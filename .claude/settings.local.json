@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(python test_state_machine.py:*)",
+      "Bash(python demo.py:*)",
+      "Bash(python test_stuck_detection.py:*)",
+      "Bash(python diagnose_validation.py:*)",
+      "Bash(python -c:*)",
+      "Bash(mkdir:*)",
+      "Bash(python test_api_basic.py:*)",
+      "Bash(python:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

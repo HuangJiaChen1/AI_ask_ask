@@ -1,0 +1,7 @@
+{
+  "gemini_api_key": "sk-DuxF4v4LuYtRAGvaB8C3FeDdD9C24083B7E11aFeB4A2Bf46",
+  "model_name": "gemini-2.5-pro",
+  "api_base_url": "https://api.shubiaobiao.cn/v1/chat/completions",
+  "temperature": 0.7,
+  "max_tokens": 2000
+}
