@@ -23,14 +23,14 @@ database.init_db()
 @app.route('/')
 def index():
     """Serve the web demo interface"""
-    print(f"[DEBUG] Serving index.html from static folder")
+    #print(f"[DEBUG] Serving index.html from static folder")
     return send_from_directory('static', 'index.html')
 
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     """Serve static files with debug logging"""
-    print(f"[DEBUG] Serving static file: {filename}")
+    #print(f"[DEBUG] Serving static file: {filename}")
     return send_from_directory('static', filename)
 
 
@@ -76,10 +76,10 @@ def classify_object_endpoint():
     """
     try:
         data = request.get_json()
-        print(f"[DEBUG] /api/classify called with data: {data}")
+        #print(f"[DEBUG] /api/classify called with data: {data}")
 
         if not data:
-            print(f"[ERROR] No JSON data received")
+            #print(f"[ERROR] No JSON data received")
             return jsonify({'success': False, 'error': 'Request body must be JSON'}), 400
 
         object_name = data.get('object_name')
@@ -109,7 +109,7 @@ def classify_object_endpoint():
             }), 200
 
     except Exception as e:
-        print(f"Error in classify_object_endpoint: {traceback.format_exc()}")
+        #print(f"Error in classify_object_endpoint: {traceback.format_exc()}")
         return jsonify({'success': False, 'error': f'Internal server error: {str(e)}'}), 500
 
 
@@ -122,10 +122,10 @@ def start_conversation():
     """
     try:
         data = request.get_json()
-        print(f"[DEBUG] /api/start called with data: {data}")
+        #print(f"[DEBUG] /api/start called with data: {data}")
 
         if not data:
-            print(f"[ERROR] No JSON data received")
+            #print(f"[ERROR] No JSON data received")
             return jsonify({'success': False, 'error': 'Request body must be JSON'}), 400
 
         object_name = data.get('object_name')
@@ -177,7 +177,7 @@ def start_conversation():
         # Store session in the database
         database.save_session(session_id, assistant)
 
-        print(f"[DEBUG] Session created: {session_id}, Object: {object_name}, Age: {age}, Level2: {level2_category}")
+        #print(f"[DEBUG] Session created: {session_id}, Object: {object_name}, Age: {age}, Level2: {level2_category}")
 
         return jsonify({
             'success': True,
@@ -190,7 +190,7 @@ def start_conversation():
     except ValueError as e:
         return jsonify({'success': False, 'error': str(e)}), 400
     except Exception as e:
-        print(f"Error in start_conversation: {traceback.format_exc()}")
+        #print(f"Error in start_conversation: {traceback.format_exc()}")
         return jsonify({'success': False, 'error': f'Internal server error: {str(e)}'}), 500
 
 
@@ -213,10 +213,10 @@ def continue_conversation():
     """
     try:
         data = request.get_json()
-        print(f"[DEBUG] /api/continue called with session: {data.get('session_id', 'N/A')[:8]}...")
+        #print(f"[DEBUG] /api/continue called with session: {data.get('session_id', 'N/A')[:8]}...")
 
         if not data:
-            print(f"[ERROR] No JSON data received")
+            #print(f"[ERROR] No JSON data received")
             return jsonify({
                 'success': False,
                 'error': 'Request body must be JSON'
@@ -224,7 +224,7 @@ def continue_conversation():
 
         session_id = data.get('session_id')
         child_response = data.get('child_response')
-        print(f"[DEBUG] Child response: '{child_response}'")
+        #print(f"[DEBUG] Child response: '{child_response}'")
 
         if not session_id or not child_response:
             return jsonify({
@@ -243,11 +243,11 @@ def continue_conversation():
         # Continue conversation
         response, mastery_achieved, is_correct, is_neutral, audio_output = assistant.continue_conversation(child_response)
 
-        print(f"[DEBUG] Response generated - Correct: {is_correct}, Mastery: {mastery_achieved}, Count: {assistant.correct_count}")
+        #print(f"[DEBUG] Response generated - Correct: {is_correct}, Mastery: {mastery_achieved}, Count: {assistant.correct_count}")
 
         # End the session if mastery is achieved
         if mastery_achieved:
-            print(f"[DEBUG] Mastery achieved! Deleting session: {session_id[:8]}...")
+            #print(f"[DEBUG] Mastery achieved! Deleting session: {session_id[:8]}...")
             database.delete_session(session_id)
         else:
             database.save_session(session_id, assistant)
@@ -271,7 +271,7 @@ def continue_conversation():
         }), 200
 
     except Exception as e:
-        print(f"Error in continue_conversation: {traceback.format_exc()}")
+        #print(f"Error in continue_conversation: {traceback.format_exc()}")
         return jsonify({
             'success': False,
             'error': f'Internal server error: {str(e)}'
@@ -316,7 +316,7 @@ def get_history(session_id):
         }), 200
 
     except Exception as e:
-        print(f"Error in get_history: {traceback.format_exc()}")
+        #print(f"Error in get_history: {traceback.format_exc()}")
         return jsonify({
             'success': False,
             'error': f'Internal server error: {str(e)}'
@@ -368,7 +368,7 @@ def reset_session():
             }), 404
 
     except Exception as e:
-        print(f"Error in reset_session: {traceback.format_exc()}")
+        #print(f"Error in reset_session: {traceback.format_exc()}")
         return jsonify({
             'success': False,
             'error': f'Internal server error: {str(e)}'
@@ -411,7 +411,7 @@ def list_sessions():
         }), 200
 
     except Exception as e:
-        print(f"Error in list_sessions: {traceback.format_exc()}")
+        #print(f"Error in list_sessions: {traceback.format_exc()}")
         return jsonify({
             'success': False,
             'error': f'Internal server error: {str(e)}'
@@ -423,27 +423,27 @@ if __name__ == '__main__':
     static_path = os.path.join(os.path.dirname(__file__), 'static')
     static_exists = os.path.exists(static_path)
 
-    print("=" * 60)
-    print("Child Learning Assistant - Flask Web Service (Gemini)")
-    print("=" * 60)
-    print(f"\n📁 Static folder: {static_path}")
-    print(f"   Exists: {'✅ Yes' if static_exists else '❌ No'}")
+    #print("=" * 60)
+    #print("Child Learning Assistant - Flask Web Service (Gemini)")
+    #print("=" * 60)
+    #print(f"\n📁 Static folder: {static_path}")
+    #print(f"   Exists: {'✅ Yes' if static_exists else '❌ No'}")
     if static_exists:
         files = os.listdir(static_path)
-        print(f"   Files: {', '.join(files) if files else 'Empty'}")
-    print("\n🌐 Web Interface:")
-    print("  http://localhost:5001")
-    print("\n📡 API Endpoints:")
-    print("  POST   /api/classify   - Classify object into category")
-    print("  POST   /api/start      - Start new conversation")
-    print("  POST   /api/continue   - Continue conversation")
-    print("  GET    /api/history/<session_id> - Get history")
-    print("  POST   /api/reset      - Reset session")
-    print("  GET    /api/sessions   - List active sessions")
-    print("  GET    /api/health     - Health check")
-    print("\n" + "=" * 60)
-    print("🚀 Server starting on http://localhost:5001")
-    print("   Open your browser and visit the URL above!")
-    print("=" * 60 + "\n")
+        #print(f"   Files: {', '.join(files) if files else 'Empty'}")
+    #print("\n🌐 Web Interface:")
+    #print("  http://localhost:5001")
+    #print("\n📡 API Endpoints:")
+    #print("  POST   /api/classify   - Classify object into category")
+    #print("  POST   /api/start      - Start new conversation")
+    #print("  POST   /api/continue   - Continue conversation")
+    #print("  GET    /api/history/<session_id> - Get history")
+    #print("  POST   /api/reset      - Reset session")
+    #print("  GET    /api/sessions   - List active sessions")
+    #print("  GET    /api/health     - Health check")
+    #print("\n" + "=" * 60)
+    #print("🚀 Server starting on http://localhost:5001")
+    #print("   Open your browser and visit the URL above!")
+    #print("=" * 60 + "\n")
 
     app.run(debug=True, host='0.0.0.0', port=5001)
