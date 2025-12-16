@@ -1,7 +1,13 @@
 {
+  "_comment": "Official Google Cloud Gemini API configuration",
+  "use_official_sdk": true,
+  "project": "elaborate-baton-480304-r8",
+  "location": "asia-northeast1",
+  "model_name": "gemini-2.5-flash",
+  "temperature": 0.3,
+  "max_tokens": 1000,
+
+  "_comment_legacy": "Legacy OpenAI-compatible API (kept for reference)",
   "gemini_api_key": "sk-DuxF4v4LuYtRAGvaB8C3FeDdD9C24083B7E11aFeB4A2Bf46",
-  "model_name": "gemini-2.5-pro",
-  "api_base_url": "https://api.shubiaobiao.cn/v1/chat/completions",
-  "temperature": 0.7,
-  "max_tokens": 2000
+  "api_base_url": "https://api.shubiaobiao.cn/v1/chat/completions"
 }

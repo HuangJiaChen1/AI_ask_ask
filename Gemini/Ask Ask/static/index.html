@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ask Ask - Streaming Chat</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Ask Ask Assistant</h1>
+            <p>Ask me anything! Streaming in real-time</p>
+        </div>
+
+        <div class="age-selector" id="ageSelector">
+            <label for="age">Child's Age:</label>
+            <select id="age">
+                <option value="">Not specified</option>
+                <option value="3">3 years</option>
+                <option value="4">4 years</option>
+                <option value="5">5 years</option>
+                <option value="6" selected>6 years</option>
+                <option value="7">7 years</option>
+                <option value="8">8 years</option>
+            </select>
+            <button onclick="startConversation()">Start Conversation</button>
+        </div>
+
+        <div class="messages" id="messages"></div>
+
+        <div class="input-area">
+            <input
+                type="text"
+                id="userInput"
+                placeholder="Type your question here..."
+                disabled
+                onkeypress="if(event.key==='Enter' && !event.shiftKey) sendMessage()"
+            >
+            <button id="sendBtn" onclick="sendMessage()" disabled>Send</button>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

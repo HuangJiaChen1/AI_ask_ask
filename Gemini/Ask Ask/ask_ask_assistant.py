@@ -1,13 +1,16 @@
 """
 Ask Ask Assistant - A conversational assistant where children ask questions
 and the LLM provides age-appropriate answers with follow-up questions.
+
+Now using official Google Gemini SDK with real streaming support.
 """
 import json
 import os
 import re
 import sys
 from enum import Enum
-import requests
+from google import genai
+from google.genai.types import HttpOptions, GenerateContentConfig
 
 # Add parent directory to path to access shared utilities
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -119,13 +122,21 @@ class AskAskAssistant:
     age-appropriate answers with follow-up questions.
     """
 
-    def __init__(self, config_path="../config.json", age_prompts_path="../age_prompts.json"):
-        """Initialize the assistant with configuration."""
+    def __init__(self, config_path="config.json", age_prompts_path="age_prompts.json"):
+        """Initialize the assistant with configuration and Gemini client."""
         self.config = self._load_config(config_path)
         self.conversation_history = []
         self.state = ConversationState.INTRODUCTION
         self.last_audio_output = None
         self.age = None
+
+        # Initialize Google Gemini client
+        self.client = genai.Client(
+            vertexai=True,
+            project=self.config["project"],
+            location=self.config["location"],
+            http_options=HttpOptions(api_version="v1")
+        )
 
         # Load age prompts
         self.age_prompts = self._load_age_prompts(age_prompts_path)
@@ -172,88 +183,115 @@ class AskAskAssistant:
         else:
             return age_groups.get('5-6', {}).get('prompt', '')
 
-    def _call_gemini_api(self, messages, response_format=None, temperature=None, max_tokens=None):
-        """Call Gemini API using requests."""
-        headers = {
-            "Authorization": f"Bearer {self.config['gemini_api_key']}",
-            "Content-Type": "application/json"
-        }
+    def _convert_messages_to_gemini_format(self, messages):
+        """
+        Convert OpenAI-style messages to Gemini format.
 
-        payload = {
-            "model": self.config["model_name"],
-            "messages": messages,
-            "temperature": temperature if temperature is not None else self.config["temperature"],
-            "max_tokens": max_tokens if max_tokens is not None else self.config["max_tokens"]
-        }
+        OpenAI format: [{"role": "system"/"user"/"assistant", "content": "..."}]
+        Gemini format: (system_instruction, contents_array)
 
-        # Add JSON mode if requested
-        if response_format and response_format.get("type") == "json_object":
-            modified_messages = messages.copy()
-            if modified_messages:
-                last_msg = modified_messages[-1].copy()
-                last_msg["content"] = last_msg["content"] + """
+        Returns:
+            tuple: (system_instruction_str, contents_array)
+        """
+        system_instruction = ""
+        contents = []
 
-CRITICAL INSTRUCTIONS:
-1. Respond with ONLY valid JSON
-2. NO text before the JSON
-3. NO text after the JSON
-4. NO markdown code blocks (no ```)
-5. NO explanations or reasoning
-6. Start directly with { and end directly with }
-7. Your ENTIRE response must be parseable JSON
+        for msg in messages:
+            role = msg.get("role")
+            content = msg.get("content", "")
 
-Example of CORRECT response:
-{"key": "value"}
+            if role == "system":
+                # System messages become system_instruction
+                system_instruction += content + "\n"
+            elif role == "user":
+                contents.append({"role": "user", "parts": [{"text": content}]})
+            elif role == "assistant":
+                # Convert "assistant" to "model" for Gemini
+                contents.append({"role": "model", "parts": [{"text": content}]})
 
-Example of WRONG response:
-Here's the JSON: {"key": "value"}
-```json
-{"key": "value"}
-```
+        return system_instruction.strip(), contents
 
-Your response:"""
-                modified_messages[-1] = last_msg
-            payload["messages"] = modified_messages
+    def _call_gemini_api(self, messages, temperature=None, max_tokens=None):
+        """
+        Call Gemini API using official Google SDK (non-streaming).
 
+        Args:
+            messages: OpenAI-style message array
+            temperature: Optional temperature override
+            max_tokens: Optional max_tokens override
+
+        Returns:
+            str: Complete response text
+        """
         try:
-            response = requests.post(
-                self.config["api_base_url"],
-                headers=headers,
-                json=payload,
-                timeout=30
+            # Convert to Gemini format
+            system_instruction, contents = self._convert_messages_to_gemini_format(messages)
+
+            # Configure generation
+            config = GenerateContentConfig(
+                temperature=temperature if temperature is not None else self.config["temperature"],
+                max_output_tokens=max_tokens if max_tokens is not None else self.config["max_tokens"],
+                system_instruction=system_instruction if system_instruction else None
             )
-            response.raise_for_status()
 
-            response_data = response.json()
+            # Call API
+            response = self.client.models.generate_content(
+                model=self.config["model_name"],
+                contents=contents,
+                config=config
+            )
 
-            safe_print(f"[DEBUG] API Response keys: {response_data.keys()}")
-
-            finish_reason = response_data["choices"][0].get("finish_reason")
-            if finish_reason == "MAX_TOKENS":
-                safe_print(f"[WARNING] Response was truncated due to MAX_TOKENS limit!")
-
-            if "choices" not in response_data or not response_data["choices"]:
-                safe_print(f"[ERROR] Full API response: {json.dumps(response_data, indent=2)}")
-                raise Exception(f"Invalid API response structure: missing 'choices'")
-
-            content = response_data["choices"][0]["message"]["content"]
-
-            if not content or not content.strip():
-                safe_print(f"[ERROR] Empty content. Full response: {json.dumps(response_data, indent=2)}")
+            # Extract text from response
+            if not response.text:
+                safe_print(f"[ERROR] Empty response from Gemini API")
                 raise Exception("API returned empty content")
 
-            return content
+            return response.text
 
-        except requests.exceptions.RequestException as e:
-            safe_print(f"[ERROR] Request failed: {str(e)}")
-            if hasattr(e, 'response') and e.response is not None:
-                safe_print(f"[ERROR] Response status: {e.response.status_code}")
-                safe_print(f"[ERROR] Response body: {e.response.text[:500]}")
+        except Exception as e:
+            safe_print(f"[ERROR] Gemini API call failed: {str(e)}")
             raise Exception(f"Gemini API error: {str(e)}")
-        except KeyError as e:
-            safe_print(f"[ERROR] Missing key in response: {str(e)}")
-            safe_print(f"[ERROR] Full response: {json.dumps(response_data, indent=2)}")
-            raise Exception(f"Unexpected API response format: missing key {str(e)}")
+
+    def _call_gemini_api_stream(self, messages, temperature=None, max_tokens=None):
+        """
+        Call Gemini API with REAL streaming using official Google SDK.
+
+        This provides true token-by-token streaming from the Gemini model!
+
+        Args:
+            messages: OpenAI-style message array
+            temperature: Optional temperature override
+            max_tokens: Optional max_tokens override
+
+        Yields:
+            str: Text chunks as they arrive (true streaming!)
+        """
+        try:
+            # Convert to Gemini format
+            system_instruction, contents = self._convert_messages_to_gemini_format(messages)
+
+            # Configure generation
+            config = GenerateContentConfig(
+                temperature=temperature if temperature is not None else self.config["temperature"],
+                max_output_tokens=max_tokens if max_tokens is not None else self.config["max_tokens"],
+                system_instruction=system_instruction if system_instruction else None
+            )
+
+            # Call streaming API - THIS IS TRUE STREAMING!
+            stream = self.client.models.generate_content_stream(
+                model=self.config["model_name"],
+                contents=contents,
+                config=config
+            )
+
+            # Yield chunks as they arrive in real-time
+            for chunk in stream:
+                if chunk.text:
+                    yield chunk.text
+
+        except Exception as e:
+            safe_print(f"[ERROR] Gemini streaming failed: {str(e)}")
+            raise Exception(f"Gemini API streaming error: {str(e)}")
 
     def start_conversation(self, age=None):
         """
@@ -296,24 +334,18 @@ Your response:"""
         return response
 
     def _generate_introduction(self):
-        """Generate the introduction message."""
+        """Generate the introduction message (plain text, no JSON)."""
         try:
             safe_print(f"[DEBUG] Generating introduction")
             response_text = self._call_gemini_api(
                 messages=self.conversation_history + [
                     {"role": "user", "content": self.prompts['introduction_prompt']}
-                ],
-                response_format={"type": "json_object"},
-                max_tokens=2000
+                ]
             )
 
-            json_text = extract_json_from_response(response_text)
-            structured = json.loads(json_text)
-
-            introduction = structured.get("introduction", "👋 Hi! Ask me anything you want to know!")
-            self.last_audio_output = structured.get("audio_output")
-            if not self.last_audio_output:
-                self.last_audio_output = remove_emojis(introduction)
+            # Plain text response - use directly
+            introduction = response_text.strip()
+            self.last_audio_output = remove_emojis(introduction)
 
             # Add to conversation history
             self.conversation_history.append({
@@ -400,7 +432,7 @@ Your response:"""
         return False
 
     def _answer_question(self, child_question):
-        """Answer the child's question with a follow-up."""
+        """Answer the child's question with a follow-up (plain text, no JSON)."""
         self.state = ConversationState.ANSWERING
 
         answer_prompt = self.prompts['answer_question_prompt'].format(
@@ -412,18 +444,12 @@ Your response:"""
             response_text = self._call_gemini_api(
                 messages=self.conversation_history + [
                     {"role": "user", "content": answer_prompt}
-                ],
-                response_format={"type": "json_object"},
-                max_tokens=2000
+                ]
             )
 
-            json_text = extract_json_from_response(response_text)
-            structured = json.loads(json_text)
-
-            full_response = structured.get("full_response", "That's a great question! Let me think...")
-            self.last_audio_output = structured.get("audio_output")
-            if not self.last_audio_output:
-                self.last_audio_output = remove_emojis(full_response)
+            # Plain text response - use directly
+            full_response = response_text.strip()
+            self.last_audio_output = remove_emojis(full_response)
 
             # Add to conversation history
             self.conversation_history.append({
@@ -449,7 +475,7 @@ Your response:"""
             return fallback
 
     def _suggest_topics(self):
-        """Suggest topics when child is stuck."""
+        """Suggest topics when child is stuck (plain text, no JSON)."""
         self.state = ConversationState.SUGGESTING_TOPICS
 
         try:
@@ -457,18 +483,12 @@ Your response:"""
             response_text = self._call_gemini_api(
                 messages=self.conversation_history + [
                     {"role": "user", "content": self.prompts['suggest_topics_prompt']}
-                ],
-                response_format={"type": "json_object"},
-                max_tokens=2000
+                ]
             )
 
-            json_text = extract_json_from_response(response_text)
-            structured = json.loads(json_text)
-
-            full_response = structured.get("full_response", "🤗 That's okay! Want to learn about animals or space?")
-            self.last_audio_output = structured.get("audio_output")
-            if not self.last_audio_output:
-                self.last_audio_output = remove_emojis(full_response)
+            # Plain text response - use directly
+            full_response = response_text.strip()
+            self.last_audio_output = remove_emojis(full_response)
 
             # Add to conversation history
             self.conversation_history.append({
@@ -502,3 +522,144 @@ Your response:"""
         self.conversation_history = []
         self.state = ConversationState.INTRODUCTION
         self.last_audio_output = None
+
+    def start_conversation_stream(self, age=None):
+        """
+        Start conversation with streaming introduction.
+
+        Yields:
+            tuple: (event_type, data)
+                - ("metadata", dict) - Initial metadata
+                - ("text", str) - Text chunks (plain text, character by character)
+                - ("complete", dict) - Final completion data
+                - ("error", dict) - Error information
+        """
+        self.age = age
+        self.conversation_history = []
+        self.state = ConversationState.INTRODUCTION
+
+        # Build system prompt with age guidance
+        system_prompt = self.prompts['system_prompt']
+        if age is not None:
+            age_prompt = self._get_age_prompt(age)
+            if age_prompt:
+                system_prompt += f"\n\nAGE-SPECIFIC GUIDANCE:\n{age_prompt}"
+
+        self.conversation_history.append({
+            "role": "system",
+            "content": system_prompt
+        })
+
+        # Yield metadata first
+        yield ("metadata", {"state": "introduction", "age": age})
+
+        # Stream introduction (plain text, no JSON)
+        accumulated_text = ""
+        try:
+            for chunk in self._call_gemini_api_stream(
+                messages=self.conversation_history + [
+                    {"role": "user", "content": self.prompts['introduction_prompt']}
+                ],
+                max_tokens=None  # Use config default
+            ):
+                accumulated_text += chunk
+                yield ("text", chunk)
+
+            # Store in history
+            self.conversation_history.append({
+                "role": "assistant",
+                "content": accumulated_text
+            })
+
+            self.last_audio_output = remove_emojis(accumulated_text)
+            self.state = ConversationState.AWAITING_QUESTION
+
+            yield ("complete", {
+                "success": True,
+                "audio_output": self.last_audio_output
+            })
+
+        except Exception as e:
+            safe_print(f"[Error streaming introduction]: {e}")
+            yield ("error", {"message": str(e)})
+
+    def continue_conversation_stream(self, child_input):
+        """
+        Continue conversation with streaming response.
+
+        Args:
+            child_input: The child's question or input
+
+        Yields:
+            tuple: (event_type, data)
+                - ("metadata", dict) - Immediate metadata (is_stuck, state)
+                - ("text", str) - Text chunks (plain text, character by character)
+                - ("complete", dict) - Final completion data
+                - ("error", dict) - Error information
+        """
+        # Add to history
+        self.conversation_history.append({
+            "role": "user",
+            "content": child_input
+        })
+
+        # Check if stuck
+        is_stuck = self._is_child_stuck(child_input)
+
+        # Yield metadata immediately
+        yield ("metadata", {
+            "is_stuck": is_stuck,
+            "state": self.state.value
+        })
+
+        # Stream response (plain text, no JSON)
+        accumulated_text = ""
+
+        try:
+            if is_stuck:
+                # Stream topic suggestions
+                for chunk in self._call_gemini_api_stream(
+                    messages=self.conversation_history + [
+                        {"role": "user", "content": self.prompts['suggest_topics_prompt']}
+                    ],
+                    max_tokens=2000
+                ):
+                    accumulated_text += chunk
+                    yield ("text", chunk)
+
+                self.state = ConversationState.SUGGESTING_TOPICS
+
+            else:
+                # Stream answer
+                answer_prompt = self.prompts['answer_question_prompt'].format(
+                    child_question=child_input
+                )
+
+                for chunk in self._call_gemini_api_stream(
+                    messages=self.conversation_history + [
+                        {"role": "user", "content": answer_prompt}
+                    ],
+                    max_tokens=2000
+                ):
+                    accumulated_text += chunk
+                    yield ("text", chunk)
+
+                self.state = ConversationState.ANSWERING
+
+            # Store in history
+            self.conversation_history.append({
+                "role": "assistant",
+                "content": accumulated_text
+            })
+
+            self.last_audio_output = remove_emojis(accumulated_text)
+            self.state = ConversationState.AWAITING_QUESTION
+
+            yield ("complete", {
+                "success": True,
+                "audio_output": self.last_audio_output
+            })
+
+        except Exception as e:
+            safe_print(f"[Error streaming response]: {e}")
+            yield ("error", {"message": str(e)})
