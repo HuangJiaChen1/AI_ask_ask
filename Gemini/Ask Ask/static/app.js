@@ -3,23 +3,26 @@
  *
  * This file handles:
  * - SSE (Server-Sent Events) streaming from the backend
- * - Typewriter effect for real-time text display
+ * - Real-time text display using StreamChunk format
  * - Session management
  * - User input handling
  */
 
-const API_BASE = 'http://localhost:5001/api';
+// Automatically use the same host as the frontend (works for localhost, server, and ngrok)
+const API_BASE = `${window.location.protocol}//${window.location.host}/api`;
 
 // Global state
 let sessionId = null;
 let currentMessageDiv = null;
 let isStreaming = false;
+let currentStreamController = null;
 
 // DOM elements
 const messagesContainer = document.getElementById('messages');
 const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
 const ageSelector = document.getElementById('ageSelector');
+const thinkingTimeDisplay = document.getElementById('thinking-time');
 
 /**
  * Add a message to the chat interface
@@ -65,14 +68,20 @@ async function startConversation() {
     // Clear previous messages
     messagesContainer.innerHTML = '';
     sessionId = null;
+    thinkingTimeDisplay.textContent = '';
+    thinkingTimeDisplay.style.opacity = 0;
 
     // Disable controls
     userInput.disabled = true;
     sendBtn.disabled = true;
     isStreaming = true;
+    updateStopButton();
 
     try {
         console.log('[INFO] Starting conversation with age:', age || 'not specified');
+
+        // Create AbortController for this stream
+        currentStreamController = new AbortController();
 
         const response = await fetch(`${API_BASE}/start`, {
             method: 'POST',
@@ -81,7 +90,8 @@ async function startConversation() {
             },
             body: JSON.stringify({
                 age: age ? parseInt(age) : null
-            })
+            }),
+            signal: currentStreamController.signal
         });
 
         if (!response.ok) {
@@ -129,6 +139,12 @@ async function startConversation() {
         }
 
     } catch (error) {
+        // Handle abort gracefully
+        if (error.name === 'AbortError') {
+            console.log('[INFO] Stream interrupted by user');
+            return;
+        }
+
         console.error('[ERROR] Failed to start conversation:', error);
         messagesContainer.innerHTML = '';
         const errorDiv = document.createElement('div');
@@ -136,10 +152,14 @@ async function startConversation() {
         errorDiv.textContent = `Error: ${error.message}. Please check if the server is running.`;
         messagesContainer.appendChild(errorDiv);
     } finally {
+        // Clear stream controller
+        currentStreamController = null;
+
         // Re-enable controls
         isStreaming = false;
         userInput.disabled = false;
         sendBtn.disabled = false;
+        updateStopButton();
         userInput.focus();
 
         // Hide age selector after starting
@@ -150,15 +170,83 @@ async function startConversation() {
 }
 
 /**
+ * Stop the current streaming response
+ */
+async function stopStreaming() {
+    if (!sessionId) {
+        return;
+    }
+
+    console.log('[INFO] Stopping stream...');
+
+    // Call backend to cancel stream
+    try {
+        const response = await fetch(`${API_BASE}/stop`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                session_id: sessionId
+            })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            console.log('[INFO] Stream stopped successfully');
+        } else {
+            console.warn('[WARNING] Failed to stop stream:', result.error);
+        }
+    } catch (error) {
+        console.error('[ERROR] Error stopping stream:', error);
+    }
+
+    // Also abort frontend connection
+    if (currentStreamController) {
+        currentStreamController.abort();
+        currentStreamController = null;
+    }
+
+    // Reset UI state
+    isStreaming = false;
+    userInput.disabled = false;
+    sendBtn.disabled = false;
+    updateStopButton();
+    userInput.focus();
+}
+
+/**
+ * Update stop button visibility based on streaming state
+ */
+function updateStopButton() {
+    const stopBtn = document.getElementById('stopBtn');
+    if (stopBtn) {
+        stopBtn.style.display = isStreaming ? 'inline-block' : 'none';
+    }
+}
+
+/**
  * Send a user message
  */
 async function sendMessage() {
     const text = userInput.value.trim();
 
     // Validate input
-    if (!text || !sessionId || isStreaming) {
+    if (!text || !sessionId) {
         return;
     }
+
+    // Interrupt ongoing stream if exists
+    if (isStreaming) {
+        console.log('[INFO] Interrupting previous stream');
+        await stopStreaming();
+        // Wait briefly for cleanup
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    // Clear thinking time display
+    thinkingTimeDisplay.textContent = '';
+    thinkingTimeDisplay.style.opacity = 0;
 
     // Add user message to chat
     addMessage('user', text);
@@ -168,6 +256,7 @@ async function sendMessage() {
     userInput.disabled = true;
     sendBtn.disabled = true;
     isStreaming = true;
+    updateStopButton();
 
     try {
         console.log('[INFO] Sending message:', text);
@@ -248,33 +337,26 @@ async function sendMessage() {
 /**
  * Handle SSE events from the server
  * @param {string} eventType - The type of event
- * @param {object} data - The event data
+ * @param {object} data - The event data (StreamChunk object for 'chunk' events)
  */
 async function handleSSEEvent(eventType, data) {
     console.log(`[${eventType}]`, data);
 
     switch (eventType) {
-        case 'metadata':
-            // Handle metadata (session ID, state, etc.)
-            if (data.session_id) {
-                sessionId = data.session_id;
-                console.log('[INFO] Session ID:', sessionId);
-            }
-            if (data.is_stuck !== undefined) {
-                console.log('[INFO] Child is stuck:', data.is_stuck);
-            }
-            break;
-
-        case 'text_chunk':
-            // Display text chunk immediately (streaming provides the real-time effect)
-            if (currentMessageDiv && data.text) {
-                displayChunk(currentMessageDiv, data.text);
-            }
+        case 'chunk':
+            // Handle StreamChunk object
+            handleStreamChunk(data);
             break;
 
         case 'complete':
             // Stream completed successfully
             console.log('[INFO] Stream complete:', data);
+            break;
+
+        case 'interrupted':
+            // Stream was interrupted
+            console.log('[INFO] Stream interrupted:', data);
+            // Could add visual indicator here if needed
             break;
 
         case 'error':
@@ -288,6 +370,66 @@ async function handleSSEEvent(eventType, data) {
 
         default:
             console.warn('[WARNING] Unknown event type:', eventType);
+    }
+}
+
+/**
+ * Handle a StreamChunk object
+ * @param {object} chunk - The StreamChunk object
+ */
+function handleStreamChunk(chunk) {
+    // Store session ID from first chunk
+    if (chunk.session_id && !sessionId) {
+        sessionId = chunk.session_id;
+        console.log('[INFO] Session ID:', sessionId);
+    }
+
+    // Display stuck status if present
+    if (chunk.is_stuck !== undefined && chunk.is_stuck) {
+        console.log('[INFO] Child appears stuck - suggesting topics');
+    }
+
+    // Handle text chunks (non-finish chunks with response text)
+    if (!chunk.finish && chunk.response) {
+        if (currentMessageDiv) {
+            displayChunk(currentMessageDiv, chunk.response);
+        }
+    }
+
+    // Handle final chunk (finish=true)
+    if (chunk.finish) {
+        // Only update if final response is longer (prevents cutoffs from incomplete final chunks)
+        if (currentMessageDiv && chunk.response) {
+            const currentText = currentMessageDiv.textContent;
+            if (chunk.response.length > currentText.length) {
+                // Final chunk has more text, use it
+                currentMessageDiv.textContent = chunk.response;
+            } else if (chunk.response.length < currentText.length) {
+                // Final chunk is shorter - log warning but keep current text
+                console.warn('[WARNING] Final chunk shorter than streamed text. Keeping streamed version.', {
+                    streamedLength: currentText.length,
+                    finalLength: chunk.response.length
+                });
+            }
+            // If equal length, keep what we have (no action needed)
+        }
+
+        // Display duration and token usage if available
+        if (chunk.duration) {
+            console.log(`[INFO] Response duration: ${chunk.duration.toFixed(2)}s`);
+            thinkingTimeDisplay.textContent = `Response time: ${chunk.duration.toFixed(2)}s`;
+            thinkingTimeDisplay.style.opacity = 1;
+        }
+
+        if (chunk.token_usage) {
+            console.log('[INFO] Token usage:', chunk.token_usage);
+        }
+
+        // Check if session is finished
+        if (chunk.session_finished) {
+            console.log('[INFO] Session finished');
+            // Could add UI indicator here if needed
+        }
     }
 }
 

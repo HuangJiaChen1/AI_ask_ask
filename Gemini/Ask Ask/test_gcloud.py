@@ -1,3 +1,5 @@
+import time
+
 from google import genai
 from google.genai.types import HttpOptions
 
@@ -8,7 +10,9 @@ client = genai.Client(
     http_options=HttpOptions(api_version="v1"),
 )
 
+start_time = time.time()
 for chunk in client.models.generate_content_stream(
     model='gemini-2.5-flash', contents='Tell me a story in 300 words.'
 ):
+    print(time.time() - start_time)
     print(chunk.text, end='//n')

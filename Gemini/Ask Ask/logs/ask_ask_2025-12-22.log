@@ -1,0 +1,181 @@
+2025-12-22 10:01:12.493 | INFO     | ask_ask_stream:call_ask_ask_stream:370 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream started | session_id=908c7283-645c-4af2-9f38-c94f03eea5cf, age=6, status=normal, content_length=165, message_history=1
+2025-12-22 10:01:12.494 | INFO     | ask_ask_stream:call_ask_ask_stream:383 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Stuck detection | is_stuck=False
+2025-12-22 10:01:12.494 | INFO     | ask_ask_stream:call_ask_ask_stream:404 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Routing to answer_question
+2025-12-22 10:01:12.494 | INFO     | ask_ask_stream:answer_question_stream:145 | answer_question_stream started | question_length=165, message_count=2
+2025-12-22 10:01:12.494 | DEBUG    | ask_ask_stream:answer_question_stream:155 | Messages prepared for API | count=3
+2025-12-22 10:01:12.494 | DEBUG    | ask_ask_stream:answer_question_stream:165 | Sending 2 messages to Gemini API
+2025-12-22 10:01:18.151 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 1 | length=2, total_length=2
+2025-12-22 10:01:18.154 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 2 | length=9, total_length=11
+2025-12-22 10:01:18.188 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 3 | length=61, total_length=72
+2025-12-22 10:01:18.266 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 4 | length=76, total_length=148
+2025-12-22 10:01:18.315 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 5 | length=59, total_length=207
+2025-12-22 10:01:18.317 | DEBUG    | ask_ask_stream:answer_question_stream:192 | Gemini streaming API does not provide token usage in stream mode
+2025-12-22 10:01:18.317 | INFO     | ask_ask_stream:answer_question_stream:203 | answer_question_stream completed | duration=5.823s, response_length=207
+2025-12-22 10:01:18.317 | WARNING  | ask_ask_stream:answer_question_stream:209 | Slow LLM call | duration=5.823s exceeded threshold 5.0s
+2025-12-22 10:01:18.317 | INFO     | ask_ask_stream:call_ask_ask_stream:438 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream completed | response_type=answer_question, duration=5.824s, total_chunks=5, response_length=207, session_finished=False
+2025-12-22 10:01:18.317 | DEBUG    | ask_ask_stream:call_ask_ask_stream:445 | Full response (first 200 chars): Hi there! 👋 I'm so excited to learn with you today! You can ask me about ANYTHING – like why the sky is blue 💙, how plants grow 🌱, or what dinosaurs ate 🦖! What amazing thing do you want to discover t...
+2025-12-22 10:01:21.721 | INFO     | ask_ask_stream:call_ask_ask_stream:370 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream started | session_id=908c7283-645c-4af2-9f38-c94f03eea5cf, age=6, status=normal, content_length=10, message_history=2
+2025-12-22 10:01:21.721 | INFO     | ask_ask_stream:call_ask_ask_stream:383 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Stuck detection | is_stuck=False
+2025-12-22 10:01:21.721 | INFO     | ask_ask_stream:call_ask_ask_stream:404 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Routing to answer_question
+2025-12-22 10:01:21.721 | INFO     | ask_ask_stream:answer_question_stream:145 | answer_question_stream started | question_length=10, message_count=3
+2025-12-22 10:01:21.721 | DEBUG    | ask_ask_stream:answer_question_stream:155 | Messages prepared for API | count=4
+2025-12-22 10:01:21.721 | DEBUG    | ask_ask_stream:answer_question_stream:165 | Sending 3 messages to Gemini API
+2025-12-22 10:01:22.228 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 1 | length=1, total_length=1
+2025-12-22 10:01:22.316 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 2 | length=48, total_length=49
+2025-12-22 10:01:22.403 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 3 | length=63, total_length=112
+2025-12-22 10:01:22.531 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 4 | length=137, total_length=249
+2025-12-22 10:01:22.565 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 5 | length=28, total_length=277
+2025-12-22 10:01:22.610 | DEBUG    | ask_ask_stream:answer_question_stream:192 | Gemini streaming API does not provide token usage in stream mode
+2025-12-22 10:01:22.610 | INFO     | ask_ask_stream:answer_question_stream:203 | answer_question_stream completed | duration=0.889s, response_length=277
+2025-12-22 10:01:22.610 | INFO     | ask_ask_stream:call_ask_ask_stream:438 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream completed | response_type=answer_question, duration=0.890s, total_chunks=5, response_length=277, session_finished=False
+2025-12-22 10:01:22.610 | DEBUG    | ask_ask_stream:call_ask_ask_stream:445 | Full response (first 200 chars): Aww, I love you too! 🥰 It's so nice to hear that! It makes me feel warm and fuzzy inside, like a big hug! 🤗
+
+Did you know that when people say "I love you," their brains can release special happy chem...
+2025-12-22 10:01:25.177 | INFO     | ask_ask_stream:call_ask_ask_stream:370 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream started | session_id=908c7283-645c-4af2-9f38-c94f03eea5cf, age=6, status=normal, content_length=2, message_history=3
+2025-12-22 10:01:25.177 | INFO     | ask_ask_stream:call_ask_ask_stream:383 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Stuck detection | is_stuck=True
+2025-12-22 10:01:25.177 | INFO     | ask_ask_stream:call_ask_ask_stream:400 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Routing to suggest_topics
+2025-12-22 10:01:25.178 | INFO     | ask_ask_stream:suggest_topics_stream:232 | suggest_topics_stream started | message_count=4
+2025-12-22 10:01:25.178 | DEBUG    | ask_ask_stream:suggest_topics_stream:251 | Sending 4 messages to Gemini API
+2025-12-22 10:01:25.861 | DEBUG    | ask_ask_stream:suggest_topics_stream:273 | Chunk 1 | length=2, total_length=2
+2025-12-22 10:01:26.047 | DEBUG    | ask_ask_stream:suggest_topics_stream:273 | Chunk 2 | length=4, total_length=6
+2025-12-22 10:01:26.048 | DEBUG    | ask_ask_stream:suggest_topics_stream:273 | Chunk 3 | length=89, total_length=95
+2025-12-22 10:01:26.081 | DEBUG    | ask_ask_stream:suggest_topics_stream:273 | Chunk 4 | length=61, total_length=156
+2025-12-22 10:01:26.082 | DEBUG    | ask_ask_stream:suggest_topics_stream:273 | Chunk 5 | length=107, total_length=263
+2025-12-22 10:01:26.152 | DEBUG    | ask_ask_stream:suggest_topics_stream:273 | Chunk 6 | length=101, total_length=364
+2025-12-22 10:01:26.342 | DEBUG    | ask_ask_stream:suggest_topics_stream:273 | Chunk 7 | length=173, total_length=537
+2025-12-22 10:01:26.345 | INFO     | ask_ask_stream:suggest_topics_stream:285 | suggest_topics_stream completed | duration=1.168s, response_length=537
+2025-12-22 10:01:26.345 | INFO     | ask_ask_stream:call_ask_ask_stream:438 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream completed | response_type=suggest_topics, duration=1.168s, total_chunks=7, response_length=537, session_finished=False
+2025-12-22 10:01:26.345 | DEBUG    | ask_ask_stream:call_ask_ask_stream:445 | Full response (first 200 chars): Oh, no worries at all! We can think of something super fun together! 🎉 How about we learn about...
+
+1.  **Awesome Animals!** 🦁 We could talk about how lions roar, how penguins swim, or what a giraffe ...
+2025-12-22 10:01:41.985 | INFO     | ask_ask_stream:call_ask_ask_stream:370 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream started | session_id=908c7283-645c-4af2-9f38-c94f03eea5cf, age=6, status=normal, content_length=27, message_history=4
+2025-12-22 10:01:41.985 | INFO     | ask_ask_stream:call_ask_ask_stream:383 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Stuck detection | is_stuck=False
+2025-12-22 10:01:41.985 | INFO     | ask_ask_stream:call_ask_ask_stream:404 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Routing to answer_question
+2025-12-22 10:01:41.985 | INFO     | ask_ask_stream:answer_question_stream:145 | answer_question_stream started | question_length=27, message_count=5
+2025-12-22 10:01:41.985 | DEBUG    | ask_ask_stream:answer_question_stream:155 | Messages prepared for API | count=6
+2025-12-22 10:01:41.985 | DEBUG    | ask_ask_stream:answer_question_stream:165 | Sending 5 messages to Gemini API
+2025-12-22 10:01:44.769 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 1 | length=3, total_length=3
+2025-12-22 10:01:44.843 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 2 | length=64, total_length=67
+2025-12-22 10:01:44.887 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 3 | length=59, total_length=126
+2025-12-22 10:01:45.006 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 4 | length=133, total_length=259
+2025-12-22 10:01:45.107 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 5 | length=115, total_length=374
+2025-12-22 10:01:45.139 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 6 | length=22, total_length=396
+2025-12-22 10:01:45.141 | DEBUG    | ask_ask_stream:answer_question_stream:192 | Gemini streaming API does not provide token usage in stream mode
+2025-12-22 10:01:45.141 | INFO     | ask_ask_stream:answer_question_stream:203 | answer_question_stream completed | duration=3.156s, response_length=396
+2025-12-22 10:01:45.141 | INFO     | ask_ask_stream:call_ask_ask_stream:438 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream completed | response_type=answer_question, duration=3.156s, total_chunks=6, response_length=396, session_finished=False
+2025-12-22 10:01:45.141 | DEBUG    | ask_ask_stream:call_ask_ask_stream:445 | Full response (first 200 chars): Wow, that's a super interesting question! 🤔 I'm a friendly learning helper! 🤖 Think of me like a super-smart book or a helpful friend who knows lots of cool stuff! I can help you learn about animals, ...
+2025-12-22 10:02:18.976 | INFO     | ask_ask_stream:call_ask_ask_stream:370 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream started | session_id=908c7283-645c-4af2-9f38-c94f03eea5cf, age=6, status=normal, content_length=31, message_history=5
+2025-12-22 10:02:18.976 | INFO     | ask_ask_stream:call_ask_ask_stream:383 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Stuck detection | is_stuck=False
+2025-12-22 10:02:18.976 | INFO     | ask_ask_stream:call_ask_ask_stream:404 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Routing to answer_question
+2025-12-22 10:02:18.976 | INFO     | ask_ask_stream:answer_question_stream:145 | answer_question_stream started | question_length=31, message_count=6
+2025-12-22 10:02:18.977 | DEBUG    | ask_ask_stream:answer_question_stream:155 | Messages prepared for API | count=7
+2025-12-22 10:02:18.977 | DEBUG    | ask_ask_stream:answer_question_stream:165 | Sending 6 messages to Gemini API
+2025-12-22 10:02:21.745 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 1 | length=4, total_length=4
+2025-12-22 10:02:21.769 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 2 | length=4, total_length=8
+2025-12-22 10:02:21.793 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 3 | length=84, total_length=92
+2025-12-22 10:02:21.858 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 4 | length=49, total_length=141
+2025-12-22 10:02:21.958 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 5 | length=120, total_length=261
+2025-12-22 10:02:22.119 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 6 | length=128, total_length=389
+2025-12-22 10:02:22.172 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 7 | length=41, total_length=430
+2025-12-22 10:02:22.173 | DEBUG    | ask_ask_stream:answer_question_stream:192 | Gemini streaming API does not provide token usage in stream mode
+2025-12-22 10:02:22.173 | INFO     | ask_ask_stream:answer_question_stream:203 | answer_question_stream completed | duration=3.197s, response_length=430
+2025-12-22 10:02:22.173 | INFO     | ask_ask_stream:call_ask_ask_stream:438 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream completed | response_type=answer_question, duration=3.197s, total_chunks=7, response_length=430, session_finished=False
+2025-12-22 10:02:22.173 | DEBUG    | ask_ask_stream:call_ask_ask_stream:445 | Full response (first 200 chars): That's a fantastic question! 🤩 Cars are sometimes called "mobiles" because the word "mobile" means **able to move**! 🚗💨
+
+Think about it: cars can move from one place to another, right? They aren't stu...
+2025-12-22 10:02:44.170 | INFO     | ask_ask_stream:call_ask_ask_stream:370 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream started | session_id=908c7283-645c-4af2-9f38-c94f03eea5cf, age=6, status=normal, content_length=37, message_history=6
+2025-12-22 10:02:44.170 | INFO     | ask_ask_stream:call_ask_ask_stream:383 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Stuck detection | is_stuck=False
+2025-12-22 10:02:44.170 | INFO     | ask_ask_stream:call_ask_ask_stream:404 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Routing to answer_question
+2025-12-22 10:02:44.170 | INFO     | ask_ask_stream:answer_question_stream:145 | answer_question_stream started | question_length=37, message_count=7
+2025-12-22 10:02:44.170 | DEBUG    | ask_ask_stream:answer_question_stream:155 | Messages prepared for API | count=8
+2025-12-22 10:02:44.170 | DEBUG    | ask_ask_stream:answer_question_stream:165 | Sending 7 messages to Gemini API
+2025-12-22 10:02:47.102 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 1 | length=4, total_length=4
+2025-12-22 10:02:47.129 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 2 | length=10, total_length=14
+2025-12-22 10:02:47.152 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 3 | length=65, total_length=79
+2025-12-22 10:02:47.192 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 4 | length=51, total_length=130
+2025-12-22 10:02:47.259 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 5 | length=120, total_length=250
+2025-12-22 10:02:47.390 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 6 | length=118, total_length=368
+2025-12-22 10:02:47.576 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 7 | length=177, total_length=545
+2025-12-22 10:02:47.688 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 8 | length=127, total_length=672
+2025-12-22 10:02:47.691 | DEBUG    | ask_ask_stream:answer_question_stream:192 | Gemini streaming API does not provide token usage in stream mode
+2025-12-22 10:02:47.691 | INFO     | ask_ask_stream:answer_question_stream:203 | answer_question_stream completed | duration=3.520s, response_length=672
+2025-12-22 10:02:47.691 | INFO     | ask_ask_stream:call_ask_ask_stream:438 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream completed | response_type=answer_question, duration=3.521s, total_chunks=8, response_length=672, session_finished=False
+2025-12-22 10:02:47.691 | DEBUG    | ask_ask_stream:call_ask_ask_stream:445 | Full response (first 200 chars): That's another super smart question! 🧠 You're right, phones are called "mobile" too! And it's for the exact same reason as cars! 📱🚗
+
+Phones are "mobile" because you can **carry them with you** and **m...
+2025-12-22 10:02:57.506 | INFO     | ask_ask_stream:call_ask_ask_stream:370 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream started | session_id=908c7283-645c-4af2-9f38-c94f03eea5cf, age=6, status=normal, content_length=28, message_history=7
+2025-12-22 10:02:57.506 | INFO     | ask_ask_stream:call_ask_ask_stream:383 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Stuck detection | is_stuck=False
+2025-12-22 10:02:57.506 | INFO     | ask_ask_stream:call_ask_ask_stream:404 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Routing to answer_question
+2025-12-22 10:02:57.506 | INFO     | ask_ask_stream:answer_question_stream:145 | answer_question_stream started | question_length=28, message_count=8
+2025-12-22 10:02:57.506 | DEBUG    | ask_ask_stream:answer_question_stream:155 | Messages prepared for API | count=9
+2025-12-22 10:02:57.506 | DEBUG    | ask_ask_stream:answer_question_stream:165 | Sending 8 messages to Gemini API
+2025-12-22 10:03:00.332 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 1 | length=4, total_length=4
+2025-12-22 10:03:00.355 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 2 | length=5, total_length=9
+2025-12-22 10:03:00.423 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 3 | length=72, total_length=81
+2025-12-22 10:03:00.497 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 4 | length=67, total_length=148
+2025-12-22 10:03:00.664 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 5 | length=143, total_length=291
+2025-12-22 10:03:00.778 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 6 | length=134, total_length=425
+2025-12-22 10:03:00.810 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 7 | length=3, total_length=428
+2025-12-22 10:03:00.812 | DEBUG    | ask_ask_stream:answer_question_stream:192 | Gemini streaming API does not provide token usage in stream mode
+2025-12-22 10:03:00.812 | INFO     | ask_ask_stream:answer_question_stream:203 | answer_question_stream completed | duration=3.306s, response_length=428
+2025-12-22 10:03:00.812 | INFO     | ask_ask_stream:call_ask_ask_stream:438 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream completed | response_type=answer_question, duration=3.306s, total_chunks=7, response_length=428, session_finished=False
+2025-12-22 10:03:00.812 | DEBUG    | ask_ask_stream:call_ask_ask_stream:445 | Full response (first 200 chars): That's so fun! 🎉 Playing on your phone can be a great way to learn new things and have adventures! 🤩 You can play games that help you count 🔢, learn about animals 🐒, or even build amazing worlds! 🏰
+
+D...
+2025-12-22 10:03:16.073 | INFO     | ask_ask_stream:call_ask_ask_stream:370 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream started | session_id=908c7283-645c-4af2-9f38-c94f03eea5cf, age=6, status=normal, content_length=41, message_history=8
+2025-12-22 10:03:16.073 | INFO     | ask_ask_stream:call_ask_ask_stream:383 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Stuck detection | is_stuck=False
+2025-12-22 10:03:16.073 | INFO     | ask_ask_stream:call_ask_ask_stream:404 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Routing to answer_question
+2025-12-22 10:03:16.073 | INFO     | ask_ask_stream:answer_question_stream:145 | answer_question_stream started | question_length=41, message_count=9
+2025-12-22 10:03:16.073 | DEBUG    | ask_ask_stream:answer_question_stream:155 | Messages prepared for API | count=10
+2025-12-22 10:03:16.073 | DEBUG    | ask_ask_stream:answer_question_stream:165 | Sending 9 messages to Gemini API
+2025-12-22 10:03:19.089 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 1 | length=2, total_length=2
+2025-12-22 10:03:19.118 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 2 | length=7, total_length=9
+2025-12-22 10:03:19.142 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 3 | length=64, total_length=73
+2025-12-22 10:03:19.161 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 4 | length=62, total_length=135
+2025-12-22 10:03:19.286 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 5 | length=132, total_length=267
+2025-12-22 10:03:19.391 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 6 | length=143, total_length=410
+2025-12-22 10:03:19.472 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 7 | length=87, total_length=497
+2025-12-22 10:03:19.473 | DEBUG    | ask_ask_stream:answer_question_stream:192 | Gemini streaming API does not provide token usage in stream mode
+2025-12-22 10:03:19.473 | INFO     | ask_ask_stream:answer_question_stream:203 | answer_question_stream completed | duration=3.400s, response_length=497
+2025-12-22 10:03:19.473 | INFO     | ask_ask_stream:call_ask_ask_stream:438 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream completed | response_type=answer_question, duration=3.400s, total_chunks=7, response_length=497, session_finished=False
+2025-12-22 10:03:19.473 | DEBUG    | ask_ask_stream:call_ask_ask_stream:445 | Full response (first 200 chars): Oh, that's a great question! 🤔 Sometimes, when we don't get enough sleep 😴, our eyes can look a little darker underneath. It's like our body is telling us it needs a little rest! 💤
+
+Also, sometimes it...
+2025-12-22 10:03:48.297 | INFO     | ask_ask_stream:call_ask_ask_stream:370 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream started | session_id=908c7283-645c-4af2-9f38-c94f03eea5cf, age=6, status=normal, content_length=66, message_history=9
+2025-12-22 10:03:48.297 | INFO     | ask_ask_stream:call_ask_ask_stream:383 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Stuck detection | is_stuck=False
+2025-12-22 10:03:48.297 | INFO     | ask_ask_stream:call_ask_ask_stream:404 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Routing to answer_question
+2025-12-22 10:03:48.297 | INFO     | ask_ask_stream:answer_question_stream:145 | answer_question_stream started | question_length=66, message_count=10
+2025-12-22 10:03:48.297 | DEBUG    | ask_ask_stream:answer_question_stream:155 | Messages prepared for API | count=11
+2025-12-22 10:03:48.297 | DEBUG    | ask_ask_stream:answer_question_stream:165 | Sending 10 messages to Gemini API
+2025-12-22 10:03:51.180 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 1 | length=2, total_length=2
+2025-12-22 10:03:51.195 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 2 | length=7, total_length=9
+2025-12-22 10:03:51.223 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 3 | length=66, total_length=75
+2025-12-22 10:03:51.306 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 4 | length=76, total_length=151
+2025-12-22 10:03:51.474 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 5 | length=164, total_length=315
+2025-12-22 10:03:51.638 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 6 | length=120, total_length=435
+2025-12-22 10:03:51.865 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 7 | length=200, total_length=635
+2025-12-22 10:03:51.895 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 8 | length=2, total_length=637
+2025-12-22 10:03:51.895 | DEBUG    | ask_ask_stream:answer_question_stream:192 | Gemini streaming API does not provide token usage in stream mode
+2025-12-22 10:03:51.895 | INFO     | ask_ask_stream:answer_question_stream:203 | answer_question_stream completed | duration=3.598s, response_length=637
+2025-12-22 10:03:51.896 | INFO     | ask_ask_stream:call_ask_ask_stream:438 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream completed | response_type=answer_question, duration=3.599s, total_chunks=8, response_length=637, session_finished=False
+2025-12-22 10:03:51.896 | DEBUG    | ask_ask_stream:call_ask_ask_stream:445 | Full response (first 200 chars): Oh, that's a super smart question! 🤔 You're right, even when we sleep well, sometimes those little shadows under our eyes can still be there! 🌙
+
+It can happen because the skin under our eyes is super ...
+2025-12-22 10:04:11.129 | INFO     | ask_ask_stream:call_ask_ask_stream:370 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream started | session_id=908c7283-645c-4af2-9f38-c94f03eea5cf, age=6, status=normal, content_length=37, message_history=10
+2025-12-22 10:04:11.129 | INFO     | ask_ask_stream:call_ask_ask_stream:383 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Stuck detection | is_stuck=False
+2025-12-22 10:04:11.129 | INFO     | ask_ask_stream:call_ask_ask_stream:404 | [908c7283-645c-4af2-9f38-c94f03eea5cf] Routing to answer_question
+2025-12-22 10:04:11.129 | INFO     | ask_ask_stream:answer_question_stream:145 | answer_question_stream started | question_length=37, message_count=11
+2025-12-22 10:04:11.129 | DEBUG    | ask_ask_stream:answer_question_stream:155 | Messages prepared for API | count=12
+2025-12-22 10:04:11.129 | DEBUG    | ask_ask_stream:answer_question_stream:165 | Sending 11 messages to Gemini API
+2025-12-22 10:04:13.004 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 1 | length=2, total_length=2
+2025-12-22 10:04:13.029 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 2 | length=3, total_length=5
+2025-12-22 10:04:13.075 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 3 | length=61, total_length=66
+2025-12-22 10:04:13.140 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 4 | length=70, total_length=136
+2025-12-22 10:04:13.258 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 5 | length=114, total_length=250
+2025-12-22 10:04:13.400 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 6 | length=139, total_length=389
+2025-12-22 10:04:13.585 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 7 | length=197, total_length=586
+2025-12-22 10:04:13.715 | DEBUG    | ask_ask_stream:answer_question_stream:187 | Chunk 8 | length=124, total_length=710
+2025-12-22 10:04:13.721 | DEBUG    | ask_ask_stream:answer_question_stream:192 | Gemini streaming API does not provide token usage in stream mode
+2025-12-22 10:04:13.721 | INFO     | ask_ask_stream:answer_question_stream:203 | answer_question_stream completed | duration=2.592s, response_length=710
+2025-12-22 10:04:13.721 | INFO     | ask_ask_stream:call_ask_ask_stream:438 | [908c7283-645c-4af2-9f38-c94f03eea5cf] call_ask_ask_stream completed | response_type=answer_question, duration=2.592s, total_chunks=8, response_length=710, session_finished=False
+2025-12-22 10:04:13.721 | DEBUG    | ask_ask_stream:call_ask_ask_stream:445 | Full response (first 200 chars): Oh, I understand! It's okay not to like them. 😊 Sometimes, when we don't get enough sleep 😴, our bodies can get a little tired, and that can make the skin under our eyes look a bit darker. It's like o...

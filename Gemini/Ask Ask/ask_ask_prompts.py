@@ -14,8 +14,7 @@ Answer questions in a fun, age-appropriate way:
 
 After answering:
 1. Give a clear answer
-2. Add ONE fun fact
-3. Ask a related follow-up question
+2. Ask a related follow-up question
 
 Follow AGE-SPECIFIC GUIDANCE for vocabulary and depth.
 
@@ -62,26 +61,6 @@ Example for older children (age 7-8):
 Keep it short and inviting! Respond in a natural, conversational way (NOT JSON).
 """
 
-# State-specific instructions
-STATE_INSTRUCTIONS_JSON = json.dumps({
-    "base_format": """
-You must respond in valid JSON format as specified in the prompt.
-
-IMPORTANT: Follow the AGE-SPECIFIC GUIDANCE to adjust:
-- Vocabulary level (younger = simpler words)
-- Explanation depth (younger = shorter, simpler explanations)
-- Follow-up question complexity (younger = what/how, older = why/what-if)
-
-CRITICAL about audio_output:
-- MUST be identical to full_response but with ALL emojis removed
-- Keep all text, punctuation, and structure
-- Only remove emoji characters
-""",
-    "introduction": "Generate a warm introduction as specified.",
-    "answering": "Answer the child's question and ask a related follow-up.",
-    "suggesting_topics": "Suggest interesting topics for the child to explore."
-})
-
 
 def get_prompts():
     """
@@ -92,5 +71,4 @@ def get_prompts():
         'introduction_prompt': INTRODUCTION_PROMPT,
         'answer_question_prompt': ANSWER_QUESTION_PROMPT,
         'suggest_topics_prompt': SUGGEST_TOPICS_PROMPT,
-        'state_instructions_json': STATE_INSTRUCTIONS_JSON
     }
