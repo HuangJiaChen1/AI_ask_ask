@@ -71,8 +71,7 @@ async function startConversation() {
     thinkingTimeDisplay.textContent = '';
     thinkingTimeDisplay.style.opacity = 0;
 
-    // Disable controls
-    userInput.disabled = true;
+    // Disable send button during streaming
     sendBtn.disabled = true;
     isStreaming = true;
     updateStopButton();
@@ -155,9 +154,8 @@ async function startConversation() {
         // Clear stream controller
         currentStreamController = null;
 
-        // Re-enable controls
+        // Re-enable send button
         isStreaming = false;
-        userInput.disabled = false;
         sendBtn.disabled = false;
         updateStopButton();
         userInput.focus();
@@ -209,7 +207,6 @@ async function stopStreaming() {
 
     // Reset UI state
     isStreaming = false;
-    userInput.disabled = false;
     sendBtn.disabled = false;
     updateStopButton();
     userInput.focus();
@@ -252,8 +249,7 @@ async function sendMessage() {
     addMessage('user', text);
     userInput.value = '';
 
-    // Disable controls
-    userInput.disabled = true;
+    // Disable send button during streaming
     sendBtn.disabled = true;
     isStreaming = true;
     updateStopButton();
@@ -339,9 +335,8 @@ async function sendMessage() {
         // Clear stream controller
         currentStreamController = null;
 
-        // Re-enable controls
+        // Re-enable send button
         isStreaming = false;
-        userInput.disabled = false;
         sendBtn.disabled = false;
         updateStopButton();
         userInput.focus();

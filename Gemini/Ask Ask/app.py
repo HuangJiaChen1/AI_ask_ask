@@ -29,26 +29,23 @@ sessions = {}
 active_streams = {}
 active_streams_lock = threading.Lock()
 
-# Global event loop for async operations (reused across requests)
-_global_event_loop = None
-_loop_lock = threading.Lock()
-
 
 def get_event_loop():
     """
-    Get or create the global event loop for async operations.
+    Create a new event loop for async operations.
 
-    This reuses a single event loop across all requests instead of creating
-    a new one each time, saving ~5-10ms per request.
+    Each request gets its own event loop to avoid race conditions when
+    multiple requests are processed concurrently (e.g., user sends new
+    message while previous one is still streaming).
 
     Returns:
-        asyncio.AbstractEventLoop: The global event loop
+        asyncio.AbstractEventLoop: A new event loop for this request
     """
-    global _global_event_loop
-    with _loop_lock:
-        if _global_event_loop is None or _global_event_loop.is_closed():
-            _global_event_loop = asyncio.new_event_loop()
-        return _global_event_loop
+    # Create a new event loop for each request to avoid:
+    # "RuntimeError: This event loop is already running"
+    # when concurrent requests try to use the same loop
+    loop = asyncio.new_event_loop()
+    return loop
 
 
 def start_stream_tracking(session_id):
@@ -187,46 +184,50 @@ def start_conversation():
             # Introduction content (use cached prompts)
             introduction_content = assistant.prompts['introduction_prompt']
 
-            # Get reused event loop (saves ~5-10ms per request)
+            # Get new event loop for this request (avoids race conditions)
             loop = get_event_loop()
 
-            async def stream_introduction():
-                async for chunk in call_ask_ask_stream(
-                    age=age,
-                    messages=assistant.conversation_history.copy(),
-                    content=introduction_content,
-                    status="normal",
-                    session_id=session_id,
-                    config=assistant.config,
-                    client=assistant.client,
-                    age_prompt=age_prompt,
-                    cancel_checker=lambda: is_stream_cancelled(session_id)
-                ):
-                    # Check for cancellation
-                    if is_stream_cancelled(session_id):
-                        print(f"[INFO] Session {session_id[:8]}... interrupted by user")
-                        yield sse_event("interrupted", {"message": "Stream stopped by user"})
-                        return
+            try:
+                async def stream_introduction():
+                    async for chunk in call_ask_ask_stream(
+                        age=age,
+                        messages=assistant.conversation_history.copy(),
+                        content=introduction_content,
+                        status="normal",
+                        session_id=session_id,
+                        config=assistant.config,
+                        client=assistant.client,
+                        age_prompt=age_prompt,
+                        cancel_checker=lambda: is_stream_cancelled(session_id)
+                    ):
+                        # Check for cancellation
+                        if is_stream_cancelled(session_id):
+                            print(f"[INFO] Session {session_id[:8]}... interrupted by user")
+                            yield sse_event("interrupted", {"message": "Stream stopped by user"})
+                            return
 
-                    # Yield StreamChunk as SSE event (pass directly for optimized serialization)
-                    # Update conversation history with final response
-                    if chunk.finish:
-                        assistant.conversation_history.append({
-                            "role": "assistant",
-                            "content": chunk.response
-                        })
+                        # Yield StreamChunk as SSE event (pass directly for optimized serialization)
+                        # Update conversation history with final response
+                        if chunk.finish:
+                            assistant.conversation_history.append({
+                                "role": "assistant",
+                                "content": chunk.response
+                            })
 
-                    yield sse_event("chunk", chunk)
+                        yield sse_event("chunk", chunk)
 
-                # Send completion event
-                yield sse_event("complete", {"success": True})
+                    # Send completion event
+                    yield sse_event("complete", {"success": True})
 
-            # Stream the introduction
-            gen = stream_introduction()
-            for event in async_gen_to_sync(gen, loop):
-                yield event
+                # Stream the introduction
+                gen = stream_introduction()
+                for event in async_gen_to_sync(gen, loop):
+                    yield event
 
-            print(f"[INFO] Session {session_id[:8]}... started successfully")
+                print(f"[INFO] Session {session_id[:8]}... started successfully")
+            finally:
+                # Close the event loop to avoid resource leaks
+                loop.close()
 
         except GeneratorExit:
             # Client disconnected - stream was interrupted
@@ -297,46 +298,50 @@ def continue_conversation():
             if assistant.age is not None:
                 age_prompt = assistant.get_age_prompt(assistant.age)
 
-            # Get reused event loop (saves ~5-10ms per request)
+            # Get new event loop for this request (avoids race conditions)
             loop = get_event_loop()
 
-            async def stream_response():
-                async for chunk in call_ask_ask_stream(
-                    age=assistant.age,
-                    messages=assistant.conversation_history.copy(),
-                    content=child_input,
-                    status="normal",
-                    session_id=session_id,
-                    config=assistant.config,
-                    client=assistant.client,
-                    age_prompt=age_prompt,
-                    cancel_checker=lambda: is_stream_cancelled(session_id)
-                ):
-                    # Check for cancellation
-                    if is_stream_cancelled(session_id):
-                        print(f"[INFO] Session {session_id[:8]}... interrupted by user")
-                        yield sse_event("interrupted", {"message": "Stream stopped by user"})
-                        return
+            try:
+                async def stream_response():
+                    async for chunk in call_ask_ask_stream(
+                        age=assistant.age,
+                        messages=assistant.conversation_history.copy(),
+                        content=child_input,
+                        status="normal",
+                        session_id=session_id,
+                        config=assistant.config,
+                        client=assistant.client,
+                        age_prompt=age_prompt,
+                        cancel_checker=lambda: is_stream_cancelled(session_id)
+                    ):
+                        # Check for cancellation
+                        if is_stream_cancelled(session_id):
+                            print(f"[INFO] Session {session_id[:8]}... interrupted by user")
+                            yield sse_event("interrupted", {"message": "Stream stopped by user"})
+                            return
 
-                    # Yield StreamChunk as SSE event (pass directly for optimized serialization)
-                    # Update conversation history with final response
-                    if chunk.finish:
-                        assistant.conversation_history.append({
-                            "role": "assistant",
-                            "content": chunk.response
-                        })
+                        # Yield StreamChunk as SSE event (pass directly for optimized serialization)
+                        # Update conversation history with final response
+                        if chunk.finish:
+                            assistant.conversation_history.append({
+                                "role": "assistant",
+                                "content": chunk.response
+                            })
 
-                    yield sse_event("chunk", chunk)
+                        yield sse_event("chunk", chunk)
 
-                # Send completion event
-                yield sse_event("complete", {"success": True})
+                    # Send completion event
+                    yield sse_event("complete", {"success": True})
 
-            # Stream the response
-            gen = stream_response()
-            for event in async_gen_to_sync(gen, loop):
-                yield event
+                # Stream the response
+                gen = stream_response()
+                for event in async_gen_to_sync(gen, loop):
+                    yield event
 
-            print(f"[INFO] Session {session_id[:8]}... response streamed successfully")
+                print(f"[INFO] Session {session_id[:8]}... response streamed successfully")
+            finally:
+                # Close the event loop to avoid resource leaks
+                loop.close()
 
         except GeneratorExit:
             # Client disconnected

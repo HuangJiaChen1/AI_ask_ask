@@ -1,0 +1,9 @@
+{
+  "_comment": "Official Google Cloud Gemini API configuration",
+  "use_official_sdk": true,
+  "project": "elaborate-baton-480304-r8",
+  "location": "us-central1",
+  "model_name": "gemini-2.5-flash-lite",
+  "temperature": 0.3,
+  "max_tokens": 1000
+}

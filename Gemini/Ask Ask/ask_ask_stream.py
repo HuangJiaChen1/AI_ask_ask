@@ -162,6 +162,7 @@ async def answer_question_stream(
     full_response = ""
     token_usage = None
 
+    stream = None
     try:
         logger.debug(f"Sending {len(contents)} messages to Gemini API")
 
@@ -179,12 +180,24 @@ async def answer_question_stream(
             config=gen_config
         )
 
+        # Log stream type for debugging
+        logger.debug(f"Stream object type: {type(stream).__name__}")
+
         # Yield chunks as they arrive
         chunk_count = 0
         for chunk in stream:
             # Check for cancellation
             if cancel_checker and cancel_checker():
-                logger.info("Stream cancelled by cancel_checker")
+                logger.info("Stream cancelled by cancel_checker - using del + GC to stop generation")
+
+                # Force deletion + garbage collection to stop generation
+                temp_stream = stream
+                stream = None
+                del temp_stream
+                import gc
+                gc.collect()
+                logger.info("✅ Forced stream cleanup via del + GC")
+
                 break
 
             if chunk.text:
@@ -204,6 +217,14 @@ async def answer_question_stream(
         if full_response:
             yield ("", token_usage, full_response)
         return
+    finally:
+        # Always attempt cleanup via deletion
+        if stream is not None:
+            try:
+                del stream
+                logger.debug('Cleaned up stream via del in finally block')
+            except:
+                pass
 
     duration = time.time() - start_time
     logger.info(
@@ -254,6 +275,7 @@ async def suggest_topics_stream(
     full_response = ""
     token_usage = None
 
+    stream = None
     try:
         logger.debug(f"Sending {len(contents)} messages to Gemini API")
 
@@ -271,12 +293,24 @@ async def suggest_topics_stream(
             config=gen_config
         )
 
+        # Log stream type for debugging
+        logger.debug(f"Stream object type: {type(stream).__name__}")
+
         # Yield chunks as they arrive
         chunk_count = 0
         for chunk in stream:
             # Check for cancellation
             if cancel_checker and cancel_checker():
-                logger.info("Stream cancelled by cancel_checker")
+                logger.info("Stream cancelled by cancel_checker - using del + GC to stop generation")
+
+                # Force deletion + garbage collection to stop generation
+                temp_stream = stream
+                stream = None
+                del temp_stream
+                import gc
+                gc.collect()
+                logger.info("✅ Forced stream cleanup via del + GC")
+
                 break
 
             if chunk.text:
@@ -292,6 +326,14 @@ async def suggest_topics_stream(
         if full_response:
             yield ("", token_usage, full_response)
         return
+    finally:
+        # Always attempt cleanup via deletion
+        if stream is not None:
+            try:
+                del stream
+                logger.debug('Cleaned up stream via del in finally block')
+            except:
+                pass
 
     duration = time.time() - start_time
     logger.info(

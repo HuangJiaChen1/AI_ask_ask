@@ -1,0 +1,32 @@
+{
+  "age_groups": {
+    "3-4": {
+      "age_range": [3, 4],
+      "focus": "basic properties",
+      "prompt": "Ask WHAT questions only about basic, observable properties:\n- What color is it?\n- What shape is it?\n- Is it big or small?\n- What does it look like?\n\nUse very simple vocabulary (3-4 year old level). Focus on concrete, visible features they can easily understand. Avoid abstract concepts.",
+      "aspects_priority": ["appearance", "location", "function"]
+    },
+    "5-6": {
+      "age_range": [5, 6],
+      "focus": "properties and processes",
+      "prompt": "Ask WHAT and HOW questions about properties and simple processes:\n- What does it do?\n- How does it work?\n- How do we use it?\n- What happens when...?\n- What are its parts?\n\nUse clear, accessible vocabulary (5-6 year old level). Include simple cause-effect relationships. Encourage curiosity about how things work.",
+      "aspects_priority": ["function", "parts", "behavior", "appearance"]
+    },
+    "7-8": {
+      "age_range": [7, 8],
+      "focus": "deeper understanding",
+      "prompt": "Ask WHAT, HOW, and WHY questions for deeper understanding:\n- Why does it...?\n- What would happen if...?\n- How is it different from...?\n- How come...?\n- Where does it come from?\n\nUse age-appropriate vocabulary (7-8 year old level). Encourage reasoning, comparison, and critical thinking. Explore causes, purposes, and relationships.",
+      "aspects_priority": ["function", "comparison", "origin", "lifecycle", "behavior"]
+    }
+  },
+  "aspects": {
+    "appearance": "Physical appearance (color, shape, size, texture)",
+    "function": "Purpose and uses",
+    "location": "Where it's found or lives",
+    "parts": "Components and structure",
+    "behavior": "Actions and movements (for living things)",
+    "comparison": "Similarities and differences with other objects",
+    "origin": "Where it comes from, how it's made",
+    "lifecycle": "Growth and changes over time"
+  }
+}
