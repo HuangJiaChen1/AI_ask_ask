@@ -127,8 +127,7 @@ async def answer_question_stream(
     messages: list[dict],
     child_question: str,
     config: dict,
-    client: genai.Client,
-    cancel_checker=None
+    client: genai.Client
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
     Stream answer to child's question with follow-up.
@@ -186,20 +185,6 @@ async def answer_question_stream(
         # Yield chunks as they arrive
         chunk_count = 0
         for chunk in stream:
-            # Check for cancellation
-            if cancel_checker and cancel_checker():
-                logger.info("Stream cancelled by cancel_checker - using del + GC to stop generation")
-
-                # Force deletion + garbage collection to stop generation
-                temp_stream = stream
-                stream = None
-                del temp_stream
-                import gc
-                gc.collect()
-                logger.info("✅ Forced stream cleanup via del + GC")
-
-                break
-
             if chunk.text:
                 chunk_count += 1
                 full_response += chunk.text
@@ -242,8 +227,7 @@ async def answer_question_stream(
 async def suggest_topics_stream(
     messages: list[dict],
     config: dict,
-    client: genai.Client,
-    cancel_checker=None
+    client: genai.Client
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
     Stream topic suggestions when child is stuck.
@@ -299,20 +283,6 @@ async def suggest_topics_stream(
         # Yield chunks as they arrive
         chunk_count = 0
         for chunk in stream:
-            # Check for cancellation
-            if cancel_checker and cancel_checker():
-                logger.info("Stream cancelled by cancel_checker - using del + GC to stop generation")
-
-                # Force deletion + garbage collection to stop generation
-                temp_stream = stream
-                stream = None
-                del temp_stream
-                import gc
-                gc.collect()
-                logger.info("✅ Forced stream cleanup via del + GC")
-
-                break
-
             if chunk.text:
                 chunk_count += 1
                 full_response += chunk.text
@@ -396,10 +366,10 @@ async def call_ask_ask_stream(
     content: str,
     status: str,
     session_id: str,
+    request_id: str,
     config: dict,
     client: genai.Client,
-    age_prompt: str = "",
-    cancel_checker=None
+    age_prompt: str = ""
 ) -> AsyncGenerator[StreamChunk, None]:
     """
     Main streaming function for Ask Ask assistant.
@@ -413,6 +383,7 @@ async def call_ask_ask_stream(
         content: Child's current question or input
         status: Current conversation status ("normal" or "over")
         session_id: Unique session identifier
+        request_id: Unique identifier for this specific request
         config: Configuration dict with model settings
         client: Gemini client instance
         age_prompt: Age-specific guidance to append to system message
@@ -450,22 +421,17 @@ async def call_ask_ask_stream(
     response_type = None
 
     if stuck:
-        stream_generator = suggest_topics_stream(prepared_messages, config, client, cancel_checker)
+        stream_generator = suggest_topics_stream(prepared_messages, config, client)
         response_type = "suggest_topics"
         logger.info(f"[{session_id}] Routing to suggest_topics")
     else:
-        stream_generator = answer_question_stream(prepared_messages, content, config, client, cancel_checker)
+        stream_generator = answer_question_stream(prepared_messages, content, config, client)
         response_type = "answer_question"
         logger.info(f"[{session_id}] Routing to answer_question")
 
     # Stream chunks from the selected generator
     if stream_generator:
         async for chunked_text, chunk_token_usage, full_text in stream_generator:
-            # Check for cancellation at this level too
-            if cancel_checker and cancel_checker():
-                logger.info(f"[{session_id}] Stream cancelled")
-                break
-
             if chunk_token_usage:
                 token_usage = chunk_token_usage
 
@@ -483,6 +449,7 @@ async def call_ask_ask_stream(
                     sequence_number=sequence_number,
                     timestamp=time.time(),
                     session_id=session_id,
+                    request_id=request_id,
                     is_stuck=stuck,
                 )
                 yield chunk
@@ -515,6 +482,7 @@ async def call_ask_ask_stream(
         sequence_number=sequence_number,
         timestamp=time.time(),
         session_id=session_id,
+        request_id=request_id,
         is_stuck=stuck,
     )
     yield final_chunk

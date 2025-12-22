@@ -16,6 +16,7 @@ let sessionId = null;
 let currentMessageDiv = null;
 let isStreaming = false;
 let currentStreamController = null;
+let currentRequestId = null;  // Track current request to ignore old chunks
 
 // DOM elements
 const messagesContainer = document.getElementById('messages');
@@ -23,6 +24,14 @@ const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
 const ageSelector = document.getElementById('ageSelector');
 const thinkingTimeDisplay = document.getElementById('thinking-time');
+
+/**
+ * Generate a unique request ID
+ * @returns {string} A unique request ID
+ */
+function generateRequestId() {
+    return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
 
 /**
  * Add a message to the chat interface
@@ -71,13 +80,16 @@ async function startConversation() {
     thinkingTimeDisplay.textContent = '';
     thinkingTimeDisplay.style.opacity = 0;
 
+    // Generate new request ID
+    currentRequestId = generateRequestId();
+
     // Disable send button during streaming
     sendBtn.disabled = true;
     isStreaming = true;
     updateStopButton();
 
     try {
-        console.log('[INFO] Starting conversation with age:', age || 'not specified');
+        console.log('[INFO] Starting conversation with age:', age || 'not specified', 'request_id:', currentRequestId);
 
         // Create AbortController for this stream
         currentStreamController = new AbortController();
@@ -170,36 +182,10 @@ async function startConversation() {
 /**
  * Stop the current streaming response
  */
-async function stopStreaming() {
-    if (!sessionId) {
-        return;
-    }
+function stopStreaming() {
+    console.log('[INFO] Stopping stream (frontend only)...');
 
-    console.log('[INFO] Stopping stream...');
-
-    // Call backend to cancel stream
-    try {
-        const response = await fetch(`${API_BASE}/stop`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                session_id: sessionId
-            })
-        });
-
-        const result = await response.json();
-        if (result.success) {
-            console.log('[INFO] Stream stopped successfully');
-        } else {
-            console.warn('[WARNING] Failed to stop stream:', result.error);
-        }
-    } catch (error) {
-        console.error('[ERROR] Error stopping stream:', error);
-    }
-
-    // Also abort frontend connection
+    // Abort frontend connection - old stream will finish in background
     if (currentStreamController) {
         currentStreamController.abort();
         currentStreamController = null;
@@ -233,13 +219,15 @@ async function sendMessage() {
         return;
     }
 
-    // Interrupt ongoing stream if exists
-    if (isStreaming) {
+    // Interrupt ongoing stream if exists (abort frontend connection only)
+    if (isStreaming && currentStreamController) {
         console.log('[INFO] Interrupting previous stream');
-        await stopStreaming();
-        // Wait briefly for cleanup
-        await new Promise(resolve => setTimeout(resolve, 100));
+        currentStreamController.abort();
+        currentStreamController = null;
     }
+
+    // Generate new request ID - old chunks will be ignored
+    currentRequestId = generateRequestId();
 
     // Clear thinking time display
     thinkingTimeDisplay.textContent = '';
@@ -255,7 +243,7 @@ async function sendMessage() {
     updateStopButton();
 
     try {
-        console.log('[INFO] Sending message:', text);
+        console.log('[INFO] Sending message:', text, 'request_id:', currentRequestId);
 
         // Create AbortController for this stream
         currentStreamController = new AbortController();
@@ -387,6 +375,12 @@ async function handleSSEEvent(eventType, data) {
  * @param {object} chunk - The StreamChunk object
  */
 function handleStreamChunk(chunk) {
+    // Check if this chunk is from the current request
+    if (chunk.request_id && chunk.request_id !== currentRequestId) {
+        console.log('[INFO] Ignoring chunk from old request:', chunk.request_id, '(current:', currentRequestId, ')');
+        return;  // Ignore chunks from old requests
+    }
+
     // Store session ID from first chunk
     if (chunk.session_id && !sessionId) {
         sessionId = chunk.session_id;

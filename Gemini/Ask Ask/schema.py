@@ -100,6 +100,7 @@ class StreamChunk(BaseModel):
         sequence_number: Sequential number of this chunk in the stream (1-based).
         timestamp: Timestamp when this chunk was generated (Unix timestamp).
         session_id: Session identifier matching the request session_id.
+        request_id: Unique identifier for this specific request (to distinguish concurrent streams).
         is_stuck: Boolean indicating if child is stuck and needs topic suggestions.
 
     """
@@ -135,6 +136,10 @@ class StreamChunk(BaseModel):
     session_id: str = Field(
         ...,
         description="Session identifier matching the request session_id.",
+    )
+    request_id: str = Field(
+        ...,
+        description="Unique identifier for this specific request (to distinguish concurrent streams).",
     )
     is_stuck: bool = Field(
         ...,

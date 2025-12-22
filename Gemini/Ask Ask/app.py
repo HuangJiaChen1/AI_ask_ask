@@ -24,11 +24,6 @@ CORS(app)
 # For production, consider using Redis or database storage
 sessions = {}
 
-# Track active streams with cancellation flags
-# Structure: {session_id: {"cancel": False, "timestamp": float}}
-active_streams = {}
-active_streams_lock = threading.Lock()
-
 
 def get_event_loop():
     """
@@ -46,43 +41,6 @@ def get_event_loop():
     # when concurrent requests try to use the same loop
     loop = asyncio.new_event_loop()
     return loop
-
-
-def start_stream_tracking(session_id):
-    """Mark a session as actively streaming."""
-    import time
-    with active_streams_lock:
-        active_streams[session_id] = {
-            "cancel": False,
-            "timestamp": time.time()
-        }
-    print(f"[INFO] Started tracking stream for session {session_id[:8]}...")
-
-
-def stop_stream_tracking(session_id):
-    """Remove stream tracking for a session."""
-    with active_streams_lock:
-        if session_id in active_streams:
-            del active_streams[session_id]
-    print(f"[INFO] Stopped tracking stream for session {session_id[:8]}...")
-
-
-def is_stream_cancelled(session_id):
-    """Check if stream should be cancelled."""
-    with active_streams_lock:
-        return active_streams.get(session_id, {}).get("cancel", False)
-
-
-def cancel_stream(session_id):
-    """Set cancellation flag for a session."""
-    with active_streams_lock:
-        if session_id in active_streams:
-            active_streams[session_id]["cancel"] = True
-            print(f"[INFO] Cancellation requested for session {session_id[:8]}...")
-            return True
-        else:
-            print(f"[WARNING] Cannot cancel - session {session_id[:8]}... not streaming")
-            return False
 
 
 def sse_event(event_type, data):
@@ -159,13 +117,14 @@ def start_conversation():
     # Store age in session
     assistant.age = age
 
-    print(f"[INFO] Created session {session_id[:8]}... with age={age}")
+    # Generate unique request ID for this stream
+    request_id = str(uuid.uuid4())
+
+    print(f"[INFO] Created session {session_id[:8]}... with age={age}, request_id={request_id[:8]}...")
 
     def generate():
         """Generator for SSE stream."""
         try:
-            # Start stream tracking
-            start_stream_tracking(session_id)
 
             # Build system prompt with age guidance (use cached prompts)
             system_prompt = assistant.prompts['system_prompt']
@@ -195,17 +154,11 @@ def start_conversation():
                         content=introduction_content,
                         status="normal",
                         session_id=session_id,
+                        request_id=request_id,
                         config=assistant.config,
                         client=assistant.client,
-                        age_prompt=age_prompt,
-                        cancel_checker=lambda: is_stream_cancelled(session_id)
+                        age_prompt=age_prompt
                     ):
-                        # Check for cancellation
-                        if is_stream_cancelled(session_id):
-                            print(f"[INFO] Session {session_id[:8]}... interrupted by user")
-                            yield sse_event("interrupted", {"message": "Stream stopped by user"})
-                            return
-
                         # Yield StreamChunk as SSE event (pass directly for optimized serialization)
                         # Update conversation history with final response
                         if chunk.finish:
@@ -226,8 +179,8 @@ def start_conversation():
 
                 print(f"[INFO] Session {session_id[:8]}... started successfully")
             finally:
-                # Close the event loop to avoid resource leaks
-                loop.close()
+                # Let garbage collection handle loop cleanup (faster and avoids RuntimeError)
+                pass
 
         except GeneratorExit:
             # Client disconnected - stream was interrupted
@@ -237,9 +190,6 @@ def start_conversation():
             import traceback
             traceback.print_exc()
             yield sse_event("error", {"message": str(e)})
-        finally:
-            # Always clean up stream tracking
-            stop_stream_tracking(session_id)
 
     return Response(generate(), mimetype='text/event-stream')
 
@@ -285,13 +235,14 @@ def continue_conversation():
             "error": "Session not found. Please start a new conversation."
         }), 404
 
-    print(f"[INFO] Session {session_id[:8]}... continuing: '{child_input[:50]}...'")
+    # Generate unique request ID for this stream
+    request_id = str(uuid.uuid4())
+
+    print(f"[INFO] Session {session_id[:8]}... continuing: '{child_input[:50]}...', request_id={request_id[:8]}...")
 
     def generate():
         """Generator for SSE stream."""
         try:
-            # Start stream tracking
-            start_stream_tracking(session_id)
 
             # Get age prompt if age is set
             age_prompt = ""
@@ -309,17 +260,11 @@ def continue_conversation():
                         content=child_input,
                         status="normal",
                         session_id=session_id,
+                        request_id=request_id,
                         config=assistant.config,
                         client=assistant.client,
-                        age_prompt=age_prompt,
-                        cancel_checker=lambda: is_stream_cancelled(session_id)
+                        age_prompt=age_prompt
                     ):
-                        # Check for cancellation
-                        if is_stream_cancelled(session_id):
-                            print(f"[INFO] Session {session_id[:8]}... interrupted by user")
-                            yield sse_event("interrupted", {"message": "Stream stopped by user"})
-                            return
-
                         # Yield StreamChunk as SSE event (pass directly for optimized serialization)
                         # Update conversation history with final response
                         if chunk.finish:
@@ -340,8 +285,8 @@ def continue_conversation():
 
                 print(f"[INFO] Session {session_id[:8]}... response streamed successfully")
             finally:
-                # Close the event loop to avoid resource leaks
-                loop.close()
+                # Let garbage collection handle loop cleanup (faster and avoids RuntimeError)
+                pass
 
         except GeneratorExit:
             # Client disconnected
@@ -351,9 +296,6 @@ def continue_conversation():
             import traceback
             traceback.print_exc()
             yield sse_event("error", {"message": str(e)})
-        finally:
-            # Always clean up stream tracking
-            stop_stream_tracking(session_id)
 
     return Response(generate(), mimetype='text/event-stream')
 
@@ -399,59 +341,6 @@ def reset_session():
         "success": False,
         "error": "Session not found"
     }), 404
-
-
-@app.route('/api/stop', methods=['POST'])
-def stop_streaming():
-    """
-    Stop an active streaming response.
-
-    Request body:
-        {
-            "session_id": "..."
-        }
-
-    Response:
-        {
-            "success": true/false,
-            "message": "..." (if successful),
-            "error": "..." (if failed)
-        }
-    """
-    data = request.get_json()
-
-    if not data:
-        return jsonify({
-            "success": False,
-            "error": "Request body must be JSON"
-        }), 400
-
-    session_id = data.get('session_id')
-
-    if not session_id:
-        return jsonify({
-            "success": False,
-            "error": "Missing session_id"
-        }), 400
-
-    # Check if session exists
-    if session_id not in sessions:
-        return jsonify({
-            "success": False,
-            "error": "Session not found"
-        }), 404
-
-    # Cancel the stream
-    if cancel_stream(session_id):
-        return jsonify({
-            "success": True,
-            "message": "Stream cancellation requested"
-        })
-    else:
-        return jsonify({
-            "success": False,
-            "error": "Session is not currently streaming"
-        }), 400
 
 
 @app.route('/api/sessions', methods=['GET'])
@@ -525,7 +414,7 @@ if __name__ == '__main__':
     print("Ask Ask Assistant - Streaming API Server")
     print("=" * 60)
     print("\nServer starting...")
-    print("URL: http://localhost:5001")
+    print("URL: http://localhost:5000")
     print("\nEndpoints:")
     print("  GET  /api/health          - Health check")
     print("  POST /api/start           - Start conversation (SSE)")
