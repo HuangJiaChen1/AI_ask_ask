@@ -226,6 +226,14 @@ body {
     cursor: not-allowed;
 }
 
+.input-area button#stopBtn {
+    background: #d32f2f;
+}
+
+.input-area button#stopBtn:hover:not(:disabled) {
+    background: #b71c1c;
+}
+
 /* Loading indicator */
 .typing-indicator {
     display: inline-flex;

@@ -261,6 +261,9 @@ async function sendMessage() {
     try {
         console.log('[INFO] Sending message:', text);
 
+        // Create AbortController for this stream
+        currentStreamController = new AbortController();
+
         const response = await fetch(`${API_BASE}/continue`, {
             method: 'POST',
             headers: {
@@ -269,7 +272,8 @@ async function sendMessage() {
             body: JSON.stringify({
                 session_id: sessionId,
                 child_input: text
-            })
+            }),
+            signal: currentStreamController.signal
         });
 
         if (!response.ok) {
@@ -320,16 +324,26 @@ async function sendMessage() {
         }
 
     } catch (error) {
+        // Handle abort gracefully
+        if (error.name === 'AbortError') {
+            console.log('[INFO] Stream interrupted by user');
+            return;
+        }
+
         console.error('[ERROR] Failed to send message:', error);
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
         errorDiv.textContent = `Error: ${error.message}`;
         messagesContainer.appendChild(errorDiv);
     } finally {
+        // Clear stream controller
+        currentStreamController = null;
+
         // Re-enable controls
         isStreaming = false;
         userInput.disabled = false;
         sendBtn.disabled = false;
+        updateStopButton();
         userInput.focus();
     }
 }
