@@ -47,6 +47,7 @@ class PaixuejiAssistant:
         self.object_name = None
         self.level1_category = None
         self.level2_category = None
+        self.level3_category = None
         self.correct_answer_count = 0
 
         # Set up authentication if credentials file is specified in environment
@@ -118,18 +119,24 @@ class PaixuejiAssistant:
         else:
             return age_groups.get('5-6', {}).get('prompt', '')
 
-    def get_category_prompt(self, level1, level2):
+    def get_category_prompt(self, level1, level2, level3):
         """
         Get the appropriate category-based prompt with fallback logic.
 
-        Tries level2 first (most specific), then level1, then default.
+        Uses the most specific category available (level3 → level2 → level1 → default).
         """
         DEFAULT_FALLBACK = "Ask questions about this object's appearance, properties, uses, and context. Encourage observation and description."
 
         if not self.object_prompts:
             return DEFAULT_FALLBACK
 
-        # Try level2 first (most specific)
+        # Try level3 first (most specific)
+        if level3:
+            level3_data = self.object_prompts.get('level3_categories', {}).get(level3)
+            if level3_data:
+                return level3_data.get('prompt', '')
+
+        # Fall back to level2
         if level2:
             level2_data = self.object_prompts.get('level2_categories', {}).get(level2)
             if level2_data:
@@ -168,4 +175,5 @@ class PaixuejiAssistant:
         self.object_name = None
         self.level1_category = None
         self.level2_category = None
+        self.level3_category = None
         self.correct_answer_count = 0

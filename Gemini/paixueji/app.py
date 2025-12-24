@@ -89,8 +89,9 @@ def start_conversation():
         {
             "age": 6 (optional, 3-8),
             "object_name": "apple" (required),
-            "level1_category": "foods" (required),
-            "level2_category": "fresh_ingredients" (optional)
+            "level1_category": "foods" (optional),
+            "level2_category": "fresh_ingredients" (optional),
+            "level3_category": "some_level3" (optional)
         }
 
     SSE Events:
@@ -103,18 +104,13 @@ def start_conversation():
     object_name = data.get('object_name')
     level1_category = data.get('level1_category')
     level2_category = data.get('level2_category')
+    level3_category = data.get('level3_category')
 
     # Validate required fields
     if not object_name:
         return jsonify({
             "success": False,
             "error": "object_name is required"
-        }), 400
-
-    if not level1_category:
-        return jsonify({
-            "success": False,
-            "error": "level1_category is required"
         }), 400
 
     # Validate age
@@ -138,13 +134,14 @@ def start_conversation():
     assistant.object_name = object_name
     assistant.level1_category = level1_category
     assistant.level2_category = level2_category
+    assistant.level3_category = level3_category
     assistant.correct_answer_count = 0
 
     # Generate unique request ID for this stream
     request_id = str(uuid.uuid4())
 
     print(f"[INFO] Created Paixueji session {session_id[:8]}... | age={age}, object={object_name}, "
-          f"level1={level1_category}, level2={level2_category}, request_id={request_id[:8]}...")
+          f"level1={level1_category}, level2={level2_category}, level3={level3_category}, request_id={request_id[:8]}...")
 
     def generate():
         """Generator for SSE stream."""
@@ -160,7 +157,7 @@ def start_conversation():
                     system_prompt += f"\n\nAGE-SPECIFIC GUIDANCE:\n{age_prompt}"
 
             # Get category prompt
-            category_prompt = assistant.get_category_prompt(level1_category, level2_category)
+            category_prompt = assistant.get_category_prompt(level1_category, level2_category, level3_category)
             if category_prompt:
                 system_prompt += f"\n\nCATEGORY GUIDANCE:\n{category_prompt}"
 
@@ -190,6 +187,7 @@ def start_conversation():
                         object_name=object_name,
                         level1_category=level1_category,
                         level2_category=level2_category,
+                        level3_category=level3_category,
                         correct_answer_count=0,
                         category_prompt=category_prompt
                     ):
@@ -294,7 +292,8 @@ def continue_conversation():
             # Get category prompt
             category_prompt = assistant.get_category_prompt(
                 assistant.level1_category,
-                assistant.level2_category
+                assistant.level2_category,
+                assistant.level3_category
             )
 
             # Import is_answer_reasonable for answer validation
@@ -325,6 +324,7 @@ def continue_conversation():
                         object_name=assistant.object_name,
                         level1_category=assistant.level1_category,
                         level2_category=assistant.level2_category,
+                        level3_category=assistant.level3_category,
                         correct_answer_count=assistant.correct_answer_count,
                         category_prompt=category_prompt
                     ):
@@ -493,4 +493,4 @@ if __name__ == '__main__':
     print("\nPress Ctrl+C to stop")
     print("=" * 60)
 
-    app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)
+    app.run(host='0.0.0.0', port=5001, debug=True, threaded=True)

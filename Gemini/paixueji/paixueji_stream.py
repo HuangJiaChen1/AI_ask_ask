@@ -129,7 +129,8 @@ async def ask_introduction_question_stream(
     age_prompt: str,
     age: int,
     config: dict,
-    client: genai.Client
+    client: genai.Client,
+    level3_category: str = ""
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
     Stream first question about the object.
@@ -243,7 +244,8 @@ async def ask_followup_question_stream(
     age_prompt: str,
     age: int,
     config: dict,
-    client: genai.Client
+    client: genai.Client,
+    level3_category: str = ""
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
     Stream follow-up question based on child's answer.
@@ -489,6 +491,7 @@ async def call_paixueji_stream(
     object_name: str = "",
     level1_category: str = "",
     level2_category: str = "",
+    level3_category: str = "",
     correct_answer_count: int = 0,
     category_prompt: str = ""
 ) -> AsyncGenerator[StreamChunk, None]:
@@ -511,6 +514,7 @@ async def call_paixueji_stream(
         object_name: Name of object being discussed
         level1_category: Level 1 category (e.g., "foods")
         level2_category: Level 2 category (e.g., "fresh_ingredients")
+        level3_category: Level 3 category (optional)
         correct_answer_count: Number of correct answers so far (0-4)
         category_prompt: Category-specific guidance
 
@@ -522,7 +526,7 @@ async def call_paixueji_stream(
     logger.info(
         f"[{session_id}] call_paixueji_stream started | "
         f"session_id={session_id}, age={age}, object={object_name}, "
-        f"level1={level1_category}, level2={level2_category}, "
+        f"level1={level1_category}, level2={level2_category}, level3={level3_category}, "
         f"correct_count={correct_answer_count}, status={status}, "
         f"content_length={len(content)}, message_history={len(messages)}"
     )
@@ -567,7 +571,8 @@ async def call_paixueji_stream(
             age_prompt,
             age or 6,  # default to 6 if age not specified
             config,
-            client
+            client,
+            level3_category
         )
         response_type = "introduction"
         logger.info(f"[{session_id}] Routing to introduction question")
@@ -584,7 +589,8 @@ async def call_paixueji_stream(
                 age_prompt,
                 age or 6,
                 config,
-                client
+                client,
+                level3_category
             )
             response_type = "followup"
             logger.info(f"[{session_id}] Routing to followup question | answer_reasonable=True")
@@ -599,7 +605,8 @@ async def call_paixueji_stream(
                 age_prompt,
                 age or 6,
                 config,
-                client
+                client,
+                level3_category
             )
             response_type = "followup_encouraging"
             logger.info(f"[{session_id}] Routing to followup question | answer_reasonable=False")

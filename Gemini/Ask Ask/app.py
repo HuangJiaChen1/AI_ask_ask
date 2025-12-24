@@ -269,9 +269,6 @@ def continue_conversation():
 
                         yield sse_event("chunk", chunk)
 
-                    # Send completion event
-                    yield sse_event("complete", {"success": True})
-
                 # Stream the response
                 gen = stream_response()
                 for event in async_gen_to_sync(gen, loop):
@@ -289,7 +286,6 @@ def continue_conversation():
             print(f"[ERROR] Error in continue_conversation: {e}")
             import traceback
             traceback.print_exc()
-            yield sse_event("error", {"message": str(e)})
 
     return Response(generate(), mimetype='text/event-stream')
 

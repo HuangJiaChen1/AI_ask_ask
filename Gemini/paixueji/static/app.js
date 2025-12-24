@@ -72,16 +72,18 @@ async function startConversation() {
     const objectName = document.getElementById('objectName').value.trim();
     const level1Category = document.getElementById('level1Category').value;
     const level2Category = document.getElementById('level2Category').value;
+    const level3Category = document.getElementById('level3Category').value;
 
-    // Validation
+    // Validation - only object name is required
     if (!objectName) {
         alert('Please enter an object name');
         return;
     }
-    if (!level1Category) {
-        alert('Please select a main category');
-        return;
-    }
+
+    // Convert "none" to null
+    const level1Value = (level1Category && level1Category !== 'none') ? level1Category : null;
+    const level2Value = (level2Category && level2Category !== 'none') ? level2Category : null;
+    const level3Value = (level3Category && level3Category !== 'none') ? level3Category : null;
 
     // Clear previous messages
     messagesContainer.innerHTML = '';
@@ -105,7 +107,7 @@ async function startConversation() {
 
     try {
         console.log('[INFO] Starting Paixueji conversation | age:', age, 'object:', objectName,
-                    'level1:', level1Category, 'level2:', level2Category);
+                    'level1:', level1Value, 'level2:', level2Value, 'level3:', level3Value);
 
         // Create AbortController for this stream
         currentStreamController = new AbortController();
@@ -118,8 +120,9 @@ async function startConversation() {
             body: JSON.stringify({
                 age: age,
                 object_name: objectName,
-                level1_category: level1Category,
-                level2_category: level2Category || null
+                level1_category: level1Value,
+                level2_category: level2Value,
+                level3_category: level3Value
             }),
             signal: currentStreamController.signal
         });
@@ -469,6 +472,14 @@ function populateLevel1Dropdown() {
     const level1Categories = Object.keys(categoryData.level1_categories || {});
 
     level1Select.innerHTML = '<option value="">Select...</option>';
+
+    // Add "None of the Above" option
+    const noneOption = document.createElement('option');
+    noneOption.value = 'none';
+    noneOption.textContent = 'None of the Above';
+    level1Select.appendChild(noneOption);
+
+    // Add level1 categories
     level1Categories.forEach(cat => {
         const option = document.createElement('option');
         option.value = cat;
@@ -483,10 +494,15 @@ function populateLevel1Dropdown() {
 function onLevel1Change() {
     const level1 = document.getElementById('level1Category').value;
     const level2Select = document.getElementById('level2Category');
+    const level3Select = document.getElementById('level3Category');
 
-    if (!level1) {
+    // Reset level3 dropdown
+    level3Select.disabled = true;
+    level3Select.innerHTML = '<option value="">Select...</option>';
+
+    if (!level1 || level1 === 'none') {
         level2Select.disabled = true;
-        level2Select.innerHTML = '<option value="">Select main category first...</option>';
+        level2Select.innerHTML = '<option value="">Select...</option>';
         return;
     }
 
@@ -496,12 +512,56 @@ function onLevel1Change() {
         .map(([key, val]) => key);
 
     level2Select.disabled = false;
-    level2Select.innerHTML = '<option value="">Select subcategory (optional)...</option>';
+    level2Select.innerHTML = '<option value="">Select...</option>';
+
+    // Add "None of the Above" option
+    const noneOption = document.createElement('option');
+    noneOption.value = 'none';
+    noneOption.textContent = 'None of the Above';
+    level2Select.appendChild(noneOption);
+
+    // Add level2 categories
     level2Categories.forEach(cat => {
         const option = document.createElement('option');
         option.value = cat;
         option.textContent = formatCategoryName(cat);
         level2Select.appendChild(option);
+    });
+}
+
+/**
+ * Handle Level 2 category change - populate Level 3 dropdown
+ */
+function onLevel2Change() {
+    const level2 = document.getElementById('level2Category').value;
+    const level3Select = document.getElementById('level3Category');
+
+    if (!level2 || level2 === 'none') {
+        level3Select.disabled = true;
+        level3Select.innerHTML = '<option value="">Select...</option>';
+        return;
+    }
+
+    // Find all level3 categories with this parent
+    const level3Categories = Object.entries(categoryData.level3_categories || {})
+        .filter(([key, val]) => val.parent === level2)
+        .map(([key, val]) => key);
+
+    level3Select.disabled = false;
+    level3Select.innerHTML = '<option value="">Select...</option>';
+
+    // Add "None of the Above" option
+    const noneOption = document.createElement('option');
+    noneOption.value = 'none';
+    noneOption.textContent = 'None of the Above';
+    level3Select.appendChild(noneOption);
+
+    // Add level3 categories
+    level3Categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = formatCategoryName(cat);
+        level3Select.appendChild(option);
     });
 }
 
