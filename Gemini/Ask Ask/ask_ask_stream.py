@@ -42,13 +42,14 @@ def safe_print(message):
         print(message.encode('ascii', 'replace').decode('ascii'))
 
 
-def sanitize_text(text: str) -> str:
+def sanitize_text(text: str, strip: bool = True) -> str:
     """
     Remove emojis, newlines, and markdown formatting from text.
     Returns pure text with only letters, numbers, spaces, and basic punctuation.
 
     Args:
         text: Input text to sanitize
+        strip: Whether to strip leading/trailing whitespace (default: True)
 
     Returns:
         Sanitized text without emojis, newlines, and markdown formatting
@@ -96,7 +97,8 @@ def sanitize_text(text: str) -> str:
     text = re.sub(r'\s+', ' ', text)
 
     # Strip leading/trailing whitespace
-    text = text.strip()
+    if strip:
+        text = text.strip()
 
     return text
 
@@ -248,9 +250,9 @@ async def answer_question_stream(
             if chunk.text:
                 chunk_count += 1
                 # Sanitize text to remove emojis and newlines
-                sanitized_text = sanitize_text(chunk.text)
+                sanitized_text = sanitize_text(chunk.text, strip=False)
                 full_response += sanitized_text
-                logger.debug(f"Chunk {chunk_count} | length={len(sanitized_text)}, total_length={len(full_response)}")
+                logger.debug(f"Chunk {chunk_count} | text={repr(sanitized_text)} | length={len(sanitized_text)}, total_length={len(full_response)}")
                 yield (sanitized_text, None, full_response)
 
         # Note: Gemini API doesn't provide token usage in streaming mode
@@ -348,9 +350,9 @@ async def suggest_topics_stream(
             if chunk.text:
                 chunk_count += 1
                 # Sanitize text to remove emojis and newlines
-                sanitized_text = sanitize_text(chunk.text)
+                sanitized_text = sanitize_text(chunk.text, strip=False)
                 full_response += sanitized_text
-                logger.debug(f"Chunk {chunk_count} | length={len(sanitized_text)}, total_length={len(full_response)}")
+                logger.debug(f"Chunk {chunk_count} | text={repr(sanitized_text)} | length={len(sanitized_text)}, total_length={len(full_response)}")
                 yield (sanitized_text, None, full_response)
 
     except Exception as e:
@@ -504,6 +506,7 @@ async def call_ask_ask_stream(
             # Only yield non-empty text chunks (skip the final empty yield from stream functions)
             if chunked_text:
                 sequence_number += 1
+                logger.debug(f"[{session_id}] Yielding chunk {sequence_number} | text={repr(chunked_text)}")
                 chunk = StreamChunk(
                     response=chunked_text,
                     session_finished=(status == "over"),

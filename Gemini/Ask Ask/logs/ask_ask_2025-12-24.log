@@ -103,3 +103,126 @@
 2025-12-24 10:01:54.756 | WARNING  | ask_ask_stream:answer_question_stream:283 | Slow LLM call | duration=18.741s exceeded threshold 5.0s
 2025-12-24 10:01:54.757 | INFO     | ask_ask_stream:call_ask_ask_stream:529 | [fa10071c-3abc-4403-8023-427a27aeb6b0] call_ask_ask_stream completed | response_type=answer_question, duration=18.742s, total_chunks=6, response_length=282, session_finished=False
 2025-12-24 10:01:54.757 | DEBUG    | ask_ask_stream:call_ask_ask_stream:536 | Full response (first 200 chars): Hellothere,super learner! You can ask me about ANYTHING! Like, how do airplanesfly or why do cats purr ? What amazing thing doyou want to learn about today? Answer: You can ask me about anything you'r...
+2025-12-24 10:11:23.866 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [806dd848-8dc9-495f-b20f-72e2be17e539] call_ask_ask_stream started | session_id=806dd848-8dc9-495f-b20f-72e2be17e539, age=6, status=normal, content_length=165, message_history=1
+2025-12-24 10:11:23.866 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [806dd848-8dc9-495f-b20f-72e2be17e539] Stuck detection | is_stuck=False
+2025-12-24 10:11:23.867 | INFO     | ask_ask_stream:call_ask_ask_stream:496 | [806dd848-8dc9-495f-b20f-72e2be17e539] Routing to answer_question
+2025-12-24 10:11:23.867 | INFO     | ask_ask_stream:answer_question_stream:207 | answer_question_stream started | question_length=165, message_count=2
+2025-12-24 10:11:23.867 | DEBUG    | ask_ask_stream:answer_question_stream:217 | Messages prepared for API | count=3
+2025-12-24 10:11:23.867 | DEBUG    | ask_ask_stream:answer_question_stream:228 | Sending 2 messages to Gemini API
+2025-12-24 10:11:23.867 | DEBUG    | ask_ask_stream:answer_question_stream:245 | Stream object type: generator
+2025-12-24 10:11:28.315 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 1 | length=2, total_length=2
+2025-12-24 10:11:28.319 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 2 | length=7, total_length=9
+2025-12-24 10:11:28.392 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 3 | length=72, total_length=81
+2025-12-24 10:11:28.453 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 4 | length=59, total_length=140
+2025-12-24 10:11:28.838 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 5 | length=56, total_length=196
+2025-12-24 10:11:28.838 | DEBUG    | ask_ask_stream:answer_question_stream:260 | Gemini streaming API does not provide token usage in stream mode
+2025-12-24 10:11:28.839 | DEBUG    | ask_ask_stream:answer_question_stream:274 | Cleaned up stream via del in finally block
+2025-12-24 10:11:28.839 | INFO     | ask_ask_stream:answer_question_stream:279 | answer_question_stream completed | duration=4.972s, response_length=196
+2025-12-24 10:11:28.839 | INFO     | ask_ask_stream:call_ask_ask_stream:531 | [806dd848-8dc9-495f-b20f-72e2be17e539] call_ask_ask_stream completed | response_type=answer_question, duration=4.973s, total_chunks=5, response_length=196, session_finished=False
+2025-12-24 10:11:28.839 | DEBUG    | ask_ask_stream:call_ask_ask_stream:538 | Full response (first 200 chars): Hi there, super learner! You can ask me about ANYTHING! We can talk about roaring dinosaurs , how plants grow , or even why the sky is blue  ! What amazing thing do you want to learn about today? ...
+2025-12-24 10:11:36.734 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [806dd848-8dc9-495f-b20f-72e2be17e539] call_ask_ask_stream started | session_id=806dd848-8dc9-495f-b20f-72e2be17e539, age=6, status=normal, content_length=2, message_history=2
+2025-12-24 10:11:36.734 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [806dd848-8dc9-495f-b20f-72e2be17e539] Stuck detection | is_stuck=True
+2025-12-24 10:11:36.735 | INFO     | ask_ask_stream:call_ask_ask_stream:492 | [806dd848-8dc9-495f-b20f-72e2be17e539] Routing to suggest_topics
+2025-12-24 10:11:36.735 | INFO     | ask_ask_stream:suggest_topics_stream:308 | suggest_topics_stream started | message_count=3
+2025-12-24 10:11:36.735 | DEBUG    | ask_ask_stream:suggest_topics_stream:328 | Sending 3 messages to Gemini API
+2025-12-24 10:11:36.735 | DEBUG    | ask_ask_stream:suggest_topics_stream:345 | Stream object type: generator
+2025-12-24 10:11:37.994 | DEBUG    | ask_ask_stream:suggest_topics_stream:355 | Chunk 1 | length=2, total_length=2
+2025-12-24 10:11:38.025 | DEBUG    | ask_ask_stream:suggest_topics_stream:355 | Chunk 2 | length=4, total_length=6
+2025-12-24 10:11:38.026 | DEBUG    | ask_ask_stream:suggest_topics_stream:355 | Chunk 3 | length=66, total_length=72
+2025-12-24 10:11:38.068 | DEBUG    | ask_ask_stream:suggest_topics_stream:355 | Chunk 4 | length=37, total_length=109
+2025-12-24 10:11:38.219 | DEBUG    | ask_ask_stream:suggest_topics_stream:355 | Chunk 5 | length=91, total_length=200
+2025-12-24 10:11:38.266 | DEBUG    | ask_ask_stream:suggest_topics_stream:355 | Chunk 6 | length=80, total_length=280
+2025-12-24 10:11:38.269 | DEBUG    | ask_ask_stream:suggest_topics_stream:370 | Cleaned up stream via del in finally block
+2025-12-24 10:11:38.269 | INFO     | ask_ask_stream:suggest_topics_stream:375 | suggest_topics_stream completed | duration=1.534s, response_length=280
+2025-12-24 10:11:38.269 | INFO     | ask_ask_stream:call_ask_ask_stream:531 | [806dd848-8dc9-495f-b20f-72e2be17e539] call_ask_ask_stream completed | response_type=suggest_topics, duration=1.535s, total_chunks=6, response_length=280, session_finished=False
+2025-12-24 10:11:38.269 | DEBUG    | ask_ask_stream:call_ask_ask_stream:538 | Full response (first 200 chars): Oh, no worries at all! We can think of something super fun together! How about we learn about: Dinosaurs! Did you know some were as big as a house? Rainbows! How do they get all those pretty colors? B...
+2025-12-24 10:24:17.997 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [1a230a73-c23c-4e1e-83fe-4a311ef0825d] call_ask_ask_stream started | session_id=1a230a73-c23c-4e1e-83fe-4a311ef0825d, age=6, status=normal, content_length=165, message_history=1
+2025-12-24 10:24:17.998 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [1a230a73-c23c-4e1e-83fe-4a311ef0825d] Stuck detection | is_stuck=False
+2025-12-24 10:24:17.998 | INFO     | ask_ask_stream:call_ask_ask_stream:496 | [1a230a73-c23c-4e1e-83fe-4a311ef0825d] Routing to answer_question
+2025-12-24 10:24:17.998 | INFO     | ask_ask_stream:answer_question_stream:207 | answer_question_stream started | question_length=165, message_count=2
+2025-12-24 10:24:17.998 | DEBUG    | ask_ask_stream:answer_question_stream:217 | Messages prepared for API | count=3
+2025-12-24 10:24:17.998 | DEBUG    | ask_ask_stream:answer_question_stream:228 | Sending 2 messages to Gemini API
+2025-12-24 10:24:17.998 | DEBUG    | ask_ask_stream:answer_question_stream:245 | Stream object type: generator
+2025-12-24 10:24:34.025 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 1 | text='Hello' | length=5, total_length=5
+2025-12-24 10:24:34.025 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [1a230a73-c23c-4e1e-83fe-4a311ef0825d] Yielding chunk 1 | text='Hello'
+2025-12-24 10:24:34.171 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 2 | text=" there! I'm so excited to learn with you today! You can ask" | length=59, total_length=64
+2025-12-24 10:24:34.171 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [1a230a73-c23c-4e1e-83fe-4a311ef0825d] Yielding chunk 2 | text=" there! I'm so excited to learn with you today! You can ask"
+2025-12-24 10:24:34.171 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 3 | text=' me about ANYTHING – like how rockets fly , why cats purr ,' | length=59, total_length=123
+2025-12-24 10:24:34.171 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [1a230a73-c23c-4e1e-83fe-4a311ef0825d] Yielding chunk 3 | text=' me about ANYTHING – like how rockets fly , why cats purr ,'
+2025-12-24 10:24:34.223 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 4 | text=' or how plants grow ! What amazing thing do you want to know about first? ' | length=74, total_length=197
+2025-12-24 10:24:34.223 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [1a230a73-c23c-4e1e-83fe-4a311ef0825d] Yielding chunk 4 | text=' or how plants grow ! What amazing thing do you want to know about first? '
+2025-12-24 10:24:34.223 | DEBUG    | ask_ask_stream:answer_question_stream:260 | Gemini streaming API does not provide token usage in stream mode
+2025-12-24 10:24:34.223 | DEBUG    | ask_ask_stream:answer_question_stream:274 | Cleaned up stream via del in finally block
+2025-12-24 10:24:34.223 | INFO     | ask_ask_stream:answer_question_stream:279 | answer_question_stream completed | duration=16.225s, response_length=197
+2025-12-24 10:24:34.223 | WARNING  | ask_ask_stream:answer_question_stream:285 | Slow LLM call | duration=16.225s exceeded threshold 5.0s
+2025-12-24 10:24:34.223 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [1a230a73-c23c-4e1e-83fe-4a311ef0825d] call_ask_ask_stream completed | response_type=answer_question, duration=16.226s, total_chunks=4, response_length=197, session_finished=False
+2025-12-24 10:24:34.223 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): Hello there! I'm so excited to learn with you today! You can ask me about ANYTHING – like how rockets fly , why cats purr , or how plants grow ! What amazing thing do you want to know about first? ...
+2025-12-24 10:24:50.142 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [1a230a73-c23c-4e1e-83fe-4a311ef0825d] call_ask_ask_stream started | session_id=1a230a73-c23c-4e1e-83fe-4a311ef0825d, age=6, status=normal, content_length=2, message_history=2
+2025-12-24 10:24:50.142 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [1a230a73-c23c-4e1e-83fe-4a311ef0825d] Stuck detection | is_stuck=True
+2025-12-24 10:24:50.142 | INFO     | ask_ask_stream:call_ask_ask_stream:492 | [1a230a73-c23c-4e1e-83fe-4a311ef0825d] Routing to suggest_topics
+2025-12-24 10:24:50.142 | INFO     | ask_ask_stream:suggest_topics_stream:308 | suggest_topics_stream started | message_count=3
+2025-12-24 10:24:50.142 | DEBUG    | ask_ask_stream:suggest_topics_stream:328 | Sending 3 messages to Gemini API
+2025-12-24 10:24:50.143 | DEBUG    | ask_ask_stream:suggest_topics_stream:345 | Stream object type: generator
+2025-12-24 10:24:56.314 | DEBUG    | ask_ask_stream:suggest_topics_stream:355 | Chunk 1 | text='Oh' | length=2, total_length=2
+2025-12-24 10:24:56.314 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [1a230a73-c23c-4e1e-83fe-4a311ef0825d] Yielding chunk 1 | text='Oh'
+2025-12-24 10:24:56.344 | DEBUG    | ask_ask_stream:suggest_topics_stream:355 | Chunk 2 | text=", that'" | length=7, total_length=9
+2025-12-24 10:24:56.344 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [1a230a73-c23c-4e1e-83fe-4a311ef0825d] Yielding chunk 2 | text=", that'"
+2025-12-24 10:24:56.384 | DEBUG    | ask_ask_stream:suggest_topics_stream:355 | Chunk 3 | text='s perfectly okay! We can think of some super fun things to explore together! ' | length=77, total_length=86
+2025-12-24 10:24:56.385 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [1a230a73-c23c-4e1e-83fe-4a311ef0825d] Yielding chunk 3 | text='s perfectly okay! We can think of some super fun things to explore together! '
+2025-12-24 10:24:56.410 | DEBUG    | ask_ask_stream:suggest_topics_stream:355 | Chunk 4 | text=' How about we learn about: Dinosaurs! ' | length=38, total_length=124
+2025-12-24 10:24:56.410 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [1a230a73-c23c-4e1e-83fe-4a311ef0825d] Yielding chunk 4 | text=' How about we learn about: Dinosaurs! '
+2025-12-24 10:24:56.535 | DEBUG    | ask_ask_stream:suggest_topics_stream:355 | Chunk 5 | text=' Did you know some were as big as a house? How to make a rainbow! We can discover the magic of light!' | length=101, total_length=225
+2025-12-24 10:24:56.536 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [1a230a73-c23c-4e1e-83fe-4a311ef0825d] Yielding chunk 5 | text=' Did you know some were as big as a house? How to make a rainbow! We can discover the magic of light!'
+2025-12-24 10:24:56.667 | DEBUG    | ask_ask_stream:suggest_topics_stream:355 | Chunk 6 | text=" Why bees buzz! They're busy little helpers! Which one sounds the most exciting to you? Or maybe you have a" | length=107, total_length=332
+2025-12-24 10:24:56.667 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [1a230a73-c23c-4e1e-83fe-4a311ef0825d] Yielding chunk 6 | text=" Why bees buzz! They're busy little helpers! Which one sounds the most exciting to you? Or maybe you have a"
+2025-12-24 10:24:56.674 | DEBUG    | ask_ask_stream:suggest_topics_stream:355 | Chunk 7 | text=' different idea? ' | length=17, total_length=349
+2025-12-24 10:24:56.674 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [1a230a73-c23c-4e1e-83fe-4a311ef0825d] Yielding chunk 7 | text=' different idea? '
+2025-12-24 10:24:56.675 | DEBUG    | ask_ask_stream:suggest_topics_stream:370 | Cleaned up stream via del in finally block
+2025-12-24 10:24:56.675 | INFO     | ask_ask_stream:suggest_topics_stream:375 | suggest_topics_stream completed | duration=6.533s, response_length=349
+2025-12-24 10:24:56.675 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [1a230a73-c23c-4e1e-83fe-4a311ef0825d] call_ask_ask_stream completed | response_type=suggest_topics, duration=6.533s, total_chunks=7, response_length=349, session_finished=False
+2025-12-24 10:24:56.675 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): Oh, that's perfectly okay! We can think of some super fun things to explore together!  How about we learn about: Dinosaurs!  Did you know some were as big as a house? How to make a rainbow! We can dis...
+2025-12-24 10:28:28.762 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [acdc9942-55a3-4469-841f-b496a9e2201d] call_ask_ask_stream started | session_id=acdc9942-55a3-4469-841f-b496a9e2201d, age=6, status=normal, content_length=165, message_history=1
+2025-12-24 10:28:28.763 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [acdc9942-55a3-4469-841f-b496a9e2201d] Stuck detection | is_stuck=False
+2025-12-24 10:28:28.763 | INFO     | ask_ask_stream:call_ask_ask_stream:496 | [acdc9942-55a3-4469-841f-b496a9e2201d] Routing to answer_question
+2025-12-24 10:28:28.763 | INFO     | ask_ask_stream:answer_question_stream:207 | answer_question_stream started | question_length=165, message_count=2
+2025-12-24 10:28:28.763 | DEBUG    | ask_ask_stream:answer_question_stream:217 | Messages prepared for API | count=3
+2025-12-24 10:28:28.763 | DEBUG    | ask_ask_stream:answer_question_stream:228 | Sending 2 messages to Gemini API
+2025-12-24 10:28:28.763 | DEBUG    | ask_ask_stream:answer_question_stream:245 | Stream object type: generator
+2025-12-24 10:28:35.166 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 1 | text='Hello' | length=5, total_length=5
+2025-12-24 10:28:35.167 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [acdc9942-55a3-4469-841f-b496a9e2201d] Yielding chunk 1 | text='Hello'
+2025-12-24 10:28:35.195 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 2 | text=' there,' | length=7, total_length=12
+2025-12-24 10:28:35.196 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [acdc9942-55a3-4469-841f-b496a9e2201d] Yielding chunk 2 | text=' there,'
+2025-12-24 10:28:35.231 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 3 | text=' super learner! You can ask me about ANYTHING! Like, why is the sky blue ' | length=73, total_length=85
+2025-12-24 10:28:35.231 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [acdc9942-55a3-4469-841f-b496a9e2201d] Yielding chunk 3 | text=' super learner! You can ask me about ANYTHING! Like, why is the sky blue '
+2025-12-24 10:28:35.319 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 4 | text=' , how do plants grow , or what do dinosaurs eat !' | length=50, total_length=135
+2025-12-24 10:28:35.319 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [acdc9942-55a3-4469-841f-b496a9e2201d] Yielding chunk 4 | text=' , how do plants grow , or what do dinosaurs eat !'
+2025-12-24 10:28:35.329 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 5 | text=' What amazing thing do you want to learn about today? ' | length=54, total_length=189
+2025-12-24 10:28:35.329 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [acdc9942-55a3-4469-841f-b496a9e2201d] Yielding chunk 5 | text=' What amazing thing do you want to learn about today? '
+2025-12-24 10:28:35.329 | DEBUG    | ask_ask_stream:answer_question_stream:260 | Gemini streaming API does not provide token usage in stream mode
+2025-12-24 10:28:35.330 | DEBUG    | ask_ask_stream:answer_question_stream:274 | Cleaned up stream via del in finally block
+2025-12-24 10:28:35.330 | INFO     | ask_ask_stream:answer_question_stream:279 | answer_question_stream completed | duration=6.567s, response_length=189
+2025-12-24 10:28:35.330 | WARNING  | ask_ask_stream:answer_question_stream:285 | Slow LLM call | duration=6.567s exceeded threshold 5.0s
+2025-12-24 10:28:35.330 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [acdc9942-55a3-4469-841f-b496a9e2201d] call_ask_ask_stream completed | response_type=answer_question, duration=6.568s, total_chunks=5, response_length=189, session_finished=False
+2025-12-24 10:28:35.330 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): Hello there, super learner! You can ask me about ANYTHING! Like, why is the sky blue  , how do plants grow , or what do dinosaurs eat ! What amazing thing do you want to learn about today? ...
+2025-12-24 10:30:42.110 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [acdc9942-55a3-4469-841f-b496a9e2201d] call_ask_ask_stream started | session_id=acdc9942-55a3-4469-841f-b496a9e2201d, age=6, status=normal, content_length=2, message_history=2
+2025-12-24 10:30:42.111 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [acdc9942-55a3-4469-841f-b496a9e2201d] Stuck detection | is_stuck=True
+2025-12-24 10:30:42.111 | INFO     | ask_ask_stream:call_ask_ask_stream:492 | [acdc9942-55a3-4469-841f-b496a9e2201d] Routing to suggest_topics
+2025-12-24 10:30:42.111 | INFO     | ask_ask_stream:suggest_topics_stream:308 | suggest_topics_stream started | message_count=3
+2025-12-24 10:30:42.111 | DEBUG    | ask_ask_stream:suggest_topics_stream:328 | Sending 3 messages to Gemini API
+2025-12-24 10:30:42.111 | DEBUG    | ask_ask_stream:suggest_topics_stream:345 | Stream object type: generator
+2025-12-24 10:30:44.034 | DEBUG    | ask_ask_stream:suggest_topics_stream:355 | Chunk 1 | text='Oh' | length=2, total_length=2
+2025-12-24 10:30:44.035 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [acdc9942-55a3-4469-841f-b496a9e2201d] Yielding chunk 1 | text='Oh'
+2025-12-24 10:30:44.054 | DEBUG    | ask_ask_stream:suggest_topics_stream:355 | Chunk 2 | text=", that'" | length=7, total_length=9
+2025-12-24 10:30:44.054 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [acdc9942-55a3-4469-841f-b496a9e2201d] Yielding chunk 2 | text=", that'"
+2025-12-24 10:30:44.096 | DEBUG    | ask_ask_stream:suggest_topics_stream:355 | Chunk 3 | text='s totally okay! We can find something super fun to learn about together! ' | length=73, total_length=82
+2025-12-24 10:30:44.096 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [acdc9942-55a3-4469-841f-b496a9e2201d] Yielding chunk 3 | text='s totally okay! We can find something super fun to learn about together! '
+2025-12-24 10:30:44.129 | DEBUG    | ask_ask_stream:suggest_topics_stream:355 | Chunk 4 | text=' How about we explore... Why do cats purr? ' | length=43, total_length=125
+2025-12-24 10:30:44.129 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [acdc9942-55a3-4469-841f-b496a9e2201d] Yielding chunk 4 | text=' How about we explore... Why do cats purr? '
+2025-12-24 10:30:44.260 | DEBUG    | ask_ask_stream:suggest_topics_stream:355 | Chunk 5 | text=' How do rainbows get made? What do bees do all day? Which one sounds the' | length=72, total_length=197
+2025-12-24 10:30:44.260 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [acdc9942-55a3-4469-841f-b496a9e2201d] Yielding chunk 5 | text=' How do rainbows get made? What do bees do all day? Which one sounds the'
+2025-12-24 10:30:44.322 | DEBUG    | ask_ask_stream:suggest_topics_stream:355 | Chunk 6 | text=' most exciting to you? Or maybe you have a different idea? Let me know! ' | length=72, total_length=269
+2025-12-24 10:30:44.322 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [acdc9942-55a3-4469-841f-b496a9e2201d] Yielding chunk 6 | text=' most exciting to you? Or maybe you have a different idea? Let me know! '
+2025-12-24 10:30:44.325 | DEBUG    | ask_ask_stream:suggest_topics_stream:370 | Cleaned up stream via del in finally block
+2025-12-24 10:30:44.325 | INFO     | ask_ask_stream:suggest_topics_stream:375 | suggest_topics_stream completed | duration=2.215s, response_length=269
+2025-12-24 10:30:44.325 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [acdc9942-55a3-4469-841f-b496a9e2201d] call_ask_ask_stream completed | response_type=suggest_topics, duration=2.215s, total_chunks=6, response_length=269, session_finished=False
+2025-12-24 10:30:44.325 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): Oh, that's totally okay! We can find something super fun to learn about together!  How about we explore... Why do cats purr?  How do rainbows get made? What do bees do all day? Which one sounds the mo...
