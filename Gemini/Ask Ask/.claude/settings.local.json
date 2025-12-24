@@ -14,7 +14,10 @@
       "WebSearch",
       "Bash(python:*)",
       "Bash(timeout 3 curl:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(tree /F \"C:\\\\Users\\\\123\\\\Documents\\\\GitHub\\\\AI_ask_ask\\\\Gemini\\\\Ask Ask\")",
+      "Bash(dir /S /B \"C:\\\\Users\\\\123\\\\Documents\\\\GitHub\\\\AI_ask_ask\\\\Gemini\\\\Ask Ask\")",
+      "Bash(git show:*)"
     ]
   }
 }

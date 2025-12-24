@@ -1,12 +1,12 @@
 """
-Paixueji Assistant - Manages Gemini client and configuration for object-based learning.
+Paixueji Assistant - Simplified wrapper for managing Gemini client and configuration.
 
-This module provides a wrapper that holds the Gemini client, configuration,
-and object learning state, while the actual streaming logic is in paixueji_stream.py.
+This module provides a lightweight wrapper that holds the Gemini client and configuration,
+while the actual streaming logic is in paixueji_stream.py.
 """
 import json
 import os
-import random
+from enum import Enum
 
 from google import genai
 from google.genai.types import HttpOptions
@@ -20,24 +20,34 @@ def safe_print(message):
         print(message.encode('ascii', 'replace').decode('ascii'))
 
 
+class ConversationState(Enum):
+    """Tracks the current state of the Paixueji conversation."""
+    INTRODUCTION = "introduction"
+    ASKING_QUESTION = "asking_question"
+    AWAITING_ANSWER = "awaiting_answer"
+    COMPLETION = "completion"
+
+
 class PaixuejiAssistant:
     """
-    A wrapper that manages Gemini client, configuration,
-    and object learning state for the Paixueji assistant.
+    A lightweight wrapper that manages Gemini client, configuration,
+    and conversation state for the Paixueji assistant.
 
     All streaming logic has been moved to paixueji_stream.py.
     """
 
-    def __init__(self, config_path="config.json", object_prompts_path="object_prompts.json"):
+    def __init__(self, config_path="config.json", age_prompts_path="age_prompts.json", object_prompts_path="object_prompts.json"):
         """Initialize the assistant with configuration and Gemini client."""
         self.config = self._load_config(config_path)
         self.conversation_history = []
+        self.state = ConversationState.INTRODUCTION
         self.age = None
 
-        # Object learning state
-        self.current_object = None
-        self.asked_aspects = []  # Track which aspects we've covered
-        self.question_count = 0  # Number of questions asked
+        # Paixueji-specific fields
+        self.object_name = None
+        self.level1_category = None
+        self.level2_category = None
+        self.correct_answer_count = 0
 
         # Set up authentication if credentials file is specified in environment
         credentials_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
@@ -54,7 +64,10 @@ class PaixuejiAssistant:
             http_options=HttpOptions(api_version="v1")
         )
 
-        # Load object prompts
+        # Load age prompts
+        self.age_prompts = self._load_age_prompts(age_prompts_path)
+
+        # Load object/category prompts
         self.object_prompts = self._load_object_prompts(object_prompts_path)
 
         # Load prompts
@@ -71,8 +84,17 @@ class PaixuejiAssistant:
 
         return config
 
+    def _load_age_prompts(self, age_prompts_path):
+        """Load age-based prompts from JSON file."""
+        if not os.path.exists(age_prompts_path):
+            safe_print(f"[WARNING] Age prompts file not found: {age_prompts_path}")
+            return None
+
+        with open(age_prompts_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+
     def _load_object_prompts(self, object_prompts_path):
-        """Load object-based prompts from JSON file."""
+        """Load object/category prompts from JSON file."""
         if not os.path.exists(object_prompts_path):
             safe_print(f"[WARNING] Object prompts file not found: {object_prompts_path}")
             return None
@@ -81,11 +103,11 @@ class PaixuejiAssistant:
             return json.load(f)
 
     def get_age_prompt(self, age):
-        """Get the appropriate age-based prompt for object learning."""
-        if not self.object_prompts:
+        """Get the appropriate age-based prompt."""
+        if not self.age_prompts:
             return ""
 
-        age_groups = self.object_prompts.get('age_groups', {})
+        age_groups = self.age_prompts.get('age_groups', {})
 
         if 3 <= age <= 4:
             return age_groups.get('3-4', {}).get('prompt', '')
@@ -94,54 +116,43 @@ class PaixuejiAssistant:
         elif 7 <= age <= 8:
             return age_groups.get('7-8', {}).get('prompt', '')
         else:
-            # Default to 5-6 for ages outside range
             return age_groups.get('5-6', {}).get('prompt', '')
 
-    def get_aspects_priority(self, age):
-        """Get the priority order of aspects for the given age."""
+    def get_category_prompt(self, level1, level2):
+        """
+        Get the appropriate category-based prompt with fallback logic.
+
+        Tries level2 first (most specific), then level1, then default.
+        """
+        DEFAULT_FALLBACK = "Ask questions about this object's appearance, properties, uses, and context. Encourage observation and description."
+
         if not self.object_prompts:
-            return ["appearance", "function", "location", "parts"]
+            return DEFAULT_FALLBACK
 
-        age_groups = self.object_prompts.get('age_groups', {})
+        # Try level2 first (most specific)
+        if level2:
+            level2_data = self.object_prompts.get('level2_categories', {}).get(level2)
+            if level2_data:
+                return level2_data.get('prompt', '')
 
-        if 3 <= age <= 4:
-            return age_groups.get('3-4', {}).get('aspects_priority', ["appearance", "location", "function"])
-        elif 5 <= age <= 6:
-            return age_groups.get('5-6', {}).get('aspects_priority', ["function", "parts", "behavior", "appearance"])
-        elif 7 <= age <= 8:
-            return age_groups.get('7-8', {}).get('aspects_priority', ["function", "comparison", "origin", "lifecycle"])
-        else:
-            return age_groups.get('5-6', {}).get('aspects_priority', ["function", "parts", "behavior", "appearance"])
+        # Fall back to level1
+        if level1:
+            level1_data = self.object_prompts.get('level1_categories', {}).get(level1)
+            if level1_data:
+                return level1_data.get('prompt', '')
 
-    def get_next_aspect(self):
+        # Final fallback
+        return DEFAULT_FALLBACK
+
+    def increment_correct_answers(self):
         """
-        Select the next aspect to explore based on:
-        1. Age-appropriate priority
-        2. What hasn't been asked yet
+        Increment the correct answer count.
 
-        Returns the next aspect to explore (str).
+        Returns:
+            bool: True if conversation is complete (4 answers), False otherwise
         """
-        # Get all available aspects
-        all_aspects = list(self.object_prompts.get('aspects', {}).keys())
-
-        # Get age-appropriate priority
-        priority = self.get_aspects_priority(self.age or 6)
-
-        # Find aspects not yet asked
-        unasked = [asp for asp in priority if asp not in self.asked_aspects]
-
-        if unasked:
-            # Return first unasked aspect from priority list
-            return unasked[0]
-        else:
-            # All aspects covered - check if there are other aspects not in priority
-            other_unasked = [asp for asp in all_aspects if asp not in self.asked_aspects]
-            if other_unasked:
-                return other_unasked[0]
-            else:
-                # All aspects covered - reset and start over with priority
-                self.asked_aspects = []
-                return priority[0] if priority else all_aspects[0]
+        self.correct_answer_count += 1
+        return self.correct_answer_count >= 4
 
     def get_conversation_history(self):
         """Get the full conversation history."""
@@ -150,7 +161,11 @@ class PaixuejiAssistant:
     def reset(self):
         """Reset the conversation."""
         self.conversation_history = []
-        self.current_object = None
-        self.asked_aspects = []
-        self.question_count = 0
+        self.state = ConversationState.INTRODUCTION
         self.age = None
+
+        # Reset Paixueji-specific fields
+        self.object_name = None
+        self.level1_category = None
+        self.level2_category = None
+        self.correct_answer_count = 0

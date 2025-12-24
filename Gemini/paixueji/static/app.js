@@ -1,11 +1,12 @@
 /**
- * Ask Ask Assistant - Streaming Chat Client
+ * Paixueji Assistant - Streaming Chat Client
  *
  * This file handles:
  * - SSE (Server-Sent Events) streaming from the backend
  * - Real-time text display using StreamChunk format
  * - Session management
  * - User input handling
+ * - Category selection and progress tracking
  */
 
 // Automatically use the same host as the frontend (works for localhost, server, and ngrok)
@@ -16,31 +17,17 @@ let sessionId = null;
 let currentMessageDiv = null;
 let isStreaming = false;
 let currentStreamController = null;
+let correctAnswerCount = 0;
+let conversationComplete = false;
+let categoryData = {};
 
 // DOM elements
 const messagesContainer = document.getElementById('messages');
 const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
-const ageSelector = document.getElementById('ageSelector');
+const startForm = document.getElementById('startForm');
+const progressIndicator = document.getElementById('progressIndicator');
 const thinkingTimeDisplay = document.getElementById('thinking-time');
-
-/**
- * Generate a UUID v4 (works in all browsers/contexts)
- * @returns {string} A unique UUID
- */
-function generateUUID() {
-    // Try native crypto.randomUUID first (requires secure context)
-    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-        return crypto.randomUUID();
-    }
-
-    // Fallback: Generate UUID v4 manually
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-}
 
 /**
  * Add a message to the chat interface
@@ -81,16 +68,35 @@ function displayChunk(element, text) {
  * Start a new conversation
  */
 async function startConversation() {
-    const age = document.getElementById('age').value;
+    const age = parseInt(document.getElementById('age').value);
+    const objectName = document.getElementById('objectName').value.trim();
+    const level1Category = document.getElementById('level1Category').value;
+    const level2Category = document.getElementById('level2Category').value;
+
+    // Validation
+    if (!objectName) {
+        alert('Please enter an object name');
+        return;
+    }
+    if (!level1Category) {
+        alert('Please select a main category');
+        return;
+    }
 
     // Clear previous messages
     messagesContainer.innerHTML = '';
-
-    // Generate a unique session ID
-    sessionId = generateUUID();
-
+    sessionId = null;
     thinkingTimeDisplay.textContent = '';
     thinkingTimeDisplay.style.opacity = 0;
+
+    // Reset progress
+    correctAnswerCount = 0;
+    conversationComplete = false;
+    updateProgressIndicator();
+
+    // Hide start form, show progress indicator
+    startForm.style.display = 'none';
+    progressIndicator.style.display = 'flex';
 
     // Disable send button during streaming
     sendBtn.disabled = true;
@@ -98,7 +104,8 @@ async function startConversation() {
     updateStopButton();
 
     try {
-        console.log('[INFO] Starting conversation with session_id:', sessionId, 'age:', age || 'not specified');
+        console.log('[INFO] Starting Paixueji conversation | age:', age, 'object:', objectName,
+                    'level1:', level1Category, 'level2:', level2Category);
 
         // Create AbortController for this stream
         currentStreamController = new AbortController();
@@ -109,8 +116,10 @@ async function startConversation() {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                session_id: sessionId,
-                age: age ? parseInt(age) : null
+                age: age,
+                object_name: objectName,
+                level1_category: level1Category,
+                level2_category: level2Category || null
             }),
             signal: currentStreamController.signal
         });
@@ -119,17 +128,45 @@ async function startConversation() {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        // Read JSON response (non-streaming)
-        const result = await response.json();
+        // Create message bubble for streaming response
+        currentMessageDiv = addMessage('assistant', '');
 
-        if (!result.success) {
-            throw new Error(result.error || 'Failed to start conversation');
+        // Read streaming response
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+                console.log('[INFO] Stream ended');
+                break;
+            }
+
+            // Decode chunk and add to buffer
+            buffer += decoder.decode(value, { stream: true });
+
+            // Process complete SSE events (separated by \n\n)
+            const lines = buffer.split('\n\n');
+            buffer = lines.pop(); // Keep incomplete event in buffer
+
+            for (const line of lines) {
+                if (!line.trim()) continue;
+
+                // Parse SSE event
+                const eventMatch = line.match(/^event: (.+)$/m);
+                const dataMatch = line.match(/^data: (.+)$/m);
+
+                if (eventMatch && dataMatch) {
+                    const eventType = eventMatch[1];
+                    const data = JSON.parse(dataMatch[1]);
+
+                    // Handle event
+                    await handleSSEEvent(eventType, data);
+                }
+            }
         }
-
-        console.log('[INFO] Conversation started successfully');
-
-        // Display the introduction message
-        addMessage('assistant', result.introduction);
 
     } catch (error) {
         // Handle abort gracefully
@@ -153,11 +190,6 @@ async function startConversation() {
         sendBtn.disabled = false;
         updateStopButton();
         userInput.focus();
-
-        // Hide age selector after starting
-        if (sessionId) {
-            ageSelector.style.display = 'none';
-        }
     }
 }
 
@@ -360,9 +392,16 @@ function handleStreamChunk(chunk) {
         console.log('[INFO] Session ID:', sessionId);
     }
 
-    // Display stuck status if present
-    if (chunk.is_stuck !== undefined && chunk.is_stuck) {
-        console.log('[INFO] Child appears stuck - suggesting topics');
+    // Update progress tracking
+    if (chunk.correct_answer_count !== undefined) {
+        correctAnswerCount = chunk.correct_answer_count;
+        updateProgressIndicator();
+    }
+
+    // Check if conversation is complete
+    if (chunk.conversation_complete) {
+        conversationComplete = true;
+        console.log('[INFO] Conversation complete! 4/4 answers reached');
     }
 
     // Handle text chunks (non-finish chunks with response text)
@@ -401,33 +440,162 @@ function handleStreamChunk(chunk) {
             console.log('[INFO] Token usage:', chunk.token_usage);
         }
 
-        // Check if session is finished
-        if (chunk.session_finished) {
-            console.log('[INFO] Session finished');
-            // Could add UI indicator here if needed
+        // Show completion UI if conversation is complete
+        if (conversationComplete) {
+            showCompletionUI();
         }
     }
+}
+
+/**
+ * Load category data from object_prompts.json
+ */
+async function loadCategoryData() {
+    try {
+        const response = await fetch('/static/object_prompts.json');
+        categoryData = await response.json();
+        populateLevel1Dropdown();
+        console.log('[INFO] Category data loaded');
+    } catch (error) {
+        console.error('[ERROR] Failed to load category data:', error);
+    }
+}
+
+/**
+ * Populate Level 1 category dropdown
+ */
+function populateLevel1Dropdown() {
+    const level1Select = document.getElementById('level1Category');
+    const level1Categories = Object.keys(categoryData.level1_categories || {});
+
+    level1Select.innerHTML = '<option value="">Select...</option>';
+    level1Categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = formatCategoryName(cat);
+        level1Select.appendChild(option);
+    });
+}
+
+/**
+ * Handle Level 1 category change - populate Level 2 dropdown
+ */
+function onLevel1Change() {
+    const level1 = document.getElementById('level1Category').value;
+    const level2Select = document.getElementById('level2Category');
+
+    if (!level1) {
+        level2Select.disabled = true;
+        level2Select.innerHTML = '<option value="">Select main category first...</option>';
+        return;
+    }
+
+    // Find all level2 categories with this parent
+    const level2Categories = Object.entries(categoryData.level2_categories || {})
+        .filter(([key, val]) => val.parent === level1)
+        .map(([key, val]) => key);
+
+    level2Select.disabled = false;
+    level2Select.innerHTML = '<option value="">Select subcategory (optional)...</option>';
+    level2Categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = formatCategoryName(cat);
+        level2Select.appendChild(option);
+    });
+}
+
+/**
+ * Format category name for display (e.g., "fresh_ingredients" → "Fresh Ingredients")
+ */
+function formatCategoryName(name) {
+    return name.split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
+/**
+ * Update progress indicator
+ */
+function updateProgressIndicator() {
+    document.getElementById('progressText').textContent =
+        `Correct answers: ${correctAnswerCount}/4`;
+
+    const percentage = (correctAnswerCount / 4) * 100;
+    document.getElementById('progressFill').style.width = percentage + '%';
+}
+
+/**
+ * Show completion UI
+ */
+function showCompletionUI() {
+    // Disable input
+    userInput.disabled = true;
+    sendBtn.disabled = true;
+
+    // Add restart button
+    const inputArea = document.querySelector('.input-area');
+    const restartBtn = document.createElement('button');
+    restartBtn.textContent = 'Start New Conversation';
+    restartBtn.onclick = resetConversation;
+    restartBtn.style.marginLeft = '10px';
+    inputArea.appendChild(restartBtn);
+
+    console.log('[INFO] Completion UI shown');
+}
+
+/**
+ * Reset conversation
+ */
+function resetConversation() {
+    // Clear state
+    sessionId = null;
+    correctAnswerCount = 0;
+    conversationComplete = false;
+
+    // Clear messages
+    messagesContainer.innerHTML = '';
+
+    // Show start form again
+    startForm.style.display = 'block';
+    progressIndicator.style.display = 'none';
+
+    // Re-enable input
+    userInput.disabled = false;
+    userInput.value = '';
+    sendBtn.disabled = false;
+
+    // Remove restart button
+    const restartBtn = document.querySelector('.input-area button:last-child');
+    if (restartBtn && restartBtn.textContent === 'Start New Conversation') {
+        restartBtn.remove();
+    }
+
+    console.log('[INFO] Conversation reset');
 }
 
 /**
  * Initialize the application
  */
 function init() {
-    console.log('[INFO] Ask Ask Streaming Chat initialized');
+    console.log('[INFO] Paixueji Streaming Chat initialized');
+
+    // Load category data
+    loadCategoryData();
 
     // Show empty state
     if (messagesContainer.children.length === 0) {
         const emptyState = document.createElement('div');
         emptyState.className = 'empty-state';
         emptyState.innerHTML = `
-            <p>👋 Welcome to Ask Ask!</p>
-            <small>Select your age and click "Start Conversation" to begin</small>
+            <p>👋 Welcome to Paixueji!</p>
+            <small>Enter an object name, select categories, and click "Start Learning!" to begin</small>
         `;
         messagesContainer.appendChild(emptyState);
     }
 
-    // Focus on age selector
-    document.getElementById('age').focus();
+    // Focus on object name input
+    document.getElementById('objectName').focus();
 }
 
 // Initialize on page load

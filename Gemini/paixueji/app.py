@@ -1,7 +1,7 @@
 """
-Flask API for Ask Ask Assistant with Server-Sent Events (SSE) streaming.
+Flask API for Paixueji Assistant with Server-Sent Events (SSE) streaming.
 
-This provides real-time streaming responses using the new StreamChunk architecture.
+This provides real-time streaming responses where the LLM asks questions about objects.
 """
 
 from flask import Flask, request, Response, jsonify
@@ -11,10 +11,10 @@ import uuid
 import asyncio
 import threading
 
-from ask_ask_assistant import AskAskAssistant
-from ask_ask_stream import call_ask_ask_stream, sanitize_text
+from paixueji_assistant import PaixuejiAssistant
+from paixueji_stream import call_paixueji_stream
 from schema import StreamChunk
-import ask_ask_prompts
+import paixueji_prompts
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
@@ -83,24 +83,38 @@ def health():
 @app.route('/api/start', methods=['POST'])
 def start_conversation():
     """
-    Start a new conversation and get introduction.
-    Returns a standard JSON response (non-streaming).
-    Warms up the LLM by generating the first response.
+    Start a new Paixueji conversation with first question about object.
 
     Request body:
         {
-            "session_id": "...",
-            "age": 6 (optional, 3-8)
+            "age": 6 (optional, 3-8),
+            "object_name": "apple" (required),
+            "level1_category": "foods" (required),
+            "level2_category": "fresh_ingredients" (optional)
         }
+
+    SSE Events:
+        - chunk: StreamChunk object (serialized as JSON)
+        - complete: Final completion marker
+        - error: Error information
     """
     data = request.get_json() or {}
-    session_id = data.get('session_id')
     age = data.get('age')
+    object_name = data.get('object_name')
+    level1_category = data.get('level1_category')
+    level2_category = data.get('level2_category')
 
-    if not session_id:
+    # Validate required fields
+    if not object_name:
         return jsonify({
             "success": False,
-            "error": "Missing required field: session_id"
+            "error": "object_name is required"
+        }), 400
+
+    if not level1_category:
+        return jsonify({
+            "success": False,
+            "error": "level1_category is required"
         }), 400
 
     # Validate age
@@ -115,88 +129,114 @@ def start_conversation():
             age = None
 
     # Create session
-    assistant = AskAskAssistant()
+    session_id = str(uuid.uuid4())
+    assistant = PaixuejiAssistant()
     sessions[session_id] = assistant
-    assistant.age = age
 
-    # Generate unique request ID
+    # Store session state
+    assistant.age = age
+    assistant.object_name = object_name
+    assistant.level1_category = level1_category
+    assistant.level2_category = level2_category
+    assistant.correct_answer_count = 0
+
+    # Generate unique request ID for this stream
     request_id = str(uuid.uuid4())
 
-    print(f"[INFO] Starting session {session_id[:8]}... with age={age}")
+    print(f"[INFO] Created Paixueji session {session_id[:8]}... | age={age}, object={object_name}, "
+          f"level1={level1_category}, level2={level2_category}, request_id={request_id[:8]}...")
 
-    try:
-        # Build system prompt with age guidance
-        system_prompt = assistant.prompts['system_prompt']
-        age_prompt = ""
-        if age is not None:
-            age_prompt = assistant.get_age_prompt(age)
-            if age_prompt:
-                system_prompt += f"\n\nAGE-SPECIFIC GUIDANCE:\n{age_prompt}"
+    def generate():
+        """Generator for SSE stream."""
+        try:
 
-        # Initialize conversation history with system prompt
-        assistant.conversation_history = [
-            {"role": "system", "content": system_prompt}
-        ]
-        introduction_content = assistant.prompts['introduction_prompt']
+            # Build system prompt with age guidance (use cached prompts)
+            system_prompt = assistant.prompts['system_prompt']
 
-        # Call the stream but consume it fully to return a single response
-        loop = get_event_loop()
-        
-        async def get_full_response():
-            full_text = ""
-            async for chunk in call_ask_ask_stream(
-                age=age,
-                messages=assistant.conversation_history.copy(),
-                content=introduction_content,
-                status="normal",
-                session_id=session_id,
-                request_id=request_id,
-                config=assistant.config,
-                client=assistant.client,
-                age_prompt=age_prompt
-            ):
-                if chunk.finish:
-                    full_text = chunk.response
-            return full_text
+            age_prompt = ""
+            if age is not None:
+                age_prompt = assistant.get_age_prompt(age)
+                if age_prompt:
+                    system_prompt += f"\n\nAGE-SPECIFIC GUIDANCE:\n{age_prompt}"
 
-        introduction = loop.run_until_complete(get_full_response())
-        loop.close()
+            # Get category prompt
+            category_prompt = assistant.get_category_prompt(level1_category, level2_category)
+            if category_prompt:
+                system_prompt += f"\n\nCATEGORY GUIDANCE:\n{category_prompt}"
 
-        # Sanitize introduction to remove emojis and newlines
-        introduction = sanitize_text(introduction)
+            # Initialize conversation history with system prompt
+            assistant.conversation_history = [
+                {"role": "system", "content": system_prompt}
+            ]
 
-        # Update conversation history with final response
-        assistant.conversation_history.append({
-            "role": "assistant",
-            "content": introduction
-        })
+            # Introduction content (trigger first question)
+            introduction_content = f"Start conversation about {object_name}"
 
-        return jsonify({
-            "success": True,
-            "session_id": session_id,
-            "introduction": introduction,
-            "request_id": request_id
-        })
+            # Get new event loop for this request (avoids race conditions)
+            loop = get_event_loop()
 
-    except Exception as e:
-        print(f"[ERROR] Error in start_conversation: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
+            try:
+                async def stream_introduction():
+                    async for chunk in call_paixueji_stream(
+                        age=age,
+                        messages=assistant.conversation_history.copy(),
+                        content=introduction_content,
+                        status="normal",
+                        session_id=session_id,
+                        request_id=request_id,
+                        config=assistant.config,
+                        client=assistant.client,
+                        age_prompt=age_prompt,
+                        object_name=object_name,
+                        level1_category=level1_category,
+                        level2_category=level2_category,
+                        correct_answer_count=0,
+                        category_prompt=category_prompt
+                    ):
+                        # Yield StreamChunk as SSE event (pass directly for optimized serialization)
+                        # Update conversation history with final response
+                        if chunk.finish:
+                            assistant.conversation_history.append({
+                                "role": "assistant",
+                                "content": chunk.response
+                            })
+
+                        yield sse_event("chunk", chunk)
+
+                    # Send completion event
+                    yield sse_event("complete", {"success": True})
+
+                # Stream the introduction
+                gen = stream_introduction()
+                for event in async_gen_to_sync(gen, loop):
+                    yield event
+
+                print(f"[INFO] Session {session_id[:8]}... started successfully")
+            finally:
+                # Let garbage collection handle loop cleanup (faster and avoids RuntimeError)
+                pass
+
+        except GeneratorExit:
+            # Client disconnected - stream was interrupted
+            print(f"[INFO] Session {session_id[:8]}... client disconnected")
+        except Exception as e:
+            print(f"[ERROR] Error in start_conversation: {e}")
+            import traceback
+            traceback.print_exc()
+            yield sse_event("error", {"message": str(e)})
+
+    return Response(generate(), mimetype='text/event-stream')
 
 
 @app.route('/api/continue', methods=['POST'])
 def continue_conversation():
     """
-    Continue conversation with streaming response.
+    Continue Paixueji conversation with child's answer and next question.
 
     Request body:
         {
             "session_id": "...",
-            "child_input": "Why is the sky blue?"
+            "child_input": "It's red"
         }
 
     SSE Events:
@@ -229,10 +269,18 @@ def continue_conversation():
             "error": "Session not found. Please start a new conversation."
         }), 404
 
+    # Check if conversation already complete
+    if assistant.correct_answer_count >= 4:
+        return jsonify({
+            "success": False,
+            "error": "Conversation already complete. Please start a new conversation."
+        }), 400
+
     # Generate unique request ID for this stream
     request_id = str(uuid.uuid4())
 
-    print(f"[INFO] Session {session_id[:8]}... continuing: '{child_input[:50]}...', request_id={request_id[:8]}...")
+    print(f"[INFO] Session {session_id[:8]}... continuing | answer: '{child_input[:50]}...', "
+          f"correct_count: {assistant.correct_answer_count}, request_id={request_id[:8]}...")
 
     def generate():
         """Generator for SSE stream."""
@@ -243,12 +291,28 @@ def continue_conversation():
             if assistant.age is not None:
                 age_prompt = assistant.get_age_prompt(assistant.age)
 
+            # Get category prompt
+            category_prompt = assistant.get_category_prompt(
+                assistant.level1_category,
+                assistant.level2_category
+            )
+
+            # Import is_answer_reasonable for answer validation
+            from paixueji_stream import is_answer_reasonable
+
+            # Check if answer is reasonable and increment count
+            answer_is_reasonable = is_answer_reasonable(child_input)
+            if answer_is_reasonable and assistant.correct_answer_count < 4:
+                # Increment correct answer count
+                assistant.increment_correct_answers()
+                print(f"[INFO] Session {session_id[:8]}... answer accepted | new count: {assistant.correct_answer_count}/4")
+
             # Get new event loop for this request (avoids race conditions)
             loop = get_event_loop()
 
             try:
                 async def stream_response():
-                    async for chunk in call_ask_ask_stream(
+                    async for chunk in call_paixueji_stream(
                         age=assistant.age,
                         messages=assistant.conversation_history.copy(),
                         content=child_input,
@@ -257,7 +321,12 @@ def continue_conversation():
                         request_id=request_id,
                         config=assistant.config,
                         client=assistant.client,
-                        age_prompt=age_prompt
+                        age_prompt=age_prompt,
+                        object_name=assistant.object_name,
+                        level1_category=assistant.level1_category,
+                        level2_category=assistant.level2_category,
+                        correct_answer_count=assistant.correct_answer_count,
+                        category_prompt=category_prompt
                     ):
                         # Yield StreamChunk as SSE event (pass directly for optimized serialization)
                         # Update conversation history with final response
@@ -266,6 +335,9 @@ def continue_conversation():
                                 "role": "assistant",
                                 "content": chunk.response
                             })
+                            # Log completion if conversation complete
+                            if chunk.conversation_complete:
+                                print(f"[INFO] Session {session_id[:8]}... CONVERSATION COMPLETE!")
 
                         yield sse_event("chunk", chunk)
 
@@ -400,19 +472,21 @@ def async_gen_to_sync(async_gen, loop):
         elif msg_type == 'done':
             break
         elif msg_type == 'error':
-            raise exception_holder[0]   
+            raise exception_holder[0]
 
 
 if __name__ == '__main__':
     print("=" * 60)
-    print("Ask Ask Assistant - Streaming API Server")
+    print("Paixueji Assistant - Question-Asking System")
     print("=" * 60)
     print("\nServer starting...")
     print("URL: http://localhost:5000")
     print("\nEndpoints:")
     print("  GET  /api/health          - Health check")
     print("  POST /api/start           - Start conversation (SSE)")
+    print("                              Requires: age, object_name, level1_category")
     print("  POST /api/continue        - Continue conversation (SSE)")
+    print("                              Requires: session_id, child_input")
     print("  POST /api/reset           - Delete session")
     print("  GET  /api/sessions        - List active sessions")
     print("  GET  /                    - Web interface")

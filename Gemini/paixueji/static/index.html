@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paixueji - Learn by Answering</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Paixueji Assistant</h1>
+            <p>Answer questions about objects!</p>
+        </div>
+
+        <div class="start-form" id="startForm">
+            <label for="age">Child's Age:</label>
+            <select id="age">
+                <option value="3">3 years</option>
+                <option value="4">4 years</option>
+                <option value="5">5 years</option>
+                <option value="6" selected>6 years</option>
+                <option value="7">7 years</option>
+                <option value="8">8 years</option>
+            </select>
+
+            <label for="objectName">What object are we learning about?</label>
+            <input type="text" id="objectName" placeholder="e.g., apple, dog, tree" />
+
+            <label for="level1Category">Main Category:</label>
+            <select id="level1Category" onchange="onLevel1Change()">
+                <option value="">Select...</option>
+            </select>
+
+            <label for="level2Category">Specific Category:</label>
+            <select id="level2Category" disabled>
+                <option value="">Select main category first...</option>
+            </select>
+
+            <button onclick="startConversation()">Start Learning!</button>
+        </div>
+
+        <div class="progress-indicator" id="progressIndicator" style="display: none;">
+            <span id="progressText">Correct answers: 0/4</span>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <div class="messages" id="messages"></div>
+
+        <div class="input-area">
+            <div id="thinking-time" class="thinking-time"></div>
+            <input
+                type="text"
+                id="userInput"
+                placeholder="Type your answer here..."
+                onkeypress="if(event.key==='Enter' && !event.shiftKey) sendMessage()"
+            >
+            <button id="stopBtn" onclick="stopStreaming()" style="display: none;">Stop</button>
+            <button id="sendBtn" onclick="sendMessage()" disabled>Send</button>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

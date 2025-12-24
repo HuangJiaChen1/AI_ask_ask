@@ -1,14 +1,12 @@
 """
-Streaming functions for Ask Ask assistant.
+Streaming functions for Paixueji assistant.
 
-This module provides async streaming responses for the Ask Ask assistant,
-matching the architecture of the reference agent_func_stream.py but adapted
-for Q&A interactions instead of picture book discussions.
+This module provides async streaming responses for the Paixueji assistant,
+where the LLM asks questions about objects and children answer.
 """
 import copy
 import json
 import os
-import re
 import time
 from typing import AsyncGenerator
 
@@ -17,11 +15,11 @@ from google.genai.types import HttpOptions, GenerateContentConfig
 from loguru import logger
 
 from schema import StreamChunk, TokenUsage
-import ask_ask_prompts
+import paixueji_prompts
 
 # Configure loguru for production
 logger.add(
-    "logs/ask_ask_{time:YYYY-MM-DD}.log",
+    "logs/paixueji_{time:YYYY-MM-DD}.log",
     rotation="00:00",
     retention="30 days",
     level="DEBUG",
@@ -40,65 +38,6 @@ def safe_print(message):
         print(message)
     except UnicodeEncodeError:
         print(message.encode('ascii', 'replace').decode('ascii'))
-
-
-def sanitize_text(text: str) -> str:
-    """
-    Remove emojis, newlines, and markdown formatting from text.
-    Returns pure text with only letters, numbers, spaces, and basic punctuation.
-
-    Args:
-        text: Input text to sanitize
-
-    Returns:
-        Sanitized text without emojis, newlines, and markdown formatting
-    """
-    if not text:
-        return text
-
-    # Remove emojis using comprehensive Unicode ranges
-    emoji_pattern = re.compile(
-        "["
-        "\U0001F600-\U0001F64F"  # emoticons
-        "\U0001F300-\U0001F5FF"  # symbols & pictographs
-        "\U0001F680-\U0001F6FF"  # transport & map symbols
-        "\U0001F1E0-\U0001F1FF"  # flags (iOS)
-        "\U00002702-\U000027B0"  # dingbats
-        "\U000024C2-\U0001F251"  # enclosed characters
-        "\U0001F900-\U0001F9FF"  # supplemental symbols and pictographs
-        "\U0001FA00-\U0001FA6F"  # chess symbols
-        "\U0001FA70-\U0001FAFF"  # symbols and pictographs extended-A
-        "\U00002600-\U000026FF"  # miscellaneous symbols
-        "\U00002700-\U000027BF"  # dingbats
-        "]+",
-        flags=re.UNICODE
-    )
-
-    # Replace emojis with a space (to avoid concatenating adjacent words)
-    text = emoji_pattern.sub(' ', text)
-
-    # Replace newlines and tabs with spaces
-    text = text.replace('\n', ' ').replace('\r', ' ').replace('\t', ' ')
-
-    # Handle markdown bold/italic patterns - remove ** and __ but preserve the text
-    # Match **text** or __text__ and replace with just the text
-    text = re.sub(r'\*\*([^*]+)\*\*', r'\1', text)  # **bold**
-    text = re.sub(r'__([^_]+)__', r'\1', text)      # __bold__
-    text = re.sub(r'\*([^*]+)\*', r'\1', text)      # *italic*
-    text = re.sub(r'_([^_]+)_', r'\1', text)        # _italic_
-
-    # Remove any remaining markdown formatting characters (*, _, `, #, etc.)
-    # Add space around them before removal to prevent concatenation
-    text = re.sub(r'([*_`#~\[\]])', r' \1 ', text)
-    text = re.sub(r'[*_`#~\[\]]+', ' ', text)
-
-    # Clean up multiple spaces (reduces any sequence of whitespace to a single space)
-    text = re.sub(r'\s+', ' ', text)
-
-    # Strip leading/trailing whitespace
-    text = text.strip()
-
-    return text
 
 
 def clean_messages_for_api(messages: list[dict]) -> list[dict]:
@@ -183,18 +122,24 @@ def convert_messages_to_gemini_format(messages: list[dict]) -> tuple[str, list[d
     return system_instruction.strip(), contents
 
 
-async def answer_question_stream(
+async def ask_introduction_question_stream(
     messages: list[dict],
-    child_question: str,
+    object_name: str,
+    category_prompt: str,
+    age_prompt: str,
+    age: int,
     config: dict,
     client: genai.Client
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
-    Stream answer to child's question with follow-up.
+    Stream first question about the object.
 
     Args:
         messages: Conversation history
-        child_question: The child's question
+        object_name: Name of object to ask about
+        category_prompt: Category-specific guidance
+        age_prompt: Age-specific guidance
+        age: Child's age
         config: Configuration dict with model settings
         client: Gemini client instance
 
@@ -202,13 +147,18 @@ async def answer_question_stream(
         Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
     """
     start_time = time.time()
-    logger.info(f"answer_question_stream started | question_length={len(child_question)}, message_count={len(messages)}")
+    logger.info(f"ask_introduction_question_stream started | object={object_name}, age={age}")
 
-    prompts = ask_ask_prompts.get_prompts()
-    answer_prompt = prompts['answer_question_prompt'].format(child_question=child_question)
+    prompts = paixueji_prompts.get_prompts()
+    introduction_prompt = prompts['introduction_prompt'].format(
+        object_name=object_name,
+        category_prompt=category_prompt,
+        age_prompt=age_prompt,
+        age=age
+    )
 
-    # Prepare messages with answer prompt
-    messages_to_send = messages + [{"role": "user", "content": answer_prompt}]
+    # Prepare messages with introduction prompt
+    messages_to_send = messages + [{"role": "user", "content": introduction_prompt}]
 
     # Clean messages for API
     clean_messages = clean_messages_for_api(messages_to_send)
@@ -247,11 +197,9 @@ async def answer_question_stream(
         for chunk in stream:
             if chunk.text:
                 chunk_count += 1
-                # Sanitize text to remove emojis and newlines
-                sanitized_text = sanitize_text(chunk.text)
-                full_response += sanitized_text
-                logger.debug(f"Chunk {chunk_count} | length={len(sanitized_text)}, total_length={len(full_response)}")
-                yield (sanitized_text, None, full_response)
+                full_response += chunk.text
+                logger.debug(f"Chunk {chunk_count} | length={len(chunk.text)}, total_length={len(full_response)}")
+                yield (chunk.text, None, full_response)
 
         # Note: Gemini API doesn't provide token usage in streaming mode
         # We'll leave token_usage as None
@@ -275,7 +223,7 @@ async def answer_question_stream(
 
     duration = time.time() - start_time
     logger.info(
-        f"answer_question_stream completed | "
+        f"ask_introduction_question_stream completed | "
         f"duration={duration:.3f}s, response_length={len(full_response)}"
     )
 
@@ -286,16 +234,28 @@ async def answer_question_stream(
     yield ("", token_usage, full_response)
 
 
-async def suggest_topics_stream(
+async def ask_followup_question_stream(
     messages: list[dict],
+    child_answer: str,
+    object_name: str,
+    correct_count: int,
+    category_prompt: str,
+    age_prompt: str,
+    age: int,
     config: dict,
     client: genai.Client
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
-    Stream topic suggestions when child is stuck.
+    Stream follow-up question based on child's answer.
 
     Args:
         messages: Conversation history
+        child_answer: The child's previous answer
+        object_name: Name of object being discussed
+        correct_count: Number of correct answers so far
+        category_prompt: Category-specific guidance
+        age_prompt: Age-specific guidance
+        age: Child's age
         config: Configuration dict with model settings
         client: Gemini client instance
 
@@ -303,13 +263,20 @@ async def suggest_topics_stream(
         Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
     """
     start_time = time.time()
-    logger.info(f"suggest_topics_stream started | message_count={len(messages)}")
+    logger.info(f"ask_followup_question_stream started | object={object_name}, correct_count={correct_count}, answer_length={len(child_answer)}")
 
-    prompts = ask_ask_prompts.get_prompts()
-    suggest_prompt = prompts['suggest_topics_prompt']
+    prompts = paixueji_prompts.get_prompts()
+    question_prompt = prompts['question_prompt'].format(
+        child_answer=child_answer,
+        object_name=object_name,
+        correct_count=correct_count,
+        age=age,
+        category_prompt=category_prompt,
+        age_prompt=age_prompt
+    )
 
-    # Prepare messages with suggest prompt
-    messages_to_send = messages + [{"role": "user", "content": suggest_prompt}]
+    # Prepare messages with question prompt
+    messages_to_send = messages + [{"role": "user", "content": question_prompt}]
 
     # Clean messages for API
     clean_messages = clean_messages_for_api(messages_to_send)
@@ -347,11 +314,9 @@ async def suggest_topics_stream(
         for chunk in stream:
             if chunk.text:
                 chunk_count += 1
-                # Sanitize text to remove emojis and newlines
-                sanitized_text = sanitize_text(chunk.text)
-                full_response += sanitized_text
-                logger.debug(f"Chunk {chunk_count} | length={len(sanitized_text)}, total_length={len(full_response)}")
-                yield (sanitized_text, None, full_response)
+                full_response += chunk.text
+                logger.debug(f"Chunk {chunk_count} | length={len(chunk.text)}, total_length={len(full_response)}")
+                yield (chunk.text, None, full_response)
 
     except Exception as e:
         duration = time.time() - start_time
@@ -371,7 +336,7 @@ async def suggest_topics_stream(
 
     duration = time.time() - start_time
     logger.info(
-        f"suggest_topics_stream completed | "
+        f"ask_followup_question_stream completed | "
         f"duration={duration:.3f}s, response_length={len(full_response)}"
     )
 
@@ -379,52 +344,139 @@ async def suggest_topics_stream(
     yield ("", token_usage, full_response)
 
 
-def is_child_stuck(child_input: str) -> bool:
+def is_answer_reasonable(child_answer: str) -> bool:
     """
-    Check if child is stuck and doesn't know what to ask.
-    Uses simple keyword detection.
+    Check if child's answer shows reasonable engagement.
+
+    Simple heuristic - be encouraging, not strict!
 
     Args:
-        child_input: The child's input
+        child_answer: The child's answer
 
     Returns:
-        True if child appears stuck, False otherwise
+        True if answer seems reasonable, False if child appears stuck
     """
-    input_lower = child_input.lower().strip()
+    answer_lower = child_answer.lower().strip()
 
-    # Check if it's a question (ends with ? or starts with why/what/how/when/where)
-    question_starters = ["why", "what", "how", "when", "where", "who", "can", "could", "do", "does"]
-    is_likely_question = (
-        child_input.strip().endswith("?") or
-        any(input_lower.startswith(word + " ") for word in question_starters)
-    )
-
-    # If it looks like a question, they're not stuck
-    if is_likely_question and len(input_lower) > 5:
+    # Too short
+    if len(answer_lower) <= 3:
         return False
 
+    # Stuck phrases
     stuck_phrases = [
-        "don't know", "dont know", "idk", "dunno", "not sure",
-        "no idea", "help me", "i need help"
+        "don't know", "dont know", "idk", "dunno",
+        "not sure", "no idea", "help me"
     ]
+    if any(phrase in answer_lower for phrase in stuck_phrases):
+        return False
 
-    # Check for stuck phrases
-    if any(phrase in input_lower for phrase in stuck_phrases):
-        return True
+    # Has some letters (shows attempt)
+    if sum(c.isalpha() for c in answer_lower) < 2:
+        return False
 
-    # Also check if input is very short and not a question (likely stuck)
-    if len(input_lower) <= 3 and not is_likely_question:
-        return True
-
-    # Single word responses like "huh", "what", "nope" without context
-    single_word_stuck = ["huh", "what", "nope", "idk", "dunno", "help"]
-    if input_lower in single_word_stuck:
-        return True
-
-    return False
+    # Accept everything else - be encouraging!
+    return True
 
 
-async def call_ask_ask_stream(
+async def generate_completion_message_stream(
+    messages: list[dict],
+    object_name: str,
+    child_answer: str,
+    config: dict,
+    client: genai.Client
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
+    """
+    Stream completion/celebration message after 4 correct answers.
+
+    Args:
+        messages: Conversation history
+        object_name: Name of object discussed
+        child_answer: The child's final answer
+        config: Configuration dict with model settings
+        client: Gemini client instance
+
+    Yields:
+        Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
+    """
+    start_time = time.time()
+    logger.info(f"generate_completion_message_stream started | object={object_name}")
+
+    prompts = paixueji_prompts.get_prompts()
+    completion_prompt = prompts['completion_prompt'].format(
+        object_name=object_name,
+        child_answer=child_answer
+    )
+
+    # Prepare messages with completion prompt
+    messages_to_send = messages + [{"role": "user", "content": completion_prompt}]
+
+    # Clean messages for API
+    clean_messages = clean_messages_for_api(messages_to_send)
+
+    # Convert to Gemini format
+    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
+
+    # Stream from LLM
+    full_response = ""
+    token_usage = None
+
+    stream = None
+    try:
+        logger.debug(f"Sending {len(contents)} messages to Gemini API")
+
+        # Configure generation
+        gen_config = GenerateContentConfig(
+            temperature=config.get("temperature", 0.3),
+            max_output_tokens=config.get("max_tokens", 2000),
+            system_instruction=system_instruction if system_instruction else None
+        )
+
+        # Call streaming API
+        stream = client.models.generate_content_stream(
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config
+        )
+
+        # Log stream type for debugging
+        logger.debug(f"Stream object type: {type(stream).__name__}")
+
+        # Yield chunks as they arrive
+        chunk_count = 0
+        for chunk in stream:
+            if chunk.text:
+                chunk_count += 1
+                full_response += chunk.text
+                logger.debug(f"Chunk {chunk_count} | length={len(chunk.text)}, total_length={len(full_response)}")
+                yield (chunk.text, None, full_response)
+
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(f"generate_completion_message_stream LLM error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        # Still yield what we have so far (even if incomplete)
+        if full_response:
+            yield ("", token_usage, full_response)
+        return
+    finally:
+        # Always attempt cleanup via deletion
+        if stream is not None:
+            try:
+                del stream
+                logger.debug('Cleaned up stream via del in finally block')
+            except:
+                pass
+
+    duration = time.time() - start_time
+    logger.info(
+        f"generate_completion_message_stream completed | "
+        f"duration={duration:.3f}s, response_length={len(full_response)}"
+    )
+
+    # Final yield with token usage (None for Gemini streaming)
+    yield ("", token_usage, full_response)
+
+
+async def call_paixueji_stream(
     age: int | None,
     messages: list[dict],
     content: str,
@@ -433,24 +485,34 @@ async def call_ask_ask_stream(
     request_id: str,
     config: dict,
     client: genai.Client,
-    age_prompt: str = ""
+    age_prompt: str = "",
+    object_name: str = "",
+    level1_category: str = "",
+    level2_category: str = "",
+    correct_answer_count: int = 0,
+    category_prompt: str = ""
 ) -> AsyncGenerator[StreamChunk, None]:
     """
-    Main streaming function for Ask Ask assistant.
+    Main streaming function for Paixueji assistant.
 
-    This is the primary entry point matching call_Leonard_stream() from the reference.
+    This is the primary entry point for question-asking conversation flow.
     It orchestrates the conversation flow and yields StreamChunk objects.
 
     Args:
-        age: Child's age (3-8) for age-appropriate responses
+        age: Child's age (3-8) for age-appropriate questions
         messages: Conversation message history
-        content: Child's current question or input
+        content: Child's current answer or initial content
         status: Current conversation status ("normal" or "over")
         session_id: Unique session identifier
         request_id: Unique identifier for this specific request
         config: Configuration dict with model settings
         client: Gemini client instance
         age_prompt: Age-specific guidance to append to system message
+        object_name: Name of object being discussed
+        level1_category: Level 1 category (e.g., "foods")
+        level2_category: Level 2 category (e.g., "fresh_ingredients")
+        correct_answer_count: Number of correct answers so far (0-4)
+        category_prompt: Category-specific guidance
 
     Yields:
         StreamChunk objects containing response chunks and metadata
@@ -458,19 +520,20 @@ async def call_ask_ask_stream(
     start_time = time.time()
 
     logger.info(
-        f"[{session_id}] call_ask_ask_stream started | "
-        f"session_id={session_id}, age={age}, "
-        f"status={status}, content_length={len(content)}, "
-        f"message_history={len(messages)}"
+        f"[{session_id}] call_paixueji_stream started | "
+        f"session_id={session_id}, age={age}, object={object_name}, "
+        f"level1={level1_category}, level2={level2_category}, "
+        f"correct_count={correct_answer_count}, status={status}, "
+        f"content_length={len(content)}, message_history={len(messages)}"
     )
 
     # Add user input to messages
     messages.append({"role": "user", "content": content})
 
-    # Check if child is stuck
-    stuck = is_child_stuck(content)
+    # Check if conversation is complete (4 correct answers)
+    conversation_complete = correct_answer_count >= 4
 
-    logger.info(f"[{session_id}] Stuck detection | is_stuck={stuck}")
+    logger.info(f"[{session_id}] Conversation state | correct_count={correct_answer_count}, complete={conversation_complete}")
 
     # Track sequence number and token usage
     sequence_number = 0
@@ -484,14 +547,62 @@ async def call_ask_ask_stream(
     stream_generator = None
     response_type = None
 
-    if stuck:
-        stream_generator = suggest_topics_stream(prepared_messages, config, client)
-        response_type = "suggest_topics"
-        logger.info(f"[{session_id}] Routing to suggest_topics")
+    if conversation_complete:
+        # Generate completion message (celebration)
+        stream_generator = generate_completion_message_stream(
+            prepared_messages,
+            object_name,
+            content,  # child's last answer
+            config,
+            client
+        )
+        response_type = "completion"
+        logger.info(f"[{session_id}] Routing to completion message (4 correct answers reached)")
+    elif correct_answer_count == 0:
+        # First question (introduction)
+        stream_generator = ask_introduction_question_stream(
+            prepared_messages,
+            object_name,
+            category_prompt,
+            age_prompt,
+            age or 6,  # default to 6 if age not specified
+            config,
+            client
+        )
+        response_type = "introduction"
+        logger.info(f"[{session_id}] Routing to introduction question")
     else:
-        stream_generator = answer_question_stream(prepared_messages, content, config, client)
-        response_type = "answer_question"
-        logger.info(f"[{session_id}] Routing to answer_question")
+        # Follow-up question
+        # Check if answer is reasonable
+        if is_answer_reasonable(content):
+            stream_generator = ask_followup_question_stream(
+                prepared_messages,
+                content,  # child's answer
+                object_name,
+                correct_answer_count,
+                category_prompt,
+                age_prompt,
+                age or 6,
+                config,
+                client
+            )
+            response_type = "followup"
+            logger.info(f"[{session_id}] Routing to followup question | answer_reasonable=True")
+        else:
+            # Answer doesn't seem reasonable (child stuck) - ask encouraging question
+            stream_generator = ask_followup_question_stream(
+                prepared_messages,
+                content,
+                object_name,
+                correct_answer_count,
+                category_prompt,
+                age_prompt,
+                age or 6,
+                config,
+                client
+            )
+            response_type = "followup_encouraging"
+            logger.info(f"[{session_id}] Routing to followup question | answer_reasonable=False")
 
     # Stream chunks from the selected generator
     if stream_generator:
@@ -514,7 +625,9 @@ async def call_ask_ask_stream(
                     timestamp=time.time(),
                     session_id=session_id,
                     request_id=request_id,
-                    is_stuck=stuck,
+                    is_stuck=False,  # Not used in Paixueji
+                    correct_answer_count=correct_answer_count,
+                    conversation_complete=conversation_complete,
                 )
                 yield chunk
 
@@ -527,16 +640,14 @@ async def call_ask_ask_stream(
         logger.warning(f"[{session_id}] Empty response - possible streaming error")
 
     logger.info(
-        f"[{session_id}] call_ask_ask_stream completed | "
+        f"[{session_id}] call_paixueji_stream completed | "
         f"response_type={response_type}, duration={elapsed_time:.3f}s, "
         f"total_chunks={sequence_number}, response_length={len(full_response)}, "
+        f"correct_count={correct_answer_count}, complete={conversation_complete}, "
         f"session_finished={status == 'over'}"
     )
 
     logger.debug(f"Full response (first 200 chars): {full_response[:200]}...")
-
-    # Sanitize final response to ensure it's clean
-    full_response = sanitize_text(full_response)
 
     # Yield final chunk with token usage and duration
     sequence_number += 1
@@ -550,6 +661,8 @@ async def call_ask_ask_stream(
         timestamp=time.time(),
         session_id=session_id,
         request_id=request_id,
-        is_stuck=stuck,
+        is_stuck=False,  # Not used in Paixueji
+        correct_answer_count=correct_answer_count,
+        conversation_complete=conversation_complete,
     )
     yield final_chunk

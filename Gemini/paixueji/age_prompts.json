@@ -1,0 +1,19 @@
+{
+  "age_groups": {
+    "3-4": {
+      "age_range": [3, 4],
+      "focus": "whats",
+      "prompt": "Focus on WHAT questions only. Ask about basic identification, naming, colors, shapes, sizes, and simple properties. Examples: 'What color is it?', 'What does it look like?', 'What is it called?', 'What do you see?'. Keep questions very simple and concrete. Use simple vocabulary appropriate for 3-4 year olds. Encourage observation and identification."
+    },
+    "5-6": {
+      "age_range": [5, 6],
+      "focus": "whats and hows",
+      "prompt": "Focus on WHAT and HOW questions. Ask about properties, features, processes, and actions. Examples: 'What does it do?', 'How does it move?', 'How does it grow?', 'What happens when...?', 'How do we use it?'. Introduce simple cause-and-effect relationships. Use vocabulary appropriate for 5-6 year olds. Encourage understanding of processes and sequences."
+    },
+    "7-8": {
+      "age_range": [7, 8],
+      "focus": "whats, hows, and whys",
+      "prompt": "Focus on WHAT, HOW, and WHY questions. Ask about properties, processes, reasons, purposes, and deeper connections. Examples: 'Why does it...?', 'What would happen if...?', 'How come...?', 'Why do you think...?', 'What's the reason for...?'. Encourage critical thinking, reasoning, and making connections. Use more advanced vocabulary appropriate for 7-8 year olds. Challenge them to think about causes, purposes, and relationships."
+    }
+  }
+}
