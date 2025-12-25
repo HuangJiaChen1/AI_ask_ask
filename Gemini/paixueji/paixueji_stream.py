@@ -130,11 +130,12 @@ async def ask_introduction_question_stream(
     age: int,
     config: dict,
     client: genai.Client,
-    level3_category: str = ""
+    level3_category: str = "",
+    focus_prompt: str = ""
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
     Stream first question about the object.
-
+    
     Args:
         messages: Conversation history
         object_name: Name of object to ask about
@@ -143,9 +144,8 @@ async def ask_introduction_question_stream(
         age: Child's age
         config: Configuration dict with model settings
         client: Gemini client instance
-
-    Yields:
-        Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
+        level3_category: Level 3 category
+        focus_prompt: Focus strategy guidance
     """
     start_time = time.time()
     logger.info(f"ask_introduction_question_stream started | object={object_name}, age={age}")
@@ -155,7 +155,8 @@ async def ask_introduction_question_stream(
         object_name=object_name,
         category_prompt=category_prompt,
         age_prompt=age_prompt,
-        age=age
+        age=age,
+        focus_prompt=focus_prompt
     )
 
     # Prepare messages with introduction prompt
@@ -245,7 +246,8 @@ async def ask_followup_question_stream(
     age: int,
     config: dict,
     client: genai.Client,
-    level3_category: str = ""
+    level3_category: str = "",
+    focus_prompt: str = ""
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
     Stream follow-up question based on child's answer.
@@ -260,6 +262,8 @@ async def ask_followup_question_stream(
         age: Child's age
         config: Configuration dict with model settings
         client: Gemini client instance
+        level3_category: Level 3 category
+        focus_prompt: Focus strategy guidance
 
     Yields:
         Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
@@ -274,7 +278,8 @@ async def ask_followup_question_stream(
         correct_count=correct_count,
         age=age,
         category_prompt=category_prompt,
-        age_prompt=age_prompt
+        age_prompt=age_prompt,
+        focus_prompt=focus_prompt
     )
 
     # Prepare messages with question prompt
@@ -493,33 +498,31 @@ async def call_paixueji_stream(
     level2_category: str = "",
     level3_category: str = "",
     correct_answer_count: int = 0,
-    category_prompt: str = ""
+    category_prompt: str = "",
+    focus_prompt: str = "",
+    focus_mode: str | None = None
 ) -> AsyncGenerator[StreamChunk, None]:
     """
     Main streaming function for Paixueji assistant.
-
-    This is the primary entry point for question-asking conversation flow.
-    It orchestrates the conversation flow and yields StreamChunk objects.
-
+    
     Args:
-        age: Child's age (3-8) for age-appropriate questions
-        messages: Conversation message history
-        content: Child's current answer or initial content
-        status: Current conversation status ("normal" or "over")
-        session_id: Unique session identifier
-        request_id: Unique identifier for this specific request
-        config: Configuration dict with model settings
-        client: Gemini client instance
-        age_prompt: Age-specific guidance to append to system message
-        object_name: Name of object being discussed
-        level1_category: Level 1 category (e.g., "foods")
-        level2_category: Level 2 category (e.g., "fresh_ingredients")
-        level3_category: Level 3 category (optional)
-        correct_answer_count: Number of correct answers so far (0-4)
-        category_prompt: Category-specific guidance
-
-    Yields:
-        StreamChunk objects containing response chunks and metadata
+        age: Child's age
+        messages: Conversation history
+        content: User content
+        status: Session status
+        session_id: Session ID
+        request_id: Request ID
+        config: Config dict
+        client: Gemini client
+        age_prompt: Age guidance
+        object_name: Object name
+        level1_category: L1 Category
+        level2_category: L2 Category
+        level3_category: L3 Category
+        correct_answer_count: Correct answers count
+        category_prompt: Category guidance
+        focus_prompt: Focus strategy guidance
+        focus_mode: The focus mode key (e.g., depth, width_color)
     """
     start_time = time.time()
 
@@ -550,19 +553,9 @@ async def call_paixueji_stream(
     # Determine which streaming function to use
     stream_generator = None
     response_type = None
+    is_correct = False
 
-    if conversation_complete:
-        # Generate completion message (celebration)
-        stream_generator = generate_completion_message_stream(
-            prepared_messages,
-            object_name,
-            content,  # child's last answer
-            config,
-            client
-        )
-        response_type = "completion"
-        logger.info(f"[{session_id}] Routing to completion message (4 correct answers reached)")
-    elif correct_answer_count == 0:
+    if correct_answer_count == 0:
         # First question (introduction)
         stream_generator = ask_introduction_question_stream(
             prepared_messages,
@@ -572,14 +565,17 @@ async def call_paixueji_stream(
             age or 6,  # default to 6 if age not specified
             config,
             client,
-            level3_category
+            level3_category,
+            focus_prompt=focus_prompt
         )
         response_type = "introduction"
         logger.info(f"[{session_id}] Routing to introduction question")
     else:
         # Follow-up question
-        # Check if answer is reasonable
-        if is_answer_reasonable(content):
+        # Check if answer is reasonable (and mark as correct if so)
+        is_correct = is_answer_reasonable(content)
+        
+        if is_correct:
             stream_generator = ask_followup_question_stream(
                 prepared_messages,
                 content,  # child's answer
@@ -590,7 +586,8 @@ async def call_paixueji_stream(
                 age or 6,
                 config,
                 client,
-                level3_category
+                level3_category,
+                focus_prompt=focus_prompt
             )
             response_type = "followup"
             logger.info(f"[{session_id}] Routing to followup question | answer_reasonable=True")
@@ -606,24 +603,56 @@ async def call_paixueji_stream(
                 age or 6,
                 config,
                 client,
-                level3_category
+                level3_category,
+                focus_prompt=focus_prompt
             )
             response_type = "followup_encouraging"
             logger.info(f"[{session_id}] Routing to followup question | answer_reasonable=False")
 
     # Stream chunks from the selected generator
     if stream_generator:
+        new_object_detected = False
+        new_object_name = None
+        buffer = ""
+
         async for chunked_text, chunk_token_usage, full_text in stream_generator:
             if chunk_token_usage:
                 token_usage = chunk_token_usage
 
-            full_response = full_text
+            if not new_object_detected:
+                buffer += chunked_text
+                text_to_process = ""
+                
+                if "<new_topic>" in buffer:
+                    if "</new_topic>" in buffer:
+                        # Extract topic
+                        start_idx = buffer.find("<new_topic>") + len("<new_topic>")
+                        end_idx = buffer.find("</new_topic>")
+                        new_object_name = buffer[start_idx:end_idx].strip()
+                        new_object_detected = True
+                        logger.info(f"[{session_id}] NEW TOPIC DETECTED: {new_object_name}")
+                        
+                        # Remove tag from output
+                        text_to_process = buffer.replace(f"<new_topic>{new_object_name}</new_topic>", "")
+                        buffer = "" # Clear buffer
+                    else:
+                        # Wait for closing tag
+                        pass
+                else:
+                    # If buffer gets too long without tag, assume no tag (optimization)
+                    if len(buffer) > 100: 
+                         text_to_process = buffer
+                         buffer = ""
+            else:
+                text_to_process = chunked_text
 
-            # Only yield non-empty text chunks (skip the final empty yield from stream functions)
-            if chunked_text:
+            full_response += text_to_process
+
+            # Only yield non-empty text chunks
+            if text_to_process:
                 sequence_number += 1
                 chunk = StreamChunk(
-                    response=chunked_text,
+                    response=text_to_process,
                     session_finished=(status == "over"),
                     duration=0.0,  # Will be set in final chunk
                     token_usage=None,  # Only in final chunk
@@ -634,9 +663,20 @@ async def call_paixueji_stream(
                     request_id=request_id,
                     is_stuck=False,  # Not used in Paixueji
                     correct_answer_count=correct_answer_count,
-                    conversation_complete=conversation_complete,
+                    conversation_complete=False, # Infinite stream
+                    focus_mode=focus_mode,
+                    is_correct=is_correct,
+                    new_object_name=new_object_name
                 )
                 yield chunk
+                
+                # Only send new_object_name once
+                if new_object_name:
+                    new_object_name = None
+
+    # Flush remaining buffer if needed
+    if buffer and not new_object_detected:
+        full_response += buffer
 
     # Calculate total duration
     end_time = time.time()
@@ -644,7 +684,7 @@ async def call_paixueji_stream(
 
     # Validate response completeness
     if not full_response:
-        logger.warning(f"[{session_id}] Empty response - possible streaming error")
+        logger.warning(f"[{session_id}] Empty response - possible streaming error or reasoning only")
 
     logger.info(
         f"[{session_id}] call_paixueji_stream completed | "
@@ -671,5 +711,6 @@ async def call_paixueji_stream(
         is_stuck=False,  # Not used in Paixueji
         correct_answer_count=correct_answer_count,
         conversation_complete=conversation_complete,
+        focus_mode=focus_mode
     )
     yield final_chunk

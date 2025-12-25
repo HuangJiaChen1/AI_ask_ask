@@ -33,11 +33,19 @@ const thinkingTimeDisplay = document.getElementById('thinking-time');
  * Add a message to the chat interface
  * @param {string} role - 'assistant' or 'user'
  * @param {string} initialText - Initial text to display (optional)
+ * @param {string} focus - Focus mode used (optional)
  * @returns {HTMLElement} The message bubble element
  */
-function addMessage(role, initialText = '') {
+function addMessage(role, initialText = '', focus = null) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
+
+    if (focus) {
+        const focusTag = document.createElement('span');
+        focusTag.className = 'focus-tag';
+        focusTag.textContent = formatFocusName(focus);
+        messageDiv.appendChild(focusTag);
+    }
 
     const bubble = document.createElement('div');
     bubble.className = 'message-bubble';
@@ -50,6 +58,16 @@ function addMessage(role, initialText = '') {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
     return bubble;
+}
+
+/**
+ * Format focus name for display (e.g., "width_color" -> "Width: Color")
+ */
+function formatFocusName(focus) {
+    if (!focus) return '';
+    return focus.split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(': ');
 }
 
 /**
@@ -73,6 +91,11 @@ async function startConversation() {
     const level1Category = document.getElementById('level1Category').value;
     const level2Category = document.getElementById('level2Category').value;
     const level3Category = document.getElementById('level3Category').value;
+    const tone = document.getElementById('assistantTone').value;
+    const focusMode = document.getElementById('nextQuestionFocus').value;
+
+    // Save tone preference
+    localStorage.setItem('paixueji_tone', tone);
 
     // Validation - only object name is required
     if (!objectName) {
@@ -122,7 +145,9 @@ async function startConversation() {
                 object_name: objectName,
                 level1_category: level1Value,
                 level2_category: level2Value,
-                level3_category: level3Value
+                level3_category: level3Value,
+                tone: tone,
+                focus_mode: focusMode
             }),
             signal: currentStreamController.signal
         });
@@ -131,8 +156,8 @@ async function startConversation() {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        // Create message bubble for streaming response
-        currentMessageDiv = addMessage('assistant', '');
+        // Create message bubble for streaming response (will be created on first chunk)
+        currentMessageDiv = null;
 
         // Read streaming response
         const reader = response.body.getReader();
@@ -256,6 +281,8 @@ async function sendMessage() {
     isStreaming = true;
     updateStopButton();
 
+    const focusMode = document.getElementById('nextQuestionFocus').value;
+
     try {
         console.log('[INFO] Sending message:', text);
 
@@ -269,7 +296,8 @@ async function sendMessage() {
             },
             body: JSON.stringify({
                 session_id: sessionId,
-                child_input: text
+                child_input: text,
+                focus_mode: focusMode
             }),
             signal: currentStreamController.signal
         });
@@ -281,8 +309,8 @@ async function sendMessage() {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        // Create message bubble for streaming response
-        currentMessageDiv = addMessage('assistant', '');
+        // Create message bubble for streaming response (will be created on first chunk)
+        currentMessageDiv = null;
 
         // Read streaming response
         const reader = response.body.getReader();
@@ -409,9 +437,10 @@ function handleStreamChunk(chunk) {
 
     // Handle text chunks (non-finish chunks with response text)
     if (!chunk.finish && chunk.response) {
-        if (currentMessageDiv) {
-            displayChunk(currentMessageDiv, chunk.response);
+        if (!currentMessageDiv) {
+            currentMessageDiv = addMessage('assistant', '', chunk.focus_mode);
         }
+        displayChunk(currentMessageDiv, chunk.response);
     }
 
     // Handle final chunk (finish=true)
@@ -596,6 +625,7 @@ function showCompletionUI() {
     // Add restart button
     const inputArea = document.querySelector('.input-area');
     const restartBtn = document.createElement('button');
+    restartBtn.className = 'restart-btn';
     restartBtn.textContent = 'Start New Conversation';
     restartBtn.onclick = resetConversation;
     restartBtn.style.marginLeft = '10px';
@@ -626,12 +656,20 @@ function resetConversation() {
     sendBtn.disabled = false;
 
     // Remove restart button
-    const restartBtn = document.querySelector('.input-area button:last-child');
-    if (restartBtn && restartBtn.textContent === 'Start New Conversation') {
+    const restartBtn = document.querySelector('.restart-btn');
+    if (restartBtn) {
         restartBtn.remove();
     }
 
     console.log('[INFO] Conversation reset');
+}
+
+/**
+ * Save focus preference to localStorage
+ */
+function saveFocusPreference() {
+    const focusMode = document.getElementById('nextQuestionFocus').value;
+    localStorage.setItem('paixueji_focus', focusMode);
 }
 
 /**
@@ -642,6 +680,24 @@ function init() {
 
     // Load category data
     loadCategoryData();
+
+    // Load saved tone preference
+    const savedTone = localStorage.getItem('paixueji_tone');
+    if (savedTone) {
+        const toneSelect = document.getElementById('assistantTone');
+        if (toneSelect) {
+            toneSelect.value = savedTone;
+        }
+    }
+
+    // Load saved focus preference
+    const savedFocus = localStorage.getItem('paixueji_focus');
+    if (savedFocus) {
+        const focusSelect = document.getElementById('nextQuestionFocus');
+        if (focusSelect) {
+            focusSelect.value = savedFocus;
+        }
+    }
 
     // Show empty state
     if (messagesContainer.children.length === 0) {

@@ -219,8 +219,53 @@ body {
     border-top: 1px solid #e0e0e0;
     background: white;
     display: flex;
-    gap: 10px;
+    flex-direction: column;
+    gap: 15px;
     position: relative;
+}
+
+.input-row {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.focus-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.focus-control label {
+    font-size: 13px;
+    color: #666;
+    font-weight: 500;
+}
+
+.focus-control select {
+    padding: 6px 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+    background: #f9f9f9;
+}
+
+.focus-tag {
+    font-size: 11px;
+    background: #d1fae5;
+    color: #065f46;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    align-self: flex-start;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.message.assistant {
+    flex-direction: column;
 }
 
 .input-area input {

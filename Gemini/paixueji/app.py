@@ -105,6 +105,8 @@ def start_conversation():
     level1_category = data.get('level1_category')
     level2_category = data.get('level2_category')
     level3_category = data.get('level3_category')
+    tone = data.get('tone')
+    focus_mode = data.get('focus_mode', 'depth')  # Default to depth if not provided
 
     # Validate required fields
     if not object_name:
@@ -135,13 +137,14 @@ def start_conversation():
     assistant.level1_category = level1_category
     assistant.level2_category = level2_category
     assistant.level3_category = level3_category
+    assistant.tone = tone
     assistant.correct_answer_count = 0
 
     # Generate unique request ID for this stream
     request_id = str(uuid.uuid4())
 
     print(f"[INFO] Created Paixueji session {session_id[:8]}... | age={age}, object={object_name}, "
-          f"level1={level1_category}, level2={level2_category}, level3={level3_category}, request_id={request_id[:8]}...")
+          f"level1={level1_category}, level2={level2_category}, level3={level3_category}, tone={tone}, focus={focus_mode}, request_id={request_id[:8]}...")
 
     def generate():
         """Generator for SSE stream."""
@@ -156,10 +159,18 @@ def start_conversation():
                 if age_prompt:
                     system_prompt += f"\n\nAGE-SPECIFIC GUIDANCE:\n{age_prompt}"
 
+            # Get tone prompt
+            tone_prompt = assistant.get_tone_prompt(tone)
+            if tone_prompt:
+                system_prompt += f"\n\nTONE GUIDANCE:\n{tone_prompt}"
+
             # Get category prompt
             category_prompt = assistant.get_category_prompt(level1_category, level2_category, level3_category)
             if category_prompt:
                 system_prompt += f"\n\nCATEGORY GUIDANCE:\n{category_prompt}"
+
+            # Get focus prompt for first question
+            focus_prompt = assistant.get_focus_prompt(focus_mode)
 
             # Initialize conversation history with system prompt
             assistant.conversation_history = [
@@ -189,7 +200,9 @@ def start_conversation():
                         level2_category=level2_category,
                         level3_category=level3_category,
                         correct_answer_count=0,
-                        category_prompt=category_prompt
+                        category_prompt=category_prompt,
+                        focus_prompt=focus_prompt,
+                        focus_mode=focus_mode
                     ):
                         # Yield StreamChunk as SSE event (pass directly for optimized serialization)
                         # Update conversation history with final response
@@ -252,6 +265,7 @@ def continue_conversation():
 
     session_id = data.get('session_id')
     child_input = data.get('child_input')
+    focus_mode = data.get('focus_mode', 'depth')  # Default to depth
 
     if not session_id or not child_input:
         return jsonify({
@@ -267,18 +281,11 @@ def continue_conversation():
             "error": "Session not found. Please start a new conversation."
         }), 404
 
-    # Check if conversation already complete
-    if assistant.correct_answer_count >= 4:
-        return jsonify({
-            "success": False,
-            "error": "Conversation already complete. Please start a new conversation."
-        }), 400
-
     # Generate unique request ID for this stream
     request_id = str(uuid.uuid4())
 
     print(f"[INFO] Session {session_id[:8]}... continuing | answer: '{child_input[:50]}...', "
-          f"correct_count: {assistant.correct_answer_count}, request_id={request_id[:8]}...")
+          f"correct_count: {assistant.correct_answer_count}, focus={focus_mode}, request_id={request_id[:8]}...")
 
     def generate():
         """Generator for SSE stream."""
@@ -295,16 +302,19 @@ def continue_conversation():
                 assistant.level2_category,
                 assistant.level3_category
             )
+            
+            # Get focus prompt
+            focus_prompt = assistant.get_focus_prompt(focus_mode)
 
             # Import is_answer_reasonable for answer validation
             from paixueji_stream import is_answer_reasonable
 
             # Check if answer is reasonable and increment count
             answer_is_reasonable = is_answer_reasonable(child_input)
-            if answer_is_reasonable and assistant.correct_answer_count < 4:
-                # Increment correct answer count
+            if answer_is_reasonable:
+                # Increment correct answer count (returns False now as infinite)
                 assistant.increment_correct_answers()
-                print(f"[INFO] Session {session_id[:8]}... answer accepted | new count: {assistant.correct_answer_count}/4")
+                print(f"[INFO] Session {session_id[:8]}... answer accepted | new count: {assistant.correct_answer_count}")
 
             # Get new event loop for this request (avoids race conditions)
             loop = get_event_loop()
@@ -326,8 +336,15 @@ def continue_conversation():
                         level2_category=assistant.level2_category,
                         level3_category=assistant.level3_category,
                         correct_answer_count=assistant.correct_answer_count,
-                        category_prompt=category_prompt
+                        category_prompt=category_prompt,
+                        focus_prompt=focus_prompt,
+                        focus_mode=focus_mode
                     ):
+                        # Handle new object name (Context Switch)
+                        if chunk.new_object_name:
+                            assistant.object_name = chunk.new_object_name
+                            print(f"[INFO] Session {session_id[:8]}... SWITCHED TOPIC to {chunk.new_object_name}")
+
                         # Yield StreamChunk as SSE event (pass directly for optimized serialization)
                         # Update conversation history with final response
                         if chunk.finish:
@@ -335,7 +352,7 @@ def continue_conversation():
                                 "role": "assistant",
                                 "content": chunk.response
                             })
-                            # Log completion if conversation complete
+                            # Log completion if conversation complete (won't happen now but kept for safety)
                             if chunk.conversation_complete:
                                 print(f"[INFO] Session {session_id[:8]}... CONVERSATION COMPLETE!")
 

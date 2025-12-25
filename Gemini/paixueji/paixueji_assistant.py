@@ -42,6 +42,7 @@ class PaixuejiAssistant:
         self.conversation_history = []
         self.state = ConversationState.INTRODUCTION
         self.age = None
+        self.tone = None
 
         # Paixueji-specific fields
         self.object_name = None
@@ -119,6 +120,28 @@ class PaixuejiAssistant:
         else:
             return age_groups.get('5-6', {}).get('prompt', '')
 
+    def get_tone_prompt(self, tone_key):
+        """Get the appropriate tone-based prompt."""
+        if not tone_key:
+            return ""
+        
+        tone_prompts = self.prompts.get('tone_prompts', {})
+        return tone_prompts.get(tone_key, "")
+
+    def get_focus_prompt(self, focus_mode):
+        """Get the appropriate focus strategy prompt."""
+        if not focus_mode:
+            return ""
+        
+        focus_prompts = self.prompts.get('focus_prompts', {})
+        prompt = focus_prompts.get(focus_mode, "")
+        
+        # Format object name into prompt if available
+        if self.object_name and "{object_name}" in prompt:
+            prompt = prompt.format(object_name=self.object_name)
+            
+        return prompt
+
     def get_category_prompt(self, level1, level2, level3):
         """
         Get the appropriate category-based prompt with fallback logic.
@@ -154,12 +177,12 @@ class PaixuejiAssistant:
     def increment_correct_answers(self):
         """
         Increment the correct answer count.
-
+        
         Returns:
-            bool: True if conversation is complete (4 answers), False otherwise
+            bool: Always False (conversation never auto-completes)
         """
         self.correct_answer_count += 1
-        return self.correct_answer_count >= 4
+        return False
 
     def get_conversation_history(self):
         """Get the full conversation history."""

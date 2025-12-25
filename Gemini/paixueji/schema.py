@@ -137,19 +137,10 @@ class StreamChunk(BaseModel):
         ...,
         description="Session identifier matching the request session_id.",
     )
-    request_id: str = Field(
-        ...,
-        description="Unique identifier for this specific request (to distinguish concurrent streams).",
-    )
-    is_stuck: bool = Field(
-        ...,
-        description="Boolean indicating if child is stuck and needs topic suggestions.",
-    )
-    correct_answer_count: int = Field(
-        0,
-        description="Number of correct answers (0-4) in Paixueji.",
-    )
-    conversation_complete: bool = Field(
-        False,
-        description="True when 4 correct answers reached in Paixueji.",
-    )
+    request_id: str
+    is_stuck: bool = False
+    correct_answer_count: int = 0
+    conversation_complete: bool = False
+    focus_mode: str | None = None
+    is_correct: bool | None = None
+    new_object_name: str | None = None
