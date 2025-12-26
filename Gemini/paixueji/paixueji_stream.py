@@ -537,8 +537,8 @@ async def call_paixueji_stream(
     # Add user input to messages
     messages.append({"role": "user", "content": content})
 
-    # Check if conversation is complete (4 correct answers)
-    conversation_complete = correct_answer_count >= 4
+    # INFINITE MODE: Conversation never completes automatically
+    conversation_complete = False
 
     logger.info(f"[{session_id}] Conversation state | correct_count={correct_answer_count}, complete={conversation_complete}")
 
@@ -614,15 +614,34 @@ async def call_paixueji_stream(
         new_object_detected = False
         new_object_name = None
         buffer = ""
+        is_in_analysis = False
 
         async for chunked_text, chunk_token_usage, full_text in stream_generator:
             if chunk_token_usage:
                 token_usage = chunk_token_usage
 
+            buffer += chunked_text
+            text_to_process = ""
+
+            # 1. Handle Analysis Block (Hidden thought process)
+            if not is_in_analysis:
+                if "<analysis>" in buffer:
+                    is_in_analysis = True
+            
+            if is_in_analysis:
+                if "</analysis>" in buffer:
+                    # End of analysis block found - remove it
+                    end_idx = buffer.find("</analysis>") + len("</analysis>")
+                    # Keep everything AFTER the analysis block
+                    buffer = buffer[end_idx:].lstrip() # lstrip to remove newline after tag
+                    is_in_analysis = False
+                    # Fall through to process remaining buffer
+                else:
+                    # Still inside analysis - yield nothing, keep buffering
+                    continue
+
+            # 2. Handle New Topic Tag (Control signal)
             if not new_object_detected:
-                buffer += chunked_text
-                text_to_process = ""
-                
                 if "<new_topic>" in buffer:
                     if "</new_topic>" in buffer:
                         # Extract topic
@@ -633,23 +652,34 @@ async def call_paixueji_stream(
                         logger.info(f"[{session_id}] NEW TOPIC DETECTED: {new_object_name}")
                         
                         # Remove tag from output
-                        text_to_process = buffer.replace(f"<new_topic>{new_object_name}</new_topic>", "")
-                        buffer = "" # Clear buffer
+                        # Note: We replace only the first occurrence just in case
+                        tag_full = f"<new_topic>{new_object_name}</new_topic>"
+                        buffer = buffer.replace(tag_full, "", 1).lstrip()
+                        
+                        # Now we can process the buffer as text
+                        text_to_process = buffer
+                        buffer = ""
                     else:
-                        # Wait for closing tag
-                        pass
+                        # Partial tag, keep buffering
+                        continue
                 else:
-                    # If buffer gets too long without tag, assume no tag (optimization)
-                    if len(buffer) > 100: 
+                    # No tag start found yet
+                    # Heuristic: If buffer is very long and no tag, flush it to avoid latency
+                    # But we must be careful not to split a tag. 
+                    # Tags are short (<20 chars). If buffer > 50 chars and no '<', flush.
+                    if len(buffer) > 50 and "<" not in buffer:
                          text_to_process = buffer
                          buffer = ""
+                    # If we have '<' but it's at the very end, we wait.
             else:
-                text_to_process = chunked_text
+                # Normal processing after topic found or if no topic expected anymore
+                text_to_process = buffer
+                buffer = ""
 
-            full_response += text_to_process
-
-            # Only yield non-empty text chunks
+            # 3. Yield Result
             if text_to_process:
+                full_response += text_to_process # Track what we actually sent to user
+                
                 sequence_number += 1
                 chunk = StreamChunk(
                     response=text_to_process,
@@ -663,7 +693,7 @@ async def call_paixueji_stream(
                     request_id=request_id,
                     is_stuck=False,  # Not used in Paixueji
                     correct_answer_count=correct_answer_count,
-                    conversation_complete=False, # Infinite stream
+                    conversation_complete=False,  # Infinite mode: never complete
                     focus_mode=focus_mode,
                     is_correct=is_correct,
                     new_object_name=new_object_name
@@ -675,7 +705,7 @@ async def call_paixueji_stream(
                     new_object_name = None
 
     # Flush remaining buffer if needed
-    if buffer and not new_object_detected:
+    if buffer and not is_in_analysis:
         full_response += buffer
 
     # Calculate total duration

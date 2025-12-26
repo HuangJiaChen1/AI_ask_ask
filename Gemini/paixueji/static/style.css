@@ -393,3 +393,19 @@ body {
     opacity: 0;
     transition: opacity 0.3s;
 }
+
+/* Feedback badges */
+.feedback-badge {
+    display: inline-block;
+    font-size: 18px;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+.feedback-badge.correct {
+    /* Green checkmark for correct answers */
+}
+
+.feedback-badge.encouraging {
+    /* Thinking face for encouraging feedback */
+}

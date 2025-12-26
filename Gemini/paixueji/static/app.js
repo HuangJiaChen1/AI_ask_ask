@@ -34,9 +34,10 @@ const thinkingTimeDisplay = document.getElementById('thinking-time');
  * @param {string} role - 'assistant' or 'user'
  * @param {string} initialText - Initial text to display (optional)
  * @param {string} focus - Focus mode used (optional)
+ * @param {boolean|null} isCorrect - Feedback status (true=correct, false=encouraging, null=none)
  * @returns {HTMLElement} The message bubble element
  */
-function addMessage(role, initialText = '', focus = null) {
+function addMessage(role, initialText = '', focus = null, isCorrect = null) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
 
@@ -49,7 +50,16 @@ function addMessage(role, initialText = '', focus = null) {
 
     const bubble = document.createElement('div');
     bubble.className = 'message-bubble';
-    bubble.textContent = initialText;
+
+    // Add feedback indicator for assistant messages
+    if (role === 'assistant' && isCorrect !== null) {
+        const feedbackBadge = document.createElement('span');
+        feedbackBadge.className = `feedback-badge ${isCorrect ? 'correct' : 'encouraging'}`;
+        feedbackBadge.textContent = isCorrect ? '✅ ' : '🤔 ';
+        bubble.appendChild(feedbackBadge);
+    }
+
+    bubble.appendChild(document.createTextNode(initialText));
 
     messageDiv.appendChild(bubble);
     messagesContainer.appendChild(messageDiv);
@@ -77,7 +87,23 @@ function formatFocusName(focus) {
  * @param {string} text - The text to display
  */
 function displayChunk(element, text) {
-    element.textContent += text;
+    // Check if element has a feedback badge as first child
+    const hasFeedbackBadge = element.firstChild && element.firstChild.classList &&
+                             element.firstChild.classList.contains('feedback-badge');
+
+    if (hasFeedbackBadge) {
+        // Append to text node after the badge
+        const textNode = element.lastChild;
+        if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+            textNode.textContent += text;
+        } else {
+            element.appendChild(document.createTextNode(text));
+        }
+    } else {
+        // No badge, just append text normally
+        element.textContent += text;
+    }
+
     // Auto-scroll as text appears
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
@@ -429,16 +455,15 @@ function handleStreamChunk(chunk) {
         updateProgressIndicator();
     }
 
-    // Check if conversation is complete
-    if (chunk.conversation_complete) {
-        conversationComplete = true;
-        console.log('[INFO] Conversation complete! 4/4 answers reached');
-    }
+    // INFINITE MODE: No conversation completion logic
+    // Conversation continues indefinitely
 
     // Handle text chunks (non-finish chunks with response text)
     if (!chunk.finish && chunk.response) {
         if (!currentMessageDiv) {
-            currentMessageDiv = addMessage('assistant', '', chunk.focus_mode);
+            // Create message with feedback indicator on first chunk
+            const isCorrect = chunk.is_correct !== undefined ? chunk.is_correct : null;
+            currentMessageDiv = addMessage('assistant', '', chunk.focus_mode, isCorrect);
         }
         displayChunk(currentMessageDiv, chunk.response);
     }
@@ -447,10 +472,25 @@ function handleStreamChunk(chunk) {
     if (chunk.finish) {
         // Only update if final response is longer (prevents cutoffs from incomplete final chunks)
         if (currentMessageDiv && chunk.response) {
-            const currentText = currentMessageDiv.textContent;
+            // Get current text (accounting for feedback badge)
+            const hasFeedbackBadge = currentMessageDiv.firstChild &&
+                                    currentMessageDiv.firstChild.classList &&
+                                    currentMessageDiv.firstChild.classList.contains('feedback-badge');
+
+            const currentText = hasFeedbackBadge ?
+                                (currentMessageDiv.lastChild ? currentMessageDiv.lastChild.textContent : '') :
+                                currentMessageDiv.textContent;
+
             if (chunk.response.length > currentText.length) {
-                // Final chunk has more text, use it
-                currentMessageDiv.textContent = chunk.response;
+                // Final chunk has more text, use it (preserve badge)
+                if (hasFeedbackBadge) {
+                    const textNode = currentMessageDiv.lastChild;
+                    if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+                        textNode.textContent = chunk.response;
+                    }
+                } else {
+                    currentMessageDiv.textContent = chunk.response;
+                }
             } else if (chunk.response.length < currentText.length) {
                 // Final chunk is shorter - log warning but keep current text
                 console.warn('[WARNING] Final chunk shorter than streamed text. Keeping streamed version.', {
@@ -472,10 +512,7 @@ function handleStreamChunk(chunk) {
             console.log('[INFO] Token usage:', chunk.token_usage);
         }
 
-        // Show completion UI if conversation is complete
-        if (conversationComplete) {
-            showCompletionUI();
-        }
+        // INFINITE MODE: No completion UI - conversation never ends
     }
 }
 

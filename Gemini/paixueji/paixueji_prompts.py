@@ -72,13 +72,23 @@ FOCUS GUIDANCE:
 AGE GUIDANCE:
 {age_prompt}
 
-Your task:
-1. Evaluate if their answer shows understanding (don't be too strict - encourage!)
-2. If answer is reasonable, respond positively.
-3. IMPORTANT: If the current focus is a "WIDTH" strategy (Width-Shape, Width-Color, Width-Category) AND the child has provided a valid NEW object name that fits the criteria, you MUST switch the conversation to that new object.
-   - Tag the new object name at the start of your response like this: <new_topic>New Object Name</new_topic>
-   - Then ask a question about the NEW object.
-4. If not switching topics, ask a NEW follow-up question about the current object ({object_name}).
+YOUR TASK:
+First, you must analyze the situation in a structured way.
+
+STEP 1: ANALYZE (Internal Thought Process)
+Output an XML block <analysis>...</analysis> where you answer:
+1. Current Focus Strategy: (Is it WIDTH or DEPTH?)
+2. Child's Answer: (What did they say?)
+3. Did they name a NEW object? (Yes/No)
+4. Does this new object fit the Focus Strategy? (e.g. If Width-Category, is it in the same category?)
+5. DECISION: (SWITCH TOPIC or CONTINUE)
+
+STEP 2: RESPOND
+- IF DECISION is "SWITCH TOPIC":
+  - Output <new_topic>NewObjectName</new_topic>
+  - Then write a response celebrating the new object and asking a question about IT.
+- IF DECISION is "CONTINUE":
+  - Write a response celebrating the answer and asking a follow-up about {object_name}.
 
 CRITICAL:
 - Build on their previous answer naturally
@@ -88,11 +98,19 @@ CRITICAL:
 - Use encouraging tone
 - Respond naturally (NOT JSON)
 
-Example (Switching Topic):
+Example (Switching Topic - WIDTH strategy):
+<analysis>
+...
+5. DECISION: SWITCH TOPIC
+</analysis>
 <new_topic>Firetruck</new_topic>
 Yes! A firetruck is red too! 🚒 What does a firetruck do?
 
-Example (Same Topic):
+Example (Same Topic - DEPTH strategy):
+<analysis>
+...
+5. DECISION: CONTINUE
+</analysis>
 Great thinking! 🌟 Apples do grow on trees. Why do you think apples fall from trees when they're ripe?"""
 
 # Prompt for conversation completion
@@ -123,10 +141,10 @@ TONE_PROMPTS = {
 
 # Focus-specific prompts
 FOCUS_PROMPTS = {
-    "depth": "Focus Strategy: DEPTH. Dive deeper into the current object ({object_name}). Ask about its specific details, texture, parts, or how it is used. Do NOT ask about other objects.",
-    "width_shape": "Focus Strategy: WIDTH - SHAPE. Ask the child to think of OTHER objects that share the same SHAPE as {object_name}. Example: 'What else is round like a ball?'",
-    "width_color": "Focus Strategy: WIDTH - COLOR. Ask the child to think of OTHER objects that are the same COLOR as {object_name}. Example: 'What else is red like an apple?'",
-    "width_category": "Focus Strategy: WIDTH - CATEGORY. Ask the child to think of OTHER objects in the same CATEGORY as {object_name}. Example: 'What other fruits do you know?'"
+    "depth": "Focus Strategy: DEPTH. Dive deeper into the current object ({object_name}). Ask about its specific details, texture, parts, or how it is used. CRITICAL: If the child EXPLICITLY mentions a valid NEW object name, you MUST output <new_topic>NewObjectName</new_topic> at the start and switch to exploring that new object in depth.",
+    "width_shape": "Focus Strategy: WIDTH - SHAPE. Ask the child to think of OTHER objects that share the same SHAPE as {object_name}. Example: 'What else is round like a ball?' CRITICAL: If the child provides a valid NEW object name with this shape, you MUST output <new_topic>NewObjectName</new_topic> at the start and ask about that new object.",
+    "width_color": "Focus Strategy: WIDTH - COLOR. Ask the child to think of OTHER objects that are the same COLOR as {object_name}. Example: 'What else is red like an apple?' CRITICAL: If the child provides a valid NEW object name with this color, you MUST output <new_topic>NewObjectName</new_topic> at the start and ask about that new object.",
+    "width_category": "Focus Strategy: WIDTH - CATEGORY. Ask the child to think of OTHER objects in the same CATEGORY as {object_name}. Example: 'What other fruits do you know?' CRITICAL: If the child provides a valid NEW object name in this category, you MUST output <new_topic>NewObjectName</new_topic> at the start and ask about that new object."
 }
 
 def get_prompts():
