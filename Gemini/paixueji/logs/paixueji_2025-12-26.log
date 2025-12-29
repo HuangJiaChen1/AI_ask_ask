@@ -900,3 +900,186 @@ Now, tell me, what does a cherry taste like? Is it sweet like a strawberry, or i
 2025-12-26 11:46:00.495 | INFO     | paixueji_stream:ask_followup_question_stream:345 | ask_followup_question_stream completed | duration=2.146s, response_length=361
 2025-12-26 11:46:00.496 | INFO     | paixueji_stream:call_paixueji_stream:719 | [dcbf2e40-d6f3-4ea2-a31e-f9b1773cee81] call_paixueji_stream completed | response_type=followup, duration=2.146s, total_chunks=1, response_length=168, correct_count=13, complete=False, session_finished=False
 2025-12-26 11:46:00.496 | DEBUG    | paixueji_stream:call_paixueji_stream:727 | Full response (first 200 chars): Aye, ye be right, matey! Strawberries are sweet and yummy! 🍓 What else do ye notice about a strawberry? Does it have any seeds? And if so, where do ye think they are? 🤔...
+2025-12-26 14:42:48.276 | INFO     | paixueji_stream:call_paixueji_stream:529 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream started | session_id=5190eb2e-2afe-4a75-8040-5f6a87c06976, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2025-12-26 14:42:48.277 | INFO     | paixueji_stream:call_paixueji_stream:543 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Conversation state | correct_count=0, complete=False
+2025-12-26 14:42:48.277 | INFO     | paixueji_stream:call_paixueji_stream:572 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Routing to introduction question
+2025-12-26 14:42:48.277 | INFO     | paixueji_stream:ask_introduction_question_stream:151 | ask_introduction_question_stream started | object=banana, age=6
+2025-12-26 14:42:48.277 | DEBUG    | paixueji_stream:ask_introduction_question_stream:167 | Messages prepared for API | count=3
+2025-12-26 14:42:48.277 | DEBUG    | paixueji_stream:ask_introduction_question_stream:178 | Sending 2 messages to Gemini API
+2025-12-26 14:42:48.277 | DEBUG    | paixueji_stream:ask_introduction_question_stream:195 | Stream object type: generator
+2025-12-26 14:43:15.512 | DEBUG    | paixueji_stream:ask_introduction_question_stream:203 | Chunk 1 | length=2, total_length=2
+2025-12-26 14:43:15.543 | DEBUG    | paixueji_stream:ask_introduction_question_stream:203 | Chunk 2 | length=9, total_length=11
+2025-12-26 14:43:15.557 | DEBUG    | paixueji_stream:ask_introduction_question_stream:203 | Chunk 3 | length=66, total_length=77
+2025-12-26 14:43:15.621 | DEBUG    | paixueji_stream:ask_introduction_question_stream:203 | Chunk 4 | length=63, total_length=140
+2025-12-26 14:43:15.624 | DEBUG    | paixueji_stream:ask_introduction_question_stream:208 | Gemini streaming API does not provide token usage in stream mode
+2025-12-26 14:43:15.625 | DEBUG    | paixueji_stream:ask_introduction_question_stream:222 | Cleaned up stream via del in finally block
+2025-12-26 14:43:15.625 | INFO     | paixueji_stream:ask_introduction_question_stream:227 | ask_introduction_question_stream completed | duration=27.347s, response_length=140
+2025-12-26 14:43:15.625 | WARNING  | paixueji_stream:ask_introduction_question_stream:233 | Slow LLM call | duration=27.347s exceeded threshold 5.0s
+2025-12-26 14:43:15.625 | INFO     | paixueji_stream:call_paixueji_stream:719 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream completed | response_type=introduction, duration=27.348s, total_chunks=2, response_length=140, correct_count=0, complete=False, session_finished=False
+2025-12-26 14:43:15.625 | DEBUG    | paixueji_stream:call_paixueji_stream:727 | Full response (first 200 chars): Ahoy there, matey! We're about to set sail on an adventure to explore a yummy banana! 🍌
+
+Tell me, what shape does this banana remind you of?...
+2025-12-26 14:43:43.239 | INFO     | paixueji_stream:call_paixueji_stream:529 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream started | session_id=5190eb2e-2afe-4a75-8040-5f6a87c06976, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=1, status=normal, content_length=10, message_history=2
+2025-12-26 14:43:43.239 | INFO     | paixueji_stream:call_paixueji_stream:543 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Conversation state | correct_count=1, complete=False
+2025-12-26 14:43:43.239 | INFO     | paixueji_stream:call_paixueji_stream:593 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Routing to followup question | answer_reasonable=True
+2025-12-26 14:43:43.239 | INFO     | paixueji_stream:ask_followup_question_stream:272 | ask_followup_question_stream started | object=banana, correct_count=1, answer_length=10
+2025-12-26 14:43:43.240 | DEBUG    | paixueji_stream:ask_followup_question_stream:300 | Sending 3 messages to Gemini API
+2025-12-26 14:43:43.240 | DEBUG    | paixueji_stream:ask_followup_question_stream:317 | Stream object type: generator
+2025-12-26 14:43:45.242 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 1 | length=1, total_length=1
+2025-12-26 14:43:45.270 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 2 | length=10, total_length=11
+2025-12-26 14:43:45.281 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 3 | length=58, total_length=69
+2025-12-26 14:43:45.334 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 4 | length=54, total_length=123
+2025-12-26 14:43:45.442 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 5 | length=132, total_length=255
+2025-12-26 14:43:45.552 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 6 | length=127, total_length=382
+2025-12-26 14:43:45.698 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 7 | length=121, total_length=503
+2025-12-26 14:43:45.700 | DEBUG    | paixueji_stream:ask_followup_question_stream:340 | Cleaned up stream via del in finally block
+2025-12-26 14:43:45.700 | INFO     | paixueji_stream:ask_followup_question_stream:345 | ask_followup_question_stream completed | duration=2.460s, response_length=503
+2025-12-26 14:43:45.700 | INFO     | paixueji_stream:call_paixueji_stream:719 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream completed | response_type=followup, duration=2.461s, total_chunks=1, response_length=124, correct_count=1, complete=False, session_finished=False
+2025-12-26 14:43:45.700 | DEBUG    | paixueji_stream:call_paixueji_stream:727 | Full response (first 200 chars): Aye, a fine curved shape it is! 🍌 Now, let's talk about colors, me hearty! What color is this banana when it's ready to eat?...
+2025-12-26 14:43:52.326 | INFO     | paixueji_stream:call_paixueji_stream:529 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream started | session_id=5190eb2e-2afe-4a75-8040-5f6a87c06976, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=2, status=normal, content_length=10, message_history=3
+2025-12-26 14:43:52.326 | INFO     | paixueji_stream:call_paixueji_stream:543 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Conversation state | correct_count=2, complete=False
+2025-12-26 14:43:52.326 | INFO     | paixueji_stream:call_paixueji_stream:593 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Routing to followup question | answer_reasonable=True
+2025-12-26 14:43:52.326 | INFO     | paixueji_stream:ask_followup_question_stream:272 | ask_followup_question_stream started | object=banana, correct_count=2, answer_length=10
+2025-12-26 14:43:52.326 | DEBUG    | paixueji_stream:ask_followup_question_stream:300 | Sending 4 messages to Gemini API
+2025-12-26 14:43:52.326 | DEBUG    | paixueji_stream:ask_followup_question_stream:317 | Stream object type: generator
+2025-12-26 14:43:54.211 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 1 | length=1, total_length=1
+2025-12-26 14:43:54.238 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 2 | length=10, total_length=11
+2025-12-26 14:43:54.268 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 3 | length=58, total_length=69
+2025-12-26 14:43:54.314 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 4 | length=48, total_length=117
+2025-12-26 14:43:54.423 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 5 | length=108, total_length=225
+2025-12-26 14:43:54.538 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 6 | length=117, total_length=342
+2025-12-26 14:43:54.590 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 7 | length=62, total_length=404
+2025-12-26 14:43:54.591 | DEBUG    | paixueji_stream:ask_followup_question_stream:340 | Cleaned up stream via del in finally block
+2025-12-26 14:43:54.591 | INFO     | paixueji_stream:ask_followup_question_stream:345 | ask_followup_question_stream completed | duration=2.265s, response_length=404
+2025-12-26 14:43:54.591 | INFO     | paixueji_stream:call_paixueji_stream:719 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream completed | response_type=followup, duration=2.266s, total_chunks=2, response_length=179, correct_count=2, complete=False, session_finished=False
+2025-12-26 14:43:54.591 | DEBUG    | paixueji_stream:call_paixueji_stream:727 | Full response (first 200 chars): 
+Aye, that's right, me hearty! A lovely yellow, just like the sun on a clear day! ☀️ Can ye think of any other things out there in the world that are also yellow, like our banana?...
+2025-12-26 14:44:34.759 | INFO     | paixueji_stream:call_paixueji_stream:529 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream started | session_id=5190eb2e-2afe-4a75-8040-5f6a87c06976, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=3, status=normal, content_length=30, message_history=4
+2025-12-26 14:44:34.759 | INFO     | paixueji_stream:call_paixueji_stream:543 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Conversation state | correct_count=3, complete=False
+2025-12-26 14:44:34.759 | INFO     | paixueji_stream:call_paixueji_stream:593 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Routing to followup question | answer_reasonable=True
+2025-12-26 14:44:34.759 | INFO     | paixueji_stream:ask_followup_question_stream:272 | ask_followup_question_stream started | object=banana, correct_count=3, answer_length=30
+2025-12-26 14:44:34.759 | DEBUG    | paixueji_stream:ask_followup_question_stream:300 | Sending 5 messages to Gemini API
+2025-12-26 14:44:34.760 | DEBUG    | paixueji_stream:ask_followup_question_stream:317 | Stream object type: generator
+2025-12-26 14:44:38.892 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 1 | length=1, total_length=1
+2025-12-26 14:44:38.923 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 2 | length=10, total_length=11
+2025-12-26 14:44:38.937 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 3 | length=58, total_length=69
+2025-12-26 14:44:38.957 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 4 | length=69, total_length=138
+2025-12-26 14:44:39.067 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 5 | length=122, total_length=260
+2025-12-26 14:44:39.210 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 6 | length=113, total_length=373
+2025-12-26 14:44:39.210 | INFO     | paixueji_stream:call_paixueji_stream:652 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] NEW TOPIC DETECTED: Sunflower
+2025-12-26 14:44:39.263 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 7 | length=43, total_length=416
+2025-12-26 14:44:39.268 | DEBUG    | paixueji_stream:ask_followup_question_stream:340 | Cleaned up stream via del in finally block
+2025-12-26 14:44:39.268 | INFO     | paixueji_stream:ask_followup_question_stream:345 | ask_followup_question_stream completed | duration=4.508s, response_length=416
+2025-12-26 14:44:39.268 | INFO     | paixueji_stream:call_paixueji_stream:719 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream completed | response_type=followup, duration=4.509s, total_chunks=2, response_length=134, correct_count=3, complete=False, session_finished=False
+2025-12-26 14:44:39.268 | DEBUG    | paixueji_stream:call_paixueji_stream:727 | Full response (first 200 chars): Aye, a sunflower is yellow too! 🌻 That's a grand answer, me hearty! What do you think makes a sunflower turn its face towards the sun?...
+2025-12-26 14:44:54.592 | INFO     | paixueji_stream:call_paixueji_stream:529 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream started | session_id=5190eb2e-2afe-4a75-8040-5f6a87c06976, age=6, object=Sunflower, level1=plants, level2=ornamental_plants, level3=None, correct_count=3, status=normal, content_length=12, message_history=5
+2025-12-26 14:44:54.592 | INFO     | paixueji_stream:call_paixueji_stream:543 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Conversation state | correct_count=3, complete=False
+2025-12-26 14:44:54.592 | INFO     | paixueji_stream:call_paixueji_stream:610 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Routing to followup question | answer_reasonable=False
+2025-12-26 14:44:54.592 | INFO     | paixueji_stream:ask_followup_question_stream:272 | ask_followup_question_stream started | object=Sunflower, correct_count=3, answer_length=12
+2025-12-26 14:44:54.592 | DEBUG    | paixueji_stream:ask_followup_question_stream:300 | Sending 6 messages to Gemini API
+2025-12-26 14:44:54.592 | DEBUG    | paixueji_stream:ask_followup_question_stream:317 | Stream object type: generator
+2025-12-26 14:44:56.557 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 1 | length=1, total_length=1
+2025-12-26 14:44:56.564 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 2 | length=10, total_length=11
+2025-12-26 14:44:56.592 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 3 | length=51, total_length=62
+2025-12-26 14:44:56.601 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 4 | length=42, total_length=104
+2025-12-26 14:44:56.681 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 5 | length=104, total_length=208
+2025-12-26 14:44:56.819 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 6 | length=120, total_length=328
+2025-12-26 14:44:56.965 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 7 | length=166, total_length=494
+2025-12-26 14:44:56.967 | DEBUG    | paixueji_stream:ask_followup_question_stream:340 | Cleaned up stream via del in finally block
+2025-12-26 14:44:56.967 | INFO     | paixueji_stream:ask_followup_question_stream:345 | ask_followup_question_stream completed | duration=2.375s, response_length=494
+2025-12-26 14:44:56.967 | INFO     | paixueji_stream:call_paixueji_stream:719 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream completed | response_type=followup_encouraging, duration=2.376s, total_chunks=2, response_length=288, correct_count=3, complete=False, session_finished=False
+2025-12-26 14:44:56.967 | DEBUG    | paixueji_stream:call_paixueji_stream:727 | Full response (first 200 chars): Ahoy, me hearty! No worries if ye don't know! Sometimes the answers are a bit tricky to find, like buried treasure! 🏴‍☠️
+
+Let's think about that sunflower again. It has a big, round face, doesn't it? ...
+2025-12-26 14:45:23.239 | INFO     | paixueji_stream:call_paixueji_stream:529 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream started | session_id=5190eb2e-2afe-4a75-8040-5f6a87c06976, age=6, object=Sunflower, level1=plants, level2=ornamental_plants, level3=None, correct_count=4, status=normal, content_length=10, message_history=6
+2025-12-26 14:45:23.239 | INFO     | paixueji_stream:call_paixueji_stream:543 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Conversation state | correct_count=4, complete=False
+2025-12-26 14:45:23.239 | INFO     | paixueji_stream:call_paixueji_stream:593 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Routing to followup question | answer_reasonable=True
+2025-12-26 14:45:23.239 | INFO     | paixueji_stream:ask_followup_question_stream:272 | ask_followup_question_stream started | object=Sunflower, correct_count=4, answer_length=10
+2025-12-26 14:45:23.239 | DEBUG    | paixueji_stream:ask_followup_question_stream:300 | Sending 7 messages to Gemini API
+2025-12-26 14:45:23.239 | DEBUG    | paixueji_stream:ask_followup_question_stream:317 | Stream object type: generator
+2025-12-26 14:45:25.173 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 1 | length=1, total_length=1
+2025-12-26 14:45:25.198 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 2 | length=10, total_length=11
+2025-12-26 14:45:25.233 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 3 | length=51, total_length=62
+2025-12-26 14:45:25.264 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 4 | length=62, total_length=124
+2025-12-26 14:45:25.345 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 5 | length=118, total_length=242
+2025-12-26 14:45:25.429 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 6 | length=100, total_length=342
+2025-12-26 14:45:25.429 | INFO     | paixueji_stream:call_paixueji_stream:652 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] NEW TOPIC DETECTED: Football
+2025-12-26 14:45:25.534 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 7 | length=87, total_length=429
+2025-12-26 14:45:25.539 | DEBUG    | paixueji_stream:ask_followup_question_stream:340 | Cleaned up stream via del in finally block
+2025-12-26 14:45:25.539 | INFO     | paixueji_stream:ask_followup_question_stream:345 | ask_followup_question_stream completed | duration=2.300s, response_length=429
+2025-12-26 14:45:25.539 | INFO     | paixueji_stream:call_paixueji_stream:719 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream completed | response_type=followup, duration=2.300s, total_chunks=2, response_length=156, correct_count=4, complete=False, session_finished=False
+2025-12-26 14:45:25.539 | DEBUG    | paixueji_stream:call_paixueji_stream:727 | Full response (first 200 chars): A football! Aye, that's a grand round thing, just like a ball! ⚽ What do ye do with a football, me hearty? Do ye kick it, throw it, or maybe even bounce it?...
+2025-12-26 14:45:33.246 | INFO     | paixueji_stream:call_paixueji_stream:529 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream started | session_id=5190eb2e-2afe-4a75-8040-5f6a87c06976, age=6, object=Football, level1=None, level2=None, level3=None, correct_count=5, status=normal, content_length=9, message_history=7
+2025-12-26 14:45:33.246 | INFO     | paixueji_stream:call_paixueji_stream:543 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Conversation state | correct_count=5, complete=False
+2025-12-26 14:45:33.246 | INFO     | paixueji_stream:call_paixueji_stream:593 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Routing to followup question | answer_reasonable=True
+2025-12-26 14:45:33.246 | INFO     | paixueji_stream:ask_followup_question_stream:272 | ask_followup_question_stream started | object=Football, correct_count=5, answer_length=9
+2025-12-26 14:45:33.246 | DEBUG    | paixueji_stream:ask_followup_question_stream:300 | Sending 8 messages to Gemini API
+2025-12-26 14:45:33.247 | DEBUG    | paixueji_stream:ask_followup_question_stream:317 | Stream object type: generator
+2025-12-26 14:45:33.786 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 1 | length=1, total_length=1
+2025-12-26 14:45:33.797 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 2 | length=10, total_length=11
+2025-12-26 14:45:33.828 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 3 | length=51, total_length=62
+2025-12-26 14:45:33.866 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 4 | length=50, total_length=112
+2025-12-26 14:45:33.949 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 5 | length=112, total_length=224
+2025-12-26 14:45:34.070 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 6 | length=118, total_length=342
+2025-12-26 14:45:34.083 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 7 | length=20, total_length=362
+2025-12-26 14:45:34.162 | DEBUG    | paixueji_stream:ask_followup_question_stream:340 | Cleaned up stream via del in finally block
+2025-12-26 14:45:34.162 | INFO     | paixueji_stream:ask_followup_question_stream:345 | ask_followup_question_stream completed | duration=0.916s, response_length=362
+2025-12-26 14:45:34.162 | INFO     | paixueji_stream:call_paixueji_stream:719 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream completed | response_type=followup, duration=0.916s, total_chunks=1, response_length=138, correct_count=5, complete=False, session_finished=False
+2025-12-26 14:45:34.163 | DEBUG    | paixueji_stream:call_paixueji_stream:727 | Full response (first 200 chars): 
+Aye, ye kick it! That's a grand way to play with a football! ⚽ What happens when ye kick a football really hard? Does it go fast or slow?...
+2025-12-26 14:45:39.438 | INFO     | paixueji_stream:call_paixueji_stream:529 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream started | session_id=5190eb2e-2afe-4a75-8040-5f6a87c06976, age=6, object=Football, level1=None, level2=None, level3=None, correct_count=6, status=normal, content_length=12, message_history=8
+2025-12-26 14:45:39.438 | INFO     | paixueji_stream:call_paixueji_stream:543 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Conversation state | correct_count=6, complete=False
+2025-12-26 14:45:39.438 | INFO     | paixueji_stream:call_paixueji_stream:593 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Routing to followup question | answer_reasonable=True
+2025-12-26 14:45:39.438 | INFO     | paixueji_stream:ask_followup_question_stream:272 | ask_followup_question_stream started | object=Football, correct_count=6, answer_length=12
+2025-12-26 14:45:39.438 | DEBUG    | paixueji_stream:ask_followup_question_stream:300 | Sending 9 messages to Gemini API
+2025-12-26 14:45:39.439 | DEBUG    | paixueji_stream:ask_followup_question_stream:317 | Stream object type: generator
+2025-12-26 14:45:42.477 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 1 | length=1, total_length=1
+2025-12-26 14:45:42.508 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 2 | length=10, total_length=11
+2025-12-26 14:45:42.526 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 3 | length=65, total_length=76
+2025-12-26 14:45:42.568 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 4 | length=65, total_length=141
+2025-12-26 14:45:42.697 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 5 | length=112, total_length=253
+2025-12-26 14:45:42.849 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 6 | length=127, total_length=380
+2025-12-26 14:45:42.954 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 7 | length=87, total_length=467
+2025-12-26 14:45:42.956 | DEBUG    | paixueji_stream:ask_followup_question_stream:340 | Cleaned up stream via del in finally block
+2025-12-26 14:45:42.956 | INFO     | paixueji_stream:ask_followup_question_stream:345 | ask_followup_question_stream completed | duration=3.518s, response_length=467
+2025-12-26 14:45:42.956 | INFO     | paixueji_stream:call_paixueji_stream:719 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream completed | response_type=followup, duration=3.518s, total_chunks=3, response_length=271, correct_count=6, complete=False, session_finished=False
+2025-12-26 14:45:42.956 | DEBUG    | paixueji_stream:call_paixueji_stream:727 | Full response (first 200 chars): Aye, that it does, me hearty! When ye give it a good kick, it flies through the air like a swift seagull! 💨
+
+Now, ye said it goes fast. What do ye think happens to the football when it's moving really...
+2025-12-26 14:45:57.624 | INFO     | paixueji_stream:call_paixueji_stream:529 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream started | session_id=5190eb2e-2afe-4a75-8040-5f6a87c06976, age=6, object=Football, level1=None, level2=None, level3=None, correct_count=7, status=normal, content_length=17, message_history=9
+2025-12-26 14:45:57.624 | INFO     | paixueji_stream:call_paixueji_stream:543 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Conversation state | correct_count=7, complete=False
+2025-12-26 14:45:57.624 | INFO     | paixueji_stream:call_paixueji_stream:593 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Routing to followup question | answer_reasonable=True
+2025-12-26 14:45:57.624 | INFO     | paixueji_stream:ask_followup_question_stream:272 | ask_followup_question_stream started | object=Football, correct_count=7, answer_length=17
+2025-12-26 14:45:57.624 | DEBUG    | paixueji_stream:ask_followup_question_stream:300 | Sending 10 messages to Gemini API
+2025-12-26 14:45:57.624 | DEBUG    | paixueji_stream:ask_followup_question_stream:317 | Stream object type: generator
+2025-12-26 14:45:58.922 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 1 | length=1, total_length=1
+2025-12-26 14:45:58.946 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 2 | length=10, total_length=11
+2025-12-26 14:45:58.981 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 3 | length=61, total_length=72
+2025-12-26 14:45:59.008 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 4 | length=57, total_length=129
+2025-12-26 14:45:59.095 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 5 | length=108, total_length=237
+2025-12-26 14:45:59.210 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 6 | length=129, total_length=366
+2025-12-26 14:45:59.354 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 7 | length=147, total_length=513
+2025-12-26 14:45:59.356 | DEBUG    | paixueji_stream:ask_followup_question_stream:340 | Cleaned up stream via del in finally block
+2025-12-26 14:45:59.357 | INFO     | paixueji_stream:ask_followup_question_stream:345 | ask_followup_question_stream completed | duration=1.733s, response_length=513
+2025-12-26 14:45:59.357 | INFO     | paixueji_stream:call_paixueji_stream:719 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream completed | response_type=followup, duration=1.733s, total_chunks=2, response_length=310, correct_count=7, complete=False, session_finished=False
+2025-12-26 14:45:59.357 | DEBUG    | paixueji_stream:call_paixueji_stream:727 | Full response (first 200 chars): Aye, that's a keen observation, me hearty! 🧐 When a football flies fast, it can make a "whoosh" sound as it cuts through the air, like a speedy pirate ship sailing the waves! 💨 What else do ye think h...
+2025-12-26 14:46:17.175 | INFO     | paixueji_stream:call_paixueji_stream:529 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream started | session_id=5190eb2e-2afe-4a75-8040-5f6a87c06976, age=6, object=Football, level1=None, level2=None, level3=None, correct_count=8, status=normal, content_length=22, message_history=10
+2025-12-26 14:46:17.175 | INFO     | paixueji_stream:call_paixueji_stream:543 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Conversation state | correct_count=8, complete=False
+2025-12-26 14:46:17.176 | INFO     | paixueji_stream:call_paixueji_stream:593 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] Routing to followup question | answer_reasonable=True
+2025-12-26 14:46:17.176 | INFO     | paixueji_stream:ask_followup_question_stream:272 | ask_followup_question_stream started | object=Football, correct_count=8, answer_length=22
+2025-12-26 14:46:17.176 | DEBUG    | paixueji_stream:ask_followup_question_stream:300 | Sending 11 messages to Gemini API
+2025-12-26 14:46:17.176 | DEBUG    | paixueji_stream:ask_followup_question_stream:317 | Stream object type: generator
+2025-12-26 14:46:19.084 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 1 | length=1, total_length=1
+2025-12-26 14:46:19.113 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 2 | length=10, total_length=11
+2025-12-26 14:46:19.162 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 3 | length=62, total_length=73
+2025-12-26 14:46:19.180 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 4 | length=55, total_length=128
+2025-12-26 14:46:19.208 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 5 | length=112, total_length=240
+2025-12-26 14:46:19.334 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 6 | length=129, total_length=369
+2025-12-26 14:46:19.474 | DEBUG    | paixueji_stream:ask_followup_question_stream:325 | Chunk 7 | length=207, total_length=576
+2025-12-26 14:46:19.477 | DEBUG    | paixueji_stream:ask_followup_question_stream:340 | Cleaned up stream via del in finally block
+2025-12-26 14:46:19.477 | INFO     | paixueji_stream:ask_followup_question_stream:345 | ask_followup_question_stream completed | duration=2.301s, response_length=576
+2025-12-26 14:46:19.477 | INFO     | paixueji_stream:call_paixueji_stream:719 | [5190eb2e-2afe-4a75-8040-5f6a87c06976] call_paixueji_stream completed | response_type=followup, duration=2.302s, total_chunks=2, response_length=336, correct_count=8, complete=False, session_finished=False
+2025-12-26 14:46:19.477 | DEBUG    | paixueji_stream:call_paixueji_stream:727 | Full response (first 200 chars): 
+Aye, that's a clever thought, me hearty! 🧐 When a football is moving super fast, it can squish and change its shape a little bit, just like a bouncy ball! ⚽
+
+Now, let's think about other things we ca...

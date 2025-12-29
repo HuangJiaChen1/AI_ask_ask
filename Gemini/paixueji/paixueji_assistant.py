@@ -188,6 +188,85 @@ class PaixuejiAssistant:
         """Get the full conversation history."""
         return self.conversation_history
 
+    def classify_object_sync(self, object_name):
+        """
+        Classify an object into level2_category and derive level1_category.
+
+        This method is designed to be called in a background thread to avoid
+        blocking the main response stream. It updates the assistant's category
+        state for subsequent conversation turns.
+
+        Args:
+            object_name (str): Name of the object to classify
+        """
+        try:
+            safe_print(f"[CLASSIFY] Starting classification for: {object_name}")
+
+            # Get available level2 categories from object_prompts
+            if not self.object_prompts or 'level2_categories' not in self.object_prompts:
+                safe_print(f"[CLASSIFY] No object_prompts available, setting categories to None")
+                self.level1_category = None
+                self.level2_category = None
+                self.level3_category = None
+                return
+
+            level2_categories = self.object_prompts['level2_categories']
+
+            # Build categories list for prompt
+            categories_list = "\n".join([
+                f"- {key}: {data.get('prompt', '')[:100]}..."
+                for key, data in level2_categories.items()
+            ])
+
+            # Get classification prompt template
+            classification_prompt = self.prompts['classification_prompt'].format(
+                object_name=object_name,
+                categories_list=categories_list
+            )
+
+            # Call Gemini to classify
+            safe_print(f"[CLASSIFY] Calling Gemini for classification...")
+            response = self.client.models.generate_content(
+                model=self.config.get("model", "gemini-2.0-flash-exp"),
+                contents=classification_prompt,
+                config={
+                    "temperature": 0.1,  # Low temperature for consistent classification
+                    "max_output_tokens": 50  # Short response expected
+                }
+            )
+
+            # Extract classification result
+            classified_category = response.text.strip().lower()
+            safe_print(f"[CLASSIFY] Raw response: {classified_category}")
+
+            # Check if it's a valid level2 category
+            if classified_category in level2_categories:
+                # Update level2_category
+                self.level2_category = classified_category
+
+                # Derive level1_category from parent relationship
+                self.level1_category = level2_categories[classified_category].get('parent')
+
+                # Reset level3_category
+                self.level3_category = None
+
+                safe_print(f"[CLASSIFY] SUCCESS: {object_name} -> level2={self.level2_category}, level1={self.level1_category}")
+            else:
+                # No match or "none" response - set to None (fallback)
+                safe_print(f"[CLASSIFY] No match found for {object_name}, setting categories to None")
+                self.level1_category = None
+                self.level2_category = None
+                self.level3_category = None
+
+        except Exception as e:
+            safe_print(f"[CLASSIFY] ERROR during classification: {e}")
+            import traceback
+            traceback.print_exc()
+            # On error, set categories to None (fallback)
+            self.level1_category = None
+            self.level2_category = None
+            self.level3_category = None
+
     def reset(self):
         """Reset the conversation."""
         self.conversation_history = []

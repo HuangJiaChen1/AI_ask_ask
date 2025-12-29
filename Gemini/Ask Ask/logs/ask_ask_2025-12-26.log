@@ -1,0 +1,368 @@
+2025-12-26 16:45:36.085 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] call_ask_ask_stream started | session_id=104c78ec-91b9-4938-9f4b-a7b9709a9790, age=6, status=normal, content_length=165, message_history=1
+2025-12-26 16:45:36.085 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Stuck detection | is_stuck=False
+2025-12-26 16:45:36.085 | INFO     | ask_ask_stream:call_ask_ask_stream:496 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Routing to answer_question
+2025-12-26 16:45:36.085 | INFO     | ask_ask_stream:answer_question_stream:207 | answer_question_stream started | question_length=165, message_count=2
+2025-12-26 16:45:36.086 | DEBUG    | ask_ask_stream:answer_question_stream:217 | Messages prepared for API | count=3
+2025-12-26 16:45:36.086 | DEBUG    | ask_ask_stream:answer_question_stream:228 | Sending 2 messages to Gemini API
+2025-12-26 16:45:36.086 | DEBUG    | ask_ask_stream:answer_question_stream:245 | Stream object type: generator
+2025-12-26 16:45:50.739 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 1 | text='Hello' | length=5, total_length=5
+2025-12-26 16:45:50.739 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Yielding chunk 1 | text='Hello'
+2025-12-26 16:45:50.764 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 2 | text=' there,' | length=7, total_length=12
+2025-12-26 16:45:50.764 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Yielding chunk 2 | text=' there,'
+2025-12-26 16:45:50.800 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 3 | text=' curious explorer! You can ask me about ANYTHING! Want to know about roaring' | length=76, total_length=88
+2025-12-26 16:45:50.800 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Yielding chunk 3 | text=' curious explorer! You can ask me about ANYTHING! Want to know about roaring'
+2025-12-26 16:45:50.864 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 4 | text=' dinosaurs , sparkly stars , or how a tiny seed grows into a big tree ' | length=70, total_length=158
+2025-12-26 16:45:50.865 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Yielding chunk 4 | text=' dinosaurs , sparkly stars , or how a tiny seed grows into a big tree '
+2025-12-26 16:45:50.910 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 5 | text=' ? What amazing thing do you want to learn about today? ' | length=56, total_length=214
+2025-12-26 16:45:50.910 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Yielding chunk 5 | text=' ? What amazing thing do you want to learn about today? '
+2025-12-26 16:45:50.915 | DEBUG    | ask_ask_stream:answer_question_stream:260 | Gemini streaming API does not provide token usage in stream mode
+2025-12-26 16:45:50.915 | DEBUG    | ask_ask_stream:answer_question_stream:274 | Cleaned up stream via del in finally block
+2025-12-26 16:45:50.915 | INFO     | ask_ask_stream:answer_question_stream:279 | answer_question_stream completed | duration=14.830s, response_length=214
+2025-12-26 16:45:50.915 | WARNING  | ask_ask_stream:answer_question_stream:285 | Slow LLM call | duration=14.830s exceeded threshold 5.0s
+2025-12-26 16:45:50.915 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] call_ask_ask_stream completed | response_type=answer_question, duration=14.831s, total_chunks=5, response_length=214, session_finished=False
+2025-12-26 16:45:50.915 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): Hello there, curious explorer! You can ask me about ANYTHING! Want to know about roaring dinosaurs , sparkly stars , or how a tiny seed grows into a big tree  ? What amazing thing do you want to learn...
+2025-12-26 16:46:01.034 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] call_ask_ask_stream started | session_id=104c78ec-91b9-4938-9f4b-a7b9709a9790, age=6, status=normal, content_length=26, message_history=2
+2025-12-26 16:46:01.035 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Stuck detection | is_stuck=False
+2025-12-26 16:46:01.035 | INFO     | ask_ask_stream:call_ask_ask_stream:496 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Routing to answer_question
+2025-12-26 16:46:01.035 | INFO     | ask_ask_stream:answer_question_stream:207 | answer_question_stream started | question_length=26, message_count=3
+2025-12-26 16:46:01.035 | DEBUG    | ask_ask_stream:answer_question_stream:217 | Messages prepared for API | count=4
+2025-12-26 16:46:01.035 | DEBUG    | ask_ask_stream:answer_question_stream:228 | Sending 3 messages to Gemini API
+2025-12-26 16:46:01.035 | DEBUG    | ask_ask_stream:answer_question_stream:245 | Stream object type: generator
+2025-12-26 16:46:02.858 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 1 | text='Wow' | length=3, total_length=3
+2025-12-26 16:46:02.858 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Yielding chunk 1 | text='Wow'
+2025-12-26 16:46:02.915 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 2 | text=", a pet dog named Rex! That's so cool! Dogs" | length=43, total_length=46
+2025-12-26 16:46:02.915 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Yielding chunk 2 | text=", a pet dog named Rex! That's so cool! Dogs"
+2025-12-26 16:46:03.003 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 3 | text=" are amazing friends! Your dog Rex is a mammal! That means he's warm" | length=68, total_length=114
+2025-12-26 16:46:03.004 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Yielding chunk 3 | text=" are amazing friends! Your dog Rex is a mammal! That means he's warm"
+2025-12-26 16:46:03.127 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 4 | text="-blooded, like you and me, and his mommy makes milk to feed him when he's a puppy! What's Rex's favorite thing" | length=110, total_length=224
+2025-12-26 16:46:03.127 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Yielding chunk 4 | text="-blooded, like you and me, and his mommy makes milk to feed him when he's a puppy! What's Rex's favorite thing"
+2025-12-26 16:46:03.139 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 5 | text=' to do? Does he love to play fetch? ' | length=36, total_length=260
+2025-12-26 16:46:03.139 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Yielding chunk 5 | text=' to do? Does he love to play fetch? '
+2025-12-26 16:46:03.141 | DEBUG    | ask_ask_stream:answer_question_stream:260 | Gemini streaming API does not provide token usage in stream mode
+2025-12-26 16:46:03.141 | DEBUG    | ask_ask_stream:answer_question_stream:274 | Cleaned up stream via del in finally block
+2025-12-26 16:46:03.141 | INFO     | ask_ask_stream:answer_question_stream:279 | answer_question_stream completed | duration=2.106s, response_length=260
+2025-12-26 16:46:03.141 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] call_ask_ask_stream completed | response_type=answer_question, duration=2.107s, total_chunks=5, response_length=260, session_finished=False
+2025-12-26 16:46:03.141 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): Wow, a pet dog named Rex! That's so cool! Dogs are amazing friends! Your dog Rex is a mammal! That means he's warm-blooded, like you and me, and his mommy makes milk to feed him when he's a puppy! Wha...
+2025-12-26 16:46:12.180 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] call_ask_ask_stream started | session_id=104c78ec-91b9-4938-9f4b-a7b9709a9790, age=6, status=normal, content_length=22, message_history=4
+2025-12-26 16:46:12.180 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Stuck detection | is_stuck=False
+2025-12-26 16:46:12.180 | INFO     | ask_ask_stream:call_ask_ask_stream:496 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Routing to answer_question
+2025-12-26 16:46:12.181 | INFO     | ask_ask_stream:answer_question_stream:207 | answer_question_stream started | question_length=22, message_count=5
+2025-12-26 16:46:12.181 | DEBUG    | ask_ask_stream:answer_question_stream:217 | Messages prepared for API | count=6
+2025-12-26 16:46:12.181 | DEBUG    | ask_ask_stream:answer_question_stream:228 | Sending 5 messages to Gemini API
+2025-12-26 16:46:12.181 | DEBUG    | ask_ask_stream:answer_question_stream:245 | Stream object type: generator
+2025-12-26 16:46:13.067 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 1 | text='Your' | length=4, total_length=4
+2025-12-26 16:46:13.067 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Yielding chunk 1 | text='Your'
+2025-12-26 16:46:13.140 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 2 | text=" dog's name is Rex! That's a super strong name for" | length=50, total_length=54
+2025-12-26 16:46:13.140 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Yielding chunk 2 | text=" dog's name is Rex! That's a super strong name for"
+2025-12-26 16:46:13.187 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 3 | text=' a dog! Did you know that dogs have amazing noses? They can smell things' | length=72, total_length=126
+2025-12-26 16:46:13.187 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Yielding chunk 3 | text=' a dog! Did you know that dogs have amazing noses? They can smell things'
+2025-12-26 16:46:13.249 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 4 | text=" way better than we can! What's Rex's favorite toy to play with? " | length=65, total_length=191
+2025-12-26 16:46:13.249 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] Yielding chunk 4 | text=" way better than we can! What's Rex's favorite toy to play with? "
+2025-12-26 16:46:13.250 | DEBUG    | ask_ask_stream:answer_question_stream:260 | Gemini streaming API does not provide token usage in stream mode
+2025-12-26 16:46:13.250 | DEBUG    | ask_ask_stream:answer_question_stream:274 | Cleaned up stream via del in finally block
+2025-12-26 16:46:13.250 | INFO     | ask_ask_stream:answer_question_stream:279 | answer_question_stream completed | duration=1.070s, response_length=191
+2025-12-26 16:46:13.251 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [104c78ec-91b9-4938-9f4b-a7b9709a9790] call_ask_ask_stream completed | response_type=answer_question, duration=1.070s, total_chunks=4, response_length=191, session_finished=False
+2025-12-26 16:46:13.251 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): Your dog's name is Rex! That's a super strong name for a dog! Did you know that dogs have amazing noses? They can smell things way better than we can! What's Rex's favorite toy to play with? ...
+2025-12-26 16:57:55.140 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [2ae6db1f-eecc-4f1b-870c-ef999154aa34] call_ask_ask_stream started | session_id=2ae6db1f-eecc-4f1b-870c-ef999154aa34, age=6, status=normal, content_length=165, message_history=1
+2025-12-26 16:57:55.140 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [2ae6db1f-eecc-4f1b-870c-ef999154aa34] Stuck detection | is_stuck=False
+2025-12-26 16:57:55.140 | INFO     | ask_ask_stream:call_ask_ask_stream:496 | [2ae6db1f-eecc-4f1b-870c-ef999154aa34] Routing to answer_question
+2025-12-26 16:57:55.140 | INFO     | ask_ask_stream:answer_question_stream:207 | answer_question_stream started | question_length=165, message_count=2
+2025-12-26 16:57:55.140 | DEBUG    | ask_ask_stream:answer_question_stream:217 | Messages prepared for API | count=3
+2025-12-26 16:57:55.141 | DEBUG    | ask_ask_stream:answer_question_stream:228 | Sending 2 messages to Gemini API
+2025-12-26 16:57:55.141 | DEBUG    | ask_ask_stream:answer_question_stream:245 | Stream object type: generator
+2025-12-26 16:58:09.977 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 1 | text='Hello' | length=5, total_length=5
+2025-12-26 16:58:09.977 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [2ae6db1f-eecc-4f1b-870c-ef999154aa34] Yielding chunk 1 | text='Hello'
+2025-12-26 16:58:10.111 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 2 | text=' there, super learner! You can ask me about ANYTHING! We can learn' | length=66, total_length=71
+2025-12-26 16:58:10.111 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [2ae6db1f-eecc-4f1b-870c-ef999154aa34] Yielding chunk 2 | text=' there, super learner! You can ask me about ANYTHING! We can learn'
+2025-12-26 16:58:10.175 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 3 | text=' about roaring dinosaurs , twinkling stars , or even how yummy cookies are' | length=74, total_length=145
+2025-12-26 16:58:10.175 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [2ae6db1f-eecc-4f1b-870c-ef999154aa34] Yielding chunk 3 | text=' about roaring dinosaurs , twinkling stars , or even how yummy cookies are'
+2025-12-26 16:58:10.322 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 4 | text=" made! What amazing thing do you want to know about today? Answer: You can ask me about anything you're curious about!" | length=118, total_length=263
+2025-12-26 16:58:10.322 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [2ae6db1f-eecc-4f1b-870c-ef999154aa34] Yielding chunk 4 | text=" made! What amazing thing do you want to know about today? Answer: You can ask me about anything you're curious about!"
+2025-12-26 16:58:10.431 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 5 | text=' I can tell you about animals, space, how things work, and so much more! Interesting Fact: Did you know that some animals, like ch' | length=130, total_length=393
+2025-12-26 16:58:10.431 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [2ae6db1f-eecc-4f1b-870c-ef999154aa34] Yielding chunk 5 | text=' I can tell you about animals, space, how things work, and so much more! Interesting Fact: Did you know that some animals, like ch'
+2025-12-26 16:58:10.589 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 6 | text="ameleons, can change their color to hide or to talk to other chameleons? How cool is that?! Follow-up Question: What's your favorite animal, and what color do you think it would" | length=177, total_length=570
+2025-12-26 16:58:10.590 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [2ae6db1f-eecc-4f1b-870c-ef999154aa34] Yielding chunk 6 | text="ameleons, can change their color to hide or to talk to other chameleons? How cool is that?! Follow-up Question: What's your favorite animal, and what color do you think it would"
+2025-12-26 16:58:10.660 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 7 | text=' be if it could change its color? ' | length=34, total_length=604
+2025-12-26 16:58:10.660 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [2ae6db1f-eecc-4f1b-870c-ef999154aa34] Yielding chunk 7 | text=' be if it could change its color? '
+2025-12-26 16:58:10.671 | DEBUG    | ask_ask_stream:answer_question_stream:260 | Gemini streaming API does not provide token usage in stream mode
+2025-12-26 16:58:10.671 | DEBUG    | ask_ask_stream:answer_question_stream:274 | Cleaned up stream via del in finally block
+2025-12-26 16:58:10.671 | INFO     | ask_ask_stream:answer_question_stream:279 | answer_question_stream completed | duration=15.531s, response_length=604
+2025-12-26 16:58:10.671 | WARNING  | ask_ask_stream:answer_question_stream:285 | Slow LLM call | duration=15.531s exceeded threshold 5.0s
+2025-12-26 16:58:10.672 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [2ae6db1f-eecc-4f1b-870c-ef999154aa34] call_ask_ask_stream completed | response_type=answer_question, duration=15.531s, total_chunks=7, response_length=604, session_finished=False
+2025-12-26 16:58:10.672 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): Hello there, super learner! You can ask me about ANYTHING! We can learn about roaring dinosaurs , twinkling stars , or even how yummy cookies are made! What amazing thing do you want to know about tod...
+2025-12-26 16:58:24.429 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [df59db07-bf6a-4a89-b69b-4ae36896f416] call_ask_ask_stream started | session_id=df59db07-bf6a-4a89-b69b-4ae36896f416, age=6, status=normal, content_length=165, message_history=1
+2025-12-26 16:58:24.429 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Stuck detection | is_stuck=False
+2025-12-26 16:58:24.429 | INFO     | ask_ask_stream:call_ask_ask_stream:496 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Routing to answer_question
+2025-12-26 16:58:24.429 | INFO     | ask_ask_stream:answer_question_stream:207 | answer_question_stream started | question_length=165, message_count=2
+2025-12-26 16:58:24.429 | DEBUG    | ask_ask_stream:answer_question_stream:217 | Messages prepared for API | count=3
+2025-12-26 16:58:24.430 | DEBUG    | ask_ask_stream:answer_question_stream:228 | Sending 2 messages to Gemini API
+2025-12-26 16:58:24.430 | DEBUG    | ask_ask_stream:answer_question_stream:245 | Stream object type: generator
+2025-12-26 16:58:31.395 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 1 | text='Hello' | length=5, total_length=5
+2025-12-26 16:58:31.395 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Yielding chunk 1 | text='Hello'
+2025-12-26 16:58:31.422 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 2 | text=' there,' | length=7, total_length=12
+2025-12-26 16:58:31.422 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Yielding chunk 2 | text=' there,'
+2025-12-26 16:58:31.449 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 3 | text=' super learner! You can ask me about ANYTHING! Want to know about roaring' | length=73, total_length=85
+2025-12-26 16:58:31.449 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Yielding chunk 3 | text=' super learner! You can ask me about ANYTHING! Want to know about roaring'
+2025-12-26 16:58:31.507 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 4 | text=' dinosaurs , sparkly stars , or how yummy cookies are made ? What' | length=65, total_length=150
+2025-12-26 16:58:31.507 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Yielding chunk 4 | text=' dinosaurs , sparkly stars , or how yummy cookies are made ? What'
+2025-12-26 16:58:31.561 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 5 | text=' amazing thing do you want to learn about today? ' | length=49, total_length=199
+2025-12-26 16:58:31.561 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Yielding chunk 5 | text=' amazing thing do you want to learn about today? '
+2025-12-26 16:58:31.563 | DEBUG    | ask_ask_stream:answer_question_stream:260 | Gemini streaming API does not provide token usage in stream mode
+2025-12-26 16:58:31.563 | DEBUG    | ask_ask_stream:answer_question_stream:274 | Cleaned up stream via del in finally block
+2025-12-26 16:58:31.563 | INFO     | ask_ask_stream:answer_question_stream:279 | answer_question_stream completed | duration=7.133s, response_length=199
+2025-12-26 16:58:31.563 | WARNING  | ask_ask_stream:answer_question_stream:285 | Slow LLM call | duration=7.133s exceeded threshold 5.0s
+2025-12-26 16:58:31.563 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [df59db07-bf6a-4a89-b69b-4ae36896f416] call_ask_ask_stream completed | response_type=answer_question, duration=7.134s, total_chunks=5, response_length=199, session_finished=False
+2025-12-26 16:58:31.563 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): Hello there, super learner! You can ask me about ANYTHING! Want to know about roaring dinosaurs , sparkly stars , or how yummy cookies are made ? What amazing thing do you want to learn about today? ...
+2025-12-26 16:58:43.062 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [df59db07-bf6a-4a89-b69b-4ae36896f416] call_ask_ask_stream started | session_id=df59db07-bf6a-4a89-b69b-4ae36896f416, age=6, status=normal, content_length=31, message_history=2
+2025-12-26 16:58:43.062 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Stuck detection | is_stuck=False
+2025-12-26 16:58:43.063 | INFO     | ask_ask_stream:call_ask_ask_stream:496 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Routing to answer_question
+2025-12-26 16:58:43.063 | INFO     | ask_ask_stream:answer_question_stream:207 | answer_question_stream started | question_length=31, message_count=3
+2025-12-26 16:58:43.063 | DEBUG    | ask_ask_stream:answer_question_stream:217 | Messages prepared for API | count=4
+2025-12-26 16:58:43.063 | DEBUG    | ask_ask_stream:answer_question_stream:228 | Sending 3 messages to Gemini API
+2025-12-26 16:58:43.063 | DEBUG    | ask_ask_stream:answer_question_stream:245 | Stream object type: generator
+2025-12-26 16:58:44.876 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 1 | text='Wow' | length=3, total_length=3
+2025-12-26 16:58:44.876 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Yielding chunk 1 | text='Wow'
+2025-12-26 16:58:44.937 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 2 | text=", what a great question! Let's look outside! Today, the weather" | length=63, total_length=66
+2025-12-26 16:58:44.937 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Yielding chunk 2 | text=", what a great question! Let's look outside! Today, the weather"
+2025-12-26 16:58:45.016 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 3 | text=' is sunny! That means the big, bright sun is shining in the sky' | length=63, total_length=129
+2025-12-26 16:58:45.016 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Yielding chunk 3 | text=' is sunny! That means the big, bright sun is shining in the sky'
+2025-12-26 16:58:45.093 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 4 | text=". It's a perfect day to play outside! Did you know that the sun is actually a giant star, super far away? What" | length=110, total_length=239
+2025-12-26 16:58:45.093 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Yielding chunk 4 | text=". It's a perfect day to play outside! Did you know that the sun is actually a giant star, super far away? What"
+2025-12-26 16:58:45.164 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 5 | text=' do you like to do when the sun is shining? ' | length=44, total_length=283
+2025-12-26 16:58:45.165 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Yielding chunk 5 | text=' do you like to do when the sun is shining? '
+2025-12-26 16:58:45.166 | DEBUG    | ask_ask_stream:answer_question_stream:260 | Gemini streaming API does not provide token usage in stream mode
+2025-12-26 16:58:45.166 | DEBUG    | ask_ask_stream:answer_question_stream:274 | Cleaned up stream via del in finally block
+2025-12-26 16:58:45.166 | INFO     | ask_ask_stream:answer_question_stream:279 | answer_question_stream completed | duration=2.104s, response_length=283
+2025-12-26 16:58:45.166 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [df59db07-bf6a-4a89-b69b-4ae36896f416] call_ask_ask_stream completed | response_type=answer_question, duration=2.104s, total_chunks=5, response_length=283, session_finished=False
+2025-12-26 16:58:45.167 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): Wow, what a great question! Let's look outside! Today, the weather is sunny! That means the big, bright sun is shining in the sky. It's a perfect day to play outside! Did you know that the sun is actu...
+2025-12-26 17:00:19.742 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [df59db07-bf6a-4a89-b69b-4ae36896f416] call_ask_ask_stream started | session_id=df59db07-bf6a-4a89-b69b-4ae36896f416, age=6, status=normal, content_length=5, message_history=4
+2025-12-26 17:00:19.742 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Stuck detection | is_stuck=False
+2025-12-26 17:00:19.742 | INFO     | ask_ask_stream:call_ask_ask_stream:496 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Routing to answer_question
+2025-12-26 17:00:19.742 | INFO     | ask_ask_stream:answer_question_stream:207 | answer_question_stream started | question_length=5, message_count=5
+2025-12-26 17:00:19.742 | DEBUG    | ask_ask_stream:answer_question_stream:217 | Messages prepared for API | count=6
+2025-12-26 17:00:19.742 | DEBUG    | ask_ask_stream:answer_question_stream:228 | Sending 5 messages to Gemini API
+2025-12-26 17:00:19.742 | DEBUG    | ask_ask_stream:answer_question_stream:245 | Stream object type: generator
+2025-12-26 17:00:20.678 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 1 | text='O' | length=1, total_length=1
+2025-12-26 17:00:20.678 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Yielding chunk 1 | text='O'
+2025-12-26 17:00:20.754 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 2 | text='oh, sleeping is so important! When we sleep, our bodies and' | length=59, total_length=60
+2025-12-26 17:00:20.754 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Yielding chunk 2 | text='oh, sleeping is so important! When we sleep, our bodies and'
+2025-12-26 17:00:20.841 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 3 | text=" brains get to rest and recharge. It's like giving your toys a little break" | length=75, total_length=135
+2025-12-26 17:00:20.842 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Yielding chunk 3 | text=" brains get to rest and recharge. It's like giving your toys a little break"
+2025-12-26 17:00:20.959 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 4 | text=" so they can work their best again tomorrow! While you're sleeping, your brain is busy sorting out all the fun things you learned and did during the day!" | length=153, total_length=288
+2025-12-26 17:00:20.959 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Yielding chunk 4 | text=" so they can work their best again tomorrow! While you're sleeping, your brain is busy sorting out all the fun things you learned and did during the day!"
+2025-12-26 17:00:21.090 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 5 | text=" Did you know that some animals sleep for a really long time? Like a bear might sleep all winter long! What's your" | length=114, total_length=402
+2025-12-26 17:00:21.090 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Yielding chunk 5 | text=" Did you know that some animals sleep for a really long time? Like a bear might sleep all winter long! What's your"
+2025-12-26 17:00:21.147 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 6 | text=' favorite thing to do right before you go to sleep?' | length=51, total_length=453
+2025-12-26 17:00:21.147 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [df59db07-bf6a-4a89-b69b-4ae36896f416] Yielding chunk 6 | text=' favorite thing to do right before you go to sleep?'
+2025-12-26 17:00:21.154 | DEBUG    | ask_ask_stream:answer_question_stream:260 | Gemini streaming API does not provide token usage in stream mode
+2025-12-26 17:00:21.154 | DEBUG    | ask_ask_stream:answer_question_stream:274 | Cleaned up stream via del in finally block
+2025-12-26 17:00:21.154 | INFO     | ask_ask_stream:answer_question_stream:279 | answer_question_stream completed | duration=1.412s, response_length=453
+2025-12-26 17:00:21.154 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [df59db07-bf6a-4a89-b69b-4ae36896f416] call_ask_ask_stream completed | response_type=answer_question, duration=1.412s, total_chunks=6, response_length=453, session_finished=False
+2025-12-26 17:00:21.154 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): Ooh, sleeping is so important! When we sleep, our bodies and brains get to rest and recharge. It's like giving your toys a little break so they can work their best again tomorrow! While you're sleepin...
+2025-12-26 17:00:36.798 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] call_ask_ask_stream started | session_id=02d636c6-0148-4ef1-9c6a-30fd0577363a, age=6, status=normal, content_length=165, message_history=1
+2025-12-26 17:00:36.798 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Stuck detection | is_stuck=False
+2025-12-26 17:00:36.798 | INFO     | ask_ask_stream:call_ask_ask_stream:496 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Routing to answer_question
+2025-12-26 17:00:36.798 | INFO     | ask_ask_stream:answer_question_stream:207 | answer_question_stream started | question_length=165, message_count=2
+2025-12-26 17:00:36.798 | DEBUG    | ask_ask_stream:answer_question_stream:217 | Messages prepared for API | count=3
+2025-12-26 17:00:36.798 | DEBUG    | ask_ask_stream:answer_question_stream:228 | Sending 2 messages to Gemini API
+2025-12-26 17:00:36.799 | DEBUG    | ask_ask_stream:answer_question_stream:245 | Stream object type: generator
+2025-12-26 17:00:40.373 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 1 | text='Hello' | length=5, total_length=5
+2025-12-26 17:00:40.373 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Yielding chunk 1 | text='Hello'
+2025-12-26 17:00:40.470 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 2 | text=' there, super learner! You can ask me about ANYTHING! Like, maybe' | length=65, total_length=70
+2025-12-26 17:00:40.471 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Yielding chunk 2 | text=' there, super learner! You can ask me about ANYTHING! Like, maybe'
+2025-12-26 17:00:40.536 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 3 | text=' about fluffy clouds , wiggly worms , or even how rockets zoom' | length=62, total_length=132
+2025-12-26 17:00:40.536 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Yielding chunk 3 | text=' about fluffy clouds , wiggly worms , or even how rockets zoom'
+2025-12-26 17:00:40.608 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 4 | text=' to space ! What amazing thing do you want to learn about today? ' | length=65, total_length=197
+2025-12-26 17:00:40.608 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Yielding chunk 4 | text=' to space ! What amazing thing do you want to learn about today? '
+2025-12-26 17:00:40.609 | DEBUG    | ask_ask_stream:answer_question_stream:260 | Gemini streaming API does not provide token usage in stream mode
+2025-12-26 17:00:40.609 | DEBUG    | ask_ask_stream:answer_question_stream:274 | Cleaned up stream via del in finally block
+2025-12-26 17:00:40.609 | INFO     | ask_ask_stream:answer_question_stream:279 | answer_question_stream completed | duration=3.811s, response_length=197
+2025-12-26 17:00:40.609 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] call_ask_ask_stream completed | response_type=answer_question, duration=3.811s, total_chunks=4, response_length=197, session_finished=False
+2025-12-26 17:00:40.609 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): Hello there, super learner! You can ask me about ANYTHING! Like, maybe about fluffy clouds , wiggly worms , or even how rockets zoom to space ! What amazing thing do you want to learn about today? ...
+2025-12-26 17:00:48.300 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] call_ask_ask_stream started | session_id=02d636c6-0148-4ef1-9c6a-30fd0577363a, age=6, status=normal, content_length=31, message_history=2
+2025-12-26 17:00:48.300 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Stuck detection | is_stuck=False
+2025-12-26 17:00:48.300 | INFO     | ask_ask_stream:call_ask_ask_stream:496 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Routing to answer_question
+2025-12-26 17:00:48.300 | INFO     | ask_ask_stream:answer_question_stream:207 | answer_question_stream started | question_length=31, message_count=3
+2025-12-26 17:00:48.300 | DEBUG    | ask_ask_stream:answer_question_stream:217 | Messages prepared for API | count=4
+2025-12-26 17:00:48.300 | DEBUG    | ask_ask_stream:answer_question_stream:228 | Sending 3 messages to Gemini API
+2025-12-26 17:00:48.300 | DEBUG    | ask_ask_stream:answer_question_stream:245 | Stream object type: generator
+2025-12-26 17:00:50.147 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 1 | text='Wow' | length=3, total_length=3
+2025-12-26 17:00:50.147 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Yielding chunk 1 | text='Wow'
+2025-12-26 17:00:50.173 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 2 | text=', what' | length=6, total_length=9
+2025-12-26 17:00:50.174 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Yielding chunk 2 | text=', what'
+2025-12-26 17:00:50.198 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 3 | text=" a great question! Let's look outside! It looks like it'" | length=56, total_length=65
+2025-12-26 17:00:50.198 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Yielding chunk 3 | text=" a great question! Let's look outside! It looks like it'"
+2025-12-26 17:00:50.253 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 4 | text='s a sunny day today! The sun is shining bright and making everything' | length=68, total_length=133
+2025-12-26 17:00:50.253 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Yielding chunk 4 | text='s a sunny day today! The sun is shining bright and making everything'
+2025-12-26 17:00:50.417 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 5 | text=" warm and happy! Did you know that the sun is actually a giant star? It's super far away, but it gives us all the light and heat" | length=128, total_length=261
+2025-12-26 17:00:50.417 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Yielding chunk 5 | text=" warm and happy! Did you know that the sun is actually a giant star? It's super far away, but it gives us all the light and heat"
+2025-12-26 17:00:50.461 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 6 | text=' we need to play outside! What do you like to do when the sun is shining? ' | length=74, total_length=335
+2025-12-26 17:00:50.461 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Yielding chunk 6 | text=' we need to play outside! What do you like to do when the sun is shining? '
+2025-12-26 17:00:50.464 | DEBUG    | ask_ask_stream:answer_question_stream:260 | Gemini streaming API does not provide token usage in stream mode
+2025-12-26 17:00:50.464 | DEBUG    | ask_ask_stream:answer_question_stream:274 | Cleaned up stream via del in finally block
+2025-12-26 17:00:50.464 | INFO     | ask_ask_stream:answer_question_stream:279 | answer_question_stream completed | duration=2.164s, response_length=335
+2025-12-26 17:00:50.464 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] call_ask_ask_stream completed | response_type=answer_question, duration=2.164s, total_chunks=6, response_length=335, session_finished=False
+2025-12-26 17:00:50.464 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): Wow, what a great question! Let's look outside! It looks like it's a sunny day today! The sun is shining bright and making everything warm and happy! Did you know that the sun is actually a giant star...
+2025-12-26 17:00:56.093 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] call_ask_ask_stream started | session_id=02d636c6-0148-4ef1-9c6a-30fd0577363a, age=6, status=normal, content_length=15, message_history=4
+2025-12-26 17:00:56.093 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Stuck detection | is_stuck=False
+2025-12-26 17:00:56.093 | INFO     | ask_ask_stream:call_ask_ask_stream:496 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Routing to answer_question
+2025-12-26 17:00:56.093 | INFO     | ask_ask_stream:answer_question_stream:207 | answer_question_stream started | question_length=15, message_count=5
+2025-12-26 17:00:56.094 | DEBUG    | ask_ask_stream:answer_question_stream:217 | Messages prepared for API | count=6
+2025-12-26 17:00:56.094 | DEBUG    | ask_ask_stream:answer_question_stream:228 | Sending 5 messages to Gemini API
+2025-12-26 17:00:56.094 | DEBUG    | ask_ask_stream:answer_question_stream:245 | Stream object type: generator
+2025-12-26 17:00:57.848 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 1 | text='Sleeping' | length=8, total_length=8
+2025-12-26 17:00:57.848 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Yielding chunk 1 | text='Sleeping'
+2025-12-26 17:00:57.915 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 2 | text=' is super important for us! When we sleep, our bodies get to' | length=60, total_length=68
+2025-12-26 17:00:57.915 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Yielding chunk 2 | text=' is super important for us! When we sleep, our bodies get to'
+2025-12-26 17:00:57.985 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 3 | text=" rest and get ready for more fun and learning! It's like charging up a" | length=70, total_length=138
+2025-12-26 17:00:57.985 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Yielding chunk 3 | text=" rest and get ready for more fun and learning! It's like charging up a"
+2025-12-26 17:00:58.091 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 4 | text=" toy so it can play again! Did you know that when you sleep, your brain is still super busy? It's like tidying up all" | length=117, total_length=255
+2025-12-26 17:00:58.091 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Yielding chunk 4 | text=" toy so it can play again! Did you know that when you sleep, your brain is still super busy? It's like tidying up all"
+2025-12-26 17:00:58.208 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 5 | text=" the things you learned during the day and putting them in the right places! What's your favorite thing to dream about when you're sleeping? " | length=141, total_length=396
+2025-12-26 17:00:58.208 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Yielding chunk 5 | text=" the things you learned during the day and putting them in the right places! What's your favorite thing to dream about when you're sleeping? "
+2025-12-26 17:00:58.240 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 6 | text=' ' | length=1, total_length=397
+2025-12-26 17:00:58.240 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] Yielding chunk 6 | text=' '
+2025-12-26 17:00:58.241 | DEBUG    | ask_ask_stream:answer_question_stream:260 | Gemini streaming API does not provide token usage in stream mode
+2025-12-26 17:00:58.242 | DEBUG    | ask_ask_stream:answer_question_stream:274 | Cleaned up stream via del in finally block
+2025-12-26 17:00:58.242 | INFO     | ask_ask_stream:answer_question_stream:279 | answer_question_stream completed | duration=2.148s, response_length=397
+2025-12-26 17:00:58.242 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [02d636c6-0148-4ef1-9c6a-30fd0577363a] call_ask_ask_stream completed | response_type=answer_question, duration=2.149s, total_chunks=6, response_length=397, session_finished=False
+2025-12-26 17:00:58.242 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): Sleeping is super important for us! When we sleep, our bodies get to rest and get ready for more fun and learning! It's like charging up a toy so it can play again! Did you know that when you sleep, y...
+2025-12-26 17:01:14.007 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] call_ask_ask_stream started | session_id=b07560bd-ade3-4b6f-b2cb-7417235ee099, age=6, status=normal, content_length=165, message_history=1
+2025-12-26 17:01:14.007 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Stuck detection | is_stuck=False
+2025-12-26 17:01:14.007 | INFO     | ask_ask_stream:call_ask_ask_stream:496 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Routing to answer_question
+2025-12-26 17:01:14.008 | INFO     | ask_ask_stream:answer_question_stream:207 | answer_question_stream started | question_length=165, message_count=2
+2025-12-26 17:01:14.008 | DEBUG    | ask_ask_stream:answer_question_stream:217 | Messages prepared for API | count=3
+2025-12-26 17:01:14.008 | DEBUG    | ask_ask_stream:answer_question_stream:228 | Sending 2 messages to Gemini API
+2025-12-26 17:01:14.008 | DEBUG    | ask_ask_stream:answer_question_stream:245 | Stream object type: generator
+2025-12-26 17:01:19.226 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 1 | text='Hi' | length=2, total_length=2
+2025-12-26 17:01:19.226 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Yielding chunk 1 | text='Hi'
+2025-12-26 17:01:19.231 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 2 | text=' there! ' | length=8, total_length=10
+2025-12-26 17:01:19.231 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Yielding chunk 2 | text=' there! '
+2025-12-26 17:01:19.262 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 3 | text=" I'm so excited to learn with you today! You can ask me about" | length=61, total_length=71
+2025-12-26 17:01:19.262 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Yielding chunk 3 | text=" I'm so excited to learn with you today! You can ask me about"
+2025-12-26 17:01:19.351 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 4 | text=' ANYTHING – like how animals talk , why the sky is blue , or how' | length=64, total_length=135
+2025-12-26 17:01:19.351 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Yielding chunk 4 | text=' ANYTHING – like how animals talk , why the sky is blue , or how'
+2025-12-26 17:01:19.434 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 5 | text=' plants grow ! What amazing thing do you want to know about first? ' | length=67, total_length=202
+2025-12-26 17:01:19.434 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Yielding chunk 5 | text=' plants grow ! What amazing thing do you want to know about first? '
+2025-12-26 17:01:19.435 | DEBUG    | ask_ask_stream:answer_question_stream:260 | Gemini streaming API does not provide token usage in stream mode
+2025-12-26 17:01:19.435 | DEBUG    | ask_ask_stream:answer_question_stream:274 | Cleaned up stream via del in finally block
+2025-12-26 17:01:19.435 | INFO     | ask_ask_stream:answer_question_stream:279 | answer_question_stream completed | duration=5.427s, response_length=202
+2025-12-26 17:01:19.435 | WARNING  | ask_ask_stream:answer_question_stream:285 | Slow LLM call | duration=5.427s exceeded threshold 5.0s
+2025-12-26 17:01:19.435 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] call_ask_ask_stream completed | response_type=answer_question, duration=5.428s, total_chunks=5, response_length=202, session_finished=False
+2025-12-26 17:01:19.435 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): Hi there!  I'm so excited to learn with you today! You can ask me about ANYTHING – like how animals talk , why the sky is blue , or how plants grow ! What amazing thing do you want to know about first...
+2025-12-26 17:01:27.284 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] call_ask_ask_stream started | session_id=b07560bd-ade3-4b6f-b2cb-7417235ee099, age=6, status=normal, content_length=26, message_history=2
+2025-12-26 17:01:27.284 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Stuck detection | is_stuck=False
+2025-12-26 17:01:27.284 | INFO     | ask_ask_stream:call_ask_ask_stream:496 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Routing to answer_question
+2025-12-26 17:01:27.284 | INFO     | ask_ask_stream:answer_question_stream:207 | answer_question_stream started | question_length=26, message_count=3
+2025-12-26 17:01:27.284 | DEBUG    | ask_ask_stream:answer_question_stream:217 | Messages prepared for API | count=4
+2025-12-26 17:01:27.284 | DEBUG    | ask_ask_stream:answer_question_stream:228 | Sending 3 messages to Gemini API
+2025-12-26 17:01:27.284 | DEBUG    | ask_ask_stream:answer_question_stream:245 | Stream object type: generator
+2025-12-26 17:01:29.073 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 1 | text='O' | length=1, total_length=1
+2025-12-26 17:01:29.073 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Yielding chunk 1 | text='O'
+2025-12-26 17:01:29.149 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 2 | text="oh, let's check the weather! Today," | length=35, total_length=36
+2025-12-26 17:01:29.149 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Yielding chunk 2 | text="oh, let's check the weather! Today,"
+2025-12-26 17:01:29.181 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 3 | text=" the weather is sunny and warm! It's a perfect day to" | length=53, total_length=89
+2025-12-26 17:01:29.181 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Yielding chunk 3 | text=" the weather is sunny and warm! It's a perfect day to"
+2025-12-26 17:01:29.267 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 4 | text=" play outside! Did you know that the sun is like a giant, super-hot ball of fire way, way up in the sky? What'" | length=110, total_length=199
+2025-12-26 17:01:29.267 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Yielding chunk 4 | text=" play outside! Did you know that the sun is like a giant, super-hot ball of fire way, way up in the sky? What'"
+2025-12-26 17:01:29.345 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 5 | text="s your favorite thing to do when it's sunny outside? " | length=53, total_length=252
+2025-12-26 17:01:29.345 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Yielding chunk 5 | text="s your favorite thing to do when it's sunny outside? "
+2025-12-26 17:01:29.346 | DEBUG    | ask_ask_stream:answer_question_stream:260 | Gemini streaming API does not provide token usage in stream mode
+2025-12-26 17:01:29.346 | DEBUG    | ask_ask_stream:answer_question_stream:274 | Cleaned up stream via del in finally block
+2025-12-26 17:01:29.346 | INFO     | ask_ask_stream:answer_question_stream:279 | answer_question_stream completed | duration=2.062s, response_length=252
+2025-12-26 17:01:29.346 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] call_ask_ask_stream completed | response_type=answer_question, duration=2.063s, total_chunks=5, response_length=252, session_finished=False
+2025-12-26 17:01:29.346 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): Ooh, let's check the weather! Today, the weather is sunny and warm! It's a perfect day to play outside! Did you know that the sun is like a giant, super-hot ball of fire way, way up in the sky? What's...
+2025-12-26 17:02:15.837 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] call_ask_ask_stream started | session_id=b07560bd-ade3-4b6f-b2cb-7417235ee099, age=6, status=normal, content_length=15, message_history=4
+2025-12-26 17:02:15.837 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Stuck detection | is_stuck=False
+2025-12-26 17:02:15.838 | INFO     | ask_ask_stream:call_ask_ask_stream:496 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Routing to answer_question
+2025-12-26 17:02:15.838 | INFO     | ask_ask_stream:answer_question_stream:207 | answer_question_stream started | question_length=15, message_count=5
+2025-12-26 17:02:15.838 | DEBUG    | ask_ask_stream:answer_question_stream:217 | Messages prepared for API | count=6
+2025-12-26 17:02:15.838 | DEBUG    | ask_ask_stream:answer_question_stream:228 | Sending 5 messages to Gemini API
+2025-12-26 17:02:15.838 | DEBUG    | ask_ask_stream:answer_question_stream:245 | Stream object type: generator
+2025-12-26 17:02:20.385 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 1 | text='You' | length=3, total_length=3
+2025-12-26 17:02:20.385 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Yielding chunk 1 | text='You'
+2025-12-26 17:02:20.393 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 2 | text=' asked me what' | length=14, total_length=17
+2025-12-26 17:02:20.393 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Yielding chunk 2 | text=' asked me what'
+2025-12-26 17:02:20.470 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 3 | text=" you asked! That's a super smart question! You asked me," | length=56, total_length=73
+2025-12-26 17:02:20.470 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Yielding chunk 3 | text=" you asked! That's a super smart question! You asked me,"
+2025-12-26 17:02:20.489 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 4 | text=' "what did I ask?" You asked me about the weather today! We' | length=59, total_length=132
+2025-12-26 17:02:20.489 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Yielding chunk 4 | text=' "what did I ask?" You asked me about the weather today! We'
+2025-12-26 17:02:20.627 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 5 | text=" found out it's sunny and warm! Did you know that sometimes clouds are like big, fluffy cotton balls in the sky, and they can bring rain or snow?" | length=145, total_length=277
+2025-12-26 17:02:20.627 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Yielding chunk 5 | text=" found out it's sunny and warm! Did you know that sometimes clouds are like big, fluffy cotton balls in the sky, and they can bring rain or snow?"
+2025-12-26 17:02:20.653 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 6 | text=' What do you think clouds are made of? ' | length=39, total_length=316
+2025-12-26 17:02:20.653 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] Yielding chunk 6 | text=' What do you think clouds are made of? '
+2025-12-26 17:02:20.655 | DEBUG    | ask_ask_stream:answer_question_stream:260 | Gemini streaming API does not provide token usage in stream mode
+2025-12-26 17:02:20.655 | DEBUG    | ask_ask_stream:answer_question_stream:274 | Cleaned up stream via del in finally block
+2025-12-26 17:02:20.655 | INFO     | ask_ask_stream:answer_question_stream:279 | answer_question_stream completed | duration=4.817s, response_length=316
+2025-12-26 17:02:20.655 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [b07560bd-ade3-4b6f-b2cb-7417235ee099] call_ask_ask_stream completed | response_type=answer_question, duration=4.818s, total_chunks=6, response_length=316, session_finished=False
+2025-12-26 17:02:20.655 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): You asked me what you asked! That's a super smart question! You asked me, "what did I ask?" You asked me about the weather today! We found out it's sunny and warm! Did you know that sometimes clouds a...
+2025-12-26 17:03:00.296 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [9d81cd36-04c1-4666-a9ba-627002186be2] call_ask_ask_stream started | session_id=9d81cd36-04c1-4666-a9ba-627002186be2, age=6, status=normal, content_length=165, message_history=1
+2025-12-26 17:03:00.296 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [9d81cd36-04c1-4666-a9ba-627002186be2] Stuck detection | is_stuck=False
+2025-12-26 17:03:00.296 | INFO     | ask_ask_stream:call_ask_ask_stream:496 | [9d81cd36-04c1-4666-a9ba-627002186be2] Routing to answer_question
+2025-12-26 17:03:00.296 | INFO     | ask_ask_stream:answer_question_stream:207 | answer_question_stream started | question_length=165, message_count=2
+2025-12-26 17:03:00.296 | DEBUG    | ask_ask_stream:answer_question_stream:217 | Messages prepared for API | count=3
+2025-12-26 17:03:00.296 | DEBUG    | ask_ask_stream:answer_question_stream:228 | Sending 2 messages to Gemini API
+2025-12-26 17:03:00.296 | DEBUG    | ask_ask_stream:answer_question_stream:245 | Stream object type: generator
+2025-12-26 17:03:03.787 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 1 | text='Hi' | length=2, total_length=2
+2025-12-26 17:03:03.787 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [9d81cd36-04c1-4666-a9ba-627002186be2] Yielding chunk 1 | text='Hi'
+2025-12-26 17:03:03.813 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 2 | text=' there,' | length=7, total_length=9
+2025-12-26 17:03:03.814 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [9d81cd36-04c1-4666-a9ba-627002186be2] Yielding chunk 2 | text=' there,'
+2025-12-26 17:03:03.860 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 3 | text=' super learner! You can ask me about ANYTHING! Like, how do rockets' | length=67, total_length=76
+2025-12-26 17:03:03.860 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [9d81cd36-04c1-4666-a9ba-627002186be2] Yielding chunk 3 | text=' super learner! You can ask me about ANYTHING! Like, how do rockets'
+2025-12-26 17:03:03.934 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 4 | text=' fly , or why do cats purr , or even how plants' | length=47, total_length=123
+2025-12-26 17:03:03.934 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [9d81cd36-04c1-4666-a9ba-627002186be2] Yielding chunk 4 | text=' fly , or why do cats purr , or even how plants'
+2025-12-26 17:03:03.980 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 5 | text=' grow ! What amazing thing do you want to learn about today? ' | length=61, total_length=184
+2025-12-26 17:03:03.980 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [9d81cd36-04c1-4666-a9ba-627002186be2] Yielding chunk 5 | text=' grow ! What amazing thing do you want to learn about today? '
+2025-12-26 17:03:03.980 | DEBUG    | ask_ask_stream:answer_question_stream:260 | Gemini streaming API does not provide token usage in stream mode
+2025-12-26 17:03:03.980 | DEBUG    | ask_ask_stream:answer_question_stream:274 | Cleaned up stream via del in finally block
+2025-12-26 17:03:03.980 | INFO     | ask_ask_stream:answer_question_stream:279 | answer_question_stream completed | duration=3.685s, response_length=184
+2025-12-26 17:03:03.980 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [9d81cd36-04c1-4666-a9ba-627002186be2] call_ask_ask_stream completed | response_type=answer_question, duration=3.685s, total_chunks=5, response_length=184, session_finished=False
+2025-12-26 17:03:03.980 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): Hi there, super learner! You can ask me about ANYTHING! Like, how do rockets fly , or why do cats purr , or even how plants grow ! What amazing thing do you want to learn about today? ...
+2025-12-26 17:03:26.924 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [9d81cd36-04c1-4666-a9ba-627002186be2] call_ask_ask_stream started | session_id=9d81cd36-04c1-4666-a9ba-627002186be2, age=6, status=normal, content_length=26, message_history=2
+2025-12-26 17:03:26.924 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [9d81cd36-04c1-4666-a9ba-627002186be2] Stuck detection | is_stuck=False
+2025-12-26 17:03:26.924 | INFO     | ask_ask_stream:call_ask_ask_stream:496 | [9d81cd36-04c1-4666-a9ba-627002186be2] Routing to answer_question
+2025-12-26 17:03:26.924 | INFO     | ask_ask_stream:answer_question_stream:207 | answer_question_stream started | question_length=26, message_count=3
+2025-12-26 17:03:26.925 | DEBUG    | ask_ask_stream:answer_question_stream:217 | Messages prepared for API | count=4
+2025-12-26 17:03:26.925 | DEBUG    | ask_ask_stream:answer_question_stream:228 | Sending 3 messages to Gemini API
+2025-12-26 17:03:26.925 | DEBUG    | ask_ask_stream:answer_question_stream:245 | Stream object type: generator
+2025-12-26 17:03:27.821 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 1 | text='Oh' | length=2, total_length=2
+2025-12-26 17:03:27.822 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [9d81cd36-04c1-4666-a9ba-627002186be2] Yielding chunk 1 | text='Oh'
+2025-12-26 17:03:27.822 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 2 | text=', what a' | length=8, total_length=10
+2025-12-26 17:03:27.822 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [9d81cd36-04c1-4666-a9ba-627002186be2] Yielding chunk 2 | text=', what a'
+2025-12-26 17:03:27.861 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 3 | text=" great question! Let's look outside! It looks like today is a" | length=61, total_length=71
+2025-12-26 17:03:27.861 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [9d81cd36-04c1-4666-a9ba-627002186be2] Yielding chunk 3 | text=" great question! Let's look outside! It looks like today is a"
+2025-12-26 17:03:27.896 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 4 | text=' sunny day! That means the sun is shining bright in the sky!' | length=60, total_length=131
+2025-12-26 17:03:27.896 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [9d81cd36-04c1-4666-a9ba-627002186be2] Yielding chunk 4 | text=' sunny day! That means the sun is shining bright in the sky!'
+2025-12-26 17:03:28.051 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 5 | text=" Isn't that wonderful? Did you know that the sun is a giant star, and it's super, super far away, but it still gives us light" | length=125, total_length=256
+2025-12-26 17:03:28.051 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [9d81cd36-04c1-4666-a9ba-627002186be2] Yielding chunk 5 | text=" Isn't that wonderful? Did you know that the sun is a giant star, and it's super, super far away, but it still gives us light"
+2025-12-26 17:03:28.091 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 6 | text=' and warmth? What do you like to do on a sunny day? ' | length=52, total_length=308
+2025-12-26 17:03:28.091 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [9d81cd36-04c1-4666-a9ba-627002186be2] Yielding chunk 6 | text=' and warmth? What do you like to do on a sunny day? '
+2025-12-26 17:03:28.111 | DEBUG    | ask_ask_stream:answer_question_stream:260 | Gemini streaming API does not provide token usage in stream mode
+2025-12-26 17:03:28.111 | DEBUG    | ask_ask_stream:answer_question_stream:274 | Cleaned up stream via del in finally block
+2025-12-26 17:03:28.111 | INFO     | ask_ask_stream:answer_question_stream:279 | answer_question_stream completed | duration=1.187s, response_length=308
+2025-12-26 17:03:28.111 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [9d81cd36-04c1-4666-a9ba-627002186be2] call_ask_ask_stream completed | response_type=answer_question, duration=1.187s, total_chunks=6, response_length=308, session_finished=False
+2025-12-26 17:03:28.111 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): Oh, what a great question! Let's look outside! It looks like today is a sunny day! That means the sun is shining bright in the sky! Isn't that wonderful? Did you know that the sun is a giant star, and...
+2025-12-26 17:03:32.646 | INFO     | ask_ask_stream:call_ask_ask_stream:462 | [9d81cd36-04c1-4666-a9ba-627002186be2] call_ask_ask_stream started | session_id=9d81cd36-04c1-4666-a9ba-627002186be2, age=6, status=normal, content_length=26, message_history=4
+2025-12-26 17:03:32.646 | INFO     | ask_ask_stream:call_ask_ask_stream:475 | [9d81cd36-04c1-4666-a9ba-627002186be2] Stuck detection | is_stuck=False
+2025-12-26 17:03:32.646 | INFO     | ask_ask_stream:call_ask_ask_stream:496 | [9d81cd36-04c1-4666-a9ba-627002186be2] Routing to answer_question
+2025-12-26 17:03:32.646 | INFO     | ask_ask_stream:answer_question_stream:207 | answer_question_stream started | question_length=26, message_count=5
+2025-12-26 17:03:32.646 | DEBUG    | ask_ask_stream:answer_question_stream:217 | Messages prepared for API | count=6
+2025-12-26 17:03:32.646 | DEBUG    | ask_ask_stream:answer_question_stream:228 | Sending 5 messages to Gemini API
+2025-12-26 17:03:32.646 | DEBUG    | ask_ask_stream:answer_question_stream:245 | Stream object type: generator
+2025-12-26 17:03:33.092 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 1 | text='Your' | length=4, total_length=4
+2025-12-26 17:03:33.092 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [9d81cd36-04c1-4666-a9ba-627002186be2] Yielding chunk 1 | text='Your'
+2025-12-26 17:03:33.098 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 2 | text=' last question was' | length=18, total_length=22
+2025-12-26 17:03:33.098 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [9d81cd36-04c1-4666-a9ba-627002186be2] Yielding chunk 2 | text=' last question was'
+2025-12-26 17:03:33.147 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 3 | text=' "what is the weather today?" You were curious about what it\'' | length=61, total_length=83
+2025-12-26 17:03:33.147 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [9d81cd36-04c1-4666-a9ba-627002186be2] Yielding chunk 3 | text=' "what is the weather today?" You were curious about what it\''
+2025-12-26 17:03:33.192 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 4 | text='s like outside! Did you know that the weather changes all the time?' | length=67, total_length=150
+2025-12-26 17:03:33.193 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [9d81cd36-04c1-4666-a9ba-627002186be2] Yielding chunk 4 | text='s like outside! Did you know that the weather changes all the time?'
+2025-12-26 17:03:33.241 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 5 | text=" Sometimes it's sunny, sometimes it's rainy, and sometimes it's even snowy! What kind of weather do you" | length=103, total_length=253
+2025-12-26 17:03:33.241 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [9d81cd36-04c1-4666-a9ba-627002186be2] Yielding chunk 5 | text=" Sometimes it's sunny, sometimes it's rainy, and sometimes it's even snowy! What kind of weather do you"
+2025-12-26 17:03:33.260 | DEBUG    | ask_ask_stream:answer_question_stream:255 | Chunk 6 | text=' like the best? ' | length=16, total_length=269
+2025-12-26 17:03:33.260 | DEBUG    | ask_ask_stream:call_ask_ask_stream:509 | [9d81cd36-04c1-4666-a9ba-627002186be2] Yielding chunk 6 | text=' like the best? '
+2025-12-26 17:03:33.261 | DEBUG    | ask_ask_stream:answer_question_stream:260 | Gemini streaming API does not provide token usage in stream mode
+2025-12-26 17:03:33.261 | DEBUG    | ask_ask_stream:answer_question_stream:274 | Cleaned up stream via del in finally block
+2025-12-26 17:03:33.261 | INFO     | ask_ask_stream:answer_question_stream:279 | answer_question_stream completed | duration=0.615s, response_length=269
+2025-12-26 17:03:33.261 | INFO     | ask_ask_stream:call_ask_ask_stream:532 | [9d81cd36-04c1-4666-a9ba-627002186be2] call_ask_ask_stream completed | response_type=answer_question, duration=0.616s, total_chunks=6, response_length=269, session_finished=False
+2025-12-26 17:03:33.262 | DEBUG    | ask_ask_stream:call_ask_ask_stream:539 | Full response (first 200 chars): Your last question was "what is the weather today?" You were curious about what it's like outside! Did you know that the weather changes all the time? Sometimes it's sunny, sometimes it's rainy, and s...

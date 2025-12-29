@@ -345,6 +345,15 @@ def continue_conversation():
                             assistant.object_name = chunk.new_object_name
                             print(f"[INFO] Session {session_id[:8]}... SWITCHED TOPIC to {chunk.new_object_name}")
 
+                            # Trigger background classification for new object
+                            classification_thread = threading.Thread(
+                                target=assistant.classify_object_sync,
+                                args=(chunk.new_object_name,),
+                                daemon=True
+                            )
+                            classification_thread.start()
+                            print(f"[INFO] Session {session_id[:8]}... started background classification for {chunk.new_object_name}")
+
                         # Yield StreamChunk as SSE event (pass directly for optimized serialization)
                         # Update conversation history with final response
                         if chunk.finish:

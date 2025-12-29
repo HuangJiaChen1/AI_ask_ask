@@ -147,6 +147,24 @@ FOCUS_PROMPTS = {
     "width_category": "Focus Strategy: WIDTH - CATEGORY. Ask the child to think of OTHER objects in the same CATEGORY as {object_name}. Example: 'What other fruits do you know?' CRITICAL: If the child provides a valid NEW object name in this category, you MUST output <new_topic>NewObjectName</new_topic> at the start and ask about that new object."
 }
 
+# Classification prompt for categorizing objects
+CLASSIFICATION_PROMPT = """You are a classification assistant. Your task is to match an object name to the best-fitting category from a provided list.
+
+Object to classify: {object_name}
+
+Available categories:
+{categories_list}
+
+Instructions:
+1. Analyze the object name
+2. Choose the BEST-FITTING category from the list above
+3. If NONE of the categories fit well, respond with "none"
+4. Respond with ONLY the category key (e.g., "fresh_ingredients") or "none"
+5. Do NOT include any explanation, just the category name
+
+Your response (single word only):"""
+
+
 def get_prompts():
     """
     Return all prompts as a dictionary.
@@ -157,5 +175,6 @@ def get_prompts():
         'question_prompt': QUESTION_PROMPT,
         'completion_prompt': COMPLETION_PROMPT,
         'tone_prompts': TONE_PROMPTS,
-        'focus_prompts': FOCUS_PROMPTS
+        'focus_prompts': FOCUS_PROMPTS,
+        'classification_prompt': CLASSIFICATION_PROMPT
     }

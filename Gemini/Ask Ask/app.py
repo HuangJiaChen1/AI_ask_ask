@@ -260,8 +260,14 @@ def continue_conversation():
                         age_prompt=age_prompt
                     ):
                         # Yield StreamChunk as SSE event (pass directly for optimized serialization)
-                        # Update conversation history with final response
+                        # Update conversation history with both user input and final response
                         if chunk.finish:
+                            # Save user input first
+                            assistant.conversation_history.append({
+                                "role": "user",
+                                "content": child_input
+                            })
+                            # Then save assistant response
                             assistant.conversation_history.append({
                                 "role": "assistant",
                                 "content": chunk.response
