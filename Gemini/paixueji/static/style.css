@@ -50,6 +50,26 @@ body {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    overflow-y: auto;
+    max-height: calc(90vh - 100px);
+}
+
+.start-form::-webkit-scrollbar {
+    width: 8px;
+}
+
+.start-form::-webkit-scrollbar-track {
+    background: #e0e0e0;
+    border-radius: 4px;
+}
+
+.start-form::-webkit-scrollbar-thumb {
+    background: #10b981;
+    border-radius: 4px;
+}
+
+.start-form::-webkit-scrollbar-thumb:hover {
+    background: #059669;
 }
 
 .start-form label {
