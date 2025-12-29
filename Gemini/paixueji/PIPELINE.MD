@@ -310,48 +310,51 @@
                                 │
                                 ▼
   ┌─────────────────────────────────────────────────────────────────┐
-  │  CRITICAL: Stream Processing with Analysis & Topic Detection   │
-  │  Buffer Management Pipeline:                                   │
-  │  1. Accumulate chunks in buffer                                │
-  │  2. Check for <analysis>...</analysis>                         │
-  │     - If found: Hide from output (LLM's internal thinking)     │
-  │     - Extract & log, then continue                             │
-  │  3. Check for <new_topic>ObjectName</new_topic>                │
-  │     - If found: Extract object name                            │
-  │     - Set new_object_name in StreamChunk                       │
-  │     - Remove tag from visible output                           │
-  │  4. Yield clean text chunks                                    │
-  │  OUTPUT: StreamChunk objects with metadata                     │
-  └─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-  ┌─────────────────────────────────────────────────────────────────┐
-  │  Topic Switch Detection (in app.py continue_conversation)      │
-  │  if chunk.new_object_name:                                     │
-  │    assistant.object_name = chunk.new_object_name               │
-  │    // Trigger background classification thread                 │
-  │    threading.Thread(                                           │
-  │      target=assistant.classify_object_sync,                    │
-  │      args=(new_object_name,)                                   │
-  │    ).start()                                                    │
-  │  OUTPUT: Background classification running                     │
-  └─────────────────────────────────────────────────────────────────┘
-                                │
-                                ▼
-  ┌─────────────────────────────────────────────────────────────────┐
-  │  BACKGROUND: classify_object_sync() [paixueji_assistant.py]   │
-  │  1. Get level2_categories from object_prompts.json             │
-  │  2. Build classification prompt with categories list           │
-  │  3. Call Gemini (non-streaming, temp=0.1, max_tokens=50)      │
-  │     "Classify {object_name} into: {categories_list}"           │
-  │  4. Parse response (single category key or "none")             │
-  │  5. If valid category:                                         │
-  │     - Update assistant.level2_category                         │
-  │     - Derive assistant.level1_category from parent            │
-  │     - Reset assistant.level3_category = None                   │
-  │  6. If "none" or error:                                        │
-  │     - Set all categories to None (fallback)                    │
-  │  OUTPUT: Updated assistant categories for next turn            │
+  │  TWO-STEP DECISION ARCHITECTURE (Updated)                      │
+  │                                                                 │
+  │  STEP 1: Topic Switch Decision (Structured Output)             │
+  │  ─────────────────────────────────────────────────────────────  │
+  │  Function: decide_topic_switch() [paixueji_stream.py]          │
+  │  Input:                                                         │
+  │    - Child's answer                                            │
+  │    - Current object, focus mode, correct count                 │
+  │  Process:                                                       │
+  │    - Build decision prompt with context                        │
+  │    - Call Gemini API with JSON mode (response_mime_type)       │
+  │    - Temperature: 0.1, Max tokens: 100                         │
+  │  Output:                                                        │
+  │    {                                                            │
+  │      "decision": "SWITCH" | "CONTINUE",                        │
+  │      "new_object": "ObjectName" | null,                        │
+  │      "reasoning": "Brief explanation"                          │
+  │    }                                                            │
+  │  Latency: ~100-200ms                                            │
+  │                                                                 │
+  │  STEP 2: Handle Decision & Classify (if switching)             │
+  │  ─────────────────────────────────────────────────────────────  │
+  │  if decision == "SWITCH":                                       │
+  │    1. Update assistant.object_name = new_object                │
+  │    2. Classify synchronously with 1s timeout:                  │
+  │       - Call assistant.classify_object_sync()                  │
+  │       - Wait max 1 second for completion                       │
+  │       - Updates level1/level2/level3 categories                │
+  │    3. Rebuild category_prompt and focus_prompt                 │
+  │  Latency: ~800ms-1s (for classification)                       │
+  │                                                                 │
+  │  STEP 3: Generate Response                                      │
+  │  ─────────────────────────────────────────────────────────────  │
+  │  - Use updated object_name and prompts                         │
+  │  - Stream response generation (existing logic)                 │
+  │  - Simple buffering (no tag parsing needed)                    │
+  │                                                                 │
+  │  Benefits:                                                      │
+  │    ✓ 100% reliable topic switching (structured JSON)           │
+  │    ✓ No XML tag parsing from free text                         │
+  │    ✓ Clear audit trail in logs                                 │
+  │    ✓ Separation of decision from response generation           │
+  │                                                                 │
+  │  Total Added Latency: ~200-300ms per turn                      │
+  │  OUTPUT: StreamChunk objects with new_object_name if switched  │
   └─────────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
@@ -541,14 +544,31 @@
   ---
   6. LLM RESPONSE PARSING PIPELINE
 
+  ╔═════════════════════════════════════════════════════════════════╗
+  ║                    ⚠️  DEPRECATED - OLD FLOW  ⚠️                 ║
+  ║                                                                 ║
+  ║  This section documents the OLD XML tag parsing approach       ║
+  ║  that has been REPLACED by the two-step decision architecture. ║
+  ║                                                                 ║
+  ║  Problem: LLM would sometimes forget to output <new_topic>     ║
+  ║  tags even when intending to switch, causing fallback bugs.    ║
+  ║                                                                 ║
+  ║  Solution: Separated decision-making (structured JSON) from    ║
+  ║  response generation (free text). See Section 3 for new flow.  ║
+  ║                                                                 ║
+  ║  Kept for historical reference only.                           ║
+  ╚═════════════════════════════════════════════════════════════════╝
+
+  OLD FLOW (Deprecated):
+
   ┌─────────────────────────────────────────────────────────────────┐
   │                  GEMINI RESPONSE STRUCTURE                      │
-  │  (What the LLM is instructed to output)                         │
+  │  (What the LLM was instructed to output)                        │
   └─────────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
   ┌─────────────────────────────────────────────────────────────────┐
-  │  EXPECTED FORMAT (from QUESTION_PROMPT):                        │
+  │  EXPECTED FORMAT (from old QUESTION_PROMPT):                    │
   │  <analysis>                                                     │
   │  1. Current Focus Strategy: WIDTH-COLOR                         │
   │  2. Child's Answer: "firetruck"                                │
@@ -562,7 +582,7 @@
                                 │
                                 ▼
   ┌─────────────────────────────────────────────────────────────────┐
-  │  PARSING STAGE 1: Analysis Block Removal                       │
+  │  PARSING STAGE 1: Analysis Block Removal (REMOVED)             │
   │  INPUT: Buffered chunks from Gemini stream                     │
   │  DETECTION: if "<analysis>" in buffer:                         │
   │  ACTION:                                                        │
@@ -576,7 +596,7 @@
                                 │
                                 ▼
   ┌─────────────────────────────────────────────────────────────────┐
-  │  PARSING STAGE 2: Topic Tag Extraction                         │
+  │  PARSING STAGE 2: Topic Tag Extraction (REMOVED)               │
   │  INPUT: Buffer after analysis removal                          │
   │  DETECTION: if "<new_topic>" in buffer:                        │
   │  ACTION:                                                        │

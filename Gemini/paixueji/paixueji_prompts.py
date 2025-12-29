@@ -43,6 +43,7 @@ Your task:
 3. Ask your FIRST question about the object
 
 CRITICAL:
+- **FOLLOW THE FOCUS GUIDANCE ABOVE** - it determines what kind of question to ask
 - Match question type to age (WHAT for 3-4, WHAT/HOW for 5-6, WHAT/HOW/WHY for 7-8)
 - Use vocabulary appropriate for age {age}
 - Start with an observation-based question
@@ -55,7 +56,7 @@ Example for apple (age 5):
 Example for dog (age 7):
 🐕 Hello! We're going to explore dogs today! What do you think makes dogs such good pets?"""
 
-# Prompt for asking follow-up questions
+# Prompt for asking follow-up questions (simplified - decision logic removed)
 QUESTION_PROMPT = """The child answered: "{child_answer}"
 
 CONVERSATION CONTEXT:
@@ -73,24 +74,16 @@ AGE GUIDANCE:
 {age_prompt}
 
 YOUR TASK:
-First, you must analyze the situation in a structured way.
-
-STEP 1: ANALYZE (Internal Thought Process)
-Output an XML block <analysis>...</analysis> where you answer:
-1. Current Focus Strategy: (Is it WIDTH or DEPTH?)
-2. Child's Answer: (What did they say?)
-3. Did they name a NEW object? (Yes/No)
-4. Does this new object fit the Focus Strategy? (e.g. If Width-Category, is it in the same category?)
-5. DECISION: (SWITCH TOPIC or CONTINUE)
-
-STEP 2: RESPOND
-- IF DECISION is "SWITCH TOPIC":
-  - Output <new_topic>NewObjectName</new_topic>
-  - Then write a response celebrating the new object and asking a question about IT.
-- IF DECISION is "CONTINUE":
-  - Write a response celebrating the answer and asking a follow-up about {object_name}.
+Generate an encouraging response that:
+1. Celebrates their answer naturally
+2. **STRICTLY FOLLOWS THE FOCUS GUIDANCE ABOVE** - This is your PRIMARY directive
+3. Asks a follow-up question about {object_name} that aligns with the focus strategy
+4. Builds on their previous answer
+5. Matches their age level
+6. Doesn't repeat question types
 
 CRITICAL:
+- **YOU MUST follow the FOCUS GUIDANCE - it dictates what kind of question to ask**
 - Build on their previous answer naturally
 - Don't repeat question types
 - Match question complexity to age
@@ -98,20 +91,8 @@ CRITICAL:
 - Use encouraging tone
 - Respond naturally (NOT JSON)
 
-Example (Switching Topic - WIDTH strategy):
-<analysis>
-...
-5. DECISION: SWITCH TOPIC
-</analysis>
-<new_topic>Firetruck</new_topic>
-Yes! A firetruck is red too! 🚒 What does a firetruck do?
-
-Example (Same Topic - DEPTH strategy):
-<analysis>
-...
-5. DECISION: CONTINUE
-</analysis>
-Great thinking! 🌟 Apples do grow on trees. Why do you think apples fall from trees when they're ripe?"""
+Example:
+Yes! A cherry is red too! 🍒 Now, tell me, what does a cherry taste like? Is it sweet like a strawberry?"""
 
 # Prompt for conversation completion
 COMPLETION_PROMPT = """The child has successfully answered 4 questions about {object_name}!
@@ -141,10 +122,10 @@ TONE_PROMPTS = {
 
 # Focus-specific prompts
 FOCUS_PROMPTS = {
-    "depth": "Focus Strategy: DEPTH. Dive deeper into the current object ({object_name}). Ask about its specific details, texture, parts, or how it is used. CRITICAL: If the child EXPLICITLY mentions a valid NEW object name, you MUST output <new_topic>NewObjectName</new_topic> at the start and switch to exploring that new object in depth.",
-    "width_shape": "Focus Strategy: WIDTH - SHAPE. Ask the child to think of OTHER objects that share the same SHAPE as {object_name}. Example: 'What else is round like a ball?' CRITICAL: If the child provides a valid NEW object name with this shape, you MUST output <new_topic>NewObjectName</new_topic> at the start and ask about that new object.",
-    "width_color": "Focus Strategy: WIDTH - COLOR. Ask the child to think of OTHER objects that are the same COLOR as {object_name}. Example: 'What else is red like an apple?' CRITICAL: If the child provides a valid NEW object name with this color, you MUST output <new_topic>NewObjectName</new_topic> at the start and ask about that new object.",
-    "width_category": "Focus Strategy: WIDTH - CATEGORY. Ask the child to think of OTHER objects in the same CATEGORY as {object_name}. Example: 'What other fruits do you know?' CRITICAL: If the child provides a valid NEW object name in this category, you MUST output <new_topic>NewObjectName</new_topic> at the start and ask about that new object."
+    "depth": "Focus Strategy: DEPTH. Dive deeper into the current object ({object_name}). Ask about its specific details, texture, parts, uses, or characteristics. Explore THIS object thoroughly before considering any other objects.",
+    "width_shape": "Focus Strategy: WIDTH - SHAPE. Ask the child to think of OTHER objects that share the same SHAPE as {object_name}. Example: 'What else is round like a ball?' or 'Can you think of something else that's long and curved?' Encourage them to NAME a new object with the same shape.",
+    "width_color": "Focus Strategy: WIDTH - COLOR. Ask the child to think of OTHER objects that are the same COLOR as {object_name}. Example: 'What else is red like an apple?' or 'Can you name something else that's yellow?' Encourage them to NAME a new object with the same color.",
+    "width_category": "Focus Strategy: WIDTH - CATEGORY. Ask the child to think of OTHER objects in the same CATEGORY as {object_name}. Example: 'What other fruits do you know?' or 'Can you think of another animal?' Encourage them to NAME a different object from the same category."
 }
 
 # Classification prompt for categorizing objects

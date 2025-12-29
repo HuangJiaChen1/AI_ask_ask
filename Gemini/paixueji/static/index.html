@@ -35,7 +35,11 @@
             </select>
 
             <label for="objectName">What object are we learning about?</label>
-            <input type="text" id="objectName" placeholder="e.g., apple, dog, tree" />
+            <div class="object-input-row">
+                <input type="text" id="objectName" placeholder="e.g., apple, dog, tree" />
+                <button type="button" onclick="classifyObject()" id="classifyBtn" class="classify-btn">Classify</button>
+            </div>
+            <div id="classifyStatus" class="classify-status"></div>
 
             <label for="level1Category">Level 1 Category:</label>
             <select id="level1Category" onchange="onLevel1Change()">

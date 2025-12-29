@@ -105,6 +105,56 @@ body {
     transform: scale(0.98);
 }
 
+.object-input-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+}
+
+.object-input-row input {
+    flex: 1;
+}
+
+.classify-btn {
+    padding: 10px 20px !important;
+    background: #059669 !important;
+    font-size: 14px !important;
+    white-space: nowrap;
+    margin-top: 0 !important;
+}
+
+.classify-btn:hover {
+    background: #047857 !important;
+}
+
+.classify-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.classify-status {
+    font-size: 13px;
+    margin-top: -8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    min-height: 20px;
+}
+
+.classify-status.success {
+    color: #065f46;
+    background: #d1fae5;
+}
+
+.classify-status.error {
+    color: #991b1b;
+    background: #fee2e2;
+}
+
+.classify-status.loading {
+    color: #1e40af;
+    background: #dbeafe;
+}
+
 .progress-indicator {
     padding: 12px 20px;
     background: #f0fdf4;
@@ -139,7 +189,7 @@ body {
     flex: 1;
     overflow-y: auto;
     padding: 20px;
-    display: flex;
+    display: none;
     flex-direction: column;
     gap: 15px;
     background: #fafafa;

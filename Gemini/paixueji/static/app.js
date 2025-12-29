@@ -145,9 +145,10 @@ async function startConversation() {
     conversationComplete = false;
     updateProgressIndicator();
 
-    // Hide start form, show progress indicator
+    // Hide start form, show progress indicator and messages
     startForm.style.display = 'none';
     progressIndicator.style.display = 'flex';
+    messagesContainer.style.display = 'flex';
 
     // Disable send button during streaming
     sendBtn.disabled = true;
@@ -632,6 +633,79 @@ function onLevel2Change() {
 }
 
 /**
+ * Classify an object and auto-populate category dropdowns
+ */
+async function classifyObject() {
+    const objectName = document.getElementById('objectName').value.trim();
+    const classifyBtn = document.getElementById('classifyBtn');
+    const classifyStatus = document.getElementById('classifyStatus');
+
+    if (!objectName) {
+        classifyStatus.className = 'classify-status error';
+        classifyStatus.textContent = 'Please enter an object name first';
+        return;
+    }
+
+    // Disable button and show loading
+    classifyBtn.disabled = true;
+    classifyStatus.className = 'classify-status loading';
+    classifyStatus.textContent = 'Classifying...';
+
+    try {
+        const response = await fetch(`${API_BASE}/classify`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                object_name: objectName
+            })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.error || 'Classification failed');
+        }
+
+        const { level1_category, level2_category } = result;
+
+        // Update dropdowns
+        const level1Select = document.getElementById('level1Category');
+        const level2Select = document.getElementById('level2Category');
+
+        if (level2_category === 'none') {
+            // No match found - select "None of the Above"
+            level1Select.value = 'none';
+            level2Select.disabled = true;
+            level2Select.innerHTML = '<option value="">Select...</option>';
+
+            classifyStatus.className = 'classify-status success';
+            classifyStatus.textContent = `"${objectName}" doesn't match our categories. Selected "None of the Above"`;
+        } else {
+            // Match found - update both dropdowns
+            level1Select.value = level1_category;
+
+            // Trigger level1 change to populate level2
+            onLevel1Change();
+
+            // Set level2 value
+            level2Select.value = level2_category;
+
+            classifyStatus.className = 'classify-status success';
+            classifyStatus.textContent = `✓ Classified as: ${formatCategoryName(level2_category)} (${formatCategoryName(level1_category)})`;
+        }
+
+    } catch (error) {
+        console.error('Classification error:', error);
+        classifyStatus.className = 'classify-status error';
+        classifyStatus.textContent = `Error: ${error.message}`;
+    } finally {
+        classifyBtn.disabled = false;
+    }
+}
+
+/**
  * Format category name for display (e.g., "fresh_ingredients" → "Fresh Ingredients")
  */
 function formatCategoryName(name) {
@@ -683,9 +757,10 @@ function resetConversation() {
     // Clear messages
     messagesContainer.innerHTML = '';
 
-    // Show start form again
+    // Show start form again, hide messages and progress
     startForm.style.display = 'block';
     progressIndicator.style.display = 'none';
+    messagesContainer.style.display = 'none';
 
     // Re-enable input
     userInput.disabled = false;
@@ -742,9 +817,19 @@ function init() {
         emptyState.className = 'empty-state';
         emptyState.innerHTML = `
             <p>👋 Welcome to Paixueji!</p>
-            <small>Enter an object name, select categories, and click "Start Learning!" to begin</small>
+            <small>Enter an object name, click "Classify" to auto-categorize, then "Start Learning!" to begin</small>
         `;
         messagesContainer.appendChild(emptyState);
+    }
+
+    // Clear classification status when user types in object name
+    const objectNameInput = document.getElementById('objectName');
+    const classifyStatus = document.getElementById('classifyStatus');
+    if (objectNameInput && classifyStatus) {
+        objectNameInput.addEventListener('input', () => {
+            classifyStatus.className = 'classify-status';
+            classifyStatus.textContent = '';
+        });
     }
 
     // Focus on object name input

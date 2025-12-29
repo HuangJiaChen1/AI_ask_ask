@@ -194,6 +194,7 @@ def start_conversation():
                         request_id=request_id,
                         config=assistant.config,
                         client=assistant.client,
+                        assistant=assistant,
                         age_prompt=age_prompt,
                         object_name=object_name,
                         level1_category=level1_category,
@@ -330,6 +331,7 @@ def continue_conversation():
                         request_id=request_id,
                         config=assistant.config,
                         client=assistant.client,
+                        assistant=assistant,
                         age_prompt=age_prompt,
                         object_name=assistant.object_name,
                         level1_category=assistant.level1_category,
@@ -340,19 +342,9 @@ def continue_conversation():
                         focus_prompt=focus_prompt,
                         focus_mode=focus_mode
                     ):
-                        # Handle new object name (Context Switch)
-                        if chunk.new_object_name:
-                            assistant.object_name = chunk.new_object_name
-                            print(f"[INFO] Session {session_id[:8]}... SWITCHED TOPIC to {chunk.new_object_name}")
-
-                            # Trigger background classification for new object
-                            classification_thread = threading.Thread(
-                                target=assistant.classify_object_sync,
-                                args=(chunk.new_object_name,),
-                                daemon=True
-                            )
-                            classification_thread.start()
-                            print(f"[INFO] Session {session_id[:8]}... started background classification for {chunk.new_object_name}")
+                        # NEW: Topic switching and classification now handled in ask_followup_question_stream()
+                        # The decision step happens BEFORE response generation
+                        # Object name and categories are already updated if switch occurred
 
                         # Yield StreamChunk as SSE event (pass directly for optimized serialization)
                         # Update conversation history with final response
@@ -454,6 +446,77 @@ def list_sessions():
     })
 
 
+@app.route('/api/classify', methods=['POST'])
+def classify_object():
+    """
+    Classify an object into level2 category.
+
+    Request body:
+        {
+            "object_name": "apple"
+        }
+
+    Response:
+        {
+            "success": true,
+            "object_name": "apple",
+            "level2_category": "fresh_ingredients",
+            "level1_category": "foods"
+        }
+        OR
+        {
+            "success": true,
+            "object_name": "apple",
+            "level2_category": "none",
+            "level1_category": "none"
+        }
+    """
+    data = request.get_json()
+
+    if not data:
+        return jsonify({
+            "success": False,
+            "error": "Request body must be JSON"
+        }), 400
+
+    object_name = data.get('object_name')
+
+    if not object_name:
+        return jsonify({
+            "success": False,
+            "error": "Missing object_name"
+        }), 400
+
+    # Create a temporary assistant for classification
+    assistant = PaixuejiAssistant()
+
+    try:
+        # Run classification synchronously
+        assistant.classify_object_sync(object_name)
+
+        # Get results
+        level2_category = assistant.level2_category or "none"
+        level1_category = assistant.level1_category or "none"
+
+        print(f"[INFO] Classified '{object_name}' -> level2={level2_category}, level1={level1_category}")
+
+        return jsonify({
+            "success": True,
+            "object_name": object_name,
+            "level2_category": level2_category,
+            "level1_category": level1_category
+        })
+
+    except Exception as e:
+        print(f"[ERROR] Classification error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
 def async_gen_to_sync(async_gen, loop):
     """
     Bridge async generator to sync generator WITHOUT buffering.
@@ -513,6 +576,8 @@ if __name__ == '__main__':
     print("                              Requires: age, object_name, level1_category")
     print("  POST /api/continue        - Continue conversation (SSE)")
     print("                              Requires: session_id, child_input")
+    print("  POST /api/classify        - Classify object into categories")
+    print("                              Requires: object_name")
     print("  POST /api/reset           - Delete session")
     print("  GET  /api/sessions        - List active sessions")
     print("  GET  /                    - Web interface")

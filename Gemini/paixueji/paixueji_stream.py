@@ -132,10 +132,10 @@ async def ask_introduction_question_stream(
     client: genai.Client,
     level3_category: str = "",
     focus_prompt: str = ""
-) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str, str | None], None]:
     """
     Stream first question about the object.
-    
+
     Args:
         messages: Conversation history
         object_name: Name of object to ask about
@@ -146,6 +146,10 @@ async def ask_introduction_question_stream(
         client: Gemini client instance
         level3_category: Level 3 category
         focus_prompt: Focus strategy guidance
+
+    Yields:
+        Tuple of (text_chunk, token_usage_or_None, full_response_so_far, new_object_name_or_None)
+        Note: new_object_name is always None for introduction questions (no topic switching)
     """
     start_time = time.time()
     logger.info(f"ask_introduction_question_stream started | object={object_name}, age={age}")
@@ -201,7 +205,7 @@ async def ask_introduction_question_stream(
                 chunk_count += 1
                 full_response += chunk.text
                 logger.debug(f"Chunk {chunk_count} | length={len(chunk.text)}, total_length={len(full_response)}")
-                yield (chunk.text, None, full_response)
+                yield (chunk.text, None, full_response, None)  # Fourth element: no topic switch in intro
 
         # Note: Gemini API doesn't provide token usage in streaming mode
         # We'll leave token_usage as None
@@ -212,7 +216,7 @@ async def ask_introduction_question_stream(
         logger.error(f"answer_question_stream LLM error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
         # Still yield what we have so far (even if incomplete)
         if full_response:
-            yield ("", token_usage, full_response)
+            yield ("", token_usage, full_response, None)  # Fourth element: no topic switch
         return
     finally:
         # Always attempt cleanup via deletion
@@ -233,12 +237,97 @@ async def ask_introduction_question_stream(
         logger.warning(f"Slow LLM call | duration={duration:.3f}s exceeded threshold {SLOW_LLM_CALL_THRESHOLD}s")
 
     # Final yield with token usage (None for Gemini streaming)
-    yield ("", token_usage, full_response)
+    yield ("", token_usage, full_response, None)  # Fourth element: no topic switch in intro
+
+
+def decide_topic_switch(assistant, child_answer, focus_mode, object_name, correct_count, age):
+    """
+    Step 1: Ask LLM to decide whether to switch topics.
+
+    Uses Gemini's JSON mode to get a structured decision about whether the child
+    mentioned a new object that should become the main topic of discussion.
+
+    Args:
+        assistant: PaixuejiAssistant instance
+        child_answer: The child's answer text
+        focus_mode: Current focus strategy (depth, width_shape, width_color, width_category)
+        object_name: Current object being discussed
+        correct_count: Number of correct answers so far
+        age: Child's age
+
+    Returns:
+        dict: {
+            'decision': 'SWITCH' | 'CONTINUE',
+            'new_object': str | None,
+            'reasoning': str  # for debugging
+        }
+    """
+    # Build decision prompt
+    decision_prompt = f"""You are helping a {age}-year-old child learn about objects.
+
+CURRENT CONTEXT:
+- Current Object: {object_name}
+- Focus Mode: {focus_mode}
+- Child's Answer: "{child_answer}"
+- Correct Answers So Far: {correct_count}
+
+YOUR TASK:
+Analyze whether the child mentioned a NEW object that should become the main topic of discussion.
+
+DECISION RULES:
+1. In DEPTH mode: Only switch if child EXPLICITLY names a completely different object
+2. In WIDTH mode (shape/color/category): Switch if child names a valid new object matching the criteria
+3. If child gives a description but no object name: CONTINUE
+4. If child names an invalid/nonsensical object: CONTINUE
+
+OUTPUT MUST BE VALID JSON:
+{{
+    "decision": "SWITCH" or "CONTINUE",
+    "new_object": "ObjectName" or null,
+    "reasoning": "Brief explanation"
+}}
+
+Examples:
+- Child says "cherry" when asked about red things → {{"decision": "SWITCH", "new_object": "Cherry", "reasoning": "Child named a valid red object"}}
+- Child says "it's yummy" → {{"decision": "CONTINUE", "new_object": null, "reasoning": "Description, not a new object"}}
+- Child says "blibblob" → {{"decision": "CONTINUE", "new_object": null, "reasoning": "Invalid object name"}}
+"""
+
+    try:
+        # Call Gemini with JSON mode / structured output
+        response = assistant.client.models.generate_content(
+            model=assistant.config.get("model", "gemini-2.0-flash-exp"),
+            contents=decision_prompt,
+            config={
+                "response_mime_type": "application/json",  # Force JSON output
+                "temperature": 0.1,  # Low temp for consistent decisions
+                "max_output_tokens": 100
+            }
+        )
+
+        # Parse JSON response
+        import json
+        decision_data = json.loads(response.text)
+
+        logger.info(f"[DECIDE] {decision_data['decision']} | new_object={decision_data.get('new_object')} | reasoning={decision_data.get('reasoning')}")
+
+        return decision_data
+
+    except Exception as e:
+        logger.error(f"[DECIDE] Error: {e}, defaulting to CONTINUE")
+        import traceback
+        traceback.print_exc()
+        return {
+            'decision': 'CONTINUE',
+            'new_object': None,
+            'reasoning': f'Error in decision: {e}'
+        }
 
 
 async def ask_followup_question_stream(
     messages: list[dict],
     child_answer: str,
+    assistant,  # PaixuejiAssistant instance
     object_name: str,
     correct_count: int,
     category_prompt: str,
@@ -247,14 +336,16 @@ async def ask_followup_question_stream(
     config: dict,
     client: genai.Client,
     level3_category: str = "",
-    focus_prompt: str = ""
-) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
+    focus_prompt: str = "",
+    focus_mode: str | None = None
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str, str | None], None]:
     """
     Stream follow-up question based on child's answer.
 
     Args:
         messages: Conversation history
         child_answer: The child's previous answer
+        assistant: PaixuejiAssistant instance for topic switching
         object_name: Name of object being discussed
         correct_count: Number of correct answers so far
         category_prompt: Category-specific guidance
@@ -264,12 +355,54 @@ async def ask_followup_question_stream(
         client: Gemini client instance
         level3_category: Level 3 category
         focus_prompt: Focus strategy guidance
+        focus_mode: The focus mode key (e.g., depth, width_color)
 
     Yields:
-        Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
+        Tuple of (text_chunk, token_usage_or_None, full_response_so_far, new_object_name_or_None)
     """
     start_time = time.time()
     logger.info(f"ask_followup_question_stream started | object={object_name}, correct_count={correct_count}, answer_length={len(child_answer)}")
+
+    # STEP 1: DECISION - Should we switch topics?
+    new_topic_name = None
+    decision = decide_topic_switch(
+        assistant=assistant,
+        child_answer=child_answer,
+        focus_mode=focus_mode or "depth",
+        object_name=object_name,
+        correct_count=correct_count,
+        age=age
+    )
+
+    # STEP 2: HANDLE DECISION
+    if decision['decision'] == 'SWITCH' and decision['new_object']:
+        new_topic_name = decision['new_object']
+        logger.info(f"[SWITCH] Decision: Switch to {new_topic_name}")
+
+        # Update object name immediately
+        assistant.object_name = new_topic_name
+        object_name = new_topic_name  # Update local variable too
+
+        # Classify synchronously with timeout
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(
+                assistant.classify_object_sync,
+                new_topic_name
+            )
+            try:
+                future.result(timeout=1.0)  # Wait up to 1 second
+                logger.info(f"[CLASSIFY] Completed for {new_topic_name}")
+            except concurrent.futures.TimeoutError:
+                logger.warning(f"[CLASSIFY] Timeout for {new_topic_name}, continuing in background")
+
+        # Rebuild category/focus prompts with new object
+        category_prompt = assistant.get_category_prompt(
+            assistant.level1_category,
+            assistant.level2_category,
+            assistant.level3_category
+        )
+        focus_prompt = assistant.get_focus_prompt(focus_mode or "depth")
 
     prompts = paixueji_prompts.get_prompts()
     question_prompt = prompts['question_prompt'].format(
@@ -323,14 +456,14 @@ async def ask_followup_question_stream(
                 chunk_count += 1
                 full_response += chunk.text
                 logger.debug(f"Chunk {chunk_count} | length={len(chunk.text)}, total_length={len(full_response)}")
-                yield (chunk.text, None, full_response)
+                yield (chunk.text, None, full_response, new_topic_name)
 
     except Exception as e:
         duration = time.time() - start_time
         logger.error(f"suggest_topics_stream LLM error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
         # Still yield what we have so far (even if incomplete)
         if full_response:
-            yield ("", token_usage, full_response)
+            yield ("", token_usage, full_response, new_topic_name)
         return
     finally:
         # Always attempt cleanup via deletion
@@ -348,7 +481,7 @@ async def ask_followup_question_stream(
     )
 
     # Final yield with token usage (None for Gemini streaming)
-    yield ("", token_usage, full_response)
+    yield ("", token_usage, full_response, new_topic_name)
 
 
 def is_answer_reasonable(child_answer: str) -> bool:
@@ -492,6 +625,7 @@ async def call_paixueji_stream(
     request_id: str,
     config: dict,
     client: genai.Client,
+    assistant,  # PaixuejiAssistant instance for topic switching
     age_prompt: str = "",
     object_name: str = "",
     level1_category: str = "",
@@ -579,6 +713,7 @@ async def call_paixueji_stream(
             stream_generator = ask_followup_question_stream(
                 prepared_messages,
                 content,  # child's answer
+                assistant,  # Pass assistant for topic switching
                 object_name,
                 correct_answer_count,
                 category_prompt,
@@ -587,7 +722,8 @@ async def call_paixueji_stream(
                 config,
                 client,
                 level3_category,
-                focus_prompt=focus_prompt
+                focus_prompt=focus_prompt,
+                focus_mode=focus_mode
             )
             response_type = "followup"
             logger.info(f"[{session_id}] Routing to followup question | answer_reasonable=True")
@@ -596,6 +732,7 @@ async def call_paixueji_stream(
             stream_generator = ask_followup_question_stream(
                 prepared_messages,
                 content,
+                assistant,  # Pass assistant for topic switching
                 object_name,
                 correct_answer_count,
                 category_prompt,
@@ -604,79 +741,31 @@ async def call_paixueji_stream(
                 config,
                 client,
                 level3_category,
-                focus_prompt=focus_prompt
+                focus_prompt=focus_prompt,
+                focus_mode=focus_mode
             )
             response_type = "followup_encouraging"
             logger.info(f"[{session_id}] Routing to followup question | answer_reasonable=False")
 
     # Stream chunks from the selected generator
     if stream_generator:
-        new_object_detected = False
         new_object_name = None
         buffer = ""
-        is_in_analysis = False
 
-        async for chunked_text, chunk_token_usage, full_text in stream_generator:
+        async for chunked_text, chunk_token_usage, full_text, detected_new_object in stream_generator:
+            # Capture new object name from decision step (only set once)
+            if detected_new_object and not new_object_name:
+                new_object_name = detected_new_object
+                logger.info(f"[{session_id}] TOPIC SWITCH DETECTED: {new_object_name}")
             if chunk_token_usage:
                 token_usage = chunk_token_usage
 
+            # Simple buffering - no tag parsing needed (decision made in separate API call)
             buffer += chunked_text
-            text_to_process = ""
+            text_to_process = buffer
+            buffer = ""
 
-            # 1. Handle Analysis Block (Hidden thought process)
-            if not is_in_analysis:
-                if "<analysis>" in buffer:
-                    is_in_analysis = True
-            
-            if is_in_analysis:
-                if "</analysis>" in buffer:
-                    # End of analysis block found - remove it
-                    end_idx = buffer.find("</analysis>") + len("</analysis>")
-                    # Keep everything AFTER the analysis block
-                    buffer = buffer[end_idx:].lstrip() # lstrip to remove newline after tag
-                    is_in_analysis = False
-                    # Fall through to process remaining buffer
-                else:
-                    # Still inside analysis - yield nothing, keep buffering
-                    continue
-
-            # 2. Handle New Topic Tag (Control signal)
-            if not new_object_detected:
-                if "<new_topic>" in buffer:
-                    if "</new_topic>" in buffer:
-                        # Extract topic
-                        start_idx = buffer.find("<new_topic>") + len("<new_topic>")
-                        end_idx = buffer.find("</new_topic>")
-                        new_object_name = buffer[start_idx:end_idx].strip()
-                        new_object_detected = True
-                        logger.info(f"[{session_id}] NEW TOPIC DETECTED: {new_object_name}")
-                        
-                        # Remove tag from output
-                        # Note: We replace only the first occurrence just in case
-                        tag_full = f"<new_topic>{new_object_name}</new_topic>"
-                        buffer = buffer.replace(tag_full, "", 1).lstrip()
-                        
-                        # Now we can process the buffer as text
-                        text_to_process = buffer
-                        buffer = ""
-                    else:
-                        # Partial tag, keep buffering
-                        continue
-                else:
-                    # No tag start found yet
-                    # Heuristic: If buffer is very long and no tag, flush it to avoid latency
-                    # But we must be careful not to split a tag. 
-                    # Tags are short (<20 chars). If buffer > 50 chars and no '<', flush.
-                    if len(buffer) > 50 and "<" not in buffer:
-                         text_to_process = buffer
-                         buffer = ""
-                    # If we have '<' but it's at the very end, we wait.
-            else:
-                # Normal processing after topic found or if no topic expected anymore
-                text_to_process = buffer
-                buffer = ""
-
-            # 3. Yield Result
+            # Yield Result
             if text_to_process:
                 full_response += text_to_process # Track what we actually sent to user
                 
