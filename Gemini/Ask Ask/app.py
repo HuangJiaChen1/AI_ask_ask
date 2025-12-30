@@ -114,6 +114,18 @@ def start_conversation():
             print(f"[WARNING] Invalid age format {age}, using None")
             age = None
 
+    # Check if session already exists - silently ignore duplicate /start calls
+    if session_id in sessions:
+        print(f"[INFO] Session {session_id[:8]}... already exists - ignoring duplicate /start call (doing nothing)")
+        # Return success without doing any LLM generation or session modification
+        return jsonify({
+            "success": True,
+            "session_id": session_id,
+            "introduction": "",  # Empty - client should ignore this
+            "request_id": str(uuid.uuid4()),
+            "duplicate": True  # Flag indicating this was a no-op duplicate call
+        }), 200
+
     # Create session
     assistant = AskAskAssistant()
     sessions[session_id] = assistant
@@ -122,7 +134,12 @@ def start_conversation():
     # Generate unique request ID
     request_id = str(uuid.uuid4())
 
-    print(f"[INFO] Starting session {session_id[:8]}... with age={age}")
+    print(f"\n{'='*80}")
+    print(f"[/api/start] NEW SESSION STARTED")
+    print(f"  Session ID: {session_id}")
+    print(f"  Age: {age}")
+    print(f"  Request ID: {request_id}")
+    print(f"{'='*80}")
 
     try:
         # Build system prompt with age guidance
@@ -171,6 +188,10 @@ def start_conversation():
             "content": introduction
         })
 
+        print(f"[/api/start] Introduction generated (length: {len(introduction)})")
+        print(f"[/api/start] Conversation history now has {len(assistant.conversation_history)} messages")
+        print(f"{'='*80}\n")
+
         return jsonify({
             "success": True,
             "session_id": session_id,
@@ -215,6 +236,12 @@ def continue_conversation():
     session_id = data.get('session_id')
     child_input = data.get('child_input')
 
+    print(f"\n{'='*80}")
+    print(f"[/api/continue] CONTINUE REQUEST RECEIVED")
+    print(f"  Session ID: {session_id}")
+    print(f"  User Input: {repr(child_input[:100] if child_input else None)}...")
+    print(f"{'='*80}")
+
     if not session_id or not child_input:
         return jsonify({
             "success": False,
@@ -224,6 +251,9 @@ def continue_conversation():
     assistant = sessions.get(session_id)
 
     if not assistant:
+        print(f"[/api/continue] ERROR: Session {session_id} NOT FOUND")
+        print(f"[/api/continue] Available sessions: {list(sessions.keys())}")
+        print(f"{'='*80}\n")
         return jsonify({
             "success": False,
             "error": "Session not found. Please start a new conversation."
@@ -232,7 +262,7 @@ def continue_conversation():
     # Generate unique request ID for this stream
     request_id = str(uuid.uuid4())
 
-    print(f"[INFO] Session {session_id[:8]}... continuing: '{child_input[:50]}...', request_id={request_id[:8]}...")
+    print(f"[/api/continue] Session found - current history has {len(assistant.conversation_history)} messages")
 
     def generate():
         """Generator for SSE stream."""
@@ -245,6 +275,13 @@ def continue_conversation():
 
             # Get new event loop for this request (avoids race conditions)
             loop = get_event_loop()
+
+            print(f"[/api/continue] Starting streaming response...")
+            print(f"[/api/continue] Message history being sent to model:")
+            for i, msg in enumerate(assistant.conversation_history):
+                role = msg.get('role', 'unknown')
+                content_preview = msg.get('content', '')[:80]
+                print(f"    [{i}] {role}: {content_preview}...")
 
             try:
                 async def stream_response():
@@ -272,6 +309,11 @@ def continue_conversation():
                                 "role": "assistant",
                                 "content": chunk.response
                             })
+
+                            print(f"[/api/continue] Streaming completed")
+                            print(f"[/api/continue] Final response length: {len(chunk.response)}")
+                            print(f"[/api/continue] Conversation history now has {len(assistant.conversation_history)} messages")
+                            print(f"{'='*80}\n")
 
                         yield sse_event("chunk", chunk)
 

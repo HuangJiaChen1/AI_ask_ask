@@ -243,6 +243,7 @@
   │  - Has letters? (<2 letters) → False                          │
   │  - Otherwise → True (be encouraging!)                          │
   │  OUTPUT: answer_is_reasonable (bool)                           │
+  │  EFFECT: Determines routing to followup vs explanation stream  │
   └─────────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
@@ -251,6 +252,8 @@
   │  if answer_is_reasonable:                                      │
   │    assistant.increment_correct_answers()                       │
   │    // correct_answer_count += 1                                │
+  │  else:                                                          │
+  │    // Keep count unchanged - child needs help                  │
   │  OUTPUT: Updated correct_answer_count                          │
   └─────────────────────────────────────────────────────────────────┘
                                 │
@@ -286,14 +289,23 @@
                                 │
                                 ▼
   ┌─────────────────────────────────────────────────────────────────┐
-  │  Route to Follow-up Stream (correct_answer_count > 0)          │
-  │  ask_followup_question_stream()                                │
+  │  Route Based on Answer Quality (correct_answer_count > 0)      │
+  │                                                                 │
+  │  PATH 1: Reasonable Answer → ask_followup_question_stream()    │
   │  - Format QUESTION_PROMPT with:                                │
   │    * child_answer, object_name, correct_count                 │
   │    * age, category_prompt, age_prompt, focus_prompt           │
-  │  - Append to messages as user message                          │
-  │  - Clean messages (remove non-standard fields)                 │
-  │  - Convert to Gemini format (system_instruction + contents)    │
+  │  - Celebrates answer and asks next question                    │
+  │  - Calls decide_topic_switch() for topic detection             │
+  │                                                                 │
+  │  PATH 2: Unreasonable Answer → ask_explanation_question_stream()│
+  │  - Extract previous question from conversation history         │
+  │  - Format EXPLANATION_PROMPT with:                             │
+  │    * child_answer, previous_question, object_name             │
+  │    * age, category_prompt, age_prompt, focus_prompt           │
+  │  - Provides answer with examples, then asks follow-up          │
+  │  - NO topic switching (focus on teaching current concept)      │
+  │                                                                 │
   │  OUTPUT: Prepared messages for Gemini API                      │
   └─────────────────────────────────────────────────────────────────┘
                                 │
@@ -474,6 +486,37 @@
   │                + "\n\nCATEGORY GUIDANCE:\n" + category_prompt  │
   │  (focus_prompt used in user message, not system)              │
   │  OUTPUT: Complete system instruction for Gemini                │
+  └─────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  CONVERSATION-SPECIFIC PROMPTS (paixueji_prompts.py)          │
+  │                                                                 │
+  │  INTRODUCTION_PROMPT (correct_answer_count == 0):              │
+  │  - Greet child warmly                                          │
+  │  - Introduce the object                                        │
+  │  - Ask first question following focus strategy                 │
+  │                                                                 │
+  │  QUESTION_PROMPT (answer is reasonable):                       │
+  │  - Celebrate child's answer naturally                          │
+  │  - STRICTLY follow focus guidance (PRIMARY directive)          │
+  │  - Ask follow-up question about object                         │
+  │  - Build on previous answer                                    │
+  │  - Calls decide_topic_switch() first to detect new objects     │
+  │                                                                 │
+  │  EXPLANATION_PROMPT (answer is unreasonable - "I don't know"): │
+  │  - Acknowledge uncertainty gently (no pressure)                │
+  │  - Provide answer to the SPECIFIC previous question            │
+  │  - Use age-appropriate examples and comparisons                │
+  │  - Keep explanation SHORT (2-3 sentences max)                  │
+  │  - Continue with focus strategy for follow-up question         │
+  │  - NO topic switching (focus on teaching current concept)      │
+  │                                                                 │
+  │  COMPLETION_PROMPT (4+ correct answers - infinite mode):       │
+  │  - Celebrate achievement enthusiastically                      │
+  │  - Summarize key learnings                                     │
+  │  - Encourage exploring more objects                            │
+  │  OUTPUT: Context-appropriate prompt for current turn           │
   └─────────────────────────────────────────────────────────────────┘
 
   ---
@@ -798,7 +841,19 @@
   | app.py                | Flask routes, SSE streaming, session management, event loops           |
   | paixueji_assistant.py | Session state, client initialization, prompt retrieval, classification |
   | paixueji_stream.py    | Async streaming logic, Gemini API calls, response parsing              |
-  | paixueji_prompts.py   | Prompt templates (system, intro, question, completion, tone, focus)    |
+  |                       | - ask_introduction_question_stream(): First question                   |
+  |                       | - ask_followup_question_stream(): Regular follow-ups                   |
+  |                       | - ask_explanation_question_stream(): "I don't know" handling (NEW)     |
+  |                       | - extract_previous_question(): Extract last question from history (NEW)|
+  |                       | - decide_topic_switch(): JSON-based topic detection                    |
+  |                       | - is_answer_reasonable(): Answer quality validation                    |
+  | paixueji_prompts.py   | Prompt templates (system, intro, question, explanation, completion)    |
+  |                       | - SYSTEM_PROMPT: Base instructions                                     |
+  |                       | - INTRODUCTION_PROMPT: First question template                         |
+  |                       | - QUESTION_PROMPT: Normal follow-up template                           |
+  |                       | - EXPLANATION_PROMPT: "I don't know" response template (NEW)           |
+  |                       | - COMPLETION_PROMPT: Celebration message                               |
+  |                       | - TONE_PROMPTS: 6 tone styles, FOCUS_PROMPTS: 4 focus strategies       |
   | schema.py             | Pydantic models (StreamChunk, TokenUsage, etc.)                        |
   | config.json           | Gemini configuration (project, location, model, temperature)           |
   | age_prompts.json      | Age-based guidance (3-4, 5-6, 7-8)                                     |

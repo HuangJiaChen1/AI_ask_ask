@@ -275,10 +275,15 @@ YOUR TASK:
 Analyze whether the child mentioned a NEW object that should become the main topic of discussion.
 
 DECISION RULES:
-1. In DEPTH mode: Only switch if child EXPLICITLY names a completely different object
-2. In WIDTH mode (shape/color/category): Switch if child names a valid new object matching the criteria
-3. If child gives a description but no object name: CONTINUE
-4. If child names an invalid/nonsensical object: CONTINUE
+1. **DEPTH mode**: Only SWITCH if child EXPLICITLY names a completely different object unrelated to the current one
+2. **WIDTH_COLOR mode**: SWITCH if child names ANY real object that shares the same COLOR (e.g., "sun" for yellow banana → SWITCH)
+3. **WIDTH_SHAPE mode**: SWITCH if child names ANY real object that shares the same SHAPE (e.g., "orange" for round apple → SWITCH)
+4. **WIDTH_CATEGORY mode**: SWITCH if child names ANY real object in the same CATEGORY (e.g., "cherry" for fruit apple → SWITCH)
+5. If child gives only a DESCRIPTION without naming an object: CONTINUE (e.g., "it's big" → CONTINUE)
+6. If child names a nonsensical/made-up object: CONTINUE (e.g., "blibblob" → CONTINUE)
+7. If child names abstract concepts or non-tangible things, judge carefully:
+   - "sun", "moon", "star" are VALID objects (even if not touchable)
+   - Pure concepts like "happiness" are NOT valid objects
 
 OUTPUT MUST BE VALID JSON:
 {{
@@ -288,9 +293,10 @@ OUTPUT MUST BE VALID JSON:
 }}
 
 Examples:
-- Child says "cherry" when asked about red things → {{"decision": "SWITCH", "new_object": "Cherry", "reasoning": "Child named a valid red object"}}
-- Child says "it's yummy" → {{"decision": "CONTINUE", "new_object": null, "reasoning": "Description, not a new object"}}
-- Child says "blibblob" → {{"decision": "CONTINUE", "new_object": null, "reasoning": "Invalid object name"}}
+- Focus: width_color, Answer: "cherry" → {{"decision": "SWITCH", "new_object": "Cherry", "reasoning": "Cherry is a real red object"}}
+- Focus: width_color, Answer: "the sun" → {{"decision": "SWITCH", "new_object": "Sun", "reasoning": "Sun is a real yellow object"}}
+- Focus: width_shape, Answer: "it's round" → {{"decision": "CONTINUE", "new_object": null, "reasoning": "Description only, no object named"}}
+- Focus: depth, Answer: "blibblob" → {{"decision": "CONTINUE", "new_object": null, "reasoning": "Invalid/nonsensical object"}}
 """
 
     try:
@@ -374,10 +380,14 @@ async def ask_followup_question_stream(
         age=age
     )
 
-    # STEP 2: HANDLE DECISION
+    # STEP 2: HANDLE DECISION & BUILD APPROPRIATE PROMPT
+    prompts = paixueji_prompts.get_prompts()
+
     if decision['decision'] == 'SWITCH' and decision['new_object']:
+        # TOPIC SWITCH: Child named a new object!
         new_topic_name = decision['new_object']
-        logger.info(f"[SWITCH] Decision: Switch to {new_topic_name}")
+        previous_object = object_name  # Save for prompt
+        logger.info(f"[SWITCH] Decision: Switch from {previous_object} to {new_topic_name}")
 
         # Update object name immediately
         assistant.object_name = new_topic_name
@@ -396,24 +406,38 @@ async def ask_followup_question_stream(
             except concurrent.futures.TimeoutError:
                 logger.warning(f"[CLASSIFY] Timeout for {new_topic_name}, continuing in background")
 
-        # Rebuild category/focus prompts with new object
+        # Rebuild category prompt for new object
         category_prompt = assistant.get_category_prompt(
             assistant.level1_category,
             assistant.level2_category,
             assistant.level3_category
         )
-        focus_prompt = assistant.get_focus_prompt(focus_mode or "depth")
 
-    prompts = paixueji_prompts.get_prompts()
-    question_prompt = prompts['question_prompt'].format(
-        child_answer=child_answer,
-        object_name=object_name,
-        correct_count=correct_count,
-        age=age,
-        category_prompt=category_prompt,
-        age_prompt=age_prompt,
-        focus_prompt=focus_prompt
-    )
+        # Use TOPIC_SWITCH_PROMPT - celebrate and ask about new object
+        question_prompt = prompts['topic_switch_prompt'].format(
+            child_answer=child_answer,
+            previous_object=previous_object,
+            new_object=new_topic_name,
+            age=age,
+            category_prompt=category_prompt,
+            age_prompt=age_prompt
+        )
+    else:
+        # CONTINUE: Regular follow-up question on same object
+        # Validation: Answer was not a valid new object
+        validation_guidance = f"❌ NOT A VALID NEW OBJECT - The child's answer did not name a valid new object. Gently acknowledge their attempt but guide them to think of a proper object name. Reasoning: {decision.get('reasoning', 'No valid object')}"
+
+        # Use regular QUESTION_PROMPT with validation
+        question_prompt = prompts['question_prompt'].format(
+            child_answer=child_answer,
+            object_name=object_name,
+            correct_count=correct_count,
+            age=age,
+            category_prompt=category_prompt,
+            age_prompt=age_prompt,
+            focus_prompt=focus_prompt,
+            validation_guidance=validation_guidance
+        )
 
     # Prepare messages with question prompt
     messages_to_send = messages + [{"role": "user", "content": question_prompt}]
@@ -484,6 +508,131 @@ async def ask_followup_question_stream(
     yield ("", token_usage, full_response, new_topic_name)
 
 
+async def ask_explanation_question_stream(
+    messages: list[dict],
+    child_answer: str,
+    assistant,  # PaixuejiAssistant instance
+    object_name: str,
+    correct_count: int,
+    category_prompt: str,
+    age_prompt: str,
+    age: int,
+    config: dict,
+    client: genai.Client,
+    level3_category: str = "",
+    focus_prompt: str = "",
+    focus_mode: str | None = None
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str, str | None], None]:
+    """
+    Stream explanation + follow-up question when child says "I don't know".
+
+    This function:
+    1. Extracts the previous question from conversation history
+    2. Uses EXPLANATION_PROMPT to explain the answer
+    3. Continues with focus strategy for next question
+
+    Args:
+        messages: Conversation history
+        child_answer: The child's "I don't know" answer
+        assistant: PaixuejiAssistant instance
+        object_name: Name of object being discussed
+        correct_count: Number of correct answers so far
+        category_prompt: Category-specific guidance
+        age_prompt: Age-specific guidance
+        age: Child's age
+        config: Configuration dict with model settings
+        client: Gemini client instance
+        level3_category: Level 3 category
+        focus_prompt: Focus strategy guidance
+        focus_mode: The focus mode key (e.g., depth, width_color)
+
+    Yields:
+        Tuple of (text_chunk, token_usage_or_None, full_response_so_far, new_object_name_or_None)
+    """
+    start_time = time.time()
+    logger.info(f"ask_explanation_question_stream started | object={object_name}, answer={child_answer[:30]}")
+
+    # Extract the previous question from conversation history
+    previous_question = extract_previous_question(messages)
+    logger.debug(f"Extracted previous question: {previous_question[:100]}")
+
+    # Build explanation prompt
+    prompts = paixueji_prompts.get_prompts()
+    explanation_prompt = prompts['explanation_prompt'].format(
+        child_answer=child_answer,
+        object_name=object_name,
+        age=age,
+        previous_question=previous_question,
+        category_prompt=category_prompt,
+        age_prompt=age_prompt,
+        focus_prompt=focus_prompt
+    )
+
+    # Prepare messages with explanation prompt
+    messages_to_send = messages + [{"role": "user", "content": explanation_prompt}]
+
+    # Clean messages for API
+    clean_messages = clean_messages_for_api(messages_to_send)
+
+    # Convert to Gemini format
+    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
+
+    # Stream from LLM
+    full_response = ""
+    token_usage = None
+    new_topic_name = None  # No topic switching when child doesn't know
+
+    stream = None
+    try:
+        logger.debug(f"Sending {len(contents)} messages to Gemini API (explanation mode)")
+
+        # Configure generation
+        gen_config = GenerateContentConfig(
+            temperature=config.get("temperature", 0.3),
+            max_output_tokens=config.get("max_tokens", 2000),
+            system_instruction=system_instruction if system_instruction else None
+        )
+
+        # Call streaming API
+        stream = client.models.generate_content_stream(
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config
+        )
+
+        # Yield chunks as they arrive
+        chunk_count = 0
+        for chunk in stream:
+            if chunk.text:
+                chunk_count += 1
+                full_response += chunk.text
+                logger.debug(f"Chunk {chunk_count} | length={len(chunk.text)}, total_length={len(full_response)}")
+                yield (chunk.text, None, full_response, new_topic_name)
+
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(f"ask_explanation_question_stream LLM error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        if full_response:
+            yield ("", token_usage, full_response, new_topic_name)
+        return
+    finally:
+        if stream is not None:
+            try:
+                del stream
+                logger.debug('Cleaned up stream via del in finally block')
+            except:
+                pass
+
+    duration = time.time() - start_time
+    logger.info(
+        f"ask_explanation_question_stream completed | "
+        f"duration={duration:.3f}s, response_length={len(full_response)}"
+    )
+
+    # Final yield with token usage (None for Gemini streaming)
+    yield ("", token_usage, full_response, new_topic_name)
+
+
 def is_answer_reasonable(child_answer: str) -> bool:
     """
     Check if child's answer shows reasonable engagement.
@@ -516,6 +665,30 @@ def is_answer_reasonable(child_answer: str) -> bool:
 
     # Accept everything else - be encouraging!
     return True
+
+
+def extract_previous_question(messages: list[dict]) -> str:
+    """
+    Extract the last question asked by the assistant from conversation history.
+
+    This looks for the most recent assistant message and returns it.
+    Used to provide context when explaining answers to "I don't know" responses.
+
+    Args:
+        messages: Conversation history (list of role/content dicts)
+
+    Returns:
+        The last assistant message, or a fallback string if not found
+    """
+    # Walk backwards through messages to find last assistant message
+    for msg in reversed(messages):
+        if msg.get("role") == "assistant":
+            content = msg.get("content", "")
+            # Return the content (which contains the question)
+            return content
+
+    # Fallback if no assistant message found (shouldn't happen in practice)
+    return "the previous question"
 
 
 async def generate_completion_message_stream(
@@ -689,8 +862,11 @@ async def call_paixueji_stream(
     response_type = None
     is_correct = False
 
-    if correct_answer_count == 0:
-        # First question (introduction)
+    # Check if this is truly the first interaction (no assistant messages yet)
+    has_asked_questions = any(msg.get("role") == "assistant" for msg in messages)
+
+    if correct_answer_count == 0 and not has_asked_questions:
+        # First question (introduction) - only if we haven't asked any questions yet
         stream_generator = ask_introduction_question_stream(
             prepared_messages,
             object_name,
@@ -705,7 +881,7 @@ async def call_paixueji_stream(
         response_type = "introduction"
         logger.info(f"[{session_id}] Routing to introduction question")
     else:
-        # Follow-up question
+        # Follow-up question or explanation (we've already started the conversation)
         # Check if answer is reasonable (and mark as correct if so)
         is_correct = is_answer_reasonable(content)
         
@@ -728,13 +904,13 @@ async def call_paixueji_stream(
             response_type = "followup"
             logger.info(f"[{session_id}] Routing to followup question | answer_reasonable=True")
         else:
-            # Answer doesn't seem reasonable (child stuck) - ask encouraging question
-            stream_generator = ask_followup_question_stream(
+            # Answer doesn't seem reasonable (child stuck) - provide explanation
+            stream_generator = ask_explanation_question_stream(
                 prepared_messages,
                 content,
-                assistant,  # Pass assistant for topic switching
+                assistant,
                 object_name,
-                correct_answer_count,
+                correct_answer_count,  # Don't increment - they didn't answer
                 category_prompt,
                 age_prompt,
                 age or 6,
@@ -744,8 +920,8 @@ async def call_paixueji_stream(
                 focus_prompt=focus_prompt,
                 focus_mode=focus_mode
             )
-            response_type = "followup_encouraging"
-            logger.info(f"[{session_id}] Routing to followup question | answer_reasonable=False")
+            response_type = "explanation"
+            logger.info(f"[{session_id}] Routing to explanation (answer_reasonable=False)")
 
     # Stream chunks from the selected generator
     if stream_generator:

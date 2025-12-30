@@ -64,6 +64,9 @@ CONVERSATION CONTEXT:
 - Correct answers so far: {correct_count}
 - Child's age: {age}
 
+ANSWER VALIDATION:
+{validation_guidance}
+
 CATEGORY GUIDANCE:
 {category_prompt}
 
@@ -75,7 +78,7 @@ AGE GUIDANCE:
 
 YOUR TASK:
 Generate an encouraging response that:
-1. Celebrates their answer naturally
+1. Responds to their answer based on ANSWER VALIDATION above
 2. **STRICTLY FOLLOWS THE FOCUS GUIDANCE ABOVE** - This is your PRIMARY directive
 3. Asks a follow-up question about {object_name} that aligns with the focus strategy
 4. Builds on their previous answer
@@ -83,6 +86,7 @@ Generate an encouraging response that:
 6. Doesn't repeat question types
 
 CRITICAL:
+- **FOLLOW THE ANSWER VALIDATION** - it tells you whether to celebrate or gently redirect
 - **YOU MUST follow the FOCUS GUIDANCE - it dictates what kind of question to ask**
 - Build on their previous answer naturally
 - Don't repeat question types
@@ -91,8 +95,86 @@ CRITICAL:
 - Use encouraging tone
 - Respond naturally (NOT JSON)
 
-Example:
-Yes! A cherry is red too! 🍒 Now, tell me, what does a cherry taste like? Is it sweet like a strawberry?"""
+Example (when answer is valid):
+Yes! A cherry is red too! 🍒 Now, tell me, what does a cherry taste like? Is it sweet like a strawberry?
+
+Example (when answer is not quite right):
+Hmm, that's an interesting idea! But let me help you - we're looking for something that's the same color as the banana. Can you think of another yellow object?"""
+
+# Prompt for topic switching (when child names a new object)
+TOPIC_SWITCH_PROMPT = """The child answered: "{child_answer}"
+
+CONVERSATION CONTEXT:
+- Previous Object: {previous_object}
+- NEW Object (what the child mentioned): {new_object}
+- Child's age: {age}
+
+CATEGORY GUIDANCE FOR NEW OBJECT:
+{category_prompt}
+
+AGE GUIDANCE:
+{age_prompt}
+
+YOUR TASK:
+The child just named a new object ({new_object})! Now you need to:
+1. CELEBRATE their answer enthusiastically - they gave a great response!
+2. SMOOTHLY TRANSITION to exploring the new object they mentioned
+3. Ask an engaging, age-appropriate question about {new_object}
+
+CRITICAL:
+- Acknowledge their answer was correct/great
+- Make the transition natural and exciting
+- Ask a SIMPLE question about the NEW object (not about finding more similar objects)
+- Match question complexity to age {age}
+- Keep vocabulary age-appropriate
+- Use encouraging tone
+- Respond naturally (NOT JSON)
+
+Example (child said "sun" when asked about yellow things like banana):
+Yes! The sun is yellow too! ☀️ Great thinking! Now let's talk about the sun. Tell me, when do we see the sun in the sky?
+
+Example (child said "cherry" when asked about red things like apple):
+Wonderful! A cherry is red just like an apple! 🍒 Now let's explore cherries. What shape is a cherry? Is it round or long?"""
+
+# Prompt for explaining answers when child says "I don't know"
+EXPLANATION_PROMPT = """The child answered: "{child_answer}"
+
+CONVERSATION CONTEXT:
+- Object: {object_name}
+- Child's age: {age}
+- Previous question asked: "{previous_question}"
+
+CATEGORY GUIDANCE:
+{category_prompt}
+
+AGE GUIDANCE:
+{age_prompt}
+
+YOUR TASK:
+The child said they don't know or gave an unclear answer. You need to:
+1. GENTLY acknowledge their uncertainty (no pressure!)
+2. PROVIDE THE ANSWER to the specific question you just asked
+3. Use age-appropriate examples and comparisons to explain
+4. Keep the explanation SHORT and engaging (2-3 sentences max)
+5. After explaining, CONTINUE with the focus strategy by asking a follow-up question
+
+FOCUS GUIDANCE FOR FOLLOW-UP:
+{focus_prompt}
+
+CRITICAL INSTRUCTIONS:
+- **Answer the SPECIFIC question from "{previous_question}"** - don't give general knowledge
+- Use examples they can relate to (e.g., "like a strawberry" for color)
+- Make comparisons to familiar things
+- Be warm and encouraging - no one knows everything!
+- After explaining, ask a NEW question following the focus strategy
+- Match vocabulary to age {age}
+- Respond naturally (NOT JSON)
+
+Example (age 5, previous question was "What color is the apple?"):
+That's okay! Apples are usually RED - like a fire truck! 🍎 Some apples can also be green or yellow. Now, tell me, what shape is an apple? Is it round like a ball?
+
+Example (age 7, previous question was "Why do birds have feathers?"):
+No problem! Birds have feathers to help them FLY - the feathers are light and create lift in the air, kind of like how a kite flies! Feathers also keep birds warm, just like your jacket keeps you warm. Now, can you think of another animal that can fly?"""
 
 # Prompt for conversation completion
 COMPLETION_PROMPT = """The child has successfully answered 4 questions about {object_name}!
@@ -154,6 +236,8 @@ def get_prompts():
         'system_prompt': SYSTEM_PROMPT,
         'introduction_prompt': INTRODUCTION_PROMPT,
         'question_prompt': QUESTION_PROMPT,
+        'topic_switch_prompt': TOPIC_SWITCH_PROMPT,
+        'explanation_prompt': EXPLANATION_PROMPT,
         'completion_prompt': COMPLETION_PROMPT,
         'tone_prompts': TONE_PROMPTS,
         'focus_prompts': FOCUS_PROMPTS,

@@ -204,7 +204,7 @@ async def answer_question_stream(
         Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
     """
     start_time = time.time()
-    logger.info(f"answer_question_stream started | question_length={len(child_question)}, message_count={len(messages)}")
+    logger.debug(f"[ANSWER] Starting answer_question_stream | question_length={len(child_question)}, message_count={len(messages)}")
 
     prompts = ask_ask_prompts.get_prompts()
     answer_prompt = prompts['answer_question_prompt'].format(child_question=child_question)
@@ -214,7 +214,7 @@ async def answer_question_stream(
 
     # Clean messages for API
     clean_messages = clean_messages_for_api(messages_to_send)
-    logger.debug(f"Messages prepared for API | count={len(clean_messages)}")
+    logger.debug(f"[ANSWER] Prepared {len(clean_messages)} messages for Gemini API")
 
     # Convert to Gemini format
     system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
@@ -225,7 +225,7 @@ async def answer_question_stream(
 
     stream = None
     try:
-        logger.debug(f"Sending {len(contents)} messages to Gemini API")
+        logger.debug(f"[ANSWER] Calling Gemini API with {len(contents)} messages")
 
         # Configure generation
         gen_config = GenerateContentConfig(
@@ -241,8 +241,7 @@ async def answer_question_stream(
             config=gen_config
         )
 
-        # Log stream type for debugging
-        logger.debug(f"Stream object type: {type(stream).__name__}")
+        logger.debug(f"[ANSWER] Receiving stream from Gemini (model: {config['model_name']})")
 
         # Yield chunks as they arrive
         chunk_count = 0
@@ -252,16 +251,14 @@ async def answer_question_stream(
                 # Sanitize text to remove emojis and newlines
                 sanitized_text = sanitize_text(chunk.text, strip=False)
                 full_response += sanitized_text
-                logger.debug(f"Chunk {chunk_count} | text={repr(sanitized_text)} | length={len(sanitized_text)}, total_length={len(full_response)}")
+                # Only log first few chunks to reduce noise
+                if chunk_count <= 3:
+                    logger.debug(f"[ANSWER] Chunk {chunk_count}: {repr(sanitized_text[:50])}... ({len(sanitized_text)} chars)")
                 yield (sanitized_text, None, full_response)
-
-        # Note: Gemini API doesn't provide token usage in streaming mode
-        # We'll leave token_usage as None
-        logger.debug("Gemini streaming API does not provide token usage in stream mode")
 
     except Exception as e:
         duration = time.time() - start_time
-        logger.error(f"answer_question_stream LLM error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        logger.error(f"[ANSWER] ❌ ERROR: {str(e)} (duration={duration:.3f}s)", exc_info=True)
         # Still yield what we have so far (even if incomplete)
         if full_response:
             yield ("", token_usage, full_response)
@@ -271,15 +268,11 @@ async def answer_question_stream(
         if stream is not None:
             try:
                 del stream
-                logger.debug('Cleaned up stream via del in finally block')
             except:
                 pass
 
     duration = time.time() - start_time
-    logger.info(
-        f"answer_question_stream completed | "
-        f"duration={duration:.3f}s, response_length={len(full_response)}"
-    )
+    logger.info(f"[ANSWER] ✓ Completed | {len(full_response)} chars in {duration:.3f}s")
 
     if duration > SLOW_LLM_CALL_THRESHOLD:
         logger.warning(f"Slow LLM call | duration={duration:.3f}s exceeded threshold {SLOW_LLM_CALL_THRESHOLD}s")
@@ -459,12 +452,22 @@ async def call_ask_ask_stream(
     """
     start_time = time.time()
 
-    logger.info(
-        f"[{session_id}] call_ask_ask_stream started | "
-        f"session_id={session_id}, age={age}, "
-        f"status={status}, content_length={len(content)}, "
-        f"message_history={len(messages)}"
-    )
+    logger.info(f"\n{'='*80}")
+    logger.info(f"[STREAM] New streaming request")
+    logger.info(f"  Session ID: {session_id}")
+    logger.info(f"  Request ID: {request_id}")
+    logger.info(f"  Child Age: {age}")
+    logger.info(f"  User Input: {repr(content[:100])}...")
+    logger.info(f"  Conversation History: {len(messages)} messages")
+    logger.info(f"  Status: {status}")
+
+    # Log conversation context for debugging
+    logger.info(f"\n[STREAM] Conversation context being used:")
+    for i, msg in enumerate(messages):
+        role = msg.get('role', 'unknown')
+        content_preview = msg.get('content', '')[:60]
+        logger.info(f"    [{i}] {role}: {content_preview}...")
+    logger.info(f"{'='*80}\n")
 
     # Add user input to messages
     messages.append({"role": "user", "content": content})
@@ -472,7 +475,7 @@ async def call_ask_ask_stream(
     # Check if child is stuck
     stuck = is_child_stuck(content)
 
-    logger.info(f"[{session_id}] Stuck detection | is_stuck={stuck}")
+    logger.info(f"[STREAM] Stuck detection result: {'STUCK - will suggest topics' if stuck else 'NOT STUCK - will answer question'}")
 
     # Track sequence number and token usage
     sequence_number = 0
@@ -489,11 +492,11 @@ async def call_ask_ask_stream(
     if stuck:
         stream_generator = suggest_topics_stream(prepared_messages, config, client)
         response_type = "suggest_topics"
-        logger.info(f"[{session_id}] Routing to suggest_topics")
+        logger.info(f"[STREAM] → Routing to SUGGEST_TOPICS function")
     else:
         stream_generator = answer_question_stream(prepared_messages, content, config, client)
         response_type = "answer_question"
-        logger.info(f"[{session_id}] Routing to answer_question")
+        logger.info(f"[STREAM] → Routing to ANSWER_QUESTION function")
 
     # Stream chunks from the selected generator
     if stream_generator:
@@ -506,7 +509,9 @@ async def call_ask_ask_stream(
             # Only yield non-empty text chunks (skip the final empty yield from stream functions)
             if chunked_text:
                 sequence_number += 1
-                logger.debug(f"[{session_id}] Yielding chunk {sequence_number} | text={repr(chunked_text)}")
+                # Only log first and every 5th chunk to reduce noise
+                if sequence_number == 1 or sequence_number % 5 == 0:
+                    logger.debug(f"[STREAM] Chunk #{sequence_number} | {len(chunked_text)} chars | total={len(full_text)} chars")
                 chunk = StreamChunk(
                     response=chunked_text,
                     session_finished=(status == "over"),
@@ -527,16 +532,17 @@ async def call_ask_ask_stream(
 
     # Validate response completeness
     if not full_response:
-        logger.warning(f"[{session_id}] Empty response - possible streaming error")
+        logger.warning(f"[STREAM] ⚠️  WARNING: Empty response - possible streaming error")
 
-    logger.info(
-        f"[{session_id}] call_ask_ask_stream completed | "
-        f"response_type={response_type}, duration={elapsed_time:.3f}s, "
-        f"total_chunks={sequence_number}, response_length={len(full_response)}, "
-        f"session_finished={status == 'over'}"
-    )
-
-    logger.debug(f"Full response (first 200 chars): {full_response[:200]}...")
+    logger.info(f"\n{'='*80}")
+    logger.info(f"[STREAM] Streaming completed successfully")
+    logger.info(f"  Response Type: {response_type}")
+    logger.info(f"  Duration: {elapsed_time:.3f}s")
+    logger.info(f"  Total Chunks: {sequence_number}")
+    logger.info(f"  Response Length: {len(full_response)} chars")
+    logger.info(f"  Session Finished: {status == 'over'}")
+    logger.info(f"  Full Response Preview: {full_response[:150]}...")
+    logger.info(f"{'='*80}\n")
 
     # Sanitize final response to ensure it's clean
     full_response = sanitize_text(full_response)
