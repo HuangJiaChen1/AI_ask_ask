@@ -150,6 +150,9 @@ CATEGORY GUIDANCE:
 AGE GUIDANCE:
 {age_prompt}
 
+FOCUS GUIDANCE FOR FOLLOW-UP:
+{focus_prompt}
+
 YOUR TASK:
 The child said they don't know or gave an unclear answer. You need to:
 1. GENTLY acknowledge their uncertainty (no pressure!)
@@ -158,11 +161,14 @@ The child said they don't know or gave an unclear answer. You need to:
 4. Keep the explanation SHORT and engaging (2-3 sentences max)
 5. After explaining, CONTINUE with the focus strategy by asking a follow-up question
 
-FOCUS GUIDANCE FOR FOLLOW-UP:
-{focus_prompt}
+CRITICAL INSTRUCTIONS FOR ANSWERING:
+- **If the previous question asked about OTHER/SIMILAR objects** (e.g., "What else is yellow?", "Can you think of another round thing?"):
+  → Provide ACTUAL EXAMPLES of other objects (e.g., "A lemon is yellow too!", "The moon is round like a ball!")
+  → DO NOT just restate the original object's properties
 
-CRITICAL INSTRUCTIONS:
-- **Answer the SPECIFIC question from "{previous_question}"** - don't give general knowledge
+- **If the previous question asked about a PROPERTY of the object** (e.g., "What color is it?", "What does it feel like?"):
+  → Provide the specific property answer (e.g., "It's RED like a fire truck!", "It feels smooth!")
+
 - Use examples they can relate to (e.g., "like a strawberry" for color)
 - Make comparisons to familiar things
 - Be warm and encouraging - no one knows everything!
@@ -170,10 +176,13 @@ CRITICAL INSTRUCTIONS:
 - Match vocabulary to age {age}
 - Respond naturally (NOT JSON)
 
-Example (age 5, previous question was "What color is the apple?"):
+Example (age 5, property question - "What color is the apple?"):
 That's okay! Apples are usually RED - like a fire truck! 🍎 Some apples can also be green or yellow. Now, tell me, what shape is an apple? Is it round like a ball?
 
-Example (age 7, previous question was "Why do birds have feathers?"):
+Example (age 6, comparison question - "What else is shaped like a banana?"):
+No worries! Let me help you think of some! A CRESCENT MOON is curved like a banana! 🌙 And a BOOMERANG is curved too! Now, can you think of what color our banana is?
+
+Example (age 7, comparison question - "Why do birds have feathers?"):
 No problem! Birds have feathers to help them FLY - the feathers are light and create lift in the air, kind of like how a kite flies! Feathers also keep birds warm, just like your jacket keeps you warm. Now, can you think of another animal that can fly?"""
 
 # Prompt for gentle correction when answer is factually wrong
@@ -231,10 +240,10 @@ Q: "Where do fish live?"
 A: "In trees"
 → "That's a creative answer! But fish actually live in WATER - like oceans, rivers, and ponds. They need water to breathe! 🐠 Now, what do fish use to swim?"
 
-Example (age 6, wrong shape - from user's log):
+Example (age 6, wrong shape - width_shape mode):
 Q: "Can you think of something else that's shaped like a banana, all long and curved?"
 A: "Apples have the same shape"
-→ "I like your thinking! But actually, apples are usually ROUND, while bananas are long and curved - they have different shapes! 🍎🍌 Now, what color are apples usually?"""
+→ "I like your thinking! But actually, apples are usually ROUND like a ball, while bananas are long and curved! 🍎🍌 Things that ARE curved like a banana include a CRESCENT MOON 🌙 or a BOOMERANG! Can you think of anything else that's curved?"""
 
 # Prompt for conversation completion
 COMPLETION_PROMPT = """The child has successfully answered 4 questions about {object_name}!
