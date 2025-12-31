@@ -159,7 +159,84 @@ sequenceDiagram
    - Classifies new object in background (1s timeout)
    - Updates category prompts for context-aware questions
 
-### 3. Answer Validation & Response Flow
+### 3. Complete Conversation Flow (Full System)
+
+```mermaid
+graph TD
+    UserStart[User starts conversation<br/>POST /api/start] --> CreateSession[Create session ID<br/>Initialize PaixuejiAssistant]
+
+    CreateSession --> BuildPrompts1[Build multi-layer prompts<br/>Age + Tone + Category + Focus]
+
+    BuildPrompts1 --> IntroStream[ask_introduction_question_stream<br/>Greet + First question]
+
+    IntroStream --> StreamToUser1[Stream response to frontend<br/>SSE chunks]
+
+    StreamToUser1 --> WaitInput[Wait for child's answer]
+
+    WaitInput --> UserAnswer[Child types answer<br/>POST /api/continue]
+
+    UserAnswer --> GetSession[Retrieve session state<br/>Get conversation history]
+
+    GetSession --> UnifiedValidation[decide_topic_switch_with_validation<br/>Single JSON API call]
+
+    UnifiedValidation --> ThreeChecks{3-Part Evaluation}
+
+    ThreeChecks --> Eng[Part 1: Engagement]
+    ThreeChecks --> Corr[Part 2: Correctness]
+    ThreeChecks --> Switch[Part 3: Switching]
+
+    Eng --> RouteDecision{Route based on<br/>engagement + correctness}
+    Corr --> RouteDecision
+    Switch --> RouteDecision
+
+    RouteDecision -->|Not Engaged<br/>Stuck/IDK| Path1[ask_explanation_question_stream]
+    RouteDecision -->|Engaged<br/>+ Wrong| Path2[ask_gentle_correction_stream]
+    RouteDecision -->|Engaged + Correct<br/>+ CONTINUE| Path3[ask_followup_question_stream<br/>QUESTION_PROMPT]
+    RouteDecision -->|Engaged + Correct<br/>+ SWITCH| Path4[Classify new object<br/>classify_object_sync]
+
+    Path1 --> Explain[Provide answer with examples<br/>Ask new question following focus]
+    Path2 --> Gentle[Gently correct<br/>Provide right info + continue]
+    Path3 --> Followup[Celebrate answer<br/>Ask next question]
+    Path4 --> Rebuild[Update object_name<br/>Rebuild category prompts]
+
+    Rebuild --> Path5[ask_followup_question_stream<br/>TOPIC_SWITCH_PROMPT]
+    Path5 --> SwitchCelebrate[Celebrate switch<br/>Ask about new object]
+
+    Explain --> UpdateHistory[Append to conversation_history]
+    Gentle --> UpdateHistory
+    Followup --> UpdateHistory
+    SwitchCelebrate --> UpdateHistory
+
+    UpdateHistory --> StreamToUser2[Stream response to frontend<br/>SSE chunks]
+
+    StreamToUser2 --> WaitInput
+
+    WaitInput --> UserReset{User resets?}
+    UserReset -->|Yes| DeleteSession[POST /api/reset<br/>Delete session]
+    UserReset -->|No| UserAnswer
+
+    DeleteSession --> End[Session ended]
+
+    style UserStart fill:#e1f5ff
+    style UnifiedValidation fill:#fbbf24
+    style Path1 fill:#fca5a5
+    style Path2 fill:#fdba74
+    style Path3 fill:#a5f3fc
+    style Path4 fill:#86efac
+    style Path5 fill:#86efac
+    style End fill:#f0f0f0
+```
+
+**Legend:**
+- 🔵 Blue: User actions / Start
+- 🟡 Yellow: AI validation (critical decision point)
+- 🔴 Red: Not engaged path (explanation)
+- 🟠 Orange: Engaged + wrong path (gentle correction)
+- 🟢 Green: Engaged + correct + switch path (topic switch)
+- 🔵 Light blue: Engaged + correct + continue path (normal followup)
+- ⚪ Gray: End state
+
+### 4. Answer Validation & Response Flow (Detailed)
 
 ```mermaid
 graph TD
@@ -179,7 +256,7 @@ graph TD
 
     Route -->|Engaged + Wrong| Correct[ask_gentle_correction_stream<br/>Gently correct + provide right info]
 
-    Route -->|Engaged + Correct<br/>+ SWITCH| Switch[1. classify_object_sync<br/>2. Rebuild prompts<br/>3. ask_followup (topic_switch_prompt)]
+    Route -->|Engaged + Correct<br/>+ SWITCH| Switch["1. classify_object_sync<br/>2. Rebuild prompts<br/>3. ask_followup with topic_switch_prompt"]
 
     Route -->|Engaged + Correct<br/>+ CONTINUE| Continue[ask_followup_question_stream<br/>Celebrate + next question]
 
