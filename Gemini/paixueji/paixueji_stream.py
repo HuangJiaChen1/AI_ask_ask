@@ -970,7 +970,7 @@ async def call_paixueji_stream(
                     new_object_name = None
 
     # Flush remaining buffer if needed
-    if buffer and not is_in_analysis:
+    if buffer:
         full_response += buffer
 
     # Calculate total duration
@@ -989,7 +989,7 @@ async def call_paixueji_stream(
         f"session_finished={status == 'over'}"
     )
 
-    logger.debug(f"Full response (first 200 chars): {full_response[:200]}...")
+    logger.debug(f"Full response: {full_response}...")
 
     # Yield final chunk with token usage and duration
     sequence_number += 1

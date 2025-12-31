@@ -205,3 +205,40 @@ Now, let's think about the sun itself. What does the sun feel like? Is it cold l
 2025-12-30 18:24:58.687 | DEBUG    | paixueji_stream:call_paixueji_stream:981 | Full response (first 200 chars): Aye, ye've got it, me hearty! The sun is indeed warm, like a big, cozy hug in the sky! ☀️
 
 Now, let's think about what the sun looks like. It's round, like a big, bright circle! Can ye think of any ot...
+2025-12-30 18:28:25.596 | INFO     | paixueji_stream:call_paixueji_stream:836 | [a4074acf-d62a-43f7-b5ab-20cfb773c6b2] call_paixueji_stream started | session_id=a4074acf-d62a-43f7-b5ab-20cfb773c6b2, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2025-12-30 18:28:25.596 | INFO     | paixueji_stream:call_paixueji_stream:850 | [a4074acf-d62a-43f7-b5ab-20cfb773c6b2] Conversation state | correct_count=0, complete=False
+2025-12-30 18:28:25.596 | INFO     | paixueji_stream:call_paixueji_stream:882 | [a4074acf-d62a-43f7-b5ab-20cfb773c6b2] Routing to introduction question
+2025-12-30 18:28:25.596 | INFO     | paixueji_stream:ask_introduction_question_stream:155 | ask_introduction_question_stream started | object=banana, age=6
+2025-12-30 18:28:25.596 | DEBUG    | paixueji_stream:ask_introduction_question_stream:171 | Messages prepared for API | count=3
+2025-12-30 18:28:25.596 | DEBUG    | paixueji_stream:ask_introduction_question_stream:182 | Sending 2 messages to Gemini API
+2025-12-30 18:28:25.596 | DEBUG    | paixueji_stream:ask_introduction_question_stream:199 | Stream object type: generator
+2025-12-30 18:28:30.352 | DEBUG    | paixueji_stream:ask_introduction_question_stream:207 | Chunk 1 | length=2, total_length=2
+2025-12-30 18:28:30.378 | DEBUG    | paixueji_stream:ask_introduction_question_stream:207 | Chunk 2 | length=8, total_length=10
+2025-12-30 18:28:30.418 | DEBUG    | paixueji_stream:ask_introduction_question_stream:207 | Chunk 3 | length=60, total_length=70
+2025-12-30 18:28:30.486 | DEBUG    | paixueji_stream:ask_introduction_question_stream:207 | Chunk 4 | length=55, total_length=125
+2025-12-30 18:28:30.515 | DEBUG    | paixueji_stream:ask_introduction_question_stream:207 | Chunk 5 | length=30, total_length=155
+2025-12-30 18:28:30.518 | DEBUG    | paixueji_stream:ask_introduction_question_stream:212 | Gemini streaming API does not provide token usage in stream mode
+2025-12-30 18:28:30.518 | DEBUG    | paixueji_stream:ask_introduction_question_stream:226 | Cleaned up stream via del in finally block
+2025-12-30 18:28:30.518 | INFO     | paixueji_stream:ask_introduction_question_stream:231 | ask_introduction_question_stream completed | duration=4.922s, response_length=155
+2025-12-30 18:28:30.518 | INFO     | paixueji_stream:call_paixueji_stream:984 | [a4074acf-d62a-43f7-b5ab-20cfb773c6b2] call_paixueji_stream completed | response_type=introduction, duration=4.923s, total_chunks=5, response_length=155, correct_count=0, complete=False, session_finished=False
+2025-12-30 18:28:30.518 | DEBUG    | paixueji_stream:call_paixueji_stream:992 | Full response (first 200 chars): Ahoy there, matey! Let's set sail and explore a yummy treasure today – a banana! 🍌
+
+Can ye think of anything else that's long and curved, like this banana?...
+2025-12-30 18:28:51.366 | INFO     | paixueji_stream:call_paixueji_stream:836 | [a4074acf-d62a-43f7-b5ab-20cfb773c6b2] call_paixueji_stream started | session_id=a4074acf-d62a-43f7-b5ab-20cfb773c6b2, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=12, message_history=2
+2025-12-30 18:28:51.366 | INFO     | paixueji_stream:call_paixueji_stream:850 | [a4074acf-d62a-43f7-b5ab-20cfb773c6b2] Conversation state | correct_count=0, complete=False
+2025-12-30 18:28:51.366 | INFO     | paixueji_stream:call_paixueji_stream:924 | [a4074acf-d62a-43f7-b5ab-20cfb773c6b2] Routing to explanation (answer_reasonable=False)
+2025-12-30 18:28:51.366 | INFO     | paixueji_stream:ask_explanation_question_stream:553 | ask_explanation_question_stream started | object=banana, answer=I don't know
+2025-12-30 18:28:51.366 | DEBUG    | paixueji_stream:ask_explanation_question_stream:557 | Extracted previous question: Ahoy there, matey! Let's set sail and explore a yummy treasure today – a banana! 🍌
+
+Can ye think of 
+2025-12-30 18:28:51.366 | DEBUG    | paixueji_stream:ask_explanation_question_stream:587 | Sending 3 messages to Gemini API (explanation mode)
+2025-12-30 18:28:53.179 | DEBUG    | paixueji_stream:ask_explanation_question_stream:609 | Chunk 1 | length=2, total_length=2
+2025-12-30 18:28:53.301 | DEBUG    | paixueji_stream:ask_explanation_question_stream:609 | Chunk 2 | length=75, total_length=77
+2025-12-30 18:28:53.402 | DEBUG    | paixueji_stream:ask_explanation_question_stream:609 | Chunk 3 | length=76, total_length=153
+2025-12-30 18:28:53.514 | DEBUG    | paixueji_stream:ask_explanation_question_stream:609 | Chunk 4 | length=118, total_length=271
+2025-12-30 18:28:53.517 | DEBUG    | paixueji_stream:ask_explanation_question_stream:622 | Cleaned up stream via del in finally block
+2025-12-30 18:28:53.517 | INFO     | paixueji_stream:ask_explanation_question_stream:627 | ask_explanation_question_stream completed | duration=2.151s, response_length=271
+2025-12-30 18:28:53.517 | INFO     | paixueji_stream:call_paixueji_stream:984 | [a4074acf-d62a-43f7-b5ab-20cfb773c6b2] call_paixueji_stream completed | response_type=explanation, duration=2.151s, total_chunks=4, response_length=271, correct_count=0, complete=False, session_finished=False
+2025-12-30 18:28:53.517 | DEBUG    | paixueji_stream:call_paixueji_stream:992 | Full response (first 200 chars): No worries, me hearty! Sometimes it takes a bit of thinkin'. A banana is long and curved, like a smile! 😊 Or maybe like a little boat sailing on the sea!
+
+Now, let's think about what else we can do wi...
