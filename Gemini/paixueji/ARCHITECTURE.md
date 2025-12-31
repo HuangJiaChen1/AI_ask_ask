@@ -225,13 +225,7 @@ flowchart TD
     Build --> Call[Call Gemini with<br/>JSON mode enabled]
     Call --> Parse[Parse structured output]
 
-    Parse --> Output{{"
-    {
-      decision: 'SWITCH' | 'CONTINUE',
-      new_object: string | null,
-      reasoning: string
-    }
-    "}}
+    Parse --> Output{{"JSON Output:<br/>decision, new_object, reasoning"}}
 
     Output --> Log[Log decision to console]
 
@@ -394,7 +388,7 @@ flowchart TD
     Length -->|No| Unreasonable[Return False]
     Length -->|Yes| Stuck{Contains stuck<br/>phrases?}
 
-    Stuck -->|Yes: "I don't know"<br/>"idk", "dunno"| Unreasonable
+    Stuck -->|Yes: I don't know<br/>idk, dunno| Unreasonable
     Stuck -->|No| Letters{Has 2+<br/>letters?}
 
     Letters -->|No| Unreasonable
@@ -445,7 +439,7 @@ graph TD
     Rule3 --> Valid3{Valid object<br/>+ correct shape?}
     Rule4 --> Valid4{Valid object<br/>+ correct category?}
 
-    Valid1 -->|Yes| Switch[decision: SWITCH<br/>new_object: "..."]
+    Valid1 -->|Yes| Switch[decision: SWITCH<br/>new_object: ...]
     Valid1 -->|No| Continue[decision: CONTINUE<br/>new_object: null]
 
     Valid2 -->|Yes| Switch
