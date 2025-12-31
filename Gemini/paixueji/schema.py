@@ -142,7 +142,16 @@ class StreamChunk(BaseModel):
     correct_answer_count: int = 0
     conversation_complete: bool = False
     focus_mode: str | None = None
+
+    # DEPRECATED: Old engagement check (keep for backward compatibility)
     is_correct: bool | None = None
+
+    # NEW unified AI validation fields:
+    is_engaged: bool | None = None  # Is child trying to answer? (replaces is_correct)
+    is_factually_correct: bool | None = None  # Is answer semantically correct? (only if engaged)
+    correctness_reasoning: str | None = None  # Why answer is right/wrong
+
+    # Topic switching fields:
     new_object_name: str | None = None
     detected_object_name: str | None = None  # Object AI detected but didn't switch to
     switch_decision_reasoning: str | None = None  # AI's reasoning for switch/continue decision

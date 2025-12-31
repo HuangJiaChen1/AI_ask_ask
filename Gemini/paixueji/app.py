@@ -307,21 +307,16 @@ def continue_conversation():
             # Get focus prompt
             focus_prompt = assistant.get_focus_prompt(focus_mode)
 
-            # Import is_answer_reasonable for answer validation
-            from paixueji_stream import is_answer_reasonable
-
-            # Check if answer is reasonable and increment count
-            answer_is_reasonable = is_answer_reasonable(child_input)
-            if answer_is_reasonable:
-                # Increment correct answer count (returns False now as infinite)
-                assistant.increment_correct_answers()
-                print(f"[INFO] Session {session_id[:8]}... answer accepted | new count: {assistant.correct_answer_count}")
+            # NOTE: Validation now happens inside call_paixueji_stream() using unified AI validation
+            # Increment logic moved to stream handler below based on chunk.is_factually_correct
 
             # Get new event loop for this request (avoids race conditions)
             loop = get_event_loop()
 
             try:
                 async def stream_response():
+                    should_increment = False
+
                     async for chunk in call_paixueji_stream(
                         age=assistant.age,
                         messages=assistant.conversation_history.copy(),
@@ -346,13 +341,26 @@ def continue_conversation():
                         # The decision step happens BEFORE response generation
                         # Object name and categories are already updated if switch occurred
 
-                        # Yield StreamChunk as SSE event (pass directly for optimized serialization)
+                        # Check if we should increment based on factual correctness
+                        if chunk.finish and chunk.is_factually_correct:
+                            should_increment = True
+
                         # Update conversation history with final response
                         if chunk.finish:
                             assistant.conversation_history.append({
                                 "role": "assistant",
                                 "content": chunk.response
                             })
+
+                            # NEW: Increment only if factually correct
+                            if should_increment:
+                                assistant.increment_correct_answers()
+                                print(f"[INFO] Session {session_id[:8]}... factually correct answer | new count: {assistant.correct_answer_count}")
+                            elif chunk.is_factually_correct == False:
+                                print(f"[INFO] Session {session_id[:8]}... factually incorrect answer | count unchanged: {assistant.correct_answer_count}")
+                            elif not chunk.is_engaged:
+                                print(f"[INFO] Session {session_id[:8]}... child stuck (not engaged) | count unchanged: {assistant.correct_answer_count}")
+
                             # Log completion if conversation complete (won't happen now but kept for safety)
                             if chunk.conversation_complete:
                                 print(f"[INFO] Session {session_id[:8]}... CONVERSATION COMPLETE!")

@@ -176,6 +176,66 @@ That's okay! Apples are usually RED - like a fire truck! 🍎 Some apples can al
 Example (age 7, previous question was "Why do birds have feathers?"):
 No problem! Birds have feathers to help them FLY - the feathers are light and create lift in the air, kind of like how a kite flies! Feathers also keep birds warm, just like your jacket keeps you warm. Now, can you think of another animal that can fly?"""
 
+# Prompt for gentle correction when answer is factually wrong
+GENTLE_CORRECTION_PROMPT = """The child answered: "{child_answer}"
+
+CONVERSATION CONTEXT:
+- Object: {object_name}
+- Child's age: {age}
+- Previous question asked: "{previous_question}"
+
+ANSWER EVALUATION:
+❌ The child's answer is FACTUALLY INCORRECT
+Reasoning: {correctness_reasoning}
+
+CATEGORY GUIDANCE:
+{category_prompt}
+
+FOCUS GUIDANCE (for follow-up question):
+{focus_prompt}
+
+AGE GUIDANCE:
+{age_prompt}
+
+YOUR TASK:
+The child tried their best but got the facts wrong. You need to:
+1. ACKNOWLEDGE their effort positively (e.g., "That's a creative thought!", "Good try!")
+2. GENTLY CORRECT with the right information (e.g., "Actually, apples are usually red, green, or yellow...")
+3. Provide a simple, age-appropriate explanation if needed (1-2 sentences)
+4. CONTINUE the conversation by asking a follow-up question following the focus strategy
+
+CRITICAL INSTRUCTIONS:
+- **Be GENTLE and ENCOURAGING** - never say "wrong" or "incorrect" directly
+- Praise their effort first ("Good try!", "I like how you're thinking!", "That's creative!")
+- Correct naturally ("Actually...", "Here's something interesting...", "Let me share...")
+- Keep correction SHORT (1-2 sentences)
+- Move on QUICKLY to next question - don't dwell on the mistake
+- Follow the FOCUS GUIDANCE for your next question
+- Match vocabulary to age {age}
+- Respond naturally (NOT JSON)
+
+TONE EXAMPLES:
+❌ BAD: "No, that's wrong. Apples are not blue."
+✅ GOOD: "That's creative thinking! Actually, apples are usually red, green, or yellow - I've never seen a blue one! 🍎 Now, what shape is the apple?"
+
+❌ BAD: "Incorrect. The sun is hot, not cold."
+✅ GOOD: "Interesting idea! But the sun is actually super hot - it's like a giant fire in the sky! ☀️ What color is the sun?"
+
+Example (age 5, wrong color):
+Q: "What color is the banana?"
+A: "Red"
+→ "Good try! But bananas are actually YELLOW - like the color of sunshine! 🍌 Now, can you think of another fruit that's yellow too?"
+
+Example (age 7, wrong location):
+Q: "Where do fish live?"
+A: "In trees"
+→ "That's a creative answer! But fish actually live in WATER - like oceans, rivers, and ponds. They need water to breathe! 🐠 Now, what do fish use to swim?"
+
+Example (age 6, wrong shape - from user's log):
+Q: "Can you think of something else that's shaped like a banana, all long and curved?"
+A: "Apples have the same shape"
+→ "I like your thinking! But actually, apples are usually ROUND, while bananas are long and curved - they have different shapes! 🍎🍌 Now, what color are apples usually?"""
+
 # Prompt for conversation completion
 COMPLETION_PROMPT = """The child has successfully answered 4 questions about {object_name}!
 
@@ -239,6 +299,7 @@ def get_prompts():
         'question_prompt': QUESTION_PROMPT,
         'topic_switch_prompt': TOPIC_SWITCH_PROMPT,
         'explanation_prompt': EXPLANATION_PROMPT,
+        'gentle_correction_prompt': GENTLE_CORRECTION_PROMPT,
         'completion_prompt': COMPLETION_PROMPT,
         'tone_prompts': TONE_PROMPTS,
         'focus_prompts': FOCUS_PROMPTS,

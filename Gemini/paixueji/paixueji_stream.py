@@ -257,10 +257,12 @@ async def ask_introduction_question_stream(
     yield ("", token_usage, full_response, decision_info)
 
 
-def decide_topic_switch(assistant, child_answer: str, object_name: str, age: int, focus_mode: str | None = None):
+def decide_topic_switch_with_validation(assistant, child_answer: str, object_name: str, age: int, focus_mode: str | None = None):
     """
-    AI-driven topic switching based on conversation context.
-    No hardcoded strategies - AI analyzes natural conversation flow.
+    Unified AI validation: Checks engagement, factual correctness, AND topic switching in single call.
+
+    This function replaces both is_answer_reasonable() and decide_topic_switch() to provide
+    a single source of truth for all answer validation.
 
     Args:
         assistant: PaixuejiAssistant instance
@@ -273,7 +275,10 @@ def decide_topic_switch(assistant, child_answer: str, object_name: str, age: int
         dict: {
             'decision': 'SWITCH' | 'CONTINUE',
             'new_object': str | None,
-            'reasoning': str  # AI's explanation
+            'switching_reasoning': str,  # Why switch or continue
+            'is_engaged': bool,  # Is child trying to answer?
+            'is_factually_correct': bool,  # Is answer factually accurate? (only if engaged)
+            'correctness_reasoning': str  # Why answer is right or wrong
         }
     """
     # Extract the last question the model asked from conversation history
@@ -289,61 +294,162 @@ def decide_topic_switch(assistant, child_answer: str, object_name: str, age: int
     if not last_model_question:
         last_model_question = "Unknown (first interaction)"
 
-    # Build contextual decision prompt
+    # Build contextual THREE-PART validation prompt
     decision_prompt = f"""You are an educational AI helping a {age}-year-old child learn through conversation.
 
 CONTEXT:
 - Current Topic: {object_name}
-- Focus Mode: {focus_mode or 'depth'} (how we ask questions, NOT a switching rule)
+- Focus Mode: {focus_mode or 'depth'} (how we ask questions, NOT a validation rule)
 - Last Question You Asked: "{last_model_question}"
 - Child's Answer: "{child_answer}"
 
-YOUR TASK:
-Decide whether to SWITCH to a new object or CONTINUE with the current object.
+YOUR THREE-PART TASK:
+You must evaluate THREE aspects of the child's answer in one evaluation:
+1. ENGAGEMENT: Is the child trying to answer or are they stuck?
+2. FACTUAL CORRECTNESS: If engaged, is their answer factually accurate?
+3. TOPIC SWITCHING: Should we switch to a new object?
 
-DECISION GUIDELINES:
-1. **Invited Object Naming**: If you asked the child to name a new object (e.g., "name another red thing") and they did → SWITCH
-2. **Off-Topic Response**: If the child answered with a different object instead of answering your question → SWITCH
-3. **Explicit Request**: If child says "let's talk about X" or "can we switch to X" → SWITCH
-4. **Comparison/Description**: If child mentions object in passing while answering (e.g., "red like cherry") → CONTINUE
-5. **No New Object**: If child just answered your question normally → CONTINUE
-6. **Stuck/Uncertain**: If child says "I don't know" or can't answer → CONTINUE
+---
+
+PART 1: ENGAGEMENT CHECK
+Is the child engaged and trying to answer, or are they stuck?
+
+STUCK INDICATORS:
+- Explicit uncertainty: "I don't know", "idk", "dunno", "not sure", "no idea", "help me"
+- Very short/unclear: "??", "um", "uh", answers with 3 or fewer characters
+- Empty attempts: just punctuation, just numbers
+
+ENGAGED INDICATORS:
+- Any substantive attempt to answer with real words
+- Descriptive responses, even if wrong
+- Comparisons, examples, or explanations
+
+---
+
+PART 2: FACTUAL CORRECTNESS (only evaluate if child is ENGAGED)
+If the child is engaged, is their answer factually accurate given the question asked?
+
+EVALUATION CRITERIA:
+- Check if answer matches reality for the question asked
+- Consider age {age} - accept age-appropriate simplifications
+- Accept partial correctness (e.g., "apples grow outside" is TRUE for age 3-4)
+- Be strict on obvious contradictions (e.g., "sun is cold" → FALSE)
+
+EXAMPLES:
+Q: "What color is the apple?" A: "Red" → ENGAGED=true, CORRECT=true
+Q: "What color is the apple?" A: "Blue" → ENGAGED=true, CORRECT=false (apples aren't blue)
+Q: "What shape is banana?" A: "Long and curved" → ENGAGED=true, CORRECT=true
+Q: "What shape is banana?" A: "Round like ball" → ENGAGED=true, CORRECT=false (wrong shape)
+Q: "Can you name another red fruit?" A: "Strawberry" → ENGAGED=true, CORRECT=true
+Q: "Can you name another red fruit?" A: "Banana" → ENGAGED=true, CORRECT=false (banana is yellow)
+Q: "What shape is banana?" A: "Apples have the same shape" → ENGAGED=true, CORRECT=false (different shapes)
+Q: "What color is the apple?" A: "idk" → ENGAGED=false, CORRECT=N/A
+
+---
+
+PART 3: TOPIC SWITCHING
+Should we switch to a new object or continue with current one?
+
+SWITCHING GUIDELINES:
+1. **Invited Object Naming**: I asked child to name new object and they did → SWITCH
+2. **Off-Topic Response**: Child answered with different object instead of answering → SWITCH
+3. **Explicit Request**: Child says "let's talk about X" → SWITCH
+4. **Comparison/Description**: Child mentions object in passing ("red like cherry") → CONTINUE
+5. **Normal Answer**: Child answered my question → CONTINUE
+6. **Stuck**: Child says "I don't know" → CONTINUE
 
 VALIDATION (always apply):
-- Only SWITCH if the new object is a real, concrete object (not abstract concepts)
+- Only SWITCH if new object is real and concrete (not abstract)
 - Ignore made-up/nonsense words → CONTINUE
 - Celestial objects (sun, moon, stars) are valid
 
-FOCUS MODE CONTEXT (informational only, NOT rules):
-- 'depth': Currently exploring one object deeply
-- 'width_color/shape/category': Currently exploring by similarities
-  (This context helps you understand the conversation style, but doesn't dictate switching rules)
+---
 
 RESPOND WITH VALID JSON:
 {{
     "decision": "SWITCH" or "CONTINUE",
     "new_object": "ObjectName" or null,
-    "reasoning": "1-2 sentence explanation of why you made this decision, referencing the guidelines above"
+    "switching_reasoning": "1-2 sentence explanation for switch/continue decision",
+    "is_engaged": true or false,
+    "is_factually_correct": true or false,
+    "correctness_reasoning": "1-2 sentence explanation for why answer is right or wrong"
 }}
 
-EXAMPLES:
-Last Q: "What color is the apple?"
-Answer: "red"
-→ {{"decision": "CONTINUE", "new_object": null, "reasoning": "Child directly answered the question about color. No topic change needed."}}
+COMPLETE EXAMPLES:
 
-Last Q: "Can you think of another red fruit?"
-Answer: "strawberry"
-→ {{"decision": "SWITCH", "new_object": "strawberry", "reasoning": "I invited child to name a new object and they did. Switching to strawberry."}}
+Example 1: Correct answer, no switching
+Q: "What color is the apple?"
+A: "Red"
+→ {{
+    "decision": "CONTINUE",
+    "new_object": null,
+    "switching_reasoning": "Child directly answered the question. No topic change needed.",
+    "is_engaged": true,
+    "is_factually_correct": true,
+    "correctness_reasoning": "Red is a common and correct color for apples."
+}}
 
-Last Q: "What shape is it?"
-Answer: "Let's talk about dogs!"
-→ {{"decision": "SWITCH", "new_object": "dog", "reasoning": "Child explicitly requested to change topics to dogs."}}
+Example 2: Wrong answer, no switching
+Q: "What color is the apple?"
+A: "Blue"
+→ {{
+    "decision": "CONTINUE",
+    "new_object": null,
+    "switching_reasoning": "Child answered the question (no new object mentioned).",
+    "is_engaged": true,
+    "is_factually_correct": false,
+    "correctness_reasoning": "Apples are not blue. Common colors are red, green, or yellow."
+}}
 
-Last Q: "What does it taste like?"
-Answer: "sweet like candy"
-→ {{"decision": "CONTINUE", "new_object": null, "reasoning": "Child mentioned candy as a comparison, not requesting a topic change."}}
+Example 3: Correct answer WITH switching (invited naming)
+Q: "Can you name another red fruit?"
+A: "Strawberry"
+→ {{
+    "decision": "SWITCH",
+    "new_object": "strawberry",
+    "switching_reasoning": "I invited child to name a new object and they did.",
+    "is_engaged": true,
+    "is_factually_correct": true,
+    "correctness_reasoning": "Strawberries are indeed red fruits."
+}}
 
-Now decide for the current situation:
+Example 4: Wrong answer WITH attempted switching (but incorrect)
+Q: "Can you name another red fruit?"
+A: "Banana"
+→ {{
+    "decision": "CONTINUE",
+    "new_object": null,
+    "switching_reasoning": "Child attempted to name a fruit, but it doesn't match the color criteria (red).",
+    "is_engaged": true,
+    "is_factually_correct": false,
+    "correctness_reasoning": "Bananas are yellow, not red. Child confused the color."
+}}
+
+Example 5: Stuck/Not engaged
+Q: "What color is the apple?"
+A: "idk"
+→ {{
+    "decision": "CONTINUE",
+    "new_object": null,
+    "switching_reasoning": "Child is stuck, no topic change.",
+    "is_engaged": false,
+    "is_factually_correct": false,
+    "correctness_reasoning": "Child didn't attempt an answer."
+}}
+
+Example 6: Wrong shape comparison (from user's log)
+Q: "Can you think of something else that's shaped like a banana, all long and curved?"
+A: "Apples have the same shape"
+→ {{
+    "decision": "CONTINUE",
+    "new_object": null,
+    "switching_reasoning": "Child attempted to answer the question but didn't match criteria.",
+    "is_engaged": true,
+    "is_factually_correct": false,
+    "correctness_reasoning": "Apples are round, bananas are long and curved. They have different shapes."
+}}
+
+Now evaluate the current situation:
 """
 
     try:
@@ -355,7 +461,7 @@ Now decide for the current situation:
             config={
                 "response_mime_type": "application/json",  # Force JSON output
                 "temperature": 0.1,  # Low temp for consistent decisions
-                "max_output_tokens": 150
+                "max_output_tokens": 200  # Increased from 150 for additional fields
             }
         )
 
@@ -363,21 +469,27 @@ Now decide for the current situation:
         decision_data = json.loads(response.text)
 
         logger.info(
-            f"[DECIDE] {decision_data['decision']} | "
+            f"[VALIDATE] {decision_data['decision']} | "
             f"new_object={decision_data.get('new_object')}, "
-            f"reasoning={decision_data.get('reasoning')}"
+            f"engaged={decision_data.get('is_engaged')}, "
+            f"correct={decision_data.get('is_factually_correct')}, "
+            f"switch_reasoning={decision_data.get('switching_reasoning')}, "
+            f"correctness_reasoning={decision_data.get('correctness_reasoning')}"
         )
 
         return decision_data
 
     except Exception as e:
-        logger.error(f"[DECIDE] Error: {e}, defaulting to CONTINUE")
+        logger.error(f"[VALIDATE] Error: {e}, defaulting to safe state")
         import traceback
         traceback.print_exc()
         return {
             'decision': 'CONTINUE',
             'new_object': None,
-            'reasoning': f'Error in decision: {str(e)}'
+            'switching_reasoning': f'Error in validation: {str(e)}',
+            'is_engaged': True,  # Safe default - continue conversation
+            'is_factually_correct': True,  # Safe default - don't incorrectly penalize
+            'correctness_reasoning': 'Could not evaluate due to error'
         }
 
 
@@ -425,7 +537,9 @@ async def ask_followup_question_stream(
     detected_object_name = None
     switch_decision_reasoning = None
 
-    decision = decide_topic_switch(
+    # Call unified validation (we already know answer is engaged+correct since we're in followup path)
+    # We only care about topic switching decision here
+    decision = decide_topic_switch_with_validation(
         assistant=assistant,
         child_answer=child_answer,
         object_name=object_name,
@@ -433,8 +547,8 @@ async def ask_followup_question_stream(
         focus_mode=focus_mode  # Context only, not a rule
     )
 
-    # Capture reasoning from AI decision
-    switch_decision_reasoning = decision.get('reasoning', 'No reasoning provided')
+    # Capture reasoning from AI decision (updated field name)
+    switch_decision_reasoning = decision.get('switching_reasoning', 'No reasoning provided')
 
     # STEP 2: HANDLE DECISION & BUILD APPROPRIATE PROMPT
     prompts = paixueji_prompts.get_prompts()
@@ -717,6 +831,140 @@ async def ask_explanation_question_stream(
     yield ("", token_usage, full_response, decision_info)
 
 
+async def ask_gentle_correction_stream(
+    messages: list[dict],
+    child_answer: str,
+    assistant,  # PaixuejiAssistant instance
+    object_name: str,
+    correct_count: int,
+    category_prompt: str,
+    age_prompt: str,
+    age: int,
+    config: dict,
+    client: genai.Client,
+    correctness_reasoning: str,
+    level3_category: str = "",
+    focus_prompt: str = "",
+    focus_mode: str | None = None
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str, dict], None]:
+    """
+    Stream gentle correction + follow-up when answer is factually wrong.
+
+    This function:
+    1. Acknowledges child's effort positively
+    2. Provides correct information gently
+    3. Continues with focus strategy for next question
+
+    Args:
+        messages: Conversation history
+        child_answer: The child's incorrect answer
+        assistant: PaixuejiAssistant instance
+        object_name: Name of object being discussed
+        correct_count: Number of correct answers so far (NOT incremented)
+        category_prompt: Category-specific guidance
+        age_prompt: Age-specific guidance
+        age: Child's age
+        config: Configuration dict with model settings
+        client: Gemini client instance
+        correctness_reasoning: AI's explanation of why answer is wrong
+        level3_category: Level 3 category
+        focus_prompt: Focus strategy guidance
+        focus_mode: The focus mode key
+
+    Yields:
+        Tuple of (text_chunk, token_usage_or_None, full_response_so_far, decision_info)
+    """
+    start_time = time.time()
+    logger.info(f"ask_gentle_correction_stream started | object={object_name}, answer={child_answer[:30]}")
+
+    # Extract the previous question from conversation history
+    previous_question = extract_previous_question(messages)
+    logger.debug(f"Extracted previous question: {previous_question[:100]}")
+
+    # Build gentle correction prompt
+    prompts = paixueji_prompts.get_prompts()
+    correction_prompt = prompts['gentle_correction_prompt'].format(
+        child_answer=child_answer,
+        object_name=object_name,
+        age=age,
+        previous_question=previous_question,
+        correctness_reasoning=correctness_reasoning,
+        category_prompt=category_prompt,
+        age_prompt=age_prompt,
+        focus_prompt=focus_prompt
+    )
+
+    # Prepare messages with correction prompt
+    messages_to_send = messages + [{"role": "user", "content": correction_prompt}]
+
+    # Clean messages for API
+    clean_messages = clean_messages_for_api(messages_to_send)
+
+    # Convert to Gemini format
+    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
+
+    # Stream from LLM
+    full_response = ""
+    token_usage = None
+
+    # Prepare decision info (no switching when correcting)
+    decision_info = {
+        'new_object_name': None,
+        'detected_object_name': None,
+        'switch_decision_reasoning': None
+    }
+
+    stream = None
+    try:
+        logger.debug(f"Sending {len(contents)} messages to Gemini API (gentle correction mode)")
+
+        # Configure generation
+        gen_config = GenerateContentConfig(
+            temperature=config.get("temperature", 0.3),
+            max_output_tokens=config.get("max_tokens", 2000),
+            system_instruction=system_instruction if system_instruction else None
+        )
+
+        # Call streaming API
+        stream = client.models.generate_content_stream(
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config
+        )
+
+        # Yield chunks as they arrive
+        chunk_count = 0
+        for chunk in stream:
+            if chunk.text:
+                chunk_count += 1
+                full_response += chunk.text
+                logger.debug(f"Chunk {chunk_count} | length={len(chunk.text)}, total_length={len(full_response)}")
+                yield (chunk.text, None, full_response, decision_info)
+
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(f"ask_gentle_correction_stream LLM error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        if full_response:
+            yield ("", token_usage, full_response, decision_info)
+        return
+    finally:
+        if stream is not None:
+            try:
+                del stream
+                logger.debug('Cleaned up stream via del in finally block')
+            except:
+                pass
+
+    duration = time.time() - start_time
+    logger.info(
+        f"ask_gentle_correction_stream completed | "
+        f"duration={duration:.3f}s, response_length={len(full_response)}"
+    )
+
+    # Final yield with token usage
+    yield ("", token_usage, full_response, decision_info)
+
+
 def is_answer_reasonable(child_answer: str) -> bool:
     """
     Check if child's answer shows reasonable engagement.
@@ -944,7 +1192,9 @@ async def call_paixueji_stream(
     # Determine which streaming function to use
     stream_generator = None
     response_type = None
-    is_correct = False
+    is_engaged = None
+    is_factually_correct = None
+    correctness_reasoning = None
 
     # Check if this is truly the first interaction (no assistant messages yet)
     has_asked_questions = any(msg.get("role") == "assistant" for msg in messages)
@@ -965,30 +1215,24 @@ async def call_paixueji_stream(
         response_type = "introduction"
         logger.info(f"[{session_id}] Routing to introduction question")
     else:
-        # Follow-up question or explanation (we've already started the conversation)
-        # Check if answer is reasonable (and mark as correct if so)
-        is_correct = is_answer_reasonable(content)
-        
-        if is_correct:
-            stream_generator = ask_followup_question_stream(
-                prepared_messages,
-                content,  # child's answer
-                assistant,  # Pass assistant for topic switching
-                object_name,
-                correct_answer_count,
-                category_prompt,
-                age_prompt,
-                age or 6,
-                config,
-                client,
-                level3_category,
-                focus_prompt=focus_prompt,
-                focus_mode=focus_mode
-            )
-            response_type = "followup"
-            logger.info(f"[{session_id}] Routing to followup question | answer_reasonable=True")
-        else:
-            # Answer doesn't seem reasonable (child stuck) - provide explanation
+        # Follow-up question or explanation - Use SINGLE AI VALIDATION for all answers
+        # This replaces the old is_answer_reasonable() check
+        logger.info(f"[{session_id}] Running unified AI validation for answer")
+
+        validation_result = decide_topic_switch_with_validation(
+            assistant=assistant,
+            child_answer=content,
+            object_name=object_name,
+            age=age or 6,
+            focus_mode=focus_mode
+        )
+
+        is_engaged = validation_result.get('is_engaged')
+        is_factually_correct = validation_result.get('is_factually_correct')
+        correctness_reasoning = validation_result.get('correctness_reasoning')
+
+        if not is_engaged:
+            # PATH 1: STUCK ("I don't know", unclear answers)
             stream_generator = ask_explanation_question_stream(
                 prepared_messages,
                 content,
@@ -1005,7 +1249,48 @@ async def call_paixueji_stream(
                 focus_mode=focus_mode
             )
             response_type = "explanation"
-            logger.info(f"[{session_id}] Routing to explanation (answer_reasonable=False)")
+            logger.info(f"[{session_id}] Routing to explanation | is_engaged=False")
+
+        elif is_factually_correct:
+            # PATH 2: CORRECT + ENGAGED
+            stream_generator = ask_followup_question_stream(
+                prepared_messages,
+                content,  # child's answer
+                assistant,  # Pass assistant for topic switching
+                object_name,
+                correct_answer_count,
+                category_prompt,
+                age_prompt,
+                age or 6,
+                config,
+                client,
+                level3_category,
+                focus_prompt=focus_prompt,
+                focus_mode=focus_mode
+            )
+            response_type = "followup"
+            logger.info(f"[{session_id}] Routing to followup | is_engaged=True, is_factually_correct=True")
+
+        else:
+            # PATH 3: WRONG + ENGAGED (NEW!)
+            stream_generator = ask_gentle_correction_stream(
+                prepared_messages,
+                content,
+                assistant,
+                object_name,
+                correct_answer_count,  # Don't increment - answer was wrong
+                category_prompt,
+                age_prompt,
+                age or 6,
+                config,
+                client,
+                correctness_reasoning,
+                level3_category,
+                focus_prompt=focus_prompt,
+                focus_mode=focus_mode
+            )
+            response_type = "gentle_correction"
+            logger.info(f"[{session_id}] Routing to gentle correction | is_engaged=True, is_factually_correct=False")
 
     # Stream chunks from the selected generator
     if stream_generator:
@@ -1052,7 +1337,16 @@ async def call_paixueji_stream(
                     correct_answer_count=correct_answer_count,
                     conversation_complete=False,  # Infinite mode: never complete
                     focus_mode=focus_mode,
-                    is_correct=is_correct,
+
+                    # DEPRECATED: Keep for backward compat
+                    is_correct=is_engaged and is_factually_correct if is_engaged is not None else None,
+
+                    # NEW unified AI validation fields:
+                    is_engaged=is_engaged,
+                    is_factually_correct=is_factually_correct,
+                    correctness_reasoning=correctness_reasoning if is_factually_correct == False else None,
+
+                    # Topic switching fields:
                     new_object_name=new_object_name,
                     detected_object_name=detected_object_name,
                     switch_decision_reasoning=switch_decision_reasoning
@@ -1103,6 +1397,19 @@ async def call_paixueji_stream(
         is_stuck=False,  # Not used in Paixueji
         correct_answer_count=correct_answer_count,
         conversation_complete=conversation_complete,
-        focus_mode=focus_mode
+        focus_mode=focus_mode,
+
+        # DEPRECATED: Keep for backward compat
+        is_correct=is_engaged and is_factually_correct if is_engaged is not None else None,
+
+        # NEW unified AI validation fields:
+        is_engaged=is_engaged,
+        is_factually_correct=is_factually_correct,
+        correctness_reasoning=correctness_reasoning if is_factually_correct == False else None,
+
+        # Topic switching fields:
+        new_object_name=new_object_name,
+        detected_object_name=detected_object_name,
+        switch_decision_reasoning=switch_decision_reasoning
     )
     yield final_chunk

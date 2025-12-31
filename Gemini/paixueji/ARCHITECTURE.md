@@ -736,30 +736,30 @@ class StreamChunk(BaseModel):
 ```mermaid
 sequenceDiagram
     participant Flask as Flask Thread
-    participant Loop as Asyncio Event Loop
+    participant EventLoop as Asyncio Event Loop
     participant Queue as Queue
     participant BG as Background Thread
     participant Gemini as Gemini API
 
-    Flask->>Loop: Create new event loop
+    Flask->>EventLoop: Create new event loop
     Flask->>Queue: Create Queue()
     Flask->>BG: Start background thread
     activate BG
 
-    BG->>Loop: loop.run_until_complete()
-    Loop->>Gemini: generate_content_stream()
+    BG->>EventLoop: loop.run_until_complete()
+    EventLoop->>Gemini: generate_content_stream()
     activate Gemini
 
     loop For each chunk
-        Gemini-->>Loop: yield chunk
-        Loop->>Queue: queue.put(chunk)
+        Gemini-->>EventLoop: yield chunk
+        EventLoop->>Queue: queue.put(chunk)
         Queue-->>Flask: queue.get() [blocking]
         Flask-->>Flask: Yield SSE event
     end
 
-    Gemini-->>Loop: Stream complete
+    Gemini-->>EventLoop: Stream complete
     deactivate Gemini
-    Loop->>Queue: queue.put(DONE)
+    EventLoop->>Queue: queue.put(DONE)
     deactivate BG
 
     Queue-->>Flask: DONE signal
