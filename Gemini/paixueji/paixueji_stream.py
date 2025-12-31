@@ -198,6 +198,13 @@ async def ask_introduction_question_stream(
         # Log stream type for debugging
         logger.debug(f"Stream object type: {type(stream).__name__}")
 
+        # Prepare decision info (no switching in introduction)
+        decision_info = {
+            'new_object_name': None,
+            'detected_object_name': None,
+            'switch_decision_reasoning': None
+        }
+
         # Yield chunks as they arrive
         chunk_count = 0
         for chunk in stream:
@@ -205,7 +212,7 @@ async def ask_introduction_question_stream(
                 chunk_count += 1
                 full_response += chunk.text
                 logger.debug(f"Chunk {chunk_count} | length={len(chunk.text)}, total_length={len(full_response)}")
-                yield (chunk.text, None, full_response, None)  # Fourth element: no topic switch in intro
+                yield (chunk.text, None, full_response, decision_info)
 
         # Note: Gemini API doesn't provide token usage in streaming mode
         # We'll leave token_usage as None
@@ -216,7 +223,12 @@ async def ask_introduction_question_stream(
         logger.error(f"answer_question_stream LLM error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
         # Still yield what we have so far (even if incomplete)
         if full_response:
-            yield ("", token_usage, full_response, None)  # Fourth element: no topic switch
+            decision_info = {
+                'new_object_name': None,
+                'detected_object_name': None,
+                'switch_decision_reasoning': None
+            }
+            yield ("", token_usage, full_response, decision_info)
         return
     finally:
         # Always attempt cleanup via deletion
@@ -237,85 +249,124 @@ async def ask_introduction_question_stream(
         logger.warning(f"Slow LLM call | duration={duration:.3f}s exceeded threshold {SLOW_LLM_CALL_THRESHOLD}s")
 
     # Final yield with token usage (None for Gemini streaming)
-    yield ("", token_usage, full_response, None)  # Fourth element: no topic switch in intro
+    decision_info = {
+        'new_object_name': None,
+        'detected_object_name': None,
+        'switch_decision_reasoning': None
+    }
+    yield ("", token_usage, full_response, decision_info)
 
 
-def decide_topic_switch(assistant, child_answer, focus_mode, object_name, correct_count, age):
+def decide_topic_switch(assistant, child_answer: str, object_name: str, age: int, focus_mode: str | None = None):
     """
-    Step 1: Ask LLM to decide whether to switch topics.
-
-    Uses Gemini's JSON mode to get a structured decision about whether the child
-    mentioned a new object that should become the main topic of discussion.
+    AI-driven topic switching based on conversation context.
+    No hardcoded strategies - AI analyzes natural conversation flow.
 
     Args:
         assistant: PaixuejiAssistant instance
         child_answer: The child's answer text
-        focus_mode: Current focus strategy (depth, width_shape, width_color, width_category)
         object_name: Current object being discussed
-        correct_count: Number of correct answers so far
         age: Child's age
+        focus_mode: Current focus mode (for context only, NOT decision rules)
 
     Returns:
         dict: {
             'decision': 'SWITCH' | 'CONTINUE',
             'new_object': str | None,
-            'reasoning': str  # for debugging
+            'reasoning': str  # AI's explanation
         }
     """
-    # Build decision prompt
-    decision_prompt = f"""You are helping a {age}-year-old child learn about objects.
+    # Extract the last question the model asked from conversation history
+    conversation_history = assistant.conversation_history
+    last_model_question = None
 
-CURRENT CONTEXT:
-- Current Object: {object_name}
-- Focus Mode: {focus_mode}
+    # Find the most recent assistant message
+    for msg in reversed(conversation_history):
+        if msg.get('role') == 'assistant':
+            last_model_question = msg.get('content')
+            break
+
+    if not last_model_question:
+        last_model_question = "Unknown (first interaction)"
+
+    # Build contextual decision prompt
+    decision_prompt = f"""You are an educational AI helping a {age}-year-old child learn through conversation.
+
+CONTEXT:
+- Current Topic: {object_name}
+- Focus Mode: {focus_mode or 'depth'} (how we ask questions, NOT a switching rule)
+- Last Question You Asked: "{last_model_question}"
 - Child's Answer: "{child_answer}"
-- Correct Answers So Far: {correct_count}
 
 YOUR TASK:
-Analyze whether the child mentioned a NEW object that should become the main topic of discussion.
+Decide whether to SWITCH to a new object or CONTINUE with the current object.
 
-DECISION RULES:
-1. **DEPTH mode**: Only SWITCH if child EXPLICITLY names a completely different object unrelated to the current one
-2. **WIDTH_COLOR mode**: SWITCH if child names ANY real object that shares the same COLOR (e.g., "sun" for yellow banana → SWITCH)
-3. **WIDTH_SHAPE mode**: SWITCH if child names ANY real object that shares the same SHAPE (e.g., "orange" for round apple → SWITCH)
-4. **WIDTH_CATEGORY mode**: SWITCH if child names ANY real object in the same CATEGORY (e.g., "cherry" for fruit apple → SWITCH)
-5. If child gives only a DESCRIPTION without naming an object: CONTINUE (e.g., "it's big" → CONTINUE)
-6. If child names a nonsensical/made-up object: CONTINUE (e.g., "blibblob" → CONTINUE)
-7. If child names abstract concepts or non-tangible things, judge carefully:
-   - "sun", "moon", "star" are VALID objects (even if not touchable)
-   - Pure concepts like "happiness" are NOT valid objects
+DECISION GUIDELINES:
+1. **Invited Object Naming**: If you asked the child to name a new object (e.g., "name another red thing") and they did → SWITCH
+2. **Off-Topic Response**: If the child answered with a different object instead of answering your question → SWITCH
+3. **Explicit Request**: If child says "let's talk about X" or "can we switch to X" → SWITCH
+4. **Comparison/Description**: If child mentions object in passing while answering (e.g., "red like cherry") → CONTINUE
+5. **No New Object**: If child just answered your question normally → CONTINUE
+6. **Stuck/Uncertain**: If child says "I don't know" or can't answer → CONTINUE
 
-OUTPUT MUST BE VALID JSON:
+VALIDATION (always apply):
+- Only SWITCH if the new object is a real, concrete object (not abstract concepts)
+- Ignore made-up/nonsense words → CONTINUE
+- Celestial objects (sun, moon, stars) are valid
+
+FOCUS MODE CONTEXT (informational only, NOT rules):
+- 'depth': Currently exploring one object deeply
+- 'width_color/shape/category': Currently exploring by similarities
+  (This context helps you understand the conversation style, but doesn't dictate switching rules)
+
+RESPOND WITH VALID JSON:
 {{
     "decision": "SWITCH" or "CONTINUE",
     "new_object": "ObjectName" or null,
-    "reasoning": "Brief explanation"
+    "reasoning": "1-2 sentence explanation of why you made this decision, referencing the guidelines above"
 }}
 
-Examples:
-- Focus: width_color, Answer: "cherry" → {{"decision": "SWITCH", "new_object": "Cherry", "reasoning": "Cherry is a real red object"}}
-- Focus: width_color, Answer: "the sun" → {{"decision": "SWITCH", "new_object": "Sun", "reasoning": "Sun is a real yellow object"}}
-- Focus: width_shape, Answer: "it's round" → {{"decision": "CONTINUE", "new_object": null, "reasoning": "Description only, no object named"}}
-- Focus: depth, Answer: "blibblob" → {{"decision": "CONTINUE", "new_object": null, "reasoning": "Invalid/nonsensical object"}}
+EXAMPLES:
+Last Q: "What color is the apple?"
+Answer: "red"
+→ {{"decision": "CONTINUE", "new_object": null, "reasoning": "Child directly answered the question about color. No topic change needed."}}
+
+Last Q: "Can you think of another red fruit?"
+Answer: "strawberry"
+→ {{"decision": "SWITCH", "new_object": "strawberry", "reasoning": "I invited child to name a new object and they did. Switching to strawberry."}}
+
+Last Q: "What shape is it?"
+Answer: "Let's talk about dogs!"
+→ {{"decision": "SWITCH", "new_object": "dog", "reasoning": "Child explicitly requested to change topics to dogs."}}
+
+Last Q: "What does it taste like?"
+Answer: "sweet like candy"
+→ {{"decision": "CONTINUE", "new_object": null, "reasoning": "Child mentioned candy as a comparison, not requesting a topic change."}}
+
+Now decide for the current situation:
 """
 
     try:
         # Call Gemini with JSON mode / structured output
+        import json
         response = assistant.client.models.generate_content(
             model=assistant.config.get("model", "gemini-2.0-flash-exp"),
             contents=decision_prompt,
             config={
                 "response_mime_type": "application/json",  # Force JSON output
                 "temperature": 0.1,  # Low temp for consistent decisions
-                "max_output_tokens": 100
+                "max_output_tokens": 150
             }
         )
 
         # Parse JSON response
-        import json
         decision_data = json.loads(response.text)
 
-        logger.info(f"[DECIDE] {decision_data['decision']} | new_object={decision_data.get('new_object')} | reasoning={decision_data.get('reasoning')}")
+        logger.info(
+            f"[DECIDE] {decision_data['decision']} | "
+            f"new_object={decision_data.get('new_object')}, "
+            f"reasoning={decision_data.get('reasoning')}"
+        )
 
         return decision_data
 
@@ -326,7 +377,7 @@ Examples:
         return {
             'decision': 'CONTINUE',
             'new_object': None,
-            'reasoning': f'Error in decision: {e}'
+            'reasoning': f'Error in decision: {str(e)}'
         }
 
 
@@ -371,14 +422,19 @@ async def ask_followup_question_stream(
 
     # STEP 1: DECISION - Should we switch topics?
     new_topic_name = None
+    detected_object_name = None
+    switch_decision_reasoning = None
+
     decision = decide_topic_switch(
         assistant=assistant,
         child_answer=child_answer,
-        focus_mode=focus_mode or "depth",
         object_name=object_name,
-        correct_count=correct_count,
-        age=age
+        age=age,
+        focus_mode=focus_mode  # Context only, not a rule
     )
+
+    # Capture reasoning from AI decision
+    switch_decision_reasoning = decision.get('reasoning', 'No reasoning provided')
 
     # STEP 2: HANDLE DECISION & BUILD APPROPRIATE PROMPT
     prompts = paixueji_prompts.get_prompts()
@@ -424,6 +480,11 @@ async def ask_followup_question_stream(
         )
     else:
         # CONTINUE: Regular follow-up question on same object
+        # Check if AI detected an object but decided not to switch
+        if decision.get('new_object'):
+            detected_object_name = decision['new_object']
+            logger.info(f"[CONTINUE] Object detected but not switching: {detected_object_name} | Reasoning: {switch_decision_reasoning}")
+
         # Validation: Answer was not a valid new object
         validation_guidance = f"❌ NOT A VALID NEW OBJECT - The child's answer did not name a valid new object. Gently acknowledge their attempt but guide them to think of a proper object name. Reasoning: {decision.get('reasoning', 'No valid object')}"
 
@@ -473,6 +534,13 @@ async def ask_followup_question_stream(
         # Log stream type for debugging
         logger.debug(f"Stream object type: {type(stream).__name__}")
 
+        # Prepare decision info to pass along
+        decision_info = {
+            'new_object_name': new_topic_name,
+            'detected_object_name': detected_object_name,
+            'switch_decision_reasoning': switch_decision_reasoning
+        }
+
         # Yield chunks as they arrive
         chunk_count = 0
         for chunk in stream:
@@ -480,14 +548,19 @@ async def ask_followup_question_stream(
                 chunk_count += 1
                 full_response += chunk.text
                 logger.debug(f"Chunk {chunk_count} | length={len(chunk.text)}, total_length={len(full_response)}")
-                yield (chunk.text, None, full_response, new_topic_name)
+                yield (chunk.text, None, full_response, decision_info)
 
     except Exception as e:
         duration = time.time() - start_time
         logger.error(f"suggest_topics_stream LLM error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
         # Still yield what we have so far (even if incomplete)
         if full_response:
-            yield ("", token_usage, full_response, new_topic_name)
+            decision_info = {
+                'new_object_name': new_topic_name,
+                'detected_object_name': detected_object_name,
+                'switch_decision_reasoning': switch_decision_reasoning
+            }
+            yield ("", token_usage, full_response, decision_info)
         return
     finally:
         # Always attempt cleanup via deletion
@@ -505,7 +578,12 @@ async def ask_followup_question_stream(
     )
 
     # Final yield with token usage (None for Gemini streaming)
-    yield ("", token_usage, full_response, new_topic_name)
+    decision_info = {
+        'new_object_name': new_topic_name,
+        'detected_object_name': detected_object_name,
+        'switch_decision_reasoning': switch_decision_reasoning
+    }
+    yield ("", token_usage, full_response, decision_info)
 
 
 async def ask_explanation_question_stream(
@@ -580,7 +658,13 @@ async def ask_explanation_question_stream(
     # Stream from LLM
     full_response = ""
     token_usage = None
-    new_topic_name = None  # No topic switching when child doesn't know
+
+    # Prepare decision info (no switching when child doesn't know)
+    decision_info = {
+        'new_object_name': None,
+        'detected_object_name': None,
+        'switch_decision_reasoning': None
+    }
 
     stream = None
     try:
@@ -607,13 +691,13 @@ async def ask_explanation_question_stream(
                 chunk_count += 1
                 full_response += chunk.text
                 logger.debug(f"Chunk {chunk_count} | length={len(chunk.text)}, total_length={len(full_response)}")
-                yield (chunk.text, None, full_response, new_topic_name)
+                yield (chunk.text, None, full_response, decision_info)
 
     except Exception as e:
         duration = time.time() - start_time
         logger.error(f"ask_explanation_question_stream LLM error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
         if full_response:
-            yield ("", token_usage, full_response, new_topic_name)
+            yield ("", token_usage, full_response, decision_info)
         return
     finally:
         if stream is not None:
@@ -630,7 +714,7 @@ async def ask_explanation_question_stream(
     )
 
     # Final yield with token usage (None for Gemini streaming)
-    yield ("", token_usage, full_response, new_topic_name)
+    yield ("", token_usage, full_response, decision_info)
 
 
 def is_answer_reasonable(child_answer: str) -> bool:
@@ -926,13 +1010,21 @@ async def call_paixueji_stream(
     # Stream chunks from the selected generator
     if stream_generator:
         new_object_name = None
+        detected_object_name = None
+        switch_decision_reasoning = None
         buffer = ""
 
-        async for chunked_text, chunk_token_usage, full_text, detected_new_object in stream_generator:
-            # Capture new object name from decision step (only set once)
-            if detected_new_object and not new_object_name:
-                new_object_name = detected_new_object
-                logger.info(f"[{session_id}] TOPIC SWITCH DETECTED: {new_object_name}")
+        async for chunked_text, chunk_token_usage, full_text, decision_info in stream_generator:
+            # Capture decision info from streaming functions
+            if decision_info:
+                if decision_info.get('new_object_name') and not new_object_name:
+                    new_object_name = decision_info['new_object_name']
+                    logger.info(f"[{session_id}] TOPIC SWITCH DETECTED: {new_object_name}")
+                if decision_info.get('detected_object_name') and not detected_object_name:
+                    detected_object_name = decision_info['detected_object_name']
+                    switch_decision_reasoning = decision_info.get('switch_decision_reasoning')
+                    logger.info(f"[{session_id}] Object detected but not switching: {detected_object_name}")
+
             if chunk_token_usage:
                 token_usage = chunk_token_usage
 
@@ -944,7 +1036,7 @@ async def call_paixueji_stream(
             # Yield Result
             if text_to_process:
                 full_response += text_to_process # Track what we actually sent to user
-                
+
                 sequence_number += 1
                 chunk = StreamChunk(
                     response=text_to_process,
@@ -961,13 +1053,18 @@ async def call_paixueji_stream(
                     conversation_complete=False,  # Infinite mode: never complete
                     focus_mode=focus_mode,
                     is_correct=is_correct,
-                    new_object_name=new_object_name
+                    new_object_name=new_object_name,
+                    detected_object_name=detected_object_name,
+                    switch_decision_reasoning=switch_decision_reasoning
                 )
                 yield chunk
-                
-                # Only send new_object_name once
+
+                # Only send these values once (they're sent in first chunk after decision)
                 if new_object_name:
                     new_object_name = None
+                if detected_object_name:
+                    detected_object_name = None
+                    switch_decision_reasoning = None
 
     # Flush remaining buffer if needed
     if buffer:

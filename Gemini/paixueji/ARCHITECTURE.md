@@ -204,67 +204,127 @@ graph TD
 
 ---
 
-## Focus Modes & Decision Logic
+## Focus Modes & AI-Driven Topic Switching
+
+### Focus Mode vs Switching Logic (Separation of Concerns)
+
+**Focus modes** and **topic switching** are now **decoupled**:
+
+| Concern | What It Controls | Examples |
+|---------|------------------|----------|
+| **Focus Mode** | Question style (HOW to ask) | DEPTH: "What are the parts?", WIDTH_COLOR: "What else is red?" |
+| **Topic Switching** | When to switch topics (WHEN to switch) | AI analyzes conversation context, not hardcoded rules |
 
 ### Focus Mode Strategies
 
-Each focus mode defines HOW the AI explores the object space:
+Each focus mode defines **question style only** (not switching behavior):
 
-| Focus Mode | Behavior | Switch Trigger | Example |
-|------------|----------|----------------|---------|
-| **depth** | Deep dive into current object | Child explicitly names different object | Apple → "It has banana inside" → Switch to Banana |
-| **width_color** | Explore objects by shared color | Child names object with same color | Red apple → "Firetruck" → Switch to Firetruck |
-| **width_shape** | Explore objects by shared shape | Child names object with same shape | Round ball → "Moon" → Switch to Moon |
-| **width_category** | Explore objects in same category | Child names object in category | Apple (fruit) → "Banana" → Switch to Banana |
+| Focus Mode | Question Style | Example Questions |
+|------------|----------------|-------------------|
+| **depth** | Deep dive into current object | "What are its parts?", "How does it work?", "What is it made of?" |
+| **width_color** | Explore objects by shared color | "What else is red?", "Can you name another yellow thing?" |
+| **width_shape** | Explore objects by shared shape | "What else is round?", "Can you think of something long like this?" |
+| **width_category** | Explore objects in same category | "What other fruits do you know?", "Name another animal!" |
 
-### Decision Algorithm (Structured Output)
+### AI-Driven Topic Switching (No Hardcoded Rules!)
+
+Instead of rigid rules, the AI analyzes **conversation context** to decide when to switch:
+
+#### Context Provided to AI:
+1. **Last model question** - What did the model just ask?
+2. **Child's answer** - How did the child respond?
+3. **Current object** - What are we discussing?
+4. **Focus mode** - For informational context only
+
+#### Decision Guidelines (Not Rules):
+1. **Invited Object Naming**: If AI asked child to name new object and they did → SWITCH
+2. **Off-Topic Response**: If child answered with different object instead of answering question → SWITCH
+3. **Explicit Request**: If child says "let's talk about X" → SWITCH
+4. **Comparison Mention**: If child mentions object in passing ("red like cherry") → CONTINUE
+5. **Normal Answer**: If child answered the question → CONTINUE
+6. **Stuck/Uncertain**: If child says "I don't know" → CONTINUE
+
+#### Example Decision Scenarios:
+
+| Last Question | Child Answer | AI Decision | Reasoning |
+|--------------|--------------|-------------|-----------|
+| "What color is the apple?" | "red" | **CONTINUE** | Direct answer, no topic change |
+| "Can you name another red fruit?" | "strawberry" | **SWITCH** | Invited naming, child responded |
+| "What shape is it?" | "banana" | **SWITCH** | Off-topic, child wants to discuss banana |
+| "What does it taste like?" | "sweet like candy" | **CONTINUE** | Comparison, not topic change request |
+| "Where do apples grow?" | "Can we talk about dogs?" | **SWITCH** | Explicit request |
+
+### Decision Algorithm (Contextual + Structured Output)
 
 ```mermaid
 flowchart TD
-    Input[Child's Answer] --> Build[Build decision prompt<br/>with context]
+    Input[Child's Answer] --> Extract[Extract last model question<br/>from conversation history]
+    Extract --> Build[Build contextual decision prompt:<br/>- What was asked?<br/>- What was answered?<br/>- Current object<br/>- Focus mode context]
     Build --> Call[Call Gemini with<br/>JSON mode enabled]
     Call --> Parse[Parse structured output]
 
     Parse --> Output{{"JSON Output:<br/>decision, new_object, reasoning"}}
 
-    Output --> Log[Log decision to console]
+    Output --> Log[Log decision + reasoning]
 
     Log --> Route{decision?}
     Route -->|SWITCH| Action1[1. Update object_name<br/>2. Classify new object<br/>3. Rebuild prompts<br/>4. Use topic_switch_prompt]
-    Route -->|CONTINUE| Action2[1. Keep object_name<br/>2. Use question_prompt]
+    Route -->|CONTINUE| Action2[1. Keep object_name<br/>2. Use question_prompt<br/>3. If object detected: offer manual override]
 
     Action1 --> Return[Return to stream generation]
     Action2 --> Return
 
     style Input fill:#e1f5ff
-    style Output fill:#fff4e1
+    style Extract fill:#fff4e1
+    style Output fill:#e1ffe1
     style Action1 fill:#ffe1e1
-    style Action2 fill:#e1ffe1
+    style Action2 fill:#d1fae5
 ```
 
-**Why Structured Output?**
-- **100% Reliable**: No XML tag parsing failures
-- **Fast**: ~100-200ms decision latency
-- **Auditable**: Clear reasoning in logs
-- **Separation of Concerns**: Decision ≠ Response generation
+**Why AI-Driven (Not Hardcoded)?**
+- ✅ **Natural**: Mimics how human teachers decide
+- ✅ **Context-Aware**: Considers what was asked vs what was answered
+- ✅ **Flexible**: Handles edge cases and nuanced scenarios
+- ✅ **Transparent**: AI explains every decision
+- ✅ **Fast**: Same ~100-200ms latency (1 API call)
+- ✅ **User Control**: Manual override available
 
-### Focus Prompt Examples
+### Manual Override Feature
+
+When AI detects an object but decides to CONTINUE, users can override:
+
+**UI Panel Appears When:**
+- AI detected object in child's answer (e.g., "cherry")
+- AI decided to CONTINUE (e.g., "Mentioned as comparison, not topic change")
+
+**User Options:**
+1. **Switch to [detected_object]** - Force topic change
+2. **Stay on current topic** - Dismiss panel and continue
+
+**Backend Flow:**
+1. Frontend calls `/api/force-switch` with detected object
+2. Backend updates `assistant.object_name`
+3. Backend classifies new object (1s timeout)
+4. System message appears: "✨ Switched to cherry!"
+
+### Focus Prompt Examples (Updated)
 
 **Depth Mode:**
 ```
-Deep exploration of {object_name}:
-- Ask detailed questions about specific features
-- Probe functionality, parts, materials
-- Only switch if child explicitly names a different object
+Focus Strategy: DEPTH.
+Ask detailed questions about {object_name}'s specific features,
+parts, materials, texture, uses, and functionality.
+Dive deep into this one object.
 ```
+*(Note: No switching instructions - that's handled by AI context)*
 
 **Width Color Mode:**
 ```
-Color exploration starting from {object_name}:
-- Ask child to think of OTHER objects with the same color
-- If they name a valid object → SWITCH to it
-- Celebrate color connections ("Yes! Both are red!")
+Focus Strategy: WIDTH - COLOR.
+Ask the child to think of OTHER objects that are the same COLOR as {object_name}.
+Example: 'What else is red like an apple?' or 'Can you name something else that's yellow?'
 ```
+*(Note: Questions invite new objects, but AI decides whether to switch based on context)*
 
 ---
 
@@ -539,6 +599,7 @@ graph LR
     A[Client] -->|POST /api/start| B[Start Conversation]
     A -->|POST /api/continue| C[Continue Conversation]
     A -->|POST /api/reset| D[Delete Session]
+    A -->|POST /api/force-switch| H[Force Topic Switch]
     A -->|GET /api/sessions| E[List Sessions]
     A -->|POST /api/classify| F[Classify Object]
     A -->|GET /api/health| G[Health Check]
@@ -546,12 +607,14 @@ graph LR
     B -->|SSE Stream| A
     C -->|SSE Stream| A
     D -->|JSON| A
+    H -->|JSON| A
     E -->|JSON| A
     F -->|JSON| A
     G -->|JSON| A
 
     style B fill:#e1f5ff
     style C fill:#e1f5ff
+    style H fill:#fbbf24
 ```
 
 ### Request/Response Contracts
@@ -604,21 +667,31 @@ data: {"success":true}
 
 ```python
 class StreamChunk(BaseModel):
-    response: str                    # Text to display
-    session_finished: bool           # Session ended?
-    duration: float                  # Total time (only in final chunk)
-    token_usage: TokenUsage | None   # Token counts (only in final chunk)
-    finish: bool                     # Is this final chunk?
-    sequence_number: int             # Chunk order
-    timestamp: float                 # Unix timestamp
-    session_id: str                  # Session UUID
-    request_id: str                  # Request UUID
-    correct_answer_count: int        # Progress tracking
-    conversation_complete: bool      # Always False (infinite mode)
-    focus_mode: str | None           # Current focus mode
-    is_correct: bool | None          # Answer validation feedback
-    new_object_name: str | None      # New object if topic switched
+    response: str                          # Text to display
+    session_finished: bool                 # Session ended?
+    duration: float                        # Total time (only in final chunk)
+    token_usage: TokenUsage | None         # Token counts (only in final chunk)
+    finish: bool                           # Is this final chunk?
+    sequence_number: int                   # Chunk order
+    timestamp: float                       # Unix timestamp
+    session_id: str                        # Session UUID
+    request_id: str                        # Request UUID
+    correct_answer_count: int              # Progress tracking
+    conversation_complete: bool            # Always False (infinite mode)
+    focus_mode: str | None                 # Current focus mode
+    is_correct: bool | None                # Answer validation feedback
+    new_object_name: str | None            # New object if topic switched
+    detected_object_name: str | None       # Object AI detected but didn't switch to (for manual override)
+    switch_decision_reasoning: str | None  # AI's explanation for switch/continue decision
 ```
+
+**New Fields for AI-Driven Switching:**
+- `detected_object_name`: Set when AI detects an object in child's answer but decides to CONTINUE
+  - Triggers manual override UI panel
+  - Example: Child says "red like cherry", AI continues but detects "cherry"
+- `switch_decision_reasoning`: AI's explanation for every decision
+  - Example: "Child directly answered the question about color. No topic change needed."
+  - Logged and displayed in override panel
 
 ### Streaming Architecture
 

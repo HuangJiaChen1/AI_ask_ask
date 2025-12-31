@@ -144,3 +144,5 @@ class StreamChunk(BaseModel):
     focus_mode: str | None = None
     is_correct: bool | None = None
     new_object_name: str | None = None
+    detected_object_name: str | None = None  # Object AI detected but didn't switch to
+    switch_decision_reasoning: str | None = None  # AI's reasoning for switch/continue decision

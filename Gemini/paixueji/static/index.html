@@ -69,6 +69,23 @@
 
         <div class="messages" id="messages"></div>
 
+        <!-- Manual Topic Switch Override Panel -->
+        <div id="manualSwitchPanel" style="display: none; padding: 15px; margin: 10px; background: #fffacd; border: 2px solid #ffd700; border-radius: 8px;">
+            <p style="margin: 0 0 10px 0;">
+                <strong>💡 Object detected:</strong> <span id="detectedObjectName" style="font-weight: bold; color: #d97706;"></span>
+                <br>
+                <small id="switchReasoning" style="color: #666;"></small>
+            </p>
+            <div style="display: flex; gap: 10px;">
+                <button id="forceSwitchBtn" onclick="forceSwitch()" style="background: #fbbf24; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                    Switch to <span id="switchToObjectName"></span>
+                </button>
+                <button onclick="dismissSwitchPanel()" style="background: #e5e7eb; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                    Stay on current topic
+                </button>
+            </div>
+        </div>
+
         <div class="input-area">
             <div id="thinking-time" class="thinking-time"></div>
             

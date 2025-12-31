@@ -20,6 +20,7 @@ let currentStreamController = null;
 let correctAnswerCount = 0;
 let conversationComplete = false;
 let categoryData = {};
+let detectedObject = null;  // For manual topic switch override
 
 // DOM elements
 const messagesContainer = document.getElementById('messages');
@@ -515,6 +516,16 @@ function handleStreamChunk(chunk) {
 
         // INFINITE MODE: No completion UI - conversation never ends
     }
+
+    // Handle detected object (AI decided to CONTINUE but detected a new object)
+    if (chunk.detected_object_name && chunk.switch_decision_reasoning) {
+        detectedObject = chunk.detected_object_name;
+        document.getElementById('detectedObjectName').textContent = detectedObject;
+        document.getElementById('switchToObjectName').textContent = detectedObject;
+        document.getElementById('switchReasoning').textContent = chunk.switch_decision_reasoning;
+        document.getElementById('manualSwitchPanel').style.display = 'block';
+        console.log('[INFO] Object detected but not switching:', detectedObject, '| Reasoning:', chunk.switch_decision_reasoning);
+    }
 }
 
 /**
@@ -834,6 +845,63 @@ function init() {
 
     // Focus on object name input
     document.getElementById('objectName').focus();
+}
+
+/**
+ * Force a manual topic switch to the detected object
+ */
+async function forceSwitch() {
+    if (!detectedObject || !sessionId) {
+        console.error('[ERROR] Cannot force switch: missing detectedObject or sessionId');
+        return;
+    }
+
+    try {
+        console.log('[INFO] Forcing switch to:', detectedObject);
+
+        const response = await fetch(`${API_BASE}/force-switch`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                session_id: sessionId,
+                new_object: detectedObject
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            console.log('[INFO] Switch successful:', result);
+
+            // Add system message to chat
+            const systemMsg = addMessage('system', `✨ Switched to ${result.new_object}!`);
+            systemMsg.style.background = '#d1fae5';
+            systemMsg.style.borderLeft = '4px solid #10b981';
+            systemMsg.style.padding = '10px';
+            systemMsg.style.margin = '10px 0';
+
+            // Update input placeholder
+            userInput.placeholder = `Tell me about ${result.new_object}...`;
+        } else {
+            console.error('[ERROR] Force switch failed:', result.error);
+            alert(`Failed to switch: ${result.error}`);
+        }
+
+        dismissSwitchPanel();
+
+    } catch (error) {
+        console.error('[ERROR] Force switch error:', error);
+        alert('Failed to switch topics. Please try again.');
+    }
+}
+
+/**
+ * Dismiss the manual switch panel
+ */
+function dismissSwitchPanel() {
+    document.getElementById('manualSwitchPanel').style.display = 'none';
+    detectedObject = null;
+    console.log('[INFO] Manual switch panel dismissed');
 }
 
 // Initialize on page load

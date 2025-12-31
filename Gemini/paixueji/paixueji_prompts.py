@@ -203,11 +203,12 @@ TONE_PROMPTS = {
 }
 
 # Focus-specific prompts
+# NOTE: These control QUESTION STYLE only, NOT topic switching decisions
 FOCUS_PROMPTS = {
-    "depth": "Focus Strategy: DEPTH. Dive deeper into the current object ({object_name}). Ask about its specific details, texture, parts, uses, or characteristics. Explore THIS object thoroughly before considering any other objects.",
-    "width_shape": "Focus Strategy: WIDTH - SHAPE. Ask the child to think of OTHER objects that share the same SHAPE as {object_name}. Example: 'What else is round like a ball?' or 'Can you think of something else that's long and curved?' Encourage them to NAME a new object with the same shape.",
-    "width_color": "Focus Strategy: WIDTH - COLOR. Ask the child to think of OTHER objects that are the same COLOR as {object_name}. Example: 'What else is red like an apple?' or 'Can you name something else that's yellow?' Encourage them to NAME a new object with the same color.",
-    "width_category": "Focus Strategy: WIDTH - CATEGORY. Ask the child to think of OTHER objects in the same CATEGORY as {object_name}. Example: 'What other fruits do you know?' or 'Can you think of another animal?' Encourage them to NAME a different object from the same category."
+    "depth": "Focus Strategy: DEPTH. Ask detailed questions about {object_name}'s specific features, parts, materials, texture, uses, and functionality. Dive deep into this one object.",
+    "width_shape": "Focus Strategy: WIDTH - SHAPE. Ask the child to think of OTHER objects that share the same SHAPE as {object_name}. Example: 'What else is round like a ball?' or 'Can you think of something else that's long and curved?'",
+    "width_color": "Focus Strategy: WIDTH - COLOR. Ask the child to think of OTHER objects that are the same COLOR as {object_name}. Example: 'What else is red like an apple?' or 'Can you name something else that's yellow?'",
+    "width_category": "Focus Strategy: WIDTH - CATEGORY. Ask the child to think of OTHER objects in the same CATEGORY as {object_name}. Example: 'What other fruits do you know?' or 'Can you think of another animal?'"
 }
 
 # Classification prompt for categorizing objects

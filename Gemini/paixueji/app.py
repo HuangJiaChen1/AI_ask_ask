@@ -517,6 +517,92 @@ def classify_object():
         }), 500
 
 
+@app.route('/api/force-switch', methods=['POST'])
+def force_switch():
+    """
+    Manually force a topic switch when user disagrees with AI decision.
+
+    Request body:
+        {
+            "session_id": "uuid-string",
+            "new_object": "ObjectName"
+        }
+
+    Response:
+        {
+            "success": true,
+            "previous_object": "apple",
+            "new_object": "banana",
+            "message": "Switched to banana"
+        }
+    """
+    data = request.get_json()
+
+    if not data:
+        return jsonify({
+            "success": False,
+            "error": "Request body must be JSON"
+        }), 400
+
+    session_id = data.get('session_id')
+    new_object = data.get('new_object')
+
+    if not session_id:
+        return jsonify({
+            "success": False,
+            "error": "Missing session_id"
+        }), 400
+
+    if not new_object:
+        return jsonify({
+            "success": False,
+            "error": "Missing new_object"
+        }), 400
+
+    if session_id not in sessions:
+        return jsonify({
+            "success": False,
+            "error": "Session not found"
+        }), 404
+
+    try:
+        assistant = sessions[session_id]
+
+        # Save previous object
+        previous_object = assistant.object_name
+
+        # Update object name
+        assistant.object_name = new_object
+
+        # Classify new object with timeout
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(assistant.classify_object_sync, new_object)
+            try:
+                future.result(timeout=1.0)
+                print(f"[FORCE-SWITCH] Classification completed for {new_object}")
+            except concurrent.futures.TimeoutError:
+                print(f"[FORCE-SWITCH] Classification timeout for {new_object}, continuing anyway")
+
+        print(f"[FORCE-SWITCH] User forced switch from {previous_object} to {new_object}")
+
+        return jsonify({
+            "success": True,
+            "previous_object": previous_object,
+            "new_object": new_object,
+            "message": f"Switched to {new_object}"
+        })
+
+    except Exception as e:
+        print(f"[ERROR] Force switch error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
 def async_gen_to_sync(async_gen, loop):
     """
     Bridge async generator to sync generator WITHOUT buffering.
