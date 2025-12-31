@@ -660,8 +660,46 @@ data: {"success":true}
 }
 ```
 
-**Response:** Same SSE format as `/api/start`, with additional field:
+**Response:** Same SSE format as `/api/start`, with additional fields:
 - `new_object_name`: Set if topic switch detected
+- `detected_object_name`: Set if object detected but AI didn't switch
+- `switch_decision_reasoning`: AI's explanation for the decision
+
+#### POST /api/force-switch
+
+**Purpose:** Manually override AI's decision and force a topic switch
+
+**Request:**
+```json
+{
+  "session_id": "uuid-from-start",
+  "new_object": "cherry"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "previous_object": "apple",
+  "new_object": "cherry",
+  "message": "Switched to cherry"
+}
+```
+
+**Use Case:**
+- AI detected "cherry" in child's answer but decided to CONTINUE
+- UI shows manual override panel with detected object
+- User clicks "Switch to cherry" button
+- This endpoint updates session state and classifies new object
+
+**Error Response:**
+```json
+{
+  "success": false,
+  "error": "Session not found"
+}
+```
 
 ### StreamChunk Schema
 
@@ -1078,17 +1116,48 @@ def get_metrics(session_id):
 
 | File | Purpose | Key Functions |
 |------|---------|---------------|
-| `app.py` | Flask server, routes, SSE streaming | `start_conversation()`, `continue_conversation()`, `async_gen_to_sync()` |
+| `app.py` | Flask server, routes, SSE streaming | `start_conversation()`, `continue_conversation()`, `force_switch()`, `async_gen_to_sync()` |
 | `paixueji_assistant.py` | Session state, client management | `get_age_prompt()`, `get_focus_prompt()`, `classify_object_sync()` |
 | `paixueji_stream.py` | Streaming logic, AI calls | `ask_introduction_question_stream()`, `ask_followup_question_stream()`, `decide_topic_switch()` |
 | `paixueji_prompts.py` | Prompt templates | `SYSTEM_PROMPT`, `QUESTION_PROMPT`, `EXPLANATION_PROMPT`, `FOCUS_PROMPTS` |
 | `schema.py` | Pydantic models | `StreamChunk`, `TokenUsage` |
-| `static/app.js` | Frontend SSE handling | `startConversation()`, `continueConversation()`, event listeners |
+| `static/app.js` | Frontend SSE handling | `startConversation()`, `continueConversation()`, `forceSwitch()`, `dismissSwitchPanel()` |
 
 ---
 
-**Document Version:** 1.0
+## Version 2.0 Updates: AI-Driven Contextual Switching
+
+### Key Architectural Changes (December 2025)
+
+**What Changed:**
+1. ✅ **Decoupled Concerns**: Focus modes now control question style ONLY, not switching behavior
+2. ✅ **AI-Driven Decisions**: Topic switching uses conversation context instead of hardcoded rules
+3. ✅ **Manual Override**: New UI panel allows users to override AI decisions
+4. ✅ **Transparency**: AI explains every decision with reasoning
+
+**Migration from v1.0:**
+- **Removed**: Hardcoded switching rules in `FOCUS_PROMPTS` (e.g., "Only SWITCH if...")
+- **Added**: Contextual decision prompt with last question + answer analysis
+- **Added**: `/api/force-switch` endpoint for manual topic changes
+- **Added**: `detected_object_name` and `switch_decision_reasoning` fields to `StreamChunk`
+
+**Performance Impact:**
+- ⚡ **Zero additional latency** - Same 1 API call, smarter prompt
+- ✅ Decision time: ~100-200ms (unchanged)
+- ✅ Same streaming performance
+
+**Benefits:**
+- 🎯 Natural conversation flow (mimics human teachers)
+- 🧠 Context-aware decisions (what was asked vs answered)
+- 🔧 User control (manual override when needed)
+- 📊 Full transparency (AI explains every decision)
+- 🚀 Handles edge cases better (no rigid rules)
+
+---
+
+**Document Version:** 2.0
 **Last Updated:** 2025-12-31
+**Major Update:** AI-Driven Contextual Topic Switching
 **Maintained By:** Development Team
 
 For questions or updates to this architecture, please update this document and commit changes to the repository.
