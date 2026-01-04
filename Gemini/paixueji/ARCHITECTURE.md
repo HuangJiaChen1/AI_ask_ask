@@ -116,17 +116,21 @@ sequenceDiagram
 
     alt Not Engaged ("I don't know")
         B->>A: ask_explanation_question_stream<br/>(Teach + continue)
-    else Engaged + Factually Correct
+    else Engaged + Factually Correct (OR Generic Switch)
         alt Decision = SWITCH
-            B->>B: Update object_name
-            B->>C: classify_object_sync(new_object)
-            activate C
-            C->>A: Classify into categories
-            A-->>C: level2_category
-            C->>B: Update categories
-            deactivate C
-            B->>B: Rebuild prompts
-            B->>A: ask_followup_question_stream<br/>(topic_switch_prompt)
+            alt New Object Named
+                B->>B: Update object_name
+                B->>C: classify_object_sync(new_object)
+                activate C
+                C->>A: Classify into categories
+                A-->>C: level2_category
+                C->>B: Update categories
+                deactivate C
+                B->>B: Rebuild prompts
+                B->>A: ask_followup_question_stream<br/>(topic_switch_prompt)
+            else Generic Switch Request
+                B->>A: ask_followup_question_stream<br/>(Ask user for topic)
+            end
         else Decision = CONTINUE
             B->>B: Increment correct_count
             B->>A: ask_followup_question_stream<br/>(question_prompt)

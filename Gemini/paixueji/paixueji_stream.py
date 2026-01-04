@@ -506,7 +506,8 @@ async def ask_followup_question_stream(
     client: genai.Client,
     level3_category: str = "",
     focus_prompt: str = "",
-    focus_mode: str | None = None
+    focus_mode: str | None = None,
+    precomputed_decision: dict | None = None
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str, str | None], None]:
     """
     Stream follow-up question based on child's answer.
@@ -525,6 +526,7 @@ async def ask_followup_question_stream(
         level3_category: Level 3 category
         focus_prompt: Focus strategy guidance
         focus_mode: The focus mode key (e.g., depth, width_color)
+        precomputed_decision: Optional validation result from earlier call
 
     Yields:
         Tuple of (text_chunk, token_usage_or_None, full_response_so_far, new_object_name_or_None)
@@ -537,15 +539,20 @@ async def ask_followup_question_stream(
     detected_object_name = None
     switch_decision_reasoning = None
 
-    # Call unified validation (we already know answer is engaged+correct since we're in followup path)
-    # We only care about topic switching decision here
-    decision = decide_topic_switch_with_validation(
-        assistant=assistant,
-        child_answer=child_answer,
-        object_name=object_name,
-        age=age,
-        focus_mode=focus_mode  # Context only, not a rule
-    )
+    # Use precomputed decision if available (avoids double validation calls)
+    if precomputed_decision:
+        decision = precomputed_decision
+        logger.info(f"Using precomputed decision: {decision.get('decision')}")
+    else:
+        # Call unified validation (we already know answer is engaged+correct since we're in followup path)
+        # We only care about topic switching decision here
+        decision = decide_topic_switch_with_validation(
+            assistant=assistant,
+            child_answer=child_answer,
+            object_name=object_name,
+            age=age,
+            focus_mode=focus_mode  # Context only, not a rule
+        )
 
     # Capture reasoning from AI decision (updated field name)
     switch_decision_reasoning = decision.get('switching_reasoning', 'No reasoning provided')
@@ -553,45 +560,65 @@ async def ask_followup_question_stream(
     # STEP 2: HANDLE DECISION & BUILD APPROPRIATE PROMPT
     prompts = paixueji_prompts.get_prompts()
 
-    if decision['decision'] == 'SWITCH' and decision['new_object']:
-        # TOPIC SWITCH: Child named a new object!
-        new_topic_name = decision['new_object']
-        previous_object = object_name  # Save for prompt
-        logger.info(f"[SWITCH] Decision: Switch from {previous_object} to {new_topic_name}")
+    if decision['decision'] == 'SWITCH':
+        if decision['new_object']:
+            # TOPIC SWITCH: Child named a new object!
+            new_topic_name = decision['new_object']
+            previous_object = object_name  # Save for prompt
+            logger.info(f"[SWITCH] Decision: Switch from {previous_object} to {new_topic_name}")
 
-        # Update object name immediately
-        assistant.object_name = new_topic_name
-        object_name = new_topic_name  # Update local variable too
+            # Update object name immediately
+            assistant.object_name = new_topic_name
+            object_name = new_topic_name  # Update local variable too
 
-        # Classify synchronously with timeout
-        import concurrent.futures
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            future = executor.submit(
-                assistant.classify_object_sync,
-                new_topic_name
+            # Classify synchronously with timeout
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(
+                    assistant.classify_object_sync,
+                    new_topic_name
+                )
+                try:
+                    future.result(timeout=1.0)  # Wait up to 1 second
+                    logger.info(f"[CLASSIFY] Completed for {new_topic_name}")
+                except concurrent.futures.TimeoutError:
+                    logger.warning(f"[CLASSIFY] Timeout for {new_topic_name}, continuing in background")
+
+            # Rebuild category prompt for new object
+            category_prompt = assistant.get_category_prompt(
+                assistant.level1_category,
+                assistant.level2_category,
+                assistant.level3_category
             )
-            try:
-                future.result(timeout=1.0)  # Wait up to 1 second
-                logger.info(f"[CLASSIFY] Completed for {new_topic_name}")
-            except concurrent.futures.TimeoutError:
-                logger.warning(f"[CLASSIFY] Timeout for {new_topic_name}, continuing in background")
 
-        # Rebuild category prompt for new object
-        category_prompt = assistant.get_category_prompt(
-            assistant.level1_category,
-            assistant.level2_category,
-            assistant.level3_category
-        )
+            # Use TOPIC_SWITCH_PROMPT - celebrate and ask about new object
+            question_prompt = prompts['topic_switch_prompt'].format(
+                child_answer=child_answer,
+                previous_object=previous_object,
+                new_object=new_topic_name,
+                age=age,
+                category_prompt=category_prompt,
+                age_prompt=age_prompt
+            )
+        else:
+            # GENERIC SWITCH REQUEST (User said "let's switch" but didn't say what)
+            logger.info("[SWITCH] Generic switch request detected (no new object named)")
+            
+            # Construct a prompt to acknowledge the request and ask for a topic
+            # We treat this as a special "followup" where we ask for the topic
+            question_prompt = f"""The child explicitly asked to switch topics but didn't say what to talk about.
+            
+            Their input was: "{child_answer}"
+            
+            Your task:
+            1. Warmly agree to switch topics (e.g., "Sure! That sounds fun!", "Okay, let's talk about something else!")
+            2. Ask the child what they would like to talk about next.
+            3. Keep it short and encouraging.
+            
+            Age: {age}
+            Tone: Use the established tone.
+            """
 
-        # Use TOPIC_SWITCH_PROMPT - celebrate and ask about new object
-        question_prompt = prompts['topic_switch_prompt'].format(
-            child_answer=child_answer,
-            previous_object=previous_object,
-            new_object=new_topic_name,
-            age=age,
-            category_prompt=category_prompt,
-            age_prompt=age_prompt
-        )
     else:
         # CONTINUE: Regular follow-up question on same object
         # Check if AI detected an object but decided not to switch
@@ -1266,7 +1293,10 @@ async def call_paixueji_stream(
                 "correctness_reasoning": correctness_reasoning
             }
 
-        if not is_engaged:
+        # Check for explicit switch decision (even if engaged=False, e.g. "Can we switch?")
+        should_switch = validation_result.get('decision') == 'SWITCH'
+
+        if not is_engaged and not should_switch:
             # PATH 1: STUCK ("I don't know", unclear answers)
             stream_generator = ask_explanation_question_stream(
                 prepared_messages,
@@ -1297,8 +1327,8 @@ async def call_paixueji_stream(
                         "routing": response_type
                     }
 
-        elif is_factually_correct:
-            # PATH 2: CORRECT + ENGAGED
+        elif is_factually_correct or should_switch:
+            # PATH 2: CORRECT + ENGAGED (OR SWITCHING)
             stream_generator = ask_followup_question_stream(
                 prepared_messages,
                 content,  # child's answer
@@ -1312,10 +1342,11 @@ async def call_paixueji_stream(
                 client,
                 level3_category,
                 focus_prompt=focus_prompt,
-                focus_mode=focus_mode
+                focus_mode=focus_mode,
+                precomputed_decision=validation_result  # Pass decision to avoid re-validation
             )
             response_type = "followup"
-            logger.info(f"[{session_id}] Routing to followup | is_engaged=True, is_factually_correct=True")
+            logger.info(f"[{session_id}] Routing to followup | is_engaged=True, is_factually_correct=True, should_switch={should_switch}")
 
             # Update node type and capture decision
             if current_node:
