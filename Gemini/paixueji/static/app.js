@@ -241,6 +241,11 @@ async function startConversation() {
         // Clear stream controller
         currentStreamController = null;
 
+        // Show debug panel when session starts
+        if (sessionId) {
+            document.getElementById('debugPanel').style.display = 'block';
+        }
+
         // Re-enable send button
         isStreaming = false;
         sendBtn.disabled = false;
@@ -902,6 +907,106 @@ function dismissSwitchPanel() {
     document.getElementById('manualSwitchPanel').style.display = 'none';
     detectedObject = null;
     console.log('[INFO] Manual switch panel dismissed');
+}
+
+// ============================================================================
+// Flow Tree Debugging Functions
+// ============================================================================
+
+// Initialize Mermaid
+if (typeof mermaid !== 'undefined') {
+    mermaid.initialize({ startOnLoad: false, theme: 'default' });
+}
+
+/**
+ * Toggle visibility of conversation flow tree
+ */
+async function toggleFlowTree() {
+    const container = document.getElementById('flowTreeContainer');
+
+    if (container.style.display === 'none') {
+        if (!sessionId) {
+            alert('No active session');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/debug/flow-tree/${sessionId}?format=mermaid`);
+            const data = await response.json();
+
+            if (data.success) {
+                const diagramContainer = document.getElementById('mermaidDiagram');
+
+                // Clear previous diagram
+                diagramContainer.innerHTML = '';
+
+                // Create a new div for the diagram
+                const diagramDiv = document.createElement('div');
+                diagramDiv.className = 'mermaid';
+                diagramDiv.textContent = data.diagram;
+                diagramContainer.appendChild(diagramDiv);
+
+                // Show container first so Mermaid can calculate dimensions
+                container.style.display = 'block';
+
+                // Render the Mermaid diagram
+                await mermaid.run({ nodes: [diagramDiv] });
+            } else {
+                alert('Error: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Flow tree error:', error);
+            alert('Failed to load flow tree');
+        }
+    } else {
+        container.style.display = 'none';
+    }
+}
+
+/**
+ * Download flow tree as both JSON and Mermaid files
+ */
+async function downloadFlowTree() {
+    if (!sessionId) {
+        alert('No active session');
+        return;
+    }
+
+    try {
+        // Download JSON file
+        const jsonResponse = await fetch(`${API_BASE}/debug/flow-tree/${sessionId}?format=json`);
+        const jsonData = await jsonResponse.json();
+
+        if (jsonData.success) {
+            // Download JSON
+            const jsonBlob = new Blob([JSON.stringify(jsonData.tree, null, 2)], { type: 'application/json' });
+            const jsonUrl = URL.createObjectURL(jsonBlob);
+            const jsonLink = document.createElement('a');
+            jsonLink.href = jsonUrl;
+            jsonLink.download = `flow-tree-${sessionId.substring(0, 8)}.json`;
+            jsonLink.click();
+            URL.revokeObjectURL(jsonUrl);
+
+            // Download Mermaid diagram
+            const mermaidResponse = await fetch(`${API_BASE}/debug/flow-tree/${sessionId}?format=mermaid`);
+            const mermaidData = await mermaidResponse.json();
+
+            if (mermaidData.success) {
+                const mermaidBlob = new Blob([mermaidData.diagram], { type: 'text/plain' });
+                const mermaidUrl = URL.createObjectURL(mermaidBlob);
+                const mermaidLink = document.createElement('a');
+                mermaidLink.href = mermaidUrl;
+                mermaidLink.download = `flow-tree-${sessionId.substring(0, 8)}.mmd`;
+                mermaidLink.click();
+                URL.revokeObjectURL(mermaidUrl);
+            }
+
+            alert('Downloaded both JSON and Mermaid files!');
+        }
+    } catch (error) {
+        console.error('Download error:', error);
+        alert('Failed to download files');
+    }
 }
 
 // Initialize on page load

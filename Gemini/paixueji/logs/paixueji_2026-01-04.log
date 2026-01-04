@@ -1,0 +1,537 @@
+2026-01-04 09:42:48.520 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] call_paixueji_stream started | session_id=e0317c59-e70c-4eac-8bef-3222ed1ac3b1, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2026-01-04 09:42:48.520 | INFO     | paixueji_stream:call_paixueji_stream:1182 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Conversation state | correct_count=0, complete=False
+2026-01-04 09:42:48.520 | INFO     | paixueji_stream:call_paixueji_stream:1216 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Routing to introduction question
+2026-01-04 09:42:48.521 | INFO     | paixueji_stream:ask_introduction_question_stream:155 | ask_introduction_question_stream started | object=banana, age=6
+2026-01-04 09:42:48.521 | DEBUG    | paixueji_stream:ask_introduction_question_stream:171 | Messages prepared for API | count=3
+2026-01-04 09:42:48.521 | DEBUG    | paixueji_stream:ask_introduction_question_stream:182 | Sending 2 messages to Gemini API
+2026-01-04 09:42:48.521 | DEBUG    | paixueji_stream:ask_introduction_question_stream:199 | Stream object type: generator
+2026-01-04 09:42:53.061 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 1 | length=2, total_length=2
+2026-01-04 09:42:53.067 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 2 | length=9, total_length=11
+2026-01-04 09:42:53.105 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 3 | length=70, total_length=81
+2026-01-04 09:42:53.195 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 4 | length=52, total_length=133
+2026-01-04 09:42:53.260 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 5 | length=77, total_length=210
+2026-01-04 09:42:53.269 | DEBUG    | paixueji_stream:ask_introduction_question_stream:219 | Gemini streaming API does not provide token usage in stream mode
+2026-01-04 09:42:53.269 | DEBUG    | paixueji_stream:ask_introduction_question_stream:238 | Cleaned up stream via del in finally block
+2026-01-04 09:42:53.269 | INFO     | paixueji_stream:ask_introduction_question_stream:243 | ask_introduction_question_stream completed | duration=4.749s, response_length=210
+2026-01-04 09:42:53.269 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] call_paixueji_stream completed | response_type=introduction, duration=4.750s, total_chunks=5, response_length=210, correct_count=0, complete=False, session_finished=False
+2026-01-04 09:42:53.269 | DEBUG    | paixueji_stream:call_paixueji_stream:1383 | Full response: Ahoy there, matey! Let's set sail on an adventure to learn about a yummy treasure: the banana! 🍌
+
+Now, look at this banana, me hearty! Can ye think of anything else that's shaped like this, all long and curved?...
+2026-01-04 09:43:04.578 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] call_paixueji_stream started | session_id=e0317c59-e70c-4eac-8bef-3222ed1ac3b1, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=11, message_history=2
+2026-01-04 09:43:04.579 | INFO     | paixueji_stream:call_paixueji_stream:1182 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Conversation state | correct_count=0, complete=False
+2026-01-04 09:43:04.579 | INFO     | paixueji_stream:call_paixueji_stream:1220 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Running unified AI validation for answer
+2026-01-04 09:43:05.980 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] SWITCH | new_object=boomerang, engaged=True, correct=True, switch_reasoning=The child named a new object in response to my question about similar shapes. A boomerang is a real, concrete object., correctness_reasoning=A boomerang is indeed long and curved, similar to a banana.
+2026-01-04 09:43:05.980 | INFO     | paixueji_stream:call_paixueji_stream:1272 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Routing to followup | is_engaged=True, is_factually_correct=True
+2026-01-04 09:43:05.980 | INFO     | paixueji_stream:ask_followup_question_stream:533 | ask_followup_question_stream started | object=banana, correct_count=0, answer_length=11
+2026-01-04 09:43:06.971 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] SWITCH | new_object=boomerang, engaged=True, correct=True, switch_reasoning=The child named a new object in response to my question about similar shapes. A boomerang is a real, concrete object., correctness_reasoning=A boomerang is indeed long and curved, similar to a banana.
+2026-01-04 09:43:06.971 | INFO     | paixueji_stream:ask_followup_question_stream:560 | [SWITCH] Decision: Switch from banana to boomerang
+2026-01-04 09:43:07.549 | INFO     | paixueji_stream:ask_followup_question_stream:575 | [CLASSIFY] Completed for boomerang
+2026-01-04 09:43:07.549 | DEBUG    | paixueji_stream:ask_followup_question_stream:632 | Sending 3 messages to Gemini API
+2026-01-04 09:43:07.549 | DEBUG    | paixueji_stream:ask_followup_question_stream:649 | Stream object type: generator
+2026-01-04 09:43:09.135 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 1 | length=3, total_length=3
+2026-01-04 09:43:09.135 | INFO     | paixueji_stream:call_paixueji_stream:1307 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] TOPIC SWITCH DETECTED: boomerang
+2026-01-04 09:43:09.205 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 2 | length=67, total_length=70
+2026-01-04 09:43:09.206 | INFO     | paixueji_stream:call_paixueji_stream:1307 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] TOPIC SWITCH DETECTED: boomerang
+2026-01-04 09:43:09.257 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 3 | length=58, total_length=128
+2026-01-04 09:43:09.257 | INFO     | paixueji_stream:call_paixueji_stream:1307 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] TOPIC SWITCH DETECTED: boomerang
+2026-01-04 09:43:09.340 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 4 | length=58, total_length=186
+2026-01-04 09:43:09.340 | INFO     | paixueji_stream:call_paixueji_stream:1307 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] TOPIC SWITCH DETECTED: boomerang
+2026-01-04 09:43:09.344 | DEBUG    | paixueji_stream:ask_followup_question_stream:684 | Cleaned up stream via del in finally block
+2026-01-04 09:43:09.344 | INFO     | paixueji_stream:ask_followup_question_stream:689 | ask_followup_question_stream completed | duration=3.364s, response_length=186
+2026-01-04 09:43:09.344 | INFO     | paixueji_stream:call_paixueji_stream:1307 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] TOPIC SWITCH DETECTED: boomerang
+2026-01-04 09:43:09.344 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] call_paixueji_stream completed | response_type=followup, duration=4.766s, total_chunks=4, response_length=186, correct_count=0, complete=False, session_finished=False
+2026-01-04 09:43:09.344 | DEBUG    | paixueji_stream:call_paixueji_stream:1383 | Full response: Shiver me timbers, a boomerang! That's a fantastic answer, me hearty! 🤩 You've got a keen eye for shapes!
+
+Now, tell me, what do you think a boomerang *does*? What's its special trick? 🤔...
+2026-01-04 09:43:24.409 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] call_paixueji_stream started | session_id=e0317c59-e70c-4eac-8bef-3222ed1ac3b1, age=6, object=boomerang, level1=None, level2=None, level3=None, correct_count=1, status=normal, content_length=13, message_history=3
+2026-01-04 09:43:24.409 | INFO     | paixueji_stream:call_paixueji_stream:1182 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Conversation state | correct_count=1, complete=False
+2026-01-04 09:43:24.409 | INFO     | paixueji_stream:call_paixueji_stream:1220 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Running unified AI validation for answer
+2026-01-04 09:43:26.873 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question directly and did not mention a new object., correctness_reasoning=A boomerang does indeed fly back to the thrower.
+2026-01-04 09:43:26.874 | INFO     | paixueji_stream:call_paixueji_stream:1272 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Routing to followup | is_engaged=True, is_factually_correct=True
+2026-01-04 09:43:26.874 | INFO     | paixueji_stream:ask_followup_question_stream:533 | ask_followup_question_stream started | object=boomerang, correct_count=1, answer_length=13
+2026-01-04 09:43:27.944 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question directly and did not mention a new object., correctness_reasoning=A boomerang does indeed fly back to the thrower.
+2026-01-04 09:43:27.944 | DEBUG    | paixueji_stream:ask_followup_question_stream:632 | Sending 4 messages to Gemini API
+2026-01-04 09:43:27.944 | DEBUG    | paixueji_stream:ask_followup_question_stream:649 | Stream object type: generator
+2026-01-04 09:43:28.502 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 1 | length=3, total_length=3
+2026-01-04 09:43:28.574 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 2 | length=64, total_length=67
+2026-01-04 09:43:28.655 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 3 | length=64, total_length=131
+2026-01-04 09:43:28.802 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 4 | length=140, total_length=271
+2026-01-04 09:43:28.829 | DEBUG    | paixueji_stream:ask_followup_question_stream:684 | Cleaned up stream via del in finally block
+2026-01-04 09:43:28.829 | INFO     | paixueji_stream:ask_followup_question_stream:689 | ask_followup_question_stream completed | duration=1.955s, response_length=271
+2026-01-04 09:43:28.829 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] call_paixueji_stream completed | response_type=followup, duration=4.420s, total_chunks=4, response_length=271, correct_count=1, complete=False, session_finished=False
+2026-01-04 09:43:28.829 | DEBUG    | paixueji_stream:call_paixueji_stream:1383 | Full response: Aye, that's right! A boomerang flies back! That's its special magic trick! ✨
+
+Now, let's think about other things we can throw that might fly. Can ye think of any other toys that you can throw, maybe a ball or a frisbee? What else do ye know that flies through the air? 🤔...
+2026-01-04 09:43:44.625 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] call_paixueji_stream started | session_id=e0317c59-e70c-4eac-8bef-3222ed1ac3b1, age=6, object=boomerang, level1=None, level2=None, level3=None, correct_count=2, status=normal, content_length=9, message_history=4
+2026-01-04 09:43:44.625 | INFO     | paixueji_stream:call_paixueji_stream:1182 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Conversation state | correct_count=2, complete=False
+2026-01-04 09:43:44.625 | INFO     | paixueji_stream:call_paixueji_stream:1220 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Running unified AI validation for answer
+2026-01-04 09:43:47.082 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] SWITCH | new_object=frisbee, engaged=True, correct=True, switch_reasoning=The child named a new object (frisbee) in response to my question asking them to name other things that fly. This invites a switch to the new object., correctness_reasoning=A frisbee is indeed a toy that can be thrown and flies through the air.
+2026-01-04 09:43:47.082 | INFO     | paixueji_stream:call_paixueji_stream:1272 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Routing to followup | is_engaged=True, is_factually_correct=True
+2026-01-04 09:43:47.082 | INFO     | paixueji_stream:ask_followup_question_stream:533 | ask_followup_question_stream started | object=boomerang, correct_count=2, answer_length=9
+2026-01-04 09:43:48.206 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] SWITCH | new_object=frisbee, engaged=True, correct=True, switch_reasoning=The child named a new object (frisbee) in response to my question asking them to name other things that fly. This invites a switch to the new object., correctness_reasoning=A frisbee is indeed a toy that can be thrown and flies through the air.
+2026-01-04 09:43:48.206 | INFO     | paixueji_stream:ask_followup_question_stream:560 | [SWITCH] Decision: Switch from boomerang to frisbee
+2026-01-04 09:43:48.710 | INFO     | paixueji_stream:ask_followup_question_stream:575 | [CLASSIFY] Completed for frisbee
+2026-01-04 09:43:48.710 | DEBUG    | paixueji_stream:ask_followup_question_stream:632 | Sending 5 messages to Gemini API
+2026-01-04 09:43:48.711 | DEBUG    | paixueji_stream:ask_followup_question_stream:649 | Stream object type: generator
+2026-01-04 09:43:49.798 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 1 | length=1, total_length=1
+2026-01-04 09:43:49.798 | INFO     | paixueji_stream:call_paixueji_stream:1307 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] TOPIC SWITCH DETECTED: frisbee
+2026-01-04 09:43:49.804 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 2 | length=9, total_length=10
+2026-01-04 09:43:49.804 | INFO     | paixueji_stream:call_paixueji_stream:1307 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] TOPIC SWITCH DETECTED: frisbee
+2026-01-04 09:43:49.860 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 3 | length=65, total_length=75
+2026-01-04 09:43:49.861 | INFO     | paixueji_stream:call_paixueji_stream:1307 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] TOPIC SWITCH DETECTED: frisbee
+2026-01-04 09:43:49.932 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 4 | length=56, total_length=131
+2026-01-04 09:43:49.932 | INFO     | paixueji_stream:call_paixueji_stream:1307 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] TOPIC SWITCH DETECTED: frisbee
+2026-01-04 09:43:50.044 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 5 | length=115, total_length=246
+2026-01-04 09:43:50.044 | INFO     | paixueji_stream:call_paixueji_stream:1307 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] TOPIC SWITCH DETECTED: frisbee
+2026-01-04 09:43:50.075 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 6 | length=2, total_length=248
+2026-01-04 09:43:50.076 | INFO     | paixueji_stream:call_paixueji_stream:1307 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] TOPIC SWITCH DETECTED: frisbee
+2026-01-04 09:43:50.077 | DEBUG    | paixueji_stream:ask_followup_question_stream:684 | Cleaned up stream via del in finally block
+2026-01-04 09:43:50.077 | INFO     | paixueji_stream:ask_followup_question_stream:689 | ask_followup_question_stream completed | duration=2.995s, response_length=248
+2026-01-04 09:43:50.078 | INFO     | paixueji_stream:call_paixueji_stream:1307 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] TOPIC SWITCH DETECTED: frisbee
+2026-01-04 09:43:50.078 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] call_paixueji_stream completed | response_type=followup, duration=5.453s, total_chunks=6, response_length=248, correct_count=2, complete=False, session_finished=False
+2026-01-04 09:43:50.078 | DEBUG    | paixueji_stream:call_paixueji_stream:1383 | Full response: A frisbee! Aye, a frisbee is a grand thing to throw, just like a boomerang! You've got a good eye for things that fly, me hearty! 🤩
+
+Now, let's talk about this frisbee! What does a frisbee *do* when you throw it? How does it move through the air? 🤔...
+2026-01-04 09:43:55.946 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] call_paixueji_stream started | session_id=e0317c59-e70c-4eac-8bef-3222ed1ac3b1, age=6, object=frisbee, level1=None, level2=None, level3=None, correct_count=3, status=normal, content_length=8, message_history=5
+2026-01-04 09:43:55.946 | INFO     | paixueji_stream:call_paixueji_stream:1182 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Conversation state | correct_count=3, complete=False
+2026-01-04 09:43:55.946 | INFO     | paixueji_stream:call_paixueji_stream:1220 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Running unified AI validation for answer
+2026-01-04 09:43:58.389 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question directly, even though the answer is very basic. No need to switch objects yet., correctness_reasoning=The frisbee does indeed fly. It's a simple but correct observation.
+2026-01-04 09:43:58.389 | INFO     | paixueji_stream:call_paixueji_stream:1272 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Routing to followup | is_engaged=True, is_factually_correct=True
+2026-01-04 09:43:58.389 | INFO     | paixueji_stream:ask_followup_question_stream:533 | ask_followup_question_stream started | object=frisbee, correct_count=3, answer_length=8
+2026-01-04 09:43:59.614 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question directly, even though the answer is very basic. We should continue to explore the frisbee., correctness_reasoning=A frisbee does indeed fly. It's a simple but true statement.
+2026-01-04 09:43:59.614 | DEBUG    | paixueji_stream:ask_followup_question_stream:632 | Sending 6 messages to Gemini API
+2026-01-04 09:43:59.615 | DEBUG    | paixueji_stream:ask_followup_question_stream:649 | Stream object type: generator
+2026-01-04 09:44:00.146 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 1 | length=3, total_length=3
+2026-01-04 09:44:00.219 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 2 | length=49, total_length=52
+2026-01-04 09:44:00.249 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 3 | length=63, total_length=115
+2026-01-04 09:44:00.286 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 4 | length=63, total_length=178
+2026-01-04 09:44:00.287 | DEBUG    | paixueji_stream:ask_followup_question_stream:684 | Cleaned up stream via del in finally block
+2026-01-04 09:44:00.287 | INFO     | paixueji_stream:ask_followup_question_stream:689 | ask_followup_question_stream completed | duration=1.898s, response_length=178
+2026-01-04 09:44:00.287 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] call_paixueji_stream completed | response_type=followup, duration=4.342s, total_chunks=4, response_length=178, correct_count=3, complete=False, session_finished=False
+2026-01-04 09:44:00.287 | DEBUG    | paixueji_stream:call_paixueji_stream:1383 | Full response: Aye, it does fly, me hearty! That's a grand start! 🤩
+
+Now, let's look closer at this frisbee. What do you think it's *made* of? Does it feel like wood, or maybe something else? 🤔...
+2026-01-04 09:44:14.739 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] call_paixueji_stream started | session_id=e0317c59-e70c-4eac-8bef-3222ed1ac3b1, age=6, object=frisbee, level1=None, level2=None, level3=None, correct_count=4, status=normal, content_length=19, message_history=6
+2026-01-04 09:44:14.739 | INFO     | paixueji_stream:call_paixueji_stream:1182 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Conversation state | correct_count=4, complete=False
+2026-01-04 09:44:14.739 | INFO     | paixueji_stream:call_paixueji_stream:1220 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Running unified AI validation for answer
+2026-01-04 09:44:16.160 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question directly and did not mention a new object., correctness_reasoning=Many frisbees are made of plastic, so this is a correct answer.
+2026-01-04 09:44:16.160 | INFO     | paixueji_stream:call_paixueji_stream:1272 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Routing to followup | is_engaged=True, is_factually_correct=True
+2026-01-04 09:44:16.160 | INFO     | paixueji_stream:ask_followup_question_stream:533 | ask_followup_question_stream started | object=frisbee, correct_count=4, answer_length=19
+2026-01-04 09:44:17.205 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question directly and did not mention a new object., correctness_reasoning=Frisbees are commonly made of plastic, so the answer is correct.
+2026-01-04 09:44:17.205 | DEBUG    | paixueji_stream:ask_followup_question_stream:632 | Sending 7 messages to Gemini API
+2026-01-04 09:44:17.205 | DEBUG    | paixueji_stream:ask_followup_question_stream:649 | Stream object type: generator
+2026-01-04 09:44:17.697 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 1 | length=3, total_length=3
+2026-01-04 09:44:17.774 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 2 | length=60, total_length=63
+2026-01-04 09:44:17.845 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 3 | length=57, total_length=120
+2026-01-04 09:44:17.931 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 4 | length=120, total_length=240
+2026-01-04 09:44:17.935 | DEBUG    | paixueji_stream:ask_followup_question_stream:684 | Cleaned up stream via del in finally block
+2026-01-04 09:44:17.935 | INFO     | paixueji_stream:ask_followup_question_stream:689 | ask_followup_question_stream completed | duration=1.775s, response_length=240
+2026-01-04 09:44:17.935 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] call_paixueji_stream completed | response_type=followup, duration=3.197s, total_chunks=4, response_length=240, correct_count=4, complete=False, session_finished=False
+2026-01-04 09:44:17.935 | DEBUG    | paixueji_stream:call_paixueji_stream:1383 | Full response: Aye, plastic it is, me hearty! That's a fine observation! 🤩 You've got a good grip on what this frisbee is made of!
+
+Now that we know it's plastic, can ye tell me, what does the plastic *feel* like? Is it bumpy, smooth, or something else? 🤔...
+2026-01-04 09:44:36.235 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] call_paixueji_stream started | session_id=e0317c59-e70c-4eac-8bef-3222ed1ac3b1, age=6, object=frisbee, level1=None, level2=None, level3=None, correct_count=5, status=normal, content_length=33, message_history=7
+2026-01-04 09:44:36.235 | INFO     | paixueji_stream:call_paixueji_stream:1182 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Conversation state | correct_count=5, complete=False
+2026-01-04 09:44:36.235 | INFO     | paixueji_stream:call_paixueji_stream:1220 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Running unified AI validation for answer
+2026-01-04 09:44:37.916 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] SWITCH | new_object=None, engaged=True, correct=False, switch_reasoning=The child explicitly requested to switch to a new topic, indicating a lack of interest in continuing with the current one., correctness_reasoning=The child didn't provide an answer to the question, but instead requested a topic change.
+2026-01-04 09:44:37.917 | INFO     | paixueji_stream:call_paixueji_stream:1293 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Routing to gentle correction | is_engaged=True, is_factually_correct=False
+2026-01-04 09:44:37.917 | INFO     | paixueji_stream:ask_gentle_correction_stream:878 | ask_gentle_correction_stream started | object=frisbee, answer=can we talk about something el
+2026-01-04 09:44:37.917 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:882 | Extracted previous question: Aye, plastic it is, me hearty! That's a fine observation! 🤩 You've got a good grip on what this fris
+2026-01-04 09:44:37.917 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:919 | Sending 8 messages to Gemini API (gentle correction mode)
+2026-01-04 09:44:38.427 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:941 | Chunk 1 | length=2, total_length=2
+2026-01-04 09:44:38.454 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:941 | Chunk 2 | length=9, total_length=11
+2026-01-04 09:44:38.477 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:941 | Chunk 3 | length=58, total_length=69
+2026-01-04 09:44:38.551 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:941 | Chunk 4 | length=49, total_length=118
+2026-01-04 09:44:38.675 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:941 | Chunk 5 | length=129, total_length=247
+2026-01-04 09:44:38.722 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:941 | Chunk 6 | length=14, total_length=261
+2026-01-04 09:44:38.724 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:954 | Cleaned up stream via del in finally block
+2026-01-04 09:44:38.724 | INFO     | paixueji_stream:ask_gentle_correction_stream:959 | ask_gentle_correction_stream completed | duration=0.807s, response_length=261
+2026-01-04 09:44:38.724 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] call_paixueji_stream completed | response_type=gentle_correction, duration=2.489s, total_chunks=6, response_length=261, correct_count=5, complete=False, session_finished=False
+2026-01-04 09:44:38.724 | DEBUG    | paixueji_stream:call_paixueji_stream:1383 | Full response: Ahoy there, matey! I hear ye loud and clear! We'll chart a new course! 🧭
+
+Let's put the frisbee aside for a moment and talk about something else that's super yummy and good for us! How about an apple? 🍎
+
+Now, tell me, what color are apples usually, me hearty? 🤔...
+2026-01-04 09:44:46.681 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] call_paixueji_stream started | session_id=e0317c59-e70c-4eac-8bef-3222ed1ac3b1, age=6, object=frisbee, level1=None, level2=None, level3=None, correct_count=5, status=normal, content_length=12, message_history=8
+2026-01-04 09:44:46.681 | INFO     | paixueji_stream:call_paixueji_stream:1182 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Conversation state | correct_count=5, complete=False
+2026-01-04 09:44:46.681 | INFO     | paixueji_stream:call_paixueji_stream:1220 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Running unified AI validation for answer
+2026-01-04 09:44:49.041 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child correctly answered the question about the color of apples, so we should continue with the current topic., correctness_reasoning=Red is a common and correct color for apples.
+2026-01-04 09:44:49.041 | INFO     | paixueji_stream:call_paixueji_stream:1272 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] Routing to followup | is_engaged=True, is_factually_correct=True
+2026-01-04 09:44:49.042 | INFO     | paixueji_stream:ask_followup_question_stream:533 | ask_followup_question_stream started | object=frisbee, correct_count=5, answer_length=12
+2026-01-04 09:44:50.162 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child correctly answered the question about the color of apples, so we should continue with the current topic., correctness_reasoning=Red is a common and correct color for apples.
+2026-01-04 09:44:50.162 | DEBUG    | paixueji_stream:ask_followup_question_stream:632 | Sending 9 messages to Gemini API
+2026-01-04 09:44:50.162 | DEBUG    | paixueji_stream:ask_followup_question_stream:649 | Stream object type: generator
+2026-01-04 09:44:50.730 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 1 | length=2, total_length=2
+2026-01-04 09:44:50.755 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 2 | length=9, total_length=11
+2026-01-04 09:44:50.788 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 3 | length=46, total_length=57
+2026-01-04 09:44:50.822 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 4 | length=61, total_length=118
+2026-01-04 09:44:50.913 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 5 | length=127, total_length=245
+2026-01-04 09:44:50.945 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 6 | length=67, total_length=312
+2026-01-04 09:44:50.946 | DEBUG    | paixueji_stream:ask_followup_question_stream:684 | Cleaned up stream via del in finally block
+2026-01-04 09:44:50.947 | INFO     | paixueji_stream:ask_followup_question_stream:689 | ask_followup_question_stream completed | duration=1.905s, response_length=312
+2026-01-04 09:44:50.947 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [e0317c59-e70c-4eac-8bef-3222ed1ac3b1] call_paixueji_stream completed | response_type=followup, duration=4.266s, total_chunks=6, response_length=312, correct_count=5, complete=False, session_finished=False
+2026-01-04 09:44:50.947 | DEBUG    | paixueji_stream:call_paixueji_stream:1383 | Full response: Ahoy there, matey! You're right, apples can be red! 🍎 But we're still on our treasure hunt for the frisbee!
+
+Now, let's get back to that frisbee! You said it's made of plastic. Can ye tell me, what does the plastic *feel* like when you touch it? Is it smooth like a calm sea, or is it bumpy like a rocky shore? 🤔...
+2026-01-04 10:07:19.481 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [c5d12e10-d6f4-45fe-b770-7139385e0dc0] call_paixueji_stream started | session_id=c5d12e10-d6f4-45fe-b770-7139385e0dc0, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2026-01-04 10:07:19.481 | INFO     | paixueji_stream:call_paixueji_stream:1204 | [c5d12e10-d6f4-45fe-b770-7139385e0dc0] Conversation state | correct_count=0, complete=False
+2026-01-04 10:07:19.481 | INFO     | paixueji_stream:call_paixueji_stream:1238 | [c5d12e10-d6f4-45fe-b770-7139385e0dc0] Routing to introduction question
+2026-01-04 10:07:19.482 | INFO     | paixueji_stream:ask_introduction_question_stream:155 | ask_introduction_question_stream started | object=banana, age=6
+2026-01-04 10:07:19.482 | DEBUG    | paixueji_stream:ask_introduction_question_stream:171 | Messages prepared for API | count=3
+2026-01-04 10:07:19.482 | DEBUG    | paixueji_stream:ask_introduction_question_stream:182 | Sending 2 messages to Gemini API
+2026-01-04 10:07:19.482 | DEBUG    | paixueji_stream:ask_introduction_question_stream:199 | Stream object type: generator
+2026-01-04 10:07:45.653 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 1 | length=2, total_length=2
+2026-01-04 10:07:45.679 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 2 | length=9, total_length=11
+2026-01-04 10:07:45.705 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 3 | length=66, total_length=77
+2026-01-04 10:07:45.767 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 4 | length=56, total_length=133
+2026-01-04 10:07:45.803 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 5 | length=24, total_length=157
+2026-01-04 10:07:45.805 | DEBUG    | paixueji_stream:ask_introduction_question_stream:219 | Gemini streaming API does not provide token usage in stream mode
+2026-01-04 10:07:45.806 | DEBUG    | paixueji_stream:ask_introduction_question_stream:238 | Cleaned up stream via del in finally block
+2026-01-04 10:07:45.806 | INFO     | paixueji_stream:ask_introduction_question_stream:243 | ask_introduction_question_stream completed | duration=26.324s, response_length=157
+2026-01-04 10:07:45.806 | WARNING  | paixueji_stream:ask_introduction_question_stream:249 | Slow LLM call | duration=26.324s exceeded threshold 5.0s
+2026-01-04 10:07:45.806 | INFO     | paixueji_stream:call_paixueji_stream:1443 | [c5d12e10-d6f4-45fe-b770-7139385e0dc0] call_paixueji_stream completed | response_type=introduction, duration=26.325s, total_chunks=5, response_length=157, correct_count=0, complete=False, session_finished=False
+2026-01-04 10:07:45.806 | DEBUG    | paixueji_stream:call_paixueji_stream:1451 | Full response: Ahoy there, matey! We're about to set sail on an adventure to explore a yummy treasure: a banana! 🍌
+
+Tell me, what does a banana feel like when you touch it?...
+2026-01-04 10:08:23.047 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [c5d12e10-d6f4-45fe-b770-7139385e0dc0] call_paixueji_stream started | session_id=c5d12e10-d6f4-45fe-b770-7139385e0dc0, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=15, message_history=2
+2026-01-04 10:08:23.047 | INFO     | paixueji_stream:call_paixueji_stream:1204 | [c5d12e10-d6f4-45fe-b770-7139385e0dc0] Conversation state | correct_count=0, complete=False
+2026-01-04 10:08:23.047 | INFO     | paixueji_stream:call_paixueji_stream:1247 | [c5d12e10-d6f4-45fe-b770-7139385e0dc0] Running unified AI validation for answer
+2026-01-04 10:08:25.324 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question directly and did not mention a new object., correctness_reasoning=Bananas are generally smooth to the touch, especially when ripe.
+2026-01-04 10:08:25.324 | INFO     | paixueji_stream:call_paixueji_stream:1318 | [c5d12e10-d6f4-45fe-b770-7139385e0dc0] Routing to followup | is_engaged=True, is_factually_correct=True
+2026-01-04 10:08:25.325 | INFO     | paixueji_stream:ask_followup_question_stream:533 | ask_followup_question_stream started | object=banana, correct_count=0, answer_length=15
+2026-01-04 10:08:26.427 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question directly and did not mention a new object., correctness_reasoning=Bananas are generally smooth to the touch, especially when ripe.
+2026-01-04 10:08:26.428 | DEBUG    | paixueji_stream:ask_followup_question_stream:632 | Sending 3 messages to Gemini API
+2026-01-04 10:08:26.428 | DEBUG    | paixueji_stream:ask_followup_question_stream:649 | Stream object type: generator
+2026-01-04 10:08:26.922 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 1 | length=3, total_length=3
+2026-01-04 10:08:27.022 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 2 | length=55, total_length=58
+2026-01-04 10:08:27.083 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 3 | length=67, total_length=125
+2026-01-04 10:08:27.115 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 4 | length=27, total_length=152
+2026-01-04 10:08:27.130 | DEBUG    | paixueji_stream:ask_followup_question_stream:684 | Cleaned up stream via del in finally block
+2026-01-04 10:08:27.130 | INFO     | paixueji_stream:ask_followup_question_stream:689 | ask_followup_question_stream completed | duration=1.805s, response_length=152
+2026-01-04 10:08:27.130 | INFO     | paixueji_stream:call_paixueji_stream:1443 | [c5d12e10-d6f4-45fe-b770-7139385e0dc0] call_paixueji_stream completed | response_type=followup, duration=4.083s, total_chunks=4, response_length=152, correct_count=0, complete=False, session_finished=False
+2026-01-04 10:08:27.130 | DEBUG    | paixueji_stream:call_paixueji_stream:1451 | Full response: Aye, smooth it is! That's a fine observation, me hearty! 🍌
+
+Now, what do ye think makes the banana feel so smooth? Is it like a rock, or something else?...
+2026-01-04 10:12:15.802 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [423a166f-f5cb-4504-bc25-f92ffa2ea5af] call_paixueji_stream started | session_id=423a166f-f5cb-4504-bc25-f92ffa2ea5af, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2026-01-04 10:12:15.803 | INFO     | paixueji_stream:call_paixueji_stream:1204 | [423a166f-f5cb-4504-bc25-f92ffa2ea5af] Conversation state | correct_count=0, complete=False
+2026-01-04 10:12:15.803 | INFO     | paixueji_stream:call_paixueji_stream:1238 | [423a166f-f5cb-4504-bc25-f92ffa2ea5af] Routing to introduction question
+2026-01-04 10:12:15.803 | INFO     | paixueji_stream:ask_introduction_question_stream:155 | ask_introduction_question_stream started | object=banana, age=6
+2026-01-04 10:12:15.803 | DEBUG    | paixueji_stream:ask_introduction_question_stream:171 | Messages prepared for API | count=3
+2026-01-04 10:12:15.803 | DEBUG    | paixueji_stream:ask_introduction_question_stream:182 | Sending 2 messages to Gemini API
+2026-01-04 10:12:15.803 | DEBUG    | paixueji_stream:ask_introduction_question_stream:199 | Stream object type: generator
+2026-01-04 10:12:19.486 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 1 | length=2, total_length=2
+2026-01-04 10:12:19.510 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 2 | length=9, total_length=11
+2026-01-04 10:12:19.541 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 3 | length=73, total_length=84
+2026-01-04 10:12:19.588 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 4 | length=66, total_length=150
+2026-01-04 10:12:19.620 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 5 | length=4, total_length=154
+2026-01-04 10:12:19.622 | DEBUG    | paixueji_stream:ask_introduction_question_stream:219 | Gemini streaming API does not provide token usage in stream mode
+2026-01-04 10:12:19.622 | DEBUG    | paixueji_stream:ask_introduction_question_stream:238 | Cleaned up stream via del in finally block
+2026-01-04 10:12:19.622 | INFO     | paixueji_stream:ask_introduction_question_stream:243 | ask_introduction_question_stream completed | duration=3.819s, response_length=154
+2026-01-04 10:12:19.622 | INFO     | paixueji_stream:call_paixueji_stream:1443 | [423a166f-f5cb-4504-bc25-f92ffa2ea5af] call_paixueji_stream completed | response_type=introduction, duration=3.820s, total_chunks=5, response_length=154, correct_count=0, complete=False, session_finished=False
+2026-01-04 10:12:19.622 | DEBUG    | paixueji_stream:call_paixueji_stream:1451 | Full response: Ahoy there, matey! We're about to set sail on an adventure to discover the marvelous **banana**!
+
+Tell me, what does a banana feel like when you touch it?...
+2026-01-04 10:12:35.287 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [423a166f-f5cb-4504-bc25-f92ffa2ea5af] call_paixueji_stream started | session_id=423a166f-f5cb-4504-bc25-f92ffa2ea5af, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=15, message_history=2
+2026-01-04 10:12:35.288 | INFO     | paixueji_stream:call_paixueji_stream:1204 | [423a166f-f5cb-4504-bc25-f92ffa2ea5af] Conversation state | correct_count=0, complete=False
+2026-01-04 10:12:35.288 | INFO     | paixueji_stream:call_paixueji_stream:1247 | [423a166f-f5cb-4504-bc25-f92ffa2ea5af] Running unified AI validation for answer
+2026-01-04 10:12:37.587 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question about the banana's texture. We should continue exploring the banana., correctness_reasoning=Bananas do feel smooth to the touch, especially when ripe.
+2026-01-04 10:12:37.587 | INFO     | paixueji_stream:call_paixueji_stream:1318 | [423a166f-f5cb-4504-bc25-f92ffa2ea5af] Routing to followup | is_engaged=True, is_factually_correct=True
+2026-01-04 10:12:37.588 | INFO     | paixueji_stream:ask_followup_question_stream:533 | ask_followup_question_stream started | object=banana, correct_count=0, answer_length=15
+2026-01-04 10:12:38.696 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question about the banana's texture. No need to switch topics yet., correctness_reasoning=Bananas do feel smooth to the touch, especially when ripe.
+2026-01-04 10:12:38.697 | DEBUG    | paixueji_stream:ask_followup_question_stream:632 | Sending 3 messages to Gemini API
+2026-01-04 10:12:38.697 | DEBUG    | paixueji_stream:ask_followup_question_stream:649 | Stream object type: generator
+2026-01-04 10:12:39.265 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 1 | length=3, total_length=3
+2026-01-04 10:12:39.358 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 2 | length=69, total_length=72
+2026-01-04 10:12:39.401 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 3 | length=66, total_length=138
+2026-01-04 10:12:39.462 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 4 | length=70, total_length=208
+2026-01-04 10:12:39.463 | DEBUG    | paixueji_stream:ask_followup_question_stream:684 | Cleaned up stream via del in finally block
+2026-01-04 10:12:39.463 | INFO     | paixueji_stream:ask_followup_question_stream:689 | ask_followup_question_stream completed | duration=1.876s, response_length=208
+2026-01-04 10:12:39.463 | INFO     | paixueji_stream:call_paixueji_stream:1443 | [423a166f-f5cb-4504-bc25-f92ffa2ea5af] call_paixueji_stream completed | response_type=followup, duration=4.176s, total_chunks=4, response_length=208, correct_count=0, complete=False, session_finished=False
+2026-01-04 10:12:39.463 | DEBUG    | paixueji_stream:call_paixueji_stream:1451 | Full response: Aye, a smooth treasure indeed! You've got a keen eye for texture, matey!
+
+Now, what else do you notice about this banana? Does it have any other interesting parts, like a peel or a stem? Tell me all about it!...
+2026-01-04 10:22:33.628 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] call_paixueji_stream started | session_id=75e6d2d0-9a12-448a-ab4f-cb25c82bce4c, age=6, object=onion, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=30, message_history=1
+2026-01-04 10:22:33.629 | INFO     | paixueji_stream:call_paixueji_stream:1204 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] Conversation state | correct_count=0, complete=False
+2026-01-04 10:22:33.629 | INFO     | paixueji_stream:call_paixueji_stream:1238 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] Routing to introduction question
+2026-01-04 10:22:33.629 | INFO     | paixueji_stream:ask_introduction_question_stream:155 | ask_introduction_question_stream started | object=onion, age=6
+2026-01-04 10:22:33.629 | DEBUG    | paixueji_stream:ask_introduction_question_stream:171 | Messages prepared for API | count=3
+2026-01-04 10:22:33.629 | DEBUG    | paixueji_stream:ask_introduction_question_stream:182 | Sending 2 messages to Gemini API
+2026-01-04 10:22:33.629 | DEBUG    | paixueji_stream:ask_introduction_question_stream:199 | Stream object type: generator
+2026-01-04 10:22:38.118 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 1 | length=2, total_length=2
+2026-01-04 10:22:38.147 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 2 | length=9, total_length=11
+2026-01-04 10:22:38.176 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 3 | length=62, total_length=73
+2026-01-04 10:22:38.206 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 4 | length=59, total_length=132
+2026-01-04 10:22:38.253 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 5 | length=23, total_length=155
+2026-01-04 10:22:38.260 | DEBUG    | paixueji_stream:ask_introduction_question_stream:219 | Gemini streaming API does not provide token usage in stream mode
+2026-01-04 10:22:38.260 | DEBUG    | paixueji_stream:ask_introduction_question_stream:238 | Cleaned up stream via del in finally block
+2026-01-04 10:22:38.261 | INFO     | paixueji_stream:ask_introduction_question_stream:243 | ask_introduction_question_stream completed | duration=4.631s, response_length=155
+2026-01-04 10:22:38.261 | INFO     | paixueji_stream:call_paixueji_stream:1443 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] call_paixueji_stream completed | response_type=introduction, duration=4.632s, total_chunks=5, response_length=155, correct_count=0, complete=False, session_finished=False
+2026-01-04 10:22:38.261 | DEBUG    | paixueji_stream:call_paixueji_stream:1451 | Full response: Ahoy there, matey! We're about to set sail on an adventure to explore the mighty **onion**! 🧅
+
+Tell me, what do you notice about the outside of this onion?...
+2026-01-04 10:22:51.166 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] call_paixueji_stream started | session_id=75e6d2d0-9a12-448a-ab4f-cb25c82bce4c, age=6, object=onion, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=11, message_history=2
+2026-01-04 10:22:51.167 | INFO     | paixueji_stream:call_paixueji_stream:1204 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] Conversation state | correct_count=0, complete=False
+2026-01-04 10:22:51.167 | INFO     | paixueji_stream:call_paixueji_stream:1247 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] Running unified AI validation for answer
+2026-01-04 10:22:53.599 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question about the onion's outside. No topic change is needed., correctness_reasoning=The outer layer of an onion is often referred to as its 'skin'. This is a correct observation.
+2026-01-04 10:22:53.599 | INFO     | paixueji_stream:call_paixueji_stream:1318 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] Routing to followup | is_engaged=True, is_factually_correct=True
+2026-01-04 10:22:53.599 | INFO     | paixueji_stream:ask_followup_question_stream:533 | ask_followup_question_stream started | object=onion, correct_count=0, answer_length=11
+2026-01-04 10:22:54.744 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question about the onion's outside. No topic change is needed., correctness_reasoning=The outer layer of an onion is often referred to as its skin, so the answer is correct.
+2026-01-04 10:22:54.744 | DEBUG    | paixueji_stream:ask_followup_question_stream:632 | Sending 3 messages to Gemini API
+2026-01-04 10:22:54.744 | DEBUG    | paixueji_stream:ask_followup_question_stream:649 | Stream object type: generator
+2026-01-04 10:22:55.772 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 1 | length=3, total_length=3
+2026-01-04 10:22:55.853 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 2 | length=55, total_length=58
+2026-01-04 10:22:55.888 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 3 | length=47, total_length=105
+2026-01-04 10:22:55.956 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 4 | length=53, total_length=158
+2026-01-04 10:22:55.956 | DEBUG    | paixueji_stream:ask_followup_question_stream:684 | Cleaned up stream via del in finally block
+2026-01-04 10:22:55.956 | INFO     | paixueji_stream:ask_followup_question_stream:689 | ask_followup_question_stream completed | duration=2.358s, response_length=158
+2026-01-04 10:22:55.957 | INFO     | paixueji_stream:call_paixueji_stream:1443 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] call_paixueji_stream completed | response_type=followup, duration=4.790s, total_chunks=4, response_length=158, correct_count=0, complete=False, session_finished=False
+2026-01-04 10:22:55.957 | DEBUG    | paixueji_stream:call_paixueji_stream:1451 | Full response: Aye, that's right, matey! It does have a papery skin, just like a treasure map! 🗺️
+
+Now, can you tell me, what color is that skin on the outside of our onion?...
+2026-01-04 10:23:08.518 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] call_paixueji_stream started | session_id=75e6d2d0-9a12-448a-ab4f-cb25c82bce4c, age=6, object=onion, level1=foods, level2=fresh_ingredients, level3=None, correct_count=1, status=normal, content_length=33, message_history=3
+2026-01-04 10:23:08.518 | INFO     | paixueji_stream:call_paixueji_stream:1204 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] Conversation state | correct_count=1, complete=False
+2026-01-04 10:23:08.518 | INFO     | paixueji_stream:call_paixueji_stream:1247 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] Running unified AI validation for answer
+2026-01-04 10:23:11.541 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question about the onion's color, so we should continue with the current topic., correctness_reasoning=The child is correct that onion skins can be white or purple.
+2026-01-04 10:23:11.541 | INFO     | paixueji_stream:call_paixueji_stream:1318 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] Routing to followup | is_engaged=True, is_factually_correct=True
+2026-01-04 10:23:11.541 | INFO     | paixueji_stream:ask_followup_question_stream:533 | ask_followup_question_stream started | object=onion, correct_count=1, answer_length=33
+2026-01-04 10:23:13.768 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question about the onion's color, so we should continue with the current topic., correctness_reasoning=The child is correct that onion skins can be white or purple, among other colors.
+2026-01-04 10:23:13.768 | DEBUG    | paixueji_stream:ask_followup_question_stream:632 | Sending 4 messages to Gemini API
+2026-01-04 10:23:13.768 | DEBUG    | paixueji_stream:ask_followup_question_stream:649 | Stream object type: generator
+2026-01-04 10:23:15.294 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 1 | length=3, total_length=3
+2026-01-04 10:23:15.380 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 2 | length=65, total_length=68
+2026-01-04 10:23:15.450 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 3 | length=67, total_length=135
+2026-01-04 10:23:15.552 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 4 | length=93, total_length=228
+2026-01-04 10:23:15.554 | DEBUG    | paixueji_stream:ask_followup_question_stream:684 | Cleaned up stream via del in finally block
+2026-01-04 10:23:15.554 | INFO     | paixueji_stream:ask_followup_question_stream:689 | ask_followup_question_stream completed | duration=4.013s, response_length=228
+2026-01-04 10:23:15.554 | INFO     | paixueji_stream:call_paixueji_stream:1443 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] call_paixueji_stream completed | response_type=followup, duration=7.037s, total_chunks=4, response_length=228, correct_count=1, complete=False, session_finished=False
+2026-01-04 10:23:15.555 | DEBUG    | paixueji_stream:call_paixueji_stream:1451 | Full response: Aye, ye be right, matey! Some onions wear white coats, and some wear fancy purple ones! 💜
+
+Now, if ye were to peel off that papery skin, what do ye think ye'd find underneath? What's the onion like when ye get to the juicy part?...
+2026-01-04 10:23:29.238 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] call_paixueji_stream started | session_id=75e6d2d0-9a12-448a-ab4f-cb25c82bce4c, age=6, object=onion, level1=foods, level2=fresh_ingredients, level3=None, correct_count=2, status=normal, content_length=24, message_history=4
+2026-01-04 10:23:29.238 | INFO     | paixueji_stream:call_paixueji_stream:1204 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] Conversation state | correct_count=2, complete=False
+2026-01-04 10:23:29.238 | INFO     | paixueji_stream:call_paixueji_stream:1247 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] Running unified AI validation for answer
+2026-01-04 10:23:32.162 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=False, switch_reasoning=The child is trying to describe the inside of an onion, but their description is not quite accurate. We should continue with the current topic to help them understand better., correctness_reasoning=While onions can be somewhat round, describing the juicy part as 'like a ball' isn't quite right. It's more like layers.
+2026-01-04 10:23:32.162 | INFO     | paixueji_stream:call_paixueji_stream:1350 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] Routing to gentle correction | is_engaged=True, is_factually_correct=False
+2026-01-04 10:23:32.162 | INFO     | paixueji_stream:ask_gentle_correction_stream:878 | ask_gentle_correction_stream started | object=onion, answer=the onion is like a ball
+2026-01-04 10:23:32.162 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:882 | Extracted previous question: Aye, ye be right, matey! Some onions wear white coats, and some wear fancy purple ones! 💜
+
+Now, if y
+2026-01-04 10:23:32.162 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:919 | Sending 5 messages to Gemini API (gentle correction mode)
+2026-01-04 10:23:34.009 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:941 | Chunk 1 | length=4, total_length=4
+2026-01-04 10:23:34.113 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:941 | Chunk 2 | length=67, total_length=71
+2026-01-04 10:23:34.371 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:941 | Chunk 3 | length=55, total_length=126
+2026-01-04 10:23:34.374 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:941 | Chunk 4 | length=123, total_length=249
+2026-01-04 10:23:34.480 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:941 | Chunk 5 | length=89, total_length=338
+2026-01-04 10:23:34.481 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:954 | Cleaned up stream via del in finally block
+2026-01-04 10:23:34.482 | INFO     | paixueji_stream:ask_gentle_correction_stream:959 | ask_gentle_correction_stream completed | duration=2.319s, response_length=338
+2026-01-04 10:23:34.482 | INFO     | paixueji_stream:call_paixueji_stream:1443 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] call_paixueji_stream completed | response_type=gentle_correction, duration=5.244s, total_chunks=5, response_length=338, correct_count=2, complete=False, session_finished=False
+2026-01-04 10:23:34.483 | DEBUG    | paixueji_stream:call_paixueji_stream:1451 | Full response: That's a creative thought, matey! You're right that onions are roundish, like a little ball! ⚽
+
+Actually, when we peel off the papery skin, we find layers inside, like a treasure chest with many compartments! 🏴‍☠️
+
+Now, let's think about colors! Can ye name another yummy thing we eat that's the same color as the *outside* of this onion?...
+2026-01-04 10:23:57.584 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] call_paixueji_stream started | session_id=75e6d2d0-9a12-448a-ab4f-cb25c82bce4c, age=6, object=onion, level1=foods, level2=fresh_ingredients, level3=None, correct_count=2, status=normal, content_length=36, message_history=5
+2026-01-04 10:23:57.584 | INFO     | paixueji_stream:call_paixueji_stream:1204 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] Conversation state | correct_count=2, complete=False
+2026-01-04 10:23:57.584 | INFO     | paixueji_stream:call_paixueji_stream:1247 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] Running unified AI validation for answer
+2026-01-04 10:24:00.294 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=False, switch_reasoning=The child is trying to clarify the color of the onion's outside, which is relevant to the question. No topic change is needed., correctness_reasoning=The child is asking for clarification, but neither white nor purple is consistently the *outside* color of an onion. Onions can be white, yellow, or red/purple on the outside.
+2026-01-04 10:24:00.295 | INFO     | paixueji_stream:call_paixueji_stream:1350 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] Routing to gentle correction | is_engaged=True, is_factually_correct=False
+2026-01-04 10:24:00.295 | INFO     | paixueji_stream:ask_gentle_correction_stream:878 | ask_gentle_correction_stream started | object=onion, answer=you mean white color or purple
+2026-01-04 10:24:00.295 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:882 | Extracted previous question: That's a creative thought, matey! You're right that onions are roundish, like a little ball! ⚽
+
+Actu
+2026-01-04 10:24:00.296 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:919 | Sending 6 messages to Gemini API (gentle correction mode)
+2026-01-04 10:24:01.476 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:941 | Chunk 1 | length=2, total_length=2
+2026-01-04 10:24:01.485 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:941 | Chunk 2 | length=9, total_length=11
+2026-01-04 10:24:01.541 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:941 | Chunk 3 | length=56, total_length=67
+2026-01-04 10:24:01.627 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:941 | Chunk 4 | length=86, total_length=153
+2026-01-04 10:24:01.778 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:941 | Chunk 5 | length=132, total_length=285
+2026-01-04 10:24:01.821 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:941 | Chunk 6 | length=129, total_length=414
+2026-01-04 10:24:01.879 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:941 | Chunk 7 | length=41, total_length=455
+2026-01-04 10:24:01.880 | DEBUG    | paixueji_stream:ask_gentle_correction_stream:954 | Cleaned up stream via del in finally block
+2026-01-04 10:24:01.880 | INFO     | paixueji_stream:ask_gentle_correction_stream:959 | ask_gentle_correction_stream completed | duration=1.585s, response_length=455
+2026-01-04 10:24:01.880 | INFO     | paixueji_stream:call_paixueji_stream:1443 | [75e6d2d0-9a12-448a-ab4f-cb25c82bce4c] call_paixueji_stream completed | response_type=gentle_correction, duration=4.297s, total_chunks=7, response_length=455, correct_count=2, complete=False, session_finished=False
+2026-01-04 10:24:01.881 | DEBUG    | paixueji_stream:call_paixueji_stream:1451 | Full response: Ahoy there, matey! That's a super idea to think about the colors! 🎨
+
+Actually, onions can wear different colored coats! Some have papery white skin, some have a yellowish-brown skin, and some have a lovely purple or red skin. So, ye might see white or purple on the outside!
+
+Now, let's think about colors! Can ye name another yummy thing we eat that's the same color as the *purple* skin of some onions? Aye, what else is purple, like a royal treasure? 👑...
+2026-01-04 10:30:45.034 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] call_paixueji_stream started | session_id=d6bb2a3b-ed01-4031-ba3b-554faeeef419, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2026-01-04 10:30:45.034 | INFO     | paixueji_stream:call_paixueji_stream:1204 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Conversation state | correct_count=0, complete=False
+2026-01-04 10:30:45.034 | INFO     | paixueji_stream:call_paixueji_stream:1238 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Routing to introduction question
+2026-01-04 10:30:45.034 | INFO     | paixueji_stream:ask_introduction_question_stream:155 | ask_introduction_question_stream started | object=banana, age=6
+2026-01-04 10:30:45.034 | DEBUG    | paixueji_stream:ask_introduction_question_stream:171 | Messages prepared for API | count=3
+2026-01-04 10:30:45.034 | DEBUG    | paixueji_stream:ask_introduction_question_stream:182 | Sending 2 messages to Gemini API
+2026-01-04 10:30:45.034 | DEBUG    | paixueji_stream:ask_introduction_question_stream:199 | Stream object type: generator
+2026-01-04 10:30:52.430 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 1 | length=2, total_length=2
+2026-01-04 10:30:52.440 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 2 | length=9, total_length=11
+2026-01-04 10:30:52.484 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 3 | length=69, total_length=80
+2026-01-04 10:30:52.526 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 4 | length=48, total_length=128
+2026-01-04 10:30:52.534 | DEBUG    | paixueji_stream:ask_introduction_question_stream:219 | Gemini streaming API does not provide token usage in stream mode
+2026-01-04 10:30:52.534 | DEBUG    | paixueji_stream:ask_introduction_question_stream:238 | Cleaned up stream via del in finally block
+2026-01-04 10:30:52.534 | INFO     | paixueji_stream:ask_introduction_question_stream:243 | ask_introduction_question_stream completed | duration=7.499s, response_length=128
+2026-01-04 10:30:52.534 | WARNING  | paixueji_stream:ask_introduction_question_stream:249 | Slow LLM call | duration=7.499s exceeded threshold 5.0s
+2026-01-04 10:30:52.534 | INFO     | paixueji_stream:call_paixueji_stream:1443 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] call_paixueji_stream completed | response_type=introduction, duration=7.500s, total_chunks=4, response_length=128, correct_count=0, complete=False, session_finished=False
+2026-01-04 10:30:52.534 | DEBUG    | paixueji_stream:call_paixueji_stream:1451 | Full response: Ahoy there, matey! We're about to set sail on an adventure to explore a yummy **banana**! 🍌
+
+Tell me, what color is this banana?...
+2026-01-04 10:34:18.207 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] call_paixueji_stream started | session_id=d6bb2a3b-ed01-4031-ba3b-554faeeef419, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=6, message_history=2
+2026-01-04 10:34:18.207 | INFO     | paixueji_stream:call_paixueji_stream:1204 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Conversation state | correct_count=0, complete=False
+2026-01-04 10:34:18.207 | INFO     | paixueji_stream:call_paixueji_stream:1247 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Running unified AI validation for answer
+2026-01-04 10:34:23.600 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child correctly answered the question about the banana's color, so we should continue exploring the banana., correctness_reasoning=The child correctly identified the color of a banana as yellow.
+2026-01-04 10:34:23.600 | INFO     | paixueji_stream:call_paixueji_stream:1318 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Routing to followup | is_engaged=True, is_factually_correct=True
+2026-01-04 10:34:23.600 | INFO     | paixueji_stream:ask_followup_question_stream:533 | ask_followup_question_stream started | object=banana, correct_count=0, answer_length=6
+2026-01-04 10:34:25.701 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child correctly answered the question about the banana's color, so we should continue exploring the banana., correctness_reasoning=Bananas are typically yellow, so the answer is correct.
+2026-01-04 10:34:25.701 | DEBUG    | paixueji_stream:ask_followup_question_stream:632 | Sending 3 messages to Gemini API
+2026-01-04 10:34:25.701 | DEBUG    | paixueji_stream:ask_followup_question_stream:649 | Stream object type: generator
+2026-01-04 10:34:26.297 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 1 | length=3, total_length=3
+2026-01-04 10:34:26.362 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 2 | length=59, total_length=62
+2026-01-04 10:34:26.412 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 3 | length=68, total_length=130
+2026-01-04 10:34:26.413 | DEBUG    | paixueji_stream:ask_followup_question_stream:684 | Cleaned up stream via del in finally block
+2026-01-04 10:34:26.413 | INFO     | paixueji_stream:ask_followup_question_stream:689 | ask_followup_question_stream completed | duration=2.813s, response_length=130
+2026-01-04 10:34:26.414 | INFO     | paixueji_stream:call_paixueji_stream:1443 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] call_paixueji_stream completed | response_type=followup, duration=8.207s, total_chunks=3, response_length=130, correct_count=0, complete=False, session_finished=False
+2026-01-04 10:34:26.414 | DEBUG    | paixueji_stream:call_paixueji_stream:1451 | Full response: Aye, a banana is indeed yellow, like a sunny day! ☀️
+
+Now, can ye think of any other yummy things that are yellow like our banana?...
+2026-01-04 10:34:38.166 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] call_paixueji_stream started | session_id=d6bb2a3b-ed01-4031-ba3b-554faeeef419, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=1, status=normal, content_length=10, message_history=3
+2026-01-04 10:34:38.166 | INFO     | paixueji_stream:call_paixueji_stream:1204 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Conversation state | correct_count=1, complete=False
+2026-01-04 10:34:38.166 | INFO     | paixueji_stream:call_paixueji_stream:1247 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Running unified AI validation for answer
+2026-01-04 10:34:41.902 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] SWITCH | new_object=sunflower, engaged=True, correct=True, switch_reasoning=The child named a new object (sunflower) in response to my question about yellow things. This invites a switch to the new object., correctness_reasoning=Sunflowers are indeed yellow, matching the color asked about.
+2026-01-04 10:34:41.903 | INFO     | paixueji_stream:call_paixueji_stream:1318 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Routing to followup | is_engaged=True, is_factually_correct=True
+2026-01-04 10:34:41.903 | INFO     | paixueji_stream:ask_followup_question_stream:533 | ask_followup_question_stream started | object=banana, correct_count=1, answer_length=10
+2026-01-04 10:34:43.592 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] SWITCH | new_object=sunflower, engaged=True, correct=True, switch_reasoning=The child named a new object (sunflower) in response to my question about yellow things. This invites a switch to the new object., correctness_reasoning=Sunflowers are indeed yellow, making the answer correct.
+2026-01-04 10:34:43.592 | INFO     | paixueji_stream:ask_followup_question_stream:560 | [SWITCH] Decision: Switch from banana to sunflower
+2026-01-04 10:34:44.201 | INFO     | paixueji_stream:ask_followup_question_stream:575 | [CLASSIFY] Completed for sunflower
+2026-01-04 10:34:44.201 | DEBUG    | paixueji_stream:ask_followup_question_stream:632 | Sending 4 messages to Gemini API
+2026-01-04 10:34:44.201 | DEBUG    | paixueji_stream:ask_followup_question_stream:649 | Stream object type: generator
+2026-01-04 10:34:45.116 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 1 | length=3, total_length=3
+2026-01-04 10:34:45.116 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] TOPIC SWITCH DETECTED: sunflower
+2026-01-04 10:34:45.387 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 2 | length=71, total_length=74
+2026-01-04 10:34:45.387 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] TOPIC SWITCH DETECTED: sunflower
+2026-01-04 10:34:45.388 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 3 | length=52, total_length=126
+2026-01-04 10:34:45.388 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] TOPIC SWITCH DETECTED: sunflower
+2026-01-04 10:34:45.389 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 4 | length=125, total_length=251
+2026-01-04 10:34:45.389 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] TOPIC SWITCH DETECTED: sunflower
+2026-01-04 10:34:45.390 | DEBUG    | paixueji_stream:ask_followup_question_stream:684 | Cleaned up stream via del in finally block
+2026-01-04 10:34:45.390 | INFO     | paixueji_stream:ask_followup_question_stream:689 | ask_followup_question_stream completed | duration=3.487s, response_length=251
+2026-01-04 10:34:45.390 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] TOPIC SWITCH DETECTED: sunflower
+2026-01-04 10:34:45.390 | INFO     | paixueji_stream:call_paixueji_stream:1443 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] call_paixueji_stream completed | response_type=followup, duration=7.224s, total_chunks=4, response_length=251, correct_count=1, complete=False, session_finished=False
+2026-01-04 10:34:45.390 | DEBUG    | paixueji_stream:call_paixueji_stream:1451 | Full response: Shiver me timbers, ye be right! Sunflowers are a grand yellow, just like a banana! 🌻 That's a super smart answer, matey!
+
+Now, let's talk about these tall, sunny sunflowers! Can ye tell me, what do you think a sunflower needs to grow big and strong? 🤔...
+2026-01-04 10:58:02.191 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] call_paixueji_stream started | session_id=d6bb2a3b-ed01-4031-ba3b-554faeeef419, age=6, object=sunflower, level1=plants, level2=useful_plants, level3=None, correct_count=2, status=normal, content_length=8, message_history=4
+2026-01-04 10:58:02.191 | INFO     | paixueji_stream:call_paixueji_stream:1204 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Conversation state | correct_count=2, complete=False
+2026-01-04 10:58:02.191 | INFO     | paixueji_stream:call_paixueji_stream:1247 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Running unified AI validation for answer
+2026-01-04 10:58:04.821 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question directly and correctly. No topic change is needed., correctness_reasoning=Sunlight is essential for sunflowers to grow big and strong.
+2026-01-04 10:58:04.821 | INFO     | paixueji_stream:call_paixueji_stream:1318 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Routing to followup | is_engaged=True, is_factually_correct=True
+2026-01-04 10:58:04.821 | INFO     | paixueji_stream:ask_followup_question_stream:533 | ask_followup_question_stream started | object=sunflower, correct_count=2, answer_length=8
+2026-01-04 10:58:06.390 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question directly and correctly. No need to switch topics., correctness_reasoning=Sunlight is essential for sunflowers to grow. It's a correct and relevant answer.
+2026-01-04 10:58:06.391 | DEBUG    | paixueji_stream:ask_followup_question_stream:632 | Sending 5 messages to Gemini API
+2026-01-04 10:58:06.391 | DEBUG    | paixueji_stream:ask_followup_question_stream:649 | Stream object type: generator
+2026-01-04 10:58:07.251 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 1 | length=2, total_length=2
+2026-01-04 10:58:07.281 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 2 | length=9, total_length=11
+2026-01-04 10:58:07.343 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 3 | length=68, total_length=79
+2026-01-04 10:58:07.403 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 4 | length=75, total_length=154
+2026-01-04 10:58:07.513 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 5 | length=138, total_length=292
+2026-01-04 10:58:07.519 | DEBUG    | paixueji_stream:ask_followup_question_stream:684 | Cleaned up stream via del in finally block
+2026-01-04 10:58:07.519 | INFO     | paixueji_stream:ask_followup_question_stream:689 | ask_followup_question_stream completed | duration=2.698s, response_length=292
+2026-01-04 10:58:07.519 | INFO     | paixueji_stream:call_paixueji_stream:1443 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] call_paixueji_stream completed | response_type=followup, duration=5.329s, total_chunks=5, response_length=292, correct_count=2, complete=False, session_finished=False
+2026-01-04 10:58:07.519 | DEBUG    | paixueji_stream:call_paixueji_stream:1451 | Full response: Ahoy there, matey! Sunlight is super important for our sunflower, ye be right! ☀️ It helps it grow tall and strong, just like sunshine helps us grow!
+
+Now, let's think about other things that are yellow like our sunflower. Can ye spy anything else in the room that's a bright, sunny yellow? 🤔...
+2026-01-04 10:58:25.686 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] call_paixueji_stream started | session_id=d6bb2a3b-ed01-4031-ba3b-554faeeef419, age=6, object=sunflower, level1=plants, level2=useful_plants, level3=None, correct_count=3, status=normal, content_length=16, message_history=5
+2026-01-04 10:58:25.686 | INFO     | paixueji_stream:call_paixueji_stream:1204 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Conversation state | correct_count=3, complete=False
+2026-01-04 10:58:25.686 | INFO     | paixueji_stream:call_paixueji_stream:1247 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Running unified AI validation for answer
+2026-01-04 10:58:28.183 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] SWITCH | new_object=duck, engaged=True, correct=True, switch_reasoning=The child named a new object (duck) in response to my question about yellow things. This invites a switch to the new object., correctness_reasoning=Ducks can be yellow, especially ducklings, so the answer is factually correct.
+2026-01-04 10:58:28.183 | INFO     | paixueji_stream:call_paixueji_stream:1318 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Routing to followup | is_engaged=True, is_factually_correct=True
+2026-01-04 10:58:28.184 | INFO     | paixueji_stream:ask_followup_question_stream:533 | ask_followup_question_stream started | object=sunflower, correct_count=3, answer_length=16
+2026-01-04 10:58:29.878 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] SWITCH | new_object=duck, engaged=True, correct=True, switch_reasoning=The child named a new object (duck) in response to my question about yellow things. This invites a switch to the new object., correctness_reasoning=Ducks can be yellow, especially ducklings, so the answer is factually correct.
+2026-01-04 10:58:29.878 | INFO     | paixueji_stream:ask_followup_question_stream:560 | [SWITCH] Decision: Switch from sunflower to duck
+2026-01-04 10:58:30.452 | INFO     | paixueji_stream:ask_followup_question_stream:575 | [CLASSIFY] Completed for duck
+2026-01-04 10:58:30.453 | DEBUG    | paixueji_stream:ask_followup_question_stream:632 | Sending 6 messages to Gemini API
+2026-01-04 10:58:30.453 | DEBUG    | paixueji_stream:ask_followup_question_stream:649 | Stream object type: generator
+2026-01-04 10:58:32.461 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 1 | length=3, total_length=3
+2026-01-04 10:58:32.461 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] TOPIC SWITCH DETECTED: duck
+2026-01-04 10:58:32.574 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 2 | length=62, total_length=65
+2026-01-04 10:58:32.574 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] TOPIC SWITCH DETECTED: duck
+2026-01-04 10:58:32.611 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 3 | length=72, total_length=137
+2026-01-04 10:58:32.611 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] TOPIC SWITCH DETECTED: duck
+2026-01-04 10:58:32.763 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 4 | length=136, total_length=273
+2026-01-04 10:58:32.763 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] TOPIC SWITCH DETECTED: duck
+2026-01-04 10:58:32.831 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 5 | length=64, total_length=337
+2026-01-04 10:58:32.831 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] TOPIC SWITCH DETECTED: duck
+2026-01-04 10:58:32.833 | DEBUG    | paixueji_stream:ask_followup_question_stream:684 | Cleaned up stream via del in finally block
+2026-01-04 10:58:32.833 | INFO     | paixueji_stream:ask_followup_question_stream:689 | ask_followup_question_stream completed | duration=4.650s, response_length=337
+2026-01-04 10:58:32.833 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] TOPIC SWITCH DETECTED: duck
+2026-01-04 10:58:32.833 | INFO     | paixueji_stream:call_paixueji_stream:1443 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] call_paixueji_stream completed | response_type=followup, duration=7.147s, total_chunks=5, response_length=337, correct_count=3, complete=False, session_finished=False
+2026-01-04 10:58:32.833 | DEBUG    | paixueji_stream:call_paixueji_stream:1451 | Full response: Aye, ye be absolutely right, matey! Ducks can be a lovely yellow, just like a little fluffy chick! 🐥 That's a fantastic observation!
+
+Now, let's talk about these swimming, quacking ducks! When a duck wants to move from one place to another, how do ye think it travels? Does it waddle on land, or does it do something else in the water? 🤔...
+2026-01-04 10:59:08.999 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] call_paixueji_stream started | session_id=d6bb2a3b-ed01-4031-ba3b-554faeeef419, age=6, object=duck, level1=animals, level2=vertebrates, level3=None, correct_count=4, status=normal, content_length=8, message_history=6
+2026-01-04 10:59:08.999 | INFO     | paixueji_stream:call_paixueji_stream:1204 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Conversation state | correct_count=4, complete=False
+2026-01-04 10:59:08.999 | INFO     | paixueji_stream:call_paixueji_stream:1247 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Running unified AI validation for answer
+2026-01-04 10:59:12.484 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child correctly answered the question about how ducks move in the water. No need to switch topics., correctness_reasoning=Ducks swim to move in the water, which is a correct and age-appropriate answer.
+2026-01-04 10:59:12.485 | INFO     | paixueji_stream:call_paixueji_stream:1318 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Routing to followup | is_engaged=True, is_factually_correct=True
+2026-01-04 10:59:12.485 | INFO     | paixueji_stream:ask_followup_question_stream:533 | ask_followup_question_stream started | object=duck, correct_count=4, answer_length=8
+2026-01-04 10:59:14.031 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child correctly answered the question about how ducks move in the water. No need to switch topics., correctness_reasoning=Ducks swim to move in the water. This is a correct and age-appropriate answer.
+2026-01-04 10:59:14.032 | DEBUG    | paixueji_stream:ask_followup_question_stream:632 | Sending 7 messages to Gemini API
+2026-01-04 10:59:14.032 | DEBUG    | paixueji_stream:ask_followup_question_stream:649 | Stream object type: generator
+2026-01-04 10:59:15.042 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 1 | length=3, total_length=3
+2026-01-04 10:59:15.123 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 2 | length=48, total_length=51
+2026-01-04 10:59:15.170 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 3 | length=58, total_length=109
+2026-01-04 10:59:15.330 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 4 | length=134, total_length=243
+2026-01-04 10:59:15.366 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 5 | length=10, total_length=253
+2026-01-04 10:59:15.368 | DEBUG    | paixueji_stream:ask_followup_question_stream:684 | Cleaned up stream via del in finally block
+2026-01-04 10:59:15.368 | INFO     | paixueji_stream:ask_followup_question_stream:689 | ask_followup_question_stream completed | duration=2.884s, response_length=253
+2026-01-04 10:59:15.369 | INFO     | paixueji_stream:call_paixueji_stream:1443 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] call_paixueji_stream completed | response_type=followup, duration=6.370s, total_chunks=5, response_length=253, correct_count=4, complete=False, session_finished=False
+2026-01-04 10:59:15.369 | DEBUG    | paixueji_stream:call_paixueji_stream:1451 | Full response: Aye, ye be right, matey! Ducks do indeed swim! 🏊‍♂️ That's a grand way for them to get around in the water!
+
+Now, we've been talking about our swimming duck. Can ye think of any other animals that like to swim in the water, just like our ducky friend? 🤔...
+2026-01-04 10:59:35.246 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] call_paixueji_stream started | session_id=d6bb2a3b-ed01-4031-ba3b-554faeeef419, age=6, object=duck, level1=animals, level2=vertebrates, level3=None, correct_count=5, status=normal, content_length=4, message_history=7
+2026-01-04 10:59:35.246 | INFO     | paixueji_stream:call_paixueji_stream:1204 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Conversation state | correct_count=5, complete=False
+2026-01-04 10:59:35.246 | INFO     | paixueji_stream:call_paixueji_stream:1247 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Running unified AI validation for answer
+2026-01-04 10:59:37.692 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] SWITCH | new_object=fish, engaged=True, correct=True, switch_reasoning=The child named a new object (fish) in response to my question asking for another animal that swims. This invites a switch to the new object., correctness_reasoning=Fish are indeed animals that swim, making the answer correct.
+2026-01-04 10:59:37.693 | INFO     | paixueji_stream:call_paixueji_stream:1318 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Routing to followup | is_engaged=True, is_factually_correct=True
+2026-01-04 10:59:37.693 | INFO     | paixueji_stream:ask_followup_question_stream:533 | ask_followup_question_stream started | object=duck, correct_count=5, answer_length=4
+2026-01-04 10:59:38.814 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] SWITCH | new_object=fish, engaged=True, correct=True, switch_reasoning=The child named a new object (fish) in response to my question asking for another animal that swims., correctness_reasoning=Fish are indeed animals that swim, so the answer is correct.
+2026-01-04 10:59:38.815 | INFO     | paixueji_stream:ask_followup_question_stream:560 | [SWITCH] Decision: Switch from duck to fish
+2026-01-04 10:59:39.823 | WARNING  | paixueji_stream:ask_followup_question_stream:577 | [CLASSIFY] Timeout for fish, continuing in background
+2026-01-04 10:59:40.230 | DEBUG    | paixueji_stream:ask_followup_question_stream:632 | Sending 8 messages to Gemini API
+2026-01-04 10:59:40.230 | DEBUG    | paixueji_stream:ask_followup_question_stream:649 | Stream object type: generator
+2026-01-04 10:59:41.297 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 1 | length=3, total_length=3
+2026-01-04 10:59:41.297 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] TOPIC SWITCH DETECTED: fish
+2026-01-04 10:59:41.381 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 2 | length=62, total_length=65
+2026-01-04 10:59:41.382 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] TOPIC SWITCH DETECTED: fish
+2026-01-04 10:59:41.410 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 3 | length=54, total_length=119
+2026-01-04 10:59:41.410 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] TOPIC SWITCH DETECTED: fish
+2026-01-04 10:59:41.514 | DEBUG    | paixueji_stream:ask_followup_question_stream:664 | Chunk 4 | length=137, total_length=256
+2026-01-04 10:59:41.515 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] TOPIC SWITCH DETECTED: fish
+2026-01-04 10:59:41.516 | DEBUG    | paixueji_stream:ask_followup_question_stream:684 | Cleaned up stream via del in finally block
+2026-01-04 10:59:41.516 | INFO     | paixueji_stream:ask_followup_question_stream:689 | ask_followup_question_stream completed | duration=3.824s, response_length=256
+2026-01-04 10:59:41.516 | INFO     | paixueji_stream:call_paixueji_stream:1375 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] TOPIC SWITCH DETECTED: fish
+2026-01-04 10:59:41.517 | INFO     | paixueji_stream:call_paixueji_stream:1443 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] call_paixueji_stream completed | response_type=followup, duration=6.271s, total_chunks=4, response_length=256, correct_count=5, complete=False, session_finished=False
+2026-01-04 10:59:41.517 | DEBUG    | paixueji_stream:call_paixueji_stream:1451 | Full response: Aye, a fish is a splendid swimmer, just like a duck! 🐠 You've got a keen eye for sea creatures, matey!
+
+Now, let's dive into the world of fish! Can ye tell me, how do fish breathe underwater? Do they have lungs like us, or do they do something different? 🤔...
+2026-01-04 10:59:56.327 | INFO     | paixueji_stream:call_paixueji_stream:1168 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] call_paixueji_stream started | session_id=d6bb2a3b-ed01-4031-ba3b-554faeeef419, age=6, object=fish, level1=animals, level2=vertebrates, level3=None, correct_count=6, status=normal, content_length=33, message_history=8
+2026-01-04 10:59:56.327 | INFO     | paixueji_stream:call_paixueji_stream:1204 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Conversation state | correct_count=6, complete=False
+2026-01-04 10:59:56.327 | INFO     | paixueji_stream:call_paixueji_stream:1247 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Running unified AI validation for answer
+2026-01-04 10:59:58.947 | INFO     | paixueji_stream:decide_topic_switch_with_validation:471 | [VALIDATE] SWITCH | new_object=None, engaged=False, correct=False, switch_reasoning=The child explicitly requested to switch to a new topic, indicating a lack of interest or difficulty with the current one., correctness_reasoning=The child did not provide a factual answer, but rather a request to change the subject.
+2026-01-04 10:59:58.947 | INFO     | paixueji_stream:call_paixueji_stream:1287 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] Routing to explanation | is_engaged=False
+2026-01-04 10:59:58.947 | INFO     | paixueji_stream:ask_explanation_question_stream:745 | ask_explanation_question_stream started | object=fish, answer=can we talk about something el
+2026-01-04 10:59:58.948 | DEBUG    | paixueji_stream:ask_explanation_question_stream:749 | Extracted previous question: Aye, a fish is a splendid swimmer, just like a duck! 🐠 You've got a keen eye for sea creatures, mate
+2026-01-04 10:59:58.948 | DEBUG    | paixueji_stream:ask_explanation_question_stream:785 | Sending 9 messages to Gemini API (explanation mode)
+2026-01-04 10:59:59.494 | DEBUG    | paixueji_stream:ask_explanation_question_stream:807 | Chunk 1 | length=2, total_length=2
+2026-01-04 10:59:59.499 | DEBUG    | paixueji_stream:ask_explanation_question_stream:807 | Chunk 2 | length=9, total_length=11
+2026-01-04 10:59:59.545 | DEBUG    | paixueji_stream:ask_explanation_question_stream:807 | Chunk 3 | length=53, total_length=64
+2026-01-04 10:59:59.573 | DEBUG    | paixueji_stream:ask_explanation_question_stream:807 | Chunk 4 | length=73, total_length=137
+2026-01-04 10:59:59.676 | DEBUG    | paixueji_stream:ask_explanation_question_stream:807 | Chunk 5 | length=131, total_length=268
+2026-01-04 10:59:59.794 | DEBUG    | paixueji_stream:ask_explanation_question_stream:807 | Chunk 6 | length=129, total_length=397
+2026-01-04 10:59:59.805 | DEBUG    | paixueji_stream:ask_explanation_question_stream:807 | Chunk 7 | length=3, total_length=400
+2026-01-04 10:59:59.806 | DEBUG    | paixueji_stream:ask_explanation_question_stream:820 | Cleaned up stream via del in finally block
+2026-01-04 10:59:59.806 | INFO     | paixueji_stream:ask_explanation_question_stream:825 | ask_explanation_question_stream completed | duration=0.859s, response_length=400
+2026-01-04 10:59:59.807 | INFO     | paixueji_stream:call_paixueji_stream:1443 | [d6bb2a3b-ed01-4031-ba3b-554faeeef419] call_paixueji_stream completed | response_type=explanation, duration=3.480s, total_chunks=7, response_length=400, correct_count=6, complete=False, session_finished=False
+2026-01-04 10:59:59.807 | DEBUG    | paixueji_stream:call_paixueji_stream:1451 | Full response: Ahoy there, matey! No worries if ye don't know the answer, that's what learning is all about!
+
+Fish have special little things called **gills** that help them breathe underwater. It's like they have tiny little filters that take the air right out of the water! 🌊
+
+Now, let's look closely at our fishy friend. Can ye see its **fins**? What do ye think those fins help the fish do when it's swimming? 🤔...

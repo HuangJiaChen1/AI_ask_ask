@@ -51,6 +51,9 @@ class PaixuejiAssistant:
         self.level3_category = None
         self.correct_answer_count = 0
 
+        # Conversation flow tree for debugging
+        self.flow_tree = None
+
         # Set up authentication if credentials file is specified in environment
         credentials_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
         if credentials_path and not os.environ.get('GOOGLE_APPLICATION_CREDENTIALS_SET'):
@@ -85,6 +88,31 @@ class PaixuejiAssistant:
             config = json.load(f)
 
         return config
+
+    def init_flow_tree(self, session_id, age, object_name, tone, focus_mode):
+        """
+        Initialize conversation flow tree for debugging.
+
+        Args:
+            session_id: Session ID for this conversation
+            age: Child's age
+            object_name: Initial object being discussed
+            tone: Conversation tone
+            focus_mode: Focus mode (depth, width, etc.)
+        """
+        from conversation_tree import ConversationFlowTree
+        from datetime import datetime
+
+        self.flow_tree = ConversationFlowTree(
+            session_id=session_id,
+            metadata={
+                "created_at": datetime.now().isoformat(),
+                "initial_object": object_name,
+                "child_age": age,
+                "tone": tone,
+                "initial_focus": focus_mode
+            }
+        )
 
     def _load_age_prompts(self, age_prompts_path):
         """Load age-based prompts from JSON file."""

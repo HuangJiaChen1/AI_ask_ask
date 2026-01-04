@@ -1176,6 +1176,28 @@ async def call_paixueji_stream(
     # Add user input to messages
     messages.append({"role": "user", "content": content})
 
+    # Create tree node for this turn
+    current_node = None
+    if assistant.flow_tree:
+        parent_id = assistant.flow_tree.get_latest_node().node_id if assistant.flow_tree.nodes else None
+        turn_number = len(assistant.flow_tree.nodes)
+
+        current_node = assistant.flow_tree.create_node(
+            parent_id=parent_id,
+            turn_number=turn_number,
+            node_type="pending"  # Will be updated after routing
+        )
+
+        # Capture state BEFORE
+        current_node.state_before = {
+            "object_name": object_name,
+            "level1_category": level1_category,
+            "level2_category": level2_category,
+            "correct_answer_count": correct_answer_count,
+            "focus_mode": focus_mode
+        }
+        current_node.user_input = content if turn_number > 0 else None
+
     # INFINITE MODE: Conversation never completes automatically
     conversation_complete = False
 
@@ -1214,6 +1236,11 @@ async def call_paixueji_stream(
         )
         response_type = "introduction"
         logger.info(f"[{session_id}] Routing to introduction question")
+
+        # Update node type for introduction (no validation)
+        if current_node:
+            current_node.type = response_type
+
     else:
         # Follow-up question or explanation - Use SINGLE AI VALIDATION for all answers
         # This replaces the old is_answer_reasonable() check
@@ -1230,6 +1257,14 @@ async def call_paixueji_stream(
         is_engaged = validation_result.get('is_engaged')
         is_factually_correct = validation_result.get('is_factually_correct')
         correctness_reasoning = validation_result.get('correctness_reasoning')
+
+        # Capture validation in tree
+        if current_node:
+            current_node.validation = {
+                "is_engaged": is_engaged,
+                "is_factually_correct": is_factually_correct,
+                "correctness_reasoning": correctness_reasoning
+            }
 
         if not is_engaged:
             # PATH 1: STUCK ("I don't know", unclear answers)
@@ -1251,6 +1286,17 @@ async def call_paixueji_stream(
             response_type = "explanation"
             logger.info(f"[{session_id}] Routing to explanation | is_engaged=False")
 
+            # Update node type and capture decision
+            if current_node:
+                current_node.type = response_type
+                if validation_result.get('decision'):
+                    current_node.decision = {
+                        "decision_type": validation_result.get('decision'),
+                        "detected_object": validation_result.get('new_object'),
+                        "switch_reasoning": validation_result.get('switching_reasoning'),
+                        "routing": response_type
+                    }
+
         elif is_factually_correct:
             # PATH 2: CORRECT + ENGAGED
             stream_generator = ask_followup_question_stream(
@@ -1270,6 +1316,17 @@ async def call_paixueji_stream(
             )
             response_type = "followup"
             logger.info(f"[{session_id}] Routing to followup | is_engaged=True, is_factually_correct=True")
+
+            # Update node type and capture decision
+            if current_node:
+                current_node.type = response_type
+                if validation_result.get('decision'):
+                    current_node.decision = {
+                        "decision_type": validation_result.get('decision'),
+                        "detected_object": validation_result.get('new_object'),
+                        "switch_reasoning": validation_result.get('switching_reasoning'),
+                        "routing": response_type
+                    }
 
         else:
             # PATH 3: WRONG + ENGAGED (NEW!)
@@ -1291,6 +1348,17 @@ async def call_paixueji_stream(
             )
             response_type = "gentle_correction"
             logger.info(f"[{session_id}] Routing to gentle correction | is_engaged=True, is_factually_correct=False")
+
+            # Update node type and capture decision
+            if current_node:
+                current_node.type = response_type
+                if validation_result.get('decision'):
+                    current_node.decision = {
+                        "decision_type": validation_result.get('decision'),
+                        "detected_object": validation_result.get('new_object'),
+                        "switch_reasoning": validation_result.get('switching_reasoning'),
+                        "routing": response_type
+                    }
 
     # Stream chunks from the selected generator
     if stream_generator:
@@ -1413,3 +1481,23 @@ async def call_paixueji_stream(
         switch_decision_reasoning=switch_decision_reasoning
     )
     yield final_chunk
+
+    # Finalize tree node
+    if current_node:
+        current_node.ai_response = full_response
+        current_node.response_duration = elapsed_time
+
+        # Capture state changes
+        state_after = {}
+        if assistant.object_name != current_node.state_before.get("object_name"):
+            state_after["object_name"] = assistant.object_name
+            state_after["level1_category"] = assistant.level1_category
+            state_after["level2_category"] = assistant.level2_category
+        if assistant.correct_answer_count != current_node.state_before.get("correct_answer_count"):
+            state_after["correct_answer_count"] = assistant.correct_answer_count
+
+        current_node.state_after = state_after
+        current_node.metadata = {
+            "chunk_count": sequence_number,
+            "token_usage": token_usage.model_dump() if token_usage else None
+        }
