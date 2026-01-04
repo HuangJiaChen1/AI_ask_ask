@@ -280,6 +280,154 @@ graph TD
 
 ---
 
+### 5. Dual-Parallel API Architecture (NEW!)
+
+**As of January 2026**, the system has been upgraded to use **dual-parallel API calls** to decouple response generation from question generation. This architectural change provides cleaner separation of concerns and better prompt engineering.
+
+#### Before: Monolithic Response+Question (Single API Call)
+
+```
+Child Answer → Validation → Route to Stream Function → Single API Call:
+  └─ Generate: Response + Question (combined in one prompt)
+```
+
+**Problems:**
+- Prompts tried to do TWO things at once (respond AND ask)
+- Hard to prevent questions appearing in responses
+- Hard to prevent explanations appearing in questions
+- Single prompt balanced both concerns
+
+#### After: Dual-Parallel Calls (Separate Response & Question)
+
+```
+Child Answer → Validation → Route → TWO Sequential API Calls:
+  ├─ Call 1: Response Generator (feedback/explanation/correction) - NO QUESTIONS
+  └─ Call 2: Question Generator (next question) - NO EXPLANATIONS
+```
+
+**Benefits:**
+- ✅ **Clear separation**: Each prompt focuses on ONE task
+- ✅ **Better quality**: Response never contains questions, questions never contain explanations
+- ✅ **Easier debugging**: Can isolate issues to response or question generation
+- ✅ **More maintainable**: Easier to refine prompts independently
+- ✅ **Graceful degradation**: Fallbacks ensure conversation continues on errors
+
+#### New Generator Functions
+
+**Response-Only Generators** (4 functions):
+1. `generate_feedback_response_stream()` - Celebrate correct answers (NO questions)
+2. `generate_explanation_response_stream()` - Teach when child says "I don't know" (NO questions)
+3. `generate_correction_response_stream()` - Gently correct wrong answers (NO questions)
+4. `generate_topic_switch_response_stream()` - Celebrate topic transitions (NO questions)
+
+**Question-Only Generator** (1 function):
+5. `generate_followup_question_stream()` - Ask next question based on focus strategy (NO explanations)
+
+#### Dual-Parallel Flow Diagram
+
+```mermaid
+sequenceDiagram
+    participant U as User (Child)
+    participant B as Backend
+    participant V as Validator
+    participant R as Response Generator
+    participant Q as Question Generator
+
+    U->>B: Types answer
+    activate B
+    B->>V: decide_topic_switch_with_validation()
+    activate V
+    V-->>B: {is_engaged, is_factually_correct, decision}
+    deactivate V
+
+    Note over B: Route to appropriate response generator
+
+    alt Not Engaged
+        B->>R: generate_explanation_response_stream()
+    else Engaged + Correct
+        alt Topic Switch
+            B->>R: generate_topic_switch_response_stream()
+        else Normal
+            B->>R: generate_feedback_response_stream()
+        end
+    else Engaged + Wrong
+        B->>R: generate_correction_response_stream()
+    end
+
+    activate R
+    R-->>B: Stream response chunks
+    B-->>U: SSE: Response (e.g., "Yes! Great job!")
+    deactivate R
+
+    B->>Q: generate_followup_question_stream()
+    activate Q
+    Q-->>B: Stream question chunks
+    B-->>U: SSE: Question (e.g., "Now, what color is it?")
+    deactivate Q
+
+    B->>B: Combine response + question<br/>Append to history
+    deactivate B
+```
+
+#### Error Handling Strategy
+
+**Graceful Degradation:**
+- If **response generation fails**: Use fallback "I see!" and continue
+- If **question generation fails**: Use fallback "What else can you tell me about {object}?"
+- If **both fail**: Both fallbacks used, conversation continues gracefully
+- All errors logged for debugging
+
+#### Performance Characteristics
+
+**API Calls per Turn:**
+- **Before**: 2 calls (validation + response+question)
+- **After**: 3 calls (validation + response + question)
+- **Cost impact**: ~50% increase in API calls
+- **Latency impact**: ~0-100ms (sequential streaming)
+
+**Trade-offs Accepted:**
+- ⚠️ Higher API cost for better quality and maintainability
+- ⚠️ Slightly more complex code (more functions to maintain)
+- ✅ Better prompt separation worth the cost
+
+#### Prompt Engineering Rules
+
+**Response Prompts:**
+- ✅ Respond to child's current answer ONLY
+- ✅ Provide feedback/explanation/correction
+- ❌ NEVER ask questions
+- ❌ NEVER use question marks
+- ❌ NEVER look ahead to next topic
+
+**Question Prompts:**
+- ✅ Ask next question based on focus strategy
+- ✅ Follow category and age guidance
+- ❌ NEVER explain previous answers
+- ❌ NEVER respond to child's input
+- ❌ NEVER provide feedback
+
+#### Example Turn with Dual-Parallel
+
+**Child answers:** "It's red!"
+
+**Call 1 - Response Generator:**
+```
+Prompt: FEEDBACK_RESPONSE_PROMPT
+Output: "Yes! Red like a fire truck! Great observation!"
+```
+
+**Call 2 - Question Generator:**
+```
+Prompt: FOLLOWUP_QUESTION_PROMPT
+Output: "Now, what does an apple taste like?"
+```
+
+**Combined to user:** "Yes! Red like a fire truck! Great observation! Now, what does an apple taste like?"
+
+**Appended to history:** Full combined output saved for context
+
+---
+
 ## Focus Modes & AI-Driven Topic Switching
 
 ### Focus Mode vs Switching Logic (Separation of Concerns)

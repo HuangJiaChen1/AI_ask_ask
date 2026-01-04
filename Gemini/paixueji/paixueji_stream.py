@@ -61,6 +61,25 @@ def clean_messages_for_api(messages: list[dict]) -> list[dict]:
     return cleaned
 
 
+def extract_previous_question(messages: list[dict]) -> str:
+    """
+    Extract the most recent assistant question from conversation history.
+
+    This is used by response generators that need to reference what question
+    was asked before the child's answer.
+
+    Args:
+        messages: List of conversation messages
+
+    Returns:
+        The most recent assistant message, or empty string if none found
+    """
+    for msg in reversed(messages):
+        if msg.get("role") == "assistant":
+            return msg.get("content", "")
+    return ""
+
+
 def prepare_messages_for_streaming(messages: list[dict], age_prompt: str = "") -> list[dict]:
     """
     Safely prepare messages for streaming API calls without mutating the original list.
@@ -256,6 +275,471 @@ async def ask_introduction_question_stream(
     }
     yield ("", token_usage, full_response, decision_info)
 
+
+# ============================================================================
+# DUAL-PARALLEL API FUNCTIONS: Response-Only and Question-Only Generators
+# ============================================================================
+
+async def generate_feedback_response_stream(
+    messages: list[dict],
+    child_answer: str,
+    object_name: str,
+    age: int,
+    config: dict,
+    client: genai.Client
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
+    """
+    Generate ONLY celebratory feedback for correct answers. NO follow-up questions.
+
+    This function is part of the dual-parallel architecture where response generation
+    is decoupled from question generation.
+
+    Args:
+        messages: Conversation history
+        child_answer: The child's correct answer
+        object_name: Name of object being discussed
+        age: Child's age
+        config: Configuration dict with model settings
+        client: Gemini client instance
+
+    Yields:
+        Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
+    """
+    start_time = time.time()
+    logger.info(f"generate_feedback_response_stream started | object={object_name}, age={age}")
+
+    # Build feedback-only prompt
+    prompts = paixueji_prompts.get_prompts()
+    prompt = prompts['feedback_response_prompt'].format(
+        child_answer=child_answer,
+        object_name=object_name,
+        age=age
+    )
+
+    # Prepare messages
+    messages_to_send = messages + [{"role": "user", "content": prompt}]
+    clean_messages = clean_messages_for_api(messages_to_send)
+
+    # Convert to Gemini format
+    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
+
+    # Stream from LLM
+    full_response = ""
+    token_usage = None
+    stream = None
+
+    try:
+        gen_config = GenerateContentConfig(
+            temperature=config.get("temperature", 0.3),
+            max_output_tokens=config.get("max_tokens", 500),  # Shorter for feedback only
+            system_instruction=system_instruction if system_instruction else None
+        )
+
+        stream = client.models.generate_content_stream(
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config
+        )
+
+        # Yield chunks
+        for chunk in stream:
+            if chunk.text:
+                full_response += chunk.text
+                yield (chunk.text, None, full_response)
+
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(f"generate_feedback_response_stream error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        if full_response:
+            yield ("", token_usage, full_response)
+        return
+    finally:
+        if stream is not None:
+            try:
+                del stream
+            except:
+                pass
+
+    duration = time.time() - start_time
+    logger.info(f"generate_feedback_response_stream completed | duration={duration:.3f}s, length={len(full_response)}")
+
+    # Final yield
+    yield ("", token_usage, full_response)
+
+
+async def generate_explanation_response_stream(
+    messages: list[dict],
+    child_answer: str,
+    object_name: str,
+    previous_question: str,
+    age: int,
+    category_prompt: str,
+    age_prompt: str,
+    config: dict,
+    client: genai.Client
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
+    """
+    Generate ONLY explanation when child says "I don't know". NO follow-up questions.
+
+    This function is part of the dual-parallel architecture where response generation
+    is decoupled from question generation.
+
+    Args:
+        messages: Conversation history
+        child_answer: The child's unclear/stuck answer
+        object_name: Name of object being discussed
+        previous_question: The question that was asked
+        age: Child's age
+        category_prompt: Category-specific guidance
+        age_prompt: Age-specific guidance
+        config: Configuration dict with model settings
+        client: Gemini client instance
+
+    Yields:
+        Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
+    """
+    start_time = time.time()
+    logger.info(f"generate_explanation_response_stream started | object={object_name}, age={age}")
+
+    # Build explanation-only prompt
+    prompts = paixueji_prompts.get_prompts()
+    prompt = prompts['explanation_response_prompt'].format(
+        child_answer=child_answer,
+        previous_question=previous_question,
+        object_name=object_name,
+        age=age
+    )
+
+    # Prepare messages
+    messages_to_send = messages + [{"role": "user", "content": prompt}]
+    clean_messages = clean_messages_for_api(messages_to_send)
+
+    # Convert to Gemini format
+    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
+
+    # Stream from LLM
+    full_response = ""
+    token_usage = None
+    stream = None
+
+    try:
+        gen_config = GenerateContentConfig(
+            temperature=config.get("temperature", 0.3),
+            max_output_tokens=config.get("max_tokens", 800),
+            system_instruction=system_instruction if system_instruction else None
+        )
+
+        stream = client.models.generate_content_stream(
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config
+        )
+
+        # Yield chunks
+        for chunk in stream:
+            if chunk.text:
+                full_response += chunk.text
+                yield (chunk.text, None, full_response)
+
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(f"generate_explanation_response_stream error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        if full_response:
+            yield ("", token_usage, full_response)
+        return
+    finally:
+        if stream is not None:
+            try:
+                del stream
+            except:
+                pass
+
+    duration = time.time() - start_time
+    logger.info(f"generate_explanation_response_stream completed | duration={duration:.3f}s, length={len(full_response)}")
+
+    # Final yield
+    yield ("", token_usage, full_response)
+
+
+async def generate_correction_response_stream(
+    messages: list[dict],
+    child_answer: str,
+    object_name: str,
+    previous_question: str,
+    correctness_reasoning: str,
+    age: int,
+    config: dict,
+    client: genai.Client
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
+    """
+    Generate ONLY gentle correction for wrong answers. NO follow-up questions.
+
+    This function is part of the dual-parallel architecture where response generation
+    is decoupled from question generation.
+
+    Args:
+        messages: Conversation history
+        child_answer: The child's incorrect answer
+        object_name: Name of object being discussed
+        previous_question: The question that was asked
+        correctness_reasoning: AI's reasoning for why answer is wrong
+        age: Child's age
+        config: Configuration dict with model settings
+        client: Gemini client instance
+
+    Yields:
+        Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
+    """
+    start_time = time.time()
+    logger.info(f"generate_correction_response_stream started | object={object_name}, age={age}")
+
+    # Build correction-only prompt
+    prompts = paixueji_prompts.get_prompts()
+    prompt = prompts['correction_response_prompt'].format(
+        child_answer=child_answer,
+        object_name=object_name,
+        correctness_reasoning=correctness_reasoning,
+        age=age
+    )
+
+    # Prepare messages
+    messages_to_send = messages + [{"role": "user", "content": prompt}]
+    clean_messages = clean_messages_for_api(messages_to_send)
+
+    # Convert to Gemini format
+    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
+
+    # Stream from LLM
+    full_response = ""
+    token_usage = None
+    stream = None
+
+    try:
+        gen_config = GenerateContentConfig(
+            temperature=config.get("temperature", 0.3),
+            max_output_tokens=config.get("max_tokens", 600),
+            system_instruction=system_instruction if system_instruction else None
+        )
+
+        stream = client.models.generate_content_stream(
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config
+        )
+
+        # Yield chunks
+        for chunk in stream:
+            if chunk.text:
+                full_response += chunk.text
+                yield (chunk.text, None, full_response)
+
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(f"generate_correction_response_stream error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        if full_response:
+            yield ("", token_usage, full_response)
+        return
+    finally:
+        if stream is not None:
+            try:
+                del stream
+            except:
+                pass
+
+    duration = time.time() - start_time
+    logger.info(f"generate_correction_response_stream completed | duration={duration:.3f}s, length={len(full_response)}")
+
+    # Final yield
+    yield ("", token_usage, full_response)
+
+
+async def generate_topic_switch_response_stream(
+    messages: list[dict],
+    previous_object: str,
+    new_object: str,
+    age: int,
+    config: dict,
+    client: genai.Client
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
+    """
+    Generate ONLY celebration for topic transitions. NO follow-up questions.
+
+    This function is part of the dual-parallel architecture where response generation
+    is decoupled from question generation.
+
+    Args:
+        messages: Conversation history
+        previous_object: The previous object being discussed
+        new_object: The new object child wants to discuss
+        age: Child's age
+        config: Configuration dict with model settings
+        client: Gemini client instance
+
+    Yields:
+        Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
+    """
+    start_time = time.time()
+    logger.info(f"generate_topic_switch_response_stream started | {previous_object} -> {new_object}, age={age}")
+
+    # Build topic switch celebration prompt
+    prompts = paixueji_prompts.get_prompts()
+    prompt = prompts['topic_switch_response_prompt'].format(
+        previous_object=previous_object,
+        new_object=new_object,
+        age=age
+    )
+
+    # Prepare messages
+    messages_to_send = messages + [{"role": "user", "content": prompt}]
+    clean_messages = clean_messages_for_api(messages_to_send)
+
+    # Convert to Gemini format
+    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
+
+    # Stream from LLM
+    full_response = ""
+    token_usage = None
+    stream = None
+
+    try:
+        gen_config = GenerateContentConfig(
+            temperature=config.get("temperature", 0.3),
+            max_output_tokens=config.get("max_tokens", 400),
+            system_instruction=system_instruction if system_instruction else None
+        )
+
+        stream = client.models.generate_content_stream(
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config
+        )
+
+        # Yield chunks
+        for chunk in stream:
+            if chunk.text:
+                full_response += chunk.text
+                yield (chunk.text, None, full_response)
+
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(f"generate_topic_switch_response_stream error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        if full_response:
+            yield ("", token_usage, full_response)
+        return
+    finally:
+        if stream is not None:
+            try:
+                del stream
+            except:
+                pass
+
+    duration = time.time() - start_time
+    logger.info(f"generate_topic_switch_response_stream completed | duration={duration:.3f}s, length={len(full_response)}")
+
+    # Final yield
+    yield ("", token_usage, full_response)
+
+
+async def generate_followup_question_stream(
+    messages: list[dict],
+    object_name: str,
+    correct_count: int,
+    category_prompt: str,
+    age_prompt: str,
+    age: int,
+    focus_prompt: str,
+    config: dict,
+    client: genai.Client,
+    is_topic_switch: bool = False
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
+    """
+    Generate ONLY follow-up question based on focus strategy. NO responses or explanations.
+
+    This function is part of the dual-parallel architecture where question generation
+    is decoupled from response generation.
+
+    Args:
+        messages: Conversation history
+        object_name: Name of object being discussed (may be new object if switched)
+        correct_count: Number of correct answers so far
+        category_prompt: Category-specific guidance
+        age_prompt: Age-specific guidance
+        age: Child's age
+        focus_prompt: Focus strategy guidance
+        config: Configuration dict with model settings
+        client: Gemini client instance
+        is_topic_switch: Whether this follows a topic switch
+
+    Yields:
+        Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
+    """
+    start_time = time.time()
+    logger.info(f"generate_followup_question_stream started | object={object_name}, age={age}, is_switch={is_topic_switch}")
+
+    # Build question-only prompt
+    prompts = paixueji_prompts.get_prompts()
+    prompt = prompts['followup_question_prompt'].format(
+        object_name=object_name,
+        age=age,
+        focus_prompt=focus_prompt,
+        category_prompt=category_prompt,
+        age_prompt=age_prompt
+    )
+
+    # Prepare messages
+    messages_to_send = messages + [{"role": "user", "content": prompt}]
+    clean_messages = clean_messages_for_api(messages_to_send)
+
+    # Convert to Gemini format
+    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
+
+    # Stream from LLM
+    full_response = ""
+    token_usage = None
+    stream = None
+
+    try:
+        gen_config = GenerateContentConfig(
+            temperature=config.get("temperature", 0.3),
+            max_output_tokens=config.get("max_tokens", 600),
+            system_instruction=system_instruction if system_instruction else None
+        )
+
+        stream = client.models.generate_content_stream(
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config
+        )
+
+        # Yield chunks
+        for chunk in stream:
+            if chunk.text:
+                full_response += chunk.text
+                yield (chunk.text, None, full_response)
+
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(f"generate_followup_question_stream error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        if full_response:
+            yield ("", token_usage, full_response)
+        return
+    finally:
+        if stream is not None:
+            try:
+                del stream
+            except:
+                pass
+
+    duration = time.time() - start_time
+    logger.info(f"generate_followup_question_stream completed | duration={duration:.3f}s, length={len(full_response)}")
+
+    # Final yield
+    yield ("", token_usage, full_response)
+
+
+# ============================================================================
+# VALIDATION & DECISION FUNCTIONS
+# ============================================================================
 
 def decide_topic_switch_with_validation(assistant, child_answer: str, object_name: str, age: int, focus_mode: str | None = None):
     """
@@ -1234,6 +1718,10 @@ async def call_paixueji_stream(
     sequence_number = 0
     token_usage = None
     full_response = ""
+    buffer = ""
+    new_object_name = None
+    detected_object_name = None
+    switch_decision_reasoning = None
 
     # Prepare messages with age guidance
     prepared_messages = prepare_messages_for_streaming(messages, age_prompt)
@@ -1269,8 +1757,8 @@ async def call_paixueji_stream(
             current_node.type = response_type
 
     else:
+        # DUAL-PARALLEL ARCHITECTURE: Separate response and question generation
         # Follow-up question or explanation - Use SINGLE AI VALIDATION for all answers
-        # This replaces the old is_answer_reasonable() check
         logger.info(f"[{session_id}] Running unified AI validation for answer")
 
         validation_result = decide_topic_switch_with_validation(
@@ -1284,6 +1772,7 @@ async def call_paixueji_stream(
         is_engaged = validation_result.get('is_engaged')
         is_factually_correct = validation_result.get('is_factually_correct')
         correctness_reasoning = validation_result.get('correctness_reasoning')
+        switch_decision_reasoning = validation_result.get('switching_reasoning')
 
         # Capture validation in tree
         if current_node:
@@ -1293,111 +1782,264 @@ async def call_paixueji_stream(
                 "correctness_reasoning": correctness_reasoning
             }
 
-        # Check for explicit switch decision (even if engaged=False, e.g. "Can we switch?")
+        # Check for explicit switch decision
         should_switch = validation_result.get('decision') == 'SWITCH'
 
+        # ROUTING: Determine response generator based on validation
+        response_generator = None
+        previous_question = extract_previous_question(prepared_messages)
+
         if not is_engaged and not should_switch:
-            # PATH 1: STUCK ("I don't know", unclear answers)
-            stream_generator = ask_explanation_question_stream(
-                prepared_messages,
-                content,
-                assistant,
-                object_name,
-                correct_answer_count,  # Don't increment - they didn't answer
-                category_prompt,
-                age_prompt,
-                age or 6,
-                config,
-                client,
-                level3_category,
-                focus_prompt=focus_prompt,
-                focus_mode=focus_mode
+            # PATH 1: STUCK/UNCLEAR ("I don't know", unclear answers)
+            response_generator = generate_explanation_response_stream(
+                messages=prepared_messages,
+                child_answer=content,
+                object_name=object_name,
+                previous_question=previous_question,
+                age=age or 6,
+                category_prompt=category_prompt,
+                age_prompt=age_prompt,
+                config=config,
+                client=client
             )
             response_type = "explanation"
             logger.info(f"[{session_id}] Routing to explanation | is_engaged=False")
 
-            # Update node type and capture decision
-            if current_node:
-                current_node.type = response_type
-                if validation_result.get('decision'):
-                    current_node.decision = {
-                        "decision_type": validation_result.get('decision'),
-                        "detected_object": validation_result.get('new_object'),
-                        "switch_reasoning": validation_result.get('switching_reasoning'),
-                        "routing": response_type
-                    }
+        elif is_factually_correct:
+            if should_switch and validation_result.get('new_object'):
+                # PATH 2A: TOPIC SWITCH
+                new_object = validation_result['new_object']
+                previous_object = object_name
 
-        elif is_factually_correct or should_switch:
-            # PATH 2: CORRECT + ENGAGED (OR SWITCHING)
-            stream_generator = ask_followup_question_stream(
-                prepared_messages,
-                content,  # child's answer
-                assistant,  # Pass assistant for topic switching
-                object_name,
-                correct_answer_count,
-                category_prompt,
-                age_prompt,
-                age or 6,
-                config,
-                client,
-                level3_category,
-                focus_prompt=focus_prompt,
-                focus_mode=focus_mode,
-                precomputed_decision=validation_result  # Pass decision to avoid re-validation
-            )
-            response_type = "followup"
-            logger.info(f"[{session_id}] Routing to followup | is_engaged=True, is_factually_correct=True, should_switch={should_switch}")
+                # Update object in assistant
+                assistant.object_name = new_object
+                object_name = new_object
+                new_object_name = new_object
+                switch_decision_reasoning = validation_result.get('switching_reasoning')
 
-            # Update node type and capture decision
-            if current_node:
-                current_node.type = response_type
-                if validation_result.get('decision'):
-                    current_node.decision = {
-                        "decision_type": validation_result.get('decision'),
-                        "detected_object": validation_result.get('new_object'),
-                        "switch_reasoning": validation_result.get('switching_reasoning'),
-                        "routing": response_type
-                    }
+                # Classify new object (background with timeout)
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(assistant.classify_object_sync, new_object)
+                    try:
+                        future.result(timeout=1.0)
+                        logger.info(f"[{session_id}] Classification completed for {new_object}")
+                    except concurrent.futures.TimeoutError:
+                        logger.warning(f"[{session_id}] Classification timeout for {new_object}")
+
+                # Rebuild category prompts for new object
+                category_prompt = assistant.get_category_prompt(
+                    assistant.level1_category,
+                    assistant.level2_category,
+                    assistant.level3_category
+                )
+                level1_category = assistant.level1_category
+                level2_category = assistant.level2_category
+                level3_category = assistant.level3_category
+
+                response_generator = generate_topic_switch_response_stream(
+                    messages=prepared_messages,
+                    previous_object=previous_object,
+                    new_object=new_object,
+                    age=age or 6,
+                    config=config,
+                    client=client
+                )
+                response_type = "topic_switch"
+                logger.info(f"[{session_id}] Routing to topic switch | {previous_object} -> {new_object}")
+
+            else:
+                # PATH 2B: CORRECT ANSWER (no switch)
+                response_generator = generate_feedback_response_stream(
+                    messages=prepared_messages,
+                    child_answer=content,
+                    object_name=object_name,
+                    age=age or 6,
+                    config=config,
+                    client=client
+                )
+                response_type = "feedback"
+                logger.info(f"[{session_id}] Routing to feedback | is_engaged=True, is_factually_correct=True")
 
         else:
-            # PATH 3: WRONG + ENGAGED (NEW!)
-            stream_generator = ask_gentle_correction_stream(
-                prepared_messages,
-                content,
-                assistant,
-                object_name,
-                correct_answer_count,  # Don't increment - answer was wrong
-                category_prompt,
-                age_prompt,
-                age or 6,
-                config,
-                client,
-                correctness_reasoning,
-                level3_category,
-                focus_prompt=focus_prompt,
-                focus_mode=focus_mode
+            # PATH 3: WRONG + ENGAGED
+            response_generator = generate_correction_response_stream(
+                messages=prepared_messages,
+                child_answer=content,
+                object_name=object_name,
+                previous_question=previous_question,
+                correctness_reasoning=correctness_reasoning,
+                age=age or 6,
+                config=config,
+                client=client
             )
             response_type = "gentle_correction"
             logger.info(f"[{session_id}] Routing to gentle correction | is_engaged=True, is_factually_correct=False")
 
-            # Update node type and capture decision
-            if current_node:
-                current_node.type = response_type
-                if validation_result.get('decision'):
-                    current_node.decision = {
-                        "decision_type": validation_result.get('decision'),
-                        "detected_object": validation_result.get('new_object'),
-                        "switch_reasoning": validation_result.get('switching_reasoning'),
-                        "routing": response_type
-                    }
+        # Update node type and capture decision
+        if current_node:
+            current_node.type = response_type
+            if validation_result.get('decision'):
+                current_node.decision = {
+                    "decision_type": validation_result.get('decision'),
+                    "detected_object": validation_result.get('new_object'),
+                    "switch_reasoning": validation_result.get('switching_reasoning'),
+                    "routing": response_type
+                }
+
+        # ALWAYS generate follow-up question (for all non-introduction turns)
+        question_generator = generate_followup_question_stream(
+            messages=prepared_messages,
+            object_name=object_name,  # Updated object if switched
+            correct_count=correct_answer_count,
+            category_prompt=category_prompt,
+            age_prompt=age_prompt,
+            age=age or 6,
+            focus_prompt=focus_prompt,
+            config=config,
+            client=client,
+            is_topic_switch=should_switch
+        )
+
+        # DUAL-PARALLEL STREAMING: Stream response first, then question
+        full_response_text = ""
+        full_question_text = ""
+
+        # Stream response generator
+        try:
+            logger.debug(f"[{session_id}] Streaming response ({response_type})")
+            async for chunk_data in response_generator:
+                text_chunk, usage, response_so_far = chunk_data
+                full_response_text = response_so_far
+
+                if text_chunk:
+                    sequence_number += 1
+                    yield StreamChunk(
+                        response=text_chunk,
+                        session_finished=False,
+                        duration=0.0,
+                        token_usage=None,
+                        finish=False,
+                        sequence_number=sequence_number,
+                        timestamp=time.time(),
+                        session_id=session_id,
+                        request_id=request_id,
+                        is_stuck=False,
+                        correct_answer_count=correct_answer_count,
+                        conversation_complete=False,
+                        focus_mode=focus_mode,
+                        is_correct=is_engaged and is_factually_correct if is_engaged is not None else None,
+                        is_engaged=is_engaged,
+                        is_factually_correct=is_factually_correct,
+                        correctness_reasoning=correctness_reasoning if is_factually_correct == False else None,
+                        new_object_name=new_object_name,
+                        detected_object_name=detected_object_name,
+                        switch_decision_reasoning=switch_decision_reasoning,
+                        response_type=response_type
+                    )
+
+        except Exception as e:
+            logger.error(f"[{session_id}] Response generation failed | error={str(e)}", exc_info=True)
+            # Fallback response
+            fallback_response = "I see!"
+            full_response_text = fallback_response
+            sequence_number += 1
+            yield StreamChunk(
+                response=fallback_response,
+                session_finished=False,
+                duration=0.0,
+                token_usage=None,
+                finish=False,
+                sequence_number=sequence_number,
+                timestamp=time.time(),
+                session_id=session_id,
+                request_id=request_id,
+                is_stuck=False,
+                correct_answer_count=correct_answer_count,
+                conversation_complete=False,
+                focus_mode=focus_mode,
+                is_correct=is_engaged and is_factually_correct if is_engaged is not None else None,
+                is_engaged=is_engaged,
+                is_factually_correct=is_factually_correct,
+                correctness_reasoning=correctness_reasoning if is_factually_correct == False else None,
+                new_object_name=new_object_name,
+                detected_object_name=detected_object_name,
+                switch_decision_reasoning=switch_decision_reasoning,
+                response_type=response_type
+            )
+
+        # Stream question generator
+        try:
+            logger.debug(f"[{session_id}] Streaming question")
+            async for chunk_data in question_generator:
+                text_chunk, usage, question_so_far = chunk_data
+                full_question_text = question_so_far
+
+                if text_chunk:
+                    sequence_number += 1
+                    yield StreamChunk(
+                        response=text_chunk,
+                        session_finished=False,
+                        duration=0.0,
+                        token_usage=None,
+                        finish=False,
+                        sequence_number=sequence_number,
+                        timestamp=time.time(),
+                        session_id=session_id,
+                        request_id=request_id,
+                        is_stuck=False,
+                        correct_answer_count=correct_answer_count,
+                        conversation_complete=False,
+                        focus_mode=focus_mode,
+                        is_correct=is_engaged and is_factually_correct if is_engaged is not None else None,
+                        is_engaged=is_engaged,
+                        is_factually_correct=is_factually_correct,
+                        correctness_reasoning=correctness_reasoning if is_factually_correct == False else None,
+                        new_object_name=new_object_name,
+                        detected_object_name=detected_object_name,
+                        switch_decision_reasoning=switch_decision_reasoning,
+                        response_type="followup_question"
+                    )
+
+        except Exception as e:
+            logger.error(f"[{session_id}] Question generation failed | error={str(e)}", exc_info=True)
+            # Fallback question
+            fallback_question = f"What else can you tell me about {object_name}?"
+            full_question_text = fallback_question
+            sequence_number += 1
+            yield StreamChunk(
+                response=fallback_question,
+                session_finished=False,
+                duration=0.0,
+                token_usage=None,
+                finish=False,
+                sequence_number=sequence_number,
+                timestamp=time.time(),
+                session_id=session_id,
+                request_id=request_id,
+                is_stuck=False,
+                correct_answer_count=correct_answer_count,
+                conversation_complete=False,
+                focus_mode=focus_mode,
+                is_correct=is_engaged and is_factually_correct if is_engaged is not None else None,
+                is_engaged=is_engaged,
+                is_factually_correct=is_factually_correct,
+                correctness_reasoning=correctness_reasoning if is_factually_correct == False else None,
+                new_object_name=new_object_name,
+                detected_object_name=detected_object_name,
+                switch_decision_reasoning=switch_decision_reasoning,
+                response_type="followup_question"
+            )
+
+        # Combine response and question for conversation history
+        full_response = full_response_text + " " + full_question_text
+        prepared_messages.append({"role": "assistant", "content": full_response})
+
+        # Set stream_generator to None to skip old streaming logic
+        stream_generator = None
 
     # Stream chunks from the selected generator
     if stream_generator:
-        new_object_name = None
-        detected_object_name = None
-        switch_decision_reasoning = None
-        buffer = ""
-
         async for chunked_text, chunk_token_usage, full_text, decision_info in stream_generator:
             # Capture decision info from streaming functions
             if decision_info:

@@ -61,6 +61,7 @@ Help the child move forward based on the TYPE of question asked:
 
 CRITICAL:
 - DO NOT ask any follow-up questions
+- DO NOT use question marks (!)
 - Keep it short (1-2 sentences)
 - Match vocabulary to age {age}
 - Respond naturally (NOT JSON)
@@ -111,10 +112,12 @@ AGE GUIDANCE:
 
 CRITICAL RULES:
 1. **STRICTLY FOLLOW THE STRATEGY GUIDANCE ABOVE** - This determines the type of question.
-2. Start with a short bridge phrase like "Now," or "Moving on," or "Tell me,"
-3. Keep the question short and inviting.
-4. Match question complexity to age {age}.
-5. Respond naturally (NOT JSON).
+2. DO NOT provide explanations or feedback about previous answers
+3. DO NOT respond to the child's previous answer
+4. Start with a short bridge phrase like "Now," or "Moving on," or "Tell me,"
+5. Keep the question short and inviting.
+6. Match question complexity to age {age}.
+7. Respond naturally (NOT JSON).
 """
 
 # ============================================================================
