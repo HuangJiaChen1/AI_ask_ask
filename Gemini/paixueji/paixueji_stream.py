@@ -1705,7 +1705,8 @@ async def call_paixueji_stream(
             "level1_category": level1_category,
             "level2_category": level2_category,
             "correct_answer_count": correct_answer_count,
-            "focus_mode": focus_mode
+            "focus_mode": focus_mode,
+            "tone": assistant.tone
         }
         current_node.user_input = content if turn_number > 0 else None
 
@@ -1718,6 +1719,8 @@ async def call_paixueji_stream(
     sequence_number = 0
     token_usage = None
     full_response = ""
+    full_response_text = None
+    full_question_text = None
     buffer = ""
     new_object_name = None
     detected_object_name = None
@@ -2158,6 +2161,8 @@ async def call_paixueji_stream(
     # Finalize tree node
     if current_node:
         current_node.ai_response = full_response
+        current_node.ai_response_part1 = full_response_text
+        current_node.ai_response_part2 = full_question_text
         current_node.response_duration = elapsed_time
 
         # Capture state changes
@@ -2174,3 +2179,22 @@ async def call_paixueji_stream(
             "chunk_count": sequence_number,
             "token_usage": token_usage.model_dump() if token_usage else None
         }
+
+        # [DEBUG LOG] Structured output matching Debug Panel
+        state_b = current_node.state_before
+        val = current_node.validation or {}
+        dec = current_node.decision or {}
+        
+        log_msg = (
+            f"\n\n[DEBUG TREE NODE] Turn {current_node.turn_number} ({current_node.type.upper()})\n"
+            f"--------------------------------------------------\n"
+            f"👤 USER INPUT: {current_node.user_input or '(None)'}\n"
+            f"🧠 CONTEXT: Object='{state_b.get('object_name')}' | Tone='{state_b.get('tone')}' | Focus='{state_b.get('focus_mode')}'\n"
+            f"🔍 VALIDATION: Engaged={val.get('is_engaged')} | Correct={val.get('is_factually_correct')}\n"
+            f"💭 REASONING: {val.get('correctness_reasoning') or 'N/A'}\n"
+            f"⚡ DECISION: {dec.get('decision_type') or 'N/A'} (Reason: {dec.get('switch_reasoning') or 'N/A'})\n"
+            f"🗣️ RESPONSE PART 1: {current_node.ai_response_part1 or '(None)'}\n"
+            f"❓ RESPONSE PART 2: {current_node.ai_response_part2 or '(None)'}\n"
+            f"--------------------------------------------------\n"
+        )
+        logger.debug(log_msg)

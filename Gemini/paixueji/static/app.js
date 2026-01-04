@@ -919,48 +919,51 @@ if (typeof mermaid !== 'undefined') {
 }
 
 /**
- * Toggle visibility of conversation flow tree
+ * Show conversation flow tree in a modal popup
  */
-async function toggleFlowTree() {
-    const container = document.getElementById('flowTreeContainer');
+async function showFlowTreeModal() {
+    const modal = document.getElementById('flowTreeModal');
+    const diagramContainer = document.getElementById('modalMermaidDiagram');
 
-    if (container.style.display === 'none') {
-        if (!sessionId) {
-            alert('No active session');
-            return;
-        }
-
-        try {
-            const response = await fetch(`${API_BASE}/debug/flow-tree/${sessionId}?format=mermaid`);
-            const data = await response.json();
-
-            if (data.success) {
-                const diagramContainer = document.getElementById('mermaidDiagram');
-
-                // Clear previous diagram
-                diagramContainer.innerHTML = '';
-
-                // Create a new div for the diagram
-                const diagramDiv = document.createElement('div');
-                diagramDiv.className = 'mermaid';
-                diagramDiv.textContent = data.diagram;
-                diagramContainer.appendChild(diagramDiv);
-
-                // Show container first so Mermaid can calculate dimensions
-                container.style.display = 'block';
-
-                // Render the Mermaid diagram
-                await mermaid.run({ nodes: [diagramDiv] });
-            } else {
-                alert('Error: ' + data.error);
-            }
-        } catch (error) {
-            console.error('Flow tree error:', error);
-            alert('Failed to load flow tree');
-        }
-    } else {
-        container.style.display = 'none';
+    if (!sessionId) {
+        alert('No active session');
+        return;
     }
+
+    // Show modal immediately
+    modal.style.display = 'flex';
+    diagramContainer.innerHTML = '<div style="text-align: center; padding: 20px;">Loading...</div>';
+
+    try {
+        const response = await fetch(`${API_BASE}/debug/flow-tree/${sessionId}?format=mermaid`);
+        const data = await response.json();
+
+        if (data.success) {
+            // Clear previous diagram
+            diagramContainer.innerHTML = '';
+
+            // Create a new div for the diagram
+            const diagramDiv = document.createElement('div');
+            diagramDiv.className = 'mermaid';
+            diagramDiv.textContent = data.diagram;
+            diagramContainer.appendChild(diagramDiv);
+
+            // Render the Mermaid diagram
+            await mermaid.run({ nodes: [diagramDiv] });
+        } else {
+            diagramContainer.innerHTML = `<div style="color: red; padding: 20px;">Error: ${data.error}</div>`;
+        }
+    } catch (error) {
+        console.error('Flow tree error:', error);
+        diagramContainer.innerHTML = `<div style="color: red; padding: 20px;">Failed to load flow tree: ${error.message}</div>`;
+    }
+}
+
+/**
+ * Close the flow tree modal
+ */
+function closeFlowTreeModal() {
+    document.getElementById('flowTreeModal').style.display = 'none';
 }
 
 /**

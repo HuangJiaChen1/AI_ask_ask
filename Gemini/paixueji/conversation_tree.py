@@ -31,6 +31,8 @@ class ConversationTreeNode:
         # Core conversation data
         self.user_input = None
         self.ai_response = None
+        self.ai_response_part1 = None  # Feedback / Explanation
+        self.ai_response_part2 = None  # Follow-up Question
         self.response_duration = 0.0
 
         # State tracking (before/after snapshots)
@@ -56,6 +58,8 @@ class ConversationTreeNode:
             "type": self.type,
             "user_input": self.user_input,
             "ai_response": self.ai_response,
+            "ai_response_part1": self.ai_response_part1,
+            "ai_response_part2": self.ai_response_part2,
             "response_duration": round(self.response_duration, 3),
             "state_before": self.state_before,
             "state_after": self.state_after,

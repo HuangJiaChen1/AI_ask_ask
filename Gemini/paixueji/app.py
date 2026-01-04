@@ -499,148 +499,172 @@ def get_flow_tree(session_id):
         }), 500
 
 
+def escape_mermaid_text(text):
+    """Escape text for Mermaid diagram labels."""
+    if not text:
+        return "N/A"
+    # Escape quotes and handle newlines
+    # 1. Replace double quotes with single quotes to avoid breaking label syntax
+    # 2. Replace newlines with <br/> for formatting
+    # 3. Escape special characters if necessary (keeping it simple for now)
+    return str(text).replace('"', "'").replace('\n', '<br/>')
+
+
 def convert_tree_to_mermaid(flow_tree):
     """Convert flow tree to Mermaid diagram syntax with comprehensive debugging info."""
     lines = ["graph TD"]
+    
+    # Strategy descriptions for readable intent
+    FOCUS_DESCRIPTIONS = {
+        "depth": "Dive Deeper (Features/Uses)",
+        "width_shape": "Width: Same Shape",
+        "width_color": "Width: Same Color",
+        "width_category": "Width: Same Category"
+    }
+
+    # Track previous output node to connect turns
+    previous_output_id = None
 
     for node in flow_tree.nodes:
-        # Helper function to truncate text safely
-        def truncate(text, max_len=35):
-            if not text:
-                return "N/A"
-            text = str(text).replace('"', "'").replace("\n", " ")
-            return text[:max_len] + "..." if len(text) > max_len else text
+        node_id = node.node_id
+        
+        # Create a subgraph for this turn to group related steps
+        lines.append(f'    subgraph Turn_{node.turn_number} ["🔄 Turn {node.turn_number}: {node.type.upper()}"]')
+        lines.append('    direction TB')
 
-        # === HEADER: Turn number and type ===
-        obj = node.state_after.get('object_name') or node.state_before.get('object_name')
-        label_parts = [f"🔄 T{node.turn_number}: {node.type.upper()}"]
-        label_parts.append(f"📦 Object: {obj}")
-
-        # === USER INPUT ===
+        # === 1. USER INPUT ===
+        input_id = f"{node_id}_input"
+        input_content = "Start of Conversation"
         if node.user_input:
-            label_parts.append(f"👦 Child: {truncate(node.user_input, 40)}")
+            input_content = escape_mermaid_text(node.user_input)
+        elif node.turn_number > 0:
+            input_content = "(No Input / System Trigger)"
+            
+        lines.append(f'    {input_id}["👤 User Input:<br/>{input_content}"]')
+        lines.append(f'    style {input_id} fill:#e3f2fd,stroke:#2196f3,stroke-width:2px')
 
-        # === VALIDATION STATUS ===
+        # === 2. DECISION LOGIC & CONTEXT ===
+        # Gather all context and reasoning
+        logic_id = f"{node_id}_logic"
+        logic_lines = []
+        
+        # Context (Object + Tone)
+        obj = node.state_before.get('object_name', 'N/A')
+        tone = node.state_before.get('tone', 'Default')
+        logic_lines.append(f"<b>Context:</b> Object='{obj}' | Tone='{tone}'")
+        
+        # Active Strategy (Focus Mode)
+        focus_mode = node.state_before.get('focus_mode')
+        if focus_mode:
+            strategy_desc = FOCUS_DESCRIPTIONS.get(focus_mode, focus_mode)
+            logic_lines.append(f"<b>Strategy:</b> {strategy_desc}")
+
+        # Validation Info
         if node.validation:
             engaged = node.validation.get('is_engaged')
             correct = node.validation.get('is_factually_correct')
-
-            # Build validation line with emojis
-            val_line = "🔍 "
-            if engaged is False:
-                val_line += "❌ NOT ENGAGED"
-            elif engaged is True:
-                if correct is True:
-                    val_line += "✅ CORRECT"
-                elif correct is False:
-                    val_line += "❌ INCORRECT"
-                else:
-                    val_line += "⚠️ ENGAGED (no correctness)"
-            else:
-                val_line += "⚪ No validation"
-
-            label_parts.append(val_line)
-
-            # Add correctness reasoning if available
-            reasoning = node.validation.get('correctness_reasoning')
-            if reasoning:
-                label_parts.append(f"💭 Why: {truncate(reasoning, 50)}")
-
-        # === AI RESPONSE PREVIEW ===
-        if node.ai_response:
-            label_parts.append(f"🤖 AI: {truncate(node.ai_response, 45)}")
-
-        # === STATE CHANGES ===
-        state_changes = []
-        if node.state_after:
-            if 'correct_answer_count' in node.state_after:
-                old_count = node.state_before.get('correct_answer_count', 0)
-                new_count = node.state_after['correct_answer_count']
-                state_changes.append(f"✨ Correct: {old_count}→{new_count}")
-
-            if 'object_name' in node.state_after:
-                old_obj = node.state_before.get('object_name', 'None')
-                new_obj = node.state_after['object_name']
-                state_changes.append(f"🔀 Topic: {old_obj}→{new_obj}")
-
-            if 'level2_category' in node.state_after:
-                old_cat = node.state_before.get('level2_category', 'None')
-                new_cat = node.state_after['level2_category']
-                state_changes.append(f"📂 Cat: {old_cat}→{new_cat}")
-
-        if state_changes:
-            label_parts.extend(state_changes)
-
-        # === DECISION INFO (Topic Switching) ===
+            
+            status_icon = "⚪"
+            if engaged is False: status_icon = "❌ STUCK"
+            elif correct is True: status_icon = "✅ CORRECT"
+            elif correct is False: status_icon = "❌ WRONG"
+            
+            logic_lines.append(f"<b>Validation:</b> {status_icon}")
+            
+            if node.validation.get('correctness_reasoning'):
+                logic_lines.append(f"<i>Reasoning:</i> {escape_mermaid_text(node.validation['correctness_reasoning'])}")
+        
+        # Decision Info (Switching)
         if node.decision:
-            decision_type = node.decision.get('decision_type')
-            if decision_type == 'SWITCH':
-                detected_obj = node.decision.get('detected_object', 'unknown')
-                label_parts.append(f"⚡ SWITCH DETECTED → {detected_obj}")
-            elif decision_type == 'STAY':
-                label_parts.append("⚡ STAY on current topic")
+            dec_type = node.decision.get('decision_type')
+            detected = node.decision.get('detected_object')
+            
+            logic_lines.append(f"<b>Decision:</b> {dec_type}")
+            if detected:
+                logic_lines.append(f"<i>Detected Object:</i> {detected}")
+            
+            if node.decision.get('switch_reasoning'):
+                logic_lines.append(f"<i>Logic:</i> {escape_mermaid_text(node.decision['switch_reasoning'])}")
 
-        # === PERFORMANCE METRICS ===
-        perf_parts = []
-        if node.response_duration:
-            perf_parts.append(f"⏱️ {node.response_duration:.2f}s")
+        logic_content = "<br/>".join(logic_lines) if logic_lines else "No logic data"
+        lines.append(f'    {logic_id}["🧠 Logic & Analysis:<br/>{logic_content}"]')
+        lines.append(f'    style {logic_id} fill:#fff9c4,stroke:#fbc02d,stroke-width:2px')
 
-        if node.metadata and node.metadata.get('token_usage'):
-            tokens = node.metadata['token_usage']
-            if 'total_tokens' in tokens:
-                perf_parts.append(f"🎫 {tokens['total_tokens']} tokens")
+        # === 3. SYSTEM ACTION ===
+        action_id = f"{node_id}_action"
+        action_lines = []
+        
+        action_lines.append(f"<b>Route:</b> {node.type}")
+        
+        # State Changes
+        if node.state_after:
+            changes = []
+            for k, v in node.state_after.items():
+                old_v = node.state_before.get(k)
+                if v != old_v:
+                    changes.append(f"{k}: {old_v} -> {v}")
+            
+            if changes:
+                action_lines.append("<b>State Updates:</b><br/>" + "<br/>".join(changes))
+        
+        action_content = "<br/>".join(action_lines)
+        lines.append(f'    {action_id}["⚙️ System Action:<br/>{action_content}"]')
+        lines.append(f'    style {action_id} fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px')
 
-        if perf_parts:
-            label_parts.append(" | ".join(perf_parts))
-
-        # === BUILD FINAL LABEL ===
-        label = "<br/>".join(label_parts)
-
-        # === NODE STYLING ===
-        # Color code based on validation result for easy visual debugging
-        if node.validation:
-            engaged = node.validation.get('is_engaged')
-            correct = node.validation.get('is_factually_correct')
-
-            if engaged is False:
-                # Not engaged - yellow/orange
-                style = "fill:#fff3e0,stroke:#ff9800,stroke-width:3px"
-            elif correct is True:
-                # Correct answer - green
-                style = "fill:#e8f5e9,stroke:#4caf50,stroke-width:3px"
-            elif correct is False:
-                # Incorrect answer - red
-                style = "fill:#ffebee,stroke:#f44336,stroke-width:3px"
-            else:
-                # Engaged but no correctness - blue
-                style = "fill:#e3f2fd,stroke:#2196f3,stroke-width:2px"
+        # === 4. AI RESPONSE (Split into Parts) ===
+        output_id = f"{node_id}_output"
+        
+        # Check if we have split parts (for dual-parallel turns)
+        has_split_parts = getattr(node, 'ai_response_part1', None) or getattr(node, 'ai_response_part2', None)
+        
+        if has_split_parts:
+            # PART 1: Feedback / Explanation / Correction
+            part1_content = "(None)"
+            if node.ai_response_part1:
+                part1_content = escape_mermaid_text(node.ai_response_part1)
+                
+            part1_id = f"{node_id}_resp1"
+            lines.append(f'    {part1_id}["🗣️ Feedback / Explanation:<br/>{part1_content}"]')
+            lines.append(f'    style {part1_id} fill:#c8e6c9,stroke:#388e3c,stroke-width:2px')
+            
+            # PART 2: Follow-up Question
+            part2_content = "(None)"
+            if node.ai_response_part2:
+                part2_content = escape_mermaid_text(node.ai_response_part2)
+                
+            part2_id = f"{node_id}_resp2"
+            lines.append(f'    {part2_id}["❓ Follow-up Question:<br/>{part2_content}"]')
+            lines.append(f'    style {part2_id} fill:#b3e5fc,stroke:#0288d1,stroke-width:2px')
+            
+            # Link Action -> Part 1 -> Part 2
+            lines.append(f'    {action_id} --> {part1_id}')
+            lines.append(f'    {part1_id} --> {part2_id}')
+            
+            # Set output_id to the last part for the next turn's link
+            output_id = part2_id
+            
         else:
-            # No validation (e.g., introduction) - light gray
-            style = "fill:#f5f5f5,stroke:#9e9e9e,stroke-width:2px"
+            # Legacy/Introduction turns (single response)
+            output_content = "(Generating...)"
+            if node.ai_response:
+                output_content = escape_mermaid_text(node.ai_response)
+            
+            lines.append(f'    {output_id}["🤖 AI Response:<br/>{output_content}"]')
+            lines.append(f'    style {output_id} fill:#e8f5e9,stroke:#4caf50,stroke-width:2px')
+            
+            lines.append(f'    {action_id} --> {output_id}')
 
-        # Add node
-        lines.append(f'    {node.node_id}["{label}"]')
-        lines.append(f'    style {node.node_id} {style}')
+        # === INTERNAL SUBGRAPH LINKS ===
+        lines.append(f'    {input_id} --> {logic_id}')
+        lines.append(f'    {logic_id} --> {action_id}')
+        
+        lines.append('    end') # End subgraph
 
-        # === EDGE WITH LABEL ===
-        if node.parent_id:
-            # Add edge label showing the flow logic
-            edge_label = ""
-            if node.validation:
-                engaged = node.validation.get('is_engaged')
-                correct = node.validation.get('is_factually_correct')
-
-                if engaged is False:
-                    edge_label = "Not engaged"
-                elif correct is True:
-                    edge_label = "Correct ✓"
-                elif correct is False:
-                    edge_label = "Wrong ✗"
-
-            if edge_label:
-                lines.append(f'    {node.parent_id} -->|{edge_label}| {node.node_id}')
-            else:
-                lines.append(f'    {node.parent_id} --> {node.node_id}')
+        # === LINK TO PREVIOUS TURN ===
+        if previous_output_id:
+            lines.append(f'    {previous_output_id} --> {input_id}')
+        
+        previous_output_id = output_id
 
     return "\n".join(lines)
 
