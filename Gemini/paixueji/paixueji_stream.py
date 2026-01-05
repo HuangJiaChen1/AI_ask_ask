@@ -1890,20 +1890,6 @@ async def call_paixueji_stream(
                     "routing": response_type
                 }
 
-        # ALWAYS generate follow-up question (for all non-introduction turns)
-        question_generator = generate_followup_question_stream(
-            messages=prepared_messages,
-            object_name=object_name,  # Updated object if switched
-            correct_count=correct_answer_count,
-            category_prompt=category_prompt,
-            age_prompt=age_prompt,
-            age=age or 6,
-            focus_prompt=focus_prompt,
-            config=config,
-            client=client,
-            is_topic_switch=should_switch
-        )
-
         # DUAL-PARALLEL STREAMING: Stream response first, then question
         full_response_text = ""
         full_question_text = ""
@@ -1970,6 +1956,27 @@ async def call_paixueji_stream(
                 switch_decision_reasoning=switch_decision_reasoning,
                 response_type=response_type
             )
+
+        # CRITICAL FIX: Update messages with the generated response BEFORE asking follow-up
+        # This ensures the question generator sees the explanation/feedback we just gave
+        question_messages = prepared_messages.copy()
+        if full_response_text:
+            question_messages.append({"role": "assistant", "content": full_response_text})
+        
+        # ALWAYS generate follow-up question (for all non-introduction turns)
+        # Now using the updated history including the response
+        question_generator = generate_followup_question_stream(
+            messages=question_messages,
+            object_name=object_name,  # Updated object if switched
+            correct_count=correct_answer_count,
+            category_prompt=category_prompt,
+            age_prompt=age_prompt,
+            age=age or 6,
+            focus_prompt=focus_prompt,
+            config=config,
+            client=client,
+            is_topic_switch=should_switch
+        )
 
         # Stream question generator
         try:

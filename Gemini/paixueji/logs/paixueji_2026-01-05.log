@@ -1,0 +1,432 @@
+2026-01-05 09:44:32.951 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [8cfad8a5-e466-486f-891e-da8cada528b2] call_paixueji_stream started | session_id=8cfad8a5-e466-486f-891e-da8cada528b2, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2026-01-05 09:44:32.952 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [8cfad8a5-e466-486f-891e-da8cada528b2] Conversation state | correct_count=0, complete=False
+2026-01-05 09:44:32.952 | INFO     | paixueji_stream:call_paixueji_stream:1756 | [8cfad8a5-e466-486f-891e-da8cada528b2] Routing to introduction question
+2026-01-05 09:44:32.952 | INFO     | paixueji_stream:ask_introduction_question_stream:174 | ask_introduction_question_stream started | object=banana, age=6
+2026-01-05 09:44:32.952 | DEBUG    | paixueji_stream:ask_introduction_question_stream:190 | Messages prepared for API | count=3
+2026-01-05 09:44:32.952 | DEBUG    | paixueji_stream:ask_introduction_question_stream:201 | Sending 2 messages to Gemini API
+2026-01-05 09:44:32.954 | DEBUG    | paixueji_stream:ask_introduction_question_stream:218 | Stream object type: generator
+2026-01-05 09:45:01.091 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 1 | length=2, total_length=2
+2026-01-05 09:45:01.092 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 2 | length=9, total_length=11
+2026-01-05 09:45:01.125 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 3 | length=55, total_length=66
+2026-01-05 09:45:01.240 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 4 | length=82, total_length=148
+2026-01-05 09:45:01.281 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 5 | length=49, total_length=197
+2026-01-05 09:45:01.284 | DEBUG    | paixueji_stream:ask_introduction_question_stream:238 | Gemini streaming API does not provide token usage in stream mode
+2026-01-05 09:45:01.284 | DEBUG    | paixueji_stream:ask_introduction_question_stream:257 | Cleaned up stream via del in finally block
+2026-01-05 09:45:01.284 | INFO     | paixueji_stream:ask_introduction_question_stream:262 | ask_introduction_question_stream completed | duration=28.332s, response_length=197
+2026-01-05 09:45:01.284 | WARNING  | paixueji_stream:ask_introduction_question_stream:268 | Slow LLM call | duration=28.332s exceeded threshold 5.0s
+2026-01-05 09:45:01.284 | INFO     | paixueji_stream:call_paixueji_stream:2119 | [8cfad8a5-e466-486f-891e-da8cada528b2] call_paixueji_stream completed | response_type=introduction, duration=28.333s, total_chunks=5, response_length=197, correct_count=0, complete=False, session_finished=False
+2026-01-05 09:45:01.284 | DEBUG    | paixueji_stream:call_paixueji_stream:2127 | Full response: Ahoy there, matey! Today we've got a yummy banana to talk about!
+
+Now, look at this banana, a fine curved treasure! Can ye think of any other things in the world that have a shape like this banana?...
+2026-01-05 09:45:01.284 | DEBUG    | paixueji_stream:call_paixueji_stream:2200 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+👤 USER INPUT: (None)
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='width_shape'
+🔍 VALIDATION: Engaged=None | Correct=None
+💭 REASONING: N/A
+⚡ DECISION: N/A (Reason: N/A)
+🗣️ RESPONSE PART 1: (None)
+❓ RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-05 09:45:35.118 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [8cfad8a5-e466-486f-891e-da8cada528b2] call_paixueji_stream started | session_id=8cfad8a5-e466-486f-891e-da8cada528b2, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=12, message_history=2
+2026-01-05 09:45:35.118 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [8cfad8a5-e466-486f-891e-da8cada528b2] Conversation state | correct_count=0, complete=False
+2026-01-05 09:45:35.118 | INFO     | paixueji_stream:call_paixueji_stream:1765 | [8cfad8a5-e466-486f-891e-da8cada528b2] Running unified AI validation for answer
+2026-01-05 09:45:40.654 | INFO     | paixueji_stream:decide_topic_switch_with_validation:955 | [VALIDATE] CONTINUE | new_object=None, engaged=False, correct=False, switch_reasoning=The child is stuck and needs more help with the current object., correctness_reasoning=The child indicated they don't know the answer.
+2026-01-05 09:45:40.654 | INFO     | paixueji_stream:call_paixueji_stream:1809 | [8cfad8a5-e466-486f-891e-da8cada528b2] Routing to explanation | is_engaged=False
+2026-01-05 09:45:40.654 | DEBUG    | paixueji_stream:call_paixueji_stream:1913 | [8cfad8a5-e466-486f-891e-da8cada528b2] Streaming response (explanation)
+2026-01-05 09:45:40.654 | INFO     | paixueji_stream:generate_explanation_response_stream:402 | generate_explanation_response_stream started | object=banana, age=6
+2026-01-05 09:45:41.856 | INFO     | paixueji_stream:generate_explanation_response_stream:458 | generate_explanation_response_stream completed | duration=1.202s, length=112
+2026-01-05 09:45:41.856 | DEBUG    | paixueji_stream:call_paixueji_stream:1976 | [8cfad8a5-e466-486f-891e-da8cada528b2] Streaming question
+2026-01-05 09:45:41.856 | INFO     | paixueji_stream:generate_followup_question_stream:677 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-05 09:45:42.802 | INFO     | paixueji_stream:generate_followup_question_stream:734 | generate_followup_question_stream completed | duration=0.946s, length=42
+2026-01-05 09:45:42.803 | INFO     | paixueji_stream:call_paixueji_stream:2119 | [8cfad8a5-e466-486f-891e-da8cada528b2] call_paixueji_stream completed | response_type=explanation, duration=7.685s, total_chunks=6, response_length=155, correct_count=0, complete=False, session_finished=False
+2026-01-05 09:45:42.803 | DEBUG    | paixueji_stream:call_paixueji_stream:2127 | Full response: Ahoy, matey! Don't ye worry yer sea legs! A smile is shaped like a banana, and so is a crescent moon in the sky! Tell me, matey, what color is this banana?...
+2026-01-05 09:45:42.804 | DEBUG    | paixueji_stream:call_paixueji_stream:2200 | 
+
+[DEBUG TREE NODE] Turn 1 (EXPLANATION)
+--------------------------------------------------
+👤 USER INPUT: I don't know
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='width_shape'
+🔍 VALIDATION: Engaged=False | Correct=False
+💭 REASONING: The child indicated they don't know the answer.
+⚡ DECISION: CONTINUE (Reason: The child is stuck and needs more help with the current object.)
+🗣️ RESPONSE PART 1: Ahoy, matey! Don't ye worry yer sea legs! A smile is shaped like a banana, and so is a crescent moon in the sky!
+❓ RESPONSE PART 2: Tell me, matey, what color is this banana?
+--------------------------------------------------
+
+2026-01-05 09:48:17.848 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [8cfad8a5-e466-486f-891e-da8cada528b2] call_paixueji_stream started | session_id=8cfad8a5-e466-486f-891e-da8cada528b2, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=20, message_history=3
+2026-01-05 09:48:17.848 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [8cfad8a5-e466-486f-891e-da8cada528b2] Conversation state | correct_count=0, complete=False
+2026-01-05 09:48:17.848 | INFO     | paixueji_stream:call_paixueji_stream:1765 | [8cfad8a5-e466-486f-891e-da8cada528b2] Running unified AI validation for answer
+2026-01-05 09:48:20.244 | INFO     | paixueji_stream:decide_topic_switch_with_validation:955 | [VALIDATE] SWITCH | new_object=yellow, engaged=True, correct=True, switch_reasoning=The child correctly identified the color of the banana as yellow. Since the focus is on width and shape, and the child has answered correctly, we can switch to the color 'yellow' as the new object., correctness_reasoning=Bananas are typically yellow when ripe, so the answer is correct.
+2026-01-05 09:48:21.251 | WARNING  | paixueji_stream:call_paixueji_stream:1831 | [8cfad8a5-e466-486f-891e-da8cada528b2] Classification timeout for yellow
+2026-01-05 09:48:21.385 | INFO     | paixueji_stream:call_paixueji_stream:1852 | [8cfad8a5-e466-486f-891e-da8cada528b2] Routing to topic switch | banana -> yellow
+2026-01-05 09:48:21.385 | DEBUG    | paixueji_stream:call_paixueji_stream:1913 | [8cfad8a5-e466-486f-891e-da8cada528b2] Streaming response (topic_switch)
+2026-01-05 09:48:21.385 | INFO     | paixueji_stream:generate_topic_switch_response_stream:582 | generate_topic_switch_response_stream started | banana -> yellow, age=6
+2026-01-05 09:48:22.655 | INFO     | paixueji_stream:generate_topic_switch_response_stream:637 | generate_topic_switch_response_stream completed | duration=1.269s, length=233
+2026-01-05 09:48:22.655 | DEBUG    | paixueji_stream:call_paixueji_stream:1976 | [8cfad8a5-e466-486f-891e-da8cada528b2] Streaming question
+2026-01-05 09:48:22.655 | INFO     | paixueji_stream:generate_followup_question_stream:677 | generate_followup_question_stream started | object=yellow, age=6, is_switch=True
+2026-01-05 09:48:24.776 | INFO     | paixueji_stream:generate_followup_question_stream:734 | generate_followup_question_stream completed | duration=2.121s, length=131
+2026-01-05 09:48:24.776 | INFO     | paixueji_stream:call_paixueji_stream:2119 | [8cfad8a5-e466-486f-891e-da8cada528b2] call_paixueji_stream completed | response_type=topic_switch, duration=6.928s, total_chunks=9, response_length=365, correct_count=0, complete=False, session_finished=False
+2026-01-05 09:48:24.776 | DEBUG    | paixueji_stream:call_paixueji_stream:2127 | Full response: Aye, ye be right, matey! Yellow it is! A bright and sunny yellow, just like a pirate's gold doubloons!
+
+Now, tell me, what does this yellow banana feel like when ye touch it? Is it smooth like a calm sea, or bumpy like a rocky shore? Ahoy, matey! That's right, it's a lovely yellow! Now, tell me, what other things do ye know that are also yellow, like this banana?...
+2026-01-05 09:48:24.776 | DEBUG    | paixueji_stream:call_paixueji_stream:2200 | 
+
+[DEBUG TREE NODE] Turn 2 (TOPIC_SWITCH)
+--------------------------------------------------
+👤 USER INPUT: I think it is yellow
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='width_shape'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: Bananas are typically yellow when ripe, so the answer is correct.
+⚡ DECISION: SWITCH (Reason: The child correctly identified the color of the banana as yellow. Since the focus is on width and shape, and the child has answered correctly, we can switch to the color 'yellow' as the new object.)
+🗣️ RESPONSE PART 1: Aye, ye be right, matey! Yellow it is! A bright and sunny yellow, just like a pirate's gold doubloons!
+
+Now, tell me, what does this yellow banana feel like when ye touch it? Is it smooth like a calm sea, or bumpy like a rocky shore?
+❓ RESPONSE PART 2: Ahoy, matey! That's right, it's a lovely yellow! Now, tell me, what other things do ye know that are also yellow, like this banana?
+--------------------------------------------------
+
+2026-01-05 09:52:19.654 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [542ac7ff-9c08-44d0-acca-8874410e5230] call_paixueji_stream started | session_id=542ac7ff-9c08-44d0-acca-8874410e5230, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2026-01-05 09:52:19.655 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [542ac7ff-9c08-44d0-acca-8874410e5230] Conversation state | correct_count=0, complete=False
+2026-01-05 09:52:19.655 | INFO     | paixueji_stream:call_paixueji_stream:1756 | [542ac7ff-9c08-44d0-acca-8874410e5230] Routing to introduction question
+2026-01-05 09:52:19.655 | INFO     | paixueji_stream:ask_introduction_question_stream:174 | ask_introduction_question_stream started | object=banana, age=6
+2026-01-05 09:52:19.655 | DEBUG    | paixueji_stream:ask_introduction_question_stream:190 | Messages prepared for API | count=3
+2026-01-05 09:52:19.655 | DEBUG    | paixueji_stream:ask_introduction_question_stream:201 | Sending 2 messages to Gemini API
+2026-01-05 09:52:19.655 | DEBUG    | paixueji_stream:ask_introduction_question_stream:218 | Stream object type: generator
+2026-01-05 09:52:26.847 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 1 | length=2, total_length=2
+2026-01-05 09:52:26.870 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 2 | length=9, total_length=11
+2026-01-05 09:52:26.907 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 3 | length=58, total_length=69
+2026-01-05 09:52:26.955 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 4 | length=57, total_length=126
+2026-01-05 09:52:27.040 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 5 | length=114, total_length=240
+2026-01-05 09:52:27.045 | DEBUG    | paixueji_stream:ask_introduction_question_stream:238 | Gemini streaming API does not provide token usage in stream mode
+2026-01-05 09:52:27.045 | DEBUG    | paixueji_stream:ask_introduction_question_stream:257 | Cleaned up stream via del in finally block
+2026-01-05 09:52:27.045 | INFO     | paixueji_stream:ask_introduction_question_stream:262 | ask_introduction_question_stream completed | duration=7.391s, response_length=240
+2026-01-05 09:52:27.045 | WARNING  | paixueji_stream:ask_introduction_question_stream:268 | Slow LLM call | duration=7.391s exceeded threshold 5.0s
+2026-01-05 09:52:27.045 | INFO     | paixueji_stream:call_paixueji_stream:2119 | [542ac7ff-9c08-44d0-acca-8874410e5230] call_paixueji_stream completed | response_type=introduction, duration=7.391s, total_chunks=5, response_length=240, correct_count=0, complete=False, session_finished=False
+2026-01-05 09:52:27.046 | DEBUG    | paixueji_stream:call_paixueji_stream:2127 | Full response: Ahoy there, matey! Let's talk about a yummy treat today – a banana!
+
+Now, look at this banana. It's got a special shape, doesn't it? Can you think of any other things, maybe toys or even other foods, that have a shape kind of like a banana?...
+2026-01-05 09:52:27.046 | DEBUG    | paixueji_stream:call_paixueji_stream:2200 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+👤 USER INPUT: (None)
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='width_shape'
+🔍 VALIDATION: Engaged=None | Correct=None
+💭 REASONING: N/A
+⚡ DECISION: N/A (Reason: N/A)
+🗣️ RESPONSE PART 1: (None)
+❓ RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-05 09:52:46.523 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [542ac7ff-9c08-44d0-acca-8874410e5230] call_paixueji_stream started | session_id=542ac7ff-9c08-44d0-acca-8874410e5230, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=7, message_history=2
+2026-01-05 09:52:46.523 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [542ac7ff-9c08-44d0-acca-8874410e5230] Conversation state | correct_count=0, complete=False
+2026-01-05 09:52:46.523 | INFO     | paixueji_stream:call_paixueji_stream:1765 | [542ac7ff-9c08-44d0-acca-8874410e5230] Running unified AI validation for answer
+2026-01-05 09:52:48.862 | INFO     | paixueji_stream:decide_topic_switch_with_validation:955 | [VALIDATE] SWITCH | new_object=knife, engaged=True, correct=True, switch_reasoning=The child named a new object (knife) in response to my question about similar shapes. This invites a switch to the new object., correctness_reasoning=A knife can have a curved shape similar to a banana, so the answer is acceptable.
+2026-01-05 09:52:49.868 | WARNING  | paixueji_stream:call_paixueji_stream:1831 | [542ac7ff-9c08-44d0-acca-8874410e5230] Classification timeout for knife
+2026-01-05 09:52:50.200 | INFO     | paixueji_stream:call_paixueji_stream:1852 | [542ac7ff-9c08-44d0-acca-8874410e5230] Routing to topic switch | banana -> knife
+2026-01-05 09:52:50.200 | DEBUG    | paixueji_stream:call_paixueji_stream:1913 | [542ac7ff-9c08-44d0-acca-8874410e5230] Streaming response (topic_switch)
+2026-01-05 09:52:50.200 | INFO     | paixueji_stream:generate_topic_switch_response_stream:582 | generate_topic_switch_response_stream started | banana -> knife, age=6
+2026-01-05 09:52:52.243 | INFO     | paixueji_stream:generate_topic_switch_response_stream:637 | generate_topic_switch_response_stream completed | duration=2.043s, length=117
+2026-01-05 09:52:52.244 | DEBUG    | paixueji_stream:call_paixueji_stream:1976 | [542ac7ff-9c08-44d0-acca-8874410e5230] Streaming question
+2026-01-05 09:52:52.244 | INFO     | paixueji_stream:generate_followup_question_stream:677 | generate_followup_question_stream started | object=knife, age=6, is_switch=True
+2026-01-05 09:52:53.411 | INFO     | paixueji_stream:generate_followup_question_stream:734 | generate_followup_question_stream completed | duration=1.167s, length=54
+2026-01-05 09:52:53.411 | INFO     | paixueji_stream:call_paixueji_stream:2119 | [542ac7ff-9c08-44d0-acca-8874410e5230] call_paixueji_stream completed | response_type=topic_switch, duration=6.888s, total_chunks=5, response_length=172, correct_count=0, complete=False, session_finished=False
+2026-01-05 09:52:53.412 | DEBUG    | paixueji_stream:call_paixueji_stream:2127 | Full response: A knife, ye say? Arrr, that's a different sort of treasure indeed! A knife is a very interesting thing to talk about! Tell me, matey, what do you think a knife is used for?...
+2026-01-05 09:52:53.412 | DEBUG    | paixueji_stream:call_paixueji_stream:2200 | 
+
+[DEBUG TREE NODE] Turn 1 (TOPIC_SWITCH)
+--------------------------------------------------
+👤 USER INPUT: a knife
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: A knife can have a curved shape similar to a banana, so the answer is acceptable.
+⚡ DECISION: SWITCH (Reason: The child named a new object (knife) in response to my question about similar shapes. This invites a switch to the new object.)
+🗣️ RESPONSE PART 1: A knife, ye say? Arrr, that's a different sort of treasure indeed! A knife is a very interesting thing to talk about!
+❓ RESPONSE PART 2: Tell me, matey, what do you think a knife is used for?
+--------------------------------------------------
+
+2026-01-05 09:53:01.332 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [542ac7ff-9c08-44d0-acca-8874410e5230] call_paixueji_stream started | session_id=542ac7ff-9c08-44d0-acca-8874410e5230, age=6, object=knife, level1=None, level2=None, level3=None, correct_count=1, status=normal, content_length=11, message_history=3
+2026-01-05 09:53:01.332 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [542ac7ff-9c08-44d0-acca-8874410e5230] Conversation state | correct_count=1, complete=False
+2026-01-05 09:53:01.332 | INFO     | paixueji_stream:call_paixueji_stream:1765 | [542ac7ff-9c08-44d0-acca-8874410e5230] Running unified AI validation for answer
+2026-01-05 09:53:05.086 | INFO     | paixueji_stream:decide_topic_switch_with_validation:955 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question directly and did not mention a new object., correctness_reasoning=Knives are indeed used for cutting things. This is a primary function.
+2026-01-05 09:53:05.087 | INFO     | paixueji_stream:call_paixueji_stream:1865 | [542ac7ff-9c08-44d0-acca-8874410e5230] Routing to feedback | is_engaged=True, is_factually_correct=True
+2026-01-05 09:53:05.087 | DEBUG    | paixueji_stream:call_paixueji_stream:1913 | [542ac7ff-9c08-44d0-acca-8874410e5230] Streaming response (feedback)
+2026-01-05 09:53:05.087 | INFO     | paixueji_stream:generate_feedback_response_stream:309 | generate_feedback_response_stream started | object=knife, age=6
+2026-01-05 09:53:06.439 | INFO     | paixueji_stream:generate_feedback_response_stream:364 | generate_feedback_response_stream completed | duration=1.352s, length=73
+2026-01-05 09:53:06.439 | DEBUG    | paixueji_stream:call_paixueji_stream:1976 | [542ac7ff-9c08-44d0-acca-8874410e5230] Streaming question
+2026-01-05 09:53:06.439 | INFO     | paixueji_stream:generate_followup_question_stream:677 | generate_followup_question_stream started | object=knife, age=6, is_switch=False
+2026-01-05 09:53:07.555 | INFO     | paixueji_stream:generate_followup_question_stream:734 | generate_followup_question_stream completed | duration=1.116s, length=45
+2026-01-05 09:53:07.556 | INFO     | paixueji_stream:call_paixueji_stream:2119 | [542ac7ff-9c08-44d0-acca-8874410e5230] call_paixueji_stream completed | response_type=feedback, duration=6.224s, total_chunks=6, response_length=119, correct_count=1, complete=False, session_finished=False
+2026-01-05 09:53:07.556 | DEBUG    | paixueji_stream:call_paixueji_stream:2127 | Full response: Arrr, ye got it, matey! Cutting is exactly what it's for! Smart thinking! Tell me, matey, what parts does a knife have?...
+2026-01-05 09:53:07.556 | DEBUG    | paixueji_stream:call_paixueji_stream:2200 | 
+
+[DEBUG TREE NODE] Turn 2 (FEEDBACK)
+--------------------------------------------------
+👤 USER INPUT: for cutting
+🧠 CONTEXT: Object='knife' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: Knives are indeed used for cutting things. This is a primary function.
+⚡ DECISION: CONTINUE (Reason: The child answered the question directly and did not mention a new object.)
+🗣️ RESPONSE PART 1: Arrr, ye got it, matey! Cutting is exactly what it's for! Smart thinking!
+❓ RESPONSE PART 2: Tell me, matey, what parts does a knife have?
+--------------------------------------------------
+
+2026-01-05 09:53:18.692 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [542ac7ff-9c08-44d0-acca-8874410e5230] call_paixueji_stream started | session_id=542ac7ff-9c08-44d0-acca-8874410e5230, age=6, object=knife, level1=None, level2=None, level3=None, correct_count=2, status=normal, content_length=14, message_history=4
+2026-01-05 09:53:18.692 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [542ac7ff-9c08-44d0-acca-8874410e5230] Conversation state | correct_count=2, complete=False
+2026-01-05 09:53:18.692 | INFO     | paixueji_stream:call_paixueji_stream:1765 | [542ac7ff-9c08-44d0-acca-8874410e5230] Running unified AI validation for answer
+2026-01-05 09:53:20.579 | INFO     | paixueji_stream:decide_topic_switch_with_validation:955 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question directly and didn't mention a new object., correctness_reasoning=A knife does have a blade. It's a key part of the knife.
+2026-01-05 09:53:20.580 | INFO     | paixueji_stream:call_paixueji_stream:1865 | [542ac7ff-9c08-44d0-acca-8874410e5230] Routing to feedback | is_engaged=True, is_factually_correct=True
+2026-01-05 09:53:20.580 | DEBUG    | paixueji_stream:call_paixueji_stream:1913 | [542ac7ff-9c08-44d0-acca-8874410e5230] Streaming response (feedback)
+2026-01-05 09:53:20.580 | INFO     | paixueji_stream:generate_feedback_response_stream:309 | generate_feedback_response_stream started | object=knife, age=6
+2026-01-05 09:53:21.171 | INFO     | paixueji_stream:generate_feedback_response_stream:364 | generate_feedback_response_stream completed | duration=0.592s, length=68
+2026-01-05 09:53:21.171 | DEBUG    | paixueji_stream:call_paixueji_stream:1976 | [542ac7ff-9c08-44d0-acca-8874410e5230] Streaming question
+2026-01-05 09:53:21.171 | INFO     | paixueji_stream:generate_followup_question_stream:677 | generate_followup_question_stream started | object=knife, age=6, is_switch=False
+2026-01-05 09:53:22.153 | INFO     | paixueji_stream:generate_followup_question_stream:734 | generate_followup_question_stream completed | duration=0.981s, length=66
+2026-01-05 09:53:22.153 | INFO     | paixueji_stream:call_paixueji_stream:2119 | [542ac7ff-9c08-44d0-acca-8874410e5230] call_paixueji_stream completed | response_type=feedback, duration=3.461s, total_chunks=6, response_length=135, correct_count=2, complete=False, session_finished=False
+2026-01-05 09:53:22.153 | DEBUG    | paixueji_stream:call_paixueji_stream:2127 | Full response: Arrr, a blade it is! Ye be a sharp one, matey! That's exactly right! Tell me, matey, what do you think the blade of a knife is made of?...
+2026-01-05 09:53:22.154 | DEBUG    | paixueji_stream:call_paixueji_stream:2200 | 
+
+[DEBUG TREE NODE] Turn 3 (FEEDBACK)
+--------------------------------------------------
+👤 USER INPUT: it has a blade
+🧠 CONTEXT: Object='knife' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: A knife does have a blade. It's a key part of the knife.
+⚡ DECISION: CONTINUE (Reason: The child answered the question directly and didn't mention a new object.)
+🗣️ RESPONSE PART 1: Arrr, a blade it is! Ye be a sharp one, matey! That's exactly right!
+❓ RESPONSE PART 2: Tell me, matey, what do you think the blade of a knife is made of?
+--------------------------------------------------
+
+2026-01-05 09:53:30.499 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [542ac7ff-9c08-44d0-acca-8874410e5230] call_paixueji_stream started | session_id=542ac7ff-9c08-44d0-acca-8874410e5230, age=6, object=knife, level1=None, level2=None, level3=None, correct_count=3, status=normal, content_length=17, message_history=5
+2026-01-05 09:53:30.500 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [542ac7ff-9c08-44d0-acca-8874410e5230] Conversation state | correct_count=3, complete=False
+2026-01-05 09:53:30.500 | INFO     | paixueji_stream:call_paixueji_stream:1765 | [542ac7ff-9c08-44d0-acca-8874410e5230] Running unified AI validation for answer
+2026-01-05 09:53:33.397 | INFO     | paixueji_stream:decide_topic_switch_with_validation:955 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question directly and didn't mention any other objects., correctness_reasoning=Steel is a common material used to make knife blades.
+2026-01-05 09:53:33.397 | INFO     | paixueji_stream:call_paixueji_stream:1865 | [542ac7ff-9c08-44d0-acca-8874410e5230] Routing to feedback | is_engaged=True, is_factually_correct=True
+2026-01-05 09:53:33.398 | DEBUG    | paixueji_stream:call_paixueji_stream:1913 | [542ac7ff-9c08-44d0-acca-8874410e5230] Streaming response (feedback)
+2026-01-05 09:53:33.398 | INFO     | paixueji_stream:generate_feedback_response_stream:309 | generate_feedback_response_stream started | object=knife, age=6
+2026-01-05 09:53:34.140 | INFO     | paixueji_stream:generate_feedback_response_stream:364 | generate_feedback_response_stream completed | duration=0.742s, length=70
+2026-01-05 09:53:34.141 | DEBUG    | paixueji_stream:call_paixueji_stream:1976 | [542ac7ff-9c08-44d0-acca-8874410e5230] Streaming question
+2026-01-05 09:53:34.141 | INFO     | paixueji_stream:generate_followup_question_stream:677 | generate_followup_question_stream started | object=knife, age=6, is_switch=False
+2026-01-05 09:53:35.117 | INFO     | paixueji_stream:generate_followup_question_stream:734 | generate_followup_question_stream completed | duration=0.976s, length=113
+2026-01-05 09:53:35.117 | INFO     | paixueji_stream:call_paixueji_stream:2119 | [542ac7ff-9c08-44d0-acca-8874410e5230] call_paixueji_stream completed | response_type=feedback, duration=4.617s, total_chunks=7, response_length=184, correct_count=3, complete=False, session_finished=False
+2026-01-05 09:53:35.117 | DEBUG    | paixueji_stream:call_paixueji_stream:2127 | Full response: Arrr, steel it is! Ye be a clever pirate, matey! That's exactly right! Now, matey, since ye know a knife is made of steel, can ye think of any other things that are also made of steel?...
+2026-01-05 09:53:35.117 | DEBUG    | paixueji_stream:call_paixueji_stream:2200 | 
+
+[DEBUG TREE NODE] Turn 4 (FEEDBACK)
+--------------------------------------------------
+👤 USER INPUT: its made of steel
+🧠 CONTEXT: Object='knife' | Tone='pirate' | Focus='width_category'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: Steel is a common material used to make knife blades.
+⚡ DECISION: CONTINUE (Reason: The child answered the question directly and didn't mention any other objects.)
+🗣️ RESPONSE PART 1: Arrr, steel it is! Ye be a clever pirate, matey! That's exactly right!
+❓ RESPONSE PART 2: Now, matey, since ye know a knife is made of steel, can ye think of any other things that are also made of steel?
+--------------------------------------------------
+
+2026-01-05 09:54:01.340 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [542ac7ff-9c08-44d0-acca-8874410e5230] call_paixueji_stream started | session_id=542ac7ff-9c08-44d0-acca-8874410e5230, age=6, object=knife, level1=None, level2=None, level3=None, correct_count=4, status=normal, content_length=5, message_history=6
+2026-01-05 09:54:01.340 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [542ac7ff-9c08-44d0-acca-8874410e5230] Conversation state | correct_count=4, complete=False
+2026-01-05 09:54:01.340 | INFO     | paixueji_stream:call_paixueji_stream:1765 | [542ac7ff-9c08-44d0-acca-8874410e5230] Running unified AI validation for answer
+2026-01-05 09:54:03.745 | INFO     | paixueji_stream:decide_topic_switch_with_validation:955 | [VALIDATE] SWITCH | new_object=spoon, engaged=True, correct=True, switch_reasoning=The child named a new object (spoon) in response to my question about other things made of steel. This invites a switch to the new object., correctness_reasoning=Spoons are commonly made of steel, so the answer is correct.
+2026-01-05 09:54:04.310 | INFO     | paixueji_stream:call_paixueji_stream:1829 | [542ac7ff-9c08-44d0-acca-8874410e5230] Classification completed for spoon
+2026-01-05 09:54:04.311 | INFO     | paixueji_stream:call_paixueji_stream:1852 | [542ac7ff-9c08-44d0-acca-8874410e5230] Routing to topic switch | knife -> spoon
+2026-01-05 09:54:04.311 | DEBUG    | paixueji_stream:call_paixueji_stream:1913 | [542ac7ff-9c08-44d0-acca-8874410e5230] Streaming response (topic_switch)
+2026-01-05 09:54:04.311 | INFO     | paixueji_stream:generate_topic_switch_response_stream:582 | generate_topic_switch_response_stream started | knife -> spoon, age=6
+2026-01-05 09:54:05.327 | INFO     | paixueji_stream:generate_topic_switch_response_stream:637 | generate_topic_switch_response_stream completed | duration=1.016s, length=95
+2026-01-05 09:54:05.327 | DEBUG    | paixueji_stream:call_paixueji_stream:1976 | [542ac7ff-9c08-44d0-acca-8874410e5230] Streaming question
+2026-01-05 09:54:05.327 | INFO     | paixueji_stream:generate_followup_question_stream:677 | generate_followup_question_stream started | object=spoon, age=6, is_switch=True
+2026-01-05 09:54:06.212 | INFO     | paixueji_stream:generate_followup_question_stream:734 | generate_followup_question_stream completed | duration=0.884s, length=43
+2026-01-05 09:54:06.212 | INFO     | paixueji_stream:call_paixueji_stream:2119 | [542ac7ff-9c08-44d0-acca-8874410e5230] call_paixueji_stream completed | response_type=topic_switch, duration=4.872s, total_chunks=5, response_length=139, correct_count=4, complete=False, session_finished=False
+2026-01-05 09:54:06.212 | DEBUG    | paixueji_stream:call_paixueji_stream:2127 | Full response: Arrr, a spoon! That's another fine treasure to explore, matey! A spoon is a grand thing indeed! Tell me, matey, what do ye use a spoon for?...
+2026-01-05 09:54:06.212 | DEBUG    | paixueji_stream:call_paixueji_stream:2200 | 
+
+[DEBUG TREE NODE] Turn 5 (TOPIC_SWITCH)
+--------------------------------------------------
+👤 USER INPUT: spoon
+🧠 CONTEXT: Object='knife' | Tone='pirate' | Focus='width_category'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: Spoons are commonly made of steel, so the answer is correct.
+⚡ DECISION: SWITCH (Reason: The child named a new object (spoon) in response to my question about other things made of steel. This invites a switch to the new object.)
+🗣️ RESPONSE PART 1: Arrr, a spoon! That's another fine treasure to explore, matey! A spoon is a grand thing indeed!
+❓ RESPONSE PART 2: Tell me, matey, what do ye use a spoon for?
+--------------------------------------------------
+
+2026-01-05 09:54:15.501 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [542ac7ff-9c08-44d0-acca-8874410e5230] call_paixueji_stream started | session_id=542ac7ff-9c08-44d0-acca-8874410e5230, age=6, object=spoon, level1=None, level2=None, level3=None, correct_count=5, status=normal, content_length=15, message_history=7
+2026-01-05 09:54:15.501 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [542ac7ff-9c08-44d0-acca-8874410e5230] Conversation state | correct_count=5, complete=False
+2026-01-05 09:54:15.501 | INFO     | paixueji_stream:call_paixueji_stream:1765 | [542ac7ff-9c08-44d0-acca-8874410e5230] Running unified AI validation for answer
+2026-01-05 09:54:18.374 | INFO     | paixueji_stream:decide_topic_switch_with_validation:955 | [VALIDATE] SWITCH | new_object=food, engaged=True, correct=True, switch_reasoning=The child answered the question, but mentioned a broad category of objects (food) instead of sticking to the spoon. This is an implicit invitation to switch to a new object., correctness_reasoning=Using a spoon to eat is correct.
+2026-01-05 09:54:19.392 | WARNING  | paixueji_stream:call_paixueji_stream:1831 | [542ac7ff-9c08-44d0-acca-8874410e5230] Classification timeout for food
+2026-01-05 09:54:20.428 | INFO     | paixueji_stream:call_paixueji_stream:1852 | [542ac7ff-9c08-44d0-acca-8874410e5230] Routing to topic switch | spoon -> food
+2026-01-05 09:54:20.428 | DEBUG    | paixueji_stream:call_paixueji_stream:1913 | [542ac7ff-9c08-44d0-acca-8874410e5230] Streaming response (topic_switch)
+2026-01-05 09:54:20.428 | INFO     | paixueji_stream:generate_topic_switch_response_stream:582 | generate_topic_switch_response_stream started | spoon -> food, age=6
+2026-01-05 09:55:10.713 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] call_paixueji_stream started | session_id=ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2026-01-05 09:55:10.713 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Conversation state | correct_count=0, complete=False
+2026-01-05 09:55:10.713 | INFO     | paixueji_stream:call_paixueji_stream:1756 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Routing to introduction question
+2026-01-05 09:55:10.713 | INFO     | paixueji_stream:ask_introduction_question_stream:174 | ask_introduction_question_stream started | object=banana, age=6
+2026-01-05 09:55:10.713 | DEBUG    | paixueji_stream:ask_introduction_question_stream:190 | Messages prepared for API | count=3
+2026-01-05 09:55:10.713 | DEBUG    | paixueji_stream:ask_introduction_question_stream:201 | Sending 2 messages to Gemini API
+2026-01-05 09:55:10.714 | DEBUG    | paixueji_stream:ask_introduction_question_stream:218 | Stream object type: generator
+2026-01-05 09:55:25.605 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 1 | length=2, total_length=2
+2026-01-05 09:55:25.633 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 2 | length=9, total_length=11
+2026-01-05 09:55:25.642 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 3 | length=55, total_length=66
+2026-01-05 09:55:25.725 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 4 | length=77, total_length=143
+2026-01-05 09:55:25.780 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 5 | length=29, total_length=172
+2026-01-05 09:55:25.783 | DEBUG    | paixueji_stream:ask_introduction_question_stream:238 | Gemini streaming API does not provide token usage in stream mode
+2026-01-05 09:55:25.783 | DEBUG    | paixueji_stream:ask_introduction_question_stream:257 | Cleaned up stream via del in finally block
+2026-01-05 09:55:25.783 | INFO     | paixueji_stream:ask_introduction_question_stream:262 | ask_introduction_question_stream completed | duration=15.070s, response_length=172
+2026-01-05 09:55:25.783 | WARNING  | paixueji_stream:ask_introduction_question_stream:268 | Slow LLM call | duration=15.070s exceeded threshold 5.0s
+2026-01-05 09:55:25.784 | INFO     | paixueji_stream:call_paixueji_stream:2126 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] call_paixueji_stream completed | response_type=introduction, duration=15.071s, total_chunks=5, response_length=172, correct_count=0, complete=False, session_finished=False
+2026-01-05 09:55:25.784 | DEBUG    | paixueji_stream:call_paixueji_stream:2134 | Full response: Ahoy there, matey! Today we've got a yummy banana to talk about!
+
+This banana looks so bright and yellow! What do you think makes bananas grow, and where do they come from?...
+2026-01-05 09:55:25.784 | DEBUG    | paixueji_stream:call_paixueji_stream:2207 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+👤 USER INPUT: (None)
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=None | Correct=None
+💭 REASONING: N/A
+⚡ DECISION: N/A (Reason: N/A)
+🗣️ RESPONSE PART 1: (None)
+❓ RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-05 09:55:48.357 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] call_paixueji_stream started | session_id=ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=20, message_history=2
+2026-01-05 09:55:48.357 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Conversation state | correct_count=0, complete=False
+2026-01-05 09:55:48.357 | INFO     | paixueji_stream:call_paixueji_stream:1765 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Running unified AI validation for answer
+2026-01-05 09:55:52.257 | INFO     | paixueji_stream:decide_topic_switch_with_validation:955 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question, even though the answer is partially incorrect. We should continue with the current topic., correctness_reasoning=Bananas do grow on plants that look like trees, so the answer is partially correct for a 6-year-old.
+2026-01-05 09:55:52.257 | INFO     | paixueji_stream:call_paixueji_stream:1865 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Routing to feedback | is_engaged=True, is_factually_correct=True
+2026-01-05 09:55:52.257 | DEBUG    | paixueji_stream:call_paixueji_stream:1899 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Streaming response (feedback)
+2026-01-05 09:55:52.258 | INFO     | paixueji_stream:generate_feedback_response_stream:309 | generate_feedback_response_stream started | object=banana, age=6
+2026-01-05 09:55:52.965 | INFO     | paixueji_stream:generate_feedback_response_stream:364 | generate_feedback_response_stream completed | duration=0.707s, length=99
+2026-01-05 09:55:52.965 | DEBUG    | paixueji_stream:call_paixueji_stream:1983 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Streaming question
+2026-01-05 09:55:52.965 | INFO     | paixueji_stream:generate_followup_question_stream:677 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-05 09:55:53.846 | INFO     | paixueji_stream:generate_followup_question_stream:734 | generate_followup_question_stream completed | duration=0.881s, length=99
+2026-01-05 09:55:53.847 | INFO     | paixueji_stream:call_paixueji_stream:2126 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] call_paixueji_stream completed | response_type=feedback, duration=5.489s, total_chunks=7, response_length=199, correct_count=0, complete=False, session_finished=False
+2026-01-05 09:55:53.847 | DEBUG    | paixueji_stream:call_paixueji_stream:2134 | Full response: Shiver me timbers, you're right, matey! Bananas do indeed grow on trees! That's a fantastic answer! Tell me, matey, what other things do you know that are the same bright yellow color as this banana?...
+2026-01-05 09:55:53.847 | DEBUG    | paixueji_stream:call_paixueji_stream:2207 | 
+
+[DEBUG TREE NODE] Turn 1 (FEEDBACK)
+--------------------------------------------------
+👤 USER INPUT: They come from trees
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='width_color'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: Bananas do grow on plants that look like trees, so the answer is partially correct for a 6-year-old.
+⚡ DECISION: CONTINUE (Reason: The child answered the question, even though the answer is partially incorrect. We should continue with the current topic.)
+🗣️ RESPONSE PART 1: Shiver me timbers, you're right, matey! Bananas do indeed grow on trees! That's a fantastic answer!
+❓ RESPONSE PART 2: Tell me, matey, what other things do you know that are the same bright yellow color as this banana?
+--------------------------------------------------
+
+2026-01-05 09:56:04.157 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] call_paixueji_stream started | session_id=ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=1, status=normal, content_length=11, message_history=3
+2026-01-05 09:56:04.157 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Conversation state | correct_count=1, complete=False
+2026-01-05 09:56:04.157 | INFO     | paixueji_stream:call_paixueji_stream:1765 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Running unified AI validation for answer
+2026-01-05 09:56:06.701 | INFO     | paixueji_stream:decide_topic_switch_with_validation:955 | [VALIDATE] SWITCH | new_object=boomerang, engaged=True, correct=False, switch_reasoning=The child named a new object in response to the question about yellow things. We should switch to talking about boomerangs., correctness_reasoning=While some boomerangs can be yellow, they are not always yellow. Therefore, it's not a universally correct answer.
+2026-01-05 09:56:06.701 | INFO     | paixueji_stream:call_paixueji_stream:1880 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Routing to gentle correction | is_engaged=True, is_factually_correct=False
+2026-01-05 09:56:06.702 | DEBUG    | paixueji_stream:call_paixueji_stream:1899 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Streaming response (gentle_correction)
+2026-01-05 09:56:06.702 | INFO     | paixueji_stream:generate_correction_response_stream:494 | generate_correction_response_stream started | object=banana, age=6
+2026-01-05 09:56:07.519 | INFO     | paixueji_stream:generate_correction_response_stream:550 | generate_correction_response_stream completed | duration=0.817s, length=183
+2026-01-05 09:56:07.519 | DEBUG    | paixueji_stream:call_paixueji_stream:1983 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Streaming question
+2026-01-05 09:56:07.519 | INFO     | paixueji_stream:generate_followup_question_stream:677 | generate_followup_question_stream started | object=banana, age=6, is_switch=True
+2026-01-05 09:56:08.403 | INFO     | paixueji_stream:generate_followup_question_stream:734 | generate_followup_question_stream completed | duration=0.883s, length=105
+2026-01-05 09:56:08.403 | INFO     | paixueji_stream:call_paixueji_stream:2126 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] call_paixueji_stream completed | response_type=gentle_correction, duration=4.246s, total_chunks=9, response_length=289, correct_count=1, complete=False, session_finished=False
+2026-01-05 09:56:08.403 | DEBUG    | paixueji_stream:call_paixueji_stream:2134 | Full response: Ahoy, matey! A boomerang is a super interesting thing, and sometimes they can be yellow! That's a good try!
+
+Actually, bananas are usually yellow, but apples are usually red or green. Tell me, matey, besides this banana, what other things do you know that are the same bright yellow color?...
+2026-01-05 09:56:08.403 | DEBUG    | paixueji_stream:call_paixueji_stream:2207 | 
+
+[DEBUG TREE NODE] Turn 2 (GENTLE_CORRECTION)
+--------------------------------------------------
+👤 USER INPUT: a boomerang
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='width_color'
+🔍 VALIDATION: Engaged=True | Correct=False
+💭 REASONING: While some boomerangs can be yellow, they are not always yellow. Therefore, it's not a universally correct answer.
+⚡ DECISION: SWITCH (Reason: The child named a new object in response to the question about yellow things. We should switch to talking about boomerangs.)
+🗣️ RESPONSE PART 1: Ahoy, matey! A boomerang is a super interesting thing, and sometimes they can be yellow! That's a good try!
+
+Actually, bananas are usually yellow, but apples are usually red or green.
+❓ RESPONSE PART 2: Tell me, matey, besides this banana, what other things do you know that are the same bright yellow color?
+--------------------------------------------------
+
+2026-01-05 09:56:21.924 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] call_paixueji_stream started | session_id=ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=1, status=normal, content_length=7, message_history=4
+2026-01-05 09:56:21.924 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Conversation state | correct_count=1, complete=False
+2026-01-05 09:56:21.924 | INFO     | paixueji_stream:call_paixueji_stream:1765 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Running unified AI validation for answer
+2026-01-05 09:56:26.302 | INFO     | paixueji_stream:decide_topic_switch_with_validation:955 | [VALIDATE] SWITCH | new_object=sun, engaged=True, correct=True, switch_reasoning=The child named a new object (the sun) in response to my question about yellow things. We should switch to talking about the sun., correctness_reasoning=The sun is indeed yellow, so the child's answer is correct.
+2026-01-05 09:56:26.824 | INFO     | paixueji_stream:call_paixueji_stream:1829 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Classification completed for sun
+2026-01-05 09:56:26.825 | INFO     | paixueji_stream:call_paixueji_stream:1852 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Routing to topic switch | banana -> sun
+2026-01-05 09:56:26.825 | DEBUG    | paixueji_stream:call_paixueji_stream:1899 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Streaming response (topic_switch)
+2026-01-05 09:56:26.825 | INFO     | paixueji_stream:generate_topic_switch_response_stream:582 | generate_topic_switch_response_stream started | banana -> sun, age=6
+2026-01-05 09:56:27.918 | INFO     | paixueji_stream:generate_topic_switch_response_stream:637 | generate_topic_switch_response_stream completed | duration=1.093s, length=161
+2026-01-05 09:56:27.918 | DEBUG    | paixueji_stream:call_paixueji_stream:1983 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Streaming question
+2026-01-05 09:56:27.918 | INFO     | paixueji_stream:generate_followup_question_stream:677 | generate_followup_question_stream started | object=sun, age=6, is_switch=True
+2026-01-05 09:56:28.820 | INFO     | paixueji_stream:generate_followup_question_stream:734 | generate_followup_question_stream completed | duration=0.902s, length=84
+2026-01-05 09:56:28.820 | INFO     | paixueji_stream:call_paixueji_stream:2126 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] call_paixueji_stream completed | response_type=topic_switch, duration=6.896s, total_chunks=9, response_length=246, correct_count=1, complete=False, session_finished=False
+2026-01-05 09:56:28.820 | DEBUG    | paixueji_stream:call_paixueji_stream:2134 | Full response: Ahoy, matey! The sun! That's a brilliant answer! The sun is a super important and very, very yellow thing, isn't it? You've got a sharp eye for color, me hearty! Tell me, matey, what else do you see that's the same bright yellow color as the sun?...
+2026-01-05 09:56:28.821 | DEBUG    | paixueji_stream:call_paixueji_stream:2207 | 
+
+[DEBUG TREE NODE] Turn 3 (TOPIC_SWITCH)
+--------------------------------------------------
+👤 USER INPUT: the sun
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='width_color'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: The sun is indeed yellow, so the child's answer is correct.
+⚡ DECISION: SWITCH (Reason: The child named a new object (the sun) in response to my question about yellow things. We should switch to talking about the sun.)
+🗣️ RESPONSE PART 1: Ahoy, matey! The sun! That's a brilliant answer! The sun is a super important and very, very yellow thing, isn't it? You've got a sharp eye for color, me hearty!
+❓ RESPONSE PART 2: Tell me, matey, what else do you see that's the same bright yellow color as the sun?
+--------------------------------------------------
+
+2026-01-05 09:56:46.508 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] call_paixueji_stream started | session_id=ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d, age=6, object=sun, level1=None, level2=None, level3=None, correct_count=2, status=normal, content_length=12, message_history=5
+2026-01-05 09:56:46.508 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Conversation state | correct_count=2, complete=False
+2026-01-05 09:56:46.508 | INFO     | paixueji_stream:call_paixueji_stream:1765 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Running unified AI validation for answer
+2026-01-05 09:56:50.723 | INFO     | paixueji_stream:decide_topic_switch_with_validation:955 | [VALIDATE] CONTINUE | new_object=None, engaged=False, correct=False, switch_reasoning=The child indicated they don't know, so we should continue with the current topic to provide more guidance., correctness_reasoning=The child did not provide an answer, so correctness is not applicable.
+2026-01-05 09:56:50.723 | INFO     | paixueji_stream:call_paixueji_stream:1809 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Routing to explanation | is_engaged=False
+2026-01-05 09:56:50.723 | DEBUG    | paixueji_stream:call_paixueji_stream:1899 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Streaming response (explanation)
+2026-01-05 09:56:50.724 | INFO     | paixueji_stream:generate_explanation_response_stream:402 | generate_explanation_response_stream started | object=sun, age=6
+2026-01-05 09:56:52.095 | INFO     | paixueji_stream:generate_explanation_response_stream:458 | generate_explanation_response_stream completed | duration=1.371s, length=55
+2026-01-05 09:56:52.095 | DEBUG    | paixueji_stream:call_paixueji_stream:1983 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Streaming question
+2026-01-05 09:56:52.096 | INFO     | paixueji_stream:generate_followup_question_stream:677 | generate_followup_question_stream started | object=sun, age=6, is_switch=False
+2026-01-05 09:56:53.417 | INFO     | paixueji_stream:generate_followup_question_stream:734 | generate_followup_question_stream completed | duration=1.321s, length=84
+2026-01-05 09:56:53.417 | INFO     | paixueji_stream:call_paixueji_stream:2126 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] call_paixueji_stream completed | response_type=explanation, duration=6.909s, total_chunks=5, response_length=140, correct_count=2, complete=False, session_finished=False
+2026-01-05 09:56:53.417 | DEBUG    | paixueji_stream:call_paixueji_stream:2134 | Full response: Ahoy, matey! Some lemons and sunflowers are yellow too! Tell me, matey, what else do you see that's the same bright yellow color as the sun?...
+2026-01-05 09:56:53.417 | DEBUG    | paixueji_stream:call_paixueji_stream:2207 | 
+
+[DEBUG TREE NODE] Turn 4 (EXPLANATION)
+--------------------------------------------------
+👤 USER INPUT: I don't know
+🧠 CONTEXT: Object='sun' | Tone='pirate' | Focus='width_color'
+🔍 VALIDATION: Engaged=False | Correct=False
+💭 REASONING: The child did not provide an answer, so correctness is not applicable.
+⚡ DECISION: CONTINUE (Reason: The child indicated they don't know, so we should continue with the current topic to provide more guidance.)
+🗣️ RESPONSE PART 1: Ahoy, matey! Some lemons and sunflowers are yellow too!
+❓ RESPONSE PART 2: Tell me, matey, what else do you see that's the same bright yellow color as the sun?
+--------------------------------------------------
+
+2026-01-05 09:57:06.419 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] call_paixueji_stream started | session_id=ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d, age=6, object=sun, level1=None, level2=None, level3=None, correct_count=2, status=normal, content_length=7, message_history=6
+2026-01-05 09:57:06.419 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Conversation state | correct_count=2, complete=False
+2026-01-05 09:57:06.419 | INFO     | paixueji_stream:call_paixueji_stream:1765 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Running unified AI validation for answer
+2026-01-05 09:57:08.927 | INFO     | paixueji_stream:decide_topic_switch_with_validation:955 | [VALIDATE] SWITCH | new_object=lemon, engaged=True, correct=True, switch_reasoning=The child repeated 'lemons,' which I already mentioned. This indicates they may be struggling to come up with new examples, so I will switch to talking about lemons directly., correctness_reasoning=Lemons are yellow, matching the color of the sun.
+2026-01-05 09:57:09.480 | INFO     | paixueji_stream:call_paixueji_stream:1829 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Classification completed for lemon
+2026-01-05 09:57:09.481 | INFO     | paixueji_stream:call_paixueji_stream:1852 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Routing to topic switch | sun -> lemon
+2026-01-05 09:57:09.482 | DEBUG    | paixueji_stream:call_paixueji_stream:1899 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Streaming response (topic_switch)
+2026-01-05 09:57:09.482 | INFO     | paixueji_stream:generate_topic_switch_response_stream:582 | generate_topic_switch_response_stream started | sun -> lemon, age=6
+2026-01-05 09:57:10.614 | INFO     | paixueji_stream:generate_topic_switch_response_stream:637 | generate_topic_switch_response_stream completed | duration=1.132s, length=139
+2026-01-05 09:57:10.614 | DEBUG    | paixueji_stream:call_paixueji_stream:1983 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] Streaming question
+2026-01-05 09:57:10.614 | INFO     | paixueji_stream:generate_followup_question_stream:677 | generate_followup_question_stream started | object=lemon, age=6, is_switch=True
+2026-01-05 09:57:11.331 | INFO     | paixueji_stream:generate_followup_question_stream:734 | generate_followup_question_stream completed | duration=0.717s, length=74
+2026-01-05 09:57:11.331 | INFO     | paixueji_stream:call_paixueji_stream:2126 | [ad7c7f56-c9a9-4936-a11f-b76bd61ddf1d] call_paixueji_stream completed | response_type=topic_switch, duration=4.913s, total_chunks=7, response_length=214, correct_count=2, complete=False, session_finished=False
+2026-01-05 09:57:11.331 | DEBUG    | paixueji_stream:call_paixueji_stream:2134 | Full response: Ahoy, matey! A lemon! That's another super yellow thing, just like the sun! You've got a keen eye for spotting yellow treasures, me hearty! Tell me, matey, what other things do you know that are round like a lemon?...
+2026-01-05 09:57:11.332 | DEBUG    | paixueji_stream:call_paixueji_stream:2207 | 
+
+[DEBUG TREE NODE] Turn 5 (TOPIC_SWITCH)
+--------------------------------------------------
+👤 USER INPUT: lemons?
+🧠 CONTEXT: Object='sun' | Tone='pirate' | Focus='width_shape'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: Lemons are yellow, matching the color of the sun.
+⚡ DECISION: SWITCH (Reason: The child repeated 'lemons,' which I already mentioned. This indicates they may be struggling to come up with new examples, so I will switch to talking about lemons directly.)
+🗣️ RESPONSE PART 1: Ahoy, matey! A lemon! That's another super yellow thing, just like the sun! You've got a keen eye for spotting yellow treasures, me hearty!
+❓ RESPONSE PART 2: Tell me, matey, what other things do you know that are round like a lemon?
+--------------------------------------------------
+
