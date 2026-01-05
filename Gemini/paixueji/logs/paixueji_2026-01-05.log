@@ -1022,3 +1022,234 @@ Tell me, what does a banana feel like when you touch it? Is it smooth or bumpy?.
 ❓ RESPONSE PART 2: Now, matey, what do you think happens to a banana when we peel it? What do we find inside?
 --------------------------------------------------
 
+2026-01-05 14:03:50.690 | INFO     | paixueji_stream:call_paixueji_stream:1971 | [e626c579-6e96-4d73-89ab-8109061b0be5] System-managed mode: using focus_mode=depth
+2026-01-05 14:03:50.691 | INFO     | paixueji_stream:call_paixueji_stream:1973 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream started | session_id=e626c579-6e96-4d73-89ab-8109061b0be5, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=1, status=normal, content_length=17, message_history=3
+2026-01-05 14:03:50.691 | INFO     | paixueji_stream:call_paixueji_stream:2010 | [e626c579-6e96-4d73-89ab-8109061b0be5] Conversation state | correct_count=1, complete=False
+2026-01-05 14:03:50.691 | INFO     | paixueji_stream:call_paixueji_stream:2059 | [e626c579-6e96-4d73-89ab-8109061b0be5] Running unified AI validation for answer
+2026-01-05 14:03:52.644 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1051 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question directly and didn't mention a new object., correctness_reasoning=The inside of a banana after peeling is indeed the fruit.
+2026-01-05 14:03:52.644 | INFO     | paixueji_stream:call_paixueji_stream:2079 | [SYSTEM_MANAGED] Depth: 2/5
+2026-01-05 14:03:52.645 | INFO     | paixueji_stream:call_paixueji_stream:2176 | [e626c579-6e96-4d73-89ab-8109061b0be5] Routing to feedback | is_engaged=True, is_factually_correct=True
+2026-01-05 14:03:52.645 | DEBUG    | paixueji_stream:call_paixueji_stream:2210 | [e626c579-6e96-4d73-89ab-8109061b0be5] Streaming response (feedback)
+2026-01-05 14:03:52.645 | INFO     | paixueji_stream:generate_feedback_response_stream:309 | generate_feedback_response_stream started | object=banana, age=6
+2026-01-05 14:03:53.284 | INFO     | paixueji_stream:generate_feedback_response_stream:364 | generate_feedback_response_stream completed | duration=0.640s, length=87
+2026-01-05 14:03:53.285 | INFO     | paixueji_stream:call_paixueji_stream:2305 | [e626c579-6e96-4d73-89ab-8109061b0be5] System-managed: focus_mode=depth, reason=Depth phase: 2/5 questions asked
+2026-01-05 14:03:53.285 | DEBUG    | paixueji_stream:call_paixueji_stream:2325 | [e626c579-6e96-4d73-89ab-8109061b0be5] Streaming question
+2026-01-05 14:03:53.285 | INFO     | paixueji_stream:generate_followup_question_stream:773 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-05 14:03:53.922 | INFO     | paixueji_stream:generate_followup_question_stream:830 | generate_followup_question_stream completed | duration=0.637s, length=113
+2026-01-05 14:03:53.922 | INFO     | paixueji_stream:call_paixueji_stream:2476 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream completed | response_type=feedback, duration=3.232s, total_chunks=7, response_length=201, correct_count=1, complete=False, session_finished=False
+2026-01-05 14:03:53.922 | DEBUG    | paixueji_stream:call_paixueji_stream:2484 | Full response: Aye, that's the treasure we find inside, the yummy fruit! You've got a keen eye, matey! Tell me, matey, what do you think makes a banana good for our bodies? What kind of special power does it give us?...
+2026-01-05 14:03:53.922 | DEBUG    | paixueji_stream:call_paixueji_stream:2557 | 
+
+[DEBUG TREE NODE] Turn 2 (FEEDBACK)
+--------------------------------------------------
+👤 USER INPUT: we find the fruit
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: The inside of a banana after peeling is indeed the fruit.
+⚡ DECISION: CONTINUE (Reason: The child answered the question directly and didn't mention a new object.)
+🗣️ RESPONSE PART 1: Aye, that's the treasure we find inside, the yummy fruit! You've got a keen eye, matey!
+❓ RESPONSE PART 2: Tell me, matey, what do you think makes a banana good for our bodies? What kind of special power does it give us?
+--------------------------------------------------
+
+2026-01-05 14:04:02.095 | INFO     | paixueji_stream:call_paixueji_stream:1971 | [e626c579-6e96-4d73-89ab-8109061b0be5] System-managed mode: using focus_mode=depth
+2026-01-05 14:04:02.095 | INFO     | paixueji_stream:call_paixueji_stream:1973 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream started | session_id=e626c579-6e96-4d73-89ab-8109061b0be5, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=2, status=normal, content_length=12, message_history=4
+2026-01-05 14:04:02.095 | INFO     | paixueji_stream:call_paixueji_stream:2010 | [e626c579-6e96-4d73-89ab-8109061b0be5] Conversation state | correct_count=2, complete=False
+2026-01-05 14:04:02.095 | INFO     | paixueji_stream:call_paixueji_stream:2059 | [e626c579-6e96-4d73-89ab-8109061b0be5] Running unified AI validation for answer
+2026-01-05 14:04:03.877 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1051 | [VALIDATE] CONTINUE | new_object=None, engaged=False, correct=False, switch_reasoning=The child indicated that they don't know the answer, so we should continue with the current topic and try a different approach., correctness_reasoning=The child did not provide an answer, so correctness is not applicable.
+2026-01-05 14:04:03.878 | INFO     | paixueji_stream:call_paixueji_stream:2120 | [e626c579-6e96-4d73-89ab-8109061b0be5] Routing to explanation | is_engaged=False
+2026-01-05 14:04:03.878 | DEBUG    | paixueji_stream:call_paixueji_stream:2210 | [e626c579-6e96-4d73-89ab-8109061b0be5] Streaming response (explanation)
+2026-01-05 14:04:03.878 | INFO     | paixueji_stream:generate_explanation_response_stream:402 | generate_explanation_response_stream started | object=banana, age=6
+2026-01-05 14:04:04.477 | INFO     | paixueji_stream:generate_explanation_response_stream:458 | generate_explanation_response_stream completed | duration=0.599s, length=134
+2026-01-05 14:04:04.477 | INFO     | paixueji_stream:call_paixueji_stream:2305 | [e626c579-6e96-4d73-89ab-8109061b0be5] System-managed: focus_mode=depth, reason=Depth phase: 2/5 questions asked
+2026-01-05 14:04:04.477 | DEBUG    | paixueji_stream:call_paixueji_stream:2325 | [e626c579-6e96-4d73-89ab-8109061b0be5] Streaming question
+2026-01-05 14:04:04.477 | INFO     | paixueji_stream:generate_followup_question_stream:773 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-05 14:04:05.062 | INFO     | paixueji_stream:generate_followup_question_stream:830 | generate_followup_question_stream completed | duration=0.585s, length=130
+2026-01-05 14:04:05.062 | INFO     | paixueji_stream:call_paixueji_stream:2476 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream completed | response_type=explanation, duration=2.968s, total_chunks=7, response_length=265, correct_count=2, complete=False, session_finished=False
+2026-01-05 14:04:05.062 | DEBUG    | paixueji_stream:call_paixueji_stream:2484 | Full response: Ah, a banana gives us energy to run and play, like a speedy ship on the sea! It's full of good stuff that helps us grow strong, matey! Now, matey, what do you think happens to a banana when it's left out for a long, long time? Does it stay yellow and yummy forever?...
+2026-01-05 14:04:05.063 | DEBUG    | paixueji_stream:call_paixueji_stream:2557 | 
+
+[DEBUG TREE NODE] Turn 3 (EXPLANATION)
+--------------------------------------------------
+👤 USER INPUT: I don't know
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=False | Correct=False
+💭 REASONING: The child did not provide an answer, so correctness is not applicable.
+⚡ DECISION: CONTINUE (Reason: The child indicated that they don't know the answer, so we should continue with the current topic and try a different approach.)
+🗣️ RESPONSE PART 1: Ah, a banana gives us energy to run and play, like a speedy ship on the sea! It's full of good stuff that helps us grow strong, matey!
+❓ RESPONSE PART 2: Now, matey, what do you think happens to a banana when it's left out for a long, long time? Does it stay yellow and yummy forever?
+--------------------------------------------------
+
+2026-01-05 14:04:18.782 | INFO     | paixueji_stream:call_paixueji_stream:1971 | [e626c579-6e96-4d73-89ab-8109061b0be5] System-managed mode: using focus_mode=depth
+2026-01-05 14:04:18.782 | INFO     | paixueji_stream:call_paixueji_stream:1973 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream started | session_id=e626c579-6e96-4d73-89ab-8109061b0be5, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=2, status=normal, content_length=16, message_history=5
+2026-01-05 14:04:18.782 | INFO     | paixueji_stream:call_paixueji_stream:2010 | [e626c579-6e96-4d73-89ab-8109061b0be5] Conversation state | correct_count=2, complete=False
+2026-01-05 14:04:18.783 | INFO     | paixueji_stream:call_paixueji_stream:2059 | [e626c579-6e96-4d73-89ab-8109061b0be5] Running unified AI validation for answer
+2026-01-05 14:04:20.990 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1051 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question about what happens to a banana when left out. No new object was mentioned., correctness_reasoning=Bananas do turn black/brown when they are left out for a long time due to oxidation and enzymatic browning.
+2026-01-05 14:04:20.991 | INFO     | paixueji_stream:call_paixueji_stream:2079 | [SYSTEM_MANAGED] Depth: 3/5
+2026-01-05 14:04:20.991 | INFO     | paixueji_stream:call_paixueji_stream:2176 | [e626c579-6e96-4d73-89ab-8109061b0be5] Routing to feedback | is_engaged=True, is_factually_correct=True
+2026-01-05 14:04:20.991 | DEBUG    | paixueji_stream:call_paixueji_stream:2210 | [e626c579-6e96-4d73-89ab-8109061b0be5] Streaming response (feedback)
+2026-01-05 14:04:20.991 | INFO     | paixueji_stream:generate_feedback_response_stream:309 | generate_feedback_response_stream started | object=banana, age=6
+2026-01-05 14:04:21.698 | INFO     | paixueji_stream:generate_feedback_response_stream:364 | generate_feedback_response_stream completed | duration=0.707s, length=169
+2026-01-05 14:04:21.698 | INFO     | paixueji_stream:call_paixueji_stream:2305 | [e626c579-6e96-4d73-89ab-8109061b0be5] System-managed: focus_mode=depth, reason=Depth phase: 3/5 questions asked
+2026-01-05 14:04:21.698 | DEBUG    | paixueji_stream:call_paixueji_stream:2325 | [e626c579-6e96-4d73-89ab-8109061b0be5] Streaming question
+2026-01-05 14:04:21.698 | INFO     | paixueji_stream:generate_followup_question_stream:773 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-05 14:04:22.309 | INFO     | paixueji_stream:generate_followup_question_stream:830 | generate_followup_question_stream completed | duration=0.612s, length=119
+2026-01-05 14:04:22.310 | INFO     | paixueji_stream:call_paixueji_stream:2476 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream completed | response_type=feedback, duration=3.527s, total_chunks=7, response_length=289, correct_count=2, complete=False, session_finished=False
+2026-01-05 14:04:22.310 | DEBUG    | paixueji_stream:call_paixueji_stream:2484 | Full response: Blast and barnacles, you're absolutely right, matey! It turns all black and squishy, like an old pirate's boot! You've got a sharp eye for spotting changes, that you do! Tell me, matey, where do you think bananas grow before they come to us? Do they grow on bushes, or maybe on tall trees?...
+2026-01-05 14:04:22.310 | DEBUG    | paixueji_stream:call_paixueji_stream:2557 | 
+
+[DEBUG TREE NODE] Turn 4 (FEEDBACK)
+--------------------------------------------------
+👤 USER INPUT: it becomes black
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: Bananas do turn black/brown when they are left out for a long time due to oxidation and enzymatic browning.
+⚡ DECISION: CONTINUE (Reason: The child answered the question about what happens to a banana when left out. No new object was mentioned.)
+🗣️ RESPONSE PART 1: Blast and barnacles, you're absolutely right, matey! It turns all black and squishy, like an old pirate's boot! You've got a sharp eye for spotting changes, that you do!
+❓ RESPONSE PART 2: Tell me, matey, where do you think bananas grow before they come to us? Do they grow on bushes, or maybe on tall trees?
+--------------------------------------------------
+
+2026-01-05 14:04:35.969 | INFO     | paixueji_stream:call_paixueji_stream:1971 | [e626c579-6e96-4d73-89ab-8109061b0be5] System-managed mode: using focus_mode=depth
+2026-01-05 14:04:35.969 | INFO     | paixueji_stream:call_paixueji_stream:1973 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream started | session_id=e626c579-6e96-4d73-89ab-8109061b0be5, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=3, status=normal, content_length=18, message_history=6
+2026-01-05 14:04:35.969 | INFO     | paixueji_stream:call_paixueji_stream:2010 | [e626c579-6e96-4d73-89ab-8109061b0be5] Conversation state | correct_count=3, complete=False
+2026-01-05 14:04:35.969 | INFO     | paixueji_stream:call_paixueji_stream:2059 | [e626c579-6e96-4d73-89ab-8109061b0be5] Running unified AI validation for answer
+2026-01-05 14:04:37.701 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1051 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question directly and accurately. No need to switch topics., correctness_reasoning=Bananas do grow on trees, making the child's answer correct.
+2026-01-05 14:04:37.702 | INFO     | paixueji_stream:call_paixueji_stream:2079 | [SYSTEM_MANAGED] Depth: 4/5
+2026-01-05 14:04:37.702 | INFO     | paixueji_stream:call_paixueji_stream:2176 | [e626c579-6e96-4d73-89ab-8109061b0be5] Routing to feedback | is_engaged=True, is_factually_correct=True
+2026-01-05 14:04:37.702 | DEBUG    | paixueji_stream:call_paixueji_stream:2210 | [e626c579-6e96-4d73-89ab-8109061b0be5] Streaming response (feedback)
+2026-01-05 14:04:37.702 | INFO     | paixueji_stream:generate_feedback_response_stream:309 | generate_feedback_response_stream started | object=banana, age=6
+2026-01-05 14:04:38.395 | INFO     | paixueji_stream:generate_feedback_response_stream:364 | generate_feedback_response_stream completed | duration=0.693s, length=138
+2026-01-05 14:04:38.395 | INFO     | paixueji_stream:call_paixueji_stream:2305 | [e626c579-6e96-4d73-89ab-8109061b0be5] System-managed: focus_mode=depth, reason=Depth phase: 4/5 questions asked
+2026-01-05 14:04:38.395 | DEBUG    | paixueji_stream:call_paixueji_stream:2325 | [e626c579-6e96-4d73-89ab-8109061b0be5] Streaming question
+2026-01-05 14:04:38.395 | INFO     | paixueji_stream:generate_followup_question_stream:773 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-05 14:04:39.051 | INFO     | paixueji_stream:generate_followup_question_stream:830 | generate_followup_question_stream completed | duration=0.656s, length=79
+2026-01-05 14:04:39.051 | INFO     | paixueji_stream:call_paixueji_stream:2476 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream completed | response_type=feedback, duration=3.082s, total_chunks=8, response_length=218, correct_count=3, complete=False, session_finished=False
+2026-01-05 14:04:39.051 | DEBUG    | paixueji_stream:call_paixueji_stream:2484 | Full response: Shiver me timbers, you're spot on, matey! Bananas do indeed grow on trees, tall and grand like the masts of a mighty ship! Hooray for you! Tell me, matey, what do we do with a banana after we peel it? How do we eat it?...
+2026-01-05 14:04:39.051 | DEBUG    | paixueji_stream:call_paixueji_stream:2557 | 
+
+[DEBUG TREE NODE] Turn 5 (FEEDBACK)
+--------------------------------------------------
+👤 USER INPUT: they grow on trees
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: Bananas do grow on trees, making the child's answer correct.
+⚡ DECISION: CONTINUE (Reason: The child answered the question directly and accurately. No need to switch topics.)
+🗣️ RESPONSE PART 1: Shiver me timbers, you're spot on, matey! Bananas do indeed grow on trees, tall and grand like the masts of a mighty ship! Hooray for you!
+❓ RESPONSE PART 2: Tell me, matey, what do we do with a banana after we peel it? How do we eat it?
+--------------------------------------------------
+
+2026-01-05 14:04:59.793 | INFO     | paixueji_stream:call_paixueji_stream:1971 | [e626c579-6e96-4d73-89ab-8109061b0be5] System-managed mode: using focus_mode=depth
+2026-01-05 14:04:59.794 | INFO     | paixueji_stream:call_paixueji_stream:1973 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream started | session_id=e626c579-6e96-4d73-89ab-8109061b0be5, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=4, status=normal, content_length=14, message_history=7
+2026-01-05 14:04:59.794 | INFO     | paixueji_stream:call_paixueji_stream:2010 | [e626c579-6e96-4d73-89ab-8109061b0be5] Conversation state | correct_count=4, complete=False
+2026-01-05 14:04:59.794 | INFO     | paixueji_stream:call_paixueji_stream:2059 | [e626c579-6e96-4d73-89ab-8109061b0be5] Running unified AI validation for answer
+2026-01-05 14:05:01.594 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1051 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question directly and did not mention a new object., correctness_reasoning=Eating is the primary way people consume bananas after peeling them.
+2026-01-05 14:05:01.594 | INFO     | paixueji_stream:call_paixueji_stream:2079 | [SYSTEM_MANAGED] Depth: 5/5
+2026-01-05 14:05:01.594 | INFO     | paixueji_stream:call_paixueji_stream:2176 | [e626c579-6e96-4d73-89ab-8109061b0be5] Routing to feedback | is_engaged=True, is_factually_correct=True
+2026-01-05 14:05:01.594 | DEBUG    | paixueji_stream:call_paixueji_stream:2210 | [e626c579-6e96-4d73-89ab-8109061b0be5] Streaming response (feedback)
+2026-01-05 14:05:01.594 | INFO     | paixueji_stream:generate_feedback_response_stream:309 | generate_feedback_response_stream started | object=banana, age=6
+2026-01-05 14:05:02.205 | INFO     | paixueji_stream:generate_feedback_response_stream:364 | generate_feedback_response_stream completed | duration=0.611s, length=94
+2026-01-05 14:05:02.205 | INFO     | paixueji_stream:call_paixueji_stream:2305 | [e626c579-6e96-4d73-89ab-8109061b0be5] System-managed: focus_mode=width_color, reason=Completed depth phase (5 questions). Switching to WIDTH: color
+2026-01-05 14:05:02.205 | DEBUG    | paixueji_stream:call_paixueji_stream:2325 | [e626c579-6e96-4d73-89ab-8109061b0be5] Streaming question
+2026-01-05 14:05:02.205 | INFO     | paixueji_stream:generate_followup_question_stream:773 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-05 14:05:02.761 | INFO     | paixueji_stream:generate_followup_question_stream:830 | generate_followup_question_stream completed | duration=0.556s, length=96
+2026-01-05 14:05:02.761 | INFO     | paixueji_stream:call_paixueji_stream:2476 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream completed | response_type=feedback, duration=2.968s, total_chunks=7, response_length=191, correct_count=4, complete=False, session_finished=False
+2026-01-05 14:05:02.762 | DEBUG    | paixueji_stream:call_paixueji_stream:2484 | Full response: Aye, that's right, matey! We just eat it! You're a super-duper banana expert, you are! Hooray! Tell me, matey, what other things do you know that are the same bright yellow color as a banana?...
+2026-01-05 14:05:02.762 | DEBUG    | paixueji_stream:call_paixueji_stream:2557 | 
+
+[DEBUG TREE NODE] Turn 6 (FEEDBACK)
+--------------------------------------------------
+👤 USER INPUT: we just eat it
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: Eating is the primary way people consume bananas after peeling them.
+⚡ DECISION: CONTINUE (Reason: The child answered the question directly and did not mention a new object.)
+🗣️ RESPONSE PART 1: Aye, that's right, matey! We just eat it! You're a super-duper banana expert, you are! Hooray!
+❓ RESPONSE PART 2: Tell me, matey, what other things do you know that are the same bright yellow color as a banana?
+--------------------------------------------------
+
+2026-01-05 14:05:34.511 | INFO     | paixueji_stream:call_paixueji_stream:1971 | [e626c579-6e96-4d73-89ab-8109061b0be5] System-managed mode: using focus_mode=width_color
+2026-01-05 14:05:34.511 | INFO     | paixueji_stream:call_paixueji_stream:1973 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream started | session_id=e626c579-6e96-4d73-89ab-8109061b0be5, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=5, status=normal, content_length=12, message_history=8
+2026-01-05 14:05:34.512 | INFO     | paixueji_stream:call_paixueji_stream:2010 | [e626c579-6e96-4d73-89ab-8109061b0be5] Conversation state | correct_count=5, complete=False
+2026-01-05 14:05:34.512 | INFO     | paixueji_stream:call_paixueji_stream:2059 | [e626c579-6e96-4d73-89ab-8109061b0be5] Running unified AI validation for answer
+2026-01-05 14:05:36.254 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1051 | [VALIDATE] CONTINUE | new_object=None, engaged=False, correct=False, switch_reasoning=The child indicated they don't know, so we should continue with the current topic and try a different approach., correctness_reasoning=The child did not provide an answer, so correctness is not applicable.
+2026-01-05 14:05:36.254 | INFO     | paixueji_stream:call_paixueji_stream:2120 | [e626c579-6e96-4d73-89ab-8109061b0be5] Routing to explanation | is_engaged=False
+2026-01-05 14:05:36.254 | DEBUG    | paixueji_stream:call_paixueji_stream:2210 | [e626c579-6e96-4d73-89ab-8109061b0be5] Streaming response (explanation)
+2026-01-05 14:05:36.254 | INFO     | paixueji_stream:generate_explanation_response_stream:402 | generate_explanation_response_stream started | object=banana, age=6
+2026-01-05 14:05:36.852 | INFO     | paixueji_stream:generate_explanation_response_stream:458 | generate_explanation_response_stream completed | duration=0.597s, length=78
+2026-01-05 14:05:36.852 | INFO     | paixueji_stream:call_paixueji_stream:2305 | [e626c579-6e96-4d73-89ab-8109061b0be5] System-managed: focus_mode=width_color, reason=WIDTH mode: 0/3 wrong answers
+2026-01-05 14:05:36.852 | DEBUG    | paixueji_stream:call_paixueji_stream:2325 | [e626c579-6e96-4d73-89ab-8109061b0be5] Streaming question
+2026-01-05 14:05:36.852 | INFO     | paixueji_stream:generate_followup_question_stream:773 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-05 14:05:37.446 | INFO     | paixueji_stream:generate_followup_question_stream:830 | generate_followup_question_stream completed | duration=0.594s, length=96
+2026-01-05 14:05:37.446 | INFO     | paixueji_stream:call_paixueji_stream:2476 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream completed | response_type=explanation, duration=2.935s, total_chunks=6, response_length=175, correct_count=5, complete=False, session_finished=False
+2026-01-05 14:05:37.446 | DEBUG    | paixueji_stream:call_paixueji_stream:2484 | Full response: Ahoy, matey! Some other things that are yellow are the sun and a rubber ducky! Tell me, matey, what other things do you know that are the same bright yellow color as a banana?...
+2026-01-05 14:05:37.446 | DEBUG    | paixueji_stream:call_paixueji_stream:2557 | 
+
+[DEBUG TREE NODE] Turn 7 (EXPLANATION)
+--------------------------------------------------
+👤 USER INPUT: I don't know
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='width_color'
+🔍 VALIDATION: Engaged=False | Correct=False
+💭 REASONING: The child did not provide an answer, so correctness is not applicable.
+⚡ DECISION: CONTINUE (Reason: The child indicated they don't know, so we should continue with the current topic and try a different approach.)
+🗣️ RESPONSE PART 1: Ahoy, matey! Some other things that are yellow are the sun and a rubber ducky!
+❓ RESPONSE PART 2: Tell me, matey, what other things do you know that are the same bright yellow color as a banana?
+--------------------------------------------------
+
+2026-01-05 14:05:53.983 | INFO     | paixueji_stream:call_paixueji_stream:1971 | [e626c579-6e96-4d73-89ab-8109061b0be5] System-managed mode: using focus_mode=width_color
+2026-01-05 14:05:53.984 | INFO     | paixueji_stream:call_paixueji_stream:1973 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream started | session_id=e626c579-6e96-4d73-89ab-8109061b0be5, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=5, status=normal, content_length=11, message_history=9
+2026-01-05 14:05:53.984 | INFO     | paixueji_stream:call_paixueji_stream:2010 | [e626c579-6e96-4d73-89ab-8109061b0be5] Conversation state | correct_count=5, complete=False
+2026-01-05 14:05:53.984 | INFO     | paixueji_stream:call_paixueji_stream:2059 | [e626c579-6e96-4d73-89ab-8109061b0be5] Running unified AI validation for answer
+2026-01-05 14:05:55.776 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1051 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child is still answering the question about yellow things. No need to switch topics yet., correctness_reasoning=A rubber duck is yellow, so the answer is correct.
+2026-01-05 14:05:55.777 | INFO     | paixueji_stream:call_paixueji_stream:2089 | [SYSTEM_MANAGED] Correct WIDTH answer, reset count
+2026-01-05 14:05:55.777 | INFO     | paixueji_stream:call_paixueji_stream:2176 | [e626c579-6e96-4d73-89ab-8109061b0be5] Routing to feedback | is_engaged=True, is_factually_correct=True
+2026-01-05 14:05:55.777 | DEBUG    | paixueji_stream:call_paixueji_stream:2210 | [e626c579-6e96-4d73-89ab-8109061b0be5] Streaming response (feedback)
+2026-01-05 14:05:55.777 | INFO     | paixueji_stream:generate_feedback_response_stream:309 | generate_feedback_response_stream started | object=banana, age=6
+2026-01-05 14:05:56.452 | INFO     | paixueji_stream:generate_feedback_response_stream:364 | generate_feedback_response_stream completed | duration=0.675s, length=100
+2026-01-05 14:05:56.452 | INFO     | paixueji_stream:call_paixueji_stream:2305 | [e626c579-6e96-4d73-89ab-8109061b0be5] System-managed: focus_mode=width_color, reason=WIDTH mode: 0/3 wrong answers
+2026-01-05 14:05:56.452 | DEBUG    | paixueji_stream:call_paixueji_stream:2325 | [e626c579-6e96-4d73-89ab-8109061b0be5] Streaming question
+2026-01-05 14:05:56.452 | INFO     | paixueji_stream:generate_followup_question_stream:773 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-05 14:05:57.053 | INFO     | paixueji_stream:generate_followup_question_stream:830 | generate_followup_question_stream completed | duration=0.601s, length=120
+2026-01-05 14:05:57.053 | INFO     | paixueji_stream:call_paixueji_stream:2476 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream completed | response_type=feedback, duration=3.070s, total_chunks=7, response_length=221, correct_count=5, complete=False, session_finished=False
+2026-01-05 14:05:57.053 | DEBUG    | paixueji_stream:call_paixueji_stream:2484 | Full response: Hooray! A rubber ducky is indeed yellow, just like our banana! You're a super-duper observer, matey! Tell me, matey, besides a rubber ducky, what other things do you know that are the same bright yellow color as a banana?...
+2026-01-05 14:05:57.053 | DEBUG    | paixueji_stream:call_paixueji_stream:2557 | 
+
+[DEBUG TREE NODE] Turn 8 (FEEDBACK)
+--------------------------------------------------
+👤 USER INPUT: rubber duck
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='width_color'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: A rubber duck is yellow, so the answer is correct.
+⚡ DECISION: CONTINUE (Reason: The child is still answering the question about yellow things. No need to switch topics yet.)
+🗣️ RESPONSE PART 1: Hooray! A rubber ducky is indeed yellow, just like our banana! You're a super-duper observer, matey!
+❓ RESPONSE PART 2: Tell me, matey, besides a rubber ducky, what other things do you know that are the same bright yellow color as a banana?
+--------------------------------------------------
+
+2026-01-05 14:06:25.762 | INFO     | paixueji_stream:call_paixueji_stream:1971 | [e626c579-6e96-4d73-89ab-8109061b0be5] System-managed mode: using focus_mode=width_color
+2026-01-05 14:06:25.762 | INFO     | paixueji_stream:call_paixueji_stream:1973 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream started | session_id=e626c579-6e96-4d73-89ab-8109061b0be5, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=6, status=normal, content_length=10, message_history=10
+2026-01-05 14:06:25.762 | INFO     | paixueji_stream:call_paixueji_stream:2010 | [e626c579-6e96-4d73-89ab-8109061b0be5] Conversation state | correct_count=6, complete=False
+2026-01-05 14:06:25.762 | INFO     | paixueji_stream:call_paixueji_stream:2059 | [e626c579-6e96-4d73-89ab-8109061b0be5] Running unified AI validation for answer
+2026-01-05 14:06:27.435 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1051 | [VALIDATE] SWITCH | new_object=sunflower, engaged=True, correct=True, switch_reasoning=The child successfully named another yellow object, so we should switch to talking about sunflowers., correctness_reasoning=Sunflowers are indeed yellow, matching the color of a banana.
+2026-01-05 14:06:27.436 | INFO     | paixueji_stream:call_paixueji_stream:2089 | [SYSTEM_MANAGED] Correct WIDTH answer, reset count
+2026-01-05 14:06:28.016 | INFO     | paixueji_stream:call_paixueji_stream:2140 | [e626c579-6e96-4d73-89ab-8109061b0be5] Classification completed for sunflower
+2026-01-05 14:06:28.016 | INFO     | paixueji_stream:call_paixueji_stream:2163 | [e626c579-6e96-4d73-89ab-8109061b0be5] Routing to topic switch | banana -> sunflower
+2026-01-05 14:06:28.016 | DEBUG    | paixueji_stream:call_paixueji_stream:2210 | [e626c579-6e96-4d73-89ab-8109061b0be5] Streaming response (topic_switch)
+2026-01-05 14:06:28.016 | INFO     | paixueji_stream:generate_topic_switch_response_stream:582 | generate_topic_switch_response_stream started | banana -> sunflower, age=6
+2026-01-05 14:06:28.601 | INFO     | paixueji_stream:generate_topic_switch_response_stream:637 | generate_topic_switch_response_stream completed | duration=0.584s, length=96
+2026-01-05 14:06:28.601 | INFO     | paixueji_stream:call_paixueji_stream:2305 | [e626c579-6e96-4d73-89ab-8109061b0be5] System-managed: focus_mode=width_color, reason=WIDTH mode: 0/3 wrong answers
+2026-01-05 14:06:28.601 | DEBUG    | paixueji_stream:call_paixueji_stream:2325 | [e626c579-6e96-4d73-89ab-8109061b0be5] Streaming question
+2026-01-05 14:06:28.601 | INFO     | paixueji_stream:generate_followup_question_stream:773 | generate_followup_question_stream started | object=sunflower, age=6, is_switch=True
+2026-01-05 14:06:29.225 | INFO     | paixueji_stream:generate_followup_question_stream:830 | generate_followup_question_stream completed | duration=0.624s, length=138
+2026-01-05 14:06:29.225 | INFO     | paixueji_stream:call_paixueji_stream:2476 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream completed | response_type=topic_switch, duration=3.464s, total_chunks=8, response_length=235, correct_count=6, complete=False, session_finished=False
+2026-01-05 14:06:29.225 | DEBUG    | paixueji_stream:call_paixueji_stream:2484 | Full response: Ahoy, matey! A sunflower, ye say? That's a grand new treasure to explore! Hooray for sunflowers! Tell me, matey, besides our banana and a rubber ducky, what other things do you know that are the same bright yellow color as a sunflower?...
+2026-01-05 14:06:29.225 | DEBUG    | paixueji_stream:call_paixueji_stream:2557 | 
+
+[DEBUG TREE NODE] Turn 9 (TOPIC_SWITCH)
+--------------------------------------------------
+👤 USER INPUT: sunflowers
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='width_color'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: Sunflowers are indeed yellow, matching the color of a banana.
+⚡ DECISION: SWITCH (Reason: The child successfully named another yellow object, so we should switch to talking about sunflowers.)
+🗣️ RESPONSE PART 1: Ahoy, matey! A sunflower, ye say? That's a grand new treasure to explore! Hooray for sunflowers!
+❓ RESPONSE PART 2: Tell me, matey, besides our banana and a rubber ducky, what other things do you know that are the same bright yellow color as a sunflower?
+--------------------------------------------------
+
