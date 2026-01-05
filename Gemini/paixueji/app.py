@@ -359,6 +359,8 @@ def continue_conversation():
                             # NEW: Increment only if factually correct
                             if should_increment:
                                 assistant.increment_correct_answers()
+                                # Update chunk with new count so frontend sees it immediately
+                                chunk.correct_answer_count = assistant.correct_answer_count
                                 print(f"[INFO] Session {session_id[:8]}... factually correct answer | new count: {assistant.correct_answer_count}")
                             elif chunk.is_factually_correct == False:
                                 print(f"[INFO] Session {session_id[:8]}... factually incorrect answer | count unchanged: {assistant.correct_answer_count}")

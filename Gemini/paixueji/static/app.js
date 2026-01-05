@@ -127,6 +127,33 @@ async function startConversation() {
     // Save tone preference
     localStorage.setItem('paixueji_tone', tone);
 
+    // Set active focus mode dropdown to match start selection
+    const activeFocusSelect = document.getElementById('activeFocusMode');
+    if (activeFocusSelect) {
+        activeFocusSelect.value = focusMode;
+        
+        // If starting in manual mode, disable "System Managed" option
+        // If starting in system mode, keep it enabled (until they switch away)
+        const systemOption = activeFocusSelect.querySelector('option[value="system_managed"]');
+        if (systemOption) {
+            systemOption.disabled = !systemManagedMode;
+        }
+        
+        // Add event listener to disable system_managed if user switches away from it
+        activeFocusSelect.onchange = function() {
+            if (this.value !== 'system_managed') {
+                systemOption.disabled = true;
+                console.log('[INFO] Switched to manual mode, system_managed disabled');
+            }
+        };
+
+        // Show the control
+        const controlDiv = document.getElementById('activeFocusControl');
+        if (controlDiv) {
+            controlDiv.style.display = 'flex';
+        }
+    }
+
     // Validation - only object name is required
     if (!objectName) {
         alert('Please enter an object name');
@@ -318,7 +345,9 @@ async function sendMessage() {
     isStreaming = true;
     updateStopButton();
 
-    const focusMode = document.getElementById('nextQuestionFocus').value;
+    // Get focus mode from active dropdown (allows mid-chat switching)
+    const activeFocusSelect = document.getElementById('activeFocusMode');
+    const focusMode = activeFocusSelect ? activeFocusSelect.value : document.getElementById('nextQuestionFocus').value;
 
     try {
         console.log('[INFO] Sending message:', text);
@@ -788,6 +817,12 @@ function resetConversation() {
     startForm.style.display = 'block';
     progressIndicator.style.display = 'none';
     messagesContainer.style.display = 'none';
+
+    // Hide active focus control
+    const activeFocusControl = document.getElementById('activeFocusControl');
+    if (activeFocusControl) {
+        activeFocusControl.style.display = 'none';
+    }
 
     // Re-enable input
     userInput.disabled = false;

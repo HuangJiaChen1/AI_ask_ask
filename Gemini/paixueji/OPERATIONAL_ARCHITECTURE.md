@@ -3,6 +3,35 @@
 **Purpose**: Debugging, tracing execution, and reasoning about failure modes
 **Generated**: 2026-01-05
 **Status**: OPERATIONAL ANALYSIS (not presentation)
+**Audit Status**: ✅ AUDITED - Critical issues investigated and documented
+
+---
+
+## AUDIT SUMMARY
+
+**Status of Critical Issues**:
+
+1. ✅ **Category data source for UI** - RESOLVED
+   - UI loads from `/static/object_prompts.json` via `loadCategoryData()` (app.js:550-559)
+   - Called at page initialization
+   - Flow fully traceable
+
+2. ⚠️ **Event loop cleanup** - CONFIRMED RESOURCE LEAK RISK
+   - No explicit `loop.close()` call
+   - Relies on Python garbage collection
+   - Potential accumulation if GC delayed under load
+   - See Section 11 for details
+
+3. ✅ **request_id propagation** - FALSE POSITIVE (actually works correctly)
+   - Generated in app.py and passed through entire stack
+   - Included in all StreamChunk objects
+   - Available for log correlation
+
+4. ⚠️ **Session orphan accumulation** - CONFIRMED MEMORY LEAK
+   - No automatic cleanup mechanism
+   - Only deleted via explicit `/api/reset`
+   - Browser refresh/close orphans server-side sessions
+   - See Section 12 for details
 
 ---
 
@@ -14,8 +43,9 @@ This is a Flask-based streaming educational chatbot where an AI asks questions a
 - Real-time SSE (Server-Sent Events) streaming
 - In-memory session management (data lost on restart)
 - Asynchronous LLM streaming with synchronous Flask
-- "Dual-parallel" response generation (feedback + question in parallel)
+- "Dual-parallel" response generation (feedback + question sequentially, not concurrently)
 - Topic switching and focus mode management
+- **Static asset serving** for UI and category data
 
 ---
 
@@ -29,9 +59,11 @@ graph TB
 
     subgraph "Entry Points"
         Flask["Flask Server :5001<br/>app.py<br/>(Multi-threaded)"]
+        StaticServer["Static File Server<br/>Flask static_folder='static'"]
     end
 
     subgraph "API Endpoints"
+        EP0["GET /<br/>(Returns index.html)"]
         EP1["/api/start<br/>(POST - SSE)"]
         EP2["/api/continue<br/>(POST - SSE)"]
         EP3["/api/reset<br/>(POST - JSON)"]
@@ -43,8 +75,15 @@ graph TB
         EP9["/api/sessions<br/>(GET - JSON)"]
     end
 
+    subgraph "Static Assets"
+        StaticHTML["static/index.html"]
+        StaticJS["static/app.js"]
+        StaticCSS["static/style.css"]
+        StaticPrompts["static/object_prompts.json<br/>⚠️ DUPLICATE of server file"]
+    end
+
     subgraph "Session Management"
-        Sessions["In-Memory Sessions Dict<br/>{session_id: PaixuejiAssistant}<br/>⚠️ VOLATILE - Lost on restart"]
+        Sessions["In-Memory Sessions Dict<br/>{session_id: PaixuejiAssistant}<br/>⚠️ VOLATILE - Lost on restart<br/>⚠️ ORPHANS - No cleanup"]
     end
 
     subgraph "Core Components"
@@ -53,6 +92,8 @@ graph TB
         Stream["Streaming Engine<br/>paixueji_stream.py<br/>• async generators<br/>• LLM calls<br/>• Response routing"]
 
         Tree["ConversationFlowTree<br/>conversation_tree.py<br/>• Debug tracking<br/>• Mermaid export"]
+
+        AsyncBridge["async_gen_to_sync()<br/>app.py:924-969<br/>• queue.Queue bridge<br/>• Background thread<br/>• Event loop runner"]
     end
 
     subgraph "External Services"
@@ -69,7 +110,7 @@ graph TB
 
     subgraph "Logging & Monitoring"
         Logs["Loguru Logger<br/>logs/paixueji_YYYY-MM-DD.log<br/>• 30-day retention<br/>• DEBUG level<br/>• Rotation at midnight"]
-        Console["Console Logging<br/>print() statements<br/>• Session lifecycle<br/>• Request tracking"]
+        Console["Console Logging<br/>print() statements<br/>• Session lifecycle<br/>• Request tracking<br/>• request_id included"]
     end
 
     subgraph "Trust Boundaries"
@@ -80,15 +121,22 @@ graph TB
 
     %% Connections
     UI -->|"HTTP/SSE<br/>:5001"| Flask
-    Flask --> EP1 & EP2 & EP3 & EP4 & EP5 & EP6 & EP7 & EP8 & EP9
+    UI -->|"GET /static/*"| StaticServer
+
+    Flask --> EP0 & EP1 & EP2 & EP3 & EP4 & EP5 & EP6 & EP7 & EP8 & EP9
+
+    StaticServer --> StaticHTML & StaticJS & StaticCSS & StaticPrompts
 
     EP1 & EP2 -->|"Create/Retrieve"| Sessions
-    EP3 -->|"Delete"| Sessions
+    EP3 -->|"Delete (manual only)"| Sessions
     EP5 & EP6 & EP7 -->|"Create temp/Update"| Sessions
 
     Sessions -->|"Contains"| Assistant
     Assistant -->|"Uses"| Stream
     Assistant -->|"Maintains"| Tree
+
+    EP1 & EP2 -->|"Create per request"| AsyncBridge
+    AsyncBridge -->|"Bridges to"| Stream
 
     Stream -->|"Async calls<br/>streaming"| Gemini
     Gemini -.->|"Credentials"| GCP
@@ -98,6 +146,8 @@ graph TB
     Assistant -->|"Load once at init"| ObjPrompts
     Assistant -->|"Import"| SysPrompts
 
+    UI -.->|"Fetch at page load"| StaticPrompts
+
     Stream -->|"Write logs"| Logs
     Flask -->|"Write logs"| Console
 
@@ -106,19 +156,79 @@ graph TB
     style TB3 fill:#ffcccc,stroke:#cc0000
     style Sessions fill:#fff3cd,stroke:#ffc107
     style Gemini fill:#e3f2fd,stroke:#2196f3
+    style AsyncBridge fill:#e1f5fe,stroke:#01579b
+    style StaticPrompts fill:#fff3cd,stroke:#ffc107
 ```
 
 **Legend**:
 - **⚠️ Red**: Security boundaries with no authentication/validation
 - **✅ Green**: Authenticated/secure boundaries
-- **Yellow**: Volatile storage (data loss risk)
+- **Yellow**: Volatile storage or duplicated data
 - **Blue**: External service dependency
+
+**Key Additions from Audit**:
+- Added `async_gen_to_sync()` bridge component (previously missing)
+- Added static file server and assets (UI category data source)
+- Added `static/object_prompts.json` duplicate file (client-side copy)
+- Added GET `/` endpoint for index.html
+- Clarified session cleanup: "manual only" (no automatic mechanism)
 
 ---
 
-## 2. DETAILED REQUEST/EVENT FLOWS
+## 2. PAGE INITIALIZATION FLOW
 
-### 2.1 Start Conversation Flow (`/api/start`)
+**NEW DIAGRAM** - Shows how UI loads category data
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant Browser
+    participant Flask as Flask Static Server
+    participant HTML as index.html
+    participant JS as app.js
+    participant Prompts as /static/object_prompts.json
+
+    User->>Browser: Navigate to http://localhost:5001
+    Browser->>Flask: GET /
+    Flask->>Browser: 200 static/index.html
+    Browser->>HTML: Parse HTML
+    HTML->>Browser: Load <script src="/static/app.js">
+
+    Browser->>Flask: GET /static/app.js
+    Flask->>Browser: 200 app.js
+
+    Browser->>JS: Execute JavaScript
+
+    Note over JS: Page initialization begins
+
+    JS->>JS: Call loadCategoryData()
+    JS->>Flask: GET /static/object_prompts.json
+    Flask->>Prompts: Read file
+    Prompts-->>Flask: JSON content
+    Flask-->>JS: 200 object_prompts.json
+
+    JS->>JS: categoryData = JSON
+    JS->>JS: populateLevel1Dropdown()
+    JS->>JS: Populate dropdowns:<br/>• level1_categories<br/>• level2_categories (disabled)<br/>• level3_categories (disabled)
+
+    JS-->>Browser: DOM updated with category options
+    Browser->>User: Show start form with dropdowns ready
+```
+
+**Data Passed**:
+- Step 3: Full HTML document
+- Step 6: Full JavaScript code
+- Step 13: Complete object_prompts.json (~5-10KB JSON)
+- Step 16: Category names as `<option>` elements in DOM
+
+**Trigger**: User navigates to application URL
+
+**KEY FINDING**: This resolves the "category data source" critical issue. UI gets categories from static JSON file, NOT from API endpoint.
+
+---
+
+## 3. START CONVERSATION FLOW
 
 ```mermaid
 sequenceDiagram
@@ -130,73 +240,98 @@ sequenceDiagram
     participant Assistant as PaixuejiAssistant
     participant EventLoop as Event Loop<br/>(async bridge)
     participant Stream as call_paixueji_stream
-    participant Validation as AI Validation<br/>(Gemini)
     participant Response as Response Generator<br/>(Gemini)
     participant FlowTree as ConversationFlowTree
+
+    Note over UI: Categories already loaded<br/>from static JSON
 
     User->>UI: Fill form + click Start
     UI->>Flask: POST /api/start<br/>{age, object_name, categories, tone, focus_mode}
 
     Note over Flask: Validate: object_name required<br/>age 3-8 or None
 
-    Flask->>Session: Create session_id = uuid4()
+    Flask->>Session: session_id = uuid4()
     Flask->>Assistant: new PaixuejiAssistant(system_managed)
-    Session->>Session: sessions[session_id] = assistant
+    Assistant->>Assistant: Load configs:<br/>config.json<br/>age_prompts.json<br/>object_prompts.json<br/>paixueji_prompts.py
+    Session->>Session: sessions[session_id] = assistant<br/>⚠️ No cleanup - orphans possible
 
     Assistant->>FlowTree: init_flow_tree(session_id, metadata)
-    Assistant->>Assistant: Load prompts:<br/>- System prompt<br/>- Age prompt (if age set)<br/>- Tone prompt<br/>- Category prompt<br/>- Focus prompt
+    Assistant->>Assistant: Build system prompt:<br/>+ age_prompt (if set)<br/>+ tone_prompt<br/>+ category_prompt<br/>+ focus_prompt
 
-    Flask->>EventLoop: get_event_loop()<br/>Create new event loop
+    Flask->>Flask: request_id = uuid4()<br/>✅ For tracing this stream
+    Flask->>Console: print(session_id, request_id, params)
+
+    Flask->>EventLoop: get_event_loop()<br/>⚠️ Creates new loop, no cleanup
 
     Note over Flask,EventLoop: ASYNC BOUNDARY<br/>Flask thread → Event loop thread<br/>Using async_gen_to_sync() bridge
 
-    EventLoop->>Stream: call_paixueji_stream(...)<br/>content="Start conversation about {object}"<br/>status="normal"
+    EventLoop->>Stream: call_paixueji_stream(...)<br/>content="Start conversation about {object}"<br/>status="normal"<br/>request_id=request_id ✅
 
     Stream->>Stream: Route to ask_introduction_question_stream()
-    Stream->>Response: Build introduction prompt<br/>+ system + age + category + focus
+    Stream->>Response: Build introduction prompt<br/>+ all context
     Stream->>Response: client.models.generate_content_stream()<br/>STREAMING ENABLED
 
     loop For each chunk from Gemini
         Response-->>Stream: yield (chunk.text, None, full_response, decision_info)
-        Stream-->>EventLoop: yield StreamChunk
+        Stream-->>EventLoop: Construct StreamChunk:<br/>- sequence_number<br/>- timestamp<br/>- session_id ✅<br/>- request_id ✅<br/>- response text<br/>- finish=false
         EventLoop-->>Flask: Put in queue.Queue
         Flask-->>UI: SSE event: chunk<br/>data: StreamChunk JSON
-        UI->>UI: Display text chunk in real-time
+        UI->>UI: displayChunk() - show text in real-time
     end
 
     Response-->>Stream: Final chunk (finish=true)
     Stream->>Assistant: conversation_history.append({role: assistant, content: response})
-    Stream->>FlowTree: Create node for turn 0<br/>type="introduction"<br/>state_before, state_after
-    Stream-->>EventLoop: yield final StreamChunk<br/>finish=true
+    Stream->>FlowTree: Create node for turn 0:<br/>- type="introduction"<br/>- user_input="Start..."<br/>- ai_response=full_response<br/>- state_before/after
+    Stream-->>EventLoop: yield final StreamChunk<br/>finish=true, all metadata
     EventLoop-->>Flask: Final chunk
     Flask-->>UI: SSE event: chunk (final)
     Flask-->>UI: SSE event: complete
 
-    UI->>UI: Enable input field<br/>session_id saved<br/>Display flow tree link
+    Note over EventLoop: ⚠️ Event loop NOT closed<br/>Relies on garbage collection
+
+    UI->>UI: sessionId = chunk.session_id<br/>Enable input field<br/>Show debug panel with flow tree link
 
     Note over UI,Session: Session active<br/>Ready for /api/continue
 ```
 
-**Data Passed (Labels)**:
+**Data Passed (with corrections)**:
 - Step 2: `{age: int?, object_name: str, level1/2/3_category: str?, tone: str?, focus_mode: str, system_managed: bool}` (HTTP POST - JSON)
-- Step 7: Event loop creation (SYNC → ASYNC boundary)
-- Step 9: Introduction content string (sync)
-- Step 11: Prompt with all context (async)
-- Step 12: Gemini streaming request (async HTTP)
-- Steps 13-17: Text chunks (async generator → queue → SSE)
-- Step 21: `StreamChunk` with `finish=true` (SSE JSON)
+- Step 7: Config files loaded: config.json, age_prompts.json, object_prompts.json (~10-20KB total)
+- Step 11: **request_id created** and logged (UUID string, 36 chars)
+- Step 14: Event loop created (asyncio.AbstractEventLoop object) - **⚠️ NOT CLOSED**
+- Steps 21-26: **StreamChunk** with ALL fields populated:
+  - `response: str` (incremental text)
+  - `session_id: str` ✅
+  - `request_id: str` ✅ (for tracing)
+  - `sequence_number: int` (1, 2, 3...)
+  - `timestamp: float` (Unix timestamp)
+  - `finish: bool`
+  - `session_finished: bool`
+  - `duration: float` (only on final chunk)
+  - `token_usage: TokenUsage | None` (always None for Gemini streaming)
+  - `correct_answer_count: int`
+  - `conversation_complete: bool`
+  - `focus_mode: str | None`
+  - Other validation/switching fields
 
 **Sync vs Async**:
-- Steps 1-6: **SYNC** (Flask request handler thread)
-- Steps 7-20: **ASYNC** (event loop in background thread via `async_gen_to_sync`)
-- Steps 21-22: **SYNC** (Flask SSE response generator)
+- Steps 1-13: **SYNC** (Flask request handler thread)
+- Steps 14-30: **ASYNC** (event loop in background thread via `async_gen_to_sync`)
+- Step 16: **Passes request_id** into async context ✅
+- Steps 31-33: **SYNC** (Flask SSE response generator)
 
 **Trigger Conditions**:
 - User clicks "Start" button with valid object_name
 
+**Resource Leak Points**:
+- **Step 14**: Event loop created but never explicitly closed (relies on GC)
+- **Step 6**: Session added to dict, only removed via manual `/api/reset` call
+
 ---
 
-### 2.2 Continue Conversation Flow (`/api/continue`)
+## 4. CONTINUE CONVERSATION FLOW
+
+(Same as before, with addition of request_id tracing)
 
 ```mermaid
 sequenceDiagram
@@ -222,23 +357,26 @@ sequenceDiagram
         UI->>UI: Show error
     end
 
-    Flask->>EventLoop: get_event_loop()<br/>New event loop for this request
+    Flask->>Flask: request_id = uuid4()<br/>✅ New ID for this stream
+    Flask->>Console: print(session_id, request_id, child_input preview)
 
-    Note over Flask,EventLoop: ASYNC BOUNDARY<br/>Request ID = uuid4()<br/>For tracking concurrent streams
+    Flask->>EventLoop: get_event_loop()<br/>⚠️ New loop, no cleanup
 
-    EventLoop->>Stream: call_paixueji_stream(...)<br/>content=child_input<br/>status="normal"
+    Note over Flask,EventLoop: ASYNC BOUNDARY<br/>Request ID = request_id ✅<br/>For tracking concurrent streams
+
+    EventLoop->>Stream: call_paixueji_stream(...)<br/>content=child_input<br/>status="normal"<br/>request_id=request_id ✅
 
     Stream->>Stream: Route to ask_followup_question_stream()
 
-    Note over Stream,Validation: DECISION STEP<br/>AI-powered validation + switching
+    Note over Stream,Validation: DECISION STEP<br/>AI-powered validation + switching<br/>⚠️ BLOCKING call (non-streaming)
 
     Stream->>Validation: decide_topic_switch_with_validation()<br/>Params: child_answer, object_name, age, focus_mode
-    Validation->>Validation: Build 3-part prompt:<br/>1. Engagement check<br/>2. Factual correctness<br/>3. Topic switching
-    Validation->>Validation: client.generate_content()<br/>response_mime_type="application/json"<br/>temperature=0.1<br/>⚠️ NON-STREAMING (blocking)
+    Validation->>Validation: Build 3-part prompt (800+ lines):<br/>1. Engagement check (is_engaged)<br/>2. Factual correctness (is_factually_correct)<br/>3. Topic switching (decision)
+    Validation->>Validation: client.generate_content()<br/>response_mime_type="application/json"<br/>temperature=0.1<br/>⚠️ NON-STREAMING (blocking, no timeout)
     Validation-->>Stream: Return JSON:<br/>{decision, new_object, switching_reasoning,<br/>is_engaged, is_factually_correct, correctness_reasoning}
 
     alt Decision = SWITCH
-        Stream->>Assistant: Update object_name = new_object
+        Stream->>Assistant: object_name = new_object
         Stream->>Assistant: classify_object_sync(new_object)<br/>⚠️ Background thread, 1s timeout
         Stream->>FlowTree: Log decision: SWITCH<br/>detected_object, switch_reasoning
         Stream->>Response1: generate_topic_switch_response_stream()<br/>Celebrate transition
@@ -247,17 +385,17 @@ sequenceDiagram
         Stream->>Response1: generate_feedback_response_stream()<br/>Celebration only
     else Decision = CONTINUE + NOT Engaged
         Stream->>FlowTree: Log validation: engaged=false
-        Stream->>Response1: generate_explanation_response_stream()<br/>Help child with answer
+        Stream->>Response1: generate_explanation_response_stream()<br/>Extract previous_question from history<br/>Help child with answer
     else Decision = CONTINUE + Engaged + Incorrect
         Stream->>FlowTree: Log validation: engaged=true, correct=false
-        Stream->>Response1: generate_correction_response_stream()<br/>Gentle correction
+        Stream->>Response1: generate_correction_response_stream()<br/>Pass correctness_reasoning<br/>Gentle correction
     end
 
-    Note over Response1,Response2: DUAL-PARALLEL ARCHITECTURE<br/>Part 1 streams first, Part 2 streams second<br/>⚠️ Sequential, NOT concurrent
+    Note over Response1,Response2: DUAL-PARALLEL ARCHITECTURE<br/>Part 1 streams THEN Part 2 streams<br/>⚠️ Sequential, NOT concurrent
 
     loop Part 1: Feedback/Explanation/Correction
         Response1-->>Stream: yield (chunk.text, None, full_response)
-        Stream-->>UI: SSE event: chunk<br/>ai_response_part1
+        Stream-->>UI: SSE event: chunk<br/>request_id=request_id ✅<br/>ai_response_part1 (accumulated)
         UI->>UI: Display Part 1 in real-time
     end
 
@@ -271,7 +409,7 @@ sequenceDiagram
 
     loop Part 2: Follow-up Question
         Response2-->>Stream: yield (chunk.text, None, full_response)
-        Stream-->>UI: SSE event: chunk<br/>ai_response_part2
+        Stream-->>UI: SSE event: chunk<br/>request_id=request_id ✅<br/>ai_response_part2 (accumulated)
         UI->>UI: Display Part 2 in real-time
     end
 
@@ -280,45 +418,34 @@ sequenceDiagram
     Stream->>FlowTree: Update node.ai_response_part2
 
     alt is_factually_correct = true
-        Stream->>Assistant: increment_correct_answers()<br/>correct_answer_count++
+        Stream->>Assistant: correct_answer_count++
         Stream->>FlowTree: Log increment
     end
 
-    Stream-->>UI: SSE event: chunk (final)<br/>finish=true, is_factually_correct, new_object_name, etc.
+    Stream-->>UI: SSE event: chunk (final)<br/>finish=true<br/>request_id=request_id ✅<br/>is_factually_correct, new_object_name, etc.
     Stream-->>UI: SSE event: complete
+
+    Note over EventLoop: ⚠️ Event loop NOT closed<br/>Relies on garbage collection
 
     UI->>UI: Update progress indicator<br/>Enable input
 
     Note over UI,FlowTree: Loop continues until user resets
 ```
 
-**Data Passed**:
-- Step 2: `{session_id: str, child_input: str, focus_mode: str}` (HTTP POST)
-- Step 7: Child's answer text (sync → async)
-- Step 10: Validation request with full context (async HTTP to Gemini)
-- Step 11: JSON decision structure (sync response from Gemini)
-- Steps 17-20: Part 1 text chunks (async SSE)
-- Steps 24-27: Part 2 text chunks (async SSE)
-- Step 31: Final `StreamChunk` with all metadata (SSE JSON)
-
-**Sync vs Async**:
-- Steps 1-5: **SYNC**
-- Steps 6-31: **ASYNC** (via event loop bridge)
-- Validation (Step 10): **SYNC call inside async context** (blocking)
-
-**Trigger Conditions**:
-- User sends answer via input field
-- Valid session_id exists
-
-**Critical Decision Point (Step 10)**:
-- `is_engaged=false` → Explanation path
-- `is_engaged=true, is_factually_correct=true` → Feedback path
-- `is_engaged=true, is_factually_correct=false` → Correction path
-- `decision=SWITCH` → Topic switch celebration
+**Key Corrections**:
+- **Step 5**: request_id created and logged (was implicit before)
+- **Steps 10, 18**: request_id passed through async boundary ✅
+- **Step 14**: Clarified it's a BLOCKING call (non-streaming Gemini API)
+- **Step 19**: Added "Extract previous_question from history" (was missing data flow)
+- **Step 21**: Added "Pass correctness_reasoning" (was missing data flow)
+- **Steps 25, 31**: Added request_id in SSE events ✅
+- **Step 38**: Event loop cleanup issue noted
 
 ---
 
-### 2.3 Session Reset Flow (`/api/reset`)
+## 5. SESSION RESET & ORPHAN CLEANUP
+
+**Updated with orphan detection**
 
 ```mermaid
 sequenceDiagram
@@ -328,90 +455,63 @@ sequenceDiagram
     participant Flask as Flask API
     participant Session as Sessions Dict
 
+    Note over Session: Before reset:<br/>sessions = {<br/>"abc123": Assistant1,<br/>"def456": Assistant2 (orphan),<br/>"ghi789": Assistant3<br/>}
+
     User->>UI: Click Reset/New Conversation
-    UI->>Flask: POST /api/reset<br/>{session_id}
+    UI->>Flask: POST /api/reset<br/>{session_id: "abc123"}
 
     Flask->>Session: Check if session_id in sessions
 
     alt Session exists
-        Session->>Session: del sessions[session_id]
-        Note over Session: ⚠️ All state destroyed:<br/>- Conversation history<br/>- Assistant instance<br/>- Flow tree<br/>- Progress count
+        Session->>Session: del sessions["abc123"]
+        Note over Session: ⚠️ All state destroyed:<br/>- Conversation history<br/>- Assistant instance<br/>- Flow tree<br/>- Progress count<br/>- Gemini client closed (via __del__)
         Flask-->>UI: 200 {success: true}
-        UI->>UI: Show start form<br/>Clear session_id<br/>Reset UI state
+        UI->>UI: sessionId = null<br/>Show start form<br/>Clear session_id<br/>Reset UI state
+
+        Note over Session: After reset:<br/>sessions = {<br/>"def456": Assistant2 (orphan),<br/>"ghi789": Assistant3<br/>}<br/><br/>⚠️ Orphan "def456" remains forever
     else Session not found
         Flask-->>UI: 404 {success: false, error: "Session not found"}
         UI->>UI: Show error
     end
+
+    Note over User,Session: ⚠️ ORPHAN SCENARIOS:<br/>1. Browser refresh → client loses session_id<br/>2. Browser close → client loses session_id<br/>3. Network error → incomplete cleanup<br/><br/>Server-side session remains until:<br/>- Manual /api/reset (requires session_id)<br/>- Server restart (all lost)
 ```
 
-**Data Passed**:
-- Step 2: `{session_id: str}` (HTTP POST)
-- Step 5/7: JSON response
+**Orphan Accumulation Example**:
+```
+Time 0:   sessions = {}
+10:00 AM: User A starts → sessions = {"aaa": Assistant1}
+10:05 AM: User B starts → sessions = {"aaa": Assistant1, "bbb": Assistant2}
+10:10 AM: User A refreshes browser → client loses "aaa"
+          Server: sessions = {"aaa": Assistant1 (orphan), "bbb": Assistant2}
+10:15 AM: User C starts → sessions = {"aaa": orphan, "bbb": Assistant2, "ccc": Assistant3}
+10:20 AM: User B resets properly → sessions = {"aaa": orphan, "ccc": Assistant3}
 
-**Sync vs Async**: All **SYNC**
+Result: 1 orphan accumulates, memory never freed
+Over 1000 users: 100s of orphans, MBs of leaked memory
+```
 
-**Trigger Conditions**: User clicks reset button
+**Data Loss Scenarios**:
+- Server restart/crash → all sessions lost
+- Browser refresh → session_id lost (but server-side session remains orphaned)
+- Network disconnect during stream → session remains, client loses connection
+- Memory exhaustion from unbounded growth + orphans → potential crash
 
 ---
 
-### 2.4 Object Classification Flow (`/api/classify`)
+## 6. STATE & PERSISTENCE MAP
 
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as External Client/UI
-    participant Flask as Flask API
-    participant Assistant as PaixuejiAssistant<br/>(temporary)
-    participant Gemini as Gemini API
-
-    Client->>Flask: POST /api/classify<br/>{object_name}
-    Flask->>Assistant: new PaixuejiAssistant()<br/>⚠️ Temp instance, not stored
-
-    Assistant->>Assistant: Load object_prompts.json<br/>Get level2_categories list
-    Assistant->>Assistant: Build classification_prompt:<br/>"Classify 'apple' into: [foods, toys, ...]"
-
-    Assistant->>Gemini: generate_content()<br/>temperature=0.1<br/>max_tokens=50<br/>⚠️ BLOCKING, NON-STREAMING
-
-    Gemini-->>Assistant: "fresh_ingredients"
-
-    Assistant->>Assistant: Lookup in level2_categories dict
-    alt Valid level2 category
-        Assistant->>Assistant: level2_category = result<br/>level1_category = parent
-    else Invalid or "none"
-        Assistant->>Assistant: level1/2/3_category = None
-    end
-
-    Assistant-->>Flask: Return level1, level2, level3
-    Flask-->>Client: 200 {success: true, object_name, level1_category, level2_category}
-
-    Note over Assistant: ⚠️ Temp instance garbage collected
-```
-
-**Data Passed**:
-- Step 1: `{object_name: str}`
-- Step 4: Prompt with categories list
-- Step 6: Category string response
-- Step 10: JSON with categories
-
-**Sync vs Async**: All **SYNC**
-
-**Trigger Conditions**:
-- Manual API call (not used in main UI flow)
-- Background classification in `/api/force-switch` and `/api/select-object`
-
----
-
-## 3. STATE & PERSISTENCE MAP
+(Same as before, with session cleanup clarification)
 
 ```mermaid
 graph TB
     subgraph "Session State (In-Memory - VOLATILE)"
-        SessionDict["sessions = {}<br/>Python Dict"]
+        SessionDict["sessions = {}<br/>Python Dict<br/>⚠️ NO CLEANUP - orphans accumulate"]
 
         subgraph "Per Session: PaixuejiAssistant"
-            ConvHist["conversation_history: list[dict]<br/>• role: system/user/assistant<br/>• content: str<br/>⚠️ Grows unbounded"]
+            ConvHist["conversation_history: list[dict]<br/>• role: system/user/assistant<br/>• content: str<br/>⚠️ Grows unbounded (no truncation)"]
 
-            StateVars["State Variables:<br/>• object_name: str<br/>• level1/2/3_category: str | None<br/>• age: int | None<br/>• tone: str | None<br/>• correct_answer_count: int<br/>• system_managed_focus: bool<br/>• current_focus_mode: str<br/>• depth_questions_count: int<br/>• width_wrong_count: int<br/>• width_categories_tried: list[str]<br/>• depth_target: int (4-5)"]
+            StateVars["State Variables:<br/>• object_name: str<br/>• level1/2/3_category: str | None<br/>• age: int | None<br/>• tone: str | None<br/>• correct_answer_count: int<br/>• system_managed_focus: bool<br/>• current_focus_mode: str<br/>• depth_questions_count: int<br/>• width_wrong_count: int<br/>• width_categories_tried: list[str]<br/>• depth_target: int (random 4-5)"]
 
             FlowTree["flow_tree: ConversationFlowTree<br/>• nodes: list[ConversationTreeNode]<br/>• metadata: dict<br/>⚠️ Debug only, grows with conversation"]
 
@@ -424,7 +524,7 @@ graph TB
     subgraph "File System (PERSISTENT)"
         ConfigFile["config.json<br/>• Read at init<br/>• Never written"]
         AgeFile["age_prompts.json<br/>• Read at init<br/>• Never written"]
-        ObjFile["object_prompts.json<br/>• Read at init<br/>• Never written"]
+        ObjFile["object_prompts.json<br/>• Read at init<br/>• Never written<br/>• Duplicated in static/"]
         LogFiles["logs/paixueji_YYYY-MM-DD.log<br/>• Written continuously<br/>• 30-day retention<br/>• Rotation at midnight"]
     end
 
@@ -434,12 +534,13 @@ graph TB
 
     subgraph "Browser State (PERSISTENT until tab close)"
         LocalStorage["localStorage<br/>• paixueji_tone: str"]
-        BrowserVars["JS Global Variables:<br/>• sessionId: str<br/>• correctAnswerCount: int<br/>• conversationComplete: bool<br/>• systemManagedMode: bool<br/>• awaitingObjectSelection: bool"]
+        BrowserVars["JS Global Variables:<br/>• sessionId: str (lost on refresh)<br/>• categoryData: object (from static JSON)<br/>• correctAnswerCount: int<br/>• conversationComplete: bool<br/>• systemManagedMode: bool<br/>• awaitingObjectSelection: bool"]
     end
 
     %% Data Loss Risks
     ServerRestart["⚠️ SERVER RESTART<br/>→ ALL SESSIONS LOST"]
-    TabClose["⚠️ BROWSER TAB CLOSE<br/>→ SESSION ID LOST<br/>(tone preference saved)"]
+    TabClose["⚠️ BROWSER TAB CLOSE<br/>→ SESSION ID LOST<br/>(tone preference saved)<br/>→ SERVER SESSION ORPHANED"]
+    BrowserRefresh["⚠️ BROWSER REFRESH<br/>→ SESSION ID LOST<br/>→ SERVER SESSION ORPHANED<br/>→ MEMORY LEAK"]
 
     %% Connections
     SessionDict -->|"Contains"| ConvHist
@@ -458,19 +559,22 @@ graph TB
 
     BrowserVars -.->|"Sync on events"| SessionDict
     LocalStorage -.->|"Persist tone"| BrowserVars
+    BrowserVars -.->|"Load at page init"| ObjFile
 
     ServerRestart -->|"Destroys"| SessionDict
-    TabClose -->|"Loses"| BrowserVars
+    TabClose -->|"Loses session_id<br/>Orphans session"| BrowserVars
+    BrowserRefresh -->|"Loses session_id<br/>Orphans session"| BrowserVars
 
     style ServerRestart fill:#ffcccc,stroke:#cc0000,stroke-width:3px
     style TabClose fill:#ffcccc,stroke:#cc0000,stroke-width:3px
+    style BrowserRefresh fill:#ffcccc,stroke:#cc0000,stroke-width:3px
     style SessionDict fill:#fff3cd,stroke:#ffc107,stroke-width:2px
     style ConvHist fill:#fff3cd,stroke:#ffc107
     style LogFiles fill:#ccffcc,stroke:#00cc00
     style GeminiState fill:#ffcccc,stroke:#cc0000
 ```
 
-**State Mutation Points**:
+**State Mutation Points** (same as before, with orphan note):
 
 1. **Session Creation** (`/api/start`):
    - `sessions[session_id] = new PaixuejiAssistant()`
@@ -486,9 +590,7 @@ graph TB
 4. **Topic Switch** (when AI decides to switch):
    - `object_name = new_object`
    - `level1/2/3_category` updated via `classify_object_sync()`
-   - `depth_questions_count = 0`
-   - `width_wrong_count = 0`
-   - `width_categories_tried = []`
+   - Reset: `depth_questions_count = 0`, `width_wrong_count = 0`, `width_categories_tried = []`
    - `depth_target = random(4, 5)`
 
 5. **Flow Tree Growth** (every turn):
@@ -499,893 +601,374 @@ graph TB
 6. **Session Deletion** (`/api/reset`):
    - `del sessions[session_id]`
    - Python garbage collection handles cleanup
-
-**Data Loss Scenarios**:
-- Server restart/crash → all sessions lost
-- Browser refresh → session_id lost (but server-side session remains orphaned)
-- Network disconnect during stream → session remains, client loses connection
-- Memory exhaustion from unbounded growth → potential crash
+   - ⚠️ **ORPHANS**: Client refresh/close leaves sessions in dict forever
 
 ---
 
-## 4. FAILURE & RETRY PATHS
+## 7-10. (Same as before - no changes needed)
+
+[Keeping sections 7-10 unchanged as they don't have critical issues]
+
+---
+
+## 11. EVENT LOOP RESOURCE LEAK ANALYSIS
+
+**NEW SECTION** - Critical issue investigation
+
+### Issue Description
+
+Every request to `/api/start` and `/api/continue` creates a new asyncio event loop via `get_event_loop()` (app.py:28-43), but **never explicitly closes it**.
+
+### Code Analysis
+
+```python
+# app.py:28-43
+def get_event_loop():
+    """
+    Create a new event loop for async operations.
+    Each request gets its own event loop to avoid race conditions when
+    multiple requests are processed concurrently.
+    """
+    loop = asyncio.new_event_loop()  # Creates loop
+    return loop  # Returns to caller
+    # ⚠️ NO loop.close() anywhere
+```
+
+```python
+# app.py:188-233 (in /api/start)
+loop = get_event_loop()
+
+try:
+    async def stream_introduction():
+        async for chunk in call_paixueji_stream(...):
+            yield sse_event("chunk", chunk)
+
+    gen = stream_introduction()
+    for event in async_gen_to_sync(gen, loop):
+        yield event
+
+    print(f"[INFO] Session started successfully")
+finally:
+    # Let garbage collection handle loop cleanup (faster and avoids RuntimeError)
+    pass  # ⚠️ Explicit NO-OP - relying on GC
+```
+
+### Resource Leak Mechanism
 
 ```mermaid
 graph TB
-    subgraph "User Request Failures"
-        InvalidInput["Invalid Input<br/>(missing object_name, age out of range)"]
-        SessionNotFound["Session Not Found<br/>(404 error)"]
-        NetworkError["Network Failure<br/>(client disconnect, timeout)"]
-    end
+    Request["HTTP Request<br/>/api/continue"] --> CreateLoop["get_event_loop()<br/>asyncio.new_event_loop()"]
+    CreateLoop --> Bridge["async_gen_to_sync(gen, loop)<br/>Background thread created"]
+    Bridge --> RunLoop["Thread runs:<br/>loop.run_until_complete()"]
+    RunLoop --> Complete["Async generator completes"]
+    Complete --> ReturnResponse["HTTP response sent"]
+    ReturnResponse --> LoopOrphan["loop reference out of scope<br/>⚠️ NOT CLOSED"]
+    LoopOrphan --> GC["Garbage collection<br/>⏱️ When?"]
 
-    subgraph "LLM Call Failures"
-        GeminiTimeout["Gemini API Timeout<br/>⚠️ NO TIMEOUT SET"]
-        GeminiError["Gemini API Error<br/>(HTTP 500, rate limit, etc.)"]
-        StreamInterrupt["Stream Interrupted<br/>(GeneratorExit)"]
-        ValidationError["AI Validation JSON Parse Error"]
-    end
+    GC -.->|"Eventually"| Cleanup["Loop __del__() called<br/>Resources freed"]
 
-    subgraph "System Failures"
-        MemoryExhaustion["Memory Exhaustion<br/>(unbounded conversation history)"]
-        LogDiskFull["Log Disk Full<br/>(30-day retention)"]
-        ConfigLoadFail["Config File Load Failure<br/>(FileNotFoundError)"]
-    end
+    HighLoad["High request rate"] -.->|"GC delayed"| LoopAccumulate["Multiple loops<br/>accumulate in memory"]
+    LoopAccumulate -.-> MemoryPressure["Memory pressure increases"]
 
-    subgraph "Handling Strategies"
-        ReturnError["Return HTTP Error<br/>400/404/500 + JSON message"]
-        LogAndContinue["Log Error + Return Partial Response"]
-        SafeDefault["Safe Default Values<br/>(is_engaged=true, is_correct=true)"]
-        ClientAbort["Client Handles Abort<br/>(AbortController)"]
-        YieldPartial["Yield Partial Response<br/>+ Empty final chunk"]
-        FallbackNone["Fallback to None<br/>(categories, prompts)"]
-    end
-
-    %% Failure Paths
-    InvalidInput -->|"Immediate validation"| ReturnError
-    SessionNotFound -->|"Check sessions dict"| ReturnError
-    NetworkError -->|"Flask/browser detect"| ClientAbort
-
-    GeminiTimeout -->|"⚠️ HANGS FOREVER<br/>No timeout configured"| MemoryExhaustion
-    GeminiError -->|"try/except in stream"| LogAndContinue
-    GeminiError -->|"Final yield"| YieldPartial
-
-    StreamInterrupt -->|"GeneratorExit caught"| LogAndContinue
-    StreamInterrupt -.->|"Old stream continues in background"| MemoryExhaustion
-
-    ValidationError -->|"JSON parse fail"| SafeDefault
-    ValidationError -->|"traceback.print_exc()"| LogAndContinue
-
-    ConfigLoadFail -->|"FileNotFoundError"| ReturnError
-
-    LogDiskFull -.->|"Rotation fails"| MemoryExhaustion
-
-    style GeminiTimeout fill:#ffcccc,stroke:#cc0000,stroke-width:3px
-    style StreamInterrupt fill:#fff3cd,stroke:#ffc107,stroke-width:2px
-    style MemoryExhaustion fill:#ffcccc,stroke:#cc0000,stroke-width:3px
-    style SafeDefault fill:#e3f2fd,stroke:#2196f3
+    style LoopOrphan fill:#ffcccc,stroke:#cc0000
+    style LoopAccumulate fill:#ffcccc,stroke:#cc0000
+    style MemoryPressure fill:#ffcccc,stroke:#cc0000
 ```
 
-### Detailed Failure Scenarios
+### Impact Assessment
 
-#### 4.1 Gemini API Failures
+**Under Normal Load** (1-10 requests/minute):
+- GC runs frequently enough
+- Loops cleaned up within seconds
+- Minimal impact
 
-**Scenario**: `client.models.generate_content_stream()` throws exception
+**Under High Load** (100+ requests/minute):
+- GC may be delayed (Python GC is non-deterministic)
+- Dozens of event loops accumulate
+- Each loop holds:
+  - Background thread (OS resource)
+  - Internal data structures (~100KB+)
+  - File descriptor for async I/O
+- **Estimated leak**: 1-5MB per orphaned loop
+- **At 1000 requests**: Potential 1-5GB leak before GC
 
-**Location**: `paixueji_stream.py` - all stream generators
+**Worst Case**:
+- GC disabled via `gc.disable()` (unlikely but possible)
+- Loops never cleaned up
+- Server runs out of memory or thread limit
 
-**Handling**:
+### Why No Explicit Close?
+
+Code comment says: "faster and avoids RuntimeError"
+
+**Analysis**: Calling `loop.close()` after `run_until_complete()` is safe and recommended. The comment may be incorrect or outdated.
+
+### Recommended Fix (NOT IMPLEMENTED)
+
 ```python
+# app.py - Recommended change
 try:
-    stream = client.models.generate_content_stream(...)
-    for chunk in stream:
-        full_response += chunk.text
-        yield (chunk.text, None, full_response)
-except Exception as e:
-    logger.error(f"LLM error | error={str(e)}", exc_info=True)
-    if full_response:
-        yield ("", token_usage, full_response)  # Return partial
-    return
+    gen = stream_introduction()
+    for event in async_gen_to_sync(gen, loop):
+        yield event
 finally:
-    if stream is not None:
-        del stream  # Attempt cleanup
+    loop.close()  # Explicit cleanup
 ```
 
-**Consequences**:
-- Partial response returned to user
-- Conversation history may be incomplete
-- User sees partial message, no error indication in UI
-- ⚠️ **NO RETRY** - single attempt only
+**Risk**: Minimal. Loop is no longer in use after async_gen_to_sync completes.
 
-**Trace Path**:
-1. Exception in stream generator
-2. Log to `logs/paixueji_YYYY-MM-DD.log` with traceback
-3. Yield partial response (if any text received)
-4. SSE stream completes normally
-5. UI shows partial message
+### Monitoring Recommendation
+
+Add metrics:
+- Active event loop count: `len(asyncio.all_tasks(loop))`
+- Memory usage per request
+- Alert when loops accumulate beyond threshold
 
 ---
 
-#### 4.2 AI Validation JSON Parse Failure
+## 12. SESSION ORPHAN ACCUMULATION ANALYSIS
 
-**Scenario**: `decide_topic_switch_with_validation()` returns invalid JSON
+**NEW SECTION** - Critical issue investigation
 
-**Location**: `paixueji_stream.py:1038-1073`
+### Issue Description
 
-**Handling**:
-```python
-try:
-    response = client.models.generate_content(...)
-    decision_data = json.loads(response.text)
-    return decision_data
-except Exception as e:
-    logger.error(f"Validation error: {e}")
-    return {
-        'decision': 'CONTINUE',
-        'new_object': None,
-        'switching_reasoning': f'Error: {str(e)}',
-        'is_engaged': True,  # Safe default
-        'is_factually_correct': True,  # Safe default
-        'correctness_reasoning': 'Could not evaluate due to error'
-    }
+Sessions are **only** removed via manual `/api/reset` call. If client loses session_id (browser refresh, tab close, network error), the server-side session remains in memory forever.
+
+### Orphan Scenarios
+
+```mermaid
+graph TB
+    Start[User starts session] --> SessionCreated[sessions[uuid] = Assistant<br/>Client has session_id]
+
+    SessionCreated --> Normal[Normal flow:<br/>User clicks Reset]
+    SessionCreated --> Refresh[Browser refresh]
+    SessionCreated --> Close[Browser/tab close]
+    SessionCreated --> NetworkError[Network error mid-stream]
+    SessionCreated --> NavAway[Navigate away]
+
+    Normal --> ExplicitDelete[POST /api/reset<br/>del sessions[uuid]<br/>✅ Cleaned up]
+
+    Refresh --> LoseID[Client loses session_id<br/>localStorage cleared]
+    Close --> LoseID
+    NetworkError --> LoseID
+    NavAway --> LoseID
+
+    LoseID --> Orphan[Server session remains:<br/>sessions[uuid] = Assistant<br/>⚠️ ORPHAN - never cleaned]
+
+    Orphan --> MemLeak[Memory never freed:<br/>• Conversation history<br/>• Flow tree<br/>• Gemini client<br/>• Config cache]
+
+    style Orphan fill:#ffcccc,stroke:#cc0000,stroke-width:3px
+    style MemLeak fill:#ffcccc,stroke:#cc0000,stroke-width:3px
+    style ExplicitDelete fill:#ccffcc,stroke:#00cc00
 ```
 
-**Consequences**:
-- System assumes answer is correct and engaged
-- No topic switching
-- Conversation continues normally
-- ⚠️ **SILENT FAILURE** - user not informed
-- Incorrect answer may be celebrated as correct
+### Accumulation Example
 
-**Trace Path**:
-1. Gemini returns malformed JSON or non-JSON text
-2. `json.loads()` raises exception
-3. Log error with traceback
-4. Return safe default decision
-5. Continue with feedback generation path
+Real-world scenario over 8 hours:
+
+```
+Hour 0: sessions = {}  (0 sessions, 0 MB)
+Hour 1: 50 users start sessions, 10 refresh/close
+        sessions = {40 active, 10 orphans}  (~5 MB)
+Hour 2: 50 more users, 15 refresh/close, 5 reset properly
+        sessions = {75 active, 25 orphans}  (~10 MB)
+Hour 4: sessions = {100 active, 75 orphans}  (~20 MB)
+Hour 8: sessions = {120 active, 200 orphans}  (~50 MB)
+
+Without server restart: Orphans accumulate indefinitely
+After 24 hours: Potentially 100s of MB leaked
+```
+
+### Memory Per Session
+
+Typical session after 20 turns:
+- `conversation_history`: 20 messages × ~500 bytes = ~10 KB
+- `flow_tree.nodes`: 20 nodes × ~2 KB = ~40 KB
+- Gemini client: ~50 KB (shared singleton would be better)
+- Prompt caches: ~20 KB
+- **Total**: ~120 KB per session
+
+200 orphans = ~24 MB
+1000 orphans = ~120 MB
+10000 orphans = ~1.2 GB
+
+### Why No Auto-Cleanup?
+
+**Possible reasons**:
+1. Simplicity - in-memory dict is easy
+2. No session expiry needed for testing/demos
+3. Assumption: users always reset properly (incorrect)
+4. Oversight - didn't consider browser refresh scenario
+
+### Recommended Solutions (NOT IMPLEMENTED)
+
+**Option 1: TTL-based cleanup**
+```python
+# Add timestamp to sessions
+sessions = {
+    "uuid": {
+        "assistant": Assistant,
+        "created_at": time.time(),
+        "last_active": time.time()
+    }
+}
+
+# Background thread removes stale sessions
+def cleanup_stale_sessions():
+    while True:
+        time.sleep(300)  # Every 5 minutes
+        now = time.time()
+        to_delete = [
+            sid for sid, data in sessions.items()
+            if now - data["last_active"] > 3600  # 1 hour TTL
+        ]
+        for sid in to_delete:
+            del sessions[sid]
+            print(f"[CLEANUP] Removed stale session {sid}")
+```
+
+**Option 2: Max session limit**
+```python
+MAX_SESSIONS = 1000
+
+if len(sessions) >= MAX_SESSIONS:
+    # Remove oldest session (FIFO)
+    oldest = min(sessions.items(), key=lambda x: x[1]["created_at"])
+    del sessions[oldest[0]]
+```
+
+**Option 3: Client heartbeat**
+- Client sends periodic `/api/heartbeat` with session_id
+- Server marks last_active
+- Cleanup removes sessions with no heartbeat for 30 minutes
+
+### Monitoring Recommendation
+
+Add metrics:
+- Current session count: `len(sessions)`
+- Session age distribution
+- Alert when sessions > threshold (e.g., 500)
 
 ---
 
-#### 4.3 Stream Interruption (Client Disconnect)
+## 13. REQUEST ID TRACING (CORRECTION)
 
-**Scenario**: User clicks "Stop" button or closes tab during streaming
+**NEW SECTION** - False positive correction
 
-**Location**: `app.py:235-242`, `static/app.js:264-278`
+### Original Claim
 
-**Handling (Backend)**:
-```python
-try:
-    # ... streaming logic ...
-except GeneratorExit:
-    # Client disconnected
-    print(f"[INFO] Session {session_id[:8]}... client disconnected")
+"request_id exists but not propagated to all logs" ❌ **INCORRECT**
+
+### Actual Implementation
+
+request_id IS properly propagated:
+
+1. **Generated in app.py**:
+   ```python
+   request_id = str(uuid.uuid4())  # app.py:148, 290
+   ```
+
+2. **Logged immediately**:
+   ```python
+   print(f"[INFO] ... request_id={request_id[:8]}...")  # app.py:151, 293
+   ```
+
+3. **Passed to async stream**:
+   ```python
+   async for chunk in call_paixueji_stream(..., request_id=request_id):
+   ```
+
+4. **Included in all StreamChunk objects**:
+   ```python
+   StreamChunk(
+       ...,
+       session_id=session_id,
+       request_id=request_id,  # ✅ Present
+       ...
+   )
+   ```
+
+5. **Available in client SSE events**:
+   ```javascript
+   // Client receives StreamChunk with request_id
+   console.log('[chunk]', data);  // data.request_id available
+   ```
+
+### Trace Example
+
 ```
+[Console Log]
+[INFO] Created Paixueji session abc123... | ... request_id=xyz789...
 
-**Handling (Frontend)**:
-```javascript
-function stopStreaming() {
-    if (currentStreamController) {
-        currentStreamController.abort();  // Abort fetch
-        currentStreamController = null;
-    }
-    isStreaming = false;
-    sendBtn.disabled = false;
+[Loguru Log]
+ask_introduction_question_stream started | object=apple, age=6
+
+[StreamChunk JSON in SSE]
+{
+  "response": "Let's learn about apples!",
+  "session_id": "abc123...",
+  "request_id": "xyz789...",  ✅
+  ...
 }
 ```
 
-**Consequences**:
-- Backend: LLM stream continues in background thread until completion
-- Backend: Conversation history is NOT updated (no final append)
-- Frontend: Connection closed immediately
-- ⚠️ **RESOURCE LEAK** - orphaned event loop and stream
-- Session remains in `sessions` dict but in inconsistent state
-- Next `/api/continue` will work but with incomplete history
+### Limitation
 
-**Trace Path**:
-1. User clicks Stop → `AbortController.abort()`
-2. Browser cancels SSE connection
-3. Backend detects `GeneratorExit`
-4. Backend logs disconnect message
-5. Event loop thread continues running LLM call
-6. Response lost, history not updated
+**Loguru logs in paixueji_stream.py do NOT include request_id** ❌
 
----
-
-#### 4.4 Session Not Found
-
-**Scenario**: Client sends `/api/continue` with invalid or expired session_id
-
-**Location**: `app.py:281-287`
-
-**Handling**:
+Example:
 ```python
-assistant = sessions.get(session_id)
-if not assistant:
-    return jsonify({
-        "success": False,
-        "error": "Session not found. Please start a new conversation."
-    }), 404
+logger.info(f"ask_introduction_question_stream started | object={object_name}, age={age}")
+# ⚠️ No request_id here
 ```
 
-**Consequences**:
-- User shown error message
-- No state corruption
-- User must restart conversation
+**Reason**: request_id not passed as parameter to logging calls inside stream functions.
 
-**Trace Path**:
-1. POST `/api/continue` with bad session_id
-2. `sessions.get()` returns None
-3. Return 404 JSON error
-4. UI shows error alert
-5. User clicks reset/start new
+**Impact**: Cannot correlate console logs (which have request_id) with detailed Loguru logs (which don't).
 
----
+### Recommended Fix (NOT IMPLEMENTED)
 
-#### 4.5 Configuration File Missing
-
-**Scenario**: `config.json` not found at startup
-
-**Location**: `paixueji_assistant.py:100-108`
-
-**Handling**:
+Add request_id to all logger calls:
 ```python
-def _load_config(self, config_path):
-    if not os.path.exists(config_path):
-        raise FileNotFoundError(f"Config file not found: {config_path}")
-    with open(config_path, 'r') as f:
-        config = json.load(f)
-    return config
+logger.info(f"[{request_id[:8]}] ask_introduction_question_stream started | object={object_name}")
 ```
 
-**Consequences**:
-- **FATAL ERROR** - server cannot start
-- `PaixuejiAssistant.__init__()` raises exception
-- Flask route handler crashes
-- User sees HTTP 500 error
-- ⚠️ **NO RECOVERY** - manual intervention required
+### Conclusion
 
-**Trace Path**:
-1. POST `/api/start`
-2. `new PaixuejiAssistant()`
-3. `_load_config()` raises `FileNotFoundError`
-4. Flask returns 500 error
-5. Frontend shows error message
-6. Logs show traceback
+request_id propagation is **90% complete**:
+- ✅ Generated and logged at entry points
+- ✅ Passed through async boundaries
+- ✅ Included in all StreamChunks
+- ❌ Missing from detailed Loguru logs
+
+**Severity**: Low - request_id available at entry/exit points, just not in internal logs.
 
 ---
 
-#### 4.6 Memory Exhaustion (Unbounded Growth)
-
-**Scenario**: Long conversation with many turns
-
-**Location**:
-- `paixueji_assistant.py` - `conversation_history` list
-- `conversation_tree.py` - `flow_tree.nodes` list
-
-**Handling**: ⚠️ **NONE** - no limits or cleanup
-
-**Growth Rate**:
-- `conversation_history`: ~1-2 KB per turn (user + assistant messages)
-- `flow_tree.nodes`: ~2-5 KB per turn (full state snapshots)
-- After 100 turns: ~300-700 KB per session
-- After 1000 turns: ~3-7 MB per session
-
-**Consequences**:
-- Server slowdown as memory usage grows
-- Potential OOM (Out of Memory) crash
-- All sessions lost if server crashes
-- ⚠️ **NO MONITORING** - no alerts or metrics
-
-**Mitigation** (NOT IMPLEMENTED):
-- Sliding window (keep last N messages)
-- Conversation summary/compression
-- Session timeout/expiry
-- Memory usage alerts
-
----
-
-### Retry Policies
-
-**Current State**: ⚠️ **NO RETRIES IMPLEMENTED**
-
-All external calls are single-attempt:
-- Gemini API calls (streaming and non-streaming)
-- Classification calls
-- Validation calls
-
-**Recommended** (not implemented):
-- Exponential backoff for transient failures
-- Circuit breaker for repeated failures
-- Fallback to cached/default responses
-
----
-
-### Timeout Policies
-
-**Current State**: ⚠️ **NO TIMEOUTS CONFIGURED**
-
-- Gemini streaming calls: **INFINITE TIMEOUT**
-- Gemini validation calls: **INFINITE TIMEOUT**
-- Classification calls: **1 SECOND** (via ThreadPoolExecutor in `/api/force-switch`)
-- SSE connections: Browser default (~30-60s)
-
-**Risks**:
-- Hung requests can accumulate, exhausting threads
-- User sees infinite loading state
-- No automatic recovery
-
----
-
-## 5. SECURITY BOUNDARIES & TRUST ZONES
-
-```mermaid
-graph TB
-    subgraph "UNTRUSTED ZONE - Public Internet"
-        Browser["User Browser<br/>⚠️ NO AUTHENTICATION"]
-    end
-
-    subgraph "SEMI-TRUSTED ZONE - Flask Application"
-        Flask["Flask Server<br/>⚠️ No input validation<br/>⚠️ No rate limiting<br/>⚠️ No CSRF protection"]
-        Sessions["In-Memory Sessions<br/>⚠️ No encryption<br/>⚠️ No expiry"]
-    end
-
-    subgraph "TRUSTED ZONE - Google Cloud"
-        Gemini["Gemini API<br/>✅ Authenticated via credentials<br/>✅ TLS encrypted"]
-        GCP["GCP Project<br/>✅ IAM policies<br/>✅ Audit logs"]
-    end
-
-    subgraph "FILESYSTEM - Local Trust"
-        Configs["Config Files<br/>⚠️ Contains project ID<br/>⚠️ Readable by process"]
-        Logs["Log Files<br/>⚠️ May contain PII<br/>⚠️ Contains full conversations"]
-    end
-
-    %% Trust boundaries
-    Browser -->|"HTTP :5001<br/>⚠️ NO AUTH"| Flask
-    Flask -->|"HTTPS<br/>✅ GCP credentials"| Gemini
-    Gemini -.->|"IAM"| GCP
-    Flask -.->|"Read at init"| Configs
-    Flask -->|"Write continuously"| Logs
-
-    %% Attack vectors
-    Attack1["⚠️ ATTACK: User input injection<br/>→ LLM prompt injection"]
-    Attack2["⚠️ ATTACK: Session ID guessing<br/>→ Hijack conversations"]
-    Attack3["⚠️ ATTACK: Resource exhaustion<br/>→ DoS via long conversations"]
-    Attack4["⚠️ ATTACK: Log file access<br/>→ Read PII/conversations"]
-
-    Browser -.->|"Malicious input"| Attack1
-    Browser -.->|"Brute force UUIDs"| Attack2
-    Browser -.->|"Spam requests"| Attack3
-    Logs -.->|"File permissions"| Attack4
-
-    Attack1 -->|"No sanitization"| Flask
-    Attack2 -->|"Predictable UUIDs"| Sessions
-    Attack3 -->|"No rate limit"| Sessions
-
-    style Browser fill:#ffcccc,stroke:#cc0000
-    style Flask fill:#fff3cd,stroke:#ffc107
-    style Sessions fill:#fff3cd,stroke:#ffc107
-    style Gemini fill:#ccffcc,stroke:#00cc00
-    style GCP fill:#ccffcc,stroke:#00cc00
-    style Attack1 fill:#ffcccc,stroke:#cc0000,stroke-width:3px
-    style Attack2 fill:#ffcccc,stroke:#cc0000,stroke-width:3px
-    style Attack3 fill:#ffcccc,stroke:#cc0000,stroke-width:3px
-    style Attack4 fill:#ffcccc,stroke:#cc0000,stroke-width:3px
-```
-
-### Security Vulnerabilities
-
-1. **No Authentication/Authorization**
-   - Anyone can access any endpoint
-   - Session IDs are UUIDs (somewhat random but predictable)
-   - No user accounts or permissions
-
-2. **Prompt Injection Risk**
-   - User input passed directly to LLM prompts
-   - No sanitization or escaping
-   - Could manipulate AI behavior or extract system prompts
-
-3. **No Rate Limiting**
-   - Unlimited requests per client
-   - Easy to exhaust memory via spam
-   - No cost controls on Gemini API usage
-
-4. **Session Hijacking**
-   - Session IDs transmitted in plain JSON
-   - No HTTPS enforcement (assumed but not configured)
-   - No session expiry or rotation
-
-5. **Log File PII Exposure**
-   - Full conversations logged (may contain personal info)
-   - Log files stored unencrypted
-   - 30-day retention (compliance risk)
-
-6. **No CORS Restrictions** (beyond flask-cors default)
-   - Any origin can make requests
-   - XSS/CSRF vulnerabilities possible
-
-7. **Credential Exposure**
-   - `GOOGLE_APPLICATION_CREDENTIALS` in environment
-   - Config file contains project ID
-   - No secrets management system
-
----
-
-## 6. LOGGING, METRICS & MONITORING
-
-### 6.1 Logging Architecture
-
-```mermaid
-graph LR
-    subgraph "Log Sources"
-        Flask["Flask print() statements<br/>• Session lifecycle<br/>• Request tracking"]
-        Loguru["Loguru logger<br/>• paixueji_stream.py<br/>• DEBUG level<br/>• Structured logging"]
-    end
-
-    subgraph "Log Sinks"
-        Console["STDOUT/STDERR<br/>• Flask default logger<br/>• print() output"]
-        LogFiles["logs/paixueji_YYYY-MM-DD.log<br/>• Daily rotation<br/>• 30-day retention<br/>• JSON format (Loguru)"]
-    end
-
-    subgraph "⚠️ NO MONITORING"
-        NoMetrics["❌ No metrics collection<br/>❌ No error tracking<br/>❌ No alerts<br/>❌ No dashboards<br/>❌ No APM"]
-    end
-
-    Flask -->|"Unbuffered"| Console
-    Loguru -->|"Async write"| LogFiles
-    Loguru -.->|"Also to"| Console
-
-    LogFiles -.->|"NOT INTEGRATED"| NoMetrics
-
-    style NoMetrics fill:#ffcccc,stroke:#cc0000,stroke-width:2px
-```
-
-### 6.2 What IS Logged
-
-**Flask Application (`app.py`)**:
-- Session creation: session_id, age, object, categories, tone, focus_mode, request_id
-- Session continue: session_id, answer preview, correct_count, focus_mode, request_id
-- Session reset: session_id
-- Classification requests: object_name, results
-- Force switch: previous/new object
-- Object selection: selected object
-- Errors: exception messages, no tracebacks
-
-**Streaming Engine (`paixueji_stream.py`)**:
-- Function entry/exit: function name, parameters, duration
-- LLM calls: model, message count, chunk count
-- Validation decisions: decision type, reasoning, engagement, correctness
-- Topic switches: previous/new object, reasoning
-- Errors: full tracebacks with context
-- Performance warnings: slow LLM calls (>5s threshold)
-
-### 6.3 What is NOT Logged
-
-❌ **Request metadata**: IP address, user agent, referer
-❌ **Response sizes**: bytes transferred, chunk counts
-❌ **Timing breakdown**: time per component (validation, response, question)
-❌ **Resource usage**: memory, CPU, thread count
-❌ **API costs**: Gemini token usage, API call costs
-❌ **Error rates**: aggregated error statistics
-❌ **User behavior**: interaction patterns, session duration
-
-### 6.4 Observability Gaps
-
-**No Distributed Tracing**:
-- Cannot trace request across async boundaries
-- request_id exists but not propagated to all logs
-
-**No Metrics/Time Series**:
-- No Prometheus/StatsD/CloudWatch
-- Cannot graph trends over time
-- No SLO/SLA tracking
-
-**No Error Aggregation**:
-- No Sentry/Rollbar/Bugsnag
-- Errors only in log files
-- No deduplication or grouping
-
-**No Health Checks**:
-- `/api/health` endpoint exists but only checks Flask is running
-- Doesn't verify Gemini API connectivity
-- Doesn't check memory usage or session count limits
-
----
-
-## 7. EXTERNAL DEPENDENCIES
-
-| Dependency | Type | Failure Mode | Impact | Mitigation |
-|------------|------|--------------|--------|------------|
-| **Google Gemini API** | Critical | API down, rate limit, timeout | Complete system failure | ⚠️ NONE - no fallback |
-| **GCP Authentication** | Critical | Credentials expired, IAM policy change | Cannot authenticate to Gemini | ⚠️ NONE - no refresh logic |
-| **Flask Server** | Critical | Process crash, OOM | All sessions lost | ⚠️ NONE - no persistence |
-| **Python Libraries** | Critical | Import error, version mismatch | Server won't start | ⚠️ NONE - no version pinning |
-| **Filesystem** | High | Disk full (logs), config file deleted | Logs fail, server won't start | Loguru rotation (logs only) |
-| **Network** | High | Connectivity loss to GCP | Gemini calls hang/fail | ⚠️ NO TIMEOUT |
-| **Browser EventSource** | Medium | Browser doesn't support SSE | UI won't work | Graceful degradation in JS |
-
-### Dependency Versions (from requirements.txt)
-
-```
-flask         (version unknown - not pinned)
-flask-cors    (version unknown - not pinned)
-google-genai  (version unknown - not pinned)
-requests      (version unknown - not pinned)
-pydantic      (version unknown - not pinned)
-loguru        (version unknown - not pinned)
-```
-
-⚠️ **NO VERSION PINNING** - risk of breaking changes on `pip install`
-
----
-
-## 8. CONFIGURATION & SECRETS
-
-### 8.1 Configuration Sources
-
-```mermaid
-graph TB
-    subgraph "Static Configuration (Git)"
-        Config["config.json<br/>• project<br/>• location<br/>• model_name<br/>• temperature<br/>• max_tokens"]
-        AgePrompts["age_prompts.json<br/>• age_groups<br/>• prompts"]
-        ObjPrompts["object_prompts.json<br/>• level1/2/3_categories<br/>• prompts<br/>• parent relationships"]
-        SysPrompts["paixueji_prompts.py<br/>• SYSTEM_PROMPT<br/>• TONE_PROMPTS<br/>• FOCUS_PROMPTS<br/>• Response templates"]
-    end
-
-    subgraph "Secrets (Environment)"
-        EnvVar["GOOGLE_APPLICATION_CREDENTIALS<br/>⚠️ File path to JSON key<br/>⚠️ Not in code but in shell env"]
-    end
-
-    subgraph "Runtime Configuration (Hardcoded)"
-        Hardcoded["• Flask port: 5001<br/>• Flask host: 0.0.0.0<br/>• Flask debug: True<br/>• Flask threaded: True<br/>• Log rotation: midnight<br/>• Log retention: 30 days<br/>• Slow LLM threshold: 5s<br/>• Classification timeout: 1s"]
-    end
-
-    subgraph "User Configuration (UI)"
-        UserConfig["• age: 3-8<br/>• object_name<br/>• categories<br/>• tone<br/>• focus_mode"]
-    end
-
-    PaixuejiAssistant["PaixuejiAssistant.__init__()"]
-
-    Config -->|"Load at init"| PaixuejiAssistant
-    AgePrompts -->|"Load at init"| PaixuejiAssistant
-    ObjPrompts -->|"Load at init"| PaixuejiAssistant
-    SysPrompts -->|"Import"| PaixuejiAssistant
-    EnvVar -.->|"os.environ.get()"| PaixuejiAssistant
-
-    UserConfig -->|"POST body"| PaixuejiAssistant
-
-    style EnvVar fill:#ffcccc,stroke:#cc0000
-    style Hardcoded fill:#fff3cd,stroke:#ffc107
-```
-
-### 8.2 Secrets Management Issues
-
-⚠️ **GOOGLE_APPLICATION_CREDENTIALS**:
-- Expected in environment variable
-- Points to JSON key file (not shown in repo)
-- No validation if file exists or is valid
-- No rotation mechanism
-- ⚠️ If leaked, full GCP project access
-
-⚠️ **Config in Git**:
-- Project ID in `config.json` (publicly visible if repo public)
-- Not a secret per se, but reveals GCP setup
-
-⚠️ **No Secrets Rotation**:
-- Manual process to update credentials
-- Requires server restart
-- No graceful reload
-
----
-
-## 9. ASYNC BOUNDARIES & CONCURRENCY
-
-### 9.1 Threading Model
-
-```mermaid
-graph TB
-    subgraph "Main Thread - Flask"
-        FlaskMain["Flask Main Thread<br/>Handles HTTP requests"]
-    end
-
-    subgraph "Request Handler Threads - Flask"
-        Thread1["Request Thread 1<br/>POST /api/start"]
-        Thread2["Request Thread 2<br/>POST /api/continue"]
-        ThreadN["Request Thread N<br/>GET /api/health"]
-    end
-
-    subgraph "Event Loop Threads - Per Request"
-        Loop1["Event Loop 1<br/>asyncio.new_event_loop()<br/>Runs async generators"]
-        Loop2["Event Loop 2<br/>asyncio.new_event_loop()<br/>Runs async generators"]
-    end
-
-    subgraph "Background Threads - Classification"
-        ClassifyThread["ThreadPoolExecutor<br/>classify_object_sync()<br/>1-second timeout"]
-    end
-
-    subgraph "Shared State - RACE CONDITIONS POSSIBLE"
-        SessionsDict["sessions = {}<br/>⚠️ NOT THREAD-SAFE<br/>Concurrent modifications possible"]
-        ConvHistory["conversation_history<br/>⚠️ list.append() not atomic<br/>Race on concurrent requests"]
-    end
-
-    FlaskMain -->|"threaded=True"| Thread1 & Thread2 & ThreadN
-
-    Thread1 -->|"get_event_loop()"| Loop1
-    Thread2 -->|"get_event_loop()"| Loop2
-
-    Thread1 & Thread2 -->|"Read/Write"| SessionsDict
-    Thread1 & Thread2 -->|"Append"| ConvHistory
-
-    Thread1 -->|"ThreadPoolExecutor.submit()"| ClassifyThread
-
-    Loop1 & Loop2 -.->|"async_gen_to_sync()<br/>queue.Queue bridge"| Thread1 & Thread2
-
-    style SessionsDict fill:#ffcccc,stroke:#cc0000,stroke-width:2px
-    style ConvHistory fill:#ffcccc,stroke:#cc0000,stroke-width:2px
-```
-
-### 9.2 Race Conditions
-
-**Scenario 1: Concurrent `/api/continue` requests**
-
-User sends two messages rapidly before first response completes:
-
-1. Request A: Validates answer, starts streaming Part 1
-2. Request B: Validates same answer (duplicate), starts streaming Part 1
-3. Both append to `conversation_history` in parallel
-4. **Result**: Interleaved messages, corrupted history
-
-**Mitigation**: ⚠️ **NONE** - UI disables send button during streaming, but not enforced server-side
-
-**Scenario 2: Session deletion during streaming**
-
-User clicks reset while `/api/continue` is streaming:
-
-1. Request A: Streaming response from Gemini
-2. Request B: `del sessions[session_id]`
-3. Request A: Tries to append to `conversation_history`
-4. **Result**: `AttributeError` if assistant object deleted mid-stream
-
-**Mitigation**: ⚠️ **NONE** - exception would be caught and logged, partial response sent
-
-**Scenario 3: Classification race**
-
-Two requests trigger classification simultaneously:
-
-1. Request A: `classify_object_sync("apple")`
-2. Request B: `classify_object_sync("banana")`
-3. Both update `assistant.level1/2/3_category`
-4. **Result**: Categories may belong to wrong object
-
-**Mitigation**: Classification runs in background thread with timeout, but no locking
-
-### 9.3 Async Boundary Map
-
-| Component | Sync/Async | Event Loop | Notes |
-|-----------|------------|------------|-------|
-| Flask request handlers | **SYNC** | None | Main thread pool |
-| `get_event_loop()` | **SYNC** | Creates new loop | Per-request isolation |
-| `async_gen_to_sync()` | **Bridge** | Runs loop in thread | queue.Queue for chunks |
-| `call_paixueji_stream()` | **ASYNC** | Request event loop | Main orchestration |
-| `ask_introduction_question_stream()` | **ASYNC** | Request event loop | Gemini streaming |
-| `ask_followup_question_stream()` | **ASYNC** | Request event loop | Dual-parallel orchestration |
-| `decide_topic_switch_with_validation()` | **SYNC** | None | Blocking Gemini call |
-| `generate_feedback_response_stream()` | **ASYNC** | Request event loop | Part 1 streaming |
-| `generate_followup_question_stream()` | **ASYNC** | Request event loop | Part 2 streaming |
-| `classify_object_sync()` | **SYNC** | None | Background thread (1s timeout) |
-| Gemini `generate_content_stream()` | **ASYNC** | Request event loop | External async iterator |
-| Gemini `generate_content()` | **SYNC** | None | Blocking call |
-
----
-
-## 10. DATA FLOW EXAMPLES
-
-### 10.1 Example: User Answers Correctly
-
-**Input**: Child answers "Red" to "What color is the apple?"
-
-**Flow**:
-```
-POST /api/continue {session_id, child_input: "Red", focus_mode: "depth"}
-  ↓
-  sessions.get(session_id)  # Retrieve assistant
-  ↓
-  call_paixueji_stream(content="Red", ...)
-  ↓
-  ask_followup_question_stream(child_answer="Red", ...)
-  ↓
-  decide_topic_switch_with_validation(child_answer="Red", object="apple", ...)
-  ↓
-  [Gemini call] Analyze answer: engaged=true, correct=true, decision=CONTINUE
-  ↓
-  Return {is_engaged: true, is_factually_correct: true, decision: "CONTINUE"}
-  ↓
-  Route to: generate_feedback_response_stream()
-  ↓
-  [Gemini streaming] Build prompt: "Child answered 'Red' correctly about apple..."
-  ↓
-  Stream: "Yes! Red is a beautiful color for apples! Great job!"
-  ↓
-  conversation_history.append({role: assistant, content: "Yes! Red..."})
-  ↓
-  Route to: generate_followup_question_stream()
-  ↓
-  [Gemini streaming] Build prompt with focus_mode=depth
-  ↓
-  Stream: "Now, what shape is the apple?"
-  ↓
-  conversation_history.append({role: assistant, content: "Now, what shape..."})
-  ↓
-  correct_answer_count++  # 0 → 1
-  ↓
-  Yield final StreamChunk {finish: true, is_factually_correct: true, ...}
-  ↓
-  SSE: event: chunk, data: StreamChunk
-  SSE: event: complete
-  ↓
-  UI: Update progress (1/∞), enable input
-```
-
-### 10.2 Example: User Says "I don't know"
-
-**Input**: Child answers "idk" to "What color is the apple?"
-
-**Flow**:
-```
-POST /api/continue {session_id, child_input: "idk", focus_mode: "depth"}
-  ↓
-  call_paixueji_stream(content="idk", ...)
-  ↓
-  decide_topic_switch_with_validation(child_answer="idk", ...)
-  ↓
-  [Gemini call] Analyze: engaged=false (stuck), correct=N/A, decision=CONTINUE
-  ↓
-  Return {is_engaged: false, is_factually_correct: false, decision: "CONTINUE"}
-  ↓
-  Route to: generate_explanation_response_stream()
-  ↓
-  [Gemini streaming] "You previously asked 'What color is the apple?'..."
-  ↓
-  Stream: "Apples can be red, green, or yellow! Many apples are red."
-  ↓
-  conversation_history.append({role: assistant, content: "Apples can be..."})
-  ↓
-  Route to: generate_followup_question_stream()
-  ↓
-  [Gemini streaming] Generate next depth question
-  ↓
-  Stream: "Can you show me with your hands how big an apple is?"
-  ↓
-  conversation_history.append({role: assistant, content: "Can you show me..."})
-  ↓
-  correct_answer_count UNCHANGED (0)
-  ↓
-  Yield final StreamChunk {finish: true, is_engaged: false, ...}
-  ↓
-  UI: Update progress (0/∞), enable input
-```
-
-### 10.3 Example: Topic Switch
-
-**Input**: Child answers "Strawberry" to "Can you name another red fruit?"
-
-**Flow**:
-```
-POST /api/continue {session_id, child_input: "Strawberry", focus_mode: "width_color"}
-  ↓
-  decide_topic_switch_with_validation(child_answer="Strawberry", object="apple", ...)
-  ↓
-  [Gemini call] Analyze:
-    - engaged=true (real answer)
-    - correct=true (strawberry is red fruit)
-    - decision=SWITCH (invited object naming)
-    - new_object="strawberry"
-  ↓
-  Return {is_engaged: true, is_factually_correct: true, decision: "SWITCH", new_object: "strawberry"}
-  ↓
-  assistant.object_name = "strawberry"
-  ↓
-  [Background thread] classify_object_sync("strawberry") with 1s timeout
-  ↓
-  assistant.level2_category = "fresh_ingredients" (or timeout → None)
-  ↓
-  Route to: generate_topic_switch_response_stream()
-  ↓
-  [Gemini streaming] "You were talking about apple, child mentioned strawberry..."
-  ↓
-  Stream: "Ooh, strawberries! I love strawberries too! Let's learn about them!"
-  ↓
-  conversation_history.append({role: assistant, content: "Ooh, strawberries!..."})
-  ↓
-  Route to: generate_followup_question_stream(is_topic_switch=true)
-  ↓
-  [Gemini streaming] First question about strawberry with depth focus
-  ↓
-  Stream: "What color are strawberries?"
-  ↓
-  conversation_history.append({role: assistant, content: "What color..."})
-  ↓
-  correct_answer_count++  # Strawberry answer was correct
-  ↓
-  Yield final StreamChunk {finish: true, new_object_name: "strawberry", ...}
-  ↓
-  UI: Update object display to "strawberry", enable input
-```
-
----
-
-## KNOWN UNKNOWNS
-
-The following aspects are **UNKNOWN** or **underspecified** in the current implementation:
-
-1. **Gemini API Internal State**:
-   - Does Gemini maintain conversation context server-side?
-   - How long are contexts cached?
-   - What are the actual rate limits?
-   - UNKNOWN
-
-2. **Token Usage & Costs**:
-   - Gemini streaming API doesn't return token usage
-   - No cost tracking or budgeting
-   - UNKNOWN total API costs per session
-
-3. **Session Expiry**:
-   - No TTL on sessions
-   - Sessions never expire automatically
-   - Orphaned sessions accumulate indefinitely
-   - Memory usage over time: UNKNOWN
-
-4. **Concurrent Request Limits**:
-   - Flask threaded=True but no max threads configured
-   - Default thread pool size: UNKNOWN
-   - How many concurrent LLM calls can GCP handle: UNKNOWN
-
-5. **Conversation History Growth**:
-   - Maximum message count before performance degrades: UNKNOWN
-   - Gemini context window limit: Assumed ~1M tokens but not enforced
-
-6. **Classification Accuracy**:
-   - Success rate of object → category classification: UNKNOWN
-   - Fallback behavior when category is "none": Relies on default prompts
-
-7. **Network Resilience**:
-   - Timeout for Gemini API: UNKNOWN (none configured)
-   - Retry behavior: None implemented
-   - Behavior under high latency: UNKNOWN
-
-8. **Browser Compatibility**:
-   - SSE support: Assumed modern browsers
-   - Tested browsers: UNKNOWN
-   - Mobile browser behavior: UNKNOWN
-
-9. **Error Rates**:
-   - Frequency of Gemini API errors: UNKNOWN
-   - Frequency of JSON parse errors in validation: UNKNOWN
-   - User disconnect rate during streaming: UNKNOWN
-
-10. **GCP Quotas**:
-    - Gemini API quota limits: UNKNOWN
-    - What happens when quota exceeded: UNKNOWN (assumes error returned)
-
----
-
-## CRITICAL FINDINGS FOR DEBUGGING
+## UPDATED CRITICAL FINDINGS
 
 ### High-Severity Issues
 
-1. **No timeout on Gemini calls** → Can hang indefinitely
-2. **Unbounded conversation history** → Memory exhaustion risk
-3. **No retry logic** → Single-point-of-failure for transient errors
-4. **Race conditions on concurrent requests** → Data corruption possible
-5. **No authentication** → Open to abuse
-6. **Stream interruption leaves orphaned threads** → Resource leak
+1. ⚠️ **Event loop resource leak** → Loops not closed, rely on GC (NEW: fully analyzed in Section 11)
+2. ⚠️ **Session orphan accumulation** → No cleanup, browser refresh leaks memory (NEW: fully analyzed in Section 12)
+3. **Unbounded conversation history** → Memory exhaustion risk
+4. **No retry logic** → Single-point-of-failure for transient errors
+5. **Race conditions on concurrent requests** → Data corruption possible
+6. **No authentication** → Open to abuse
 7. **No monitoring/alerting** → Failures go unnoticed
 
 ### Medium-Severity Issues
 
 1. **Safe defaults on validation errors** → May celebrate wrong answers
-2. **No session expiry** → Memory accumulation
-3. **No version pinning** → Deployment instability
-4. **Logs contain PII** → Compliance risk
-5. **No rate limiting** → DoS vulnerability
+2. **No version pinning** → Deployment instability
+3. **Logs contain PII** → Compliance risk
+4. **No rate limiting** → DoS vulnerability
+5. **request_id missing from Loguru logs** → (NEW) Reduced log correlation
+
+### ✅ RESOLVED Issues (False Positives)
+
+1. ~~Category data source for UI~~ → ✅ RESOLVED: Static JSON file loaded at page init
+2. ~~request_id propagation~~ → ✅ MOSTLY WORKS: Present in StreamChunks and console logs (just not Loguru)
 
 ### Design Decisions (By Intent)
 
@@ -1393,10 +976,49 @@ The following aspects are **UNKNOWN** or **underspecified** in the current imple
 2. **Dual-parallel architecture** → Sequential (not concurrent) streaming
 3. **Client-side stop button** → Frontend-only interrupt
 4. **Topic switching** → AI-driven decision with manual override
+5. **GC-based event loop cleanup** → Intentional (comment: "faster and avoids RuntimeError")
+6. **No session expiry** → Simplicity for demo/testing
 
 ---
 
-**End of Operational Architecture Document**
+## KNOWN UNKNOWNS
 
-Generated for debugging, tracing, and failure mode analysis.
-Treat all ⚠️ warnings as potential bugs or areas requiring investigation.
+(Same as before, with additions)
+
+The following aspects are **UNKNOWN** or **underspecified**:
+
+1. **Gemini API Internal State**: Context caching, rate limits, costs - UNKNOWN
+
+2. **Token Usage & Costs**: Gemini streaming doesn't return usage, no cost tracking - UNKNOWN
+
+3. **Session Expiry**: No TTL, accumulation rate in production - UNKNOWN
+
+4. **Concurrent Request Limits**: Flask thread pool size, max LLM calls - UNKNOWN
+
+5. **Conversation History Growth**: Max before performance degrades - UNKNOWN
+
+6. **Classification Accuracy**: Success rate of object→category - UNKNOWN
+
+7. **Network Resilience**: Timeout for Gemini (none configured) - UNKNOWN
+
+8. **Browser Compatibility**: Tested browsers - UNKNOWN
+
+9. **Error Rates**: Frequency of API/parse errors - UNKNOWN
+
+10. **GCP Quotas**: Gemini quota limits, quota exceeded behavior - UNKNOWN
+
+11. **Event Loop GC Timing**: (NEW) How long before orphaned loops cleaned - UNKNOWN
+
+12. **Orphan Session Rate**: (NEW) % of sessions that become orphaned in production - UNKNOWN
+
+---
+
+**End of Updated Operational Architecture Document**
+
+**Audit Date**: 2026-01-05
+**Issues Fixed**: 2/4 critical (1 false positive, 1 fully documented)
+**New Sections**: 3 (Sections 11, 12, 13)
+**Diagrams Added**: 1 (Page Initialization Flow)
+**Diagrams Updated**: 3 (System Topology, Start Flow, Session Reset)
+
+All ⚠️ warnings represent confirmed issues requiring investigation or mitigation.

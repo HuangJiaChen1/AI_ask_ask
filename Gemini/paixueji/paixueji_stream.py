@@ -2079,9 +2079,16 @@ async def call_paixueji_stream(
                 logger.info(f"[SYSTEM_MANAGED] Depth: {assistant.depth_questions_count}/{assistant.depth_target}")
 
             # Handle wrong WIDTH answers
-            if assistant.current_focus_mode.startswith('width_') and is_engaged and not is_factually_correct:
+            # Include 'not is_engaged' to handle "I don't know" as a wrong answer that triggers a switch
+            if assistant.current_focus_mode.startswith('width_') and (not is_engaged or not is_factually_correct):
                 width_result = handle_width_wrong_answer(assistant)
                 logger.info(f"[SYSTEM_MANAGED] WIDTH wrong: {width_result}")
+
+                # Update local variables if mode changed so response uses new strategy
+                if width_result.get('switch_category'):
+                    focus_mode = width_result['new_focus_mode']
+                    focus_prompt = assistant.get_focus_prompt(focus_mode)
+                    logger.info(f"[SYSTEM_MANAGED] Switched focus to {focus_mode} for immediate response")
 
             # Reset wrong count on correct WIDTH answer
             if assistant.current_focus_mode.startswith('width_') and is_factually_correct:
@@ -2103,7 +2110,23 @@ async def call_paixueji_stream(
         response_generator = None
         previous_question = extract_previous_question(prepared_messages)
 
-        if not is_engaged and not should_switch:
+        # Handle explicit request to switch without a specific object named
+        if should_switch and not validation_result.get('new_object'):
+            # Trigger object selection flow immediately
+            suggested_objects = generate_object_suggestions(assistant, config, client, age or 6)
+            response_generator = generate_object_selection_response_stream(
+                messages=prepared_messages,
+                suggested_objects=suggested_objects,
+                current_object=object_name,
+                age=age or 6,
+                config=config,
+                client=client
+            )
+            response_type = "object_selection"
+            object_selection_mode = True
+            logger.info(f"[{session_id}] Routing to object selection (explicit switch requested)")
+
+        elif not is_engaged:
             # PATH 1: STUCK/UNCLEAR ("I don't know", unclear answers)
             response_generator = generate_explanation_response_stream(
                 messages=prepared_messages,
@@ -2125,8 +2148,12 @@ async def call_paixueji_stream(
                 new_object = validation_result['new_object']
                 previous_object = object_name
 
-                # Update object in assistant
-                assistant.object_name = new_object
+                # Update object in assistant and reset focus state for new object
+                if assistant.system_managed_focus:
+                    assistant.reset_object_state(new_object)
+                else:
+                    assistant.object_name = new_object
+                
                 object_name = new_object
                 new_object_name = new_object
                 switch_decision_reasoning = validation_result.get('switching_reasoning')
@@ -2201,6 +2228,29 @@ async def call_paixueji_stream(
                     "routing": response_type
                 }
 
+        # NEW: System-managed focus mode decision (Move BEFORE response generation)
+        # This ensures the frontend gets the correct focus mode tag on the very first chunk
+        skip_question_generation = False
+        object_selection_mode = False
+        suggested_objects = None
+
+        if assistant.system_managed_focus:
+            focus_decision = decide_next_focus_mode(assistant)
+
+            if focus_decision['focus_mode'] == 'object_selection':
+                # Generate object selection response instead of question
+                suggested_objects = generate_object_suggestions(assistant, config, client, age or 6)
+                
+                # Flag to use object selection generator later
+                object_selection_mode = True
+                response_type = "object_selection" # Update response type if this overrides
+                logger.info(f"[{session_id}] System-managed: object selection mode triggered")
+            else:
+                # Update focus mode for BOTH response and question generation
+                focus_mode = focus_decision['focus_mode']
+                focus_prompt = assistant.get_focus_prompt(focus_mode)
+                logger.info(f"[{session_id}] System-managed: focus_mode={focus_mode}, reason={focus_decision['reason']}")
+
         # DUAL-PARALLEL STREAMING: Stream response first, then question
         full_response_text = ""
         full_question_text = ""
@@ -2227,7 +2277,7 @@ async def call_paixueji_stream(
                         is_stuck=False,
                         correct_answer_count=correct_answer_count,
                         conversation_complete=False,
-                        focus_mode=focus_mode,
+                        focus_mode=focus_mode, # Uses UPDATED focus mode
                         is_correct=is_engaged and is_factually_correct if is_engaged is not None else None,
                         is_engaged=is_engaged,
                         is_factually_correct=is_factually_correct,
@@ -2235,7 +2285,9 @@ async def call_paixueji_stream(
                         new_object_name=new_object_name,
                         detected_object_name=detected_object_name,
                         switch_decision_reasoning=switch_decision_reasoning,
-                        response_type=response_type
+                        response_type=response_type,
+                        system_focus_mode=assistant.current_focus_mode if assistant.system_managed_focus else None,
+                        depth_progress=f"{assistant.depth_questions_count}/{assistant.depth_target}" if assistant.system_managed_focus else None
                     )
 
         except Exception as e:
@@ -2265,7 +2317,9 @@ async def call_paixueji_stream(
                 new_object_name=new_object_name,
                 detected_object_name=detected_object_name,
                 switch_decision_reasoning=switch_decision_reasoning,
-                response_type=response_type
+                response_type=response_type,
+                system_focus_mode=assistant.current_focus_mode if assistant.system_managed_focus else None,
+                depth_progress=f"{assistant.depth_questions_count}/{assistant.depth_target}" if assistant.system_managed_focus else None
             )
 
         # CRITICAL FIX: Update messages with the generated response BEFORE asking follow-up
@@ -2274,19 +2328,9 @@ async def call_paixueji_stream(
         if full_response_text:
             question_messages.append({"role": "assistant", "content": full_response_text})
 
-        # NEW: System-managed focus mode decision
-        skip_question_generation = False
-        object_selection_mode = False
-        suggested_objects = None
-
-        if assistant.system_managed_focus:
-            focus_decision = decide_next_focus_mode(assistant)
-
-            if focus_decision['focus_mode'] == 'object_selection':
-                # Generate object selection response instead of question
-                suggested_objects = generate_object_suggestions(assistant, config, client, age or 6)
-
-                # Use object selection response generator
+        # Check if object selection mode triggered (logic moved up)
+        if object_selection_mode:
+             # Use object selection response generator
                 question_generator = generate_object_selection_response_stream(
                     messages=question_messages,
                     suggested_objects=suggested_objects,
@@ -2295,14 +2339,7 @@ async def call_paixueji_stream(
                     config=config,
                     client=client
                 )
-                response_type = "object_selection"
-                object_selection_mode = True
-                logger.info(f"[{session_id}] System-managed: object selection mode triggered")
-            else:
-                # Update focus mode for question generation
-                focus_mode = focus_decision['focus_mode']
-                focus_prompt = assistant.get_focus_prompt(focus_mode)
-                logger.info(f"[{session_id}] System-managed: focus_mode={focus_mode}, reason={focus_decision['reason']}")
+
 
         # ALWAYS generate follow-up question (for all non-introduction turns)
         # Now using the updated history including the response
