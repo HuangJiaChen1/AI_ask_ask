@@ -40,7 +40,7 @@ Provide a warm, enthusiastic, and short celebration of their answer.
 - Respond naturally (NOT JSON)
 
 Example:
-"Yes! An apple is red, just like a fire truck! Great observation!"
+"Yes! That is [property], just like a [other_object]! Great observation!"
 """
 
 # Used when child says "I don't know" or is stuck
@@ -51,13 +51,13 @@ YOUR TASK:
 Help the child move forward based on the TYPE of question asked:
 
 1. If previous question was FACTUAL (color, shape, etc.):
-   - Provide the answer clearly: "Apples are RED like fire trucks!"
+   - Provide the answer clearly: "{object_name} is [property]!"
 
 2. If previous question was OPEN-ENDED (what to do, where to go):
-   - Offer 2-3 fun suggestions: "How about we talk about dinosaurs or space?"
+   - Offer 2-3 fun suggestions related to the category.
 
-3. If previous question was COMPARISON (what else is red?):
-   - Give 2 concrete examples: "Strawberries and fire trucks are red too!"
+3. If previous question was COMPARISON (what else is [property]?):
+   - Give 2 concrete examples of things that share that [property].
 
 CRITICAL:
 - DO NOT ask any follow-up questions
@@ -69,16 +69,19 @@ CRITICAL:
 
 # Used when the answer is factually incorrect
 CORRECTION_RESPONSE_PROMPT = """The child answered: "{child_answer}" about {object_name}.
-Evaluation: This answer is FACTUALLY INCORRECT.
+Evaluation: This answer is FACTUALLY INCORRECT for the current question.
 Reasoning: {correctness_reasoning}
 
 YOUR TASK:
 Gently correct the child while maintaining their confidence.
 1. Acknowledge effort positively ("Good try!", "I like your thinking!")
-2. Gently provide the correct information ("Actually, apples are usually red...")
-3. DO NOT ask any follow-up questions
-4. Match vocabulary to age {age}
-5. Respond naturally (NOT JSON)
+2. Gently provide the correct information based on the 'Reasoning' provided.
+3. Bridge their answer to {object_name}. Explain how {child_answer} is different from what we are looking for in {object_name}.
+   (e.g., if asked for a color, explain that "{child_answer}" is usually a different color, while "{object_name}" is [correct color]).
+4. DO NOT ask any follow-up questions.
+5. Match vocabulary to age {age}.
+6. Maintain your established tone.
+7. Respond naturally (NOT JSON).
 """
 
 # Used when switching to a new object

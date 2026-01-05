@@ -430,3 +430,114 @@ Actually, bananas are usually yellow, but apples are usually red or green.
 ❓ RESPONSE PART 2: Tell me, matey, what other things do you know that are round like a lemon?
 --------------------------------------------------
 
+2026-01-05 10:40:02.833 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [32459a50-7c1b-4c25-ace1-c6d905717f80] call_paixueji_stream started | session_id=32459a50-7c1b-4c25-ace1-c6d905717f80, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2026-01-05 10:40:02.833 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [32459a50-7c1b-4c25-ace1-c6d905717f80] Conversation state | correct_count=0, complete=False
+2026-01-05 10:40:02.833 | INFO     | paixueji_stream:call_paixueji_stream:1756 | [32459a50-7c1b-4c25-ace1-c6d905717f80] Routing to introduction question
+2026-01-05 10:40:02.834 | INFO     | paixueji_stream:ask_introduction_question_stream:174 | ask_introduction_question_stream started | object=banana, age=6
+2026-01-05 10:40:02.834 | DEBUG    | paixueji_stream:ask_introduction_question_stream:190 | Messages prepared for API | count=3
+2026-01-05 10:40:02.834 | DEBUG    | paixueji_stream:ask_introduction_question_stream:201 | Sending 2 messages to Gemini API
+2026-01-05 10:40:02.834 | DEBUG    | paixueji_stream:ask_introduction_question_stream:218 | Stream object type: generator
+2026-01-05 10:40:31.319 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 1 | length=2, total_length=2
+2026-01-05 10:40:31.341 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 2 | length=9, total_length=11
+2026-01-05 10:40:31.351 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 3 | length=55, total_length=66
+2026-01-05 10:40:31.411 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 4 | length=67, total_length=133
+2026-01-05 10:40:31.450 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 5 | length=66, total_length=199
+2026-01-05 10:40:31.459 | DEBUG    | paixueji_stream:ask_introduction_question_stream:238 | Gemini streaming API does not provide token usage in stream mode
+2026-01-05 10:40:31.459 | DEBUG    | paixueji_stream:ask_introduction_question_stream:257 | Cleaned up stream via del in finally block
+2026-01-05 10:40:31.459 | INFO     | paixueji_stream:ask_introduction_question_stream:262 | ask_introduction_question_stream completed | duration=28.625s, response_length=199
+2026-01-05 10:40:31.459 | WARNING  | paixueji_stream:ask_introduction_question_stream:268 | Slow LLM call | duration=28.625s exceeded threshold 5.0s
+2026-01-05 10:40:31.459 | INFO     | paixueji_stream:call_paixueji_stream:2126 | [32459a50-7c1b-4c25-ace1-c6d905717f80] call_paixueji_stream completed | response_type=introduction, duration=28.626s, total_chunks=5, response_length=199, correct_count=0, complete=False, session_finished=False
+2026-01-05 10:40:31.459 | DEBUG    | paixueji_stream:call_paixueji_stream:2134 | Full response: Ahoy there, matey! Today we've got a super-duper yummy treasure to talk about – a banana!
+
+Now, look at this banana. Can you tell me, what other things do you know that have a shape like this banana?...
+2026-01-05 10:40:31.459 | DEBUG    | paixueji_stream:call_paixueji_stream:2207 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+👤 USER INPUT: (None)
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='width_shape'
+🔍 VALIDATION: Engaged=None | Correct=None
+💭 REASONING: N/A
+⚡ DECISION: N/A (Reason: N/A)
+🗣️ RESPONSE PART 1: (None)
+❓ RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-05 10:42:56.573 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [32459a50-7c1b-4c25-ace1-c6d905717f80] call_paixueji_stream started | session_id=32459a50-7c1b-4c25-ace1-c6d905717f80, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=12, message_history=2
+2026-01-05 10:42:56.573 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [32459a50-7c1b-4c25-ace1-c6d905717f80] Conversation state | correct_count=0, complete=False
+2026-01-05 10:42:56.573 | INFO     | paixueji_stream:call_paixueji_stream:1765 | [32459a50-7c1b-4c25-ace1-c6d905717f80] Running unified AI validation for answer
+2026-01-05 10:42:59.444 | INFO     | paixueji_stream:decide_topic_switch_with_validation:955 | [VALIDATE] CONTINUE | new_object=None, engaged=False, correct=False, switch_reasoning=The child indicated they don't know, so we should continue with the current object., correctness_reasoning=The child did not provide an answer, so correctness is not applicable.
+2026-01-05 10:42:59.444 | INFO     | paixueji_stream:call_paixueji_stream:1809 | [32459a50-7c1b-4c25-ace1-c6d905717f80] Routing to explanation | is_engaged=False
+2026-01-05 10:42:59.444 | DEBUG    | paixueji_stream:call_paixueji_stream:1899 | [32459a50-7c1b-4c25-ace1-c6d905717f80] Streaming response (explanation)
+2026-01-05 10:42:59.444 | INFO     | paixueji_stream:generate_explanation_response_stream:402 | generate_explanation_response_stream started | object=banana, age=6
+2026-01-05 10:43:00.238 | INFO     | paixueji_stream:generate_explanation_response_stream:458 | generate_explanation_response_stream completed | duration=0.794s, length=157
+2026-01-05 10:43:00.238 | DEBUG    | paixueji_stream:call_paixueji_stream:1983 | [32459a50-7c1b-4c25-ace1-c6d905717f80] Streaming question
+2026-01-05 10:43:00.238 | INFO     | paixueji_stream:generate_followup_question_stream:677 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-05 10:43:01.476 | INFO     | paixueji_stream:generate_followup_question_stream:734 | generate_followup_question_stream completed | duration=1.238s, length=42
+2026-01-05 10:43:01.476 | INFO     | paixueji_stream:call_paixueji_stream:2126 | [32459a50-7c1b-4c25-ace1-c6d905717f80] call_paixueji_stream completed | response_type=explanation, duration=4.903s, total_chunks=7, response_length=200, correct_count=0, complete=False, session_finished=False
+2026-01-05 10:43:01.476 | DEBUG    | paixueji_stream:call_paixueji_stream:2134 | Full response: Ahoy, matey! No worries if ye don't know! A banana is curved, like a smile! Ye might see other things that are curved too, like a rainbow or a crescent moon! Tell me, matey, what color is this banana?...
+2026-01-05 10:43:01.476 | DEBUG    | paixueji_stream:call_paixueji_stream:2207 | 
+
+[DEBUG TREE NODE] Turn 1 (EXPLANATION)
+--------------------------------------------------
+👤 USER INPUT: I don't know
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='width_shape'
+🔍 VALIDATION: Engaged=False | Correct=False
+💭 REASONING: The child did not provide an answer, so correctness is not applicable.
+⚡ DECISION: CONTINUE (Reason: The child indicated they don't know, so we should continue with the current object.)
+🗣️ RESPONSE PART 1: Ahoy, matey! No worries if ye don't know! A banana is curved, like a smile! Ye might see other things that are curved too, like a rainbow or a crescent moon!
+❓ RESPONSE PART 2: Tell me, matey, what color is this banana?
+--------------------------------------------------
+
+2026-01-05 10:48:56.726 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [32459a50-7c1b-4c25-ace1-c6d905717f80] call_paixueji_stream started | session_id=32459a50-7c1b-4c25-ace1-c6d905717f80, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=12, message_history=3
+2026-01-05 10:48:56.726 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [32459a50-7c1b-4c25-ace1-c6d905717f80] Conversation state | correct_count=0, complete=False
+2026-01-05 10:48:56.726 | INFO     | paixueji_stream:call_paixueji_stream:1765 | [32459a50-7c1b-4c25-ace1-c6d905717f80] Running unified AI validation for answer
+2026-01-05 10:49:01.023 | INFO     | paixueji_stream:decide_topic_switch_with_validation:955 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question directly and did not mention any other objects., correctness_reasoning=The child correctly identified the color of the banana as yellow.
+2026-01-05 10:49:01.024 | INFO     | paixueji_stream:call_paixueji_stream:1865 | [32459a50-7c1b-4c25-ace1-c6d905717f80] Routing to feedback | is_engaged=True, is_factually_correct=True
+2026-01-05 10:49:01.024 | DEBUG    | paixueji_stream:call_paixueji_stream:1899 | [32459a50-7c1b-4c25-ace1-c6d905717f80] Streaming response (feedback)
+2026-01-05 10:49:01.024 | INFO     | paixueji_stream:generate_feedback_response_stream:309 | generate_feedback_response_stream started | object=banana, age=6
+2026-01-05 10:49:01.665 | INFO     | paixueji_stream:generate_feedback_response_stream:364 | generate_feedback_response_stream completed | duration=0.641s, length=91
+2026-01-05 10:49:01.665 | DEBUG    | paixueji_stream:call_paixueji_stream:1983 | [32459a50-7c1b-4c25-ace1-c6d905717f80] Streaming question
+2026-01-05 10:49:01.665 | INFO     | paixueji_stream:generate_followup_question_stream:677 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-05 10:49:02.673 | INFO     | paixueji_stream:generate_followup_question_stream:734 | generate_followup_question_stream completed | duration=1.008s, length=80
+2026-01-05 10:49:02.673 | INFO     | paixueji_stream:call_paixueji_stream:2126 | [32459a50-7c1b-4c25-ace1-c6d905717f80] call_paixueji_stream completed | response_type=feedback, duration=5.948s, total_chunks=6, response_length=172, correct_count=0, complete=False, session_finished=False
+2026-01-05 10:49:02.673 | DEBUG    | paixueji_stream:call_paixueji_stream:2134 | Full response: Shiver me timbers, ye got it! It's bright yellow, just like the sunshine! Well done, matey! Tell me, matey, what other things do ye know that have a shape like this banana?...
+2026-01-05 10:49:02.674 | DEBUG    | paixueji_stream:call_paixueji_stream:2207 | 
+
+[DEBUG TREE NODE] Turn 2 (FEEDBACK)
+--------------------------------------------------
+👤 USER INPUT: it is yellow
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='width_shape'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: The child correctly identified the color of the banana as yellow.
+⚡ DECISION: CONTINUE (Reason: The child answered the question directly and did not mention any other objects.)
+🗣️ RESPONSE PART 1: Shiver me timbers, ye got it! It's bright yellow, just like the sunshine! Well done, matey!
+❓ RESPONSE PART 2: Tell me, matey, what other things do ye know that have a shape like this banana?
+--------------------------------------------------
+
+2026-01-05 10:49:11.685 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [32459a50-7c1b-4c25-ace1-c6d905717f80] call_paixueji_stream started | session_id=32459a50-7c1b-4c25-ace1-c6d905717f80, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=1, status=normal, content_length=7, message_history=4
+2026-01-05 10:49:11.685 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [32459a50-7c1b-4c25-ace1-c6d905717f80] Conversation state | correct_count=1, complete=False
+2026-01-05 10:49:11.685 | INFO     | paixueji_stream:call_paixueji_stream:1765 | [32459a50-7c1b-4c25-ace1-c6d905717f80] Running unified AI validation for answer
+2026-01-05 10:49:14.274 | INFO     | paixueji_stream:decide_topic_switch_with_validation:955 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=False, switch_reasoning=The child answered the question, but the answer is not factually correct. We should continue with the current object., correctness_reasoning=A smile is curved, but it is not the same shape as a banana. A smile is more of a curve, while a banana is a long, curved shape.
+2026-01-05 10:49:14.274 | INFO     | paixueji_stream:call_paixueji_stream:1880 | [32459a50-7c1b-4c25-ace1-c6d905717f80] Routing to gentle correction | is_engaged=True, is_factually_correct=False
+2026-01-05 10:49:14.274 | DEBUG    | paixueji_stream:call_paixueji_stream:1899 | [32459a50-7c1b-4c25-ace1-c6d905717f80] Streaming response (gentle_correction)
+2026-01-05 10:49:14.275 | INFO     | paixueji_stream:generate_correction_response_stream:494 | generate_correction_response_stream started | object=banana, age=6
+2026-01-05 10:49:15.115 | INFO     | paixueji_stream:generate_correction_response_stream:550 | generate_correction_response_stream completed | duration=0.840s, length=321
+2026-01-05 10:49:15.115 | DEBUG    | paixueji_stream:call_paixueji_stream:1983 | [32459a50-7c1b-4c25-ace1-c6d905717f80] Streaming question
+2026-01-05 10:49:15.115 | INFO     | paixueji_stream:generate_followup_question_stream:677 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-05 10:49:16.156 | INFO     | paixueji_stream:generate_followup_question_stream:734 | generate_followup_question_stream completed | duration=1.041s, length=67
+2026-01-05 10:49:16.156 | INFO     | paixueji_stream:call_paixueji_stream:2126 | [32459a50-7c1b-4c25-ace1-c6d905717f80] call_paixueji_stream completed | response_type=gentle_correction, duration=4.472s, total_chunks=8, response_length=389, correct_count=1, complete=False, session_finished=False
+2026-01-05 10:49:16.157 | DEBUG    | paixueji_stream:call_paixueji_stream:2134 | Full response: Ahoy, matey! That's a super-duper creative answer! I like how ye are thinking about shapes! A smile is a lovely curve, it is! But when we look at this banana, it's a long, curved shape, like a gentle arc in the sky. A smile is usually a bit shorter and rounder, ye see? This banana is long and curved, like a little boat! Tell me, matey, what do ye think is hiding inside this yellow peel?...
+2026-01-05 10:49:16.157 | DEBUG    | paixueji_stream:call_paixueji_stream:2207 | 
+
+[DEBUG TREE NODE] Turn 3 (GENTLE_CORRECTION)
+--------------------------------------------------
+👤 USER INPUT: a smile
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=True | Correct=False
+💭 REASONING: A smile is curved, but it is not the same shape as a banana. A smile is more of a curve, while a banana is a long, curved shape.
+⚡ DECISION: CONTINUE (Reason: The child answered the question, but the answer is not factually correct. We should continue with the current object.)
+🗣️ RESPONSE PART 1: Ahoy, matey! That's a super-duper creative answer! I like how ye are thinking about shapes! A smile is a lovely curve, it is! But when we look at this banana, it's a long, curved shape, like a gentle arc in the sky. A smile is usually a bit shorter and rounder, ye see? This banana is long and curved, like a little boat!
+❓ RESPONSE PART 2: Tell me, matey, what do ye think is hiding inside this yellow peel?
+--------------------------------------------------
+
