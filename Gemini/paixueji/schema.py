@@ -155,3 +155,9 @@ class StreamChunk(BaseModel):
     new_object_name: str | None = None
     detected_object_name: str | None = None  # Object AI detected but didn't switch to
     switch_decision_reasoning: str | None = None  # AI's reasoning for switch/continue decision
+
+    # System-managed focus mode fields:
+    object_selection_mode: bool = False  # True if presenting object choices
+    suggested_objects: list[str] | None = None  # Objects to choose from
+    system_focus_mode: str | None = None  # Current system-managed focus mode
+    depth_progress: str | None = None  # e.g., "3/5" depth questions completed

@@ -34,6 +34,15 @@
                 <option value="storyteller">Storyteller</option>
             </select>
 
+            <label for="nextQuestionFocus">Focus Mode:</label>
+            <select id="nextQuestionFocus" onchange="saveFocusPreference()">
+                <option value="system_managed" selected>System Managed (Auto)</option>
+                <option value="depth">Depth (Deep Dive)</option>
+                <option value="width_shape">Width - Same Shape</option>
+                <option value="width_color">Width - Same Color</option>
+                <option value="width_category">Width - Same Category</option>
+            </select>
+
             <label for="objectName">What object are we learning about?</label>
             <div class="object-input-row">
                 <input type="text" id="objectName" placeholder="e.g., apple, dog, tree" />
@@ -86,18 +95,18 @@
             </div>
         </div>
 
+        <!-- Object Selection Panel (for system-managed mode) -->
+        <div id="objectSelectionPanel" style="display: none; padding: 15px; margin: 10px; background: #f0f9ff; border: 2px solid #3b82f6; border-radius: 8px;">
+            <p style="margin: 0 0 10px 0; font-weight: bold;">
+                Choose what you'd like to learn about next:
+            </p>
+            <div id="objectChoices" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- Dynamically populated with buttons -->
+            </div>
+        </div>
+
         <div class="input-area">
             <div id="thinking-time" class="thinking-time"></div>
-            
-            <div class="focus-control">
-                <label for="nextQuestionFocus">Focus for NEXT question:</label>
-                <select id="nextQuestionFocus" onchange="saveFocusPreference()">
-                    <option value="depth" selected>Depth (Dive Deeper)</option>
-                    <option value="width_shape">Width (Same Shape)</option>
-                    <option value="width_color">Width (Same Color)</option>
-                    <option value="width_category">Width (Same Category)</option>
-                </select>
-            </div>
 
             <div class="input-row">
                 <input

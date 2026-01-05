@@ -36,7 +36,7 @@ class PaixuejiAssistant:
     All streaming logic has been moved to paixueji_stream.py.
     """
 
-    def __init__(self, config_path="config.json", age_prompts_path="age_prompts.json", object_prompts_path="object_prompts.json"):
+    def __init__(self, config_path="config.json", age_prompts_path="age_prompts.json", object_prompts_path="object_prompts.json", system_managed=False):
         """Initialize the assistant with configuration and Gemini client."""
         self.config = self._load_config(config_path)
         self.conversation_history = []
@@ -50,6 +50,14 @@ class PaixuejiAssistant:
         self.level2_category = None
         self.level3_category = None
         self.correct_answer_count = 0
+
+        # System-managed focus mode tracking
+        self.system_managed_focus = False
+        self.current_focus_mode = 'depth'
+        self.depth_questions_count = 0
+        self.width_wrong_count = 0
+        self.width_categories_tried = []  # ['color', 'shape', 'category']
+        self.depth_target = 0  # 4 or 5, randomly chosen per object
 
         # Conversation flow tree for debugging
         self.flow_tree = None
@@ -78,6 +86,16 @@ class PaixuejiAssistant:
         # Load prompts
         import paixueji_prompts
         self.prompts = paixueji_prompts.get_prompts()
+
+        # Initialize system-managed focus mode
+        import random
+        self.system_managed_focus = system_managed
+        if system_managed:
+            self.current_focus_mode = 'depth'
+            self.depth_target = random.randint(4, 5)
+            self.depth_questions_count = 0
+            self.width_wrong_count = 0
+            self.width_categories_tried = []
 
     def _load_config(self, config_path):
         """Load configuration from JSON file."""
@@ -294,6 +312,21 @@ class PaixuejiAssistant:
             self.level1_category = None
             self.level2_category = None
             self.level3_category = None
+
+    def reset_object_state(self, new_object_name: str):
+        """
+        Reset state when switching to a new object in system-managed mode.
+
+        Args:
+            new_object_name: Name of the new object to switch to
+        """
+        import random
+        self.object_name = new_object_name
+        self.depth_questions_count = 0
+        self.width_wrong_count = 0
+        self.width_categories_tried = []
+        self.current_focus_mode = 'depth'
+        self.depth_target = random.randint(4, 5)
 
     def reset(self):
         """Reset the conversation."""

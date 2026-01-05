@@ -21,6 +21,8 @@ let correctAnswerCount = 0;
 let conversationComplete = false;
 let categoryData = {};
 let detectedObject = null;  // For manual topic switch override
+let systemManagedMode = false;  // System-managed focus mode flag
+let awaitingObjectSelection = false;  // Waiting for object choice flag
 
 // DOM elements
 const messagesContainer = document.getElementById('messages');
@@ -120,6 +122,7 @@ async function startConversation() {
     const level3Category = document.getElementById('level3Category').value;
     const tone = document.getElementById('assistantTone').value;
     const focusMode = document.getElementById('nextQuestionFocus').value;
+    systemManagedMode = (focusMode === 'system_managed');
 
     // Save tone preference
     localStorage.setItem('paixueji_tone', tone);
@@ -175,7 +178,8 @@ async function startConversation() {
                 level2_category: level2Value,
                 level3_category: level3Value,
                 tone: tone,
-                focus_mode: focusMode
+                focus_mode: focusMode,
+                system_managed: systemManagedMode
             }),
             signal: currentStreamController.signal
         });
@@ -470,7 +474,9 @@ function handleStreamChunk(chunk) {
         if (!currentMessageDiv) {
             // Create message with feedback indicator on first chunk
             const isCorrect = chunk.is_correct !== undefined ? chunk.is_correct : null;
-            currentMessageDiv = addMessage('assistant', '', chunk.focus_mode, isCorrect);
+            // Use system_focus_mode if in system-managed mode, otherwise use focus_mode
+            const displayFocus = chunk.system_focus_mode || chunk.focus_mode;
+            currentMessageDiv = addMessage('assistant', '', displayFocus, isCorrect);
         }
         displayChunk(currentMessageDiv, chunk.response);
     }
@@ -520,6 +526,11 @@ function handleStreamChunk(chunk) {
         }
 
         // INFINITE MODE: No completion UI - conversation never ends
+    }
+
+    // Handle object selection mode (system-managed focus)
+    if (chunk.object_selection_mode && chunk.suggested_objects) {
+        showObjectSelection(chunk.suggested_objects);
     }
 
     // Handle detected object (AI decided to CONTINUE but detected a new object)
@@ -907,6 +918,87 @@ function dismissSwitchPanel() {
     document.getElementById('manualSwitchPanel').style.display = 'none';
     detectedObject = null;
     console.log('[INFO] Manual switch panel dismissed');
+}
+
+/**
+ * Show object selection panel with choices (system-managed mode)
+ * @param {Array<string>} objects - List of objects to choose from
+ */
+function showObjectSelection(objects) {
+    const panel = document.getElementById('objectSelectionPanel');
+    const choicesContainer = document.getElementById('objectChoices');
+
+    // Clear previous choices
+    choicesContainer.innerHTML = '';
+
+    // Create button for each object
+    objects.forEach(obj => {
+        const btn = document.createElement('button');
+        btn.textContent = obj;
+        btn.onclick = () => selectObject(obj);
+        btn.style.cssText = 'padding: 10px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;';
+        choicesContainer.appendChild(btn);
+    });
+
+    panel.style.display = 'block';
+    awaitingObjectSelection = true;
+    userInput.disabled = true;  // Disable text input while choosing
+
+    console.log('[INFO] Object selection panel shown with options:', objects);
+}
+
+/**
+ * Handle object selection (system-managed mode)
+ * @param {string} objectName - Selected object name
+ */
+async function selectObject(objectName) {
+    if (!sessionId) {
+        console.error('[ERROR] No session ID for object selection');
+        return;
+    }
+
+    console.log('[INFO] User selected object:', objectName);
+
+    // Hide panel
+    document.getElementById('objectSelectionPanel').style.display = 'none';
+    awaitingObjectSelection = false;
+
+    try {
+        // Send selection to backend
+        const response = await fetch(`${API_BASE}/select-object`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                session_id: sessionId,
+                selected_object: objectName
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Add system message
+            const systemMsg = addMessage('system', `Let's learn about ${objectName}!`);
+            systemMsg.style.background = '#d1fae5';
+            systemMsg.style.borderLeft = '4px solid #10b981';
+            systemMsg.style.padding = '10px';
+            systemMsg.style.margin = '10px 0';
+
+            // Re-enable input
+            userInput.disabled = false;
+            userInput.focus();
+
+            console.log('[INFO] Object selection successful:', objectName);
+        } else {
+            console.error('[ERROR] Object selection failed:', result.error);
+            alert(`Object selection failed: ${result.error}`);
+            userInput.disabled = false;
+        }
+    } catch (error) {
+        console.error('[ERROR] Object selection error:', error);
+        alert('Error selecting object. Please try again.');
+        userInput.disabled = false;
+    }
 }
 
 // ============================================================================

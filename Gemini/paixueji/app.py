@@ -107,6 +107,7 @@ def start_conversation():
     level3_category = data.get('level3_category')
     tone = data.get('tone')
     focus_mode = data.get('focus_mode', 'depth')  # Default to depth if not provided
+    system_managed = data.get('system_managed', False)  # System-managed focus mode
 
     # Validate required fields
     if not object_name:
@@ -128,7 +129,7 @@ def start_conversation():
 
     # Create session
     session_id = str(uuid.uuid4())
-    assistant = PaixuejiAssistant()
+    assistant = PaixuejiAssistant(system_managed=system_managed)
     sessions[session_id] = assistant
 
     # Initialize flow tree for debugging
@@ -837,6 +838,81 @@ def force_switch():
 
     except Exception as e:
         print(f"[ERROR] Force switch error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route('/api/select-object', methods=['POST'])
+def select_object():
+    """
+    Handle user's object selection in system-managed mode.
+
+    Request body:
+        {
+            "session_id": "uuid-string",
+            "selected_object": "ObjectName"
+        }
+
+    Response:
+        {
+            "success": true,
+            "object_name": "banana",
+            "message": "Switched to banana"
+        }
+    """
+    data = request.get_json()
+
+    if not data:
+        return jsonify({
+            "success": False,
+            "error": "Request body must be JSON"
+        }), 400
+
+    session_id = data.get('session_id')
+    selected_object = data.get('selected_object')
+
+    if not session_id or not selected_object:
+        return jsonify({
+            "success": False,
+            "error": "Missing required fields"
+        }), 400
+
+    assistant = sessions.get(session_id)
+
+    if not assistant:
+        return jsonify({
+            "success": False,
+            "error": "Session not found"
+        }), 404
+
+    try:
+        # Reset object state for new object
+        assistant.reset_object_state(selected_object)
+
+        # Classify new object (background with timeout)
+        import concurrent.futures
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            future = executor.submit(assistant.classify_object_sync, selected_object)
+            try:
+                future.result(timeout=1.0)
+                print(f"[OBJECT_SELECTION] Classification completed for {selected_object}")
+            except concurrent.futures.TimeoutError:
+                print(f"[OBJECT_SELECTION] Classification timeout for {selected_object}")
+
+        print(f"[OBJECT_SELECTION] User selected: {selected_object}")
+
+        return jsonify({
+            "success": True,
+            "object_name": selected_object,
+            "message": f"Switched to {selected_object}"
+        })
+
+    except Exception as e:
+        print(f"[ERROR] Object selection error: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({

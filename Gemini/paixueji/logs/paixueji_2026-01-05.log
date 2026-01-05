@@ -541,3 +541,484 @@ Now, look at this banana. Can you tell me, what other things do you know that ha
 ❓ RESPONSE PART 2: Tell me, matey, what do ye think is hiding inside this yellow peel?
 --------------------------------------------------
 
+2026-01-05 11:24:59.244 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [d543cdb8-db5b-4e3b-87a7-60c841d924d7] call_paixueji_stream started | session_id=d543cdb8-db5b-4e3b-87a7-60c841d924d7, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2026-01-05 11:24:59.244 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [d543cdb8-db5b-4e3b-87a7-60c841d924d7] Conversation state | correct_count=0, complete=False
+2026-01-05 11:24:59.244 | INFO     | paixueji_stream:call_paixueji_stream:1756 | [d543cdb8-db5b-4e3b-87a7-60c841d924d7] Routing to introduction question
+2026-01-05 11:24:59.244 | INFO     | paixueji_stream:ask_introduction_question_stream:174 | ask_introduction_question_stream started | object=banana, age=6
+2026-01-05 11:24:59.245 | DEBUG    | paixueji_stream:ask_introduction_question_stream:190 | Messages prepared for API | count=3
+2026-01-05 11:24:59.245 | DEBUG    | paixueji_stream:ask_introduction_question_stream:201 | Sending 2 messages to Gemini API
+2026-01-05 11:24:59.245 | DEBUG    | paixueji_stream:ask_introduction_question_stream:218 | Stream object type: generator
+2026-01-05 11:25:14.946 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 1 | length=2, total_length=2
+2026-01-05 11:25:14.967 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 2 | length=9, total_length=11
+2026-01-05 11:25:14.994 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 3 | length=59, total_length=70
+2026-01-05 11:25:15.037 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 4 | length=66, total_length=136
+2026-01-05 11:25:15.067 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 5 | length=14, total_length=150
+2026-01-05 11:25:15.075 | DEBUG    | paixueji_stream:ask_introduction_question_stream:238 | Gemini streaming API does not provide token usage in stream mode
+2026-01-05 11:25:15.075 | DEBUG    | paixueji_stream:ask_introduction_question_stream:257 | Cleaned up stream via del in finally block
+2026-01-05 11:25:15.075 | INFO     | paixueji_stream:ask_introduction_question_stream:262 | ask_introduction_question_stream completed | duration=15.830s, response_length=150
+2026-01-05 11:25:15.075 | WARNING  | paixueji_stream:ask_introduction_question_stream:268 | Slow LLM call | duration=15.830s exceeded threshold 5.0s
+2026-01-05 11:25:15.075 | INFO     | paixueji_stream:call_paixueji_stream:2126 | [d543cdb8-db5b-4e3b-87a7-60c841d924d7] call_paixueji_stream completed | response_type=introduction, duration=15.831s, total_chunks=5, response_length=150, correct_count=0, complete=False, session_finished=False
+2026-01-05 11:25:15.075 | DEBUG    | paixueji_stream:call_paixueji_stream:2134 | Full response: Ahoy there, matey! We've got a yummy banana here today!
+
+Tell me, what does a banana feel like when you touch it? Is it smooth or bumpy, hard or soft?...
+2026-01-05 11:25:15.075 | DEBUG    | paixueji_stream:call_paixueji_stream:2207 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+👤 USER INPUT: (None)
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=None | Correct=None
+💭 REASONING: N/A
+⚡ DECISION: N/A (Reason: N/A)
+🗣️ RESPONSE PART 1: (None)
+❓ RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-05 11:25:30.511 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [d543cdb8-db5b-4e3b-87a7-60c841d924d7] call_paixueji_stream started | session_id=d543cdb8-db5b-4e3b-87a7-60c841d924d7, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=12, message_history=2
+2026-01-05 11:25:30.511 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [d543cdb8-db5b-4e3b-87a7-60c841d924d7] Conversation state | correct_count=0, complete=False
+2026-01-05 11:25:30.511 | INFO     | paixueji_stream:call_paixueji_stream:1765 | [d543cdb8-db5b-4e3b-87a7-60c841d924d7] Running unified AI validation for answer
+2026-01-05 11:25:31.977 | INFO     | paixueji_stream:decide_topic_switch_with_validation:955 | [VALIDATE] CONTINUE | new_object=None, engaged=False, correct=False, switch_reasoning=The child indicated that they don't know the answer, so we should continue with the current object., correctness_reasoning=The child did not provide an answer, so correctness is not applicable.
+2026-01-05 11:25:31.977 | INFO     | paixueji_stream:call_paixueji_stream:1809 | [d543cdb8-db5b-4e3b-87a7-60c841d924d7] Routing to explanation | is_engaged=False
+2026-01-05 11:25:31.977 | DEBUG    | paixueji_stream:call_paixueji_stream:1899 | [d543cdb8-db5b-4e3b-87a7-60c841d924d7] Streaming response (explanation)
+2026-01-05 11:25:31.977 | INFO     | paixueji_stream:generate_explanation_response_stream:402 | generate_explanation_response_stream started | object=banana, age=6
+2026-01-05 11:25:32.533 | INFO     | paixueji_stream:generate_explanation_response_stream:458 | generate_explanation_response_stream completed | duration=0.555s, length=75
+2026-01-05 11:25:32.533 | DEBUG    | paixueji_stream:call_paixueji_stream:1983 | [d543cdb8-db5b-4e3b-87a7-60c841d924d7] Streaming question
+2026-01-05 11:25:32.533 | INFO     | paixueji_stream:generate_followup_question_stream:677 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-05 11:25:33.153 | INFO     | paixueji_stream:generate_followup_question_stream:734 | generate_followup_question_stream completed | duration=0.619s, length=94
+2026-01-05 11:25:33.153 | INFO     | paixueji_stream:call_paixueji_stream:2126 | [d543cdb8-db5b-4e3b-87a7-60c841d924d7] call_paixueji_stream completed | response_type=explanation, duration=2.642s, total_chunks=7, response_length=170, correct_count=0, complete=False, session_finished=False
+2026-01-05 11:25:33.153 | DEBUG    | paixueji_stream:call_paixueji_stream:2134 | Full response: Ahoy, matey! A banana feels smooth and a little bit soft when you touch it! Now, matey, what other things do ye know that are the same bright yellow color as this banana?...
+2026-01-05 11:25:33.153 | DEBUG    | paixueji_stream:call_paixueji_stream:2207 | 
+
+[DEBUG TREE NODE] Turn 1 (EXPLANATION)
+--------------------------------------------------
+👤 USER INPUT: I don't know
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='width_color'
+🔍 VALIDATION: Engaged=False | Correct=False
+💭 REASONING: The child did not provide an answer, so correctness is not applicable.
+⚡ DECISION: CONTINUE (Reason: The child indicated that they don't know the answer, so we should continue with the current object.)
+🗣️ RESPONSE PART 1: Ahoy, matey! A banana feels smooth and a little bit soft when you touch it!
+❓ RESPONSE PART 2: Now, matey, what other things do ye know that are the same bright yellow color as this banana?
+--------------------------------------------------
+
+2026-01-05 11:25:38.550 | INFO     | paixueji_stream:call_paixueji_stream:1679 | [d543cdb8-db5b-4e3b-87a7-60c841d924d7] call_paixueji_stream started | session_id=d543cdb8-db5b-4e3b-87a7-60c841d924d7, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=12, message_history=3
+2026-01-05 11:25:38.550 | INFO     | paixueji_stream:call_paixueji_stream:1716 | [d543cdb8-db5b-4e3b-87a7-60c841d924d7] Conversation state | correct_count=0, complete=False
+2026-01-05 11:25:38.550 | INFO     | paixueji_stream:call_paixueji_stream:1765 | [d543cdb8-db5b-4e3b-87a7-60c841d924d7] Running unified AI validation for answer
+2026-01-05 11:25:41.011 | INFO     | paixueji_stream:decide_topic_switch_with_validation:955 | [VALIDATE] SWITCH | new_object=None, engaged=False, correct=False, switch_reasoning=The child indicated they don't know, suggesting they are stuck on the current question. It's best to switch to a new object to maintain engagement., correctness_reasoning=The child did not provide a factual answer, but rather indicated a lack of knowledge.
+2026-01-05 11:25:41.012 | INFO     | paixueji_stream:call_paixueji_stream:1880 | [d543cdb8-db5b-4e3b-87a7-60c841d924d7] Routing to gentle correction | is_engaged=True, is_factually_correct=False
+2026-01-05 11:25:41.012 | DEBUG    | paixueji_stream:call_paixueji_stream:1899 | [d543cdb8-db5b-4e3b-87a7-60c841d924d7] Streaming response (gentle_correction)
+2026-01-05 11:25:41.012 | INFO     | paixueji_stream:generate_correction_response_stream:494 | generate_correction_response_stream started | object=banana, age=6
+2026-01-05 11:25:41.915 | INFO     | paixueji_stream:generate_correction_response_stream:550 | generate_correction_response_stream completed | duration=0.903s, length=359
+2026-01-05 11:25:41.916 | DEBUG    | paixueji_stream:call_paixueji_stream:1983 | [d543cdb8-db5b-4e3b-87a7-60c841d924d7] Streaming question
+2026-01-05 11:25:41.916 | INFO     | paixueji_stream:generate_followup_question_stream:677 | generate_followup_question_stream started | object=banana, age=6, is_switch=True
+2026-01-05 11:25:42.565 | INFO     | paixueji_stream:generate_followup_question_stream:734 | generate_followup_question_stream completed | duration=0.649s, length=104
+2026-01-05 11:25:42.565 | INFO     | paixueji_stream:call_paixueji_stream:2126 | [d543cdb8-db5b-4e3b-87a7-60c841d924d7] call_paixueji_stream completed | response_type=gentle_correction, duration=4.016s, total_chunks=9, response_length=464, correct_count=0, complete=False, session_finished=False
+2026-01-05 11:25:42.565 | DEBUG    | paixueji_stream:call_paixueji_stream:2134 | Full response: Ahoy, matey! It's okay not to know right away! I like that you're thinking about it!
+
+When we're talking about what a banana *feels* like, we're looking for words to describe its outside. "I don't know" is what we say when we're not sure of the answer, but a banana is actually smooth and a little bit soft to touch! It's not bumpy or hard like a rock, is it? Now, matey, besides this banana, can ye think of any other things that are the same bright yellow color?...
+2026-01-05 11:25:42.565 | DEBUG    | paixueji_stream:call_paixueji_stream:2207 | 
+
+[DEBUG TREE NODE] Turn 2 (GENTLE_CORRECTION)
+--------------------------------------------------
+👤 USER INPUT: I don't know
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='width_color'
+🔍 VALIDATION: Engaged=False | Correct=False
+💭 REASONING: The child did not provide a factual answer, but rather indicated a lack of knowledge.
+⚡ DECISION: SWITCH (Reason: The child indicated they don't know, suggesting they are stuck on the current question. It's best to switch to a new object to maintain engagement.)
+🗣️ RESPONSE PART 1: Ahoy, matey! It's okay not to know right away! I like that you're thinking about it!
+
+When we're talking about what a banana *feels* like, we're looking for words to describe its outside. "I don't know" is what we say when we're not sure of the answer, but a banana is actually smooth and a little bit soft to touch! It's not bumpy or hard like a rock, is it?
+❓ RESPONSE PART 2: Now, matey, besides this banana, can ye think of any other things that are the same bright yellow color?
+--------------------------------------------------
+
+2026-01-05 11:54:12.882 | INFO     | paixueji_stream:call_paixueji_stream:1967 | [9559cdd0-6046-496e-a95b-879e68d4135e] call_paixueji_stream started | session_id=9559cdd0-6046-496e-a95b-879e68d4135e, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2026-01-05 11:54:12.883 | INFO     | paixueji_stream:call_paixueji_stream:2004 | [9559cdd0-6046-496e-a95b-879e68d4135e] Conversation state | correct_count=0, complete=False
+2026-01-05 11:54:12.883 | INFO     | paixueji_stream:call_paixueji_stream:2044 | [9559cdd0-6046-496e-a95b-879e68d4135e] Routing to introduction question
+2026-01-05 11:54:12.883 | INFO     | paixueji_stream:ask_introduction_question_stream:174 | ask_introduction_question_stream started | object=banana, age=6
+2026-01-05 11:54:12.883 | DEBUG    | paixueji_stream:ask_introduction_question_stream:190 | Messages prepared for API | count=3
+2026-01-05 11:54:12.883 | DEBUG    | paixueji_stream:ask_introduction_question_stream:201 | Sending 2 messages to Gemini API
+2026-01-05 11:54:12.883 | DEBUG    | paixueji_stream:ask_introduction_question_stream:218 | Stream object type: generator
+2026-01-05 11:54:28.865 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 1 | length=2, total_length=2
+2026-01-05 11:54:28.888 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 2 | length=9, total_length=11
+2026-01-05 11:54:28.931 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 3 | length=64, total_length=75
+2026-01-05 11:54:28.979 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 4 | length=61, total_length=136
+2026-01-05 11:54:28.992 | DEBUG    | paixueji_stream:ask_introduction_question_stream:238 | Gemini streaming API does not provide token usage in stream mode
+2026-01-05 11:54:28.993 | DEBUG    | paixueji_stream:ask_introduction_question_stream:257 | Cleaned up stream via del in finally block
+2026-01-05 11:54:28.993 | INFO     | paixueji_stream:ask_introduction_question_stream:262 | ask_introduction_question_stream completed | duration=16.110s, response_length=136
+2026-01-05 11:54:28.993 | WARNING  | paixueji_stream:ask_introduction_question_stream:268 | Slow LLM call | duration=16.110s exceeded threshold 5.0s
+2026-01-05 11:54:28.993 | INFO     | paixueji_stream:call_paixueji_stream:2470 | [9559cdd0-6046-496e-a95b-879e68d4135e] call_paixueji_stream completed | response_type=introduction, duration=16.111s, total_chunks=4, response_length=136, correct_count=0, complete=False, session_finished=False
+2026-01-05 11:54:28.993 | DEBUG    | paixueji_stream:call_paixueji_stream:2478 | Full response: Ahoy there, matey! We've got a yummy banana here today!
+
+Tell me, what does a banana feel like when you touch it? Is it bumpy or smooth?...
+2026-01-05 11:54:28.993 | DEBUG    | paixueji_stream:call_paixueji_stream:2551 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+👤 USER INPUT: (None)
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='system_managed'
+🔍 VALIDATION: Engaged=None | Correct=None
+💭 REASONING: N/A
+⚡ DECISION: N/A (Reason: N/A)
+🗣️ RESPONSE PART 1: (None)
+❓ RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-05 11:54:38.948 | INFO     | paixueji_stream:call_paixueji_stream:1967 | [9559cdd0-6046-496e-a95b-879e68d4135e] call_paixueji_stream started | session_id=9559cdd0-6046-496e-a95b-879e68d4135e, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=12, message_history=2
+2026-01-05 11:54:38.948 | INFO     | paixueji_stream:call_paixueji_stream:2004 | [9559cdd0-6046-496e-a95b-879e68d4135e] Conversation state | correct_count=0, complete=False
+2026-01-05 11:54:38.948 | INFO     | paixueji_stream:call_paixueji_stream:2053 | [9559cdd0-6046-496e-a95b-879e68d4135e] Running unified AI validation for answer
+2026-01-05 11:54:41.321 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1051 | [VALIDATE] SWITCH | new_object=None, engaged=True, correct=True, switch_reasoning=The child correctly identified that a banana feels smooth. Let's move on to a new object to keep things interesting., correctness_reasoning=Bananas are generally smooth to the touch, especially when ripe.
+2026-01-05 11:54:41.322 | INFO     | paixueji_stream:call_paixueji_stream:2073 | [SYSTEM_MANAGED] Depth: 1/5
+2026-01-05 11:54:41.322 | INFO     | paixueji_stream:call_paixueji_stream:2170 | [9559cdd0-6046-496e-a95b-879e68d4135e] Routing to feedback | is_engaged=True, is_factually_correct=True
+2026-01-05 11:54:41.322 | DEBUG    | paixueji_stream:call_paixueji_stream:2204 | [9559cdd0-6046-496e-a95b-879e68d4135e] Streaming response (feedback)
+2026-01-05 11:54:41.322 | INFO     | paixueji_stream:generate_feedback_response_stream:309 | generate_feedback_response_stream started | object=banana, age=6
+2026-01-05 11:54:41.928 | INFO     | paixueji_stream:generate_feedback_response_stream:364 | generate_feedback_response_stream completed | duration=0.606s, length=83
+2026-01-05 11:54:41.928 | INFO     | paixueji_stream:call_paixueji_stream:2299 | [9559cdd0-6046-496e-a95b-879e68d4135e] System-managed: focus_mode=depth, reason=Depth phase: 1/5 questions asked
+2026-01-05 11:54:41.929 | DEBUG    | paixueji_stream:call_paixueji_stream:2319 | [9559cdd0-6046-496e-a95b-879e68d4135e] Streaming question
+2026-01-05 11:54:41.929 | INFO     | paixueji_stream:generate_followup_question_stream:773 | generate_followup_question_stream started | object=banana, age=6, is_switch=True
+2026-01-05 11:54:42.892 | INFO     | paixueji_stream:generate_followup_question_stream:830 | generate_followup_question_stream completed | duration=0.963s, length=72
+2026-01-05 11:54:42.892 | INFO     | paixueji_stream:call_paixueji_stream:2470 | [9559cdd0-6046-496e-a95b-879e68d4135e] call_paixueji_stream completed | response_type=feedback, duration=3.944s, total_chunks=6, response_length=156, correct_count=0, complete=False, session_finished=False
+2026-01-05 11:54:42.892 | DEBUG    | paixueji_stream:call_paixueji_stream:2478 | Full response: Shiver me timbers, you're right! It *is* smooth! That's a super observation, matey! Now, matey, what do you think is inside the banana peel? What do we eat?...
+2026-01-05 11:54:42.893 | DEBUG    | paixueji_stream:call_paixueji_stream:2551 | 
+
+[DEBUG TREE NODE] Turn 1 (FEEDBACK)
+--------------------------------------------------
+👤 USER INPUT: It is smooth
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='system_managed'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: Bananas are generally smooth to the touch, especially when ripe.
+⚡ DECISION: SWITCH (Reason: The child correctly identified that a banana feels smooth. Let's move on to a new object to keep things interesting.)
+🗣️ RESPONSE PART 1: Shiver me timbers, you're right! It *is* smooth! That's a super observation, matey!
+❓ RESPONSE PART 2: Now, matey, what do you think is inside the banana peel? What do we eat?
+--------------------------------------------------
+
+2026-01-05 11:54:56.687 | INFO     | paixueji_stream:call_paixueji_stream:1967 | [9559cdd0-6046-496e-a95b-879e68d4135e] call_paixueji_stream started | session_id=9559cdd0-6046-496e-a95b-879e68d4135e, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=1, status=normal, content_length=16, message_history=3
+2026-01-05 11:54:56.687 | INFO     | paixueji_stream:call_paixueji_stream:2004 | [9559cdd0-6046-496e-a95b-879e68d4135e] Conversation state | correct_count=1, complete=False
+2026-01-05 11:54:56.687 | INFO     | paixueji_stream:call_paixueji_stream:2053 | [9559cdd0-6046-496e-a95b-879e68d4135e] Running unified AI validation for answer
+2026-01-05 11:54:59.130 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1051 | [VALIDATE] SWITCH | new_object=fruit, engaged=True, correct=True, switch_reasoning=The child correctly identified what we eat inside the banana peel as 'the fruit'. Since they named a new object in response to my question, I will switch to that object., correctness_reasoning=The edible part of a banana is indeed the fruit.
+2026-01-05 11:54:59.130 | INFO     | paixueji_stream:call_paixueji_stream:2073 | [SYSTEM_MANAGED] Depth: 2/5
+2026-01-05 11:54:59.670 | INFO     | paixueji_stream:call_paixueji_stream:2134 | [9559cdd0-6046-496e-a95b-879e68d4135e] Classification completed for fruit
+2026-01-05 11:54:59.670 | INFO     | paixueji_stream:call_paixueji_stream:2157 | [9559cdd0-6046-496e-a95b-879e68d4135e] Routing to topic switch | banana -> fruit
+2026-01-05 11:54:59.670 | DEBUG    | paixueji_stream:call_paixueji_stream:2204 | [9559cdd0-6046-496e-a95b-879e68d4135e] Streaming response (topic_switch)
+2026-01-05 11:54:59.670 | INFO     | paixueji_stream:generate_topic_switch_response_stream:582 | generate_topic_switch_response_stream started | banana -> fruit, age=6
+2026-01-05 11:55:00.744 | INFO     | paixueji_stream:generate_topic_switch_response_stream:637 | generate_topic_switch_response_stream completed | duration=1.074s, length=107
+2026-01-05 11:55:00.744 | INFO     | paixueji_stream:call_paixueji_stream:2299 | [9559cdd0-6046-496e-a95b-879e68d4135e] System-managed: focus_mode=depth, reason=Depth phase: 2/5 questions asked
+2026-01-05 11:55:00.745 | DEBUG    | paixueji_stream:call_paixueji_stream:2319 | [9559cdd0-6046-496e-a95b-879e68d4135e] Streaming question
+2026-01-05 11:55:00.745 | INFO     | paixueji_stream:generate_followup_question_stream:773 | generate_followup_question_stream started | object=fruit, age=6, is_switch=True
+2026-01-05 11:55:01.394 | INFO     | paixueji_stream:generate_followup_question_stream:830 | generate_followup_question_stream completed | duration=0.649s, length=131
+2026-01-05 11:55:01.394 | INFO     | paixueji_stream:call_paixueji_stream:2470 | [9559cdd0-6046-496e-a95b-879e68d4135e] call_paixueji_stream completed | response_type=topic_switch, duration=4.707s, total_chunks=7, response_length=239, correct_count=1, complete=False, session_finished=False
+2026-01-05 11:55:01.394 | DEBUG    | paixueji_stream:call_paixueji_stream:2478 | Full response: Aye, the fruit! That's the best part, isn't it, matey? And this banana fruit, it's a special kind of fruit! Tell me, matey, how do you think this banana got to be so yummy and ready to eat? Did it grow on a bush, a tree, or somewhere else?...
+2026-01-05 11:55:01.394 | DEBUG    | paixueji_stream:call_paixueji_stream:2551 | 
+
+[DEBUG TREE NODE] Turn 2 (TOPIC_SWITCH)
+--------------------------------------------------
+👤 USER INPUT: We eat the fruit
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='system_managed'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: The edible part of a banana is indeed the fruit.
+⚡ DECISION: SWITCH (Reason: The child correctly identified what we eat inside the banana peel as 'the fruit'. Since they named a new object in response to my question, I will switch to that object.)
+🗣️ RESPONSE PART 1: Aye, the fruit! That's the best part, isn't it, matey? And this banana fruit, it's a special kind of fruit!
+❓ RESPONSE PART 2: Tell me, matey, how do you think this banana got to be so yummy and ready to eat? Did it grow on a bush, a tree, or somewhere else?
+--------------------------------------------------
+
+2026-01-05 11:55:42.062 | INFO     | paixueji_stream:call_paixueji_stream:1967 | [9559cdd0-6046-496e-a95b-879e68d4135e] call_paixueji_stream started | session_id=9559cdd0-6046-496e-a95b-879e68d4135e, age=6, object=fruit, level1=foods, level2=fresh_ingredients, level3=None, correct_count=2, status=normal, content_length=18, message_history=4
+2026-01-05 11:55:42.062 | INFO     | paixueji_stream:call_paixueji_stream:2004 | [9559cdd0-6046-496e-a95b-879e68d4135e] Conversation state | correct_count=2, complete=False
+2026-01-05 11:55:42.062 | INFO     | paixueji_stream:call_paixueji_stream:2053 | [9559cdd0-6046-496e-a95b-879e68d4135e] Running unified AI validation for answer
+2026-01-05 11:55:43.464 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1051 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question directly and did not mention a new object., correctness_reasoning=Bananas do grow on trees, so the answer is correct.
+2026-01-05 11:55:43.464 | INFO     | paixueji_stream:call_paixueji_stream:2073 | [SYSTEM_MANAGED] Depth: 3/5
+2026-01-05 11:55:43.464 | INFO     | paixueji_stream:call_paixueji_stream:2170 | [9559cdd0-6046-496e-a95b-879e68d4135e] Routing to feedback | is_engaged=True, is_factually_correct=True
+2026-01-05 11:55:43.464 | DEBUG    | paixueji_stream:call_paixueji_stream:2204 | [9559cdd0-6046-496e-a95b-879e68d4135e] Streaming response (feedback)
+2026-01-05 11:55:43.464 | INFO     | paixueji_stream:generate_feedback_response_stream:309 | generate_feedback_response_stream started | object=fruit, age=6
+2026-01-05 11:55:44.095 | INFO     | paixueji_stream:generate_feedback_response_stream:364 | generate_feedback_response_stream completed | duration=0.632s, length=70
+2026-01-05 11:55:44.096 | INFO     | paixueji_stream:call_paixueji_stream:2299 | [9559cdd0-6046-496e-a95b-879e68d4135e] System-managed: focus_mode=depth, reason=Depth phase: 3/5 questions asked
+2026-01-05 11:55:44.096 | DEBUG    | paixueji_stream:call_paixueji_stream:2319 | [9559cdd0-6046-496e-a95b-879e68d4135e] Streaming question
+2026-01-05 11:55:44.096 | INFO     | paixueji_stream:generate_followup_question_stream:773 | generate_followup_question_stream started | object=fruit, age=6, is_switch=False
+2026-01-05 11:55:45.074 | INFO     | paixueji_stream:generate_followup_question_stream:830 | generate_followup_question_stream completed | duration=0.978s, length=157
+2026-01-05 11:55:45.074 | INFO     | paixueji_stream:call_paixueji_stream:2470 | [9559cdd0-6046-496e-a95b-879e68d4135e] call_paixueji_stream completed | response_type=feedback, duration=3.012s, total_chunks=7, response_length=228, correct_count=2, complete=False, session_finished=False
+2026-01-05 11:55:45.074 | DEBUG    | paixueji_stream:call_paixueji_stream:2478 | Full response: Aye, a tree it is! You're a smart sailor, matey! That's exactly right! Tell me, matey, what do you think happens to a banana after it's picked from the tree? Does it keep growing bigger and bigger, or does it stay the same size?...
+2026-01-05 11:55:45.074 | DEBUG    | paixueji_stream:call_paixueji_stream:2551 | 
+
+[DEBUG TREE NODE] Turn 3 (FEEDBACK)
+--------------------------------------------------
+👤 USER INPUT: It grows on a tree
+🧠 CONTEXT: Object='fruit' | Tone='pirate' | Focus='system_managed'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: Bananas do grow on trees, so the answer is correct.
+⚡ DECISION: CONTINUE (Reason: The child answered the question directly and did not mention a new object.)
+🗣️ RESPONSE PART 1: Aye, a tree it is! You're a smart sailor, matey! That's exactly right!
+❓ RESPONSE PART 2: Tell me, matey, what do you think happens to a banana after it's picked from the tree? Does it keep growing bigger and bigger, or does it stay the same size?
+--------------------------------------------------
+
+2026-01-05 11:55:51.366 | INFO     | paixueji_stream:call_paixueji_stream:1967 | [9559cdd0-6046-496e-a95b-879e68d4135e] call_paixueji_stream started | session_id=9559cdd0-6046-496e-a95b-879e68d4135e, age=6, object=fruit, level1=foods, level2=fresh_ingredients, level3=None, correct_count=3, status=normal, content_length=15, message_history=5
+2026-01-05 11:55:51.367 | INFO     | paixueji_stream:call_paixueji_stream:2004 | [9559cdd0-6046-496e-a95b-879e68d4135e] Conversation state | correct_count=3, complete=False
+2026-01-05 11:55:51.367 | INFO     | paixueji_stream:call_paixueji_stream:2053 | [9559cdd0-6046-496e-a95b-879e68d4135e] Running unified AI validation for answer
+2026-01-05 11:55:53.778 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1051 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=False, switch_reasoning=The child answered the question, but the answer was incorrect. We should continue with the current object., correctness_reasoning=Bananas do not continue to grow bigger after being picked. They ripen, but don't increase in size.
+2026-01-05 11:55:53.778 | INFO     | paixueji_stream:call_paixueji_stream:2073 | [SYSTEM_MANAGED] Depth: 4/5
+2026-01-05 11:55:53.778 | INFO     | paixueji_stream:call_paixueji_stream:2185 | [9559cdd0-6046-496e-a95b-879e68d4135e] Routing to gentle correction | is_engaged=True, is_factually_correct=False
+2026-01-05 11:55:53.778 | DEBUG    | paixueji_stream:call_paixueji_stream:2204 | [9559cdd0-6046-496e-a95b-879e68d4135e] Streaming response (gentle_correction)
+2026-01-05 11:55:53.778 | INFO     | paixueji_stream:generate_correction_response_stream:494 | generate_correction_response_stream started | object=fruit, age=6
+2026-01-05 11:55:54.792 | INFO     | paixueji_stream:generate_correction_response_stream:550 | generate_correction_response_stream completed | duration=1.014s, length=416
+2026-01-05 11:55:54.792 | INFO     | paixueji_stream:call_paixueji_stream:2299 | [9559cdd0-6046-496e-a95b-879e68d4135e] System-managed: focus_mode=depth, reason=Depth phase: 4/5 questions asked
+2026-01-05 11:55:54.792 | DEBUG    | paixueji_stream:call_paixueji_stream:2319 | [9559cdd0-6046-496e-a95b-879e68d4135e] Streaming question
+2026-01-05 11:55:54.792 | INFO     | paixueji_stream:generate_followup_question_stream:773 | generate_followup_question_stream started | object=fruit, age=6, is_switch=False
+2026-01-05 11:55:55.418 | INFO     | paixueji_stream:generate_followup_question_stream:830 | generate_followup_question_stream completed | duration=0.626s, length=99
+2026-01-05 11:55:55.419 | INFO     | paixueji_stream:call_paixueji_stream:2470 | [9559cdd0-6046-496e-a95b-879e68d4135e] call_paixueji_stream completed | response_type=gentle_correction, duration=4.052s, total_chunks=11, response_length=516, correct_count=3, complete=False, session_finished=False
+2026-01-05 11:55:55.419 | DEBUG    | paixueji_stream:call_paixueji_stream:2478 | Full response: Ahoy, matey! That's a good guess! I like how you're thinking about things growing!
+
+You see, some things, like a little seed, grow bigger and bigger into a plant. But once a banana is picked from the tree, it doesn't get any bigger. Instead, it changes in other ways, like getting softer and sweeter as it ripens. So, while it's true that things can grow bigger, a banana after it's picked stays about the same size. Tell me, matey, what do you think makes a banana turn from green to yellow as it gets ready to eat?...
+2026-01-05 11:55:55.419 | DEBUG    | paixueji_stream:call_paixueji_stream:2551 | 
+
+[DEBUG TREE NODE] Turn 4 (GENTLE_CORRECTION)
+--------------------------------------------------
+👤 USER INPUT: It grows bigger
+🧠 CONTEXT: Object='fruit' | Tone='pirate' | Focus='system_managed'
+🔍 VALIDATION: Engaged=True | Correct=False
+💭 REASONING: Bananas do not continue to grow bigger after being picked. They ripen, but don't increase in size.
+⚡ DECISION: CONTINUE (Reason: The child answered the question, but the answer was incorrect. We should continue with the current object.)
+🗣️ RESPONSE PART 1: Ahoy, matey! That's a good guess! I like how you're thinking about things growing!
+
+You see, some things, like a little seed, grow bigger and bigger into a plant. But once a banana is picked from the tree, it doesn't get any bigger. Instead, it changes in other ways, like getting softer and sweeter as it ripens. So, while it's true that things can grow bigger, a banana after it's picked stays about the same size.
+❓ RESPONSE PART 2: Tell me, matey, what do you think makes a banana turn from green to yellow as it gets ready to eat?
+--------------------------------------------------
+
+2026-01-05 11:56:10.414 | INFO     | paixueji_stream:call_paixueji_stream:1967 | [9559cdd0-6046-496e-a95b-879e68d4135e] call_paixueji_stream started | session_id=9559cdd0-6046-496e-a95b-879e68d4135e, age=6, object=fruit, level1=foods, level2=fresh_ingredients, level3=None, correct_count=3, status=normal, content_length=8, message_history=6
+2026-01-05 11:56:10.414 | INFO     | paixueji_stream:call_paixueji_stream:2004 | [9559cdd0-6046-496e-a95b-879e68d4135e] Conversation state | correct_count=3, complete=False
+2026-01-05 11:56:10.415 | INFO     | paixueji_stream:call_paixueji_stream:2053 | [9559cdd0-6046-496e-a95b-879e68d4135e] Running unified AI validation for answer
+2026-01-05 11:56:12.080 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1051 | [VALIDATE] SWITCH | new_object=sun, engaged=True, correct=False, switch_reasoning=The child provided an answer that is a real-world object (sun), so we should switch to that object., correctness_reasoning=While sunlight does play a role in fruit ripening in general, it's not the primary reason a banana turns yellow after being picked. The change is mainly due to ethylene gas.
+2026-01-05 11:56:12.080 | INFO     | paixueji_stream:call_paixueji_stream:2073 | [SYSTEM_MANAGED] Depth: 5/5
+2026-01-05 11:56:12.080 | INFO     | paixueji_stream:call_paixueji_stream:2185 | [9559cdd0-6046-496e-a95b-879e68d4135e] Routing to gentle correction | is_engaged=True, is_factually_correct=False
+2026-01-05 11:56:12.080 | DEBUG    | paixueji_stream:call_paixueji_stream:2204 | [9559cdd0-6046-496e-a95b-879e68d4135e] Streaming response (gentle_correction)
+2026-01-05 11:56:12.081 | INFO     | paixueji_stream:generate_correction_response_stream:494 | generate_correction_response_stream started | object=fruit, age=6
+2026-01-05 11:56:12.907 | INFO     | paixueji_stream:generate_correction_response_stream:550 | generate_correction_response_stream completed | duration=0.827s, length=386
+2026-01-05 11:56:12.908 | INFO     | paixueji_stream:call_paixueji_stream:2299 | [9559cdd0-6046-496e-a95b-879e68d4135e] System-managed: focus_mode=width_color, reason=Completed depth phase (5 questions). Switching to WIDTH: color
+2026-01-05 11:56:12.908 | DEBUG    | paixueji_stream:call_paixueji_stream:2319 | [9559cdd0-6046-496e-a95b-879e68d4135e] Streaming question
+2026-01-05 11:56:12.908 | INFO     | paixueji_stream:generate_followup_question_stream:773 | generate_followup_question_stream started | object=fruit, age=6, is_switch=True
+2026-01-05 11:56:13.599 | INFO     | paixueji_stream:generate_followup_question_stream:830 | generate_followup_question_stream completed | duration=0.692s, length=99
+2026-01-05 11:56:13.600 | INFO     | paixueji_stream:call_paixueji_stream:2470 | [9559cdd0-6046-496e-a95b-879e68d4135e] call_paixueji_stream completed | response_type=gentle_correction, duration=3.185s, total_chunks=9, response_length=486, correct_count=3, complete=False, session_finished=False
+2026-01-05 11:56:13.600 | DEBUG    | paixueji_stream:call_paixueji_stream:2478 | Full response: Ahoy, matey! I like your thinking! Sunlight is super important for plants to grow, that's for sure!
+
+But for a banana turning yellow after it's picked, it's not the sunlight that does it. It's actually a special gas that the banana makes all by itself! This gas helps it get softer and sweeter. Sunlight helps the banana grow on the tree, but once it's picked, it's on its own to ripen! Tell me, matey, what other things do you know that are the same bright yellow color as this banana?...
+2026-01-05 11:56:13.600 | DEBUG    | paixueji_stream:call_paixueji_stream:2551 | 
+
+[DEBUG TREE NODE] Turn 5 (GENTLE_CORRECTION)
+--------------------------------------------------
+👤 USER INPUT: sunlight
+🧠 CONTEXT: Object='fruit' | Tone='pirate' | Focus='system_managed'
+🔍 VALIDATION: Engaged=True | Correct=False
+💭 REASONING: While sunlight does play a role in fruit ripening in general, it's not the primary reason a banana turns yellow after being picked. The change is mainly due to ethylene gas.
+⚡ DECISION: SWITCH (Reason: The child provided an answer that is a real-world object (sun), so we should switch to that object.)
+🗣️ RESPONSE PART 1: Ahoy, matey! I like your thinking! Sunlight is super important for plants to grow, that's for sure!
+
+But for a banana turning yellow after it's picked, it's not the sunlight that does it. It's actually a special gas that the banana makes all by itself! This gas helps it get softer and sweeter. Sunlight helps the banana grow on the tree, but once it's picked, it's on its own to ripen!
+❓ RESPONSE PART 2: Tell me, matey, what other things do you know that are the same bright yellow color as this banana?
+--------------------------------------------------
+
+2026-01-05 11:56:28.231 | INFO     | paixueji_stream:call_paixueji_stream:1967 | [9559cdd0-6046-496e-a95b-879e68d4135e] call_paixueji_stream started | session_id=9559cdd0-6046-496e-a95b-879e68d4135e, age=6, object=fruit, level1=foods, level2=fresh_ingredients, level3=None, correct_count=3, status=normal, content_length=12, message_history=7
+2026-01-05 11:56:28.231 | INFO     | paixueji_stream:call_paixueji_stream:2004 | [9559cdd0-6046-496e-a95b-879e68d4135e] Conversation state | correct_count=3, complete=False
+2026-01-05 11:56:28.231 | INFO     | paixueji_stream:call_paixueji_stream:2053 | [9559cdd0-6046-496e-a95b-879e68d4135e] Running unified AI validation for answer
+2026-01-05 11:56:30.669 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1051 | [VALIDATE] CONTINUE | new_object=None, engaged=False, correct=False, switch_reasoning=The child indicated they don't know, so we should continue with the current topic to provide more guidance., correctness_reasoning=The child did not provide an answer, so correctness is not applicable.
+2026-01-05 11:56:30.670 | INFO     | paixueji_stream:call_paixueji_stream:2114 | [9559cdd0-6046-496e-a95b-879e68d4135e] Routing to explanation | is_engaged=False
+2026-01-05 11:56:30.670 | DEBUG    | paixueji_stream:call_paixueji_stream:2204 | [9559cdd0-6046-496e-a95b-879e68d4135e] Streaming response (explanation)
+2026-01-05 11:56:30.670 | INFO     | paixueji_stream:generate_explanation_response_stream:402 | generate_explanation_response_stream started | object=fruit, age=6
+2026-01-05 11:56:31.268 | INFO     | paixueji_stream:generate_explanation_response_stream:458 | generate_explanation_response_stream completed | duration=0.598s, length=52
+2026-01-05 11:56:31.268 | INFO     | paixueji_stream:call_paixueji_stream:2299 | [9559cdd0-6046-496e-a95b-879e68d4135e] System-managed: focus_mode=width_color, reason=WIDTH mode: 0/3 wrong answers
+2026-01-05 11:56:31.268 | DEBUG    | paixueji_stream:call_paixueji_stream:2319 | [9559cdd0-6046-496e-a95b-879e68d4135e] Streaming question
+2026-01-05 11:56:31.268 | INFO     | paixueji_stream:generate_followup_question_stream:773 | generate_followup_question_stream started | object=fruit, age=6, is_switch=False
+2026-01-05 11:56:32.374 | INFO     | paixueji_stream:generate_followup_question_stream:830 | generate_followup_question_stream completed | duration=1.107s, length=99
+2026-01-05 11:56:32.375 | INFO     | paixueji_stream:call_paixueji_stream:2470 | [9559cdd0-6046-496e-a95b-879e68d4135e] call_paixueji_stream completed | response_type=explanation, duration=4.144s, total_chunks=6, response_length=152, correct_count=3, complete=False, session_finished=False
+2026-01-05 11:56:32.375 | DEBUG    | paixueji_stream:call_paixueji_stream:2478 | Full response: Ahoy, matey! A bright yellow sun is like our banana! Tell me, matey, what other things do you know that are the same bright yellow color as this banana?...
+2026-01-05 11:56:32.375 | DEBUG    | paixueji_stream:call_paixueji_stream:2551 | 
+
+[DEBUG TREE NODE] Turn 6 (EXPLANATION)
+--------------------------------------------------
+👤 USER INPUT: I don't know
+🧠 CONTEXT: Object='fruit' | Tone='pirate' | Focus='system_managed'
+🔍 VALIDATION: Engaged=False | Correct=False
+💭 REASONING: The child did not provide an answer, so correctness is not applicable.
+⚡ DECISION: CONTINUE (Reason: The child indicated they don't know, so we should continue with the current topic to provide more guidance.)
+🗣️ RESPONSE PART 1: Ahoy, matey! A bright yellow sun is like our banana!
+❓ RESPONSE PART 2: Tell me, matey, what other things do you know that are the same bright yellow color as this banana?
+--------------------------------------------------
+
+2026-01-05 11:57:00.621 | INFO     | paixueji_stream:call_paixueji_stream:1967 | [9559cdd0-6046-496e-a95b-879e68d4135e] call_paixueji_stream started | session_id=9559cdd0-6046-496e-a95b-879e68d4135e, age=6, object=fruit, level1=foods, level2=fresh_ingredients, level3=None, correct_count=3, status=normal, content_length=12, message_history=8
+2026-01-05 11:57:00.622 | INFO     | paixueji_stream:call_paixueji_stream:2004 | [9559cdd0-6046-496e-a95b-879e68d4135e] Conversation state | correct_count=3, complete=False
+2026-01-05 11:57:00.622 | INFO     | paixueji_stream:call_paixueji_stream:2053 | [9559cdd0-6046-496e-a95b-879e68d4135e] Running unified AI validation for answer
+2026-01-05 11:57:03.004 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1051 | [VALIDATE] CONTINUE | new_object=None, engaged=False, correct=False, switch_reasoning=The child indicated they don't know, so we should try a different approach to the same question., correctness_reasoning=The child did not provide an answer, so correctness is not applicable.
+2026-01-05 11:57:03.005 | INFO     | paixueji_stream:call_paixueji_stream:2114 | [9559cdd0-6046-496e-a95b-879e68d4135e] Routing to explanation | is_engaged=False
+2026-01-05 11:57:03.005 | DEBUG    | paixueji_stream:call_paixueji_stream:2204 | [9559cdd0-6046-496e-a95b-879e68d4135e] Streaming response (explanation)
+2026-01-05 11:57:03.005 | INFO     | paixueji_stream:generate_explanation_response_stream:402 | generate_explanation_response_stream started | object=fruit, age=6
+2026-01-05 11:57:03.729 | INFO     | paixueji_stream:generate_explanation_response_stream:458 | generate_explanation_response_stream completed | duration=0.724s, length=112
+2026-01-05 11:57:03.729 | INFO     | paixueji_stream:call_paixueji_stream:2299 | [9559cdd0-6046-496e-a95b-879e68d4135e] System-managed: focus_mode=width_color, reason=WIDTH mode: 0/3 wrong answers
+2026-01-05 11:57:03.729 | DEBUG    | paixueji_stream:call_paixueji_stream:2319 | [9559cdd0-6046-496e-a95b-879e68d4135e] Streaming question
+2026-01-05 11:57:03.729 | INFO     | paixueji_stream:generate_followup_question_stream:773 | generate_followup_question_stream started | object=fruit, age=6, is_switch=False
+2026-01-05 11:57:04.638 | INFO     | paixueji_stream:generate_followup_question_stream:830 | generate_followup_question_stream completed | duration=0.909s, length=99
+2026-01-05 11:57:04.638 | INFO     | paixueji_stream:call_paixueji_stream:2470 | [9559cdd0-6046-496e-a95b-879e68d4135e] call_paixueji_stream completed | response_type=explanation, duration=4.017s, total_chunks=8, response_length=212, correct_count=3, complete=False, session_finished=False
+2026-01-05 11:57:04.638 | DEBUG    | paixueji_stream:call_paixueji_stream:2478 | Full response: Ahoy, matey! Sometimes it's tricky to think of things. A bright yellow duckling is also the color of our banana. Tell me, matey, what other things do you know that are the same bright yellow color as this banana?...
+2026-01-05 11:57:04.638 | DEBUG    | paixueji_stream:call_paixueji_stream:2551 | 
+
+[DEBUG TREE NODE] Turn 7 (EXPLANATION)
+--------------------------------------------------
+👤 USER INPUT: I don't know
+🧠 CONTEXT: Object='fruit' | Tone='pirate' | Focus='system_managed'
+🔍 VALIDATION: Engaged=False | Correct=False
+💭 REASONING: The child did not provide an answer, so correctness is not applicable.
+⚡ DECISION: CONTINUE (Reason: The child indicated they don't know, so we should try a different approach to the same question.)
+🗣️ RESPONSE PART 1: Ahoy, matey! Sometimes it's tricky to think of things. A bright yellow duckling is also the color of our banana.
+❓ RESPONSE PART 2: Tell me, matey, what other things do you know that are the same bright yellow color as this banana?
+--------------------------------------------------
+
+2026-01-05 11:57:31.709 | INFO     | paixueji_stream:call_paixueji_stream:1967 | [3ccf84e5-595f-4025-9c5d-6f14b4b24f57] call_paixueji_stream started | session_id=3ccf84e5-595f-4025-9c5d-6f14b4b24f57, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2026-01-05 11:57:31.709 | INFO     | paixueji_stream:call_paixueji_stream:2004 | [3ccf84e5-595f-4025-9c5d-6f14b4b24f57] Conversation state | correct_count=0, complete=False
+2026-01-05 11:57:31.709 | INFO     | paixueji_stream:call_paixueji_stream:2044 | [3ccf84e5-595f-4025-9c5d-6f14b4b24f57] Routing to introduction question
+2026-01-05 11:57:31.709 | INFO     | paixueji_stream:ask_introduction_question_stream:174 | ask_introduction_question_stream started | object=banana, age=6
+2026-01-05 11:57:31.709 | DEBUG    | paixueji_stream:ask_introduction_question_stream:190 | Messages prepared for API | count=3
+2026-01-05 11:57:31.709 | DEBUG    | paixueji_stream:ask_introduction_question_stream:201 | Sending 2 messages to Gemini API
+2026-01-05 11:57:31.709 | DEBUG    | paixueji_stream:ask_introduction_question_stream:218 | Stream object type: generator
+2026-01-05 11:57:35.503 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 1 | length=2, total_length=2
+2026-01-05 11:57:35.520 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 2 | length=9, total_length=11
+2026-01-05 11:57:35.545 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 3 | length=56, total_length=67
+2026-01-05 11:57:35.636 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 4 | length=64, total_length=131
+2026-01-05 11:57:35.761 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 5 | length=128, total_length=259
+2026-01-05 11:57:35.789 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 6 | length=9, total_length=268
+2026-01-05 11:57:35.791 | DEBUG    | paixueji_stream:ask_introduction_question_stream:238 | Gemini streaming API does not provide token usage in stream mode
+2026-01-05 11:57:35.791 | DEBUG    | paixueji_stream:ask_introduction_question_stream:257 | Cleaned up stream via del in finally block
+2026-01-05 11:57:35.791 | INFO     | paixueji_stream:ask_introduction_question_stream:262 | ask_introduction_question_stream completed | duration=4.082s, response_length=268
+2026-01-05 11:57:35.791 | INFO     | paixueji_stream:call_paixueji_stream:2470 | [3ccf84e5-595f-4025-9c5d-6f14b4b24f57] call_paixueji_stream completed | response_type=introduction, duration=4.082s, total_chunks=6, response_length=268, correct_count=0, complete=False, session_finished=False
+2026-01-05 11:57:35.791 | DEBUG    | paixueji_stream:call_paixueji_stream:2478 | Full response: Ahoy there, matey! Today we've got a super-duper yellow treasure to talk about – a banana!
+
+This banana, it came all the way from a farm, maybe even from a tall tree! Can you tell me, what does a banana feel like when you touch it? Is it bumpy or smooth, hard or soft?...
+2026-01-05 11:57:35.791 | DEBUG    | paixueji_stream:call_paixueji_stream:2551 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+👤 USER INPUT: (None)
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='system_managed'
+🔍 VALIDATION: Engaged=None | Correct=None
+💭 REASONING: N/A
+⚡ DECISION: N/A (Reason: N/A)
+🗣️ RESPONSE PART 1: (None)
+❓ RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-05 11:57:58.805 | INFO     | paixueji_stream:call_paixueji_stream:1967 | [65983f95-8364-48de-bc69-3910a7da6f87] call_paixueji_stream started | session_id=65983f95-8364-48de-bc69-3910a7da6f87, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2026-01-05 11:57:58.805 | INFO     | paixueji_stream:call_paixueji_stream:2004 | [65983f95-8364-48de-bc69-3910a7da6f87] Conversation state | correct_count=0, complete=False
+2026-01-05 11:57:58.805 | INFO     | paixueji_stream:call_paixueji_stream:2044 | [65983f95-8364-48de-bc69-3910a7da6f87] Routing to introduction question
+2026-01-05 11:57:58.805 | INFO     | paixueji_stream:ask_introduction_question_stream:174 | ask_introduction_question_stream started | object=banana, age=6
+2026-01-05 11:57:58.805 | DEBUG    | paixueji_stream:ask_introduction_question_stream:190 | Messages prepared for API | count=3
+2026-01-05 11:57:58.805 | DEBUG    | paixueji_stream:ask_introduction_question_stream:201 | Sending 2 messages to Gemini API
+2026-01-05 11:57:58.806 | DEBUG    | paixueji_stream:ask_introduction_question_stream:218 | Stream object type: generator
+2026-01-05 11:58:02.383 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 1 | length=2, total_length=2
+2026-01-05 11:58:02.411 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 2 | length=9, total_length=11
+2026-01-05 11:58:02.442 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 3 | length=55, total_length=66
+2026-01-05 11:58:02.523 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 4 | length=62, total_length=128
+2026-01-05 11:58:02.623 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 5 | length=108, total_length=236
+2026-01-05 11:58:02.624 | DEBUG    | paixueji_stream:ask_introduction_question_stream:238 | Gemini streaming API does not provide token usage in stream mode
+2026-01-05 11:58:02.625 | DEBUG    | paixueji_stream:ask_introduction_question_stream:257 | Cleaned up stream via del in finally block
+2026-01-05 11:58:02.625 | INFO     | paixueji_stream:ask_introduction_question_stream:262 | ask_introduction_question_stream completed | duration=3.819s, response_length=236
+2026-01-05 11:58:02.625 | INFO     | paixueji_stream:call_paixueji_stream:2470 | [65983f95-8364-48de-bc69-3910a7da6f87] call_paixueji_stream completed | response_type=introduction, duration=3.820s, total_chunks=5, response_length=236, correct_count=0, complete=False, session_finished=False
+2026-01-05 11:58:02.625 | DEBUG    | paixueji_stream:call_paixueji_stream:2478 | Full response: Ahoy there, matey! Today we've got a yummy banana to talk about!
+
+This banana, it comes from a plant, like a big leafy tree, way out in warm places!
+
+Now, tell me, what color is this banana, and what does it feel like when you touch it?...
+2026-01-05 11:58:02.626 | DEBUG    | paixueji_stream:call_paixueji_stream:2551 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+👤 USER INPUT: (None)
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='system_managed'
+🔍 VALIDATION: Engaged=None | Correct=None
+💭 REASONING: N/A
+⚡ DECISION: N/A (Reason: N/A)
+🗣️ RESPONSE PART 1: (None)
+❓ RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-05 11:59:31.807 | INFO     | paixueji_stream:call_paixueji_stream:1967 | [65983f95-8364-48de-bc69-3910a7da6f87] call_paixueji_stream started | session_id=65983f95-8364-48de-bc69-3910a7da6f87, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=12, message_history=2
+2026-01-05 11:59:31.807 | INFO     | paixueji_stream:call_paixueji_stream:2004 | [65983f95-8364-48de-bc69-3910a7da6f87] Conversation state | correct_count=0, complete=False
+2026-01-05 11:59:31.807 | INFO     | paixueji_stream:call_paixueji_stream:2053 | [65983f95-8364-48de-bc69-3910a7da6f87] Running unified AI validation for answer
+2026-01-05 11:59:34.275 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1051 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered part of the question about the banana's color. We should continue to explore the banana further., correctness_reasoning=The child correctly identified that bananas are yellow.
+2026-01-05 11:59:34.275 | INFO     | paixueji_stream:call_paixueji_stream:2073 | [SYSTEM_MANAGED] Depth: 1/4
+2026-01-05 11:59:34.275 | INFO     | paixueji_stream:call_paixueji_stream:2170 | [65983f95-8364-48de-bc69-3910a7da6f87] Routing to feedback | is_engaged=True, is_factually_correct=True
+2026-01-05 11:59:34.275 | DEBUG    | paixueji_stream:call_paixueji_stream:2204 | [65983f95-8364-48de-bc69-3910a7da6f87] Streaming response (feedback)
+2026-01-05 11:59:34.275 | INFO     | paixueji_stream:generate_feedback_response_stream:309 | generate_feedback_response_stream started | object=banana, age=6
+2026-01-05 11:59:34.995 | INFO     | paixueji_stream:generate_feedback_response_stream:364 | generate_feedback_response_stream completed | duration=0.720s, length=115
+2026-01-05 11:59:34.995 | INFO     | paixueji_stream:call_paixueji_stream:2299 | [65983f95-8364-48de-bc69-3910a7da6f87] System-managed: focus_mode=depth, reason=Depth phase: 1/4 questions asked
+2026-01-05 11:59:34.995 | DEBUG    | paixueji_stream:call_paixueji_stream:2319 | [65983f95-8364-48de-bc69-3910a7da6f87] Streaming question
+2026-01-05 11:59:34.995 | INFO     | paixueji_stream:generate_followup_question_stream:773 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-05 11:59:35.903 | INFO     | paixueji_stream:generate_followup_question_stream:830 | generate_followup_question_stream completed | duration=0.907s, length=108
+2026-01-05 11:59:35.903 | INFO     | paixueji_stream:call_paixueji_stream:2470 | [65983f95-8364-48de-bc69-3910a7da6f87] call_paixueji_stream completed | response_type=feedback, duration=4.096s, total_chunks=6, response_length=224, correct_count=0, complete=False, session_finished=False
+2026-01-05 11:59:35.903 | DEBUG    | paixueji_stream:call_paixueji_stream:2478 | Full response: Shiver me timbers, you're right! It's a bright, sunny yellow, just like a little ray of sunshine! Well done, matey! Now, matey, what do you think happens when you peel the yellow skin off the banana? What do you find inside?...
+2026-01-05 11:59:35.903 | DEBUG    | paixueji_stream:call_paixueji_stream:2551 | 
+
+[DEBUG TREE NODE] Turn 1 (FEEDBACK)
+--------------------------------------------------
+👤 USER INPUT: It is yellow
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='system_managed'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: The child correctly identified that bananas are yellow.
+⚡ DECISION: CONTINUE (Reason: The child answered part of the question about the banana's color. We should continue to explore the banana further.)
+🗣️ RESPONSE PART 1: Shiver me timbers, you're right! It's a bright, sunny yellow, just like a little ray of sunshine! Well done, matey!
+❓ RESPONSE PART 2: Now, matey, what do you think happens when you peel the yellow skin off the banana? What do you find inside?
+--------------------------------------------------
+
+2026-01-05 13:37:02.668 | INFO     | paixueji_stream:call_paixueji_stream:1971 | [e626c579-6e96-4d73-89ab-8109061b0be5] System-managed mode: using focus_mode=depth
+2026-01-05 13:37:02.669 | INFO     | paixueji_stream:call_paixueji_stream:1973 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream started | session_id=e626c579-6e96-4d73-89ab-8109061b0be5, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2026-01-05 13:37:02.669 | INFO     | paixueji_stream:call_paixueji_stream:2010 | [e626c579-6e96-4d73-89ab-8109061b0be5] Conversation state | correct_count=0, complete=False
+2026-01-05 13:37:02.669 | INFO     | paixueji_stream:call_paixueji_stream:2050 | [e626c579-6e96-4d73-89ab-8109061b0be5] Routing to introduction question
+2026-01-05 13:37:02.669 | INFO     | paixueji_stream:ask_introduction_question_stream:174 | ask_introduction_question_stream started | object=banana, age=6
+2026-01-05 13:37:02.669 | DEBUG    | paixueji_stream:ask_introduction_question_stream:190 | Messages prepared for API | count=3
+2026-01-05 13:37:02.669 | DEBUG    | paixueji_stream:ask_introduction_question_stream:201 | Sending 2 messages to Gemini API
+2026-01-05 13:37:02.669 | DEBUG    | paixueji_stream:ask_introduction_question_stream:218 | Stream object type: generator
+2026-01-05 13:37:18.524 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 1 | length=2, total_length=2
+2026-01-05 13:37:18.549 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 2 | length=9, total_length=11
+2026-01-05 13:37:18.585 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 3 | length=64, total_length=75
+2026-01-05 13:37:18.636 | DEBUG    | paixueji_stream:ask_introduction_question_stream:233 | Chunk 4 | length=61, total_length=136
+2026-01-05 13:37:18.643 | DEBUG    | paixueji_stream:ask_introduction_question_stream:238 | Gemini streaming API does not provide token usage in stream mode
+2026-01-05 13:37:18.643 | DEBUG    | paixueji_stream:ask_introduction_question_stream:257 | Cleaned up stream via del in finally block
+2026-01-05 13:37:18.643 | INFO     | paixueji_stream:ask_introduction_question_stream:262 | ask_introduction_question_stream completed | duration=15.974s, response_length=136
+2026-01-05 13:37:18.643 | WARNING  | paixueji_stream:ask_introduction_question_stream:268 | Slow LLM call | duration=15.974s exceeded threshold 5.0s
+2026-01-05 13:37:18.643 | INFO     | paixueji_stream:call_paixueji_stream:2476 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream completed | response_type=introduction, duration=15.975s, total_chunks=4, response_length=136, correct_count=0, complete=False, session_finished=False
+2026-01-05 13:37:18.643 | DEBUG    | paixueji_stream:call_paixueji_stream:2484 | Full response: Ahoy there, matey! We've got a yummy banana here today!
+
+Tell me, what does a banana feel like when you touch it? Is it smooth or bumpy?...
+2026-01-05 13:37:18.643 | DEBUG    | paixueji_stream:call_paixueji_stream:2557 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+👤 USER INPUT: (None)
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=None | Correct=None
+💭 REASONING: N/A
+⚡ DECISION: N/A (Reason: N/A)
+🗣️ RESPONSE PART 1: (None)
+❓ RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-05 13:37:26.632 | INFO     | paixueji_stream:call_paixueji_stream:1971 | [e626c579-6e96-4d73-89ab-8109061b0be5] System-managed mode: using focus_mode=depth
+2026-01-05 13:37:26.632 | INFO     | paixueji_stream:call_paixueji_stream:1973 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream started | session_id=e626c579-6e96-4d73-89ab-8109061b0be5, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=10, message_history=2
+2026-01-05 13:37:26.632 | INFO     | paixueji_stream:call_paixueji_stream:2010 | [e626c579-6e96-4d73-89ab-8109061b0be5] Conversation state | correct_count=0, complete=False
+2026-01-05 13:37:26.632 | INFO     | paixueji_stream:call_paixueji_stream:2059 | [e626c579-6e96-4d73-89ab-8109061b0be5] Running unified AI validation for answer
+2026-01-05 13:37:29.049 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1051 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question directly, and no new object was mentioned. We should continue exploring the banana., correctness_reasoning=Bananas are generally smooth to the touch, so the answer is correct.
+2026-01-05 13:37:29.049 | INFO     | paixueji_stream:call_paixueji_stream:2079 | [SYSTEM_MANAGED] Depth: 1/5
+2026-01-05 13:37:29.050 | INFO     | paixueji_stream:call_paixueji_stream:2176 | [e626c579-6e96-4d73-89ab-8109061b0be5] Routing to feedback | is_engaged=True, is_factually_correct=True
+2026-01-05 13:37:29.050 | DEBUG    | paixueji_stream:call_paixueji_stream:2210 | [e626c579-6e96-4d73-89ab-8109061b0be5] Streaming response (feedback)
+2026-01-05 13:37:29.050 | INFO     | paixueji_stream:generate_feedback_response_stream:309 | generate_feedback_response_stream started | object=banana, age=6
+2026-01-05 13:37:29.716 | INFO     | paixueji_stream:generate_feedback_response_stream:364 | generate_feedback_response_stream completed | duration=0.666s, length=100
+2026-01-05 13:37:29.716 | INFO     | paixueji_stream:call_paixueji_stream:2305 | [e626c579-6e96-4d73-89ab-8109061b0be5] System-managed: focus_mode=depth, reason=Depth phase: 1/5 questions asked
+2026-01-05 13:37:29.716 | DEBUG    | paixueji_stream:call_paixueji_stream:2325 | [e626c579-6e96-4d73-89ab-8109061b0be5] Streaming question
+2026-01-05 13:37:29.716 | INFO     | paixueji_stream:generate_followup_question_stream:773 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-05 13:37:30.598 | INFO     | paixueji_stream:generate_followup_question_stream:830 | generate_followup_question_stream completed | duration=0.882s, length=90
+2026-01-05 13:37:30.598 | INFO     | paixueji_stream:call_paixueji_stream:2476 | [e626c579-6e96-4d73-89ab-8109061b0be5] call_paixueji_stream completed | response_type=feedback, duration=3.967s, total_chunks=6, response_length=191, correct_count=0, complete=False, session_finished=False
+2026-01-05 13:37:30.599 | DEBUG    | paixueji_stream:call_paixueji_stream:2484 | Full response: Shiver me timbers, you're right! It's super smooth, just like a polished treasure! Well done, matey! Now, matey, what do you think happens to a banana when we peel it? What do we find inside?...
+2026-01-05 13:37:30.599 | DEBUG    | paixueji_stream:call_paixueji_stream:2557 | 
+
+[DEBUG TREE NODE] Turn 1 (FEEDBACK)
+--------------------------------------------------
+👤 USER INPUT: Its smooth
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: Bananas are generally smooth to the touch, so the answer is correct.
+⚡ DECISION: CONTINUE (Reason: The child answered the question directly, and no new object was mentioned. We should continue exploring the banana.)
+🗣️ RESPONSE PART 1: Shiver me timbers, you're right! It's super smooth, just like a polished treasure! Well done, matey!
+❓ RESPONSE PART 2: Now, matey, what do you think happens to a banana when we peel it? What do we find inside?
+--------------------------------------------------
+

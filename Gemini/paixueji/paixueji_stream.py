@@ -640,6 +640,102 @@ async def generate_topic_switch_response_stream(
     yield ("", token_usage, full_response)
 
 
+async def generate_object_selection_response_stream(
+    messages: list[dict],
+    suggested_objects: list[str],
+    current_object: str,
+    age: int,
+    config: dict,
+    client: genai.Client
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
+    """
+    Generate ONLY object selection prompt (no questions).
+
+    This presents 3-4 objects for the child to choose from.
+
+    Args:
+        messages: Conversation history
+        suggested_objects: List of objects to present
+        current_object: Current object being discussed
+        age: Child's age
+        config: Configuration dict
+        client: Gemini client instance
+
+    Yields:
+        Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
+    """
+    start_time = time.time()
+    logger.info(f"generate_object_selection_response_stream started | objects={suggested_objects}, age={age}")
+
+    # Build object selection prompt
+    objects_list = ", ".join(suggested_objects[:-1]) + f", or {suggested_objects[-1]}"
+
+    prompt = f"""The child has been learning about {current_object}.
+
+Now it's time to choose something new to explore!
+
+YOUR TASK:
+1. Warmly acknowledge they've done a great job with {current_object}
+2. Introduce the choice in an exciting way
+3. List the options: {objects_list}
+4. DO NOT ask them to pick (the UI will handle that)
+5. Match vocabulary to age {age}
+6. Respond naturally (NOT JSON)
+
+Example: "You did such an amazing job learning about {current_object}! Now let's pick something new to explore together!"
+"""
+
+    # Prepare messages
+    messages_to_send = messages + [{"role": "user", "content": prompt}]
+    clean_messages = clean_messages_for_api(messages_to_send)
+
+    # Convert to Gemini format
+    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
+
+    # Stream from LLM
+    full_response = ""
+    token_usage = None
+    stream = None
+
+    try:
+        gen_config = GenerateContentConfig(
+            temperature=config.get("temperature", 0.3),
+            max_output_tokens=300,
+            system_instruction=system_instruction if system_instruction else None
+        )
+
+        stream = client.models.generate_content_stream(
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config
+        )
+
+        # Yield chunks
+        for chunk in stream:
+            if chunk.text:
+                full_response += chunk.text
+                yield (chunk.text, None, full_response)
+
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(f"generate_object_selection_response_stream error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        if full_response:
+            yield ("", token_usage, full_response)
+        return
+    finally:
+        if stream is not None:
+            try:
+                del stream
+            except:
+                pass
+
+    duration = time.time() - start_time
+    logger.info(f"generate_object_selection_response_stream completed | duration={duration:.3f}s, length={len(full_response)}")
+
+    # Final yield
+    yield ("", token_usage, full_response)
+
+
 async def generate_followup_question_stream(
     messages: list[dict],
     object_name: str,
@@ -1510,6 +1606,198 @@ def is_answer_reasonable(child_answer: str) -> bool:
     return True
 
 
+def decide_next_focus_mode(assistant) -> dict:
+    """
+    Determine next focus mode based on system-managed focus state.
+
+    Returns:
+        dict: {
+            'focus_mode': str,  # 'depth', 'width_color', 'width_shape', 'width_category', or 'object_selection'
+            'reason': str,  # Explanation for the decision
+            'suggested_objects': list[str] | None,  # Objects to present if mode = 'object_selection'
+            'reset_object': bool  # Whether to reset object state
+        }
+    """
+    if not assistant.system_managed_focus:
+        # Not in system-managed mode, return current manual focus
+        return {
+            'focus_mode': assistant.current_focus_mode,
+            'reason': 'Manual focus mode',
+            'suggested_objects': None,
+            'reset_object': False
+        }
+
+    # RULE 1: DEPTH phase (4-5 questions)
+    if assistant.current_focus_mode == 'depth':
+        if assistant.depth_questions_count < assistant.depth_target:
+            # Continue with DEPTH
+            return {
+                'focus_mode': 'depth',
+                'reason': f'Depth phase: {assistant.depth_questions_count}/{assistant.depth_target} questions asked',
+                'suggested_objects': None,
+                'reset_object': False
+            }
+        else:
+            # Switch to WIDTH mode (choose which category)
+            available = [c for c in ['color', 'shape', 'category'] if c not in assistant.width_categories_tried]
+            if not available:
+                # All WIDTH categories tried? Shouldn't happen but fallback
+                available = ['color', 'shape', 'category']
+                assistant.width_categories_tried = []
+
+            import random
+            width_category = random.choice(available)
+            assistant.current_focus_mode = f'width_{width_category}'
+            assistant.width_categories_tried.append(width_category)
+
+            return {
+                'focus_mode': assistant.current_focus_mode,
+                'reason': f'Completed depth phase ({assistant.depth_questions_count} questions). Switching to WIDTH: {width_category}',
+                'suggested_objects': None,
+                'reset_object': False
+            }
+
+    # RULE 2: WIDTH phase - handle wrong answers
+    elif assistant.current_focus_mode.startswith('width_'):
+        # Note: Wrong answer detection happens in validation
+        # This function is called AFTER wrong answer is detected
+
+        # Check if 3 consecutive wrong WIDTH answers
+        if assistant.width_wrong_count >= 3:
+            # Present object selection
+            logger.info(f"[SYSTEM_MANAGED] 3 consecutive wrong WIDTH answers. Triggering object selection.")
+
+            # Generate suggested objects (this will be done via AI)
+            return {
+                'focus_mode': 'object_selection',
+                'reason': '3 consecutive wrong WIDTH answers detected',
+                'suggested_objects': None,  # Will be generated by AI
+                'reset_object': False
+            }
+
+        # Not at threshold yet, continue with current WIDTH or try next category
+        # (Decision to switch WIDTH category happens elsewhere)
+        return {
+            'focus_mode': assistant.current_focus_mode,
+            'reason': f'WIDTH mode: {assistant.width_wrong_count}/3 wrong answers',
+            'suggested_objects': None,
+            'reset_object': False
+        }
+
+    # RULE 3: OBJECT_SELECTION mode - waiting for user to pick
+    elif assistant.current_focus_mode == 'object_selection':
+        return {
+            'focus_mode': 'object_selection',
+            'reason': 'Awaiting object selection from user',
+            'suggested_objects': None,
+            'reset_object': False
+        }
+
+    # Fallback
+    return {
+        'focus_mode': 'depth',
+        'reason': 'Fallback to depth mode',
+        'suggested_objects': None,
+        'reset_object': False
+    }
+
+
+def handle_width_wrong_answer(assistant) -> dict:
+    """
+    Handle wrong answer in WIDTH mode - decide whether to switch WIDTH category.
+
+    Returns:
+        dict: {
+            'switch_category': bool,
+            'new_focus_mode': str | None,
+            'reason': str
+        }
+    """
+    assistant.width_wrong_count += 1
+    logger.info(f"[SYSTEM_MANAGED] Wrong WIDTH answer. Count: {assistant.width_wrong_count}/3")
+
+    # Check if threshold reached
+    if assistant.width_wrong_count >= 3:
+        return {
+            'switch_category': False,
+            'new_focus_mode': None,
+            'reason': '3 wrong answers reached - will trigger object selection'
+        }
+
+    # Try next WIDTH category if available
+    available = [c for c in ['color', 'shape', 'category'] if c not in assistant.width_categories_tried]
+
+    if not available:
+        # All categories tried, stay on current
+        return {
+            'switch_category': False,
+            'new_focus_mode': None,
+            'reason': 'All WIDTH categories already tried this object'
+        }
+
+    # Switch to next category
+    import random
+    next_category = random.choice(available)
+    new_mode = f'width_{next_category}'
+    assistant.current_focus_mode = new_mode
+    assistant.width_categories_tried.append(next_category)
+
+    return {
+        'switch_category': True,
+        'new_focus_mode': new_mode,
+        'reason': f'Switching WIDTH category to {new_mode}'
+    }
+
+
+def generate_object_suggestions(assistant, config, client, age: int) -> list[str]:
+    """
+    Use AI to generate 3-4 related object suggestions.
+
+    Args:
+        assistant: PaixuejiAssistant instance
+        config: Config dict
+        client: Gemini client
+        age: Child's age
+
+    Returns:
+        List of 3-4 object names
+    """
+    prompt = f"""The child (age {age}) has been learning about {assistant.object_name}.
+
+Suggest 3-4 NEW objects that would be interesting for them to explore next.
+
+Guidelines:
+- Objects should be age-appropriate ({age} years old)
+- Objects should be concrete and familiar
+- Vary difficulty and category
+- Make them engaging and fun
+
+Respond with ONLY a JSON array of object names:
+["object1", "object2", "object3", "object4"]
+"""
+
+    try:
+        response = client.models.generate_content(
+            model=config.get("model_name", "gemini-2.0-flash-exp"),
+            contents=prompt,
+            config={
+                "response_mime_type": "application/json",
+                "temperature": 0.7,  # Higher temp for variety
+                "max_output_tokens": 100
+            }
+        )
+
+        import json
+        objects = json.loads(response.text)
+        logger.info(f"[OBJECT_SUGGESTIONS] Generated: {objects}")
+        return objects[:4]  # Ensure max 4
+
+    except Exception as e:
+        logger.error(f"[OBJECT_SUGGESTIONS] Error: {e}")
+        # Fallback suggestions
+        return ["apple", "dog", "car", "tree"]
+
+
 def extract_previous_question(messages: list[dict]) -> str:
     """
     Extract the last question asked by the assistant from conversation history.
@@ -1676,6 +1964,12 @@ async def call_paixueji_stream(
     """
     start_time = time.time()
 
+    # If system-managed mode, use the actual current focus mode instead of "system_managed"
+    if assistant.system_managed_focus:
+        focus_mode = assistant.current_focus_mode
+        focus_prompt = assistant.get_focus_prompt(focus_mode)
+        logger.info(f"[{session_id}] System-managed mode: using focus_mode={focus_mode}")
+
     logger.info(
         f"[{session_id}] call_paixueji_stream started | "
         f"session_id={session_id}, age={age}, object={object_name}, "
@@ -1776,6 +2070,23 @@ async def call_paixueji_stream(
         is_factually_correct = validation_result.get('is_factually_correct')
         correctness_reasoning = validation_result.get('correctness_reasoning')
         switch_decision_reasoning = validation_result.get('switching_reasoning')
+
+        # NEW: System-managed focus tracking
+        if assistant.system_managed_focus:
+            # Track DEPTH questions (only for engaged answers)
+            if is_engaged and assistant.current_focus_mode == 'depth':
+                assistant.depth_questions_count += 1
+                logger.info(f"[SYSTEM_MANAGED] Depth: {assistant.depth_questions_count}/{assistant.depth_target}")
+
+            # Handle wrong WIDTH answers
+            if assistant.current_focus_mode.startswith('width_') and is_engaged and not is_factually_correct:
+                width_result = handle_width_wrong_answer(assistant)
+                logger.info(f"[SYSTEM_MANAGED] WIDTH wrong: {width_result}")
+
+            # Reset wrong count on correct WIDTH answer
+            if assistant.current_focus_mode.startswith('width_') and is_factually_correct:
+                assistant.width_wrong_count = 0
+                logger.info(f"[SYSTEM_MANAGED] Correct WIDTH answer, reset count")
 
         # Capture validation in tree
         if current_node:
@@ -1962,21 +2273,52 @@ async def call_paixueji_stream(
         question_messages = prepared_messages.copy()
         if full_response_text:
             question_messages.append({"role": "assistant", "content": full_response_text})
-        
+
+        # NEW: System-managed focus mode decision
+        skip_question_generation = False
+        object_selection_mode = False
+        suggested_objects = None
+
+        if assistant.system_managed_focus:
+            focus_decision = decide_next_focus_mode(assistant)
+
+            if focus_decision['focus_mode'] == 'object_selection':
+                # Generate object selection response instead of question
+                suggested_objects = generate_object_suggestions(assistant, config, client, age or 6)
+
+                # Use object selection response generator
+                question_generator = generate_object_selection_response_stream(
+                    messages=question_messages,
+                    suggested_objects=suggested_objects,
+                    current_object=object_name,
+                    age=age or 6,
+                    config=config,
+                    client=client
+                )
+                response_type = "object_selection"
+                object_selection_mode = True
+                logger.info(f"[{session_id}] System-managed: object selection mode triggered")
+            else:
+                # Update focus mode for question generation
+                focus_mode = focus_decision['focus_mode']
+                focus_prompt = assistant.get_focus_prompt(focus_mode)
+                logger.info(f"[{session_id}] System-managed: focus_mode={focus_mode}, reason={focus_decision['reason']}")
+
         # ALWAYS generate follow-up question (for all non-introduction turns)
         # Now using the updated history including the response
-        question_generator = generate_followup_question_stream(
-            messages=question_messages,
-            object_name=object_name,  # Updated object if switched
-            correct_count=correct_answer_count,
-            category_prompt=category_prompt,
-            age_prompt=age_prompt,
-            age=age or 6,
-            focus_prompt=focus_prompt,
-            config=config,
-            client=client,
-            is_topic_switch=should_switch
-        )
+        if not object_selection_mode:
+            question_generator = generate_followup_question_stream(
+                messages=question_messages,
+                object_name=object_name,  # Updated object if switched
+                correct_count=correct_answer_count,
+                category_prompt=category_prompt,
+                age_prompt=age_prompt,
+                age=age or 6,
+                focus_prompt=focus_prompt,
+                config=config,
+                client=client,
+                is_topic_switch=should_switch
+            )
 
         # Stream question generator
         try:
@@ -2008,7 +2350,11 @@ async def call_paixueji_stream(
                         new_object_name=new_object_name,
                         detected_object_name=detected_object_name,
                         switch_decision_reasoning=switch_decision_reasoning,
-                        response_type="followup_question"
+                        response_type="followup_question",
+                        object_selection_mode=object_selection_mode,
+                        suggested_objects=suggested_objects,
+                        system_focus_mode=assistant.current_focus_mode if assistant.system_managed_focus else None,
+                        depth_progress=f"{assistant.depth_questions_count}/{assistant.depth_target}" if assistant.system_managed_focus else None
                     )
 
         except Exception as e:
@@ -2038,7 +2384,11 @@ async def call_paixueji_stream(
                 new_object_name=new_object_name,
                 detected_object_name=detected_object_name,
                 switch_decision_reasoning=switch_decision_reasoning,
-                response_type="followup_question"
+                response_type="followup_question",
+                object_selection_mode=False,
+                suggested_objects=None,
+                system_focus_mode=assistant.current_focus_mode if assistant.system_managed_focus else None,
+                depth_progress=f"{assistant.depth_questions_count}/{assistant.depth_target}" if assistant.system_managed_focus else None
             )
 
         # Combine response and question for conversation history

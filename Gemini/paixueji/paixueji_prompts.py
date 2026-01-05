@@ -57,7 +57,7 @@ Help the child move forward based on the TYPE of question asked:
    - Offer 2-3 fun suggestions related to the category.
 
 3. If previous question was COMPARISON (what else is [property]?):
-   - Give 2 concrete examples of things that share that [property].
+   - Give 1 simple example to help them understand, but keep the topic OPEN so we can ask for more.
 
 CRITICAL:
 - DO NOT ask any follow-up questions
@@ -117,10 +117,11 @@ CRITICAL RULES:
 1. **STRICTLY FOLLOW THE STRATEGY GUIDANCE ABOVE** - This determines the type of question.
 2. DO NOT provide explanations or feedback about previous answers
 3. DO NOT respond to the child's previous answer
-4. Start with a short bridge phrase like "Now," or "Moving on," or "Tell me,"
-5. Keep the question short and inviting.
-6. Match question complexity to age {age}.
-7. Respond naturally (NOT JSON).
+4. If you just explained the answer, ask for *more* examples using the SAME STRATEGY. Do not switch topics.
+5. Start with a short bridge phrase like "Now," or "Moving on," or "Tell me,"
+6. Keep the question short and inviting.
+7. Match question complexity to age {age}.
+8. Respond naturally (NOT JSON).
 """
 
 # ============================================================================
