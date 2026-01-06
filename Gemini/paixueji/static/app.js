@@ -567,6 +567,14 @@ function handleStreamChunk(chunk) {
             console.log('[INFO] Token usage:', chunk.token_usage);
         }
 
+        // Show save button after first response completes
+        if (sessionId) {
+            const saveBtn = document.getElementById('saveStateBtn');
+            if (saveBtn) {
+                saveBtn.style.display = 'inline-block';
+            }
+        }
+
         // INFINITE MODE: No completion UI - conversation never ends
     }
 
@@ -1124,6 +1132,235 @@ async function downloadDebugLogs() {
     } catch (error) {
         console.error('Download error:', error);
         alert(`Failed to download logs: ${error.message}`);
+    }
+}
+
+/**
+ * Save current session state to JSON file for bug reproduction
+ * Excludes the last assistant message (buggy response)
+ */
+async function saveState() {
+    if (!sessionId) {
+        alert('No active session to save');
+        return;
+    }
+
+    try {
+        console.log('[INFO] Saving session state...');
+
+        const response = await fetch(`${API_BASE}/save-state`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ session_id: sessionId })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to save state');
+        }
+
+        // Download JSON file
+        const blob = new Blob([JSON.stringify(result.state, null, 2)],
+                              { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = result.filename;
+        link.click();
+        URL.revokeObjectURL(url);
+
+        console.log('[INFO] State saved:', result.filename);
+
+        // Show info about excluded response
+        if (result.state.metadata.excluded_buggy_response) {
+            alert(`Session state saved to ${result.filename}\n\nExcluded last AI response (buggy) from save.\nConversation ends with your last message, ready for replay after fixing the bug.`);
+        } else {
+            alert(`Session state saved to ${result.filename}`);
+        }
+
+    } catch (error) {
+        console.error('[ERROR] Failed to save state:', error);
+        alert(`Failed to save state: ${error.message}`);
+    }
+}
+
+/**
+ * Restore session from uploaded JSON file and auto-replay last user message
+ */
+async function restoreState() {
+    const fileInput = document.getElementById('restoreFileInput');
+    const restoreStatus = document.getElementById('restoreStatus');
+
+    if (!fileInput.files || fileInput.files.length === 0) {
+        restoreStatus.style.color = '#ef4444';
+        restoreStatus.textContent = 'Please select a file first';
+        return;
+    }
+
+    const file = fileInput.files[0];
+
+    try {
+        restoreStatus.style.color = '#3b82f6';
+        restoreStatus.textContent = 'Loading file...';
+
+        // Read file
+        const fileText = await file.text();
+        const state = JSON.parse(fileText);
+
+        // Validate basic structure
+        if (!state.metadata || !state.session_state || !state.conversation_history) {
+            throw new Error('Invalid state file format');
+        }
+
+        restoreStatus.textContent = 'Restoring session...';
+
+        // Send to backend
+        const response = await fetch(`${API_BASE}/restore-state`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ state: state })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to restore state');
+        }
+
+        // Update frontend state
+        sessionId = result.session_id;
+        currentObject = result.restored_state.object_name;
+        correctAnswerCount = result.restored_state.correct_answer_count;
+
+        // Clear and populate messages
+        messagesContainer.innerHTML = '';
+
+        // Render conversation history (skip system message at index 0)
+        state.conversation_history.forEach((msg, idx) => {
+            if (idx === 0) return; // Skip system message
+            if (msg.role === 'user') {
+                addMessage('user', msg.content);
+            } else if (msg.role === 'assistant') {
+                addMessage('assistant', msg.content);
+            }
+        });
+
+        // Update UI
+        startForm.style.display = 'none';
+        progressIndicator.style.display = 'flex';
+        messagesContainer.style.display = 'flex';
+        updateProgressIndicator();
+        updateDebugPanel();
+
+        // Show save button
+        document.getElementById('saveStateBtn').style.display = 'inline-block';
+
+        // Enable input
+        sendBtn.disabled = false;
+        userInput.disabled = false;
+        userInput.focus();
+
+        restoreStatus.style.color = '#10b981';
+        restoreStatus.textContent = `✓ Session restored (${result.restored_state.conversation_turns} messages)`;
+
+        console.log('[INFO] Session restored:', result.session_id);
+
+        // Auto-replay: Send the last user message automatically
+        // NOTE: User message is already in the UI from rendering conversation_history
+        // We just need to send it to the API
+        if (result.restored_state.last_user_message) {
+            const lastUserMsg = result.restored_state.last_user_message;
+            console.log(`[INFO] Auto-replaying last user message: "${lastUserMsg}"`);
+
+            // Wait a moment for UI to settle, then send the message
+            setTimeout(async () => {
+                // Get current focus mode
+                const activeFocusMode = document.getElementById('activeFocusMode');
+                const focusMode = activeFocusMode ? activeFocusMode.value : 'depth';
+
+                // Disable send button during streaming
+                sendBtn.disabled = true;
+                isStreaming = true;
+
+                restoreStatus.textContent += ' | Auto-replaying last message...';
+
+                try {
+                    // Create AbortController for this stream
+                    currentStreamController = new AbortController();
+
+                    const response = await fetch(`${API_BASE}/continue`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            session_id: sessionId,
+                            child_input: lastUserMsg,
+                            focus_mode: focusMode
+                        }),
+                        signal: currentStreamController.signal
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    // Create message bubble for streaming response
+                    currentMessageDiv = null;
+
+                    // Read streaming response
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder();
+                    let buffer = '';
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+
+                        if (done) {
+                            console.log('[INFO] Auto-replay stream ended');
+                            break;
+                        }
+
+                        // Decode chunk and add to buffer
+                        buffer += decoder.decode(value, { stream: true });
+
+                        // Process complete SSE events
+                        const lines = buffer.split('\n\n');
+                        buffer = lines.pop();
+
+                        for (const line of lines) {
+                            if (!line.trim()) continue;
+
+                            // Parse SSE event
+                            const eventMatch = line.match(/^event: (.+)$/m);
+                            const dataMatch = line.match(/^data: (.+)$/m);
+
+                            if (eventMatch && dataMatch) {
+                                const eventType = eventMatch[1];
+                                const data = JSON.parse(dataMatch[1]);
+
+                                // Handle event
+                                await handleSSEEvent(eventType, data);
+                            }
+                        }
+                    }
+
+                } catch (error) {
+                    console.error('[ERROR] Auto-replay error:', error);
+                    alert(`Auto-replay failed: ${error.message}`);
+                } finally {
+                    isStreaming = false;
+                    sendBtn.disabled = false;
+                    currentStreamController = null;
+                }
+            }, 500);
+        }
+
+    } catch (error) {
+        console.error('[ERROR] Failed to restore state:', error);
+        restoreStatus.style.color = '#ef4444';
+        restoreStatus.textContent = `Error: ${error.message}`;
     }
 }
 

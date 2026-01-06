@@ -2068,8 +2068,14 @@ async def call_paixueji_stream(
         f"content_length={len(content)}, message_history={len(messages)}"
     )
 
-    # Add user input to messages
+    # Add user input to messages for Gemini API
     messages.append({"role": "user", "content": content})
+
+    # IMPORTANT: Also add to actual conversation_history so it's saved
+    # For introduction, we don't want to save the trigger message, so only add for real user inputs
+    # Check if this is a real user message (not the introduction trigger)
+    if content != f"Start conversation about {object_name}":
+        assistant.conversation_history.append({"role": "user", "content": content})
 
     # Create tree node for this turn
     current_node = None

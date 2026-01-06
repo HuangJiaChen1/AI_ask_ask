@@ -313,6 +313,7 @@ def continue_conversation():
 
             # NOTE: Validation now happens inside call_paixueji_stream() using unified AI validation
             # Increment logic moved to stream handler below based on chunk.is_factually_correct
+            # NOTE: User message is added to conversation_history inside call_paixueji_stream()
 
             # Get new event loop for this request (avoids race conditions)
             loop = get_event_loop()
@@ -840,6 +841,348 @@ def force_switch():
 
     except Exception as e:
         print(f"[ERROR] Force switch error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+# ============================================================================
+# Bug Reproduction Helper Functions
+# ============================================================================
+
+def build_save_state(assistant, session_id):
+    """
+    Build complete save state from PaixuejiAssistant instance.
+
+    IMPORTANT: Excludes the last assistant message (buggy response) if present,
+    so saved state ends with the user's message that triggered the bug.
+
+    Args:
+        assistant: PaixuejiAssistant instance to serialize
+        session_id: Current session ID
+
+    Returns:
+        dict: Complete save state matching schema
+    """
+    from datetime import datetime
+
+    # Copy conversation history
+    conversation_history = assistant.conversation_history.copy()
+
+    # Check if last message is from assistant (the buggy response)
+    excluded_buggy_response = None
+    last_user_message = None
+
+    if len(conversation_history) > 1 and conversation_history[-1]['role'] == 'assistant':
+        # Exclude the last assistant message (buggy response)
+        excluded_buggy_response = conversation_history[-1]['content']
+        conversation_history = conversation_history[:-1]  # Remove last message
+
+        # Find the last user message
+        for msg in reversed(conversation_history):
+            if msg['role'] == 'user':
+                last_user_message = msg['content']
+                break
+
+    state = {
+        "metadata": {
+            "saved_at": datetime.now().isoformat(),
+            "version": "1.0",
+            "session_id": session_id,
+            "app_version": "paixueji-v1.0",
+            "excluded_buggy_response": excluded_buggy_response,
+            "last_user_message": last_user_message
+        },
+        "session_state": {
+            "age": assistant.age,
+            "object_name": assistant.object_name,
+            "level1_category": assistant.level1_category,
+            "level2_category": assistant.level2_category,
+            "level3_category": assistant.level3_category,
+            "tone": assistant.tone,
+            "correct_answer_count": assistant.correct_answer_count,
+            "system_managed_focus": assistant.system_managed_focus,
+            "current_focus_mode": assistant.current_focus_mode,
+            "depth_questions_count": assistant.depth_questions_count,
+            "width_wrong_count": assistant.width_wrong_count,
+            "width_categories_tried": assistant.width_categories_tried.copy(),
+            "depth_target": assistant.depth_target
+        },
+        "conversation_history": conversation_history
+    }
+
+    # Add flow tree if available
+    if assistant.flow_tree:
+        try:
+            state["flow_tree"] = assistant.flow_tree.to_json()
+        except Exception as e:
+            print(f"[WARNING] Could not serialize flow tree: {e}")
+            state["flow_tree"] = None
+
+    return state
+
+
+def validate_state_schema(state):
+    """
+    Validate saved state schema.
+
+    Args:
+        state: State dict to validate
+
+    Returns:
+        tuple: (is_valid, error_message)
+    """
+    # Check top-level keys
+    if not all(k in state for k in ['metadata', 'session_state', 'conversation_history']):
+        return False, "Missing required top-level keys (metadata, session_state, or conversation_history)"
+
+    # Check metadata
+    if 'version' not in state['metadata']:
+        return False, "Missing metadata.version"
+
+    if state['metadata']['version'] != '1.0':
+        return False, f"Unsupported schema version: {state['metadata']['version']}"
+
+    # Check session_state required fields
+    required_session_fields = ['object_name', 'correct_answer_count']
+    for field in required_session_fields:
+        if field not in state['session_state']:
+            return False, f"Missing session_state.{field}"
+
+    # Check conversation_history is array
+    if not isinstance(state['conversation_history'], list):
+        return False, "conversation_history must be an array"
+
+    # Validate each message
+    for i, msg in enumerate(state['conversation_history']):
+        if 'role' not in msg or 'content' not in msg:
+            return False, f"Message {i} missing role or content"
+        if msg['role'] not in ['system', 'user', 'assistant']:
+            return False, f"Message {i} has invalid role: {msg['role']}"
+
+    # Validate data types and ranges
+    if state['session_state'].get('age') is not None:
+        age = state['session_state']['age']
+        if not isinstance(age, int) or age < 3 or age > 8:
+            return False, f"Invalid age: {age} (must be integer 3-8)"
+
+    if not isinstance(state['session_state']['correct_answer_count'], int):
+        return False, "correct_answer_count must be integer"
+
+    if state['session_state']['correct_answer_count'] < 0:
+        return False, "correct_answer_count must be >= 0"
+
+    return True, None
+
+
+def restore_from_state(state):
+    """
+    Restore PaixuejiAssistant instance from saved state.
+
+    Args:
+        state: Validated state dict
+
+    Returns:
+        PaixuejiAssistant: Restored assistant instance
+    """
+    session_state = state['session_state']
+
+    # Create new assistant
+    system_managed = session_state.get('system_managed_focus', False)
+    assistant = PaixuejiAssistant(system_managed=system_managed)
+
+    # Restore state fields
+    assistant.age = session_state.get('age')
+    assistant.object_name = session_state.get('object_name')
+    assistant.level1_category = session_state.get('level1_category')
+    assistant.level2_category = session_state.get('level2_category')
+    assistant.level3_category = session_state.get('level3_category')
+    assistant.tone = session_state.get('tone')
+    assistant.correct_answer_count = session_state.get('correct_answer_count', 0)
+
+    # Restore system-managed focus state
+    assistant.system_managed_focus = session_state.get('system_managed_focus', False)
+    assistant.current_focus_mode = session_state.get('current_focus_mode', 'depth')
+    assistant.depth_questions_count = session_state.get('depth_questions_count', 0)
+    assistant.width_wrong_count = session_state.get('width_wrong_count', 0)
+    assistant.width_categories_tried = session_state.get('width_categories_tried', [])
+    assistant.depth_target = session_state.get('depth_target', 4)
+
+    # Restore conversation history
+    assistant.conversation_history = state['conversation_history'].copy()
+
+    # Note: Flow tree restoration is skipped for simplicity
+    # A new flow tree will be initialized for the restored session
+
+    return assistant
+
+
+@app.route('/api/save-state', methods=['POST'])
+def save_session_state():
+    """
+    Save current session state to JSON for bug reproduction.
+
+    Excludes the last assistant message (buggy response) so saved state
+    ends with the user's message that triggered the bug.
+
+    Request body:
+        {
+            "session_id": "uuid-string"
+        }
+
+    Response:
+        {
+            "success": true,
+            "state": { ... },
+            "filename": "bug_2026-01-06_14-30-45.json"
+        }
+    """
+    data = request.get_json()
+
+    if not data:
+        return jsonify({
+            "success": False,
+            "error": "Request body must be JSON"
+        }), 400
+
+    session_id = data.get('session_id')
+
+    if not session_id:
+        return jsonify({
+            "success": False,
+            "error": "Missing session_id"
+        }), 400
+
+    if session_id not in sessions:
+        return jsonify({
+            "success": False,
+            "error": "Session not found"
+        }), 404
+
+    try:
+        assistant = sessions[session_id]
+
+        # Build save state (excludes last assistant message if present)
+        state = build_save_state(assistant, session_id)
+
+        # Generate filename
+        from datetime import datetime
+        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        filename = f"bug_{timestamp}.json"
+
+        print(f"[INFO] Saved session state {session_id[:8]}... to {filename}")
+
+        if state['metadata']['excluded_buggy_response']:
+            print(f"[INFO] Excluded buggy response: {state['metadata']['excluded_buggy_response'][:100]}...")
+
+        return jsonify({
+            "success": True,
+            "state": state,
+            "filename": filename
+        })
+
+    except Exception as e:
+        print(f"[ERROR] Error saving state: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route('/api/restore-state', methods=['POST'])
+def restore_session_state():
+    """
+    Restore session from saved state JSON for bug reproduction.
+
+    Creates a new session with the restored state. Conversation history
+    will end with a user message, ready for auto-replay.
+
+    Request body:
+        {
+            "state": { ... }
+        }
+
+    Response:
+        {
+            "success": true,
+            "session_id": "new-uuid",
+            "restored_state": {
+                "object_name": "apple",
+                "conversation_turns": 3,
+                "correct_answer_count": 2,
+                "last_user_message": "What color is the apple?"
+            }
+        }
+    """
+    data = request.get_json()
+
+    if not data:
+        return jsonify({
+            "success": False,
+            "error": "Request body must be JSON"
+        }), 400
+
+    state = data.get('state')
+
+    if not state:
+        return jsonify({
+            "success": False,
+            "error": "Missing state object"
+        }), 400
+
+    try:
+        # Validate schema
+        is_valid, error_msg = validate_state_schema(state)
+        if not is_valid:
+            return jsonify({
+                "success": False,
+                "error": f"Invalid state format: {error_msg}"
+            }), 400
+
+        # Restore assistant
+        assistant = restore_from_state(state)
+
+        # Create new session
+        new_session_id = str(uuid.uuid4())
+        sessions[new_session_id] = assistant
+
+        # Initialize flow tree for new session
+        assistant.init_flow_tree(
+            session_id=new_session_id,
+            age=assistant.age,
+            object_name=assistant.object_name,
+            tone=assistant.tone,
+            focus_mode=assistant.current_focus_mode
+        )
+
+        # Extract last user message for frontend auto-replay
+        last_user_message = None
+        for msg in reversed(assistant.conversation_history):
+            if msg['role'] == 'user':
+                last_user_message = msg['content']
+                break
+
+        print(f"[INFO] Restored session {new_session_id[:8]}... from saved state | "
+              f"object={assistant.object_name}, turns={len(assistant.conversation_history)}")
+
+        return jsonify({
+            "success": True,
+            "session_id": new_session_id,
+            "restored_state": {
+                "object_name": assistant.object_name,
+                "conversation_turns": len(assistant.conversation_history) - 1,  # Exclude system message
+                "correct_answer_count": assistant.correct_answer_count,
+                "last_user_message": last_user_message
+            }
+        })
+
+    except Exception as e:
+        print(f"[ERROR] Error restoring state: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({

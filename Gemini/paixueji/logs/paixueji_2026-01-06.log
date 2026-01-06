@@ -802,3 +802,310 @@ We've got some fantastic treasures to choose from! Would ye rather explore the c
 ❓ RESPONSE PART 2: Tell me, matey, what do ye think happens to a banana if we leave it out of the fridge for a long, long time?
 --------------------------------------------------
 
+2026-01-06 16:19:30.976 | INFO     | paixueji_stream:call_paixueji_stream:2061 | [9af64a20-d870-45c6-aa3c-0cda4c9ca6a1] System-managed mode: using focus_mode=depth
+2026-01-06 16:19:30.977 | INFO     | paixueji_stream:call_paixueji_stream:2063 | [9af64a20-d870-45c6-aa3c-0cda4c9ca6a1] call_paixueji_stream started | session_id=9af64a20-d870-45c6-aa3c-0cda4c9ca6a1, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2026-01-06 16:19:30.977 | INFO     | paixueji_stream:call_paixueji_stream:2100 | [9af64a20-d870-45c6-aa3c-0cda4c9ca6a1] Conversation state | correct_count=0, complete=False
+2026-01-06 16:19:30.977 | INFO     | paixueji_stream:call_paixueji_stream:2140 | [9af64a20-d870-45c6-aa3c-0cda4c9ca6a1] Routing to introduction question
+2026-01-06 16:19:30.977 | INFO     | paixueji_stream:ask_introduction_question_stream:155 | ask_introduction_question_stream started | object=banana, age=6
+2026-01-06 16:19:30.977 | DEBUG    | paixueji_stream:ask_introduction_question_stream:171 | Messages prepared for API | count=3
+2026-01-06 16:19:30.977 | DEBUG    | paixueji_stream:ask_introduction_question_stream:182 | Sending 2 messages to Gemini API
+2026-01-06 16:19:30.977 | DEBUG    | paixueji_stream:ask_introduction_question_stream:199 | Stream object type: generator
+2026-01-06 16:19:57.530 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 1 | length=2, total_length=2
+2026-01-06 16:19:57.548 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 2 | length=9, total_length=11
+2026-01-06 16:19:57.614 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 3 | length=64, total_length=75
+2026-01-06 16:19:57.699 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 4 | length=66, total_length=141
+2026-01-06 16:19:57.735 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 5 | length=9, total_length=150
+2026-01-06 16:19:57.757 | DEBUG    | paixueji_stream:ask_introduction_question_stream:219 | Gemini streaming API does not provide token usage in stream mode
+2026-01-06 16:19:57.757 | DEBUG    | paixueji_stream:ask_introduction_question_stream:238 | Cleaned up stream via del in finally block
+2026-01-06 16:19:57.758 | INFO     | paixueji_stream:ask_introduction_question_stream:243 | ask_introduction_question_stream completed | duration=26.781s, response_length=150
+2026-01-06 16:19:57.758 | WARNING  | paixueji_stream:ask_introduction_question_stream:249 | Slow LLM call | duration=26.781s exceeded threshold 5.0s
+2026-01-06 16:19:57.758 | INFO     | paixueji_stream:call_paixueji_stream:2790 | [9af64a20-d870-45c6-aa3c-0cda4c9ca6a1] call_paixueji_stream completed | response_type=introduction, duration=26.781s, total_chunks=5, response_length=150, correct_count=0, complete=False, session_finished=False
+2026-01-06 16:19:57.758 | DEBUG    | paixueji_stream:call_paixueji_stream:2798 | Full response: Ahoy there, matey! We've got a yummy banana here today!
+
+Tell me, what does a banana feel like when you touch it? Is it smooth or bumpy, hard or soft?...
+2026-01-06 16:19:57.758 | DEBUG    | paixueji_stream:call_paixueji_stream:2871 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+👤 USER INPUT: (None)
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=None | Correct=None
+💭 REASONING: N/A
+⚡ DECISION: N/A (Reason: N/A)
+🗣️ RESPONSE PART 1: (None)
+❓ RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-06 16:20:25.077 | INFO     | paixueji_stream:call_paixueji_stream:2061 | [9af64a20-d870-45c6-aa3c-0cda4c9ca6a1] System-managed mode: using focus_mode=depth
+2026-01-06 16:20:25.077 | INFO     | paixueji_stream:call_paixueji_stream:2063 | [9af64a20-d870-45c6-aa3c-0cda4c9ca6a1] call_paixueji_stream started | session_id=9af64a20-d870-45c6-aa3c-0cda4c9ca6a1, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=10, message_history=2
+2026-01-06 16:20:25.077 | INFO     | paixueji_stream:call_paixueji_stream:2100 | [9af64a20-d870-45c6-aa3c-0cda4c9ca6a1] Conversation state | correct_count=0, complete=False
+2026-01-06 16:20:25.077 | INFO     | paixueji_stream:call_paixueji_stream:2149 | [9af64a20-d870-45c6-aa3c-0cda4c9ca6a1] Running unified AI validation for answer
+2026-01-06 16:20:27.854 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1141 | [VALIDATE] CONTINUE | new_object=None, engaged=False, correct=False, switch_reasoning=The child is not answering the question, but expressing affection. We should try rephrasing the question to encourage engagement with the topic., correctness_reasoning=The child's response is an expression of affection, not a description of the banana's texture.
+2026-01-06 16:20:27.854 | INFO     | paixueji_stream:call_paixueji_stream:2246 | [9af64a20-d870-45c6-aa3c-0cda4c9ca6a1] Routing to explanation | is_engaged=False
+2026-01-06 16:20:27.854 | INFO     | paixueji_stream:call_paixueji_stream:2407 | [9af64a20-d870-45c6-aa3c-0cda4c9ca6a1] Routing to explanation | is_engaged=False
+2026-01-06 16:20:27.854 | INFO     | paixueji_stream:call_paixueji_stream:2514 | [9af64a20-d870-45c6-aa3c-0cda4c9ca6a1] System-managed: focus_mode=depth, reason=Depth phase: 0/4 questions asked
+2026-01-06 16:20:27.854 | DEBUG    | paixueji_stream:call_paixueji_stream:2522 | [9af64a20-d870-45c6-aa3c-0cda4c9ca6a1] Streaming response (explanation)
+2026-01-06 16:20:27.854 | INFO     | paixueji_stream:generate_explanation_response_stream:383 | generate_explanation_response_stream started | object=banana, age=6
+2026-01-06 16:20:28.423 | INFO     | paixueji_stream:generate_explanation_response_stream:439 | generate_explanation_response_stream completed | duration=0.569s, length=45
+2026-01-06 16:20:28.424 | DEBUG    | paixueji_stream:call_paixueji_stream:2635 | [9af64a20-d870-45c6-aa3c-0cda4c9ca6a1] Streaming question
+2026-01-06 16:20:28.424 | INFO     | paixueji_stream:generate_followup_question_stream:844 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-06 16:20:29.195 | INFO     | paixueji_stream:generate_followup_question_stream:901 | generate_followup_question_stream completed | duration=0.771s, length=83
+2026-01-06 16:20:29.195 | INFO     | paixueji_stream:call_paixueji_stream:2790 | [9af64a20-d870-45c6-aa3c-0cda4c9ca6a1] call_paixueji_stream completed | response_type=explanation, duration=4.118s, total_chunks=5, response_length=129, correct_count=0, complete=False, session_finished=False
+2026-01-06 16:20:29.195 | DEBUG    | paixueji_stream:call_paixueji_stream:2798 | Full response: Ah, a banana be yellow and a bit soft, matey! Now, matey, what do ye think happens when ye peel a banana? What do ye find inside?...
+2026-01-06 16:20:29.195 | DEBUG    | paixueji_stream:call_paixueji_stream:2871 | 
+
+[DEBUG TREE NODE] Turn 1 (EXPLANATION)
+--------------------------------------------------
+👤 USER INPUT: I love you
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=False | Correct=False
+💭 REASONING: The child's response is an expression of affection, not a description of the banana's texture.
+⚡ DECISION: CONTINUE (Reason: The child is not answering the question, but expressing affection. We should try rephrasing the question to encourage engagement with the topic.)
+🗣️ RESPONSE PART 1: Ah, a banana be yellow and a bit soft, matey!
+❓ RESPONSE PART 2: Now, matey, what do ye think happens when ye peel a banana? What do ye find inside?
+--------------------------------------------------
+
+2026-01-06 16:31:26.022 | INFO     | paixueji_stream:call_paixueji_stream:2061 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] System-managed mode: using focus_mode=depth
+2026-01-06 16:31:26.022 | INFO     | paixueji_stream:call_paixueji_stream:2063 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] call_paixueji_stream started | session_id=81d40aaa-2543-4f9e-8b24-3c18a89d27e2, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2026-01-06 16:31:26.022 | INFO     | paixueji_stream:call_paixueji_stream:2106 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Conversation state | correct_count=0, complete=False
+2026-01-06 16:31:26.022 | INFO     | paixueji_stream:call_paixueji_stream:2146 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Routing to introduction question
+2026-01-06 16:31:26.022 | INFO     | paixueji_stream:ask_introduction_question_stream:155 | ask_introduction_question_stream started | object=banana, age=6
+2026-01-06 16:31:26.022 | DEBUG    | paixueji_stream:ask_introduction_question_stream:171 | Messages prepared for API | count=3
+2026-01-06 16:31:26.022 | DEBUG    | paixueji_stream:ask_introduction_question_stream:182 | Sending 2 messages to Gemini API
+2026-01-06 16:31:26.023 | DEBUG    | paixueji_stream:ask_introduction_question_stream:199 | Stream object type: generator
+2026-01-06 16:32:03.836 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 1 | length=2, total_length=2
+2026-01-06 16:32:03.865 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 2 | length=9, total_length=11
+2026-01-06 16:32:03.970 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 3 | length=58, total_length=69
+2026-01-06 16:32:04.011 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 4 | length=62, total_length=131
+2026-01-06 16:32:04.041 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 5 | length=20, total_length=151
+2026-01-06 16:32:04.049 | DEBUG    | paixueji_stream:ask_introduction_question_stream:219 | Gemini streaming API does not provide token usage in stream mode
+2026-01-06 16:32:04.049 | DEBUG    | paixueji_stream:ask_introduction_question_stream:238 | Cleaned up stream via del in finally block
+2026-01-06 16:32:04.049 | INFO     | paixueji_stream:ask_introduction_question_stream:243 | ask_introduction_question_stream completed | duration=38.027s, response_length=151
+2026-01-06 16:32:04.049 | WARNING  | paixueji_stream:ask_introduction_question_stream:249 | Slow LLM call | duration=38.027s exceeded threshold 5.0s
+2026-01-06 16:32:04.049 | INFO     | paixueji_stream:call_paixueji_stream:2796 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] call_paixueji_stream completed | response_type=introduction, duration=38.028s, total_chunks=5, response_length=151, correct_count=0, complete=False, session_finished=False
+2026-01-06 16:32:04.050 | DEBUG    | paixueji_stream:call_paixueji_stream:2804 | Full response: Ahoy there, matey! We've got a yummy banana here, fresh from the farm!
+
+Tell me, what does a banana feel like when you touch it? Is it smooth or bumpy?...
+2026-01-06 16:32:04.050 | DEBUG    | paixueji_stream:call_paixueji_stream:2877 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+👤 USER INPUT: (None)
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=None | Correct=None
+💭 REASONING: N/A
+⚡ DECISION: N/A (Reason: N/A)
+🗣️ RESPONSE PART 1: (None)
+❓ RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-06 16:34:17.075 | INFO     | paixueji_stream:call_paixueji_stream:2061 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] System-managed mode: using focus_mode=depth
+2026-01-06 16:34:17.075 | INFO     | paixueji_stream:call_paixueji_stream:2063 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] call_paixueji_stream started | session_id=81d40aaa-2543-4f9e-8b24-3c18a89d27e2, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=12, message_history=2
+2026-01-06 16:34:17.075 | INFO     | paixueji_stream:call_paixueji_stream:2106 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Conversation state | correct_count=0, complete=False
+2026-01-06 16:34:17.075 | INFO     | paixueji_stream:call_paixueji_stream:2155 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Running unified AI validation for answer
+2026-01-06 16:34:19.129 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1141 | [VALIDATE] CONTINUE | new_object=None, engaged=False, correct=False, switch_reasoning=The child is not answering the question about the banana but instead asking about my identity. This is not a request to switch to a new object, but rather a question that needs to be addressed before continuing with the banana., correctness_reasoning=The child's response is a question about my identity, not an answer to the question about the banana's texture. Therefore, it's not factually correct in the context of the banana question.
+2026-01-06 16:34:19.129 | INFO     | paixueji_stream:call_paixueji_stream:2252 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Routing to explanation | is_engaged=False
+2026-01-06 16:34:19.129 | INFO     | paixueji_stream:call_paixueji_stream:2413 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Routing to explanation | is_engaged=False
+2026-01-06 16:34:19.129 | INFO     | paixueji_stream:call_paixueji_stream:2520 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] System-managed: focus_mode=depth, reason=Depth phase: 0/4 questions asked
+2026-01-06 16:34:19.130 | DEBUG    | paixueji_stream:call_paixueji_stream:2528 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Streaming response (explanation)
+2026-01-06 16:34:19.130 | INFO     | paixueji_stream:generate_explanation_response_stream:383 | generate_explanation_response_stream started | object=banana, age=6
+2026-01-06 16:34:19.803 | INFO     | paixueji_stream:generate_explanation_response_stream:439 | generate_explanation_response_stream completed | duration=0.674s, length=141
+2026-01-06 16:34:19.803 | DEBUG    | paixueji_stream:call_paixueji_stream:2641 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Streaming question
+2026-01-06 16:34:19.803 | INFO     | paixueji_stream:generate_followup_question_stream:844 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-06 16:34:20.400 | INFO     | paixueji_stream:generate_followup_question_stream:901 | generate_followup_question_stream completed | duration=0.597s, length=92
+2026-01-06 16:34:20.401 | INFO     | paixueji_stream:call_paixueji_stream:2796 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] call_paixueji_stream completed | response_type=explanation, duration=3.326s, total_chunks=7, response_length=234, correct_count=0, complete=False, session_finished=False
+2026-01-06 16:34:20.401 | DEBUG    | paixueji_stream:call_paixueji_stream:2804 | Full response: Ahoy, matey! I'm your learning pal, ready for an adventure with this banana!
+
+This banana feels smooth, like a slippery slide for a tiny ant! Now, matey, what do you think happens to a banana when you peel it? What do you find inside?...
+2026-01-06 16:34:20.401 | DEBUG    | paixueji_stream:call_paixueji_stream:2877 | 
+
+[DEBUG TREE NODE] Turn 1 (EXPLANATION)
+--------------------------------------------------
+👤 USER INPUT: Who are you?
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=False | Correct=False
+💭 REASONING: The child's response is a question about my identity, not an answer to the question about the banana's texture. Therefore, it's not factually correct in the context of the banana question.
+⚡ DECISION: CONTINUE (Reason: The child is not answering the question about the banana but instead asking about my identity. This is not a request to switch to a new object, but rather a question that needs to be addressed before continuing with the banana.)
+🗣️ RESPONSE PART 1: Ahoy, matey! I'm your learning pal, ready for an adventure with this banana!
+
+This banana feels smooth, like a slippery slide for a tiny ant!
+❓ RESPONSE PART 2: Now, matey, what do you think happens to a banana when you peel it? What do you find inside?
+--------------------------------------------------
+
+2026-01-06 16:34:30.411 | INFO     | paixueji_stream:call_paixueji_stream:2061 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] System-managed mode: using focus_mode=depth
+2026-01-06 16:34:30.411 | INFO     | paixueji_stream:call_paixueji_stream:2063 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] call_paixueji_stream started | session_id=81d40aaa-2543-4f9e-8b24-3c18a89d27e2, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=10, message_history=4
+2026-01-06 16:34:30.411 | INFO     | paixueji_stream:call_paixueji_stream:2106 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Conversation state | correct_count=0, complete=False
+2026-01-06 16:34:30.411 | INFO     | paixueji_stream:call_paixueji_stream:2155 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Running unified AI validation for answer
+2026-01-06 16:34:32.195 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1141 | [VALIDATE] CONTINUE | new_object=None, engaged=False, correct=False, switch_reasoning=The child is expressing affection, not naming a new object or answering the question directly. We should re-engage them with the banana topic., correctness_reasoning=The child's response is an expression of affection, not a factual statement about bananas.
+2026-01-06 16:34:32.196 | INFO     | paixueji_stream:call_paixueji_stream:2252 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Routing to explanation | is_engaged=False
+2026-01-06 16:34:32.196 | INFO     | paixueji_stream:call_paixueji_stream:2413 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Routing to explanation | is_engaged=False
+2026-01-06 16:34:32.196 | INFO     | paixueji_stream:call_paixueji_stream:2520 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] System-managed: focus_mode=depth, reason=Depth phase: 0/4 questions asked
+2026-01-06 16:34:32.196 | DEBUG    | paixueji_stream:call_paixueji_stream:2528 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Streaming response (explanation)
+2026-01-06 16:34:32.196 | INFO     | paixueji_stream:generate_explanation_response_stream:383 | generate_explanation_response_stream started | object=banana, age=6
+2026-01-06 16:34:32.817 | INFO     | paixueji_stream:generate_explanation_response_stream:439 | generate_explanation_response_stream completed | duration=0.621s, length=129
+2026-01-06 16:34:32.817 | DEBUG    | paixueji_stream:call_paixueji_stream:2641 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Streaming question
+2026-01-06 16:34:32.817 | INFO     | paixueji_stream:generate_followup_question_stream:844 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-06 16:34:33.479 | INFO     | paixueji_stream:generate_followup_question_stream:901 | generate_followup_question_stream completed | duration=0.662s, length=133
+2026-01-06 16:34:33.479 | INFO     | paixueji_stream:call_paixueji_stream:2796 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] call_paixueji_stream completed | response_type=explanation, duration=3.069s, total_chunks=8, response_length=263, correct_count=0, complete=False, session_finished=False
+2026-01-06 16:34:33.479 | DEBUG    | paixueji_stream:call_paixueji_stream:2804 | Full response: Ahoy, matey! It's grand to hear ye love bananas!
+
+When we peel a banana, we find the soft, yummy fruit inside, ready to be eaten! Now, matey, what do you think happens to a banana if we leave it out for a long, long time? Does it stay the same, or does it change?...
+2026-01-06 16:34:33.480 | DEBUG    | paixueji_stream:call_paixueji_stream:2877 | 
+
+[DEBUG TREE NODE] Turn 2 (EXPLANATION)
+--------------------------------------------------
+👤 USER INPUT: I love you
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=False | Correct=False
+💭 REASONING: The child's response is an expression of affection, not a factual statement about bananas.
+⚡ DECISION: CONTINUE (Reason: The child is expressing affection, not naming a new object or answering the question directly. We should re-engage them with the banana topic.)
+🗣️ RESPONSE PART 1: Ahoy, matey! It's grand to hear ye love bananas!
+
+When we peel a banana, we find the soft, yummy fruit inside, ready to be eaten!
+❓ RESPONSE PART 2: Now, matey, what do you think happens to a banana if we leave it out for a long, long time? Does it stay the same, or does it change?
+--------------------------------------------------
+
+2026-01-06 16:34:46.803 | INFO     | paixueji_stream:call_paixueji_stream:2061 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] System-managed mode: using focus_mode=depth
+2026-01-06 16:34:46.803 | INFO     | paixueji_stream:call_paixueji_stream:2063 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] call_paixueji_stream started | session_id=81d40aaa-2543-4f9e-8b24-3c18a89d27e2, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=41, message_history=6
+2026-01-06 16:34:46.803 | INFO     | paixueji_stream:call_paixueji_stream:2106 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Conversation state | correct_count=0, complete=False
+2026-01-06 16:34:46.803 | INFO     | paixueji_stream:call_paixueji_stream:2155 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Running unified AI validation for answer
+2026-01-06 16:34:48.756 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1141 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=False, switch_reasoning=The child is responding to the prompt, but not answering the question. We should re-phrase the question., correctness_reasoning=The child is expressing affection, not answering the question about what happens to a banana left out for a long time.
+2026-01-06 16:34:48.756 | INFO     | paixueji_stream:call_paixueji_stream:2181 | [SYSTEM_MANAGED] Depth: 1/4
+2026-01-06 16:34:48.756 | INFO     | paixueji_stream:call_paixueji_stream:2339 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Routing to correction | is_engaged=True, is_factually_correct=False
+2026-01-06 16:34:48.756 | INFO     | paixueji_stream:call_paixueji_stream:2351 | [SYSTEM_MANAGED] Depth: 2/4
+2026-01-06 16:34:48.756 | INFO     | paixueji_stream:call_paixueji_stream:2488 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Routing to gentle correction | is_engaged=True, is_factually_correct=False
+2026-01-06 16:34:48.756 | INFO     | paixueji_stream:call_paixueji_stream:2520 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] System-managed: focus_mode=depth, reason=Depth phase: 2/4 questions asked
+2026-01-06 16:34:48.756 | DEBUG    | paixueji_stream:call_paixueji_stream:2528 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Streaming response (gentle_correction)
+2026-01-06 16:34:48.756 | INFO     | paixueji_stream:generate_correction_response_stream:475 | generate_correction_response_stream started | object=banana, age=6
+2026-01-06 16:34:49.599 | INFO     | paixueji_stream:generate_correction_response_stream:531 | generate_correction_response_stream completed | duration=0.843s, length=471
+2026-01-06 16:34:49.599 | DEBUG    | paixueji_stream:call_paixueji_stream:2641 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] Streaming question
+2026-01-06 16:34:49.599 | INFO     | paixueji_stream:generate_followup_question_stream:844 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-06 16:34:50.174 | INFO     | paixueji_stream:generate_followup_question_stream:901 | generate_followup_question_stream completed | duration=0.574s, length=101
+2026-01-06 16:34:50.174 | INFO     | paixueji_stream:call_paixueji_stream:2796 | [81d40aaa-2543-4f9e-8b24-3c18a89d27e2] call_paixueji_stream completed | response_type=gentle_correction, duration=3.371s, total_chunks=10, response_length=573, correct_count=0, complete=False, session_finished=False
+2026-01-06 16:34:50.174 | DEBUG    | paixueji_stream:call_paixueji_stream:2804 | Full response: Ahoy there, matey! I appreciate yer kind words, that's mighty sweet of ye!
+
+But right now, we're on a treasure hunt for knowledge about this banana! When we talk about what happens to a banana if we leave it out for a long time, we're looking for how it *changes* its shape or color, not how we feel about it.
+
+So, let's get back to our banana quest! What do ye think happens to a banana if we leave it out for a long, long time? Does it stay the same, or does it change? Tell me, matey, what do you think makes a banana turn brown and soft if we leave it out for too long?...
+2026-01-06 16:34:50.174 | DEBUG    | paixueji_stream:call_paixueji_stream:2877 | 
+
+[DEBUG TREE NODE] Turn 3 (GENTLE_CORRECTION)
+--------------------------------------------------
+👤 USER INPUT: No, I said I love you, not I love bananas
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=True | Correct=False
+💭 REASONING: The child is expressing affection, not answering the question about what happens to a banana left out for a long time.
+⚡ DECISION: CONTINUE (Reason: The child is responding to the prompt, but not answering the question. We should re-phrase the question.)
+🗣️ RESPONSE PART 1: Ahoy there, matey! I appreciate yer kind words, that's mighty sweet of ye!
+
+But right now, we're on a treasure hunt for knowledge about this banana! When we talk about what happens to a banana if we leave it out for a long time, we're looking for how it *changes* its shape or color, not how we feel about it.
+
+So, let's get back to our banana quest! What do ye think happens to a banana if we leave it out for a long, long time? Does it stay the same, or does it change?
+❓ RESPONSE PART 2: Tell me, matey, what do you think makes a banana turn brown and soft if we leave it out for too long?
+--------------------------------------------------
+
+2026-01-06 16:39:02.681 | INFO     | paixueji_stream:call_paixueji_stream:2061 | [34685d08-fcbd-45f7-b220-cd219dd5bc8e] System-managed mode: using focus_mode=depth
+2026-01-06 16:39:02.681 | INFO     | paixueji_stream:call_paixueji_stream:2063 | [34685d08-fcbd-45f7-b220-cd219dd5bc8e] call_paixueji_stream started | session_id=34685d08-fcbd-45f7-b220-cd219dd5bc8e, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=41, message_history=7
+2026-01-06 16:39:02.681 | INFO     | paixueji_stream:call_paixueji_stream:2106 | [34685d08-fcbd-45f7-b220-cd219dd5bc8e] Conversation state | correct_count=0, complete=False
+2026-01-06 16:39:02.681 | INFO     | paixueji_stream:call_paixueji_stream:2155 | [34685d08-fcbd-45f7-b220-cd219dd5bc8e] Running unified AI validation for answer
+2026-01-06 16:39:07.273 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1141 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=False, switch_reasoning=The child is not answering the question, but is not introducing a new object. They are responding to the prompt, but not the question., correctness_reasoning=The child is responding to the prompt, but not answering the question about the banana.
+2026-01-06 16:39:07.273 | INFO     | paixueji_stream:call_paixueji_stream:2181 | [SYSTEM_MANAGED] Depth: 3/4
+2026-01-06 16:39:07.273 | INFO     | paixueji_stream:call_paixueji_stream:2339 | [34685d08-fcbd-45f7-b220-cd219dd5bc8e] Routing to correction | is_engaged=True, is_factually_correct=False
+2026-01-06 16:39:07.273 | INFO     | paixueji_stream:call_paixueji_stream:2351 | [SYSTEM_MANAGED] Depth: 4/4
+2026-01-06 16:39:07.273 | INFO     | paixueji_stream:call_paixueji_stream:2488 | [34685d08-fcbd-45f7-b220-cd219dd5bc8e] Routing to gentle correction | is_engaged=True, is_factually_correct=False
+2026-01-06 16:39:07.273 | INFO     | paixueji_stream:call_paixueji_stream:2520 | [34685d08-fcbd-45f7-b220-cd219dd5bc8e] System-managed: focus_mode=width_shape, reason=Completed depth phase (4 questions). Switching to WIDTH: shape
+2026-01-06 16:39:07.273 | DEBUG    | paixueji_stream:call_paixueji_stream:2528 | [34685d08-fcbd-45f7-b220-cd219dd5bc8e] Streaming response (gentle_correction)
+2026-01-06 16:39:07.273 | INFO     | paixueji_stream:generate_correction_response_stream:475 | generate_correction_response_stream started | object=banana, age=6
+2026-01-06 16:39:08.218 | INFO     | paixueji_stream:generate_correction_response_stream:531 | generate_correction_response_stream completed | duration=0.945s, length=583
+2026-01-06 16:39:08.218 | DEBUG    | paixueji_stream:call_paixueji_stream:2641 | [34685d08-fcbd-45f7-b220-cd219dd5bc8e] Streaming question
+2026-01-06 16:39:08.218 | INFO     | paixueji_stream:generate_followup_question_stream:844 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-06 16:39:08.900 | INFO     | paixueji_stream:generate_followup_question_stream:901 | generate_followup_question_stream completed | duration=0.682s, length=144
+2026-01-06 16:39:08.901 | INFO     | paixueji_stream:call_paixueji_stream:2796 | [34685d08-fcbd-45f7-b220-cd219dd5bc8e] call_paixueji_stream completed | response_type=gentle_correction, duration=6.220s, total_chunks=13, response_length=728, correct_count=0, complete=False, session_finished=False
+2026-01-06 16:39:08.901 | DEBUG    | paixueji_stream:call_paixueji_stream:2804 | Full response: Ahoy, matey! I hear ye loud and clear! It's super kind of ye to say ye love me, and I appreciate that!
+
+But right now, we're on a treasure hunt for knowledge about this banana! When I asked what happens if we leave the banana out for a long time, I was hoping ye'd tell me if it stays the same or changes. Saying "No, I said I love you, not I love bananas" is a different kind of treasure than what we're looking for with our banana!
+
+So, let's get back to our banana. What do ye think happens to it if we leave it out for a long, long time? Does it stay the same, or does it change? Ahoy, matey! This banana has a special shape, doesn't it?
+
+Tell me, can ye think of any other things in the world that are shaped like a banana?...
+2026-01-06 16:39:08.901 | DEBUG    | paixueji_stream:call_paixueji_stream:2877 | 
+
+[DEBUG TREE NODE] Turn 0 (GENTLE_CORRECTION)
+--------------------------------------------------
+👤 USER INPUT: (None)
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=True | Correct=False
+💭 REASONING: The child is responding to the prompt, but not answering the question about the banana.
+⚡ DECISION: CONTINUE (Reason: The child is not answering the question, but is not introducing a new object. They are responding to the prompt, but not the question.)
+🗣️ RESPONSE PART 1: Ahoy, matey! I hear ye loud and clear! It's super kind of ye to say ye love me, and I appreciate that!
+
+But right now, we're on a treasure hunt for knowledge about this banana! When I asked what happens if we leave the banana out for a long time, I was hoping ye'd tell me if it stays the same or changes. Saying "No, I said I love you, not I love bananas" is a different kind of treasure than what we're looking for with our banana!
+
+So, let's get back to our banana. What do ye think happens to it if we leave it out for a long, long time? Does it stay the same, or does it change?
+❓ RESPONSE PART 2: Ahoy, matey! This banana has a special shape, doesn't it?
+
+Tell me, can ye think of any other things in the world that are shaped like a banana?
+--------------------------------------------------
+
+2026-01-06 16:40:43.108 | INFO     | paixueji_stream:call_paixueji_stream:2061 | [37c96471-80d1-4b2f-a2b0-fbf78b20a310] System-managed mode: using focus_mode=depth
+2026-01-06 16:40:43.109 | INFO     | paixueji_stream:call_paixueji_stream:2063 | [37c96471-80d1-4b2f-a2b0-fbf78b20a310] call_paixueji_stream started | session_id=37c96471-80d1-4b2f-a2b0-fbf78b20a310, age=6, object=onion, level1=plants, level2=useful_plants, level3=None, correct_count=0, status=normal, content_length=30, message_history=1
+2026-01-06 16:40:43.109 | INFO     | paixueji_stream:call_paixueji_stream:2106 | [37c96471-80d1-4b2f-a2b0-fbf78b20a310] Conversation state | correct_count=0, complete=False
+2026-01-06 16:40:43.109 | INFO     | paixueji_stream:call_paixueji_stream:2146 | [37c96471-80d1-4b2f-a2b0-fbf78b20a310] Routing to introduction question
+2026-01-06 16:40:43.109 | INFO     | paixueji_stream:ask_introduction_question_stream:155 | ask_introduction_question_stream started | object=onion, age=6
+2026-01-06 16:40:43.109 | DEBUG    | paixueji_stream:ask_introduction_question_stream:171 | Messages prepared for API | count=3
+2026-01-06 16:40:43.109 | DEBUG    | paixueji_stream:ask_introduction_question_stream:182 | Sending 2 messages to Gemini API
+2026-01-06 16:40:43.109 | DEBUG    | paixueji_stream:ask_introduction_question_stream:199 | Stream object type: generator
+2026-01-06 16:40:46.315 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 1 | length=2, total_length=2
+2026-01-06 16:40:46.352 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 2 | length=9, total_length=11
+2026-01-06 16:40:46.362 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 3 | length=61, total_length=72
+2026-01-06 16:40:46.444 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 4 | length=60, total_length=132
+2026-01-06 16:40:46.504 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 5 | length=31, total_length=163
+2026-01-06 16:40:46.505 | DEBUG    | paixueji_stream:ask_introduction_question_stream:219 | Gemini streaming API does not provide token usage in stream mode
+2026-01-06 16:40:46.505 | DEBUG    | paixueji_stream:ask_introduction_question_stream:238 | Cleaned up stream via del in finally block
+2026-01-06 16:40:46.505 | INFO     | paixueji_stream:ask_introduction_question_stream:243 | ask_introduction_question_stream completed | duration=3.396s, response_length=163
+2026-01-06 16:40:46.505 | INFO     | paixueji_stream:call_paixueji_stream:2796 | [37c96471-80d1-4b2f-a2b0-fbf78b20a310] call_paixueji_stream completed | response_type=introduction, duration=3.396s, total_chunks=5, response_length=163, correct_count=0, complete=False, session_finished=False
+2026-01-06 16:40:46.505 | DEBUG    | paixueji_stream:call_paixueji_stream:2804 | Full response: Ahoy there, matey! Today we be talkin' 'bout a very special plant called an **onion**!
+
+Have ye ever seen an onion before? What does it look like to ye, me hearty?...
+2026-01-06 16:40:46.505 | DEBUG    | paixueji_stream:call_paixueji_stream:2877 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+👤 USER INPUT: (None)
+🧠 CONTEXT: Object='onion' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=None | Correct=None
+💭 REASONING: N/A
+⚡ DECISION: N/A (Reason: N/A)
+🗣️ RESPONSE PART 1: (None)
+❓ RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-06 16:40:58.989 | INFO     | paixueji_stream:call_paixueji_stream:2061 | [37c96471-80d1-4b2f-a2b0-fbf78b20a310] System-managed mode: using focus_mode=depth
+2026-01-06 16:40:58.990 | INFO     | paixueji_stream:call_paixueji_stream:2063 | [37c96471-80d1-4b2f-a2b0-fbf78b20a310] call_paixueji_stream started | session_id=37c96471-80d1-4b2f-a2b0-fbf78b20a310, age=6, object=onion, level1=plants, level2=useful_plants, level3=None, correct_count=0, status=normal, content_length=5, message_history=2
+2026-01-06 16:40:58.990 | INFO     | paixueji_stream:call_paixueji_stream:2106 | [37c96471-80d1-4b2f-a2b0-fbf78b20a310] Conversation state | correct_count=0, complete=False
+2026-01-06 16:40:58.990 | INFO     | paixueji_stream:call_paixueji_stream:2155 | [37c96471-80d1-4b2f-a2b0-fbf78b20a310] Running unified AI validation for answer
+2026-01-06 16:41:00.848 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1141 | [VALIDATE] CONTINUE | new_object=None, engaged=False, correct=False, switch_reasoning=The child's response is too short to determine if they are trying to name a new object or are just stuck. We should continue with the current topic., correctness_reasoning=The child's response 'hello' doesn't describe an onion or its appearance.
+2026-01-06 16:41:00.848 | INFO     | paixueji_stream:call_paixueji_stream:2252 | [37c96471-80d1-4b2f-a2b0-fbf78b20a310] Routing to explanation | is_engaged=False
+2026-01-06 16:41:00.849 | INFO     | paixueji_stream:call_paixueji_stream:2413 | [37c96471-80d1-4b2f-a2b0-fbf78b20a310] Routing to explanation | is_engaged=False
+2026-01-06 16:41:00.849 | INFO     | paixueji_stream:call_paixueji_stream:2520 | [37c96471-80d1-4b2f-a2b0-fbf78b20a310] System-managed: focus_mode=depth, reason=Depth phase: 0/4 questions asked
+2026-01-06 16:41:00.849 | DEBUG    | paixueji_stream:call_paixueji_stream:2528 | [37c96471-80d1-4b2f-a2b0-fbf78b20a310] Streaming response (explanation)
+2026-01-06 16:41:00.849 | INFO     | paixueji_stream:generate_explanation_response_stream:383 | generate_explanation_response_stream started | object=onion, age=6
+2026-01-06 16:41:01.393 | INFO     | paixueji_stream:generate_explanation_response_stream:439 | generate_explanation_response_stream completed | duration=0.544s, length=105
+2026-01-06 16:41:01.393 | DEBUG    | paixueji_stream:call_paixueji_stream:2641 | [37c96471-80d1-4b2f-a2b0-fbf78b20a310] Streaming question
+2026-01-06 16:41:01.393 | INFO     | paixueji_stream:generate_followup_question_stream:844 | generate_followup_question_stream started | object=onion, age=6, is_switch=False
+2026-01-06 16:41:02.019 | INFO     | paixueji_stream:generate_followup_question_stream:901 | generate_followup_question_stream completed | duration=0.626s, length=58
+2026-01-06 16:41:02.019 | INFO     | paixueji_stream:call_paixueji_stream:2796 | [37c96471-80d1-4b2f-a2b0-fbf78b20a310] call_paixueji_stream completed | response_type=explanation, duration=3.029s, total_chunks=6, response_length=164, correct_count=0, complete=False, session_finished=False
+2026-01-06 16:41:02.019 | DEBUG    | paixueji_stream:call_paixueji_stream:2804 | Full response: No worries, matey! An onion is a round plant that grows underground. It has papery layers on the outside! Tell me, matey, what part of the onion do ye think we eat?...
+2026-01-06 16:41:02.019 | DEBUG    | paixueji_stream:call_paixueji_stream:2877 | 
+
+[DEBUG TREE NODE] Turn 1 (EXPLANATION)
+--------------------------------------------------
+👤 USER INPUT: hello
+🧠 CONTEXT: Object='onion' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=False | Correct=False
+💭 REASONING: The child's response 'hello' doesn't describe an onion or its appearance.
+⚡ DECISION: CONTINUE (Reason: The child's response is too short to determine if they are trying to name a new object or are just stuck. We should continue with the current topic.)
+🗣️ RESPONSE PART 1: No worries, matey! An onion is a round plant that grows underground. It has papery layers on the outside!
+❓ RESPONSE PART 2: Tell me, matey, what part of the onion do ye think we eat?
+--------------------------------------------------
+
