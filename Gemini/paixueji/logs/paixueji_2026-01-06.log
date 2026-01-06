@@ -1109,3 +1109,66 @@ Have ye ever seen an onion before? What does it look like to ye, me hearty?...
 ❓ RESPONSE PART 2: Tell me, matey, what part of the onion do ye think we eat?
 --------------------------------------------------
 
+2026-01-06 17:11:42.856 | INFO     | paixueji_stream:call_paixueji_stream:2061 | [aa404945-15fa-4ed0-bf22-e2b34bbbf3a0] System-managed mode: using focus_mode=depth
+2026-01-06 17:11:42.856 | INFO     | paixueji_stream:call_paixueji_stream:2063 | [aa404945-15fa-4ed0-bf22-e2b34bbbf3a0] call_paixueji_stream started | session_id=aa404945-15fa-4ed0-bf22-e2b34bbbf3a0, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2026-01-06 17:11:42.856 | INFO     | paixueji_stream:call_paixueji_stream:2106 | [aa404945-15fa-4ed0-bf22-e2b34bbbf3a0] Conversation state | correct_count=0, complete=False
+2026-01-06 17:11:42.856 | INFO     | paixueji_stream:call_paixueji_stream:2146 | [aa404945-15fa-4ed0-bf22-e2b34bbbf3a0] Routing to introduction question
+2026-01-06 17:11:42.857 | INFO     | paixueji_stream:ask_introduction_question_stream:155 | ask_introduction_question_stream started | object=banana, age=6
+2026-01-06 17:11:42.857 | DEBUG    | paixueji_stream:ask_introduction_question_stream:171 | Messages prepared for API | count=3
+2026-01-06 17:11:42.857 | DEBUG    | paixueji_stream:ask_introduction_question_stream:182 | Sending 2 messages to Gemini API
+2026-01-06 17:11:42.857 | DEBUG    | paixueji_stream:ask_introduction_question_stream:199 | Stream object type: generator
+2026-01-06 17:11:57.911 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 1 | length=2, total_length=2
+2026-01-06 17:11:57.935 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 2 | length=9, total_length=11
+2026-01-06 17:11:57.977 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 3 | length=56, total_length=67
+2026-01-06 17:11:58.039 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 4 | length=50, total_length=117
+2026-01-06 17:11:58.082 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 5 | length=78, total_length=195
+2026-01-06 17:11:58.086 | DEBUG    | paixueji_stream:ask_introduction_question_stream:219 | Gemini streaming API does not provide token usage in stream mode
+2026-01-06 17:11:58.086 | DEBUG    | paixueji_stream:ask_introduction_question_stream:238 | Cleaned up stream via del in finally block
+2026-01-06 17:11:58.086 | INFO     | paixueji_stream:ask_introduction_question_stream:243 | ask_introduction_question_stream completed | duration=15.229s, response_length=195
+2026-01-06 17:11:58.086 | WARNING  | paixueji_stream:ask_introduction_question_stream:249 | Slow LLM call | duration=15.229s exceeded threshold 5.0s
+2026-01-06 17:11:58.086 | INFO     | paixueji_stream:call_paixueji_stream:2796 | [aa404945-15fa-4ed0-bf22-e2b34bbbf3a0] call_paixueji_stream completed | response_type=introduction, duration=15.230s, total_chunks=5, response_length=195, correct_count=0, complete=False, session_finished=False
+2026-01-06 17:11:58.086 | DEBUG    | paixueji_stream:call_paixueji_stream:2804 | Full response: Ahoy there, matey! Today we've got a super-duper yellow treasure to talk about – a banana! 🍌
+
+Now, tell me, what does a banana feel like when you touch it? Is it smooth, bumpy, or something else?...
+2026-01-06 17:11:58.086 | DEBUG    | paixueji_stream:call_paixueji_stream:2877 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+👤 USER INPUT: (None)
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=None | Correct=None
+💭 REASONING: N/A
+⚡ DECISION: N/A (Reason: N/A)
+🗣️ RESPONSE PART 1: (None)
+❓ RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-06 17:12:12.843 | INFO     | paixueji_stream:call_paixueji_stream:2061 | [aa404945-15fa-4ed0-bf22-e2b34bbbf3a0] System-managed mode: using focus_mode=depth
+2026-01-06 17:12:12.843 | INFO     | paixueji_stream:call_paixueji_stream:2063 | [aa404945-15fa-4ed0-bf22-e2b34bbbf3a0] call_paixueji_stream started | session_id=aa404945-15fa-4ed0-bf22-e2b34bbbf3a0, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=5, message_history=2
+2026-01-06 17:12:12.843 | INFO     | paixueji_stream:call_paixueji_stream:2106 | [aa404945-15fa-4ed0-bf22-e2b34bbbf3a0] Conversation state | correct_count=0, complete=False
+2026-01-06 17:12:12.843 | INFO     | paixueji_stream:call_paixueji_stream:2155 | [aa404945-15fa-4ed0-bf22-e2b34bbbf3a0] Running unified AI validation for answer
+2026-01-06 17:12:14.969 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1141 | [VALIDATE] CONTINUE | new_object=None, engaged=False, correct=False, switch_reasoning=The child's response is too short to determine if they are trying to name a new object or are just stuck. We should continue with the current topic., correctness_reasoning=The child's answer 'hello' does not describe the texture of a banana.
+2026-01-06 17:12:14.969 | INFO     | paixueji_stream:call_paixueji_stream:2252 | [aa404945-15fa-4ed0-bf22-e2b34bbbf3a0] Routing to explanation | is_engaged=False
+2026-01-06 17:12:14.969 | INFO     | paixueji_stream:call_paixueji_stream:2413 | [aa404945-15fa-4ed0-bf22-e2b34bbbf3a0] Routing to explanation | is_engaged=False
+2026-01-06 17:12:14.969 | INFO     | paixueji_stream:call_paixueji_stream:2520 | [aa404945-15fa-4ed0-bf22-e2b34bbbf3a0] System-managed: focus_mode=depth, reason=Depth phase: 0/5 questions asked
+2026-01-06 17:12:14.969 | DEBUG    | paixueji_stream:call_paixueji_stream:2528 | [aa404945-15fa-4ed0-bf22-e2b34bbbf3a0] Streaming response (explanation)
+2026-01-06 17:12:14.969 | INFO     | paixueji_stream:generate_explanation_response_stream:383 | generate_explanation_response_stream started | object=banana, age=6
+2026-01-06 17:12:15.504 | INFO     | paixueji_stream:generate_explanation_response_stream:439 | generate_explanation_response_stream completed | duration=0.535s, length=51
+2026-01-06 17:12:15.504 | DEBUG    | paixueji_stream:call_paixueji_stream:2641 | [aa404945-15fa-4ed0-bf22-e2b34bbbf3a0] Streaming question
+2026-01-06 17:12:15.504 | INFO     | paixueji_stream:generate_followup_question_stream:844 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-06 17:12:16.110 | INFO     | paixueji_stream:generate_followup_question_stream:901 | generate_followup_question_stream completed | duration=0.606s, length=96
+2026-01-06 17:12:16.111 | INFO     | paixueji_stream:call_paixueji_stream:2796 | [aa404945-15fa-4ed0-bf22-e2b34bbbf3a0] call_paixueji_stream completed | response_type=explanation, duration=3.267s, total_chunks=6, response_length=148, correct_count=0, complete=False, session_finished=False
+2026-01-06 17:12:16.111 | DEBUG    | paixueji_stream:call_paixueji_stream:2804 | Full response: Ahoy, matey! A banana be smooth, like a shiny coin! Tell me, matey, what do you think happens to a banana when you peel it? What do you find inside?...
+2026-01-06 17:12:16.112 | DEBUG    | paixueji_stream:call_paixueji_stream:2877 | 
+
+[DEBUG TREE NODE] Turn 1 (EXPLANATION)
+--------------------------------------------------
+👤 USER INPUT: hello
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=False | Correct=False
+💭 REASONING: The child's answer 'hello' does not describe the texture of a banana.
+⚡ DECISION: CONTINUE (Reason: The child's response is too short to determine if they are trying to name a new object or are just stuck. We should continue with the current topic.)
+🗣️ RESPONSE PART 1: Ahoy, matey! A banana be smooth, like a shiny coin!
+❓ RESPONSE PART 2: Tell me, matey, what do you think happens to a banana when you peel it? What do you find inside?
+--------------------------------------------------
+
