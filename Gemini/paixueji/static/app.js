@@ -23,6 +23,9 @@ let categoryData = {};
 let detectedObject = null;  // For manual topic switch override
 let systemManagedMode = false;  // System-managed focus mode flag
 let awaitingObjectSelection = false;  // Waiting for object choice flag
+let currentObject = null;  // Current object being discussed
+let currentTone = null;  // Current tone
+let currentFocusMode = null;  // Current focus mode
 
 // DOM elements
 const messagesContainer = document.getElementById('messages');
@@ -123,6 +126,11 @@ async function startConversation() {
     const tone = document.getElementById('assistantTone').value;
     const focusMode = document.getElementById('nextQuestionFocus').value;
     systemManagedMode = (focusMode === 'system_managed');
+
+    // Save state for debug panel
+    currentObject = objectName;
+    currentTone = tone;
+    currentFocusMode = focusMode;
 
     // Save tone preference
     localStorage.setItem('paixueji_tone', tone);
@@ -275,6 +283,7 @@ async function startConversation() {
         // Show debug panel when session starts
         if (sessionId) {
             document.getElementById('debugPanel').style.display = 'block';
+            updateDebugPanel();
         }
 
         // Re-enable send button
@@ -348,6 +357,10 @@ async function sendMessage() {
     // Get focus mode from active dropdown (allows mid-chat switching)
     const activeFocusSelect = document.getElementById('activeFocusMode');
     const focusMode = activeFocusSelect ? activeFocusSelect.value : document.getElementById('nextQuestionFocus').value;
+
+    // Update current focus mode for debug panel
+    currentFocusMode = focusMode;
+    updateDebugPanel();
 
     try {
         console.log('[INFO] Sending message:', text);
@@ -557,10 +570,9 @@ function handleStreamChunk(chunk) {
         // INFINITE MODE: No completion UI - conversation never ends
     }
 
-    // Handle object selection mode (system-managed focus)
-    if (chunk.object_selection_mode && chunk.suggested_objects) {
-        showObjectSelection(chunk.suggested_objects);
-    }
+    // Object selection uses natural language instead of UI buttons
+    // User reads suggested objects in AI response text and types their choice as next message
+    // (Removed showObjectSelection call - no longer using UI panel)
 
     // Handle detected object (AI decided to CONTINUE but detected a new object)
     if (chunk.detected_object_name && chunk.switch_decision_reasoning) {
@@ -570,6 +582,13 @@ function handleStreamChunk(chunk) {
         document.getElementById('switchReasoning').textContent = chunk.switch_decision_reasoning;
         document.getElementById('manualSwitchPanel').style.display = 'block';
         console.log('[INFO] Object detected but not switching:', detectedObject, '| Reasoning:', chunk.switch_decision_reasoning);
+    }
+
+    // Update current object if it changed (from switching)
+    if (chunk.current_object_name && chunk.current_object_name !== currentObject) {
+        currentObject = chunk.current_object_name;
+        updateDebugPanel();
+        console.log('[INFO] Object switched to:', currentObject);
     }
 }
 
@@ -779,6 +798,50 @@ function updateProgressIndicator() {
 
     const percentage = (correctAnswerCount / 4) * 100;
     document.getElementById('progressFill').style.width = percentage + '%';
+
+    // Also update debug panel
+    updateDebugPanel();
+}
+
+/**
+ * Update debug panel with current session state
+ */
+function updateDebugPanel() {
+    // Update session ID
+    const sessionIdElement = document.getElementById('debugSessionId');
+    if (sessionIdElement) {
+        sessionIdElement.textContent = sessionId || '-';
+    }
+
+    // Update current object
+    const objectElement = document.getElementById('debugCurrentObject');
+    if (objectElement) {
+        objectElement.textContent = currentObject || '-';
+    }
+
+    // Update tone
+    const toneElement = document.getElementById('debugTone');
+    if (toneElement) {
+        toneElement.textContent = currentTone ? formatCategoryName(currentTone) : '-';
+    }
+
+    // Update focus mode
+    const focusElement = document.getElementById('debugFocusMode');
+    if (focusElement) {
+        focusElement.textContent = currentFocusMode ? formatFocusName(currentFocusMode) : '-';
+    }
+
+    // Update system managed status
+    const systemManagedElement = document.getElementById('debugSystemManaged');
+    if (systemManagedElement) {
+        systemManagedElement.textContent = systemManagedMode ? 'Yes' : 'No';
+    }
+
+    // Update correct answers count
+    const correctCountElement = document.getElementById('debugCorrectCount');
+    if (correctCountElement) {
+        correctCountElement.textContent = `${correctAnswerCount}/4`;
+    }
 }
 
 /**
@@ -924,6 +987,10 @@ async function forceSwitch() {
         if (result.success) {
             console.log('[INFO] Switch successful:', result);
 
+            // Update current object for debug panel
+            currentObject = result.new_object;
+            updateDebugPanel();
+
             // Add system message to chat
             const systemMsg = addMessage('system', `✨ Switched to ${result.new_object}!`);
             systemMsg.style.background = '#d1fae5';
@@ -955,86 +1022,14 @@ function dismissSwitchPanel() {
     console.log('[INFO] Manual switch panel dismissed');
 }
 
-/**
- * Show object selection panel with choices (system-managed mode)
- * @param {Array<string>} objects - List of objects to choose from
- */
-function showObjectSelection(objects) {
-    const panel = document.getElementById('objectSelectionPanel');
-    const choicesContainer = document.getElementById('objectChoices');
-
-    // Clear previous choices
-    choicesContainer.innerHTML = '';
-
-    // Create button for each object
-    objects.forEach(obj => {
-        const btn = document.createElement('button');
-        btn.textContent = obj;
-        btn.onclick = () => selectObject(obj);
-        btn.style.cssText = 'padding: 10px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;';
-        choicesContainer.appendChild(btn);
-    });
-
-    panel.style.display = 'block';
-    awaitingObjectSelection = true;
-    userInput.disabled = true;  // Disable text input while choosing
-
-    console.log('[INFO] Object selection panel shown with options:', objects);
-}
-
-/**
- * Handle object selection (system-managed mode)
- * @param {string} objectName - Selected object name
- */
-async function selectObject(objectName) {
-    if (!sessionId) {
-        console.error('[ERROR] No session ID for object selection');
-        return;
-    }
-
-    console.log('[INFO] User selected object:', objectName);
-
-    // Hide panel
-    document.getElementById('objectSelectionPanel').style.display = 'none';
-    awaitingObjectSelection = false;
-
-    try {
-        // Send selection to backend
-        const response = await fetch(`${API_BASE}/select-object`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                session_id: sessionId,
-                selected_object: objectName
-            })
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            // Add system message
-            const systemMsg = addMessage('system', `Let's learn about ${objectName}!`);
-            systemMsg.style.background = '#d1fae5';
-            systemMsg.style.borderLeft = '4px solid #10b981';
-            systemMsg.style.padding = '10px';
-            systemMsg.style.margin = '10px 0';
-
-            // Re-enable input
-            userInput.disabled = false;
-            userInput.focus();
-
-            console.log('[INFO] Object selection successful:', objectName);
-        } else {
-            console.error('[ERROR] Object selection failed:', result.error);
-            alert(`Object selection failed: ${result.error}`);
-            userInput.disabled = false;
-        }
-    } catch (error) {
-        console.error('[ERROR] Object selection error:', error);
-        alert('Error selecting object. Please try again.');
-        userInput.disabled = false;
-    }
-}
+// ============================================================================
+// REMOVED: Object Selection UI Functions (showObjectSelection, selectObject)
+// ============================================================================
+// Object selection now uses natural language instead of UI buttons:
+// - AI suggests objects in response text (e.g., "Would you like to learn about cats, dogs, or trees?")
+// - User types their choice as a regular message
+// - Validation detects the SWITCH and processes it through /api/continue
+// ============================================================================
 
 // ============================================================================
 // Flow Tree Debugging Functions
@@ -1094,48 +1089,41 @@ function closeFlowTreeModal() {
 }
 
 /**
- * Download flow tree as both JSON and Mermaid files
+ * Download debug logs for this session
  */
-async function downloadFlowTree() {
+async function downloadDebugLogs() {
     if (!sessionId) {
         alert('No active session');
         return;
     }
 
     try {
-        // Download JSON file
-        const jsonResponse = await fetch(`${API_BASE}/debug/flow-tree/${sessionId}?format=json`);
-        const jsonData = await jsonResponse.json();
+        // Fetch logs from backend
+        const response = await fetch(`${API_BASE}/debug/logs/${sessionId}`);
+        const data = await response.json();
 
-        if (jsonData.success) {
-            // Download JSON
-            const jsonBlob = new Blob([JSON.stringify(jsonData.tree, null, 2)], { type: 'application/json' });
-            const jsonUrl = URL.createObjectURL(jsonBlob);
-            const jsonLink = document.createElement('a');
-            jsonLink.href = jsonUrl;
-            jsonLink.download = `flow-tree-${sessionId.substring(0, 8)}.json`;
-            jsonLink.click();
-            URL.revokeObjectURL(jsonUrl);
-
-            // Download Mermaid diagram
-            const mermaidResponse = await fetch(`${API_BASE}/debug/flow-tree/${sessionId}?format=mermaid`);
-            const mermaidData = await mermaidResponse.json();
-
-            if (mermaidData.success) {
-                const mermaidBlob = new Blob([mermaidData.diagram], { type: 'text/plain' });
-                const mermaidUrl = URL.createObjectURL(mermaidBlob);
-                const mermaidLink = document.createElement('a');
-                mermaidLink.href = mermaidUrl;
-                mermaidLink.download = `flow-tree-${sessionId.substring(0, 8)}.mmd`;
-                mermaidLink.click();
-                URL.revokeObjectURL(mermaidUrl);
-            }
-
-            alert('Downloaded both JSON and Mermaid files!');
+        if (!data.success) {
+            throw new Error(data.error || 'Failed to retrieve logs');
         }
+
+        // Create log file content
+        const logContent = data.logs.join('\n');
+
+        // Download log file
+        const blob = new Blob([logContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `debug-logs-${sessionId.substring(0, 8)}.log`;
+        link.click();
+        URL.revokeObjectURL(url);
+
+        console.log(`[INFO] Downloaded ${data.logs.length} log lines for session ${sessionId.substring(0, 8)}`);
+        alert(`Downloaded debug logs (${data.logs.length} lines)`);
+
     } catch (error) {
         console.error('Download error:', error);
-        alert('Failed to download files');
+        alert(`Failed to download logs: ${error.message}`);
     }
 }
 

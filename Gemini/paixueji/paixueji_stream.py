@@ -61,25 +61,6 @@ def clean_messages_for_api(messages: list[dict]) -> list[dict]:
     return cleaned
 
 
-def extract_previous_question(messages: list[dict]) -> str:
-    """
-    Extract the most recent assistant question from conversation history.
-
-    This is used by response generators that need to reference what question
-    was asked before the child's answer.
-
-    Args:
-        messages: List of conversation messages
-
-    Returns:
-        The most recent assistant message, or empty string if none found
-    """
-    for msg in reversed(messages):
-        if msg.get("role") == "assistant":
-            return msg.get("content", "")
-    return ""
-
-
 def prepare_messages_for_streaming(messages: list[dict], age_prompt: str = "") -> list[dict]:
     """
     Safely prepare messages for streaming API calls without mutating the original list.
@@ -640,22 +621,22 @@ async def generate_topic_switch_response_stream(
     yield ("", token_usage, full_response)
 
 
-async def generate_object_selection_response_stream(
+async def generate_natural_topic_completion_stream(
     messages: list[dict],
-    suggested_objects: list[str],
     current_object: str,
     age: int,
     config: dict,
     client: genai.Client
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
-    Generate ONLY object selection prompt (no questions).
+    Generate response for natural topic completion (after exploring an object deeply).
 
-    This presents 3-4 objects for the child to choose from.
+    This function congratulates the child on exploring the current object and asks
+    what they'd like to explore next. Does NOT provide a list of options - lets them
+    use natural language to choose.
 
     Args:
         messages: Conversation history
-        suggested_objects: List of objects to present
         current_object: Current object being discussed
         age: Child's age
         config: Configuration dict
@@ -665,24 +646,19 @@ async def generate_object_selection_response_stream(
         Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
     """
     start_time = time.time()
-    logger.info(f"generate_object_selection_response_stream started | objects={suggested_objects}, age={age}")
+    logger.info(f"generate_natural_topic_completion_stream started | object={current_object}, age={age}")
 
-    # Build object selection prompt
-    objects_list = ", ".join(suggested_objects[:-1]) + f", or {suggested_objects[-1]}"
-
-    prompt = f"""The child has been learning about {current_object}.
-
-Now it's time to choose something new to explore!
+    prompt = f"""The child has done an excellent job exploring {current_object}!
 
 YOUR TASK:
-1. Warmly acknowledge they've done a great job with {current_object}
-2. Introduce the choice in an exciting way
-3. List the options: {objects_list}
-4. DO NOT ask them to pick (the UI will handle that)
+1. Warmly congratulate them on their exploration of {current_object}
+2. Express excitement about what they've learned
+3. Ask them what they'd like to explore next (let them choose naturally)
+4. Provide a list of options
 5. Match vocabulary to age {age}
 6. Respond naturally (NOT JSON)
+7. Keep it brief and enthusiastic
 
-Example: "You did such an amazing job learning about {current_object}! Now let's pick something new to explore together!"
 """
 
     # Prepare messages
@@ -718,7 +694,7 @@ Example: "You did such an amazing job learning about {current_object}! Now let's
 
     except Exception as e:
         duration = time.time() - start_time
-        logger.error(f"generate_object_selection_response_stream error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        logger.error(f"generate_natural_topic_completion_stream error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
         if full_response:
             yield ("", token_usage, full_response)
         return
@@ -730,7 +706,102 @@ Example: "You did such an amazing job learning about {current_object}! Now let's
                 pass
 
     duration = time.time() - start_time
-    logger.info(f"generate_object_selection_response_stream completed | duration={duration:.3f}s, length={len(full_response)}")
+    logger.info(f"generate_natural_topic_completion_stream completed | duration={duration:.3f}s, length={len(full_response)}")
+
+    # Final yield
+    yield ("", token_usage, full_response)
+
+
+async def generate_explicit_switch_response_stream(
+    messages: list[dict],
+    suggested_objects: list[str],
+    age: int,
+    config: dict,
+    client: genai.Client
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
+    """
+    Generate response for explicit switch requests (e.g., "talk about something else").
+
+    This function is specifically for when the child explicitly asks to switch topics.
+    Unlike generate_object_selection_response_stream, it does NOT congratulate them
+    on exploring the previous object (since they might not have explored it much).
+
+    Args:
+        messages: Conversation history
+        suggested_objects: List of objects to present
+        age: Child's age
+        config: Configuration dict
+        client: Gemini client instance
+
+    Yields:
+        Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
+    """
+    start_time = time.time()
+    logger.info(f"generate_explicit_switch_response_stream started | objects={suggested_objects}, age={age}")
+
+    # Build object selection prompt for explicit switches
+    objects_list = ", ".join(suggested_objects[:-1]) + f", or {suggested_objects[-1]}"
+
+    prompt = f"""The child has explicitly requested to switch topics and explore something new.
+
+YOUR TASK:
+1. Warmly agree to switch topics (e.g., "Sure! That sounds fun!", "Okay, let's talk about something else!")
+2. Introduce the new choices in an exciting way
+3. Present the options: {objects_list}
+4. DO NOT ask any follow-up questions about the previous topic
+5. DO NOT congratulate them on exploring the previous topic
+6. Match vocabulary to age {age}
+7. Respond naturally (NOT JSON)
+8. Keep it brief and enthusiastic
+
+"""
+
+    # Prepare messages
+    messages_to_send = messages + [{"role": "user", "content": prompt}]
+    clean_messages = clean_messages_for_api(messages_to_send)
+
+    # Convert to Gemini format
+    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
+
+    # Stream from LLM
+    full_response = ""
+    token_usage = None
+    stream = None
+
+    try:
+        gen_config = GenerateContentConfig(
+            temperature=config.get("temperature", 0.3),
+            max_output_tokens=300,
+            system_instruction=system_instruction if system_instruction else None
+        )
+
+        stream = client.models.generate_content_stream(
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config
+        )
+
+        # Yield chunks
+        for chunk in stream:
+            if chunk.text:
+                full_response += chunk.text
+                yield (chunk.text, None, full_response)
+
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(f"generate_explicit_switch_response_stream error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        if full_response:
+            yield ("", token_usage, full_response)
+        return
+    finally:
+        if stream is not None:
+            try:
+                del stream
+            except:
+                pass
+
+    duration = time.time() - start_time
+    logger.info(f"generate_explicit_switch_response_stream completed | duration={duration:.3f}s, length={len(full_response)}")
 
     # Final yield
     yield ("", token_usage, full_response)
@@ -837,29 +908,20 @@ async def generate_followup_question_stream(
 # VALIDATION & DECISION FUNCTIONS
 # ============================================================================
 
-def decide_topic_switch_with_validation(assistant, child_answer: str, object_name: str, age: int, focus_mode: str | None = None):
+def decide_topic_switch_with_validation(assistant, child_answer: str, object_name: str, age: int, focus_mode: str | None = None, is_awaiting_topic_selection: bool = False):
     """
     Unified AI validation: Checks engagement, factual correctness, AND topic switching in single call.
-
-    This function replaces both is_answer_reasonable() and decide_topic_switch() to provide
-    a single source of truth for all answer validation.
 
     Args:
         assistant: PaixuejiAssistant instance
         child_answer: The child's answer text
         object_name: Current object being discussed
         age: Child's age
-        focus_mode: Current focus mode (for context only, NOT decision rules)
+        focus_mode: Current focus mode
+        is_awaiting_topic_selection: Whether we are waiting for user to pick a topic from a list
 
     Returns:
-        dict: {
-            'decision': 'SWITCH' | 'CONTINUE',
-            'new_object': str | None,
-            'switching_reasoning': str,  # Why switch or continue
-            'is_engaged': bool,  # Is child trying to answer?
-            'is_factually_correct': bool,  # Is answer factually accurate? (only if engaged)
-            'correctness_reasoning': str  # Why answer is right or wrong
-        }
+        dict: Decision result
     """
     # Extract the last question the model asked from conversation history
     conversation_history = assistant.conversation_history
@@ -874,6 +936,27 @@ def decide_topic_switch_with_validation(assistant, child_answer: str, object_nam
     if not last_model_question:
         last_model_question = "Unknown (first interaction)"
 
+    # Add specific instructions for topic selection state
+    topic_selection_instructions = ""
+    if is_awaiting_topic_selection:
+        topic_selection_instructions = """
+SPECIAL CONTEXT: AWAITING TOPIC SELECTION
+The previous message offered the child a choice of topics (e.g., "A, B, or C?").
+
+RULES FOR THIS STATE:
+1. **Uncertainty / Request to Pick**: If the child expresses uncertainty (e.g., "not sure", "don't know", "no idea") or asks YOU to pick (e.g., "you decide", "surprise me"):
+   - **DECISION: SWITCH**
+   - **new_object**: Pick one of the valid options from the previous message (e.g., "Apple").
+   - **switching_reasoning**: "Child expressed uncertainty or asked me to pick."
+
+2. **Valid Choice**: If child names a valid object:
+   - **DECISION: SWITCH**
+   - **new_object**: The object they named.
+
+3. **New Topic**: If child talks about something else entirely:
+   - **DECISION: SWITCH** (to their new topic).
+"""
+
     # Build contextual THREE-PART validation prompt
     decision_prompt = f"""You are an educational AI helping a {age}-year-old child learn through conversation.
 
@@ -882,6 +965,7 @@ CONTEXT:
 - Focus Mode: {focus_mode or 'depth'} (how we ask questions, NOT a validation rule)
 - Last Question You Asked: "{last_model_question}"
 - Child's Answer: "{child_answer}"
+{topic_selection_instructions}
 
 YOUR THREE-PART TASK:
 You must evaluate THREE aspects of the child's answer in one evaluation:
@@ -915,16 +999,6 @@ EVALUATION CRITERIA:
 - Accept partial correctness (e.g., "apples grow outside" is TRUE for age 3-4)
 - Be strict on obvious contradictions (e.g., "sun is cold" → FALSE)
 
-EXAMPLES:
-Q: "What color is the apple?" A: "Red" → ENGAGED=true, CORRECT=true
-Q: "What color is the apple?" A: "Blue" → ENGAGED=true, CORRECT=false (apples aren't blue)
-Q: "What shape is banana?" A: "Long and curved" → ENGAGED=true, CORRECT=true
-Q: "What shape is banana?" A: "Round like ball" → ENGAGED=true, CORRECT=false (wrong shape)
-Q: "Can you name another red fruit?" A: "Strawberry" → ENGAGED=true, CORRECT=true
-Q: "Can you name another red fruit?" A: "Banana" → ENGAGED=true, CORRECT=false (banana is yellow)
-Q: "What shape is banana?" A: "Apples have the same shape" → ENGAGED=true, CORRECT=false (different shapes)
-Q: "What color is the apple?" A: "idk" → ENGAGED=false, CORRECT=N/A
-
 ---
 
 PART 3: TOPIC SWITCHING
@@ -932,11 +1006,15 @@ Should we switch to a new object or continue with current one?
 
 SWITCHING GUIDELINES:
 1. **Invited Object Naming**: I asked child to name new object and they did → SWITCH
-2. **Off-Topic Response**: Child answered with different object instead of answering → SWITCH
-3. **Explicit Request**: Child says "let's talk about X" → SWITCH
-4. **Comparison/Description**: Child mentions object in passing ("red like cherry") → CONTINUE
-5. **Normal Answer**: Child answered my question → CONTINUE
-6. **Stuck**: Child says "I don't know" → CONTINUE
+2. **Direct Answer**: If the child's noun is the **direct answer** to your question, do **NOT** switch. (e.g., Q: "What do monkeys eat?" A: "Bananas" → CONTINUE).
+3. **Categories & Parts**: If the child names the category (e.g., "Banana is a **fruit**") or a part (e.g., "**skin**", "**seeds**") of the current object → **CONTINUE**.
+4. **True Off-Topic**: Only SWITCH if the child **ignores** your question to talk about a completely different, unrelated object.
+5. **Explicit Request**: Child says "let's talk about X" → SWITCH
+6. **Comparison/Description**: Child mentions object in passing ("red like cherry") → CONTINUE
+7. **Stuck**: Child says "I don't know" → CONTINUE (UNLESS "SPECIAL CONTEXT" above applies)
+
+CRITICAL CHECK:
+Before deciding SWITCH, ask: "Is this new word just the *answer* to my question?" If yes, decision MUST be **CONTINUE**.
 
 VALIDATION (always apply):
 - Only SWITCH if new object is real and concrete (not abstract)
@@ -969,7 +1047,19 @@ A: "Red"
     "correctness_reasoning": "Red is a common and correct color for apples."
 }}
 
-Example 2: Wrong answer, no switching
+Example 2: Noun as Answer (NO SWITCH)
+Q: "What do we find inside the skin?"
+A: "We find fruit"
+→ {{
+    "decision": "CONTINUE",
+    "new_object": null,
+    "switching_reasoning": "'Fruit' is the answer to the question 'what is inside', not a request to change topics.",
+    "is_engaged": true,
+    "is_factually_correct": true,
+    "correctness_reasoning": "The inside of the object is indeed fruit."
+}}
+
+Example 3: Wrong answer, no switching
 Q: "What color is the apple?"
 A: "Blue"
 → {{
@@ -981,7 +1071,7 @@ A: "Blue"
     "correctness_reasoning": "Apples are not blue. Common colors are red, green, or yellow."
 }}
 
-Example 3: Correct answer WITH switching (invited naming)
+Example 4: Correct answer WITH switching (invited naming)
 Q: "Can you name another red fruit?"
 A: "Strawberry"
 → {{
@@ -993,7 +1083,7 @@ A: "Strawberry"
     "correctness_reasoning": "Strawberries are indeed red fruits."
 }}
 
-Example 4: Wrong answer WITH attempted switching (but incorrect)
+Example 5: Wrong answer WITH attempted switching (but incorrect)
 Q: "Can you name another red fruit?"
 A: "Banana"
 → {{
@@ -1005,7 +1095,7 @@ A: "Banana"
     "correctness_reasoning": "Bananas are yellow, not red. Child confused the color."
 }}
 
-Example 5: Stuck/Not engaged
+Example 6: Stuck/Not engaged
 Q: "What color is the apple?"
 A: "idk"
 → {{
@@ -1017,7 +1107,7 @@ A: "idk"
     "correctness_reasoning": "Child didn't attempt an answer."
 }}
 
-Example 6: Wrong shape comparison (from user's log)
+Example 7: Wrong shape comparison (from user's log)
 Q: "Can you think of something else that's shaped like a banana, all long and curved?"
 A: "Apples have the same shape"
 → {{
@@ -2058,12 +2148,18 @@ async def call_paixueji_stream(
         # Follow-up question or explanation - Use SINGLE AI VALIDATION for all answers
         logger.info(f"[{session_id}] Running unified AI validation for answer")
 
+        # Check conversation state for special handling
+        is_awaiting_topic_selection = (assistant.state.value == "awaiting_topic_selection")
+        if is_awaiting_topic_selection:
+            logger.info(f"[{session_id}] Special validation context: AWAITING_TOPIC_SELECTION")
+
         validation_result = decide_topic_switch_with_validation(
             assistant=assistant,
             child_answer=content,
             object_name=object_name,
             age=age or 6,
-            focus_mode=focus_mode
+            focus_mode=focus_mode,
+            is_awaiting_topic_selection=is_awaiting_topic_selection
         )
 
         is_engaged = validation_result.get('is_engaged')
@@ -2114,17 +2210,185 @@ async def call_paixueji_stream(
         if should_switch and not validation_result.get('new_object'):
             # Trigger object selection flow immediately
             suggested_objects = generate_object_suggestions(assistant, config, client, age or 6)
-            response_generator = generate_object_selection_response_stream(
+            
+            # STATE UPDATE: We are now offering choices
+            from paixueji_assistant import ConversationState
+            assistant.state = ConversationState.AWAITING_TOPIC_SELECTION
+            
+            response_generator = generate_explicit_switch_response_stream(
                 messages=prepared_messages,
                 suggested_objects=suggested_objects,
-                current_object=object_name,
                 age=age or 6,
                 config=config,
                 client=client
             )
-            response_type = "object_selection"
-            object_selection_mode = True
-            logger.info(f"[{session_id}] Routing to object selection (explicit switch requested)")
+            response_type = "explicit_switch"
+            logger.info(f"[{session_id}] Routing to explicit switch response")
+
+        elif not is_engaged:
+            # PATH 1: STUCK/UNCLEAR ("I don't know", unclear answers)
+            # STATE UPDATE: Still asking questions about same object
+            from paixueji_assistant import ConversationState
+            assistant.state = ConversationState.ASKING_QUESTION
+            
+            response_generator = generate_explanation_response_stream(
+                messages=prepared_messages,
+                child_answer=content,
+                object_name=object_name,
+                previous_question=previous_question,
+                age=age or 6,
+                category_prompt=category_prompt,
+                age_prompt=age_prompt,
+                config=config,
+                client=client
+            )
+            response_type = "explanation"
+            logger.info(f"[{session_id}] Routing to explanation | is_engaged=False")
+
+        elif is_factually_correct:
+            if should_switch and validation_result.get('new_object'):
+                # PATH 2A: TOPIC SWITCH
+                new_object = validation_result['new_object']
+                previous_object = object_name
+
+                # Update object in assistant and reset focus state for new object
+                if assistant.system_managed_focus:
+                    assistant.reset_object_state(new_object)
+                else:
+                    assistant.object_name = new_object
+                
+                object_name = new_object
+                new_object_name = new_object
+                switch_decision_reasoning = validation_result.get('switching_reasoning')
+                
+                # STATE UPDATE: New object, back to asking questions
+                from paixueji_assistant import ConversationState
+                assistant.state = ConversationState.ASKING_QUESTION
+
+                # Classify new object (background with timeout)
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as executor:
+                    future = executor.submit(assistant.classify_object_sync, new_object)
+                    try:
+                        future.result(timeout=1.0)
+                        logger.info(f"[{session_id}] Classification completed for {new_object}")
+                    except concurrent.futures.TimeoutError:
+                        logger.warning(f"[{session_id}] Classification timeout for {new_object}")
+
+                # Rebuild category prompts for new object
+                category_prompt = assistant.get_category_prompt(
+                    assistant.level1_category,
+                    assistant.level2_category,
+                    assistant.level3_category
+                )
+                level1_category = assistant.level1_category
+                level2_category = assistant.level2_category
+                level3_category = assistant.level3_category
+
+                response_generator = generate_topic_switch_response_stream(
+                    messages=prepared_messages,
+                    previous_object=previous_object,
+                    new_object=new_object,
+                    age=age or 6,
+                    config=config,
+                    client=client
+                )
+                response_type = "topic_switch"
+                logger.info(f"[{session_id}] Routing to topic switch | {previous_object} -> {new_object}")
+
+            else:
+                # PATH 2B: CORRECT ANSWER (no switch)
+                # STATE UPDATE: Back to asking questions
+                from paixueji_assistant import ConversationState
+                assistant.state = ConversationState.ASKING_QUESTION
+                
+                response_generator = generate_feedback_response_stream(
+                    messages=prepared_messages,
+                    child_answer=content,
+                    object_name=object_name,
+                    age=age or 6,
+                    config=config,
+                    client=client
+                )
+                response_type = "feedback"
+                logger.info(f"[{session_id}] Routing to feedback | is_engaged=True, is_factually_correct=True")
+
+        else:
+            # PATH 3: WRONG + ENGAGED
+            # STATE UPDATE: Back to asking questions
+            from paixueji_assistant import ConversationState
+            assistant.state = ConversationState.ASKING_QUESTION
+            
+            response_generator = generate_correction_response_stream(
+                messages=prepared_messages,
+                child_answer=content,
+                object_name=object_name,
+                previous_question=previous_question,
+                correctness_reasoning=correctness_reasoning,
+                age=age or 6,
+                config=config,
+                client=client
+            )
+            response_type = "correction"
+            logger.info(f"[{session_id}] Routing to correction | is_engaged=True, is_factually_correct=False")
+
+        is_engaged = validation_result.get('is_engaged')
+        is_factually_correct = validation_result.get('is_factually_correct')
+        correctness_reasoning = validation_result.get('correctness_reasoning')
+        switch_decision_reasoning = validation_result.get('switching_reasoning')
+
+        # NEW: System-managed focus tracking
+        if assistant.system_managed_focus:
+            # Track DEPTH questions (only for engaged answers)
+            if is_engaged and assistant.current_focus_mode == 'depth':
+                assistant.depth_questions_count += 1
+                logger.info(f"[SYSTEM_MANAGED] Depth: {assistant.depth_questions_count}/{assistant.depth_target}")
+
+            # Handle wrong WIDTH answers
+            # Include 'not is_engaged' to handle "I don't know" as a wrong answer that triggers a switch
+            if assistant.current_focus_mode.startswith('width_') and (not is_engaged or not is_factually_correct):
+                width_result = handle_width_wrong_answer(assistant)
+                logger.info(f"[SYSTEM_MANAGED] WIDTH wrong: {width_result}")
+
+                # Update local variables if mode changed so response uses new strategy
+                if width_result.get('switch_category'):
+                    focus_mode = width_result['new_focus_mode']
+                    focus_prompt = assistant.get_focus_prompt(focus_mode)
+                    logger.info(f"[SYSTEM_MANAGED] Switched focus to {focus_mode} for immediate response")
+
+            # Reset wrong count on correct WIDTH answer
+            if assistant.current_focus_mode.startswith('width_') and is_factually_correct:
+                assistant.width_wrong_count = 0
+                logger.info(f"[SYSTEM_MANAGED] Correct WIDTH answer, reset count")
+
+        # Capture validation in tree
+        if current_node:
+            current_node.validation = {
+                "is_engaged": is_engaged,
+                "is_factually_correct": is_factually_correct,
+                "correctness_reasoning": correctness_reasoning
+            }
+
+        # Check for explicit switch decision
+        should_switch = validation_result.get('decision') == 'SWITCH'
+
+        # ROUTING: Determine response generator based on validation
+        response_generator = None
+        previous_question = extract_previous_question(prepared_messages)
+
+        # Handle explicit request to switch without a specific object named
+        if should_switch and not validation_result.get('new_object'):
+            # Trigger object selection flow immediately
+            suggested_objects = generate_object_suggestions(assistant, config, client, age or 6)
+            response_generator = generate_explicit_switch_response_stream(
+                messages=prepared_messages,
+                suggested_objects=suggested_objects,
+                age=age or 6,
+                config=config,
+                client=client
+            )
+            response_type = "explicit_switch"
+            logger.info(f"[{session_id}] Routing to explicit switch response")
 
         elif not is_engaged:
             # PATH 1: STUCK/UNCLEAR ("I don't know", unclear answers)
@@ -2231,20 +2495,18 @@ async def call_paixueji_stream(
         # NEW: System-managed focus mode decision (Move BEFORE response generation)
         # This ensures the frontend gets the correct focus mode tag on the very first chunk
         skip_question_generation = False
-        object_selection_mode = False
+        natural_topic_completion = False
         suggested_objects = None
 
         if assistant.system_managed_focus:
             focus_decision = decide_next_focus_mode(assistant)
 
             if focus_decision['focus_mode'] == 'object_selection':
-                # Generate object selection response instead of question
-                suggested_objects = generate_object_suggestions(assistant, config, client, age or 6)
-                
-                # Flag to use object selection generator later
-                object_selection_mode = True
-                response_type = "object_selection" # Update response type if this overrides
-                logger.info(f"[{session_id}] System-managed: object selection mode triggered")
+                # Natural topic completion: congratulate and ask what they want next
+                # No selection UI - let them use natural language
+                natural_topic_completion = True
+                response_type = "natural_topic_completion"
+                logger.info(f"[{session_id}] System-managed: natural topic completion triggered")
             else:
                 # Update focus mode for BOTH response and question generation
                 focus_mode = focus_decision['focus_mode']
@@ -2286,6 +2548,8 @@ async def call_paixueji_stream(
                         detected_object_name=detected_object_name,
                         switch_decision_reasoning=switch_decision_reasoning,
                         response_type=response_type,
+                        suggested_objects=suggested_objects,
+                        object_selection_mode=bool(suggested_objects),
                         system_focus_mode=assistant.current_focus_mode if assistant.system_managed_focus else None,
                         depth_progress=f"{assistant.depth_questions_count}/{assistant.depth_target}" if assistant.system_managed_focus else None
                     )
@@ -2318,6 +2582,8 @@ async def call_paixueji_stream(
                 detected_object_name=detected_object_name,
                 switch_decision_reasoning=switch_decision_reasoning,
                 response_type=response_type,
+                suggested_objects=suggested_objects,
+                object_selection_mode=bool(suggested_objects),
                 system_focus_mode=assistant.current_focus_mode if assistant.system_managed_focus else None,
                 depth_progress=f"{assistant.depth_questions_count}/{assistant.depth_target}" if assistant.system_managed_focus else None
             )
@@ -2328,22 +2594,28 @@ async def call_paixueji_stream(
         if full_response_text:
             question_messages.append({"role": "assistant", "content": full_response_text})
 
-        # Check if object selection mode triggered (logic moved up)
-        if object_selection_mode:
-             # Use object selection response generator
-                question_generator = generate_object_selection_response_stream(
-                    messages=question_messages,
-                    suggested_objects=suggested_objects,
-                    current_object=object_name,
-                    age=age or 6,
-                    config=config,
-                    client=client
-                )
+        # Check if this is an explicit switch request (no follow-up question needed)
+        if response_type == "explicit_switch":
+            # For explicit switches, the response already contains the object selection
+            # We don't need to generate a follow-up question
+            question_generator = None
+            logger.info(f"[{session_id}] Skipping question generation for explicit switch")
 
+        # Check if natural topic completion triggered (system-managed)
+        elif natural_topic_completion:
+            # Natural completion: congratulate and ask what they want to explore next
+            question_generator = generate_natural_topic_completion_stream(
+                messages=question_messages,
+                current_object=object_name,
+                age=age or 6,
+                config=config,
+                client=client
+            )
+            logger.info(f"[{session_id}] Using natural topic completion (no selection UI)")
 
         # ALWAYS generate follow-up question (for all non-introduction turns)
         # Now using the updated history including the response
-        if not object_selection_mode:
+        else:
             question_generator = generate_followup_question_stream(
                 messages=question_messages,
                 object_name=object_name,  # Updated object if switched
@@ -2357,79 +2629,84 @@ async def call_paixueji_stream(
                 is_topic_switch=should_switch
             )
 
-        # Stream question generator
-        try:
-            logger.debug(f"[{session_id}] Streaming question")
-            async for chunk_data in question_generator:
-                text_chunk, usage, question_so_far = chunk_data
-                full_question_text = question_so_far
+        # Stream question generator (skip if None for explicit switches)
+        if question_generator is not None:
+            try:
+                logger.debug(f"[{session_id}] Streaming question")
+                async for chunk_data in question_generator:
+                    text_chunk, usage, question_so_far = chunk_data
+                    full_question_text = question_so_far
 
-                if text_chunk:
-                    sequence_number += 1
-                    yield StreamChunk(
-                        response=text_chunk,
-                        session_finished=False,
-                        duration=0.0,
-                        token_usage=None,
-                        finish=False,
-                        sequence_number=sequence_number,
-                        timestamp=time.time(),
-                        session_id=session_id,
-                        request_id=request_id,
-                        is_stuck=False,
-                        correct_answer_count=correct_answer_count,
-                        conversation_complete=False,
-                        focus_mode=focus_mode,
-                        is_correct=is_engaged and is_factually_correct if is_engaged is not None else None,
-                        is_engaged=is_engaged,
-                        is_factually_correct=is_factually_correct,
-                        correctness_reasoning=correctness_reasoning if is_factually_correct == False else None,
-                        new_object_name=new_object_name,
-                        detected_object_name=detected_object_name,
-                        switch_decision_reasoning=switch_decision_reasoning,
-                        response_type="followup_question",
-                        object_selection_mode=object_selection_mode,
-                        suggested_objects=suggested_objects,
-                        system_focus_mode=assistant.current_focus_mode if assistant.system_managed_focus else None,
-                        depth_progress=f"{assistant.depth_questions_count}/{assistant.depth_target}" if assistant.system_managed_focus else None
-                    )
+                    if text_chunk:
+                        sequence_number += 1
+                        yield StreamChunk(
+                            response=text_chunk,
+                            session_finished=False,
+                            duration=0.0,
+                            token_usage=None,
+                            finish=False,
+                            sequence_number=sequence_number,
+                            timestamp=time.time(),
+                            session_id=session_id,
+                            request_id=request_id,
+                            is_stuck=False,
+                            correct_answer_count=correct_answer_count,
+                            conversation_complete=False,
+                            focus_mode=focus_mode,
+                            is_correct=is_engaged and is_factually_correct if is_engaged is not None else None,
+                            is_engaged=is_engaged,
+                            is_factually_correct=is_factually_correct,
+                            correctness_reasoning=correctness_reasoning if is_factually_correct == False else None,
+                            new_object_name=new_object_name,
+                            detected_object_name=detected_object_name,
+                            switch_decision_reasoning=switch_decision_reasoning,
+                            response_type="followup_question",
+                            suggested_objects=suggested_objects,
+                            object_selection_mode=bool(suggested_objects),
+                            system_focus_mode=assistant.current_focus_mode if assistant.system_managed_focus else None,
+                            depth_progress=f"{assistant.depth_questions_count}/{assistant.depth_target}" if assistant.system_managed_focus else None
+                        )
 
-        except Exception as e:
-            logger.error(f"[{session_id}] Question generation failed | error={str(e)}", exc_info=True)
-            # Fallback question
-            fallback_question = f"What else can you tell me about {object_name}?"
-            full_question_text = fallback_question
-            sequence_number += 1
-            yield StreamChunk(
-                response=fallback_question,
-                session_finished=False,
-                duration=0.0,
-                token_usage=None,
-                finish=False,
-                sequence_number=sequence_number,
-                timestamp=time.time(),
-                session_id=session_id,
-                request_id=request_id,
-                is_stuck=False,
-                correct_answer_count=correct_answer_count,
-                conversation_complete=False,
-                focus_mode=focus_mode,
-                is_correct=is_engaged and is_factually_correct if is_engaged is not None else None,
-                is_engaged=is_engaged,
-                is_factually_correct=is_factually_correct,
-                correctness_reasoning=correctness_reasoning if is_factually_correct == False else None,
-                new_object_name=new_object_name,
-                detected_object_name=detected_object_name,
-                switch_decision_reasoning=switch_decision_reasoning,
-                response_type="followup_question",
-                object_selection_mode=False,
-                suggested_objects=None,
-                system_focus_mode=assistant.current_focus_mode if assistant.system_managed_focus else None,
-                depth_progress=f"{assistant.depth_questions_count}/{assistant.depth_target}" if assistant.system_managed_focus else None
-            )
+            except Exception as e:
+                logger.error(f"[{session_id}] Question generation failed | error={str(e)}", exc_info=True)
+                # Fallback question
+                fallback_question = f"What else can you tell me about {object_name}?"
+                full_question_text = fallback_question
+                sequence_number += 1
+                yield StreamChunk(
+                    response=fallback_question,
+                    session_finished=False,
+                    duration=0.0,
+                    token_usage=None,
+                    finish=False,
+                    sequence_number=sequence_number,
+                    timestamp=time.time(),
+                    session_id=session_id,
+                    request_id=request_id,
+                    is_stuck=False,
+                    correct_answer_count=correct_answer_count,
+                    conversation_complete=False,
+                    focus_mode=focus_mode,
+                    is_correct=is_engaged and is_factually_correct if is_engaged is not None else None,
+                    is_engaged=is_engaged,
+                    is_factually_correct=is_factually_correct,
+                    correctness_reasoning=correctness_reasoning if is_factually_correct == False else None,
+                    new_object_name=new_object_name,
+                    detected_object_name=detected_object_name,
+                    switch_decision_reasoning=switch_decision_reasoning,
+                    response_type="followup_question",
+                    suggested_objects=suggested_objects,
+                    object_selection_mode=bool(suggested_objects),
+                    system_focus_mode=assistant.current_focus_mode if assistant.system_managed_focus else None,
+                    depth_progress=f"{assistant.depth_questions_count}/{assistant.depth_target}" if assistant.system_managed_focus else None
+                )
 
         # Combine response and question for conversation history
-        full_response = full_response_text + " " + full_question_text
+        # For explicit switches, there's no follow-up question, so just use the response
+        if full_question_text:
+            full_response = full_response_text + " " + full_question_text
+        else:
+            full_response = full_response_text
         prepared_messages.append({"role": "assistant", "content": full_response})
 
         # Set stream_generator to None to skip old streaming logic

@@ -25,6 +25,7 @@ class ConversationState(Enum):
     INTRODUCTION = "introduction"
     ASKING_QUESTION = "asking_question"
     AWAITING_ANSWER = "awaiting_answer"
+    AWAITING_TOPIC_SELECTION = "awaiting_topic_selection"
     COMPLETION = "completion"
 
 

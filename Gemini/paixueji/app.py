@@ -848,79 +848,74 @@ def force_switch():
         }), 500
 
 
-@app.route('/api/select-object', methods=['POST'])
-def select_object():
+@app.route('/api/debug/logs/<session_id>', methods=['GET'])
+def get_session_logs(session_id):
     """
-    Handle user's object selection in system-managed mode.
+    Retrieve debug logs for a specific session.
 
-    Request body:
-        {
-            "session_id": "uuid-string",
-            "selected_object": "ObjectName"
-        }
+    Args:
+        session_id: Session ID to retrieve logs for
 
     Response:
-        {
-            "success": true,
-            "object_name": "banana",
-            "message": "Switched to banana"
-        }
+        - success: True/False
+        - logs: List of log lines for this session
+        - error: Error message if failed
     """
-    data = request.get_json()
+    import os
+    from datetime import datetime
 
-    if not data:
-        return jsonify({
-            "success": False,
-            "error": "Request body must be JSON"
-        }), 400
-
-    session_id = data.get('session_id')
-    selected_object = data.get('selected_object')
-
-    if not session_id or not selected_object:
-        return jsonify({
-            "success": False,
-            "error": "Missing required fields"
-        }), 400
-
-    assistant = sessions.get(session_id)
-
-    if not assistant:
+    if session_id not in sessions:
         return jsonify({
             "success": False,
             "error": "Session not found"
         }), 404
 
     try:
-        # Reset object state for new object
-        assistant.reset_object_state(selected_object)
+        # Get today's log file
+        today = datetime.now().strftime('%Y-%m-%d')
+        log_file_path = f"logs/paixueji_{today}.log"
 
-        # Classify new object (background with timeout)
-        import concurrent.futures
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            future = executor.submit(assistant.classify_object_sync, selected_object)
-            try:
-                future.result(timeout=1.0)
-                print(f"[OBJECT_SELECTION] Classification completed for {selected_object}")
-            except concurrent.futures.TimeoutError:
-                print(f"[OBJECT_SELECTION] Classification timeout for {selected_object}")
+        if not os.path.exists(log_file_path):
+            return jsonify({
+                "success": False,
+                "error": f"Log file not found: {log_file_path}"
+            }), 404
 
-        print(f"[OBJECT_SELECTION] User selected: {selected_object}")
+        # Read log file and filter by session ID
+        session_logs = []
+        with open(log_file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                # Check if line contains the session ID (first 8 chars)
+                if session_id[:8] in line:
+                    session_logs.append(line.rstrip('\n'))
+
+        print(f"[INFO] Retrieved {len(session_logs)} log lines for session {session_id[:8]}...")
 
         return jsonify({
             "success": True,
-            "object_name": selected_object,
-            "message": f"Switched to {selected_object}"
+            "logs": session_logs,
+            "session_id": session_id,
+            "log_file": log_file_path
         })
 
     except Exception as e:
-        print(f"[ERROR] Object selection error: {e}")
+        print(f"[ERROR] Error retrieving logs: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({
             "success": False,
             "error": str(e)
         }), 500
+
+
+# ============================================================================
+# REMOVED: /api/select-object endpoint
+# ============================================================================
+# Object selection now uses natural language instead of API endpoint:
+# - AI suggests objects in response text through /api/continue
+# - User types their choice as a regular message
+# - Validation detects the SWITCH and processes it through normal flow
+# ============================================================================
 
 
 def async_gen_to_sync(async_gen, loop):
