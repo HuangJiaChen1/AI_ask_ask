@@ -136,3 +136,114 @@ class ConversationFlowTree:
             "node_count": len(self.nodes),
             "nodes": nodes_data
         }
+    
+    def generate_text_report(self) -> str:
+        """
+        Generate a human-readable text report of the conversation flow for debugging.
+        Replacing raw server logs with a structured narrative of logic and state.
+        """
+        lines = []
+        
+        # --- HEADER ---
+        lines.append("=" * 80)
+        lines.append(f"📄 PAIXUEJI DEBUG LOG")
+        lines.append(f"Session ID: {self.session_id}")
+        lines.append(f"Generated:  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        # Format Metadata nicely
+        meta = self.metadata or {}
+        lines.append("-" * 80)
+        lines.append(f"INITIAL CONFIGURATION:")
+        lines.append(f"• Age:    {meta.get('child_age', 'N/A')}")
+        lines.append(f"• Object: {meta.get('initial_object', 'N/A')}")
+        lines.append(f"• Tone:   {meta.get('tone', 'N/A')}")
+        lines.append(f"• Focus:  {meta.get('initial_focus', 'N/A')}")
+        lines.append("=" * 80)
+        lines.append("")
+
+        # --- NODES (TURNS) ---
+        for node in self.nodes:
+            # Timestamp relative to conversation start (if possible) or absolute
+            ts = datetime.fromtimestamp(node.timestamp).strftime('%H:%M:%S')
+            
+            lines.append(f"[TURN {node.turn_number}] {node.type.upper()} ({ts})")
+            lines.append("-" * 80)
+
+            # 1. INPUT & CONTEXT
+            # Show what the system 'knew' before processing
+            sb = node.state_before or {}
+            ctx_info = [
+                f"Object: {sb.get('object_name')}",
+                f"Focus: {sb.get('focus_mode')}",
+                f"Score: {sb.get('correct_answer_count')}"
+            ]
+            lines.append(f"🧠 CONTEXT:  {' | '.join(ctx_info)}")
+            
+            input_text = node.user_input if node.user_input else "(System Trigger / Start)"
+            lines.append(f"👤 INPUT:    {input_text}")
+            lines.append("")
+
+            # 2. LOGIC (The "Why")
+            # Combine Validation and Decision to show the thought process
+            val = node.validation or {}
+            dec = node.decision or {}
+            
+            if val or dec:
+                lines.append("🔍 LOGIC ANALYSIS:")
+                
+                # Validation Details
+                if val:
+                    is_engaged = val.get('is_engaged')
+                    is_correct = val.get('is_factually_correct')
+                    
+                    status = "UNKNOWN"
+                    if is_engaged is False: status = "❌ STUCK / NOT ENGAGED"
+                    elif is_correct is True: status = "✅ CORRECT"
+                    elif is_correct is False: status = "⚠️ WRONG"
+                    
+                    lines.append(f"   • Validation: {status}")
+                    if val.get('correctness_reasoning'):
+                        lines.append(f"   • Reasoning:  {val.get('correctness_reasoning')}")
+
+                # Decision Details (Switching)
+                if dec:
+                    d_type = dec.get('decision_type', 'N/A')
+                    lines.append(f"   • Decision:   {d_type}")
+                    
+                    if dec.get('detected_object'):
+                        lines.append(f"   • Detected:   {dec.get('detected_object')}")
+                    
+                    if dec.get('switch_reasoning'):
+                        lines.append(f"   • Reasoning:  {dec.get('switch_reasoning')}")
+                lines.append("")
+
+            # 3. OUTPUT (The Result)
+            lines.append("🤖 AI RESPONSE:")
+            
+            # Check for split response (part 1 = feedback, part 2 = question)
+            if node.ai_response_part1 or node.ai_response_part2:
+                if node.ai_response_part1:
+                    lines.append(f"   [Feedback]: \"{node.ai_response_part1}\"")
+                if node.ai_response_part2:
+                    lines.append(f"   [Question]: \"{node.ai_response_part2}\"")
+            else:
+                # Fallback for standard response
+                lines.append(f"   \"{node.ai_response}\"")
+
+            # 4. STATE CHANGES
+            # Only show what changed
+            sa = node.state_after or {}
+            changes = []
+            for k, v in sa.items():
+                old_v = sb.get(k)
+                if v != old_v:
+                    changes.append(f"{k}: {old_v} -> {v}")
+            
+            if changes:
+                lines.append("")
+                lines.append(f"⚙️ STATE UPDATES: {', '.join(changes)}")
+
+            lines.append("=" * 80)
+            lines.append("")
+
+        return "\n".join(lines)

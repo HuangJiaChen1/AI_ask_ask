@@ -552,10 +552,11 @@ def convert_tree_to_mermaid(flow_tree):
         logic_id = f"{node_id}_logic"
         logic_lines = []
         
-        # Context (Object + Tone)
+        # Context (Object + Tone + Score)
         obj = node.state_before.get('object_name', 'N/A')
         tone = node.state_before.get('tone', 'Default')
-        logic_lines.append(f"<b>Context:</b> Object='{obj}' | Tone='{tone}'")
+        score = node.state_before.get('correct_answer_count', 0)
+        logic_lines.append(f"<b>Context:</b> Object='{obj}' | Tone='{tone}' | Score={score}")
         
         # Active Strategy (Focus Mode)
         focus_mode = node.state_before.get('focus_mode')
@@ -1195,6 +1196,9 @@ def restore_session_state():
 def get_session_logs(session_id):
     """
     Retrieve debug logs for a specific session.
+    
+    Generates a structured text report from the conversation flow tree
+    instead of reading raw server logs.
 
     Args:
         session_id: Session ID to retrieve logs for
@@ -1204,45 +1208,36 @@ def get_session_logs(session_id):
         - logs: List of log lines for this session
         - error: Error message if failed
     """
-    import os
-    from datetime import datetime
+    assistant = sessions.get(session_id)
 
-    if session_id not in sessions:
+    if not assistant:
         return jsonify({
             "success": False,
             "error": "Session not found"
         }), 404
 
     try:
-        # Get today's log file
-        today = datetime.now().strftime('%Y-%m-%d')
-        log_file_path = f"logs/paixueji_{today}.log"
-
-        if not os.path.exists(log_file_path):
+        if not assistant.flow_tree:
             return jsonify({
                 "success": False,
-                "error": f"Log file not found: {log_file_path}"
+                "error": "Flow tree not initialized for this session"
             }), 404
 
-        # Read log file and filter by session ID
-        session_logs = []
-        with open(log_file_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                # Check if line contains the session ID (first 8 chars)
-                if session_id[:8] in line:
-                    session_logs.append(line.rstrip('\n'))
+        # Generate structured text report
+        report_text = assistant.flow_tree.generate_text_report()
+        report_lines = report_text.split('\n')
 
-        print(f"[INFO] Retrieved {len(session_logs)} log lines for session {session_id[:8]}...")
+        print(f"[INFO] Generated debug report ({len(report_lines)} lines) for session {session_id[:8]}...")
 
         return jsonify({
             "success": True,
-            "logs": session_logs,
+            "logs": report_lines,
             "session_id": session_id,
-            "log_file": log_file_path
+            "source": "flow_tree_report"
         })
 
     except Exception as e:
-        print(f"[ERROR] Error retrieving logs: {e}")
+        print(f"[ERROR] Error generating logs: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({
