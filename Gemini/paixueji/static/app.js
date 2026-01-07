@@ -139,21 +139,28 @@ async function startConversation() {
     const activeFocusSelect = document.getElementById('activeFocusMode');
     if (activeFocusSelect) {
         activeFocusSelect.value = focusMode;
-        
-        // If starting in manual mode, disable "System Managed" option
-        // If starting in system mode, keep it enabled (until they switch away)
-        const systemOption = activeFocusSelect.querySelector('option[value="system_managed"]');
-        if (systemOption) {
-            systemOption.disabled = !systemManagedMode;
-        }
-        
-        // Add event listener to disable system_managed if user switches away from it
-        activeFocusSelect.onchange = function() {
-            if (this.value !== 'system_managed') {
+
+        // If in system_managed mode, disable the entire dropdown
+        if (systemManagedMode) {
+            activeFocusSelect.disabled = true;
+        } else {
+            // In manual mode, disable the "System Managed" option
+            const systemOption = activeFocusSelect.querySelector('option[value="system_managed"]');
+            if (systemOption) {
                 systemOption.disabled = true;
-                console.log('[INFO] Switched to manual mode, system_managed disabled');
             }
-        };
+
+            // Add event listener to disable system_managed if user switches away from it
+            activeFocusSelect.onchange = function() {
+                if (this.value !== 'system_managed') {
+                    const systemOption = this.querySelector('option[value="system_managed"]');
+                    if (systemOption) {
+                        systemOption.disabled = true;
+                    }
+                    console.log('[INFO] Switched to manual mode, system_managed disabled');
+                }
+            };
+        }
 
         // Show the control
         const controlDiv = document.getElementById('activeFocusControl');
@@ -188,6 +195,7 @@ async function startConversation() {
     startForm.style.display = 'none';
     progressIndicator.style.display = 'flex';
     messagesContainer.style.display = 'flex';
+    document.querySelector('.input-area').style.display = 'flex';
 
     // Disable send button during streaming
     sendBtn.disabled = true;
@@ -1250,6 +1258,40 @@ async function restoreState() {
         startForm.style.display = 'none';
         progressIndicator.style.display = 'flex';
         messagesContainer.style.display = 'flex';
+        document.querySelector('.input-area').style.display = 'flex';
+
+        // Set up activeFocusControl dropdown based on restored state
+        const activeFocusSelect = document.getElementById('activeFocusMode');
+        const activeFocusControl = document.getElementById('activeFocusControl');
+        const wasSystemManaged = state.session_state.system_managed_focus;
+        const savedFocusMode = state.session_state.current_focus_mode || 'depth';
+
+        if (activeFocusSelect && activeFocusControl) {
+            // Set dropdown value to saved focus mode
+            activeFocusSelect.value = savedFocusMode;
+
+            // If was system_managed, disable the entire dropdown
+            if (wasSystemManaged) {
+                activeFocusSelect.disabled = true;
+                systemManagedMode = true;  // Update global flag
+            } else {
+                // In manual mode, disable the "System Managed" option
+                activeFocusSelect.disabled = false;
+                const systemOption = activeFocusSelect.querySelector('option[value="system_managed"]');
+                if (systemOption) {
+                    systemOption.disabled = true;
+                }
+            }
+
+            // Show the control
+            activeFocusControl.style.display = 'flex';
+        }
+
+        // Update current state variables for debug panel
+        currentTone = state.session_state.tone;
+        currentFocusMode = savedFocusMode;
+        currentObject = state.session_state.object_name;
+
         updateProgressIndicator();
         updateDebugPanel();
 
