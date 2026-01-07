@@ -17,7 +17,7 @@ from loguru import logger
 from schema import StreamChunk, TokenUsage
 import paixueji_prompts
 
-# Configure loguru for production
+# Configure loguru
 logger.add(
     "logs/paixueji_{time:YYYY-MM-DD}.log",
     rotation="00:00",
@@ -2216,11 +2216,11 @@ async def call_paixueji_stream(
         if should_switch and not validation_result.get('new_object'):
             # Trigger object selection flow immediately
             suggested_objects = generate_object_suggestions(assistant, config, client, age or 6)
-            
+
             # STATE UPDATE: We are now offering choices
             from paixueji_assistant import ConversationState
             assistant.state = ConversationState.AWAITING_TOPIC_SELECTION
-            
+
             response_generator = generate_explicit_switch_response_stream(
                 messages=prepared_messages,
                 suggested_objects=suggested_objects,
@@ -2236,7 +2236,7 @@ async def call_paixueji_stream(
             # STATE UPDATE: Still asking questions about same object
             from paixueji_assistant import ConversationState
             assistant.state = ConversationState.ASKING_QUESTION
-            
+
             response_generator = generate_explanation_response_stream(
                 messages=prepared_messages,
                 child_answer=content,
@@ -2262,11 +2262,11 @@ async def call_paixueji_stream(
                     assistant.reset_object_state(new_object)
                 else:
                     assistant.object_name = new_object
-                
+
                 object_name = new_object
                 new_object_name = new_object
                 switch_decision_reasoning = validation_result.get('switching_reasoning')
-                
+
                 # STATE UPDATE: New object, back to asking questions
                 from paixueji_assistant import ConversationState
                 assistant.state = ConversationState.ASKING_QUESTION
@@ -2307,7 +2307,7 @@ async def call_paixueji_stream(
                 # STATE UPDATE: Back to asking questions
                 from paixueji_assistant import ConversationState
                 assistant.state = ConversationState.ASKING_QUESTION
-                
+
                 response_generator = generate_feedback_response_stream(
                     messages=prepared_messages,
                     child_answer=content,
@@ -2324,7 +2324,7 @@ async def call_paixueji_stream(
             # STATE UPDATE: Back to asking questions
             from paixueji_assistant import ConversationState
             assistant.state = ConversationState.ASKING_QUESTION
-            
+
             response_generator = generate_correction_response_stream(
                 messages=prepared_messages,
                 child_answer=content,
@@ -2423,7 +2423,7 @@ async def call_paixueji_stream(
                     assistant.reset_object_state(new_object)
                 else:
                     assistant.object_name = new_object
-                
+
                 object_name = new_object
                 new_object_name = new_object
                 switch_decision_reasoning = validation_result.get('switching_reasoning')
@@ -2861,7 +2861,7 @@ async def call_paixueji_stream(
         state_b = current_node.state_before
         val = current_node.validation or {}
         dec = current_node.decision or {}
-        
+
         log_msg = (
             f"\n\n[DEBUG TREE NODE] Turn {current_node.turn_number} ({current_node.type.upper()})\n"
             f"--------------------------------------------------\n"
