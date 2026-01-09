@@ -958,168 +958,49 @@ RULES FOR THIS STATE:
 """
 
     # Build contextual THREE-PART validation prompt
-    decision_prompt = f"""You are an educational AI helping a {age}-year-old child learn through conversation.
+    decision_prompt = f"""You are an educational AI helping a {age}-year-old child learn.
 
 CONTEXT:
-- Current Topic: {object_name}
-- Focus Mode: {focus_mode or 'depth'} (how we ask questions, NOT a validation rule)
-- Last Question You Asked: "{last_model_question}"
-- Child's Answer: "{child_answer}"
+- Topic: {object_name}
+- Question: "{last_model_question}"
+- Answer: "{child_answer}"
 {topic_selection_instructions}
 
-YOUR THREE-PART TASK:
-You must evaluate THREE aspects of the child's answer in one evaluation:
-1. ENGAGEMENT: Is the child trying to answer or are they stuck?
-2. FACTUAL CORRECTNESS: If engaged, is their answer factually accurate?
-3. TOPIC SWITCHING: Should we switch to a new object?
+TASK: Evaluate Engagement, Correctness, and Topic Switching.
 
----
-
-PART 1: ENGAGEMENT CHECK
-Is the child engaged and trying to answer, or are they stuck?
-
-STUCK INDICATORS:
-- Explicit uncertainty: "I don't know", "idk", "dunno", "not sure", "no idea", "help me"
-- Very short/unclear: "??", "um", "uh", answers with 3 or fewer characters
-- Empty attempts: just punctuation, just numbers
-
-ENGAGED INDICATORS:
-- Any substantive attempt to answer with real words
-- Descriptive responses, even if wrong
-- Comparisons, examples, or explanations
-
----
-
-PART 2: FACTUAL CORRECTNESS (only evaluate if child is ENGAGED)
-If the child is engaged, is their answer factually accurate given the question asked?
-
-EVALUATION CRITERIA:
-- Check if answer matches reality for the question asked
-- Consider age {age} - accept age-appropriate simplifications
-- Accept partial correctness (e.g., "apples grow outside" is TRUE for age 3-4)
-- Be strict on obvious contradictions (e.g., "sun is cold" → FALSE)
-
----
-
-PART 3: TOPIC SWITCHING
-Should we switch to a new object or continue with current one?
-
-SWITCHING GUIDELINES:
-1. **Invited Object Naming**: I asked child to name new object and they did → SWITCH
-2. **Direct Answer**: If the child's noun is the **direct answer** to your question, do **NOT** switch. (e.g., Q: "What do monkeys eat?" A: "Bananas" → CONTINUE).
-3. **Categories & Parts**: If the child names the category (e.g., "Banana is a **fruit**") or a part (e.g., "**skin**", "**seeds**") of the current object → **CONTINUE**.
-4. **True Off-Topic**: Only SWITCH if the child **ignores** your question to talk about a completely different, unrelated object.
-5. **Explicit Request**: Child says "let's talk about X" → SWITCH
-6. **Comparison/Description**: Child mentions object in passing ("red like cherry") → CONTINUE
-7. **Stuck**: Child says "I don't know" → CONTINUE (UNLESS "SPECIAL CONTEXT" above applies)
-
-CRITICAL CHECK:
-Before deciding SWITCH, ask: "Is this new word just the *answer* to my question?" If yes, decision MUST be **CONTINUE**.
-
-VALIDATION (always apply):
-- Only SWITCH if new object is real and concrete (not abstract)
-- Ignore made-up/nonsense words → CONTINUE
-- Celestial objects (sun, moon, stars) are valid
-
----
+RULES:
+1. **Engagement**: "I don't know", "idk", empty = NOT ENGAGED. Real words = ENGAGED.
+2. **Correctness**: Check if answer matches reality for the question. Accept age-appropriate answers.
+3. **Switching**:
+   - **SWITCH** if child explicitly names a NEW object to talk about (e.g. "Let's talk about cars").
+   - **CONTINUE** if child answers the question (even if answer is a noun like "Banana"), mentions a part/category, or is stuck.
+   - **CONTINUE** if the new word is just the ANSWER to your question.
 
 RESPOND WITH VALID JSON:
 {{
     "decision": "SWITCH" or "CONTINUE",
     "new_object": "ObjectName" or null,
-    "switching_reasoning": "1-2 sentence explanation for switch/continue decision",
+    "switching_reasoning": "Brief reason",
     "is_engaged": true or false,
     "is_factually_correct": true or false,
-    "correctness_reasoning": "1-2 sentence explanation for why answer is right or wrong"
+    "correctness_reasoning": "Brief reason"
 }}
 
-COMPLETE EXAMPLES:
+EXAMPLES:
 
-Example 1: Correct answer, no switching
-Q: "What color is the apple?"
-A: "Red"
-→ {{
-    "decision": "CONTINUE",
-    "new_object": null,
-    "switching_reasoning": "Child directly answered the question. No topic change needed.",
-    "is_engaged": true,
-    "is_factually_correct": true,
-    "correctness_reasoning": "Red is a common and correct color for apples."
-}}
+1. Correct Answer (CONTINUE)
+Q: "Color?" A: "Red"
+→ {{"decision": "CONTINUE", "new_object": null, "is_engaged": true, "is_factually_correct": true, "correctness_reasoning": "Correct color.", "switching_reasoning": "Direct answer."}}
 
-Example 2: Noun as Answer (NO SWITCH)
-Q: "What do we find inside the skin?"
-A: "We find fruit"
-→ {{
-    "decision": "CONTINUE",
-    "new_object": null,
-    "switching_reasoning": "'Fruit' is the answer to the question 'what is inside', not a request to change topics.",
-    "is_engaged": true,
-    "is_factually_correct": true,
-    "correctness_reasoning": "The inside of the object is indeed fruit."
-}}
+2. Wrong Answer (CONTINUE)
+Q: "Color?" A: "Blue"
+→ {{"decision": "CONTINUE", "new_object": null, "is_engaged": true, "is_factually_correct": false, "correctness_reasoning": "Apples are not blue.", "switching_reasoning": "Direct answer."}}
 
-Example 3: Wrong answer, no switching
-Q: "What color is the apple?"
-A: "Blue"
-→ {{
-    "decision": "CONTINUE",
-    "new_object": null,
-    "switching_reasoning": "Child answered the question (no new object mentioned).",
-    "is_engaged": true,
-    "is_factually_correct": false,
-    "correctness_reasoning": "Apples are not blue. Common colors are red, green, or yellow."
-}}
+3. Topic Switch (SWITCH)
+Q: "Color?" A: "Can we talk about cars?"
+→ {{"decision": "SWITCH", "new_object": "car", "is_engaged": true, "is_factually_correct": false, "correctness_reasoning": "N/A", "switching_reasoning": "Explicit switch request."}}
 
-Example 4: Correct answer WITH switching (invited naming)
-Q: "Can you name another red fruit?"
-A: "Strawberry"
-→ {{
-    "decision": "SWITCH",
-    "new_object": "strawberry",
-    "switching_reasoning": "I invited child to name a new object and they did.",
-    "is_engaged": true,
-    "is_factually_correct": true,
-    "correctness_reasoning": "Strawberries are indeed red fruits."
-}}
-
-Example 5: Wrong answer WITH attempted switching (but incorrect)
-Q: "Can you name another red fruit?"
-A: "Banana"
-→ {{
-    "decision": "CONTINUE",
-    "new_object": null,
-    "switching_reasoning": "Child attempted to name a fruit, but it doesn't match the color criteria (red).",
-    "is_engaged": true,
-    "is_factually_correct": false,
-    "correctness_reasoning": "Bananas are yellow, not red. Child confused the color."
-}}
-
-Example 6: Stuck/Not engaged
-Q: "What color is the apple?"
-A: "idk"
-→ {{
-    "decision": "CONTINUE",
-    "new_object": null,
-    "switching_reasoning": "Child is stuck, no topic change.",
-    "is_engaged": false,
-    "is_factually_correct": false,
-    "correctness_reasoning": "Child didn't attempt an answer."
-}}
-
-Example 7: Wrong shape comparison (from user's log)
-Q: "Can you think of something else that's shaped like a banana, all long and curved?"
-A: "Apples have the same shape"
-→ {{
-    "decision": "CONTINUE",
-    "new_object": null,
-    "switching_reasoning": "Child attempted to answer the question but didn't match criteria.",
-    "is_engaged": true,
-    "is_factually_correct": false,
-    "correctness_reasoning": "Apples are round, bananas are long and curved. They have different shapes."
-}}
-
-Now evaluate the current situation:
+Evaluate now:
 """
 
     try:
@@ -2231,6 +2112,56 @@ async def call_paixueji_stream(
             response_type = "explicit_switch"
             logger.info(f"[{session_id}] Routing to explicit switch response")
 
+        elif should_switch and validation_result.get('new_object'):
+            # PATH 2A: TOPIC SWITCH (Moved up from is_factually_correct branch)
+            new_object = validation_result['new_object']
+            previous_object = object_name
+
+            # Update object in assistant and reset focus state for new object
+            if assistant.system_managed_focus:
+                assistant.reset_object_state(new_object)
+            else:
+                assistant.object_name = new_object
+
+            object_name = new_object
+            new_object_name = new_object
+            switch_decision_reasoning = validation_result.get('switching_reasoning')
+
+            # STATE UPDATE: New object, back to asking questions
+            from paixueji_assistant import ConversationState
+            assistant.state = ConversationState.ASKING_QUESTION
+
+            # Classify new object (background with timeout)
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                future = executor.submit(assistant.classify_object_sync, new_object)
+                try:
+                    future.result(timeout=1.0)
+                    logger.info(f"[{session_id}] Classification completed for {new_object}")
+                except concurrent.futures.TimeoutError:
+                    logger.warning(f"[{session_id}] Classification timeout for {new_object}")
+
+            # Rebuild category prompts for new object
+            category_prompt = assistant.get_category_prompt(
+                assistant.level1_category,
+                assistant.level2_category,
+                assistant.level3_category
+            )
+            level1_category = assistant.level1_category
+            level2_category = assistant.level2_category
+            level3_category = assistant.level3_category
+
+            response_generator = generate_topic_switch_response_stream(
+                messages=prepared_messages,
+                previous_object=previous_object,
+                new_object=new_object,
+                age=age or 6,
+                config=config,
+                client=client
+            )
+            response_type = "topic_switch"
+            logger.info(f"[{session_id}] Routing to topic switch | {previous_object} -> {new_object}")
+
         elif not is_engaged:
             # PATH 1: STUCK/UNCLEAR ("I don't know", unclear answers)
             # STATE UPDATE: Still asking questions about same object
@@ -2252,72 +2183,21 @@ async def call_paixueji_stream(
             logger.info(f"[{session_id}] Routing to explanation | is_engaged=False")
 
         elif is_factually_correct:
-            if should_switch and validation_result.get('new_object'):
-                # PATH 2A: TOPIC SWITCH
-                new_object = validation_result['new_object']
-                previous_object = object_name
+            # PATH 2B: CORRECT ANSWER (no switch)
+            # STATE UPDATE: Back to asking questions
+            from paixueji_assistant import ConversationState
+            assistant.state = ConversationState.ASKING_QUESTION
 
-                # Update object in assistant and reset focus state for new object
-                if assistant.system_managed_focus:
-                    assistant.reset_object_state(new_object)
-                else:
-                    assistant.object_name = new_object
-
-                object_name = new_object
-                new_object_name = new_object
-                switch_decision_reasoning = validation_result.get('switching_reasoning')
-
-                # STATE UPDATE: New object, back to asking questions
-                from paixueji_assistant import ConversationState
-                assistant.state = ConversationState.ASKING_QUESTION
-
-                # Classify new object (background with timeout)
-                import concurrent.futures
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(assistant.classify_object_sync, new_object)
-                    try:
-                        future.result(timeout=1.0)
-                        logger.info(f"[{session_id}] Classification completed for {new_object}")
-                    except concurrent.futures.TimeoutError:
-                        logger.warning(f"[{session_id}] Classification timeout for {new_object}")
-
-                # Rebuild category prompts for new object
-                category_prompt = assistant.get_category_prompt(
-                    assistant.level1_category,
-                    assistant.level2_category,
-                    assistant.level3_category
-                )
-                level1_category = assistant.level1_category
-                level2_category = assistant.level2_category
-                level3_category = assistant.level3_category
-
-                response_generator = generate_topic_switch_response_stream(
-                    messages=prepared_messages,
-                    previous_object=previous_object,
-                    new_object=new_object,
-                    age=age or 6,
-                    config=config,
-                    client=client
-                )
-                response_type = "topic_switch"
-                logger.info(f"[{session_id}] Routing to topic switch | {previous_object} -> {new_object}")
-
-            else:
-                # PATH 2B: CORRECT ANSWER (no switch)
-                # STATE UPDATE: Back to asking questions
-                from paixueji_assistant import ConversationState
-                assistant.state = ConversationState.ASKING_QUESTION
-
-                response_generator = generate_feedback_response_stream(
-                    messages=prepared_messages,
-                    child_answer=content,
-                    object_name=object_name,
-                    age=age or 6,
-                    config=config,
-                    client=client
-                )
-                response_type = "feedback"
-                logger.info(f"[{session_id}] Routing to feedback | is_engaged=True, is_factually_correct=True")
+            response_generator = generate_feedback_response_stream(
+                messages=prepared_messages,
+                child_answer=content,
+                object_name=object_name,
+                age=age or 6,
+                config=config,
+                client=client
+            )
+            response_type = "feedback"
+            logger.info(f"[{session_id}] Routing to feedback | is_engaged=True, is_factually_correct=True")
 
         else:
             # PATH 3: WRONG + ENGAGED
@@ -2325,155 +2205,6 @@ async def call_paixueji_stream(
             from paixueji_assistant import ConversationState
             assistant.state = ConversationState.ASKING_QUESTION
 
-            response_generator = generate_correction_response_stream(
-                messages=prepared_messages,
-                child_answer=content,
-                object_name=object_name,
-                previous_question=previous_question,
-                correctness_reasoning=correctness_reasoning,
-                age=age or 6,
-                config=config,
-                client=client
-            )
-            response_type = "correction"
-            logger.info(f"[{session_id}] Routing to correction | is_engaged=True, is_factually_correct=False")
-
-        is_engaged = validation_result.get('is_engaged')
-        is_factually_correct = validation_result.get('is_factually_correct')
-        correctness_reasoning = validation_result.get('correctness_reasoning')
-        switch_decision_reasoning = validation_result.get('switching_reasoning')
-
-        # NEW: System-managed focus tracking
-        if assistant.system_managed_focus:
-            # Track DEPTH questions (only for engaged answers)
-            if is_engaged and assistant.current_focus_mode == 'depth':
-                assistant.depth_questions_count += 1
-                logger.info(f"[SYSTEM_MANAGED] Depth: {assistant.depth_questions_count}/{assistant.depth_target}")
-
-            # Handle wrong WIDTH answers
-            # Include 'not is_engaged' to handle "I don't know" as a wrong answer that triggers a switch
-            if assistant.current_focus_mode.startswith('width_') and (not is_engaged or not is_factually_correct):
-                width_result = handle_width_wrong_answer(assistant)
-                logger.info(f"[SYSTEM_MANAGED] WIDTH wrong: {width_result}")
-
-                # Update local variables if mode changed so response uses new strategy
-                if width_result.get('switch_category'):
-                    focus_mode = width_result['new_focus_mode']
-                    focus_prompt = assistant.get_focus_prompt(focus_mode)
-                    logger.info(f"[SYSTEM_MANAGED] Switched focus to {focus_mode} for immediate response")
-
-            # Reset wrong count on correct WIDTH answer
-            if assistant.current_focus_mode.startswith('width_') and is_factually_correct:
-                assistant.width_wrong_count = 0
-                logger.info(f"[SYSTEM_MANAGED] Correct WIDTH answer, reset count")
-
-        # Capture validation in tree
-        if current_node:
-            current_node.validation = {
-                "is_engaged": is_engaged,
-                "is_factually_correct": is_factually_correct,
-                "correctness_reasoning": correctness_reasoning
-            }
-
-        # Check for explicit switch decision
-        should_switch = validation_result.get('decision') == 'SWITCH'
-
-        # ROUTING: Determine response generator based on validation
-        response_generator = None
-        previous_question = extract_previous_question(prepared_messages)
-
-        # Handle explicit request to switch without a specific object named
-        if should_switch and not validation_result.get('new_object'):
-            # Trigger object selection flow immediately
-            suggested_objects = generate_object_suggestions(assistant, config, client, age or 6)
-            response_generator = generate_explicit_switch_response_stream(
-                messages=prepared_messages,
-                suggested_objects=suggested_objects,
-                age=age or 6,
-                config=config,
-                client=client
-            )
-            response_type = "explicit_switch"
-            logger.info(f"[{session_id}] Routing to explicit switch response")
-
-        elif not is_engaged:
-            # PATH 1: STUCK/UNCLEAR ("I don't know", unclear answers)
-            response_generator = generate_explanation_response_stream(
-                messages=prepared_messages,
-                child_answer=content,
-                object_name=object_name,
-                previous_question=previous_question,
-                age=age or 6,
-                category_prompt=category_prompt,
-                age_prompt=age_prompt,
-                config=config,
-                client=client
-            )
-            response_type = "explanation"
-            logger.info(f"[{session_id}] Routing to explanation | is_engaged=False")
-
-        elif is_factually_correct:
-            if should_switch and validation_result.get('new_object'):
-                # PATH 2A: TOPIC SWITCH
-                new_object = validation_result['new_object']
-                previous_object = object_name
-
-                # Update object in assistant and reset focus state for new object
-                if assistant.system_managed_focus:
-                    assistant.reset_object_state(new_object)
-                else:
-                    assistant.object_name = new_object
-
-                object_name = new_object
-                new_object_name = new_object
-                switch_decision_reasoning = validation_result.get('switching_reasoning')
-
-                # Classify new object (background with timeout)
-                import concurrent.futures
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    future = executor.submit(assistant.classify_object_sync, new_object)
-                    try:
-                        future.result(timeout=1.0)
-                        logger.info(f"[{session_id}] Classification completed for {new_object}")
-                    except concurrent.futures.TimeoutError:
-                        logger.warning(f"[{session_id}] Classification timeout for {new_object}")
-
-                # Rebuild category prompts for new object
-                category_prompt = assistant.get_category_prompt(
-                    assistant.level1_category,
-                    assistant.level2_category,
-                    assistant.level3_category
-                )
-                level1_category = assistant.level1_category
-                level2_category = assistant.level2_category
-                level3_category = assistant.level3_category
-
-                response_generator = generate_topic_switch_response_stream(
-                    messages=prepared_messages,
-                    previous_object=previous_object,
-                    new_object=new_object,
-                    age=age or 6,
-                    config=config,
-                    client=client
-                )
-                response_type = "topic_switch"
-                logger.info(f"[{session_id}] Routing to topic switch | {previous_object} -> {new_object}")
-
-            else:
-                # PATH 2B: CORRECT ANSWER (no switch)
-                response_generator = generate_feedback_response_stream(
-                    messages=prepared_messages,
-                    child_answer=content,
-                    object_name=object_name,
-                    age=age or 6,
-                    config=config,
-                    client=client
-                )
-                response_type = "feedback"
-                logger.info(f"[{session_id}] Routing to feedback | is_engaged=True, is_factually_correct=True")
-
-        else:
-            # PATH 3: WRONG + ENGAGED
             response_generator = generate_correction_response_stream(
                 messages=prepared_messages,
                 child_answer=content,

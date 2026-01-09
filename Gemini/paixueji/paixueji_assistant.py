@@ -37,7 +37,7 @@ class PaixuejiAssistant:
     All streaming logic has been moved to paixueji_stream.py.
     """
 
-    def __init__(self, config_path="config.json", age_prompts_path="age_prompts.json", object_prompts_path="object_prompts.json", system_managed=False):
+    def __init__(self, config_path="config.json", age_prompts_path="age_prompts.json", object_prompts_path="object_prompts.json", system_managed=False, client=None):
         """Initialize the assistant with configuration and Gemini client."""
         self.config = self._load_config(config_path)
         self.conversation_history = []
@@ -71,12 +71,15 @@ class PaixuejiAssistant:
             os.environ['GOOGLE_APPLICATION_CREDENTIALS_SET'] = '1'
 
         # Initialize Google Gemini client
-        self.client = genai.Client(
-            vertexai=True,
-            project=self.config["project"],
-            location=self.config["location"],
-            http_options=HttpOptions(api_version="v1")
-        )
+        if client:
+            self.client = client
+        else:
+            self.client = genai.Client(
+                vertexai=True,
+                project=self.config["project"],
+                location=self.config["location"],
+                http_options=HttpOptions(api_version="v1")
+            )
 
         # Load age prompts
         self.age_prompts = self._load_age_prompts(age_prompts_path)

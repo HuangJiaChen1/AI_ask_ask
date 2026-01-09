@@ -10,6 +10,10 @@ import json
 import uuid
 import asyncio
 import threading
+import os
+
+from google import genai
+from google.genai.types import HttpOptions
 
 from paixueji_assistant import PaixuejiAssistant
 from paixueji_stream import call_paixueji_stream
@@ -23,6 +27,39 @@ CORS(app)
 # NOTE: Sessions will be lost on server restart
 # For production, consider using Redis or database storage
 sessions = {}
+
+# Initialize global Gemini client to enable connection reuse
+def init_global_client():
+    """Initialize a global Gemini client instance to avoid cold starts."""
+    try:
+        config_path = "config.json"
+        if not os.path.exists(config_path):
+            print(f"[WARNING] Config file not found: {config_path}")
+            return None
+
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+
+        # Set up authentication if credentials file is specified in environment
+        credentials_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+        if credentials_path and not os.environ.get('GOOGLE_APPLICATION_CREDENTIALS_SET'):
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials_path
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS_SET'] = '1'
+
+        print("[INFO] Initializing global Gemini client...")
+        client = genai.Client(
+            vertexai=True,
+            project=config["project"],
+            location=config["location"],
+            http_options=HttpOptions(api_version="v1")
+        )
+        print("[INFO] Global Gemini client initialized successfully")
+        return client
+    except Exception as e:
+        print(f"[ERROR] Failed to initialize global Gemini client: {e}")
+        return None
+
+GLOBAL_GEMINI_CLIENT = init_global_client()
 
 
 def get_event_loop():
@@ -129,7 +166,7 @@ def start_conversation():
 
     # Create session
     session_id = str(uuid.uuid4())
-    assistant = PaixuejiAssistant(system_managed=system_managed)
+    assistant = PaixuejiAssistant(system_managed=system_managed, client=GLOBAL_GEMINI_CLIENT)
     sessions[session_id] = assistant
 
     # Initialize flow tree for debugging
@@ -735,7 +772,7 @@ def classify_object():
         }), 400
 
     # Create a temporary assistant for classification
-    assistant = PaixuejiAssistant()
+    assistant = PaixuejiAssistant(client=GLOBAL_GEMINI_CLIENT)
 
     try:
         # Run classification synchronously
@@ -981,12 +1018,13 @@ def validate_state_schema(state):
     return True, None
 
 
-def restore_from_state(state):
+def restore_from_state(state, client=None):
     """
     Restore PaixuejiAssistant instance from saved state.
 
     Args:
         state: Validated state dict
+        client: Optional Gemini client to reuse
 
     Returns:
         PaixuejiAssistant: Restored assistant instance
@@ -995,7 +1033,7 @@ def restore_from_state(state):
 
     # Create new assistant
     system_managed = session_state.get('system_managed_focus', False)
-    assistant = PaixuejiAssistant(system_managed=system_managed)
+    assistant = PaixuejiAssistant(system_managed=system_managed, client=client)
 
     # Restore state fields
     assistant.age = session_state.get('age')
@@ -1157,7 +1195,7 @@ def restore_session_state():
             }), 400
 
         # Restore assistant
-        assistant = restore_from_state(state)
+        assistant = restore_from_state(state, client=GLOBAL_GEMINI_CLIENT)
 
         # Create new session
         new_session_id = str(uuid.uuid4())
