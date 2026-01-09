@@ -143,6 +143,16 @@
                 <button id="stopBtn" onclick="stopStreaming()" style="display: none;">Stop</button>
                 <button id="sendBtn" onclick="sendMessage()" disabled>Send</button>
             </div>
+
+            <!-- Approval buttons (shown after restore + auto-replay) -->
+            <div id="approvalContainer" style="display: none;">
+                <button id="approveBtn" class="approve-btn" onclick="handleApproval()">
+                    ✓ Approve
+                </button>
+                <button id="rejectBtn" class="reject-btn" onclick="handleRejection()">
+                    ✗ Reject
+                </button>
+            </div>
         </div>
     </div>
 

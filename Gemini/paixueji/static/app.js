@@ -23,6 +23,13 @@ let categoryData = {};
 let detectedObject = null;  // For manual topic switch override
 let systemManagedMode = false;  // System-managed focus mode flag
 let awaitingObjectSelection = false;  // Waiting for object choice flag
+
+// Bug tracking state for restore → auto-replay → approval flow
+let buggyResponse = null;
+let newResponse = null;
+let contextMessage = null;
+let buggyResponseIndex = null;
+let isRestoredSession = false;
 let currentObject = null;  // Current object being discussed
 let currentTone = null;  // Current tone
 let currentFocusMode = null;  // Current focus mode
@@ -477,6 +484,12 @@ async function handleSSEEvent(eventType, data) {
         case 'complete':
             // Stream completed successfully
             console.log('[INFO] Stream complete:', data);
+
+            // If this is a restored session, track the new response and show approval buttons
+            if (isRestoredSession && currentMessageDiv) {
+                newResponse = currentMessageDiv.textContent;
+                showApprovalButtons();
+            }
             break;
 
         case 'interrupted':
@@ -1244,15 +1257,46 @@ async function restoreState() {
         // Clear and populate messages
         messagesContainer.innerHTML = '';
 
-        // Render conversation history (skip system message at index 0)
+        // Extract buggy response metadata
+        buggyResponseIndex = state.metadata.buggy_response_index;
+        contextMessage = state.metadata.last_user_message;
+
+        // Find last user message index (the one before buggy response)
+        let lastUserMessageIndex = null;
+        for (let i = state.conversation_history.length - 1; i >= 0; i--) {
+            if (state.conversation_history[i].role === 'user') {
+                lastUserMessageIndex = i;
+                break;
+            }
+        }
+
+        // Render conversation history, SKIP:
+        // 1. System message (idx 0)
+        // 2. Last user message (will be auto-replayed, avoid duplicate)
+        // 3. Buggy assistant response
         state.conversation_history.forEach((msg, idx) => {
             if (idx === 0) return; // Skip system message
+
+            // Skip last user message (will be auto-replayed)
+            if (lastUserMessageIndex !== null && idx === lastUserMessageIndex) {
+                return; // Don't render it (auto-replay will add it)
+            }
+
+            // Skip rendering the buggy response (even though it's in the data)
+            if (buggyResponseIndex !== null && idx === buggyResponseIndex) {
+                buggyResponse = msg.content; // Store for later comparison
+                return; // Don't render it
+            }
+
             if (msg.role === 'user') {
                 addMessage('user', msg.content);
             } else if (msg.role === 'assistant') {
                 addMessage('assistant', msg.content);
             }
         });
+
+        // Mark as restored session for approval flow
+        isRestoredSession = true;
 
         // Update UI
         startForm.style.display = 'none';
@@ -1309,14 +1353,15 @@ async function restoreState() {
         console.log('[INFO] Session restored:', result.session_id);
 
         // Auto-replay: Send the last user message automatically
-        // NOTE: User message is already in the UI from rendering conversation_history
-        // We just need to send it to the API
         if (result.restored_state.last_user_message) {
             const lastUserMsg = result.restored_state.last_user_message;
             console.log(`[INFO] Auto-replaying last user message: "${lastUserMsg}"`);
 
             // Wait a moment for UI to settle, then send the message
             setTimeout(async () => {
+                // Add the user message to the UI (it was skipped during restore)
+                addMessage('user', lastUserMsg);
+
                 // Get current focus mode
                 const activeFocusMode = document.getElementById('activeFocusMode');
                 const focusMode = activeFocusMode ? activeFocusMode.value : 'depth';
@@ -1404,6 +1449,94 @@ async function restoreState() {
         restoreStatus.style.color = '#ef4444';
         restoreStatus.textContent = `Error: ${error.message}`;
     }
+}
+
+/**
+ * Show approval buttons after auto-replay completes
+ */
+function showApprovalButtons() {
+    // Validate we have all required data
+    if (!buggyResponse || !newResponse || !contextMessage) {
+        console.warn('Missing comparison data, skipping approval UI');
+        return;
+    }
+
+    const approvalContainer = document.getElementById('approvalContainer');
+    if (approvalContainer) {
+        approvalContainer.style.display = 'flex';
+    }
+}
+
+/**
+ * Handle approval of bugfix - generate and download HTML comparison
+ */
+async function handleApproval() {
+    // Disable buttons to prevent double-click
+    const approveBtn = document.getElementById('approveBtn');
+    const rejectBtn = document.getElementById('rejectBtn');
+    approveBtn.disabled = true;
+    rejectBtn.disabled = true;
+
+    try {
+        const response = await fetch(`${API_BASE}/generate-bugfix-comparison`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                buggy_response: buggyResponse,
+                new_response: newResponse,
+                context_message: contextMessage
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        // Create blob and download HTML file
+        const blob = new Blob([result.html], { type: 'text/html' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = result.filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        alert(`✓ Bug comparison saved as ${result.filename}`);
+
+        // Hide approval buttons and reset state
+        document.getElementById('approvalContainer').style.display = 'none';
+        resetBugTrackingState();
+
+    } catch (error) {
+        console.error('Error generating comparison:', error);
+        alert(`Failed to generate comparison: ${error.message}`);
+        approveBtn.disabled = false;
+        rejectBtn.disabled = false;
+    }
+}
+
+/**
+ * Handle rejection of bugfix - just hide buttons
+ */
+function handleRejection() {
+    // Simply hide approval buttons
+    document.getElementById('approvalContainer').style.display = 'none';
+    resetBugTrackingState();
+}
+
+/**
+ * Reset bug tracking state variables
+ */
+function resetBugTrackingState() {
+    buggyResponse = null;
+    newResponse = null;
+    contextMessage = null;
+    buggyResponseIndex = null;
+    isRestoredSession = false;
 }
 
 // Initialize on page load

@@ -858,8 +858,8 @@ def build_save_state(assistant, session_id):
     """
     Build complete save state from PaixuejiAssistant instance.
 
-    IMPORTANT: Excludes the last assistant message (buggy response) if present,
-    so saved state ends with the user's message that triggered the bug.
+    IMPORTANT: Now keeps the FULL conversation including the last assistant message
+    (buggy response) for bug tracking purposes. Marks the buggy response index in metadata.
 
     Args:
         assistant: PaixuejiAssistant instance to serialize
@@ -870,17 +870,18 @@ def build_save_state(assistant, session_id):
     """
     from datetime import datetime
 
-    # Copy conversation history
+    # Copy conversation history - keep FULL conversation including buggy response
     conversation_history = assistant.conversation_history.copy()
 
-    # Check if last message is from assistant (the buggy response)
+    # Track buggy response index and metadata
     excluded_buggy_response = None
     last_user_message = None
+    buggy_response_index = None
 
     if len(conversation_history) > 1 and conversation_history[-1]['role'] == 'assistant':
-        # Exclude the last assistant message (buggy response)
-        excluded_buggy_response = conversation_history[-1]['content']
-        conversation_history = conversation_history[:-1]  # Remove last message
+        # Mark the buggy response index (last assistant message)
+        buggy_response_index = len(conversation_history) - 1
+        excluded_buggy_response = conversation_history[-1]['content']  # Keep for reference
 
         # Find the last user message
         for msg in reversed(conversation_history):
@@ -895,7 +896,8 @@ def build_save_state(assistant, session_id):
             "session_id": session_id,
             "app_version": "paixueji-v1.0",
             "excluded_buggy_response": excluded_buggy_response,
-            "last_user_message": last_user_message
+            "last_user_message": last_user_message,
+            "buggy_response_index": buggy_response_index
         },
         "session_state": {
             "age": assistant.age,
@@ -1012,8 +1014,17 @@ def restore_from_state(state):
     assistant.width_categories_tried = session_state.get('width_categories_tried', [])
     assistant.depth_target = session_state.get('depth_target', 4)
 
-    # Restore conversation history
-    assistant.conversation_history = state['conversation_history'].copy()
+    # Restore conversation history - TRIM last user message and buggy response
+    conversation_history = state['conversation_history'].copy()
+    buggy_response_index = state.get('metadata', {}).get('buggy_response_index')
+
+    # If this is a bug tracking restore (has buggy_response_index), trim the last 2 messages
+    if buggy_response_index is not None and len(conversation_history) >= 2:
+        # Remove last 2 messages: last user message + buggy assistant response
+        # This prevents duplication when auto-replay resends the user message
+        conversation_history = conversation_history[:-2]
+
+    assistant.conversation_history = conversation_history
 
     # Note: Flow tree restoration is skipped for simplicity
     # A new flow tree will be initialized for the restored session
@@ -1161,12 +1172,8 @@ def restore_session_state():
             focus_mode=assistant.current_focus_mode
         )
 
-        # Extract last user message for frontend auto-replay
-        last_user_message = None
-        for msg in reversed(assistant.conversation_history):
-            if msg['role'] == 'user':
-                last_user_message = msg['content']
-                break
+        # Extract last user message from metadata (correctly saved before trimming)
+        last_user_message = state.get('metadata', {}).get('last_user_message')
 
         print(f"[INFO] Restored session {new_session_id[:8]}... from saved state | "
               f"object={assistant.object_name}, turns={len(assistant.conversation_history)}")
@@ -1190,6 +1197,162 @@ def restore_session_state():
             "success": False,
             "error": str(e)
         }), 500
+
+
+def generate_comparison_html(buggy_response, new_response, context_message):
+    """Generate standalone HTML file with side-by-side comparison."""
+    import html
+    from datetime import datetime
+
+    # Escape content to prevent XSS
+    buggy_escaped = html.escape(buggy_response)
+    new_escaped = html.escape(new_response)
+    context_escaped = html.escape(context_message)
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    return f'''<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bugfix Comparison - {timestamp}</title>
+    <style>
+        body {{
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }}
+        .container {{
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }}
+        .header {{
+            background: #10b981;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }}
+        .context {{
+            background: #f0f9ff;
+            padding: 15px 20px;
+            margin: 20px;
+            border-left: 4px solid #3b82f6;
+            border-radius: 4px;
+        }}
+        .context h3 {{
+            margin: 0 0 10px 0;
+            color: #1e40af;
+        }}
+        .comparison {{
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }}
+        .column {{
+            border: 2px solid;
+            border-radius: 8px;
+            padding: 15px;
+        }}
+        .before {{
+            border-color: #ef4444;
+            background: #fef2f2;
+        }}
+        .after {{
+            border-color: #10b981;
+            background: #f0fdf4;
+        }}
+        .column-header {{
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid currentColor;
+        }}
+        .before .column-header {{
+            color: #dc2626;
+        }}
+        .after .column-header {{
+            color: #059669;
+        }}
+        .response-text {{
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            line-height: 1.6;
+            color: #333;
+        }}
+        @media (max-width: 768px) {{
+            .comparison {{
+                grid-template-columns: 1fr;
+            }}
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐛 Bugfix Comparison Report</h1>
+            <p>Generated: {timestamp}</p>
+        </div>
+
+        <div class="context">
+            <h3>📝 Context - Last User Message:</h3>
+            <p>{context_escaped}</p>
+        </div>
+
+        <div class="comparison">
+            <div class="column before">
+                <div class="column-header">❌ Before (Buggy Response)</div>
+                <div class="response-text">{buggy_escaped}</div>
+            </div>
+
+            <div class="column after">
+                <div class="column-header">✅ After (Fixed Response)</div>
+                <div class="response-text">{new_escaped}</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>'''
+
+
+@app.route('/api/generate-bugfix-comparison', methods=['POST'])
+def generate_bugfix_comparison():
+    """Generate HTML comparison file for buggy vs fixed response."""
+    try:
+        data = request.get_json()
+        buggy_response = data.get('buggy_response')
+        new_response = data.get('new_response')
+        context_message = data.get('context_message')
+
+        # Validation
+        if not all([buggy_response, new_response, context_message]):
+            return jsonify({'error': 'Missing required fields'}), 400
+
+        # HTML template with embedded CSS
+        html_content = generate_comparison_html(
+            buggy_response,
+            new_response,
+            context_message
+        )
+
+        # Generate filename
+        from datetime import datetime
+        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        filename = f'bugfix_{timestamp}.html'
+
+        return jsonify({
+            'html': html_content,
+            'filename': filename
+        })
+
+    except Exception as e:
+        logger.error(f"Error generating comparison: {e}")
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/debug/logs/<session_id>', methods=['GET'])
