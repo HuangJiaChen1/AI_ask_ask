@@ -13,7 +13,8 @@ import threading
 import os
 
 from google import genai
-from google.genai.types import HttpOptions, logger
+from google.genai.types import HttpOptions
+from loguru import logger
 
 from paixueji_assistant import PaixuejiAssistant
 from paixueji_stream import call_paixueji_stream
