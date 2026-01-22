@@ -1,0 +1,52 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '12px'}}}%%
+flowchart TD
+    subgraph 系统管理聚焦模式["系统管理聚焦模式 (system_managed_focus)"]
+
+        START_FOCUS([新话题开始]) --> INIT["初始化:<br/>depth_target = random(4,5)<br/>depth_count = 0<br/>current_mode = depth"]
+
+        INIT --> DEPTH_MODE[深度模式<br/>探索物体特征/用途]
+
+        DEPTH_MODE --> DEPTH_CHECK{"depth_count<br/>< depth_target?"}
+
+        DEPTH_CHECK -->|YES| DEPTH_Q[继续深度探索<br/>depth_count++]
+        DEPTH_Q --> CHILD_ANS[孩子回答]
+        CHILD_ANS --> DEPTH_CHECK
+
+        DEPTH_CHECK -->|NO<br/>深度探索完成| SWITCH_WIDTH["切换到广度模式<br/>随机选择: color/shape/category"]
+
+        SWITCH_WIDTH --> WIDTH_MODE["广度模式<br/>width_颜色/形状/类别"]
+
+        WIDTH_MODE --> WIDTH_Q[提问相关物体]
+        WIDTH_Q --> WIDTH_ANS[孩子回答]
+
+        WIDTH_ANS --> WIDTH_CORRECT{"回答正确?"}
+
+        WIDTH_CORRECT -->|YES| RESET_WRONG["重置 wrong_count = 0"]
+        RESET_WRONG --> WIDTH_Q
+
+        WIDTH_CORRECT -->|NO| INC_WRONG["wrong_count++"]
+        INC_WRONG --> WRONG_CHECK{"wrong_count >= 3?"}
+
+        WRONG_CHECK -->|NO| TRY_NEXT{"还有未尝试的<br/>广度类别?"}
+        TRY_NEXT -->|YES| SWITCH_CAT["切换到下一广度类别<br/>如: color → shape"]
+        SWITCH_CAT --> WIDTH_MODE
+
+        TRY_NEXT -->|NO| WIDTH_Q
+
+        WRONG_CHECK -->|YES| TOPIC_COMPLETE["触发话题完成<br/>natural_topic_completion"]
+
+        TOPIC_COMPLETE --> ASK_NEXT["询问想探索什么新话题"]
+        ASK_NEXT --> NEW_TOPIC[选择新话题]
+        NEW_TOPIC --> START_FOCUS
+
+    end
+
+    %% 样式
+    style START_FOCUS fill:#4CAF50,color:#fff
+    style DEPTH_MODE fill:#2196F3,color:#fff
+    style WIDTH_MODE fill:#9C27B0,color:#fff
+    style TOPIC_COMPLETE fill:#FF9800,color:#fff
+    style DEPTH_CHECK fill:#FFC107
+    style WIDTH_CORRECT fill:#FFC107
+    style WRONG_CHECK fill:#FFC107
+    style TRY_NEXT fill:#FFC107

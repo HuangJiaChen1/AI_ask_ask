@@ -1,56 +1,60 @@
 """
-Streaming functions for Paixueji assistant.
+Paixueji Stream Module
 
-This module provides async streaming responses for the Paixueji assistant,
-where the LLM asks questions about objects and children answer.
+This module provides streaming functionality for the Paixueji assistant.
+It is organized into several sub-modules:
 
-NOTE: This file is now a thin wrapper that re-exports from the stream/ module.
-The actual implementation has been decoupled into:
-  - stream/utils.py: Utility functions
-  - stream/response_generators.py: Response-only stream generators
-  - stream/question_generators.py: Question-only stream generators
-  - stream/validation.py: Validation and decision logic
-  - stream/focus_mode.py: Focus mode state machine
-  - stream/main.py: Main entry point (call_paixueji_stream)
+- utils: Utility functions for message preparation and format conversion
+- response_generators: Response-only stream generators (Part 1 of dual-parallel)
+- question_generators: Question-only stream generators (Part 2 of dual-parallel)
+- validation: Validation and decision logic
+- focus_mode: Focus mode state machine logic
+- main: Main entry point (call_paixueji_stream)
 
-All public functions are imported from stream/ and re-exported here
-for backward compatibility.
+All public functions are re-exported from this module for backward compatibility.
 """
 
-# Re-export everything from the stream module
-from stream import (
-    # Main entry point
-    call_paixueji_stream,
+# Main entry point
+from .main import call_paixueji_stream
 
-    # Utils
+# Utilities
+from .utils import (
     safe_print,
     clean_messages_for_api,
     prepare_messages_for_streaming,
     convert_messages_to_gemini_format,
     extract_previous_question,
-    SLOW_LLM_CALL_THRESHOLD,
+    SLOW_LLM_CALL_THRESHOLD
+)
 
-    # Response generators
+# Response generators (Part 1 of dual-parallel)
+from .response_generators import (
     generate_feedback_response_stream,
     generate_explanation_response_stream,
     generate_correction_response_stream,
     generate_topic_switch_response_stream,
     generate_natural_topic_completion_stream,
-    generate_explicit_switch_response_stream,
+    generate_explicit_switch_response_stream
+)
 
-    # Question generators
+# Question generators (Part 2 of dual-parallel)
+from .question_generators import (
     ask_introduction_question_stream,
     generate_followup_question_stream,
-    generate_completion_message_stream,
+    generate_completion_message_stream
+)
 
-    # Validation
+# Validation
+from .validation import (
     decide_topic_switch_with_validation,
-    is_answer_reasonable,
+    is_answer_reasonable
+)
 
-    # Focus mode
+# Focus mode
+from .focus_mode import (
     decide_next_focus_mode,
     handle_width_wrong_answer,
-    generate_object_suggestions,
+    generate_object_suggestions
 )
 
 __all__ = [

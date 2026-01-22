@@ -1,0 +1,357 @@
+"""
+Question stream generators for Paixueji assistant.
+
+This module contains question-only stream generators:
+- Introduction question for starting conversations
+- Follow-up questions based on focus strategy
+- Completion messages
+
+Functions:
+    - ask_introduction_question_stream: First question about an object
+    - generate_followup_question_stream: Follow-up question (Part 2 of dual-parallel)
+    - generate_completion_message_stream: Completion/celebration message
+"""
+import time
+from typing import AsyncGenerator
+
+from google import genai
+from google.genai.types import GenerateContentConfig
+from loguru import logger
+
+from schema import TokenUsage
+import paixueji_prompts
+from .utils import (
+    clean_messages_for_api,
+    convert_messages_to_gemini_format,
+    SLOW_LLM_CALL_THRESHOLD
+)
+
+
+async def ask_introduction_question_stream(
+    messages: list[dict],
+    object_name: str,
+    category_prompt: str,
+    age_prompt: str,
+    age: int,
+    config: dict,
+    client: genai.Client,
+    level3_category: str = "",
+    focus_prompt: str = ""
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str, dict], None]:
+    """
+    Stream first question about the object.
+
+    Args:
+        messages: Conversation history
+        object_name: Name of object to ask about
+        category_prompt: Category-specific guidance
+        age_prompt: Age-specific guidance
+        age: Child's age
+        config: Configuration dict with model settings
+        client: Gemini client instance
+        level3_category: Level 3 category
+        focus_prompt: Focus strategy guidance
+
+    Yields:
+        Tuple of (text_chunk, token_usage_or_None, full_response_so_far, decision_info)
+        Note: decision_info contains new_object_name which is always None for introduction
+    """
+    start_time = time.time()
+    logger.info(f"ask_introduction_question_stream started | object={object_name}, age={age}")
+
+    prompts = paixueji_prompts.get_prompts()
+    introduction_prompt = prompts['introduction_prompt'].format(
+        object_name=object_name,
+        category_prompt=category_prompt,
+        age_prompt=age_prompt,
+        age=age,
+        focus_prompt=focus_prompt
+    )
+
+    # Prepare messages with introduction prompt
+    messages_to_send = messages + [{"role": "user", "content": introduction_prompt}]
+
+    # Clean messages for API
+    clean_messages = clean_messages_for_api(messages_to_send)
+    logger.debug(f"Messages prepared for API | count={len(clean_messages)}")
+
+    # Convert to Gemini format
+    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
+
+    # Stream from LLM
+    full_response = ""
+    token_usage = None
+
+    stream = None
+    try:
+        logger.debug(f"Sending {len(contents)} messages to Gemini API")
+
+        # Configure generation
+        gen_config = GenerateContentConfig(
+            temperature=config.get("temperature", 0.3),
+            max_output_tokens=config.get("max_tokens", 2000),
+            system_instruction=system_instruction if system_instruction else None
+        )
+
+        # Call streaming API
+        stream = client.models.generate_content_stream(
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config
+        )
+
+        # Log stream type for debugging
+        logger.debug(f"Stream object type: {type(stream).__name__}")
+
+        # Prepare decision info (no switching in introduction)
+        decision_info = {
+            'new_object_name': None,
+            'detected_object_name': None,
+            'switch_decision_reasoning': None
+        }
+
+        # Yield chunks as they arrive
+        chunk_count = 0
+        for chunk in stream:
+            if chunk.text:
+                chunk_count += 1
+                full_response += chunk.text
+                logger.debug(f"Chunk {chunk_count} | length={len(chunk.text)}, total_length={len(full_response)}")
+                yield (chunk.text, None, full_response, decision_info)
+
+        # Note: Gemini API doesn't provide token usage in streaming mode
+        # We'll leave token_usage as None
+        logger.debug("Gemini streaming API does not provide token usage in stream mode")
+
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(f"answer_question_stream LLM error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        # Still yield what we have so far (even if incomplete)
+        if full_response:
+            decision_info = {
+                'new_object_name': None,
+                'detected_object_name': None,
+                'switch_decision_reasoning': None
+            }
+            yield ("", token_usage, full_response, decision_info)
+        return
+    finally:
+        # Always attempt cleanup via deletion
+        if stream is not None:
+            try:
+                del stream
+                logger.debug('Cleaned up stream via del in finally block')
+            except:
+                pass
+
+    duration = time.time() - start_time
+    logger.info(
+        f"ask_introduction_question_stream completed | "
+        f"duration={duration:.3f}s, response_length={len(full_response)}"
+    )
+
+    if duration > SLOW_LLM_CALL_THRESHOLD:
+        logger.warning(f"Slow LLM call | duration={duration:.3f}s exceeded threshold {SLOW_LLM_CALL_THRESHOLD}s")
+
+    # Final yield with token usage (None for Gemini streaming)
+    decision_info = {
+        'new_object_name': None,
+        'detected_object_name': None,
+        'switch_decision_reasoning': None
+    }
+    yield ("", token_usage, full_response, decision_info)
+
+
+async def generate_followup_question_stream(
+    messages: list[dict],
+    object_name: str,
+    correct_count: int,
+    category_prompt: str,
+    age_prompt: str,
+    age: int,
+    focus_prompt: str,
+    config: dict,
+    client: genai.Client,
+    is_topic_switch: bool = False
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
+    """
+    Generate ONLY follow-up question based on focus strategy. NO responses or explanations.
+
+    This function is part of the dual-parallel architecture where question generation
+    is decoupled from response generation.
+
+    Args:
+        messages: Conversation history
+        object_name: Name of object being discussed (may be new object if switched)
+        correct_count: Number of correct answers so far
+        category_prompt: Category-specific guidance
+        age_prompt: Age-specific guidance
+        age: Child's age
+        focus_prompt: Focus strategy guidance
+        config: Configuration dict with model settings
+        client: Gemini client instance
+        is_topic_switch: Whether this follows a topic switch
+
+    Yields:
+        Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
+    """
+    start_time = time.time()
+    logger.info(f"generate_followup_question_stream started | object={object_name}, age={age}, is_switch={is_topic_switch}")
+
+    # Build question-only prompt
+    prompts = paixueji_prompts.get_prompts()
+    prompt = prompts['followup_question_prompt'].format(
+        object_name=object_name,
+        age=age,
+        focus_prompt=focus_prompt,
+        category_prompt=category_prompt,
+        age_prompt=age_prompt
+    )
+
+    # Prepare messages
+    messages_to_send = messages + [{"role": "user", "content": prompt}]
+    clean_messages = clean_messages_for_api(messages_to_send)
+
+    # Convert to Gemini format
+    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
+
+    # Stream from LLM
+    full_response = ""
+    token_usage = None
+    stream = None
+
+    try:
+        gen_config = GenerateContentConfig(
+            temperature=config.get("temperature", 0.3),
+            max_output_tokens=config.get("max_tokens", 600),
+            system_instruction=system_instruction if system_instruction else None
+        )
+
+        stream = client.models.generate_content_stream(
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config
+        )
+
+        # Yield chunks
+        for chunk in stream:
+            if chunk.text:
+                full_response += chunk.text
+                yield (chunk.text, None, full_response)
+
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(f"generate_followup_question_stream error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        if full_response:
+            yield ("", token_usage, full_response)
+        return
+    finally:
+        if stream is not None:
+            try:
+                del stream
+            except:
+                pass
+
+    duration = time.time() - start_time
+    logger.info(f"generate_followup_question_stream completed | duration={duration:.3f}s, length={len(full_response)}")
+
+    # Final yield
+    yield ("", token_usage, full_response)
+
+
+async def generate_completion_message_stream(
+    messages: list[dict],
+    object_name: str,
+    child_answer: str,
+    config: dict,
+    client: genai.Client
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
+    """
+    Stream completion/celebration message after 4 correct answers.
+
+    Args:
+        messages: Conversation history
+        object_name: Name of object discussed
+        child_answer: The child's final answer
+        config: Configuration dict with model settings
+        client: Gemini client instance
+
+    Yields:
+        Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
+    """
+    start_time = time.time()
+    logger.info(f"generate_completion_message_stream started | object={object_name}")
+
+    prompts = paixueji_prompts.get_prompts()
+    completion_prompt = prompts['completion_prompt'].format(
+        object_name=object_name,
+        child_answer=child_answer
+    )
+
+    # Prepare messages with completion prompt
+    messages_to_send = messages + [{"role": "user", "content": completion_prompt}]
+
+    # Clean messages for API
+    clean_messages = clean_messages_for_api(messages_to_send)
+
+    # Convert to Gemini format
+    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
+
+    # Stream from LLM
+    full_response = ""
+    token_usage = None
+
+    stream = None
+    try:
+        logger.debug(f"Sending {len(contents)} messages to Gemini API")
+
+        # Configure generation
+        gen_config = GenerateContentConfig(
+            temperature=config.get("temperature", 0.3),
+            max_output_tokens=config.get("max_tokens", 2000),
+            system_instruction=system_instruction if system_instruction else None
+        )
+
+        # Call streaming API
+        stream = client.models.generate_content_stream(
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config
+        )
+
+        # Log stream type for debugging
+        logger.debug(f"Stream object type: {type(stream).__name__}")
+
+        # Yield chunks as they arrive
+        chunk_count = 0
+        for chunk in stream:
+            if chunk.text:
+                chunk_count += 1
+                full_response += chunk.text
+                logger.debug(f"Chunk {chunk_count} | length={len(chunk.text)}, total_length={len(full_response)}")
+                yield (chunk.text, None, full_response)
+
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(f"generate_completion_message_stream LLM error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        # Still yield what we have so far (even if incomplete)
+        if full_response:
+            yield ("", token_usage, full_response)
+        return
+    finally:
+        # Always attempt cleanup via deletion
+        if stream is not None:
+            try:
+                del stream
+                logger.debug('Cleaned up stream via del in finally block')
+            except:
+                pass
+
+    duration = time.time() - start_time
+    logger.info(
+        f"generate_completion_message_stream completed | "
+        f"duration={duration:.3f}s, response_length={len(full_response)}"
+    )
+
+    # Final yield with token usage (None for Gemini streaming)
+    yield ("", token_usage, full_response)

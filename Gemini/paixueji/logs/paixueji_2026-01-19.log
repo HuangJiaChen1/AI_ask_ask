@@ -1,0 +1,100 @@
+2026-01-19 09:46:05.960 | INFO     | paixueji_stream:call_paixueji_stream:1942 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] System-managed mode: using focus_mode=depth
+2026-01-19 09:46:05.961 | INFO     | paixueji_stream:call_paixueji_stream:1944 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] call_paixueji_stream started | session_id=6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2026-01-19 09:46:05.961 | INFO     | paixueji_stream:call_paixueji_stream:1987 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] Conversation state | correct_count=0, complete=False
+2026-01-19 09:46:05.961 | INFO     | paixueji_stream:call_paixueji_stream:2027 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] Routing to introduction question
+2026-01-19 09:46:05.961 | INFO     | paixueji_stream:ask_introduction_question_stream:155 | ask_introduction_question_stream started | object=banana, age=6
+2026-01-19 09:46:05.961 | DEBUG    | paixueji_stream:ask_introduction_question_stream:171 | Messages prepared for API | count=3
+2026-01-19 09:46:05.961 | DEBUG    | paixueji_stream:ask_introduction_question_stream:182 | Sending 2 messages to Gemini API
+2026-01-19 09:46:05.962 | DEBUG    | paixueji_stream:ask_introduction_question_stream:199 | Stream object type: generator
+2026-01-19 09:46:51.414 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 1 | length=2, total_length=2
+2026-01-19 09:46:51.438 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 2 | length=9, total_length=11
+2026-01-19 09:46:51.484 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 3 | length=64, total_length=75
+2026-01-19 09:46:51.547 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 4 | length=77, total_length=152
+2026-01-19 09:46:51.566 | DEBUG    | paixueji_stream:ask_introduction_question_stream:214 | Chunk 5 | length=1, total_length=153
+2026-01-19 09:46:51.573 | DEBUG    | paixueji_stream:ask_introduction_question_stream:219 | Gemini streaming API does not provide token usage in stream mode
+2026-01-19 09:46:51.573 | DEBUG    | paixueji_stream:ask_introduction_question_stream:238 | Cleaned up stream via del in finally block
+2026-01-19 09:46:51.573 | INFO     | paixueji_stream:ask_introduction_question_stream:243 | ask_introduction_question_stream completed | duration=45.612s, response_length=153
+2026-01-19 09:46:51.573 | WARNING  | paixueji_stream:ask_introduction_question_stream:249 | Slow LLM call | duration=45.612s exceeded threshold 5.0s
+2026-01-19 09:46:51.573 | INFO     | paixueji_stream:call_paixueji_stream:2527 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] call_paixueji_stream completed | response_type=introduction, duration=45.613s, total_chunks=5, response_length=153, correct_count=0, complete=False, session_finished=False
+2026-01-19 09:46:51.573 | DEBUG    | paixueji_stream:call_paixueji_stream:2535 | Full response: Ahoy there, matey! We've got a yummy banana here today!
+
+Tell me, what does a banana feel like when you touch it? Is it smooth, bumpy, or something else?...
+2026-01-19 09:46:51.573 | DEBUG    | paixueji_stream:call_paixueji_stream:2608 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+👤 USER INPUT: (None)
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=None | Correct=None
+💭 REASONING: N/A
+⚡ DECISION: N/A (Reason: N/A)
+🗣️ RESPONSE PART 1: (None)
+❓ RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-19 09:47:14.765 | INFO     | paixueji_stream:call_paixueji_stream:1942 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] System-managed mode: using focus_mode=depth
+2026-01-19 09:47:14.765 | INFO     | paixueji_stream:call_paixueji_stream:1944 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] call_paixueji_stream started | session_id=6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=5, message_history=2
+2026-01-19 09:47:14.765 | INFO     | paixueji_stream:call_paixueji_stream:1987 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] Conversation state | correct_count=0, complete=False
+2026-01-19 09:47:14.765 | INFO     | paixueji_stream:call_paixueji_stream:2036 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] Running unified AI validation for answer
+2026-01-19 09:47:16.688 | INFO     | paixueji_stream:decide_topic_switch_with_validation:1022 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=False, switch_reasoning=Child answered the question., correctness_reasoning=Bananas are generally smooth, not bumpy.
+2026-01-19 09:47:16.688 | INFO     | paixueji_stream:call_paixueji_stream:2062 | [SYSTEM_MANAGED] Depth: 1/4
+2026-01-19 09:47:16.688 | INFO     | paixueji_stream:call_paixueji_stream:2219 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] Routing to gentle correction | is_engaged=True, is_factually_correct=False
+2026-01-19 09:47:16.689 | INFO     | paixueji_stream:call_paixueji_stream:2251 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] System-managed: focus_mode=depth, reason=Depth phase: 1/4 questions asked
+2026-01-19 09:47:16.689 | DEBUG    | paixueji_stream:call_paixueji_stream:2259 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] Streaming response (gentle_correction)
+2026-01-19 09:47:16.689 | INFO     | paixueji_stream:generate_correction_response_stream:475 | generate_correction_response_stream started | object=banana, age=6
+2026-01-19 09:47:17.543 | INFO     | paixueji_stream:generate_correction_response_stream:531 | generate_correction_response_stream completed | duration=0.855s, length=277
+2026-01-19 09:47:17.544 | DEBUG    | paixueji_stream:call_paixueji_stream:2372 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] Streaming question
+2026-01-19 09:47:17.544 | INFO     | paixueji_stream:generate_followup_question_stream:844 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-19 09:47:18.142 | INFO     | paixueji_stream:generate_followup_question_stream:901 | generate_followup_question_stream completed | duration=0.598s, length=62
+2026-01-19 09:47:18.142 | INFO     | paixueji_stream:call_paixueji_stream:2527 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] call_paixueji_stream completed | response_type=gentle_correction, duration=3.378s, total_chunks=8, response_length=340, correct_count=0, complete=False, session_finished=False
+2026-01-19 09:47:18.142 | DEBUG    | paixueji_stream:call_paixueji_stream:2535 | Full response: Ahoy, matey! That's a good try! I like how you're thinking about how things feel!
+
+You know, sometimes things can be bumpy, like a bumpy road or a bumpy toy. But when we touch a banana, it's usually nice and smooth, like a slippery slide! It doesn't have any bumps on its skin. Tell me, matey, what color is a banana when it's ready to eat?...
+2026-01-19 09:47:18.143 | DEBUG    | paixueji_stream:call_paixueji_stream:2608 | 
+
+[DEBUG TREE NODE] Turn 1 (GENTLE_CORRECTION)
+--------------------------------------------------
+👤 USER INPUT: bumpy
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=True | Correct=False
+💭 REASONING: Bananas are generally smooth, not bumpy.
+⚡ DECISION: CONTINUE (Reason: Child answered the question.)
+🗣️ RESPONSE PART 1: Ahoy, matey! That's a good try! I like how you're thinking about how things feel!
+
+You know, sometimes things can be bumpy, like a bumpy road or a bumpy toy. But when we touch a banana, it's usually nice and smooth, like a slippery slide! It doesn't have any bumps on its skin.
+❓ RESPONSE PART 2: Tell me, matey, what color is a banana when it's ready to eat?
+--------------------------------------------------
+
+2026-01-19 09:47:26.070 | INFO     | paixueji_stream:call_paixueji_stream:1942 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] System-managed mode: using focus_mode=depth
+2026-01-19 09:47:26.071 | INFO     | paixueji_stream:call_paixueji_stream:1944 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] call_paixueji_stream started | session_id=6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=12, message_history=4
+2026-01-19 09:47:26.071 | INFO     | paixueji_stream:call_paixueji_stream:1987 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] Conversation state | correct_count=0, complete=False
+2026-01-19 09:47:26.071 | INFO     | paixueji_stream:call_paixueji_stream:2036 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] Running unified AI validation for answer
+2026-01-19 09:47:32.893 | ERROR    | paixueji_stream:decide_topic_switch_with_validation:1034 | [VALIDATE] Error: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}, defaulting to safe state
+2026-01-19 09:47:32.979 | INFO     | paixueji_stream:call_paixueji_stream:2062 | [SYSTEM_MANAGED] Depth: 2/4
+2026-01-19 09:47:32.979 | INFO     | paixueji_stream:call_paixueji_stream:2200 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] Routing to feedback | is_engaged=True, is_factually_correct=True
+2026-01-19 09:47:32.979 | INFO     | paixueji_stream:call_paixueji_stream:2251 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] System-managed: focus_mode=depth, reason=Depth phase: 2/4 questions asked
+2026-01-19 09:47:32.979 | DEBUG    | paixueji_stream:call_paixueji_stream:2259 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] Streaming response (feedback)
+2026-01-19 09:47:32.982 | INFO     | paixueji_stream:generate_feedback_response_stream:290 | generate_feedback_response_stream started | object=banana, age=6
+2026-01-19 09:47:33.791 | INFO     | paixueji_stream:generate_feedback_response_stream:345 | generate_feedback_response_stream completed | duration=0.810s, length=188
+2026-01-19 09:47:33.792 | DEBUG    | paixueji_stream:call_paixueji_stream:2372 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] Streaming question
+2026-01-19 09:47:33.792 | INFO     | paixueji_stream:generate_followup_question_stream:844 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-19 09:47:34.554 | INFO     | paixueji_stream:generate_followup_question_stream:901 | generate_followup_question_stream completed | duration=0.762s, length=83
+2026-01-19 09:47:34.554 | INFO     | paixueji_stream:call_paixueji_stream:2527 | [6e0ef753-35b9-4bb0-bce6-5c2fd7e1f55b] call_paixueji_stream completed | response_type=feedback, duration=8.484s, total_chunks=7, response_length=272, correct_count=0, complete=False, session_finished=False
+2026-01-19 09:47:34.554 | DEBUG    | paixueji_stream:call_paixueji_stream:2535 | Full response: Ahoy, matey! That's alright! We're learning together!
+
+You're doing a grand job of exploring, and that's what matters! Keep those curious eyes open, and we'll discover all sorts of things! Tell me, matey, what do you think happens *inside* the banana when we peel it open?...
+2026-01-19 09:47:34.555 | DEBUG    | paixueji_stream:call_paixueji_stream:2608 | 
+
+[DEBUG TREE NODE] Turn 2 (FEEDBACK)
+--------------------------------------------------
+👤 USER INPUT: I don't know
+🧠 CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+🔍 VALIDATION: Engaged=True | Correct=True
+💭 REASONING: Could not evaluate due to error
+⚡ DECISION: CONTINUE (Reason: Error in validation: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}})
+🗣️ RESPONSE PART 1: Ahoy, matey! That's alright! We're learning together!
+
+You're doing a grand job of exploring, and that's what matters! Keep those curious eyes open, and we'll discover all sorts of things!
+❓ RESPONSE PART 2: Tell me, matey, what do you think happens *inside* the banana when we peel it open?
+--------------------------------------------------
+

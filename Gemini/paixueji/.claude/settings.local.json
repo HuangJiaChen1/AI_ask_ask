@@ -4,7 +4,8 @@
       "Bash(cat:*)",
       "Bash(python -m py_compile:*)",
       "Bash(ls:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(python:*)"
     ]
   }
 }
