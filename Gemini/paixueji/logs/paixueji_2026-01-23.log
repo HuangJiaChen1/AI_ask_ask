@@ -1,0 +1,133 @@
+2026-01-23 09:44:37.257 | INFO     | stream.question_generators:generate_followup_question_stream:204 | generate_followup_question_stream started | object=Bamboo, age=6, is_switch=False
+2026-01-23 09:44:37.258 | ERROR    | stream.question_generators:generate_followup_question_stream:250 | generate_followup_question_stream error | error='async_generator' object is not iterable, duration=0.001s
+2026-01-23 09:44:37.259 | INFO     | stream.question_generators:ask_introduction_question_stream:62 | ask_introduction_question_stream started | object=Bamboo, age=6
+2026-01-23 09:44:37.260 | DEBUG    | stream.question_generators:ask_introduction_question_stream:79 | Messages prepared for API | count=2
+2026-01-23 09:44:37.260 | DEBUG    | stream.question_generators:ask_introduction_question_stream:90 | Sending 2 messages to Gemini API
+2026-01-23 09:44:37.260 | DEBUG    | stream.question_generators:ask_introduction_question_stream:107 | Stream object type: async_generator
+2026-01-23 09:44:37.260 | ERROR    | stream.question_generators:ask_introduction_question_stream:131 | answer_question_stream LLM error | error='async_generator' object is not iterable, duration=0.001s
+2026-01-23 09:44:37.260 | DEBUG    | stream.question_generators:ask_introduction_question_stream:146 | Cleaned up stream via del in finally block
+2026-01-23 09:47:02.729 | INFO     | stream.main:call_paixueji_stream:85 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] KG Context: FOUND for 'bamboos'
+2026-01-23 09:47:02.729 | INFO     | stream.main:call_paixueji_stream:93 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] System-managed mode: using focus_mode=depth
+2026-01-23 09:47:02.730 | INFO     | stream.main:call_paixueji_stream:95 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] call_paixueji_stream started | session_id=a7606da2-f99b-463c-b569-e4d7cb1aef6f, age=6, object=bamboos, level1=plants, level2=useful_plants, level3=None, correct_count=0, status=normal, content_length=32, message_history=1
+2026-01-23 09:47:02.730 | INFO     | stream.main:call_paixueji_stream:138 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] Conversation state | correct_count=0, complete=False
+2026-01-23 09:47:02.730 | INFO     | stream.main:call_paixueji_stream:179 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] Routing to introduction question
+2026-01-23 09:47:02.730 | INFO     | stream.question_generators:ask_introduction_question_stream:62 | ask_introduction_question_stream started | object=bamboos, age=6
+2026-01-23 09:47:02.730 | DEBUG    | stream.question_generators:ask_introduction_question_stream:79 | Messages prepared for API | count=3
+2026-01-23 09:47:02.730 | DEBUG    | stream.question_generators:ask_introduction_question_stream:90 | Sending 2 messages to Gemini API
+2026-01-23 09:47:02.731 | DEBUG    | stream.question_generators:ask_introduction_question_stream:107 | Stream object type: generator
+2026-01-23 09:47:53.748 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 1 | length=2, total_length=2
+2026-01-23 09:47:53.771 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 2 | length=9, total_length=11
+2026-01-23 09:47:53.815 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 3 | length=75, total_length=86
+2026-01-23 09:47:53.907 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 4 | length=82, total_length=168
+2026-01-23 09:47:54.027 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 5 | length=81, total_length=249
+2026-01-23 09:47:54.036 | DEBUG    | stream.question_generators:ask_introduction_question_stream:127 | Gemini streaming API does not provide token usage in stream mode
+2026-01-23 09:47:54.037 | DEBUG    | stream.question_generators:ask_introduction_question_stream:146 | Cleaned up stream via del in finally block
+2026-01-23 09:47:54.037 | INFO     | stream.question_generators:ask_introduction_question_stream:151 | ask_introduction_question_stream completed | duration=51.307s, response_length=249
+2026-01-23 09:47:54.037 | WARNING  | stream.question_generators:ask_introduction_question_stream:157 | Slow LLM call | duration=51.307s exceeded threshold 5.0s
+2026-01-23 09:47:54.037 | INFO     | stream.main:call_paixueji_stream:680 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] call_paixueji_stream completed | response_type=introduction, duration=51.308s, total_chunks=5, response_length=249, correct_count=0, complete=False, session_finished=False
+2026-01-23 09:47:54.037 | DEBUG    | stream.main:call_paixueji_stream:688 | Full response: Ahoy there, matey! Today, we're going to talk about something super cool called bamboo!
+
+Have ye ever seen bamboo before? It grows super tall and straight, like a green tower!
+
+Now, tell me, what do ye think bamboo is made of inside its hollow stem?...
+2026-01-23 09:47:54.037 | DEBUG    | stream.main:call_paixueji_stream:761 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+USER INPUT: (None)
+CONTEXT: Object='bamboos' | Tone='pirate' | Focus='depth'
+VALIDATION: Engaged=None | Correct=None
+REASONING: N/A
+DECISION: N/A (Reason: N/A)
+RESPONSE PART 1: (None)
+RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-23 09:48:36.817 | INFO     | stream.main:call_paixueji_stream:85 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] KG Context: FOUND for 'bamboos'
+2026-01-23 09:48:36.817 | INFO     | stream.main:call_paixueji_stream:93 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] System-managed mode: using focus_mode=depth
+2026-01-23 09:48:36.817 | INFO     | stream.main:call_paixueji_stream:95 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] call_paixueji_stream started | session_id=a7606da2-f99b-463c-b569-e4d7cb1aef6f, age=6, object=bamboos, level1=plants, level2=useful_plants, level3=None, correct_count=0, status=normal, content_length=12, message_history=2
+2026-01-23 09:48:36.817 | INFO     | stream.main:call_paixueji_stream:138 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] Conversation state | correct_count=0, complete=False
+2026-01-23 09:48:36.817 | INFO     | stream.main:call_paixueji_stream:188 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] Running unified AI validation for answer
+2026-01-23 09:48:38.544 | INFO     | stream.validation:decide_topic_switch_with_validation:138 | [VALIDATE] CONTINUE | new_object=None, engaged=False, correct=False, switch_reasoning=Child is stuck and needs help., correctness_reasoning=Child doesn't know the answer.
+2026-01-23 09:48:38.544 | INFO     | stream.main:call_paixueji_stream:335 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] Routing to explanation | is_engaged=False
+2026-01-23 09:48:38.544 | INFO     | stream.main:call_paixueji_stream:403 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] System-managed: focus_mode=depth, reason=Depth phase: 0/5 questions asked
+2026-01-23 09:48:38.544 | DEBUG    | stream.main:call_paixueji_stream:411 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] Streaming response (explanation)
+2026-01-23 09:48:38.544 | INFO     | stream.response_generators:generate_explanation_response_stream:147 | generate_explanation_response_stream started | object=bamboos, age=6
+2026-01-23 09:48:39.131 | INFO     | stream.response_generators:generate_explanation_response_stream:203 | generate_explanation_response_stream completed | duration=0.587s, length=115
+2026-01-23 09:48:39.132 | DEBUG    | stream.main:call_paixueji_stream:525 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] Streaming question
+2026-01-23 09:48:39.132 | INFO     | stream.question_generators:generate_followup_question_stream:204 | generate_followup_question_stream started | object=bamboos, age=6, is_switch=False
+2026-01-23 09:48:39.784 | INFO     | stream.question_generators:generate_followup_question_stream:262 | generate_followup_question_stream completed | duration=0.652s, length=83
+2026-01-23 09:48:39.784 | INFO     | stream.main:call_paixueji_stream:680 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] call_paixueji_stream completed | response_type=explanation, duration=2.967s, total_chunks=6, response_length=199, correct_count=0, complete=False, session_finished=False
+2026-01-23 09:48:39.784 | DEBUG    | stream.main:call_paixueji_stream:688 | Full response: Shiver me timbers, matey! Bamboo is made of tough, woody material inside its hollow stem! It's like a strong straw! Tell me, matey, what are some of the amazing things that people make out of bamboo?...
+2026-01-23 09:48:39.784 | DEBUG    | stream.main:call_paixueji_stream:761 | 
+
+[DEBUG TREE NODE] Turn 1 (EXPLANATION)
+--------------------------------------------------
+USER INPUT: I don't know
+CONTEXT: Object='bamboos' | Tone='pirate' | Focus='depth'
+VALIDATION: Engaged=False | Correct=False
+REASONING: Child doesn't know the answer.
+DECISION: CONTINUE (Reason: Child is stuck and needs help.)
+RESPONSE PART 1: Shiver me timbers, matey! Bamboo is made of tough, woody material inside its hollow stem! It's like a strong straw!
+RESPONSE PART 2: Tell me, matey, what are some of the amazing things that people make out of bamboo?
+--------------------------------------------------
+
+2026-01-23 10:05:13.144 | INFO     | stream.main:call_paixueji_stream:85 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] KG Context: FOUND for 'bamboos'
+2026-01-23 10:05:13.145 | INFO     | stream.main:call_paixueji_stream:93 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] System-managed mode: using focus_mode=depth
+2026-01-23 10:05:13.145 | INFO     | stream.main:call_paixueji_stream:95 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] call_paixueji_stream started | session_id=a7606da2-f99b-463c-b569-e4d7cb1aef6f, age=6, object=bamboos, level1=plants, level2=useful_plants, level3=None, correct_count=0, status=normal, content_length=20, message_history=4
+2026-01-23 10:05:13.145 | INFO     | stream.main:call_paixueji_stream:138 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] Conversation state | correct_count=0, complete=False
+2026-01-23 10:05:13.145 | INFO     | stream.main:call_paixueji_stream:188 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] Running unified AI validation for answer
+2026-01-23 10:05:15.116 | INFO     | stream.validation:decide_topic_switch_with_validation:138 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child provided an answer to the question., correctness_reasoning=Pandas eat bamboo.
+2026-01-23 10:05:15.116 | INFO     | stream.main:call_paixueji_stream:214 | [SYSTEM_MANAGED] Depth: 1/5
+2026-01-23 10:05:15.116 | INFO     | stream.main:call_paixueji_stream:352 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] Routing to feedback | is_engaged=True, is_factually_correct=True
+2026-01-23 10:05:15.116 | INFO     | stream.main:call_paixueji_stream:403 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] System-managed: focus_mode=depth, reason=Depth phase: 1/5 questions asked
+2026-01-23 10:05:15.116 | DEBUG    | stream.main:call_paixueji_stream:411 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] Streaming response (feedback)
+2026-01-23 10:05:15.116 | INFO     | stream.response_generators:generate_feedback_response_stream:54 | generate_feedback_response_stream started | object=bamboos, age=6
+2026-01-23 10:05:15.773 | INFO     | stream.response_generators:generate_feedback_response_stream:109 | generate_feedback_response_stream completed | duration=0.657s, length=99
+2026-01-23 10:05:15.773 | DEBUG    | stream.main:call_paixueji_stream:525 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] Streaming question
+2026-01-23 10:05:15.773 | INFO     | stream.question_generators:generate_followup_question_stream:204 | generate_followup_question_stream started | object=bamboos, age=6, is_switch=False
+2026-01-23 10:05:16.337 | INFO     | stream.question_generators:generate_followup_question_stream:262 | generate_followup_question_stream completed | duration=0.564s, length=60
+2026-01-23 10:05:16.337 | INFO     | stream.main:call_paixueji_stream:680 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] call_paixueji_stream completed | response_type=feedback, duration=3.193s, total_chunks=7, response_length=160, correct_count=0, complete=False, session_finished=False
+2026-01-23 10:05:16.337 | DEBUG    | stream.main:call_paixueji_stream:688 | Full response: That's right, matey! Pandas LOVE to munch on bamboo! What a super important job bamboo has! Hooray! Tell me, matey, is bamboo a type of grass or a type of tree?...
+2026-01-23 10:05:16.337 | DEBUG    | stream.main:call_paixueji_stream:761 | 
+
+[DEBUG TREE NODE] Turn 2 (FEEDBACK)
+--------------------------------------------------
+USER INPUT: They feed the pandas
+CONTEXT: Object='bamboos' | Tone='pirate' | Focus='depth'
+VALIDATION: Engaged=True | Correct=True
+REASONING: Pandas eat bamboo.
+DECISION: CONTINUE (Reason: The child provided an answer to the question.)
+RESPONSE PART 1: That's right, matey! Pandas LOVE to munch on bamboo! What a super important job bamboo has! Hooray!
+RESPONSE PART 2: Tell me, matey, is bamboo a type of grass or a type of tree?
+--------------------------------------------------
+
+2026-01-23 10:05:24.369 | INFO     | stream.main:call_paixueji_stream:85 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] KG Context: FOUND for 'bamboos'
+2026-01-23 10:05:24.369 | INFO     | stream.main:call_paixueji_stream:93 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] System-managed mode: using focus_mode=depth
+2026-01-23 10:05:24.369 | INFO     | stream.main:call_paixueji_stream:95 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] call_paixueji_stream started | session_id=a7606da2-f99b-463c-b569-e4d7cb1aef6f, age=6, object=bamboos, level1=plants, level2=useful_plants, level3=None, correct_count=1, status=normal, content_length=12, message_history=6
+2026-01-23 10:05:24.369 | INFO     | stream.main:call_paixueji_stream:138 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] Conversation state | correct_count=1, complete=False
+2026-01-23 10:05:24.369 | INFO     | stream.main:call_paixueji_stream:188 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] Running unified AI validation for answer
+2026-01-23 10:05:26.163 | INFO     | stream.validation:decide_topic_switch_with_validation:138 | [VALIDATE] CONTINUE | new_object=None, engaged=False, correct=False, switch_reasoning=Child is stuck and doesn't know the answer., correctness_reasoning=Bamboo is a type of grass.
+2026-01-23 10:05:26.163 | INFO     | stream.main:call_paixueji_stream:335 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] Routing to explanation | is_engaged=False
+2026-01-23 10:05:26.163 | INFO     | stream.main:call_paixueji_stream:403 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] System-managed: focus_mode=depth, reason=Depth phase: 1/5 questions asked
+2026-01-23 10:05:26.164 | DEBUG    | stream.main:call_paixueji_stream:411 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] Streaming response (explanation)
+2026-01-23 10:05:26.164 | INFO     | stream.response_generators:generate_explanation_response_stream:147 | generate_explanation_response_stream started | object=bamboos, age=6
+2026-01-23 10:05:26.771 | INFO     | stream.response_generators:generate_explanation_response_stream:203 | generate_explanation_response_stream completed | duration=0.607s, length=67
+2026-01-23 10:05:26.771 | DEBUG    | stream.main:call_paixueji_stream:525 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] Streaming question
+2026-01-23 10:05:26.771 | INFO     | stream.question_generators:generate_followup_question_stream:204 | generate_followup_question_stream started | object=bamboos, age=6, is_switch=False
+2026-01-23 10:05:27.870 | INFO     | stream.question_generators:generate_followup_question_stream:262 | generate_followup_question_stream completed | duration=1.099s, length=148
+2026-01-23 10:05:27.870 | INFO     | stream.main:call_paixueji_stream:680 | [a7606da2-f99b-463c-b569-e4d7cb1aef6f] call_paixueji_stream completed | response_type=explanation, duration=3.502s, total_chunks=7, response_length=216, correct_count=1, complete=False, session_finished=False
+2026-01-23 10:05:27.870 | DEBUG    | stream.main:call_paixueji_stream:688 | Full response: Bamboo is a type of grass, matey! It's a giant, super-strong grass! Now, matey, since bamboo is a super-fast growing grass, can ye imagine how tall it might get? What do ye think it looks like when it's all grown up?...
+2026-01-23 10:05:27.871 | DEBUG    | stream.main:call_paixueji_stream:761 | 
+
+[DEBUG TREE NODE] Turn 3 (EXPLANATION)
+--------------------------------------------------
+USER INPUT: I don't know
+CONTEXT: Object='bamboos' | Tone='pirate' | Focus='depth'
+VALIDATION: Engaged=False | Correct=False
+REASONING: Bamboo is a type of grass.
+DECISION: CONTINUE (Reason: Child is stuck and doesn't know the answer.)
+RESPONSE PART 1: Bamboo is a type of grass, matey! It's a giant, super-strong grass!
+RESPONSE PART 2: Now, matey, since bamboo is a super-fast growing grass, can ye imagine how tall it might get? What do ye think it looks like when it's all grown up?
+--------------------------------------------------
+

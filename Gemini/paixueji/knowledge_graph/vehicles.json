@@ -1,0 +1,1513 @@
+[
+    {
+    "id": "vehicle_car",
+    "name": "Car",
+    "aliases": ["automobile", "vehicle", "auto"],
+    "domain": "vehicle",
+    "category": ["transportation", "transport", "land vehicle"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["red", "blue", "white", "black", "silver", "yellow", "green", "gray"],
+        "shapes": ["four wheels", "windows", "doors", "headlights", "steering wheel", "seats", "hood", "trunk"],
+        "size": "varies (small to big)",
+        "textures": ["smooth", "shiny", "metallic", "glossy"],
+        "distinctive_parts": ["steering wheel", "wheels", "headlights", "windshield", "license plate"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a car! Cars go vroom vroom! Can you make the sound of a car?",
+            "Look, a car! It has four wheels. What color is it?",
+            "A shiny car! The car can take us places. Is it big or small?",
+            "Hello, car! It has doors and windows. Can you count the wheels?",
+            "Wow, a car! I like cars. Do you like cars? Let's see what it has!"
+        ],
+        "facts": [
+            {"id": "car_t1_f1", "text": "Cars have four wheels that roll on the road.", "category": "parts", "wonder_score": 3},
+            {"id": "car_t1_f2", "text": "Cars have doors that open and close.", "category": "parts", "wonder_score": 2},
+            {"id": "car_t1_f3", "text": "Cars have a steering wheel that turns left and right.", "category": "parts", "wonder_score": 3},
+            {"id": "car_t1_f4", "text": "Cars have headlights that light up at night.", "category": "function", "wonder_score": 4},
+            {"id": "car_t1_f5", "text": "Cars can be many different colors.", "category": "appearance", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "car_t1_q1", "text": "How many wheels does a car have?", "type": "counting", "expected_answer": "4", "hint": "Let's count together: 1, 2, 3, 4!"},
+            {"id": "car_t1_q2", "text": "What part of the car turns left and right?", "type": "observation", "expected_answer": "steering wheel", "hint": "The driver holds it!"},
+            {"id": "car_t1_q3", "text": "What do cars use to see at night?", "type": "knowledge", "expected_answer": "headlights", "hint": "They are bright lights!"},
+            {"id": "car_t1_q4", "text": "What color is this car?", "type": "color", "hint": "Look at its body!"},
+            {"id": "car_t1_q5", "text": "Can a car have two doors or four doors?", "type": "yes_no", "expected_answer": "yes", "hint": "Some have two, some have four!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a car! Cars help people travel from one place to another.",
+            "Look at this car! It uses gasoline or electricity to move.",
+            "Here's a car! Cars need a driver to steer and control them.",
+            "Check out this car! It has a horn that makes a 'beep beep' sound.",
+            "Meet this car! Cars have brakes that help them stop safely."
+        ],
+        "facts": [
+            {"id": "car_t2_f1", "text": "Cars need fuel like gasoline or electricity to move and go.", "category": "function", "wonder_score": 4},
+            {"id": "car_t2_f2", "text": "A driver sits in the car and uses the steering wheel to turn the car.", "category": "operation", "wonder_score": 3},
+            {"id": "car_t2_f3", "text": "Cars have a horn that makes a loud 'beep' sound to warn others.", "category": "parts", "wonder_score": 4},
+            {"id": "car_t2_f4", "text": "Cars have brakes that slow them down and help them stop.", "category": "safety", "wonder_score": 4},
+            {"id": "car_t2_f5", "text": "Cars have seat belts to keep people safe inside.", "category": "safety", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "car_t2_q1", "text": "What do cars need to move and go?", "type": "knowledge", "expected_answer": "fuel/gasoline/electricity", "hint": "We put it in the tank!"},
+            {"id": "car_t2_q2", "text": "Who controls the car and turns the steering wheel?", "type": "knowledge", "expected_answer": "driver", "hint": "A person sits in the driver's seat!"},
+            {"id": "car_t2_q3", "text": "What part of the car makes a 'beep beep' sound?", "type": "knowledge", "expected_answer": "horn", "hint": "It's used to warn others!"},
+            {"id": "car_t2_q4", "text": "Why do cars have brakes?", "type": "why", "expected_answer": "to stop", "hint": "They help the car slow down!"},
+            {"id": "car_t2_q5", "text": "What keeps people safe inside a car when it stops suddenly?", "type": "safety", "expected_answer": "seat belt", "hint": "You buckle it across your body!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a car! Did you know that cars have engines that make them move?",
+            "Look at this car! Cars have mirrors that help the driver see what's behind.",
+            "This is a car. It has a battery that provides electricity for lights and radio.",
+            "Here we have a car. Cars need air in their tires to roll smoothly.",
+            "Consider this car. When it rains, cars use windshield wipers to clear the window."
+        ],
+        "facts": [
+            {"id": "car_t3_f1", "text": "Cars have engines that use fuel to create power and make the wheels turn.", "category": "mechanism", "wonder_score": 5},
+            {"id": "car_t3_f2", "text": "Cars have side mirrors and a rearview mirror that help the driver see around the car.", "category": "safety", "wonder_score": 4},
+            {"id": "car_t3_f3", "text": "Cars have a battery that powers the lights, radio, and other electrical parts.", "category": "parts", "wonder_score": 4},
+            {"id": "car_t3_f4", "text": "Car tires need to be filled with air so they can roll smoothly and safely on the road.", "category": "maintenance", "wonder_score": 4},
+            {"id": "car_t3_f5", "text": "Cars have windshield wipers that move back and forth to clear rain from the windshield.", "category": "function", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "car_t3_q1", "text": "What part of the car uses fuel to make the wheels turn?", "type": "knowledge", "expected_answer": "engine", "hint": "It's under the hood!"},
+            {"id": "car_t3_q2", "text": "Why do cars have mirrors on the sides and inside?", "type": "why", "hint": "To see other cars and people!"},
+            {"id": "car_t3_q3", "text": "What powers the lights and radio in a car?", "type": "knowledge", "expected_answer": "battery", "hint": "It stores electricity!"},
+            {"id": "car_t3_q4", "text": "What do car tires need to be filled with to work properly?", "type": "knowledge", "expected_answer": "air", "hint": "We pump it in at the gas station!"},
+            {"id": "car_t3_q5", "text": "What clears rain from the car's windshield so the driver can see?", "type": "knowledge", "expected_answer": "windshield wipers", "hint": "They move back and forth!"}
+        ]
+    }
+    },
+    {
+    "id": "vehicles_bus",
+    "name": "Bus",
+    "aliases": ["school bus", "city bus", "big bus", "bus vehicle"],
+    "domain": "vehicles",
+    "category": ["vehicle", "transportation", "public transport"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["yellow", "red", "blue", "green", "white", "orange"],
+        "shapes": ["long rectangular body", "big windows", "multiple doors", "wheels", "flat front", "square shape"],
+        "size": "big and long",
+        "textures": ["smooth metal", "hard plastic", "glass windows", "rubber tires"],
+        "distinctive_parts": ["big wheels", "large windshield", "stop sign arm", "headlights", "side mirrors", "exhaust pipe"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a big bus! Look at its many windows!",
+            "Wow, a bus! It is yellow and very long.",
+            "A school bus! It takes children to school every day.",
+            "Hello, bus! It has big wheels and lots of seats inside.",
+            "Look at the bus! It stops to let people get on and off."
+        ],
+        "facts": [
+            {"id": "bus_t1_f1", "text": "Buses are big vehicles that carry many people.", "category": "purpose", "wonder_score": 3},
+            {"id": "bus_t1_f2", "text": "Buses have many windows for passengers to look out.", "category": "appearance", "wonder_score": 2},
+            {"id": "bus_t1_f3", "text": "Buses stop at bus stops to pick up people.", "category": "behavior", "wonder_score": 3},
+            {"id": "bus_t1_f4", "text": "School buses are yellow to help us see them easily.", "category": "safety", "wonder_score": 4},
+            {"id": "bus_t1_f5", "text": "Buses have big wheels that go round and round.", "category": "parts", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "bus_t1_q1", "text": "What color is a school bus?", "type": "color", "expected_answer": "yellow", "hint": "It's a bright color!"},
+            {"id": "bus_t1_q2", "text": "How many wheels does a bus have? Count them!", "type": "counting", "expected_answer": "6 or more", "hint": "They have many wheels on each side!"},
+            {"id": "bus_t1_q3", "text": "What do buses carry?", "type": "purpose", "expected_answer": "people", "hint": "Many people can ride together!"},
+            {"id": "bus_t1_q4", "text": "Where does a bus stop to pick up people?", "type": "knowledge", "expected_answer": "bus stop", "hint": "Look for the sign with a bus picture!"},
+            {"id": "bus_t1_q5", "text": "Are buses big or small?", "type": "comparison", "expected_answer": "big", "hint": "Much bigger than a car!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a bus! Do you know why school buses are painted bright yellow?",
+            "Look at this bus! It has a special stop sign that comes out when children are getting on or off.",
+            "Here's a bus! Buses help reduce traffic by carrying many people in one vehicle.",
+            "Check out this bus! Some buses run on electricity instead of gasoline to keep the air clean.",
+            "Meet this bus! In cities, buses follow specific routes with many stops along the way."
+        ],
+        "facts": [
+            {"id": "bus_t2_f1", "text": "School buses have a stop sign arm that comes out to warn cars to stop.", "category": "safety", "wonder_score": 5},
+            {"id": "bus_t2_f2", "text": "Buses help reduce traffic because one bus can carry as many people as 30 cars.", "category": "environment", "wonder_score": 4},
+            {"id": "bus_t2_f3", "text": "Some buses are electric, which means they run on batteries and don't make exhaust smoke.", "category": "technology", "wonder_score": 5},
+            {"id": "bus_t2_f4", "text": "Bus drivers use mirrors to see all around the bus, especially when changing lanes.", "category": "operation", "wonder_score": 4},
+            {"id": "bus_t2_f5", "text": "Buses have special doors that open and close with a push of a button by the driver.", "category": "features", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "bus_t2_q1", "text": "What comes out from the side of a school bus when children are getting on or off?", "type": "safety", "expected_answer": "stop sign", "hint": "It tells cars to stop!"},
+            {"id": "bus_t2_q2", "text": "Why are buses good for reducing traffic?", "type": "reasoning", "hint": "Think about how many cars one bus can replace!"},
+            {"id": "bus_t2_q3", "text": "How do electric buses help keep the air clean?", "type": "environment", "expected_answer": "no exhaust smoke", "hint": "They don't burn gasoline!"},
+            {"id": "bus_t2_q4", "text": "What do bus drivers use to see around the big bus?", "type": "knowledge", "expected_answer": "mirrors", "hint": "They have big mirrors on the sides!"},
+            {"id": "bus_t2_q5", "text": "Who opens and closes the doors on a bus?", "type": "operation", "expected_answer": "the driver", "hint": "The person who drives the bus!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a bus! Did you know that buses have been used for public transportation for over 100 years?",
+            "Look at this bus! Modern buses are designed to be accessible with ramps for wheelchairs.",
+            "This is a bus. They have a special schedule to follow so people know when they will arrive.",
+            "Here we have a bus. In some cities, buses can change traffic lights to green as they approach.",
+            "Consider this bus. Without buses, many people who don't have cars couldn't get to work or school."
+        ],
+        "facts": [
+            {"id": "bus_t3_f1", "text": "The first motor buses were invented in the late 1800s, replacing horse-drawn buses.", "category": "history", "wonder_score": 4},
+            {"id": "bus_t3_f2", "text": "Many buses now have ramps or kneeling systems to help people in wheelchairs get on board.", "category": "accessibility", "wonder_score": 5},
+            {"id": "bus_t3_f3", "text": "Buses follow a timetable so people know exactly when the bus will arrive at their stop.", "category": "operation", "wonder_score": 3},
+            {"id": "bus_t3_f4", "text": "Some cities have special traffic signals that turn green when a bus is coming to help it stay on time.", "category": "technology", "wonder_score": 5},
+            {"id": "bus_t3_f5", "text": "If there were no buses, cities would have much more traffic and pollution from cars.", "category": "impact", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "bus_t3_q1", "text": "What did buses use before they had motors?", "type": "history", "expected_answer": "horses", "hint": "Animals pulled them!"},
+            {"id": "bus_t3_q2", "text": "How do modern buses help people in wheelchairs get on?", "type": "accessibility", "hint": "They can lower or have a ramp!"},
+            {"id": "bus_t3_q3", "text": "Why is it important for buses to follow a schedule?", "type": "reasoning", "hint": "So people know when to wait for it!"},
+            {"id": "bus_t3_q4", "text": "How can traffic lights help buses stay on time?", "type": "technology", "expected_answer": "turn green for bus", "hint": "They change color when the bus comes!"},
+            {"id": "bus_t3_q5", "text": "What would happen if there were no buses in a big city?", "type": "what_if", "hint": "Think about traffic and pollution!"}
+        ]
+    }
+    },
+    {
+    "id": "vehicles_bicycle",
+    "name": "Bicycle",
+    "aliases": ["bike", "two-wheeler", "cycle"],
+    "domain": "vehicles",
+    "category": ["transportation", "human-powered", "two-wheeler"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["red", "blue", "green", "black", "white", "yellow", "pink", "purple"],
+        "shapes": ["two wheels", "handlebars", "seat", "pedals", "frame", "chain", "brake levers"],
+        "size": "child-sized to adult-sized",
+        "textures": ["smooth metal", "rubber tires", "plastic grips", "leather seat"],
+        "distinctive_parts": ["two wheels", "pedals you push", "handlebars for steering", "chain that moves wheels", "bell or horn"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a bicycle! Look at the two wheels!",
+            "Wow, a bike! You pedal with your feet to make it go.",
+            "A red bicycle! It has handlebars to steer left and right.",
+            "Hello, bicycle! Let's see what makes it move.",
+            "Look, a bike! It has a seat for you to sit on."
+        ],
+        "facts": [
+            {"id": "bicycle_t1_f1", "text": "A bicycle has two wheels.", "category": "structure", "wonder_score": 3},
+            {"id": "bicycle_t1_f2", "text": "You pedal with your feet to make the bike go.", "category": "operation", "wonder_score": 4},
+            {"id": "bicycle_t1_f3", "text": "Bicycles have handlebars to steer left and right.", "category": "structure", "wonder_score": 3},
+            {"id": "bicycle_t1_f4", "text": "You sit on the seat when you ride a bike.", "category": "operation", "wonder_score": 2},
+            {"id": "bicycle_t1_f5", "text": "Some bicycles have a bell that goes 'ding-ding'.", "category": "feature", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "bicycle_t1_q1", "text": "How many wheels does a bicycle have?", "type": "counting", "expected_answer": "2", "hint": "Count them: one, two!"},
+            {"id": "bicycle_t1_q2", "text": "What do you use to make a bicycle move?", "type": "observation", "expected_answer": "feet/pedals", "hint": "You push with your feet!"},
+            {"id": "bicycle_t1_q3", "text": "What do you hold to steer a bicycle?", "type": "knowledge", "expected_answer": "handlebars", "hint": "They are like two handles in front!"},
+            {"id": "bicycle_t1_q4", "text": "Where do you sit on a bicycle?", "type": "location", "expected_answer": "on the seat", "hint": "The soft part in the middle!"},
+            {"id": "bicycle_t1_q5", "text": "What sound does a bicycle bell make?", "type": "sound", "expected_answer": "ding-ding/ring", "hint": "It goes ding-ding!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a bicycle! Do you know how the wheels turn when you pedal?",
+            "Look at this bicycle! It has brakes to make it stop safely.",
+            "Here's a bicycle! Some bikes have training wheels to help you learn.",
+            "Check out this bicycle! The chain connects the pedals to the wheels.",
+            "Meet this bicycle! You need to wear a helmet when you ride a bike."
+        ],
+        "facts": [
+            {"id": "bicycle_t2_f1", "text": "Bicycles have brakes that you squeeze to slow down and stop.", "category": "safety", "wonder_score": 4},
+            {"id": "bicycle_t2_f2", "text": "The chain connects the pedals to the wheels, making them turn when you pedal.", "category": "mechanism", "wonder_score": 4},
+            {"id": "bicycle_t2_f3", "text": "Training wheels are small extra wheels that help beginners keep balance.", "category": "learning", "wonder_score": 4},
+            {"id": "bicycle_t2_f4", "text": "You should always wear a helmet when riding a bike to protect your head.", "category": "safety", "wonder_score": 5},
+            {"id": "bicycle_t2_f5", "text": "Bicycles are good for exercise and don't need gas like cars do.", "category": "benefit", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "bicycle_t2_q1", "text": "How do you make a bicycle stop?", "type": "knowledge", "expected_answer": "use the brakes", "hint": "You squeeze the levers on the handlebars!"},
+            {"id": "bicycle_t2_q2", "text": "What part connects the pedals to the wheels?", "type": "parts", "expected_answer": "the chain", "hint": "It's a metal loop that moves!"},
+            {"id": "bicycle_t2_q3", "text": "What are training wheels for?", "type": "function", "expected_answer": "to help keep balance", "hint": "They help beginners not fall over!"},
+            {"id": "bicycle_t2_q4", "text": "What should you wear on your head when riding a bike?", "type": "safety", "expected_answer": "a helmet", "hint": "It protects your head!"},
+            {"id": "bicycle_t2_q5", "text": "How is a bicycle different from a car?", "type": "comparison", "expected_answer": "bike uses pedals, car uses gas", "hint": "Think about how they move!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a bicycle! Did you know bicycles use balance and motion to stay upright?",
+            "Look at this bicycle! The gears can make it easier to pedal up hills.",
+            "This is a bicycle. Invented long ago, it has changed a lot over time.",
+            "Here we have a bicycle. It's an eco-friendly way to travel because it doesn't pollute.",
+            "Consider this bicycle. When you turn the handlebars, the front wheel changes direction."
+        ],
+        "facts": [
+            {"id": "bicycle_t3_f1", "text": "Bicycles stay upright when moving because of balance and the spinning wheels.", "category": "physics", "wonder_score": 5},
+            {"id": "bicycle_t3_f2", "text": "Some bicycles have gears that make it easier to pedal up hills or go faster.", "category": "mechanism", "wonder_score": 5},
+            {"id": "bicycle_t3_f3", "text": "The first bicycles were invented over 200 years ago and looked very different.", "category": "history", "wonder_score": 4},
+            {"id": "bicycle_t3_f4", "text": "Bicycles are good for the environment because they don't create air pollution.", "category": "benefit", "wonder_score": 4},
+            {"id": "bicycle_t3_f5", "text": "Riding a bicycle more often can enhance the heart and lung functions as well as physical fitness.", "category": "benefit", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "bicycle_t3_q1", "text": "Why is it easier to balance on a bicycle when it's moving?", "type": "why", "expected_answer": "spinning wheels help balance", "hint": "The wheels want to keep spinning straight!"},
+            {"id": "bicycle_t3_q2", "text": "What do gears on a bicycle help you do?", "type": "function", "expected_answer": "pedal easier up hills or go faster", "hint": "They change how hard you pedal!"},
+            {"id": "bicycle_t3_q3", "text": "How long ago were bicycles invented?", "type": "history", "expected_answer": "over 200 years ago", "hint": "A very long time, before cars!"},
+            {"id": "bicycle_t3_q4", "text": "Why are bicycles good for the Earth?", "type": "why", "expected_answer": "they don't pollute the air", "hint": "They don't make smoke like cars!"},
+            {"id": "bicycle_t3_q5", "text": "What are the benefits of frequently cycling for the body?", "type": "what", "expected_answer": "It can promote the function of the heart and lungs and enhance physical fitness.", "hint": "Just like running!"}
+        ]
+    }
+    },
+    {
+    "id": "vehicles_train",
+    "name": "Train",
+    "aliases": ["railroad train", "locomotive", "railway"],
+    "domain": "vehicles",
+    "category": ["vehicle", "transportation", "public transport"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["black", "gray", "blue", "red", "green", "silver", "white", "yellow"],
+        "shapes": ["long body", "multiple cars", "wheels on tracks", "windows in rows", "front engine", "smokestack or pantograph"],
+        "size": "very long (multiple cars connected)",
+        "textures": ["metallic", "smooth", "shiny", "hard"],
+        "distinctive_parts": ["train tracks", "wheels on rails", "engine/cab", "couplers between cars", "headlights", "smoke or electricity"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a train! Look how long it is!",
+            "Wow, a train! It runs on tracks. Can you hear the sound?",
+            "A big train! It has many cars connected together.",
+            "Hello, train! It goes 'choo choo!'",
+            "Look, a train! It is pulling many cars behind it."
+        ],
+        "facts": [
+            {"id": "train_t1_f1", "text": "Trains run on special metal tracks.", "category": "movement", "wonder_score": 4},
+            {"id": "train_t1_f2", "text": "Trains are very long with many cars.", "category": "appearance", "wonder_score": 3},
+            {"id": "train_t1_f3", "text": "Trains make a 'choo choo' or 'click-clack' sound.", "category": "sound", "wonder_score": 4},
+            {"id": "train_t1_f4", "text": "Trains have many wheels that turn on the rails.", "category": "parts", "wonder_score": 3},
+            {"id": "train_t1_f5", "text": "Trains can carry many people or lots of things.", "category": "function", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "train_t1_q1", "text": "Where does a train run?", "type": "observation", "expected_answer": "on tracks", "hint": "On special metal rails!"},
+            {"id": "train_t1_q2", "text": "What sound does a train make?", "type": "sound", "expected_answer": "choo choo", "hint": "Choo choo or click-clack!"},
+            {"id": "train_t1_q3", "text": "Is a train short or long?", "type": "comparison", "expected_answer": "long", "hint": "It has many cars!"},
+            {"id": "train_t1_q4", "text": "What do trains carry?", "type": "knowledge", "expected_answer": "people or things", "hint": "They can carry both!"},
+            {"id": "train_t1_q5", "text": "How many wheels does a train have?", "type": "counting", "expected_answer": "many", "hint": "Count the wheels on one car!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a train! Some trains carry people, and some carry things like coal or cars.",
+            "Look at this train! It needs an engine to pull all the cars along the track.",
+            "Here's a train! The train driver sits in the front cabin and controls the train.",
+            "Check out this train! Trains are very good for carrying heavy things over long distances.",
+            "Meet this train! Some trains go underground in tunnels, they are called subways."
+        ],
+        "facts": [
+            {"id": "train_t2_f1", "text": "Trains have an engine in front that pulls all the other cars.", "category": "parts_function", "wonder_score": 4},
+            {"id": "train_t2_f2", "text": "Some trains carry people (passenger trains), some carry goods (freight trains).", "category": "type", "wonder_score": 4},
+            {"id": "train_t2_f3", "text": "A train driver controls the train from a cabin in the engine.", "category": "operation", "wonder_score": 4},
+            {"id": "train_t2_f4", "text": "Trains need train tracks to travel on; they cannot go on roads.", "category": "movement", "wonder_score": 3},
+            {"id": "train_t2_f5", "text": "Subway trains run underground in tunnels in big cities.", "category": "type", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "train_t2_q1", "text": "What is at the front of a train to pull it?", "type": "knowledge", "expected_answer": "an engine", "hint": "The big part that makes it go!"},
+            {"id": "train_t2_q2", "text": "What are the two main types of trains?", "type": "classification", "expected_answer": "passenger and freight", "hint": "One carries people, one carries things."},
+            {"id": "train_t2_q3", "text": "Who controls the train?", "type": "knowledge", "expected_answer": "a train driver", "hint": "A person who drives it!"},
+            {"id": "train_t2_q4", "text": "Where do subway trains run?", "type": "location", "expected_answer": "underground", "hint": "Under the city in tunnels!"},
+            {"id": "train_t2_q5", "text": "Can a train drive on a road like a car?", "type": "comparison", "expected_answer": "no", "hint": "It needs special tracks!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a train! Long ago, trains were powered by steam from burning coal.",
+            "Look at this train! Modern trains use electricity or diesel fuel to run.",
+            "This is a train. The tracks are designed so that trains can go around curves safely.",
+            "Here we have a train. Signals and signs along the tracks help trains avoid crashes.",
+            "Consider this train. High-speed trains can go very fast, almost as fast as an airplane flies!"
+        ],
+        "facts": [
+            {"id": "train_t3_f1", "text": "Long ago, trains used steam engines that burned coal to make power.", "category": "history", "wonder_score": 5},
+            {"id": "train_t3_f2", "text": "Modern trains use electricity from wires above or diesel fuel in their engines.", "category": "power", "wonder_score": 4},
+            {"id": "train_t3_f3", "text": "Train tracks have special switches that let trains change from one track to another.", "category": "operation", "wonder_score": 4},
+            {"id": "train_t3_f4", "text": "Signals and lights along the tracks tell the train driver when to stop or go.", "category": "safety", "wonder_score": 4},
+            {"id": "train_t3_f5", "text": "High-speed trains can travel over 300 kilometers per hour, much faster than cars.", "category": "ability", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "train_t3_q1", "text": "How did old steam trains get their power?", "type": "history", "expected_answer": "burning coal", "hint": "They made steam from coal!"},
+            {"id": "train_t3_q2", "text": "What do modern trains use for power?", "type": "knowledge", "expected_answer": "electricity or diesel", "hint": "Two common types!"},
+            {"id": "train_t3_q3", "text": "How do trains change from one track to another?", "type": "how", "hint": "There are moving parts in the tracks!"},
+            {"id": "train_t3_q4", "text": "Why are there signals along the train tracks?", "type": "why", "hint": "To keep trains safe and avoid crashes!"},
+            {"id": "train_t3_q5", "text": "How fast can high-speed trains go?", "type": "comparison", "expected_answer": "over 300 km/h", "hint": "Faster than cars on the highway!"}
+        ]
+    }
+    },
+    {
+    "id": "vehicles_airplane",
+    "name": "Airplane",
+    "aliases": ["plane", "aircraft", "jet", "aeroplane"],
+    "domain": "vehicles",
+    "category": ["vehicle", "transportation", "air vehicle"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["white", "silver", "blue", "red", "gray", "multi-color"],
+        "shapes": ["long body", "wings on both sides", "tail at the back", "round windows", "landing gear", "pointed nose"],
+        "size": "varies (from small to very large)",
+        "textures": ["smooth", "metallic", "shiny", "painted"],
+        "distinctive_parts": ["wings", "tail fin", "engines", "cockpit windows", "landing wheels"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's an airplane! Look at its big wings!",
+            "Wow, an airplane! It flies up in the sky. Can you see its windows?",
+            "A big airplane! It has wings and a tail. Count its wings!",
+            "Hello, airplane! It makes a loud sound when it flies.",
+            "Look up! An airplane is flying high in the blue sky."
+        ],
+        "facts": [
+            {"id": "airplane_t1_f1", "text": "Airplanes fly high up in the sky.", "category": "movement", "wonder_score": 5},
+            {"id": "airplane_t1_f2", "text": "Airplanes have two big wings.", "category": "structure", "wonder_score": 3},
+            {"id": "airplane_t1_f3", "text": "Airplanes make a loud rumbling sound.", "category": "sound", "wonder_score": 4},
+            {"id": "airplane_t1_f4", "text": "Airplanes have windows for people to look out.", "category": "features", "wonder_score": 3},
+            {"id": "airplane_t1_f5", "text": "Airplanes can carry many people inside.", "category": "function", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "airplane_t1_q1", "text": "Where do airplanes fly?", "type": "observation", "expected_answer": "in the sky", "hint": "Look up high!"},
+            {"id": "airplane_t1_q2", "text": "How many wings does an airplane have?", "type": "counting", "expected_answer": "2", "hint": "Count one on each side!"},
+            {"id": "airplane_t1_q3", "text": "What sound does an airplane make?", "type": "sound", "expected_answer": "loud rumble", "hint": "Vroom, whoosh!"},
+            {"id": "airplane_t1_q4", "text": "What do airplanes have for people to see out?", "type": "observation", "expected_answer": "windows", "hint": "Round holes on the side!"},
+            {"id": "airplane_t1_q5", "text": "Can airplanes carry many people?", "type": "yes_no", "expected_answer": "yes", "hint": "They have many seats inside!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's an airplane! Airplanes help people travel to far away places very fast.",
+            "Look at this airplane! It has special engines that help it fly through the air.",
+            "Here's an airplane! Did you know airplanes need a long runway to take off?",
+            "Check out this airplane! Pilots sit in the front and control the plane.",
+            "Meet this airplane! Different airplanes are used for different jobs, like carrying people or goods."
+        ],
+        "facts": [
+            {"id": "airplane_t2_f1", "text": "Airplanes can fly much faster than cars or trains.", "category": "speed", "wonder_score": 5},
+            {"id": "airplane_t2_f2", "text": "Airplanes need a long runway to get enough speed to take off.", "category": "operation", "wonder_score": 4},
+            {"id": "airplane_t2_f3", "text": "Pilots sit in the cockpit at the front and use controls to fly the plane.", "category": "control", "wonder_score": 4},
+            {"id": "airplane_t2_f4", "text": "Some airplanes carry people, while others carry cargo like packages and food.", "category": "function", "wonder_score": 4},
+            {"id": "airplane_t2_f5", "text": "Airplanes leave white trails called contrails in the sky when they fly very high.", "category": "observation", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "airplane_t2_q1", "text": "What is faster: an airplane or a car?", "type": "comparison", "expected_answer": "airplane", "hint": "Which one goes in the sky?"},
+            {"id": "airplane_t2_q2", "text": "Is the runway for the plane's takeoff long or short?", "type": "knowledge", "expected_answer": "a long runway", "hint": "A long, flat road!"},
+            {"id": "airplane_t2_q3", "text": "Who flies the airplane?", "type": "vocabulary", "expected_answer": "pilot", "hint": "A person in the front!"},
+            {"id": "airplane_t2_q4", "text": "What are two things airplanes can carry?", "type": "classification", "expected_answer": "people and cargo", "hint": "Passengers or things!"},
+            {"id": "airplane_t2_q5", "text": "What are the white lines airplanes sometimes leave in the sky?", "type": "knowledge", "expected_answer": "contrails", "hint": "Like clouds from the plane!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's an airplane! The shape of the wings helps create lift, which makes the plane go up.",
+            "Look at this airplane! It has to follow special routes in the sky, like roads in the air.",
+            "This is an airplane. Air traffic controllers on the ground help guide planes safely.",
+            "Here we have an airplane. Its engines push air backward to move the plane forward.",
+            "Consider this airplane. It has special lights to help other planes see it at night."
+        ],
+        "facts": [
+            {"id": "airplane_t3_f1", "text": "The special curved shape of airplane wings helps create lift, which pushes the plane up into the air.", "category": "physics", "wonder_score": 5},
+            {"id": "airplane_t3_f2", "text": "Airplanes follow specific paths in the sky called flight paths, guided by air traffic controllers.", "category": "navigation", "wonder_score": 4},
+            {"id": "airplane_t3_f3", "text": "Airplane engines work by sucking in air and pushing it out very fast, which moves the plane forward.", "category": "mechanics", "wonder_score": 5},
+            {"id": "airplane_t3_f4", "text": "Airplanes have red lights on the left wing and green lights on the right wing to help other pilots see them.", "category": "safety", "wonder_score": 4},
+            {"id": "airplane_t3_f5", "text": "The fastest passenger airplanes can fly from New York to London in about 7 hours, much faster than a ship.", "category": "speed", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "airplane_t3_q1", "text": "What helps push an airplane up into the air?", "type": "why", "hint": "It's created by the wing shape!"},
+            {"id": "airplane_t3_q2", "text": "Who helps guide airplanes safely in the sky?", "type": "vocabulary", "expected_answer": "air traffic controllers", "hint": "People on the ground!"},
+            {"id": "airplane_t3_q3", "text": "How do airplane engines move the plane forward?", "type": "how", "hint": "They push air backward!"},
+            {"id": "airplane_t3_q4", "text": "What colors are the lights on airplane wings and why?", "type": "application", "hint": "Red on left, green on right for safety!"},
+            {"id": "airplane_t3_q5", "text": "If there were no airplanes, how would we travel across oceans?", "type": "what_if", "hint": "We'd use ships or boats, which are slower!"}
+        ]
+    }
+    },
+    {
+    "id": "vehicle_boat",
+    "name": "Boat",
+    "aliases": ["ship", "watercraft", "vessel"],
+    "domain": "vehicles",
+    "category": ["vehicle", "transportation", "water vehicle"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["white", "blue", "red", "green", "brown", "yellow"],
+        "shapes": ["pointy front (bow)", "flat back (stern)", "hull", "mast", "sail", "cabin"],
+        "size": "varies (from small to very large)",
+        "textures": ["smooth", "hard", "wooden", "metal", "fiberglass"],
+        "distinctive_parts": ["hull (the body that floats)", "oars", "sail", "rudder", "anchor", "life buoy"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a boat! Boats go on the water. Can you point to the water?",
+            "Look, a boat! It floats on rivers, lakes, or the ocean.",
+            "A big/small boat! People can ride in it. Does it have a sail?",
+            "Hello, boat! Let's see what it looks like. What color is it?",
+            "Wow, a boat! I see a boat. Where does a boat go?"
+        ],
+        "facts": [
+            {"id": "boat_t1_f1", "text": "Boats float on top of the water.", "category": "function", "wonder_score": 3},
+            {"id": "boat_t1_f2", "text": "People can sit in a boat and ride across the water.", "category": "function", "wonder_score": 4},
+            {"id": "boat_t1_f3", "text": "Boats can be many colors, like white, blue, or red.", "category": "appearance", "wonder_score": 2},
+            {"id": "boat_t1_f4", "text": "Some boats have a tall pole called a mast and a big cloth called a sail.", "category": "parts", "wonder_score": 3},
+            {"id": "boat_t1_f5", "text": "A boat moves on lakes, rivers, and the big ocean.", "category": "habitat", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "boat_t1_q1", "text": "Where does a boat go?", "type": "location", "expected_answer": "on water", "hint": "Not on the road, but on lakes or the sea!"},
+            {"id": "boat_t1_q2", "text": "What can people do in a boat?", "type": "function", "expected_answer": "ride in it", "hint": "They sit inside and travel!"},
+            {"id": "boat_t1_q3", "text": "What color is this boat?", "type": "color", "hint": "Look at its body!"},
+            {"id": "boat_t1_q4", "text": "Does this boat have a sail?", "type": "yes_no", "hint": "Look for a big piece of cloth!"},
+            {"id": "boat_t1_q5", "text": "Can a boat go on a road?", "type": "yes_no", "expected_answer": "no", "hint": "Boats need water to float!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a boat! Boats are used for travel and fun on the water. Do you know how they move?",
+            "Look at this boat! Some boats use the wind to move, and others use an engine.",
+            "Here's a boat! Did you know boats have a special part at the bottom to help them float?",
+            "Check out this boat! Boats can be very different. Some are for fishing, and some are for carrying many people.",
+            "Meet this boat! It has a heavy anchor. Can you guess what the anchor does?"
+        ],
+        "facts": [
+            {"id": "boat_t2_f1", "text": "A boat's wide, hollow bottom (the hull) is what helps it float on the water.", "category": "design", "wonder_score": 4},
+            {"id": "boat_t2_f2", "text": "Some boats use long oars that people row, and others use a loud motor called an engine.", "category": "propulsion", "wonder_score": 4},
+            {"id": "boat_t2_f3", "text": "A sailboat catches the wind in its big sail to move. It doesn't need an engine!", "category": "propulsion", "wonder_score": 5},
+            {"id": "boat_t2_f4", "text": "A heavy metal anchor is dropped into the water to hold the boat in one spot.", "category": "function", "wonder_score": 4},
+            {"id": "boat_t2_f5", "text": "There are many kinds of boats, like canoes, sailboats, and big ferry boats.", "category": "types", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "boat_t2_q1", "text": "What part of the boat touches the water and helps it float?", "type": "parts", "expected_answer": "the hull/bottom", "hint": "It's the big, wide part underneath!"},
+            {"id": "boat_t2_q2", "text": "What makes a sailboat move without an engine?", "type": "propulsion", "expected_answer": "the wind", "hint": "It uses a big piece of cloth to catch something!"},
+            {"id": "boat_t2_q3", "text": "What is the heavy metal hook called that stops a boat from drifting away?", "type": "vocabulary", "expected_answer": "anchor", "hint": "It gets dropped over the side!"},
+            {"id": "boat_t2_q4", "text": "Name one kind of boat.", "type": "knowledge", "hint": "Think of a small boat with oars, or a boat with a sail!"},
+            {"id": "boat_t2_q5", "text": "Is a canoe bigger or smaller than a big ferry boat?", "type": "comparison", "expected_answer": "smaller", "hint": "A canoe is usually for just a few people."}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a boat! Have you ever wondered why heavy metal boats don't sink like a rock?",
+            "Look at this boat! The shape of its hull is very important for moving smoothly through water.",
+            "This is a boat. It has a special part at the back, called the rudder, that works like a steering wheel.",
+            "Here we have a boat. People must wear life jackets on boats for a very important safety reason.",
+            "Consider this boat. If it had a hole in the hull, what do you think would happen?"
+        ],
+        "facts": [
+            {"id": "boat_t3_f1", "text": "A boat floats because its hull pushes away (displaces) enough water to hold its weight up.", "category": "principle", "wonder_score": 5},
+            {"id": "boat_t3_f2", "text": "The pointed front (bow) of a boat helps it cut through the water more easily.", "category": "design", "wonder_score": 4},
+            {"id": "boat_t3_f3", "text": "A flat piece at the back, called the rudder, turns to help the boat change direction.", "category": "control", "wonder_score": 4},
+            {"id": "boat_t3_f4", "text": "Life jackets are worn on boats because they help keep a person's head above water if they fall in.", "category": "safety", "wonder_score": 5},
+            {"id": "boat_t3_f5", "text": "Big cargo ships are designed to carry heavy things because they have very large, strong hulls.", "category": "purpose", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "boat_t3_q1", "text": "Why does a heavy metal boat float instead of sink?", "type": "why", "hint": "Think about the space its hull takes up in the water."},
+            {"id": "boat_t3_q2", "text": "What part of the boat helps it turn left or right?", "type": "parts", "expected_answer": "the rudder", "hint": "It's a flat piece often at the back, under the water."},
+            {"id": "boat_t3_q3", "text": "Why is it important to wear a life jacket on a boat?", "type": "safety", "expected_answer": "to stay afloat if you fall in", "hint": "It helps you float!"},
+            {"id": "boat_t3_q4", "text": "What might happen to a boat if its hull had a big hole in it?", "type": "what_if", "expected_answer": "water would get in and it could sink", "hint": "Think about what happens to a cup with a hole."},
+            {"id": "boat_t3_q5", "text": "Why are big cargo ships shaped differently from fast speedboats?", "type": "why", "hint": "One needs to carry lots of weight, the other needs to go fast."}
+        ]
+    }
+    },
+    {
+    "id": "vehicles_motorcycle",
+    "name": "Motorcycle",
+    "aliases": ["motorbike", "bike", "two-wheeler"],
+    "domain": "vehicles",
+    "category": ["vehicle", "transportation", "two-wheeled"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["black", "red", "blue", "yellow", "white", "silver", "green", "orange"],
+        "shapes": ["two wheels", "handlebars", "seat", "headlight", "exhaust pipe", "kickstand", "mirrors"],
+        "size": "medium (can fit 1-2 people)",
+        "textures": ["shiny", "smooth", "metallic", "rubber tires", "leather seat"],
+        "distinctive_parts": ["two wheels", "handlebars to steer", "loud engine", "kickstand to park"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "Look! A motorcycle! It has two wheels.",
+            "Vroom vroom! A motorcycle makes a loud sound.",
+            "See the motorcycle? It can go very fast.",
+            "Hello, motorcycle! Can you count its wheels?",
+            "A cool motorcycle! What color is it?"
+        ],
+        "facts": [
+            {"id": "motorcycle_t1_f1", "text": "A motorcycle has two wheels.", "category": "structure", "wonder_score": 3},
+            {"id": "motorcycle_t1_f2", "text": "Motorcycles make a vroom vroom sound.", "category": "sound", "wonder_score": 4},
+            {"id": "motorcycle_t1_f3", "text": "You sit on a motorcycle seat to ride it.", "category": "function", "wonder_score": 2},
+            {"id": "motorcycle_t1_f4", "text": "Motorcycles can go very fast.", "category": "movement", "wonder_score": 4},
+            {"id": "motorcycle_t1_f5", "text": "A motorcycle uses a kickstand to stand up when parked.", "category": "feature", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "motorcycle_t1_q1", "text": "How many wheels does a motorcycle have?", "type": "counting", "expected_answer": "2", "hint": "Count: one, two!"},
+            {"id": "motorcycle_t1_q2", "text": "What sound does a motorcycle make?", "type": "sound", "expected_answer": "vroom", "hint": "Vroom vroom!"},
+            {"id": "motorcycle_t1_q3", "text": "Where do you sit on a motorcycle?", "type": "observation", "expected_answer": "on the seat", "hint": "Look at the middle part!"},
+            {"id": "motorcycle_t1_q4", "text": "Do motorcycles go fast or slow?", "type": "comparison", "expected_answer": "fast", "hint": "They zoom on the road!"},
+            {"id": "motorcycle_t1_q5", "text": "What helps a motorcycle stand when it is parked?", "type": "knowledge", "expected_answer": "kickstand", "hint": "A little leg that pops out!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "This is a motorcycle! It needs a helmet to keep the rider safe.",
+            "Look at this motorcycle! The rider uses handlebars to turn left and right.",
+            "A motorcycle can carry one or two people at a time.",
+            "Motorcycles use an engine to move, just like a car but smaller.",
+            "See the motorcycle's mirrors? They help the rider see behind."
+        ],
+        "facts": [
+            {"id": "motorcycle_t2_f1", "text": "Motorcycle riders wear helmets to protect their heads.", "category": "safety", "wonder_score": 5},
+            {"id": "motorcycle_t2_f2", "text": "The handlebars on a motorcycle help the rider turn left or right.", "category": "control", "wonder_score": 4},
+            {"id": "motorcycle_t2_f3", "text": "A motorcycle can carry one or two people, but not as many as a car.", "category": "capacity", "wonder_score": 3},
+            {"id": "motorcycle_t2_f4", "text": "Motorcycles use an engine to move, and they need gasoline to run.", "category": "power", "wonder_score": 4},
+            {"id": "motorcycle_t2_f5", "text": "The mirrors on a motorcycle help the rider see cars behind them.", "category": "safety", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "motorcycle_t2_q1", "text": "Why do motorcycle riders wear helmets?", "type": "reasoning", "hint": "To protect their head!"},
+            {"id": "motorcycle_t2_q2", "text": "What part of the motorcycle helps the rider turn?", "type": "knowledge", "expected_answer": "handlebars", "hint": "The part you hold with your hands!"},
+            {"id": "motorcycle_t2_q3", "text": "How many people can ride on a motorcycle at once?", "type": "counting", "hint": "One or two, but not a whole family."},
+            {"id": "motorcycle_t2_q4", "text": "What do motorcycles need to run and move?", "type": "knowledge", "expected_answer": "gasoline", "hint": "A special fuel that goes in the tank."},
+            {"id": "motorcycle_t2_q5", "text": "What is the purpose of mirrors on a motorcycle?", "type": "function", "expected_answer": "to see behind", "hint": "They help see what's coming from the back."}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "This motorcycle has an interesting feature: its two wheels help it balance when moving.",
+            "Motorcycles are more fuel-efficient than many cars, meaning they use less gasoline for the same distance.",
+            "Some motorcycles have special tires for different roads, like dirt or rain.",
+            "The loud sound of a motorcycle comes from its engine and exhaust system.",
+            "Motorcycles can lean into turns, which helps them go around corners safely."
+        ],
+        "facts": [
+            {"id": "motorcycle_t3_f1", "text": "A motorcycle stays upright when moving because the spinning wheels help it balance.", "category": "physics", "wonder_score": 5},
+            {"id": "motorcycle_t3_f2", "text": "Motorcycles use less gasoline than most cars to travel the same distance.", "category": "efficiency", "wonder_score": 4},
+            {"id": "motorcycle_t3_f3", "text": "Different motorcycles have different tires for various roads, like smooth tires for pavement and knobby tires for dirt.", "category": "design", "wonder_score": 4},
+            {"id": "motorcycle_t3_f4", "text": "The loud sound of a motorcycle comes from the engine and the exhaust pipe where gases come out.", "category": "sound_source", "wonder_score": 4},
+            {"id": "motorcycle_t3_f5", "text": "When turning, a motorcycle leans into the turn to help it stay balanced and go around the corner.", "category": "operation", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "motorcycle_t3_q1", "text": "Why does a motorcycle stay up when it's moving but fall over when it stops?", "type": "why", "hint": "The spinning wheels help it balance!"},
+            {"id": "motorcycle_t3_q2", "text": "Which uses less gasoline for a trip: a motorcycle or a big car?", "type": "comparison", "expected_answer": "motorcycle", "hint": "Smaller vehicles often use less fuel."},
+            {"id": "motorcycle_t3_q3", "text": "What kind of tires might a motorcycle need for riding on a dirt path?", "type": "application", "hint": "Tires with big bumps for grip!"},
+            {"id": "motorcycle_t3_q4", "text": "Where does the loud vroom sound of a motorcycle come from?", "type": "knowledge", "expected_answer": "engine and exhaust", "hint": "From the motor and the pipe at the back."},
+            {"id": "motorcycle_t3_q5", "text": "What does a motorcycle do when it turns a corner to help it balance?", "type": "observation", "expected_answer": "leans into the turn", "hint": "It tilts to one side."}
+        ]
+    }
+    },
+    {
+    "id": "vehicles_subway",
+    "name": "Subway",
+    "aliases": ["metro", "underground train", "tube train"],
+    "domain": "vehicles",
+    "category": ["transportation", "public transport", "train"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["silver", "red", "blue", "yellow", "white", "green", "orange"],
+        "shapes": ["long train body", "many connected cars", "windows in rows", "doors on sides", "electric rails on top", "headlights in front"],
+        "size": "very long (multiple cars connected)",
+        "textures": ["smooth metal", "glass windows", "plastic seats", "rubber handles"],
+        "distinctive_parts": ["electric rails on roof", "automatic doors", "subway map inside", "hand straps", "LED display screen"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "Look, it's a subway train! It's very long.",
+            "A subway! It runs on tracks under the ground.",
+            "I see a subway! It has many doors and windows.",
+            "This is a subway train. It carries many people.",
+            "Wow, a subway! It is big and makes a rumbling sound."
+        ],
+        "facts": [
+            {"id": "subway_t1_f1", "text": "A subway is a train that runs underground in tunnels.", "category": "basic_definition", "wonder_score": 3},
+            {"id": "subway_t1_f2", "text": "Subways have many connected cars with doors on each side.", "category": "appearance", "wonder_score": 2},
+            {"id": "subway_t1_f3", "text": "Subways stop at stations to let people get on and off.", "category": "function", "wonder_score": 3},
+            {"id": "subway_t1_f4", "text": "Subways are very long and can carry hundreds of people.", "category": "capacity", "wonder_score": 4},
+            {"id": "subway_t1_f5", "text": "Subways make a rumbling sound when they move.", "category": "sound", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "subway_t1_q1", "text": "Where does a subway train usually run?", "type": "observation", "expected_answer": "underground/in tunnels", "hint": "Under the city streets!"},
+            {"id": "subway_t1_q2", "text": "How many cars does a subway train have?", "type": "counting", "expected_answer": "many", "hint": "More than 5 cars connected together!"},
+            {"id": "subway_t1_q3", "text": "What does a subway do at a station?", "type": "knowledge", "expected_answer": "stops to let people on and off", "hint": "People get in and out!"},
+            {"id": "subway_t1_q4", "text": "Is a subway long or short?", "type": "comparison", "expected_answer": "long", "hint": "It has many parts connected!"},
+            {"id": "subway_t1_q5", "text": "What sound does a subway make?", "type": "sound", "expected_answer": "rumbling noise", "hint": "Like a deep rumble!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a subway! Subways are very fast and help people avoid traffic above ground.",
+            "Look at this subway! It runs on electricity, not gasoline, so it's cleaner.",
+            "Here's a subway! It has a special map inside showing all the stations.",
+            "Check out this subway! It has automatic doors that open by themselves.",
+            "Meet the subway! It travels on special tracks that only it can use."
+        ],
+        "facts": [
+            {"id": "subway_t2_f1", "text": "Subways run on electricity, which makes them cleaner than cars that use gasoline.", "category": "power_source", "wonder_score": 4},
+            {"id": "subway_t2_f2", "text": "Subways have special tracks that are only for them, so they don't get stuck in traffic.", "category": "infrastructure", "wonder_score": 4},
+            {"id": "subway_t2_f3", "text": "Inside a subway, there are maps and signs to help people know where to go.", "category": "features", "wonder_score": 3},
+            {"id": "subway_t2_f4", "text": "Subway doors open and close automatically when the train stops at a station.", "category": "operation", "wonder_score": 4},
+            {"id": "subway_t2_f5", "text": "A subway driver sits in the front cabin and controls the train.", "category": "operation", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "subway_t2_q1", "text": "What makes a subway train move? Gasoline or electricity?", "type": "knowledge", "expected_answer": "electricity", "hint": "It's cleaner than gasoline cars!"},
+            {"id": "subway_t2_q2", "text": "Why don't subways get stuck in traffic like cars?", "type": "reasoning", "hint": "They have their own special path!"},
+            {"id": "subway_t2_q3", "text": "What can you find inside a subway car to help you know where to go?", "type": "observation", "expected_answer": "maps and signs", "hint": "Something with lines and station names!"},
+            {"id": "subway_t2_q4", "text": "How do the doors of a subway open?", "type": "how", "expected_answer": "automatically", "hint": "They open by themselves!"},
+            {"id": "subway_t2_q5", "text": "Who controls the subway train?", "type": "knowledge", "expected_answer": "a driver", "hint": "A person in the front cabin!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a subway! Did you know that the first subway system was built over 150 years ago?",
+            "Look at this subway! It uses a special third rail to get electricity to run.",
+            "This is a subway. Its wheels are made of steel and run on steel tracks for a smooth ride.",
+            "Here we have a subway. Engineers have to plan the tunnels very carefully to avoid other underground pipes.",
+            "Consider this subway. It can brake very quickly in an emergency to keep everyone safe."
+        ],
+        "facts": [
+            {"id": "subway_t3_f1", "text": "The first subway system in the world opened in London in 1863, over 150 years ago.", "category": "history", "wonder_score": 5},
+            {"id": "subway_t3_f2", "text": "Subways get electricity from a special third rail or from wires above the train.", "category": "power_source", "wonder_score": 4},
+            {"id": "subway_t3_f3", "text": "Subway wheels are made of steel and run on steel rails, which makes them very strong and durable.", "category": "construction", "wonder_score": 4},
+            {"id": "subway_t3_f4", "text": "Subway tunnels are built deep underground to avoid water pipes, gas pipes, and building foundations.", "category": "infrastructure", "wonder_score": 4},
+            {"id": "subway_t3_f5", "text": "Subways have emergency brakes that can stop the train quickly if there is danger on the tracks.", "category": "safety", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "subway_t3_q1", "text": "When and where was the first subway system built?", "type": "history", "hint": "Over 150 years ago in a big European city."},
+            {"id": "subway_t3_q2", "text": "How does electricity reach the subway train to power it?", "type": "how", "hint": "From a special rail or wires above."},
+            {"id": "subway_t3_q3", "text": "Why are the subway wheels made of steel instead of plastic?", "type": "why", "hint": "For strength and a smooth ride on steel tracks!"},
+            {"id": "subway_t3_q4", "text": "Why are subway tunnels built so deep underground?", "type": "reasoning", "hint": "To avoid hitting other things under the street!"},
+            {"id": "subway_t3_q5", "text": "What can the subway driver do if there is an obstacle on the tracks?", "type": "safety", "expected_answer": "use the emergency brakes", "hint": "Stop the train quickly!"}
+        ]
+    }
+    },
+    {
+    "id": "vehicles_truck",
+    "name": "Truck",
+    "aliases": ["big truck", "haul truck", "lorry", "pickup truck"],
+    "domain": "vehicles",
+    "category": ["vehicle", "transport", "machine"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["red", "blue", "yellow", "white", "black", "green", "silver"],
+        "shapes": ["big body", "four or more wheels", "cab for driver", "flat bed", "container", "big headlights", "grill"],
+        "size": "big (bigger than a car)",
+        "textures": ["smooth metal", "hard plastic", "rubber tires", "glass windows", "shiny paint"],
+        "distinctive_parts": ["big wheels", "cab", "trailer", "headlights", "horn", "exhaust pipe"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a big truck! Look at its large wheels!",
+            "Wow, a truck! It is very big. What color is it?",
+            "A huge truck! It can carry heavy things. Let's count its wheels!",
+            "Hello, truck! It has a loud horn. Can you hear the sound?",
+            "Look at this truck! It is bigger than a car."
+        ],
+        "facts": [
+            {"id": "truck_t1_f1", "text": "Trucks are big vehicles with many wheels.", "category": "appearance", "wonder_score": 3},
+            {"id": "truck_t1_f2", "text": "Trucks can carry heavy things like logs or boxes.", "category": "function", "wonder_score": 4},
+            {"id": "truck_t1_f3", "text": "Trucks have a loud horn that goes 'honk honk'.", "category": "sound", "wonder_score": 3},
+            {"id": "truck_t1_f4", "text": "Trucks have a cab where the driver sits.", "category": "structure", "wonder_score": 2},
+            {"id": "truck_t1_f5", "text": "Trucks use diesel fuel to move.", "category": "energy", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "truck_t1_q1", "text": "How many wheels does this truck have?", "type": "counting", "expected_answer": "a number like 4, 6, 8, 10, etc.", "hint": "Let's count together: 1, 2, 3..."},
+            {"id": "truck_t1_q2", "text": "What sound does a truck's horn make?", "type": "sound", "expected_answer": "honk", "hint": "Honk honk!"},
+            {"id": "truck_t1_q3", "text": "What can a truck carry?", "type": "knowledge", "expected_answer": "heavy things", "hint": "Like big boxes or logs!"},
+            {"id": "truck_t1_q4", "text": "Where does the truck driver sit?", "type": "observation", "expected_answer": "in the cab", "hint": "The front part with windows!"},
+            {"id": "truck_t1_q5", "text": "Is a truck bigger or smaller than a car?", "type": "comparison", "expected_answer": "bigger", "hint": "Trucks are much bigger!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a truck! Do you know why trucks have so many wheels?",
+            "Look at this truck! It has a special part called a trailer for carrying goods.",
+            "Here's a truck! Trucks help move things from one place to another.",
+            "Check out this truck! Some trucks have a flat bed to carry big machines.",
+            "Meet this truck! Trucks are very strong and can pull heavy loads."
+        ],
+        "facts": [
+            {"id": "truck_t2_f1", "text": "Trucks have many wheels to help carry heavy loads without sinking.", "category": "design", "wonder_score": 4},
+            {"id": "truck_t2_f2", "text": "A truck's trailer can be attached or detached to carry different types of goods.", "category": "function", "wonder_score": 4},
+            {"id": "truck_t2_f3", "text": "Trucks transport goods from factories to stores so we can buy them.", "category": "role", "wonder_score": 4},
+            {"id": "truck_t2_f4", "text": "Some trucks, like dump trucks, can lift their beds to unload things like sand.", "category": "special_feature", "wonder_score": 5},
+            {"id": "truck_t2_f5", "text": "Trucks have powerful engines that allow them to climb hills with heavy loads.", "category": "ability", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "truck_t2_q1", "text": "Why do trucks have many wheels?", "type": "reasoning", "hint": "Think about carrying heavy things!"},
+            {"id": "truck_t2_q2", "text": "What is the part called that carries goods behind the truck?", "type": "vocabulary", "expected_answer": "trailer", "hint": "It's a big box on wheels!"},
+            {"id": "truck_t2_q3", "text": "How do trucks help us get things from the store?", "type": "knowledge", "expected_answer": "they transport goods", "hint": "They bring things to the store!"},
+            {"id": "truck_t2_q4", "text": "What can a dump truck do with its bed?", "type": "knowledge", "expected_answer": "lift it to unload", "hint": "It tilts up to pour out sand!"},
+            {"id": "truck_t2_q5", "text": "What makes a truck able to pull heavy things?", "type": "why", "expected_answer": "powerful engine", "hint": "It has a strong motor!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a truck! Did you know that trucks have different gears for different roads?",
+            "Look at this truck! Its engine works by burning fuel to create power.",
+            "This is a truck. Trucks need special drivers with licenses to drive them safely.",
+            "Here we have a truck. It has a cooling system to stop the engine from getting too hot.",
+            "Consider this truck. Trucks are designed to be aerodynamic to save fuel."
+        ],
+        "facts": [
+            {"id": "truck_t3_f1", "text": "Trucks have more gears than cars to help them drive smoothly with heavy loads.", "category": "design", "wonder_score": 4},
+            {"id": "truck_t3_f2", "text": "The truck's engine burns fuel to create power, which turns the wheels and moves the truck.", "category": "how_it_works", "wonder_score": 4},
+            {"id": "truck_t3_f3", "text": "Truck drivers need a special license because driving a big truck is different from driving a car.", "category": "role", "wonder_score": 3},
+            {"id": "truck_t3_f4", "text": "Trucks have a radiator that cools the engine by using water and air to take away heat.", "category": "system", "wonder_score": 4},
+            {"id": "truck_t3_f5", "text": "Some trucks are designed with a curved shape to reduce air resistance and use less fuel.", "category": "design", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "truck_t3_q1", "text": "Why do trucks have more gears than cars?", "type": "why", "hint": "Think about carrying heavy things up hills."},
+            {"id": "truck_t3_q2", "text": "How does a truck's engine make it move?", "type": "how", "hint": "It burns fuel to create power."},
+            {"id": "truck_t3_q3", "text": "Are the driver's licenses for truck drivers and car drivers the same?", "type": "knowledge", "expected_answer": "no, need a special license", "hint": "A driver's license for big vehicles."},
+            {"id": "truck_t3_q4", "text": "What part of the truck keeps the engine from getting too hot?", "type": "knowledge", "expected_answer": "radiator", "hint": "It uses water and air."},
+            {"id": "truck_t3_q5", "text": "How does a curved shape help a truck?", "type": "why", "hint": "It helps it move through the air better."}
+        ]
+    }
+    },
+    {
+    "id": "vehicle_helicopter",
+    "name": "Helicopter",
+    "aliases": ["chopper", "copter", "whirlybird"],
+    "domain": "vehicles",
+    "category": ["vehicle", "aircraft", "transportation"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["white", "black", "yellow", "red", "blue", "green", "gray", "orange"],
+        "shapes": ["rotor on top", "tail rotor", "cockpit", "landing skids", "body like a tube", "windows"],
+        "size": "medium (bigger than a car, smaller than an airplane)",
+        "textures": ["smooth", "shiny", "metallic"],
+        "distinctive_parts": ["main rotor", "tail rotor", "cockpit windows", "landing skids", "engine"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a helicopter! Look at the big rotor on top!",
+            "Wow, a helicopter! It can fly up and down. Can you see its blades?",
+            "A flying helicopter! It has a tail and a big spinning rotor.",
+            "Hello, helicopter! It makes a loud 'whop-whop' sound.",
+            "Look up! A helicopter is flying in the sky."
+        ],
+        "facts": [
+            {"id": "helicopter_t1_f1", "text": "A helicopter has big spinning blades on top.", "category": "appearance", "wonder_score": 4},
+            {"id": "helicopter_t1_f2", "text": "Helicopters can fly up, down, and sideways.", "category": "ability", "wonder_score": 5},
+            {"id": "helicopter_t1_f3", "text": "Helicopters make a loud 'whop-whop' sound.", "category": "sound", "wonder_score": 4},
+            {"id": "helicopter_t1_f4", "text": "A helicopter has a small tail with another rotor.", "category": "appearance", "wonder_score": 3},
+            {"id": "helicopter_t1_f5", "text": "Helicopters can land on the ground or on a roof.", "category": "ability", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "helicopter_t1_q1", "text": "Where are the helicopter's big blades?", "type": "observation", "expected_answer": "on top", "hint": "Look at the top of the helicopter!"},
+            {"id": "helicopter_t1_q2", "text": "How many main blades does a helicopter have?", "type": "counting", "expected_answer": "2, 3, 4 or more", "hint": "They are long and spin around!"},
+            {"id": "helicopter_t1_q3", "text": "What sound does a helicopter make?", "type": "sound", "expected_answer": "whop-whop", "hint": "Listen to the spinning blades!"},
+            {"id": "helicopter_t1_q4", "text": "What can a helicopter do that most planes cannot?", "type": "comparison", "expected_answer": "fly straight up and down", "hint": "It can go up, down, and sideways!"},
+            {"id": "helicopter_t1_q5", "text": "Can a helicopter land in a small space?", "type": "yes_no", "expected_answer": "yes", "hint": "It doesn't need a long runway!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a helicopter! Do you know why it can hover in one spot?",
+            "Look at this helicopter! Its tail rotor helps it turn in the air.",
+            "Here's a helicopter! Police and doctors use helicopters to help people.",
+            "Check out this helicopter! It can fly to places where planes cannot land.",
+            "Meet this helicopter! Pilots use controls to make it go up, down, and turn."
+        ],
+        "facts": [
+            {"id": "helicopter_t2_f1", "text": "Helicopters can hover in one spot in the air, like a dragonfly.", "category": "ability", "wonder_score": 5},
+            {"id": "helicopter_t2_f2", "text": "The tail rotor stops the helicopter from spinning around in circles.", "category": "function", "wonder_score": 5},
+            {"id": "helicopter_t2_f3", "text": "Police helicopters help find lost people and watch over the city.", "category": "role", "wonder_score": 4},
+            {"id": "helicopter_t2_f4", "text": "A helicopter pilot sits in the front and uses two sticks to fly.", "category": "operation", "wonder_score": 4},
+            {"id": "helicopter_t2_f5", "text": "Helicopters are used to rescue people from mountains or the sea.", "category": "role", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "helicopter_t2_q1", "text": "What does it mean when a helicopter 'hovers'?", "type": "definition", "expected_answer": "stays in one spot in the air", "hint": "It stays still while flying!"},
+            {"id": "helicopter_t2_q2", "text": "Why does a helicopter need a tail rotor?", "type": "why", "expected_answer": "to keep it from spinning", "hint": "Without it, the body would spin!"},
+            {"id": "helicopter_t2_q3", "text": "Who uses helicopters to help people?", "type": "knowledge", "expected_answer": "police, doctors, rescuers", "hint": "They save people in trouble!"},
+            {"id": "helicopter_t2_q4", "text": "Where does the pilot sit in a helicopter?", "type": "observation", "expected_answer": "in the front cockpit", "hint": "In the front with windows all around!"},
+            {"id": "helicopter_t2_q5", "text": "Can a helicopter land on a hospital roof?", "type": "yes_no", "expected_answer": "yes", "hint": "It doesn't need a runway!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a helicopter! Did you know that the spinning blades create lift to make it fly?",
+            "Look at this helicopter! Its design is based on how maple seeds spin through the air.",
+            "This is a helicopter. It can fly in bad weather when planes might not be able to.",
+            "Here we have a helicopter. It uses more fuel than a car because flying takes a lot of energy.",
+            "Consider this helicopter. If the engine stops, the pilot can still land safely using autorotation."
+        ],
+        "facts": [
+            {"id": "helicopter_t3_f1", "text": "Helicopter blades are shaped like wings and create lift when they spin.", "category": "principle", "wonder_score": 5},
+            {"id": "helicopter_t3_f2", "text": "Helicopter designs were inspired by how maple seeds spin and fall from trees.", "category": "history", "wonder_score": 5},
+            {"id": "helicopter_t3_f3", "text": "Helicopters can fly in rain, fog, and wind, but very strong storms are dangerous.", "category": "ability", "wonder_score": 4},
+            {"id": "helicopter_t3_f4", "text": "A helicopter uses a lot of fuel because it needs powerful engines to stay in the air.", "category": "operation", "wonder_score": 3},
+            {"id": "helicopter_t3_f5", "text": "If a helicopter's engine stops, the pilot can glide it down safely by letting the blades spin freely.", "category": "safety", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "helicopter_t3_q1", "text": "How do helicopter blades help it fly?", "type": "how", "expected_answer": "they spin and create lift", "hint": "They push air down to go up!"},
+            {"id": "helicopter_t3_q2", "text": "What natural thing inspired the helicopter design?", "type": "knowledge", "expected_answer": "maple seeds spinning", "hint": "Seeds that spin as they fall!"},
+            {"id": "helicopter_t3_q3", "text": "Can helicopters fly in the rain?", "type": "yes_no", "expected_answer": "yes", "hint": "They can, but not in very bad storms."},
+            {"id": "helicopter_t3_q4", "text": "Why do helicopters use more fuel than cars?", "type": "why", "expected_answer": "flying takes more energy", "hint": "Staying in the air is hard work!"},
+            {"id": "helicopter_t3_q5", "text": "What can a pilot do if the engine stops?", "type": "procedure", "expected_answer": "glide down using autorotation", "hint": "Let the blades spin by themselves!"}
+        ]
+    }
+    },
+    {
+    "id": "vehicles_tram",
+    "name": "Tram",
+    "aliases": ["streetcar", "trolley", "light rail"],
+    "domain": "vehicles",
+    "category": ["vehicle", "public transport", "rail vehicle"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["red", "green", "blue", "yellow", "white", "silver"],
+        "shapes": ["long and boxy", "multiple connected cars", "windows along sides", "pantograph on top", "wheels on rails"],
+        "size": "long and medium height",
+        "textures": ["smooth metal", "glass windows", "rubber seals", "plastic seats"],
+        "distinctive_parts": ["overhead wires", "pantograph", "rail tracks", "electric cables", "sliding doors", "large windows"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "Look, a tram! It's a big vehicle on tracks.",
+            "Here comes a tram! It runs on rails in the city.",
+            "See the tram? It's long and has many windows.",
+            "Watch the tram go! It gets power from wires above.",
+            "A red tram! Trams carry many people together."
+        ],
+        "facts": [
+            {"id": "tram_t1_f1", "text": "A tram runs on metal rails in the street.", "category": "movement", "wonder_score": 3},
+            {"id": "tram_t1_f2", "text": "Trams are long and have many windows.", "category": "appearance", "wonder_score": 2},
+            {"id": "tram_t1_f3", "text": "Trams get electricity from wires above.", "category": "power", "wonder_score": 4},
+            {"id": "tram_t1_f4", "text": "Trams can carry many people at once.", "category": "function", "wonder_score": 3},
+            {"id": "tram_t1_f5", "text": "Trams make a bell sound to warn people.", "category": "sound", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "tram_t1_q1", "text": "Where does a tram run?", "type": "observation", "expected_answer": "on rails", "hint": "Look at the tracks on the street!"},
+            {"id": "tram_t1_q2", "text": "How many cars does a tram have?", "type": "counting", "expected_answer": "more than one", "hint": "Count the connected sections!"},
+            {"id": "tram_t1_q3", "text": "What sound does a tram bell make?", "type": "sound", "expected_answer": "ding ding", "hint": "Like a bicycle bell!"},
+            {"id": "tram_t1_q4", "text": "What color is this tram?", "type": "color", "hint": "Look at its body!"},
+            {"id": "tram_t1_q5", "text": "Does a tram use gas like a car?", "type": "yes_no", "expected_answer": "no", "hint": "It uses electricity from wires!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a tram! Trams are electric trains that run on city streets.",
+            "Look at this tram! It connects different parts of a city together.",
+            "Here's a tram! Did you know trams are very quiet and don't make smoke?",
+            "Check out this tram! It stops at regular places called tram stops.",
+            "See the tram? It helps reduce traffic by carrying many people at once."
+        ],
+        "facts": [
+            {"id": "tram_t2_f1", "text": "Trams are electric vehicles that don't produce smoke like buses.", "category": "environment", "wonder_score": 4},
+            {"id": "tram_t2_f2", "text": "A tram has a pantograph on its roof to collect electricity from overhead wires.", "category": "mechanism", "wonder_score": 5},
+            {"id": "tram_t2_f3", "text": "Trams follow fixed routes and stop at specific tram stops along the way.", "category": "operation", "wonder_score": 3},
+            {"id": "tram_t2_f4", "text": "Trams are quieter than buses and cars because they run on smooth rails.", "category": "comparison", "wonder_score": 4},
+            {"id": "tram_t2_f5", "text": "Many trams have a driver who controls the speed and stops.", "category": "operation", "wonder_score": 2}
+        ],
+        "questions": [
+            {"id": "tram_t2_q1", "text": "Why don't trams make smoke like some buses?", "type": "reasoning", "expected_answer": "they use electricity", "hint": "Think about how they get power!"},
+            {"id": "tram_t2_q2", "text": "What is the thing on top of a tram that touches the wires?", "type": "vocabulary", "expected_answer": "pantograph", "hint": "It collects electricity!"},
+            {"id": "tram_t2_q3", "text": "Where do people wait to get on a tram?", "type": "knowledge", "expected_answer": "at tram stops", "hint": "Like a bus stop but for trams!"},
+            {"id": "tram_t2_q4", "text": "How is a tram different from a bus in how it moves?", "type": "comparison", "hint": "One uses rails, the other uses roads."},
+            {"id": "tram_t2_q5", "text": "Who drives the tram?", "type": "knowledge", "expected_answer": "a driver", "hint": "A person in the front!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a tram! Did you know trams are one of the oldest forms of public transport in cities?",
+            "Look at this tram! The rails it runs on help guide it so it never gets lost.",
+            "Here's a tram! It's more energy-efficient than cars because it carries many people using one motor.",
+            "See the tram? The overhead wires provide a constant power source so it doesn't need batteries.",
+            "Consider this tram. Its fixed route means city planners can design better streets around it."
+        ],
+        "facts": [
+            {"id": "tram_t3_f1", "text": "Trams have been used in cities for over 100 years, making them one of the oldest forms of city transport.", "category": "history", "wonder_score": 4},
+            {"id": "tram_t3_f2", "text": "The metal rails guide the tram so it doesn't need a steering wheel like a car.", "category": "mechanism", "wonder_score": 5},
+            {"id": "tram_t3_f3", "text": "Trams are more energy-efficient than cars because one tram can carry as many people as 50 cars.", "category": "efficiency", "wonder_score": 5},
+            {"id": "tram_t3_f4", "text": "Trams get power directly from overhead wires, so they don't need to stop to recharge like electric cars.", "category": "power", "wonder_score": 4},
+            {"id": "tram_t3_f5", "text": "Tram tracks are part of the road, so cars must be careful not to drive on them.", "category": "safety", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "tram_t3_q1", "text": "How do the rails help a tram stay on its path?", "type": "why", "hint": "The wheels fit perfectly on the rails!"},
+            {"id": "tram_t3_q2", "text": "Why is a tram better for the environment than many cars?", "type": "reasoning", "hint": "It carries many people at once."},
+            {"id": "tram_t3_q3", "text": "How long have trams been used in cities?", "type": "knowledge", "expected_answer": "over 100 years", "hint": "Longer than your grandparents have lived!"},
+            {"id": "tram_t3_q4", "text": "What would happen if a tram's overhead wires broke?", "type": "what_if", "hint": "It wouldn't get power to move!"},
+            {"id": "tram_t3_q5", "text": "Why do cars need to be careful around tram tracks?", "type": "safety", "hint": "The tracks are slippery and can trap wheels!"}
+        ]
+    }
+    },
+    {
+    "id": "vehicles_scooter",
+    "name": "Scooter",
+    "aliases": ["kick scooter", "push scooter", "two-wheel scooter"],
+    "domain": "vehicles",
+    "category": ["vehicle", "transportation", "toy"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["red", "blue", "green", "black", "silver", "pink", "yellow", "orange"],
+        "shapes": ["two wheels", "long deck", "handlebar", "vertical steering column", "foot platform", "kickstand"],
+        "size": "small (about as tall as a child)",
+        "textures": ["smooth metal", "grip tape on deck", "rubber handles", "plastic parts"],
+        "distinctive_parts": ["handlebar for steering", "deck to stand on", "front and back wheels", "brake near back wheel"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a scooter! Look at its two wheels!",
+            "Wow, a scooter! You stand on it and push with your foot.",
+            "A cool scooter! It has a handlebar to hold onto.",
+            "Hello, scooter! It helps you move fast. What color is it?",
+            "Look at this scooter! It is fun to ride. Can you see the wheels?"
+        ],
+        "facts": [
+            {"id": "scooter_t1_f1", "text": "A scooter has two wheels - one in front, one in back.", "category": "parts", "wonder_score": 3},
+            {"id": "scooter_t1_f2", "text": "You stand on the flat deck and hold the handlebar.", "category": "use", "wonder_score": 3},
+            {"id": "scooter_t1_f3", "text": "You make it go by pushing with your foot on the ground.", "category": "operation", "wonder_score": 4},
+            {"id": "scooter_t1_f4", "text": "Scooters come in many bright colors like red, blue, and green.", "category": "appearance", "wonder_score": 3},
+            {"id": "scooter_t1_f5", "text": "A scooter is smaller than a bicycle.", "category": "size", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "scooter_t1_q1", "text": "How many wheels does a scooter have?", "type": "counting", "expected_answer": "2", "hint": "Count them: one, two!"},
+            {"id": "scooter_t1_q2", "text": "What do you stand on when riding a scooter?", "type": "observation", "expected_answer": "the deck/platform", "hint": "The flat part where you put your feet!"},
+            {"id": "scooter_t1_q3", "text": "What do you hold onto when riding a scooter?", "type": "observation", "expected_answer": "the handlebar", "hint": "The bar at the front!"},
+            {"id": "scooter_t1_q4", "text": "How do you make a scooter go?", "type": "knowledge", "expected_answer": "push with your foot", "hint": "You kick the ground!"},
+            {"id": "scooter_t1_q5", "text": "Is a scooter bigger or smaller than a bike?", "type": "comparison", "expected_answer": "smaller", "hint": "It has two wheels but is not as big!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a scooter! Do you know that you use your body to steer it?",
+            "Look at this scooter! It has a brake to help you slow down and stop.",
+            "Here's a scooter! It's a fun way to travel short distances without a motor.",
+            "Check out this scooter! Some scooters can fold up to be carried easily.",
+            "Meet this scooter! You have to balance when you ride it, just like on a bike."
+        ],
+        "facts": [
+            {"id": "scooter_t2_f1", "text": "You steer a scooter by turning the handlebar left or right.", "category": "operation", "wonder_score": 4},
+            {"id": "scooter_t2_f2", "text": "Most scooters have a brake over the back wheel that you press with your foot.", "category": "safety", "wonder_score": 4},
+            {"id": "scooter_t2_f3", "text": "Scooters don't have an engine - they use your leg power to move.", "category": "power", "wonder_score": 5},
+            {"id": "scooter_t2_f4", "text": "Some scooters can fold in the middle so you can carry them or store them easily.", "category": "feature", "wonder_score": 5},
+            {"id": "scooter_t2_f5", "text": "When riding a scooter, you need to balance your body so you don't fall.", "category": "skill", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "scooter_t2_q1", "text": "How do you turn a scooter left or right?", "type": "knowledge", "expected_answer": "turn the handlebar", "hint": "You move the bar at the front!"},
+            {"id": "scooter_t2_q2", "text": "Where is the brake on most scooters?", "type": "location", "expected_answer": "over the back wheel", "hint": "You press it with your back foot!"},
+            {"id": "scooter_t2_q3", "text": "What makes a scooter move forward?", "type": "function", "expected_answer": "your leg power/pushing", "hint": "It doesn't have a motor - you power it!"},
+            {"id": "scooter_t2_q4", "text": "Why might a scooter be able to fold up?", "type": "reasoning", "expected_answer": "to carry or store it easily", "hint": "It becomes smaller to put away!"},
+            {"id": "scooter_t2_q5", "text": "What skill do you need to ride a scooter without falling?", "type": "knowledge", "expected_answer": "balancing", "hint": "Keeping your body steady!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a scooter! Did you know the first scooters were made over 100 years ago?",
+            "Look at this scooter! The wheels have ball bearings that help them spin smoothly.",
+            "This is a scooter. It's a simple machine that helps turn your pushing force into motion.",
+            "Here we have a scooter. Wearing a helmet is very important for safety when riding.",
+            "Consider this scooter. Its design lets you turn by leaning your body and steering."
+        ],
+        "facts": [
+            {"id": "scooter_t3_f1", "text": "The first scooters were invented in Germany over 100 years ago, and they were made of wood.", "category": "history", "wonder_score": 5},
+            {"id": "scooter_t3_f2", "text": "Scooter wheels have tiny metal balls inside called bearings that help them spin with less friction.", "category": "mechanics", "wonder_score": 5},
+            {"id": "scooter_t3_f3", "text": "When you push the ground with your foot, that force pushes the scooter forward.", "category": "physics", "wonder_score": 4},
+            {"id": "scooter_t3_f4", "text": "It is very important to wear a helmet when riding a scooter to protect your head if you fall.", "category": "safety", "wonder_score": 5},
+            {"id": "scooter_t3_f5", "text": "Electric scooters have a battery and motor, so you don't need to push with your foot.", "category": "technology", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "scooter_t3_q1", "text": "About how long ago were the first scooters invented?", "type": "knowledge", "expected_answer": "over 100 years ago", "hint": "A very long time - before your grandparents were born!"},
+            {"id": "scooter_t3_q2", "text": "What is inside scooter wheels to help them spin smoothly?", "type": "knowledge", "expected_answer": "bearings/metal balls", "hint": "Tiny round metal pieces!"},
+            {"id": "scooter_t3_q3", "text": "What happens when you push your foot against the ground while on a scooter?", "type": "cause_effect", "expected_answer": "the scooter moves forward", "hint": "Your push creates force!"},
+            {"id": "scooter_t3_q4", "text": "Why should you wear a helmet when riding a scooter?", "type": "safety", "expected_answer": "to protect your head if you fall", "hint": "It keeps your head safe!"},
+            {"id": "scooter_t3_q5", "text": "How is an electric scooter different from a regular scooter?", "type": "comparison", "expected_answer": "it has a battery and motor", "hint": "You don't need to push it!"}
+        ]
+    }
+    },
+    {
+    "id": "vehicle_skateboard",
+    "name": "Skateboard",
+    "aliases": ["skate", "board", "sk8", "deck"],
+    "domain": "vehicle",
+    "category": ["vehicle", "transportation", "sports equipment"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["black", "brown", "multicolor", "white", "red", "blue", "green", "yellow", "wood color"],
+        "shapes": ["long board", "curved ends", "four wheels", "flat surface", "grip tape top"],
+        "size": "about as long as a child's arm span",
+        "textures": ["rough grip tape", "smooth wood", "hard plastic", "rubbery wheels"],
+        "distinctive_parts": ["four wheels", "grip tape", "trucks", "deck", "bearings"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "Look, a skateboard! It has four wheels!",
+            "It's a skateboard! You can stand on it and roll!",
+            "Wow, a skateboard! It goes fast on smooth ground.",
+            "A skateboard! It has a rough top and smooth wheels.",
+            "See the skateboard? You push with one foot to make it go."
+        ],
+        "facts": [
+            {"id": "skateboard_t1_f1", "text": "A skateboard has four wheels that roll.", "category": "parts", "wonder_score": 3},
+            {"id": "skateboard_t1_f2", "text": "You stand on the skateboard with both feet.", "category": "use", "wonder_score": 2},
+            {"id": "skateboard_t1_f3", "text": "Skateboards are made of wood and have a rough top.", "category": "materials", "wonder_score": 2},
+            {"id": "skateboard_t1_f4", "text": "You push the ground with one foot to make it move.", "category": "operation", "wonder_score": 3},
+            {"id": "skateboard_t1_f5", "text": "Skateboards work best on smooth, flat ground.", "category": "environment", "wonder_score": 2}
+        ],
+        "questions": [
+            {"id": "skateboard_t1_q1", "text": "How many wheels does a skateboard have?", "type": "counting", "expected_answer": "4", "hint": "Count them: 1, 2, 3, 4!"},
+            {"id": "skateboard_t1_q2", "text": "What do you do with your feet on a skateboard?", "type": "action", "expected_answer": "stand", "hint": "You put your feet on it!"},
+            {"id": "skateboard_t1_q3", "text": "Is the top of a skateboard smooth or rough?", "type": "observation", "expected_answer": "rough", "hint": "It helps your feet grip!"},
+            {"id": "skateboard_t1_q4", "text": "How do you make a skateboard go?", "type": "operation", "expected_answer": "push with foot", "hint": "Use your foot on the ground!"},
+            {"id": "skateboard_t1_q5", "text": "Where does a skateboard work best?", "type": "location", "expected_answer": "smooth ground", "hint": "Not on grass or rocks!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a skateboard! The rough top is called grip tape - it helps your shoes stick!",
+            "Look at this skateboard! The wheels can spin very fast because of special parts inside.",
+            "Here's a skateboard! It's not a toy but a sport vehicle. People do tricks with it!",
+            "Check out this skateboard! The curved ends help riders do flips and turns.",
+            "Meet this skateboard! It has trucks under the board that help it turn left and right."
+        ],
+        "facts": [
+            {"id": "skateboard_t2_f1", "text": "The rough top of a skateboard is called grip tape, which helps your shoes not slip.", "category": "parts_function", "wonder_score": 4},
+            {"id": "skateboard_t2_f2", "text": "Skateboard wheels have bearings inside that help them spin fast and smoothly.", "category": "parts_function", "wonder_score": 4},
+            {"id": "skateboard_t2_f3", "text": "Skateboarding is a sport where people do tricks like jumps and spins.", "category": "purpose", "wonder_score": 4},
+            {"id": "skateboard_t2_f4", "text": "The curved ends of a skateboard are called the nose and tail, and they help with tricks.", "category": "design", "wonder_score": 3},
+            {"id": "skateboard_t2_f5", "text": "Skateboards turn when you lean your body left or right on the board.", "category": "operation", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "skateboard_t2_q1", "text": "Why is the top of a skateboard rough?", "type": "function", "expected_answer": "so shoes don't slip", "hint": "It's called grip tape!"},
+            {"id": "skateboard_t2_q2", "text": "What makes skateboard wheels spin so fast?", "type": "parts", "expected_answer": "bearings inside", "hint": "Small metal balls inside!"},
+            {"id": "skateboard_t2_q3", "text": "What sport uses a skateboard?", "type": "category", "expected_answer": "skateboarding", "hint": "It's in the name!"},
+            {"id": "skateboard_t2_q4", "text": "What are the curved ends of a skateboard for?", "type": "design", "expected_answer": "to do tricks", "hint": "They help with flips!"},
+            {"id": "skateboard_t2_q5", "text": "How do you make a skateboard turn?", "type": "operation", "expected_answer": "lean left or right", "hint": "Move your body weight!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a skateboard! The design helps riders control speed and direction by leaning.",
+            "Look at this skateboard! The wheels need to be just the right hardness for different surfaces.",
+            "Here's a skateboard! It was invented by surfers who wanted to 'surf' on land.",
+            "Check out this skateboard! Different shapes are used for different styles of riding.",
+            "Meet this skateboard! Safety gear like helmets are very important when riding."
+        ],
+        "facts": [
+            {"id": "skateboard_t3_f1", "text": "Skateboards were invented in the 1950s by surfers who wanted to practice on land when there were no waves.", "category": "history", "wonder_score": 4},
+            {"id": "skateboard_t3_f2", "text": "The hardness of skateboard wheels affects how they ride - softer wheels are better for rough ground, harder wheels for smooth surfaces.", "category": "design", "wonder_score": 4},
+            {"id": "skateboard_t3_f3", "text": "Wearing a helmet and pads is important because falling off a skateboard can cause injuries.", "category": "safety", "wonder_score": 5},
+            {"id": "skateboard_t3_f4", "text": "Skateboard decks are usually made of layers of wood glued together, which makes them strong but flexible.", "category": "materials", "wonder_score": 3},
+            {"id": "skateboard_t3_f5", "text": "Skateparks are special places with ramps and rails designed for doing skateboard tricks safely.", "category": "environment", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "skateboard_t3_q1", "text": "Why were skateboards first invented?", "type": "history", "expected_answer": "for surfers to practice on land", "hint": "Think about when there's no ocean!"},
+            {"id": "skateboard_t3_q2", "text": "What kind of wheels are better for riding on bumpy ground?", "type": "design", "expected_answer": "softer wheels", "hint": "They absorb bumps better!"},
+            {"id": "skateboard_t3_q3", "text": "Why should you wear a helmet when skateboarding?", "type": "safety", "expected_answer": "to protect your head if you fall", "hint": "It keeps you safe!"},
+            {"id": "skateboard_t3_q4", "text": "How are skateboard decks made strong?", "type": "materials", "expected_answer": "layers of wood glued together", "hint": "Multiple thin layers!"},
+            {"id": "skateboard_t3_q5", "text": "Where is a good place to practice skateboard tricks?", "type": "environment", "expected_answer": "skatepark", "hint": "A special park with ramps!"}
+        ]
+    }
+    },
+    {
+    "id": "vehicle_ambulance",
+    "name": "Ambulance",
+    "aliases": ["rescue vehicle", "emergency car", "medical van"],
+    "domain": "vehicle",
+    "category": ["vehicle", "emergency vehicle", "transportation"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["white", "red", "yellow", "orange", "green stripes"],
+        "shapes": ["box-shaped body", "four wheels", "large rear doors", "roof with lights", "long vehicle", "stretcher inside"],
+        "size": "medium to large (bigger than a car)",
+        "textures": ["smooth metal", "shiny paint", "glass windows", "rubber tires"],
+        "distinctive_parts": ["flashing lights on top", "loud siren", "big red cross", "rear doors for stretcher", "radio antenna"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's an ambulance! Look at its flashing lights!",
+            "Wow, an ambulance! It makes a loud 'wee-woo' sound.",
+            "A big ambulance! It is white with a red cross.",
+            "Hello, ambulance! It has big wheels and doors in the back.",
+            "Look at that ambulance! It helps people who are sick or hurt."
+        ],
+        "facts": [
+            {"id": "ambulance_t1_f1", "text": "Ambulances have flashing lights on top.", "category": "appearance", "wonder_score": 3},
+            {"id": "ambulance_t1_f2", "text": "Ambulances make a loud 'wee-woo' siren sound.", "category": "sound", "wonder_score": 4},
+            {"id": "ambulance_t1_f3", "text": "Ambulances are often white with a red cross.", "category": "appearance", "wonder_score": 2},
+            {"id": "ambulance_t1_f4", "text": "Ambulances have big wheels and four doors.", "category": "structure", "wonder_score": 2},
+            {"id": "ambulance_t1_f5", "text": "Ambulances help people who are sick or hurt.", "category": "purpose", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "ambulance_t1_q1", "text": "What color are most ambulances?", "type": "color", "expected_answer": "white", "hint": "It's a light color like snow!"},
+            {"id": "ambulance_t1_q2", "text": "How many wheels does an ambulance have?", "type": "counting", "expected_answer": "4", "hint": "Count them: 1, 2, 3, 4!"},
+            {"id": "ambulance_t1_q3", "text": "What sound does an ambulance make?", "type": "sound", "expected_answer": "wee-woo", "hint": "A loud, high-low sound!"},
+            {"id": "ambulance_t1_q4", "text": "What is on top of an ambulance that flashes?", "type": "observation", "expected_answer": "lights", "hint": "Bright colored lights!"},
+            {"id": "ambulance_t1_q5", "text": "Who do ambulances help?", "type": "knowledge", "expected_answer": "sick or hurt people", "hint": "People who need to go to the hospital."}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's an ambulance! Do you know why it has a siren and flashing lights?",
+            "Look at this ambulance! It carries special medical equipment inside.",
+            "Here's an ambulance! It takes people to the hospital very quickly.",
+            "Check out this ambulance! Other cars must move aside when it passes.",
+            "Meet this ambulance! Paramedics work inside to help people on the way to the hospital."
+        ],
+        "facts": [
+            {"id": "ambulance_t2_f1", "text": "Ambulances use sirens and flashing lights to tell other cars to move aside.", "category": "function", "wonder_score": 5},
+            {"id": "ambulance_t2_f2", "text": "Inside an ambulance, there is a bed called a stretcher for the patient.", "category": "interior", "wonder_score": 4},
+            {"id": "ambulance_t2_f3", "text": "Paramedics ride in ambulances to give medical help on the way to the hospital.", "category": "occupation", "wonder_score": 4},
+            {"id": "ambulance_t2_f4", "text": "Ambulances carry special equipment like bandages, oxygen, and medicine.", "category": "equipment", "wonder_score": 4},
+            {"id": "ambulance_t2_f5", "text": "You can call an ambulance by dialing 120 in China.", "category": "communication", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "ambulance_t2_q1", "text": "Why do ambulances have sirens and flashing lights?", "type": "reasoning", "expected_answer": "to tell other cars to move aside", "hint": "So it can get through traffic quickly!"},
+            {"id": "ambulance_t2_q2", "text": "What is the special bed inside an ambulance called?", "type": "vocabulary", "expected_answer": "stretcher", "hint": "It's a bed with wheels!"},
+            {"id": "ambulance_t2_q3", "text": "Who rides in an ambulance to help sick people?", "type": "knowledge", "expected_answer": "paramedics", "hint": "They are medical helpers."},
+            {"id": "ambulance_t2_q4", "text": "What number do you call in China to get an ambulance?", "type": "knowledge", "expected_answer": "120", "hint": "It's three numbers: 1-2-0!"},
+            {"id": "ambulance_t2_q5", "text": "Should other cars move aside for an ambulance with its siren on?", "type": "yes_no", "expected_answer": "yes", "hint": "It's an emergency!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's an ambulance! Did you know that ambulances have different types for different emergencies?",
+            "Look at this ambulance! Some ambulances are like small hospitals on wheels.",
+            "This is an ambulance. They are designed to be very safe even when driving fast.",
+            "Here we have an ambulance. They communicate with the hospital to prepare for the patient.",
+            "Consider this ambulance. The paramedics inside can do many medical procedures before reaching the hospital."
+        ],
+        "facts": [
+            {"id": "ambulance_t3_f1", "text": "There are different types of ambulances, like ones for babies or for major accidents.", "category": "variety", "wonder_score": 4},
+            {"id": "ambulance_t3_f2", "text": "Ambulances have strong suspensions and safe designs to drive fast without hurting the patient.", "category": "design", "wonder_score": 4},
+            {"id": "ambulance_t3_f3", "text": "Paramedics in the ambulance can call the hospital to tell them about the patient's condition.", "category": "communication", "wonder_score": 4},
+            {"id": "ambulance_t3_f4", "text": "The inside of an ambulance is kept very clean to prevent germs from spreading.", "category": "hygiene", "wonder_score": 4},
+            {"id": "ambulance_t3_f5", "text": "If an ambulance is not available, a fire truck or police car might help in an emergency.", "category": "cooperation", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "ambulance_t3_q1", "text": "Why are there different types of ambulances?", "type": "reasoning", "hint": "Different people need different help!"},
+            {"id": "ambulance_t3_q2", "text": "How do ambulances drive safely when they are in a hurry?", "type": "how", "hint": "They are built to be strong and stable."},
+            {"id": "ambulance_t3_q3", "text": "What can paramedics do to prepare the hospital for the patient?", "type": "application", "hint": "They can talk to the hospital on the radio."},
+            {"id": "ambulance_t3_q4", "text": "Why is it important to keep the inside of an ambulance clean?", "type": "why", "hint": "To keep the patient safe from germs."},
+            {"id": "ambulance_t3_q5", "text": "If an ambulance cannot come, what other vehicles might help in an emergency?", "type": "knowledge", "expected_answer": "fire truck or police car", "hint": "Other emergency vehicles!"}
+        ]
+    }
+    },
+    {
+    "id": "vehicles_policecar",
+    "name": "Police Car",
+    "aliases": ["police vehicle", "cop car", "patrol car"],
+    "domain": "vehicles",
+    "category": ["vehicle", "emergency vehicle", "car"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["white", "black", "blue", "red", "silver"],
+        "shapes": ["four wheels", "car body", "doors", "windows", "lights on top", "grill", "bumper"],
+        "size": "medium (like a family car)",
+        "textures": ["shiny", "smooth", "metallic", "plastic", "glass"],
+        "distinctive_parts": ["flashing lights on top", "siren", "police markings", "antenna", "spotlight"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a police car! It helps keep us safe.",
+            "Look, a police car! It has flashing lights on top.",
+            "A police car! It can go fast with its siren on.",
+            "See the police car? It is white and blue with words on it.",
+            "Watch the police car! It stops bad guys and helps people."
+        ],
+        "facts": [
+            {"id": "policecar_t1_f1", "text": "Police cars have flashing lights on the roof.", "category": "appearance", "wonder_score": 4},
+            {"id": "policecar_t1_f2", "text": "Police cars make a loud siren sound when they drive fast.", "category": "sound", "wonder_score": 4},
+            {"id": "policecar_t1_f3", "text": "Police cars are painted with police words and badges.", "category": "appearance", "wonder_score": 3},
+            {"id": "policecar_t1_f4", "text": "Police cars have four wheels and doors like other cars.", "category": "body", "wonder_score": 2},
+            {"id": "policecar_t1_f5", "text": "Police cars help police officers do their job.", "category": "function", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "policecar_t1_q1", "text": "What color lights flash on top of a police car?", "type": "color", "expected_answer": "red and blue", "hint": "They are bright and flash!"},
+            {"id": "policecar_t1_q2", "text": "How many wheels does a police car have?", "type": "counting", "expected_answer": "4", "hint": "Count them: 1, 2, 3, 4!"},
+            {"id": "policecar_t1_q3", "text": "What loud sound does a police car make?", "type": "sound", "expected_answer": "siren", "hint": "Wee-oo, wee-oo!"},
+            {"id": "policecar_t1_q4", "text": "Who drives a police car?", "type": "vocabulary", "expected_answer": "police officer", "hint": "A person in uniform!"},
+            {"id": "policecar_t1_q5", "text": "Do police cars have doors?", "type": "yes_no", "expected_answer": "yes", "hint": "Yes, to get in and out!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a police car! It is a special emergency vehicle that helps people in trouble.",
+            "Look at this police car! It has special equipment to help police officers do their work.",
+            "Here's a police car! It is different from a regular car because it has a radio and special lights.",
+            "Check out this police car! Police cars can go very fast when they need to reach someone quickly.",
+            "Meet this police car! It can communicate with other police cars using its radio."
+        ],
+        "facts": [
+            {"id": "policecar_t2_f1", "text": "The flashing lights on a police car are called emergency lights.", "category": "vocabulary", "wonder_score": 3},
+            {"id": "policecar_t2_f2", "text": "Police cars have a loudspeaker so the officer can talk to people outside.", "category": "equipment", "wonder_score": 4},
+            {"id": "policecar_t2_f3", "text": "Police cars are stronger than regular cars and have special tires.", "category": "comparison", "wonder_score": 4},
+            {"id": "policecar_t2_f4", "text": "Police cars have a computer inside to help the officer find information.", "category": "equipment", "wonder_score": 4},
+            {"id": "policecar_t2_f5", "text": "When you see a police car with lights and siren on, you should move out of the way.", "category": "safety", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "policecar_t2_q1", "text": "What are the flashing lights on a police car called?", "type": "vocabulary", "expected_answer": "emergency lights", "hint": "They are used in emergencies!"},
+            {"id": "policecar_t2_q2", "text": "Why does a police car have a loudspeaker?", "type": "function", "expected_answer": "to talk to people", "hint": "The officer can give instructions!"},
+            {"id": "policecar_t2_q3", "text": "Are police cars stronger or weaker than regular cars?", "type": "comparison", "expected_answer": "stronger", "hint": "They need to be tough!"},
+            {"id": "policecar_t2_q4", "text": "What should you do if a police car has its lights and siren on behind you?", "type": "safety", "expected_answer": "move out of the way", "hint": "Pull over to the side!"},
+            {"id": "policecar_t2_q5", "text": "What can a police officer use the computer in the car for?", "type": "function", "hint": "To look up information quickly."}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a police car! The different colors of lights help people see it from far away, even at night.",
+            "Look at this police car! It is designed to be very safe for the officer inside, even in a crash.",
+            "This is a police car. It has a special engine that allows it to accelerate quickly when chasing a bad guy.",
+            "Here we have a police car. The markings on the car are not just for show; they help people identify it as a police car.",
+            "Consider this police car. It is part of a larger system that includes police stations, other cars, and communication networks."
+        ],
+        "facts": [
+            {"id": "policecar_t3_f1", "text": "Police cars have red and blue lights because these colors are easy to see from a distance.", "category": "why", "wonder_score": 4},
+            {"id": "policecar_t3_f2", "text": "Police cars are built with a special cage in the back to safely transport people who are arrested.", "category": "design", "wonder_score": 5},
+            {"id": "policecar_t3_f3", "text": "The siren on a police car can be heard from very far away to warn people and clear the road.", "category": "function", "wonder_score": 4},
+            {"id": "policecar_t3_f5", "text": "If a police car is in an accident, it has extra safety features to protect the officer inside.", "category": "safety", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "policecar_t3_q1", "text": "Why are police car lights red and blue?", "type": "why", "hint": "Think about seeing them far away!"},
+            {"id": "policecar_t3_q2", "text": "What is the cage in the back of a police car for?", "type": "function", "expected_answer": "to transport arrested people safely", "hint": "It keeps everyone safe!"},
+            {"id": "policecar_t3_q3", "text": "How do police cars alert surrounding vehicles to give way?", "type": "how", "expected_answer": "siren", "hint": "Think about what warns people to get out of the way."},
+            {"id": "policecar_t3_q5", "text": "What would happen if a police car didn't have extra safety features?", "type": "what_if", "hint": "The officer could get hurt in a crash."}
+        ]
+    }
+    },
+    {
+    "id": "vehicles_fireengine",
+    "name": "Fire Engine",
+    "aliases": ["fire truck", "fire vehicle", "fire apparatus", "fire department truck"],
+    "domain": "vehicles",
+    "category": ["vehicle", "emergency vehicle", "public service vehicle"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["red", "white", "yellow", "black"],
+        "shapes": ["long body", "big wheels", "ladder on top", "hose reels", "flashing lights", "siren on roof", "storage compartments"],
+        "size": "big and long",
+        "textures": ["shiny", "smooth", "hard", "metallic"],
+        "distinctive_parts": ["big red body", "flashing lights", "loud siren", "long ladder", "hoses"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a fire engine! Look at its bright red color!",
+            "Wow, a fire engine! It has big wheels and flashing lights.",
+            "A fire truck! It makes a loud siren sound when it drives.",
+            "Hello, fire engine! See the long ladder on top?",
+            "Look! A fire engine is coming! Listen to its siren."
+        ],
+        "facts": [
+            {"id": "fireengine_t1_f1", "text": "Fire engines are bright red.", "category": "appearance", "wonder_score": 3},
+            {"id": "fireengine_t1_f2", "text": "Fire engines have big wheels and a long ladder.", "category": "appearance", "wonder_score": 3},
+            {"id": "fireengine_t1_f3", "text": "Fire engines have loud sirens and flashing lights.", "category": "sound_and_light", "wonder_score": 5},
+            {"id": "fireengine_t1_f4", "text": "Fire engines have long hoses to spray water.", "category": "equipment", "wonder_score": 4},
+            {"id": "fireengine_t1_f5", "text": "Fire engines are very big and long vehicles.", "category": "size", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "fireengine_t1_q1", "text": "What color is a fire engine?", "type": "color", "expected_answer": "red", "hint": "It's a bright color!"},
+            {"id": "fireengine_t1_q2", "text": "How many big wheels does a fire engine have?", "type": "counting", "expected_answer": "4 or more", "hint": "Count the wheels!"},
+            {"id": "fireengine_t1_q3", "text": "What sound does a fire engine make?", "type": "sound", "expected_answer": "loud siren", "hint": "Wee-woo wee-woo!"},
+            {"id": "fireengine_t1_q4", "text": "What does a fire engine carry on top?", "type": "observation", "expected_answer": "a ladder", "hint": "Something long and tall!"},
+            {"id": "fireengine_t1_q5", "text": "Is a fire engine big or small?", "type": "comparison", "expected_answer": "big", "hint": "It's bigger than a car!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a fire engine! Do you know why it has a loud siren?",
+            "Look at this fire engine! Its long ladder helps firefighters reach high places.",
+            "Here's a fire engine! It carries water and hoses to put out fires.",
+            "Check out this fire truck! Fire engines are emergency vehicles that help people.",
+            "Meet this fire engine! It has special equipment for firefighters to use."
+        ],
+        "facts": [
+            {"id": "fireengine_t2_f1", "text": "Fire engines have loud sirens so other cars can hear them and move out of the way.", "category": "function", "wonder_score": 4},
+            {"id": "fireengine_t2_f2", "text": "The long ladder on a fire engine helps firefighters reach high windows and rooftops.", "category": "function", "wonder_score": 5},
+            {"id": "fireengine_t2_f3", "text": "Fire engines carry water in a big tank and have hoses to spray water on fires.", "category": "equipment", "wonder_score": 5},
+            {"id": "fireengine_t2_f4", "text": "Fire engines are emergency vehicles that respond when there is a fire.", "category": "category", "wonder_score": 4},
+            {"id": "fireengine_t2_f5", "text": "Fire engines are bigger and have more equipment than regular cars or trucks.", "category": "comparison", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "fireengine_t2_q1", "text": "Why does a fire engine have a loud siren?", "type": "reasoning", "expected_answer": "so cars can hear it and move", "hint": "To let people know it's coming!"},
+            {"id": "fireengine_t2_q2", "text": "What do firefighters use the long ladder for?", "type": "function", "expected_answer": "to reach high places", "hint": "Like tall buildings!"},
+            {"id": "fireengine_t2_q3", "text": "What does a fire engine use to put out fires?", "type": "knowledge", "expected_answer": "water and hoses", "hint": "It sprays water!"},
+            {"id": "fireengine_t2_q4", "text": "What kind of vehicle is a fire engine?", "type": "category", "expected_answer": "emergency vehicle", "hint": "It helps in emergencies!"},
+            {"id": "fireengine_t2_q5", "text": "Is a fire engine bigger than a family car?", "type": "comparison", "expected_answer": "yes", "hint": "It's much bigger!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a fire engine! Did you know that different types of fire engines are used for different emergencies?",
+            "Look at this fire engine! They have special pumps that can spray water very far and high.",
+            "This is a fire engine. They are designed to carry firefighters and all their equipment to a fire.",
+            "Here we have a fire engine. Why do you think fire engines are painted bright red?",
+            "Consider this fire engine. If a fire engine didn't have a siren, what might happen when it drives to a fire?"
+        ],
+        "facts": [
+            {"id": "fireengine_t3_f1", "text": "Fire engines are painted bright red so they are easy to see and recognize in an emergency.", "category": "design", "wonder_score": 4},
+            {"id": "fireengine_t3_f2", "text": "Fire engines have powerful pumps that can spray water very far to reach distant fires.", "category": "function", "wonder_score": 5},
+            {"id": "fireengine_t3_f3", "text": "Some fire engines have special tools to cut through metal or wood to rescue people.", "category": "equipment", "wonder_score": 5},
+            {"id": "fireengine_t3_f4", "text": "Fire engines carry firefighters who wear special suits to protect them from heat and smoke.", "category": "purpose", "wonder_score": 4},
+            {"id": "fireengine_t3_f5", "text": "If a fire engine's siren didn't work, other drivers might not know to get out of the way quickly.", "category": "hypothetical", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "fireengine_t3_q1", "text": "Why are fire engines painted bright red?", "type": "why", "expected_answer": "so they are easy to see", "hint": "To stand out in traffic!"},
+            {"id": "fireengine_t3_q2", "text": "What does the pump on a fire engine do?", "type": "function", "expected_answer": "sprays water far", "hint": "It pushes water through the hose!"},
+            {"id": "fireengine_t3_q3", "text": "What special tools might a fire engine carry besides hoses?", "type": "knowledge", "expected_answer": "tools to cut things", "hint": "For rescuing people!"},
+            {"id": "fireengine_t3_q4", "text": "Who rides in a fire engine and wears special protective suits?", "type": "knowledge", "expected_answer": "firefighters", "hint": "They fight fires!"},
+            {"id": "fireengine_t3_q5", "text": "What might happen if a fire engine didn't have a working siren?", "type": "hypothetical", "expected_answer": "cars might not move", "hint": "People might not know it's coming!"}
+        ]
+    }
+    },
+    {
+    "id": "vehicle_taxi",
+    "name": "Taxi",
+    "aliases": ["cab", "taxicab", "yellow cab"],
+    "domain": "vehicles",
+    "category": ["vehicle", "transportation", "car"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["yellow", "white", "green", "orange", "black and yellow"],
+        "shapes": ["four wheels", "car shape", "roof light", "windows", "doors", "trunk"],
+        "size": "medium (like a regular car)",
+        "textures": ["smooth", "shiny", "metal", "glass", "plastic"],
+        "distinctive_parts": ["taxi sign on roof", "meter inside", "yellow color", "checker pattern", "taxi number"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a taxi! Taxis are special cars.",
+            "Look, a yellow taxi! It has a light on top.",
+            "A taxi! You see them in the city.",
+            "Hello, taxi! It helps people go places.",
+            "Wow, a taxi! It is waiting for people."
+        ],
+        "facts": [
+            {"id": "taxi_t1_f1", "text": "Taxis are usually yellow cars.", "category": "appearance", "wonder_score": 2},
+            {"id": "taxi_t1_f2", "text": "A taxi has a light on its roof.", "category": "appearance", "wonder_score": 3},
+            {"id": "taxi_t1_f3", "text": "Taxis take people to different places.", "category": "function", "wonder_score": 3},
+            {"id": "taxi_t1_f4", "text": "Taxis have four wheels like other cars.", "category": "parts", "wonder_score": 2},
+            {"id": "taxi_t1_f5", "text": "You wave your hand to stop a taxi.", "category": "use", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "taxi_t1_q1", "text": "What color are many taxis?", "type": "color", "expected_answer": "yellow", "hint": "Think of a bright color!"},
+            {"id": "taxi_t1_q2", "text": "How many wheels does a taxi have?", "type": "counting", "expected_answer": "4", "hint": "Count them: 1, 2, 3, 4!"},
+            {"id": "taxi_t1_q3", "text": "What is on top of a taxi?", "type": "observation", "expected_answer": "a light", "hint": "It lights up!"},
+            {"id": "taxi_t1_q4", "text": "What do taxis do?", "type": "function", "expected_answer": "take people places", "hint": "They drive people around!"},
+            {"id": "taxi_t1_q5", "text": "How do you stop a taxi?", "type": "action", "expected_answer": "wave your hand", "hint": "You move your hand up and down!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a taxi! Taxis are special because they can pick up anyone who needs a ride.",
+            "Look at this taxi! It has a meter inside that counts how much money to pay.",
+            "Here's a taxi! Taxi drivers know all the streets in the city very well.",
+            "Check out this taxi! You see them at airports and train stations, waiting for people.",
+            "Meet this taxi! It is different from a bus because it takes just one group at a time."
+        ],
+        "facts": [
+            {"id": "taxi_t2_f1", "text": "A taxi has a meter that shows how much money you need to pay for the ride.", "category": "feature", "wonder_score": 4},
+            {"id": "taxi_t2_f2", "text": "Taxi drivers know the city streets very well to take you the fastest way.", "category": "function", "wonder_score": 4},
+            {"id": "taxi_t2_f3", "text": "Taxis often wait at special places like airports, hotels, and train stations.", "category": "habitat", "wonder_score": 3},
+            {"id": "taxi_t2_f4", "text": "When the taxi light is on, it means it is available for passengers.", "category": "signal", "wonder_score": 4},
+            {"id": "taxi_t2_f5", "text": "Taxis can be called by phone or an app, not just by waving on the street.", "category": "use", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "taxi_t2_q1", "text": "What does the meter in a taxi do?", "type": "knowledge", "expected_answer": "shows how much to pay", "hint": "It counts money!"},
+            {"id": "taxi_t2_q2", "text": "Why do taxi drivers know the city well?", "type": "reasoning", "expected_answer": "to take fast routes", "hint": "They want to get you there quickly!"},
+            {"id": "taxi_t2_q3", "text": "Where do taxis often wait for people?", "type": "location", "expected_answer": "airports, hotels, stations", "hint": "Places with many travelers!"},
+            {"id": "taxi_t2_q4", "text": "What does it mean when the taxi roof light is on?", "type": "interpretation", "expected_answer": "available for passengers", "hint": "You can get in!"},
+            {"id": "taxi_t2_q5", "text": "How can you call a taxi besides waving?", "type": "knowledge", "expected_answer": "by phone or app", "hint": "Use a smartphone!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a taxi! Did you know that taxis have been around for over 100 years, starting with horse carriages?",
+            "Look at this taxi! There are special rules that taxis must follow to keep passengers safe.",
+            "This is a taxi. The taxi sign on the roof can show if it is available or occupied.",
+            "Here we have a taxi. In some big cities, taxi drivers have to pass a hard test about city streets.",
+            "Consider this taxi. It provides an important service for people who don't have their own car."
+        ],
+        "facts": [
+            {"id": "taxi_t3_f1", "text": "Taxis have special licenses and numbers to show they are official taxis.", "category": "regulation", "wonder_score": 4},
+            {"id": "taxi_t3_f2", "text": "The first taxis were horse carriages, long before cars were invented.", "category": "history", "wonder_score": 5},
+            {"id": "taxi_t3_f3", "text": "In some cities, taxi drivers take a test to prove they know all the streets and routes.", "category": "operation", "wonder_score": 4},
+            {"id": "taxi_t3_f4", "text": "Taxis are important for people who need to go somewhere quickly or have heavy bags.", "category": "social_role", "wonder_score": 3},
+            {"id": "taxi_t3_f5", "text": "If a taxi sign says 'off duty', it means the driver is not taking passengers right now.", "category": "signal", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "taxi_t3_q1", "text": "What do taxi licenses and numbers show?", "type": "knowledge", "expected_answer": "they are official", "hint": "They are approved to work!"},
+            {"id": "taxi_t3_q2", "text": "What were taxis like a long time ago?", "type": "history", "expected_answer": "horse carriages", "hint": "They used animals, not engines!"},
+            {"id": "taxi_t3_q3", "text": "Why do taxi drivers take a test in some cities?", "type": "why", "hint": "To make sure they know the way!"},
+            {"id": "taxi_t3_q4", "text": "When is a taxi especially helpful for people?", "type": "application", "hint": "When they have lots of luggage!"},
+            {"id": "taxi_t3_q5", "text": "What does 'off duty' mean on a taxi sign?", "type": "interpretation", "expected_answer": "not taking passengers", "hint": "The driver is going home!"}
+        ]
+    }
+    },
+    {
+    "id": "vehicles_ferry",
+    "name": "Ferry",
+    "aliases": ["passenger ferry", "boat", "river ferry", "ferryboat"],
+    "domain": "vehicles",
+    "category": ["vehicle", "water transport", "public transport"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["white", "blue", "green", "red", "yellow"],
+        "shapes": ["long and flat", "pointy front", "flat back", "big windows", "smokestack", "multiple decks"],
+        "size": "large (bigger than most boats)",
+        "textures": ["smooth metal", "painted surface", "glass windows", "wet when in water"],
+        "distinctive_parts": ["loading ramp", "car deck", "passenger cabin", "captain's bridge", "lifeboats", "smokestack"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a ferry! Look at the big boat. It carries people and cars across the water.",
+            "Wow, a ferry! See how it floats on the water. What color is the ferry?",
+            "A big ferry boat! It has many windows and a big open space for cars.",
+            "Hello, ferry! Let's watch it move slowly on the river or sea.",
+            "Look at this ferry! It goes back and forth between two places."
+        ],
+        "facts": [
+            {"id": "ferry_t1_f1", "text": "A ferry is a big boat that carries people and cars.", "category": "purpose", "wonder_score": 3},
+            {"id": "ferry_t1_f2", "text": "Ferries float on water and move from one place to another.", "category": "movement", "wonder_score": 3},
+            {"id": "ferry_t1_f3", "text": "Ferries have a front part called a bow and a back part called a stern.", "category": "parts", "wonder_score": 4},
+            {"id": "ferry_t1_f4", "text": "Many ferries are white or blue, with big windows to see outside.", "category": "appearance", "wonder_score": 2},
+            {"id": "ferry_t1_f5", "text": "Ferries have a special ramp that goes down to let cars drive on and off.", "category": "feature", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "ferry_t1_q1", "text": "What does a ferry carry?", "type": "knowledge", "expected_answer": "people and cars", "hint": "Things that need to go across water!"},
+            {"id": "ferry_t1_q2", "text": "Where does a ferry float?", "type": "observation", "expected_answer": "on water", "hint": "Look at the river, lake or sea!"},
+            {"id": "ferry_t1_q3", "text": "How many parts of a ferry can you name?", "type": "vocabulary", "expected_answer": "bow, stern, windows", "hint": "Front and back parts!"},
+            {"id": "ferry_t1_q4", "text": "What color is this ferry?", "type": "color", "hint": "Look at its body!"},
+            {"id": "ferry_t1_q5", "text": "How do cars get on a ferry?", "type": "observation", "expected_answer": "drive up a ramp", "hint": "A flat bridge goes down!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a ferry! Ferries help people cross rivers and seas when there is no bridge.",
+            "Look at this ferry! It is designed to be very stable so it doesn't tip over.",
+            "Here's a ferry! Did you know ferries have a special captain who steers them?",
+            "Check out this ferry! It can carry hundreds of people at the same time!",
+            "Meet this ferry! Some ferries have two ends, so they don't need to turn around."
+        ],
+        "facts": [
+            {"id": "ferry_t2_f1", "text": "Ferries provide a way to cross water where there are no bridges or tunnels.", "category": "purpose", "wonder_score": 4},
+            {"id": "ferry_t2_f2", "text": "A captain is in charge of driving the ferry and keeping everyone safe.", "category": "role", "wonder_score": 4},
+            {"id": "ferry_t2_f3", "text": "Ferries are built to be wide and flat, which helps them stay steady on the water.", "category": "design", "wonder_score": 4},
+            {"id": "ferry_t2_f4", "text": "Some ferries have two identical ends, so they can go both ways without turning.", "category": "design", "wonder_score": 5},
+            {"id": "ferry_t2_f5", "text": "Ferries follow specific routes back and forth between docks or terminals.", "category": "operation", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "ferry_t2_q1", "text": "Why do people use ferries instead of driving a car?", "type": "reasoning", "expected_answer": "to cross water", "hint": "When there's a river or sea in the way!"},
+            {"id": "ferry_t2_q2", "text": "Who drives the ferry?", "type": "knowledge", "expected_answer": "a captain", "hint": "The person in charge of the boat!"},
+            {"id": "ferry_t2_q3", "text": "Why are ferries built to be wide and flat?", "type": "why", "expected_answer": "to stay steady", "hint": "So they don't rock too much!"},
+            {"id": "ferry_t2_q4", "text": "What is special about some ferries with two identical ends?", "type": "feature", "expected_answer": "go both ways", "hint": "They don't need to turn around!"},
+            {"id": "ferry_t2_q5", "text": "Do ferries go anywhere or follow a set path?", "type": "knowledge", "expected_answer": "follow specific routes", "hint": "They go back and forth between places!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a ferry! Ferries are an eco-friendly way to travel compared to building long bridges.",
+            "Look at this ferry! They use special engines that push water to move forward.",
+            "This is a ferry. Even in bad weather, ferries are designed to sail safely.",
+            "Here we have a ferry. Some ferries use electricity instead of fuel to be cleaner.",
+            "Consider this ferry. If there were no ferries, people would need to take much longer routes."
+        ],
+        "facts": [
+            {"id": "ferry_t3_f1", "text": "Ferries can be better for the environment than building bridges that disturb nature.", "category": "environment", "wonder_score": 4},
+            {"id": "ferry_t3_f2", "text": "Most ferries use propellers under the water to push them forward by spinning.", "category": "mechanism", "wonder_score": 4},
+            {"id": "ferry_t3_f3", "text": "Ferries are designed with safety features like lifeboats for emergencies on water.", "category": "safety", "wonder_score": 4},
+            {"id": "ferry_t3_f4", "text": "Some modern ferries use electric motors to reduce air and water pollution.", "category": "innovation", "wonder_score": 5},
+            {"id": "ferry_t3_f5", "text": "Without ferries, people might have to drive many extra miles to find a bridge or tunnel.", "category": "importance", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "ferry_t3_q1", "text": "Why might a ferry be better for nature than a bridge?", "type": "why", "expected_answer": "less disturbance", "hint": "Bridges need big construction!"},
+            {"id": "ferry_t3_q2", "text": "How does a ferry's propeller help it move?", "type": "how", "expected_answer": "pushes water", "hint": "Spinning blades push water back!"},
+            {"id": "ferry_t3_q3", "text": "What safety feature do ferries have for emergencies?", "type": "knowledge", "expected_answer": "lifeboats", "hint": "Small boats for everyone!"},
+            {"id": "ferry_t3_q4", "text": "How are electric ferries different from regular ferries?", "type": "comparison", "expected_answer": "less pollution", "hint": "They use batteries instead of fuel!"},
+            {"id": "ferry_t3_q5", "text": "What would happen if there were no ferries in some places?", "type": "hypothetical", "expected_answer": "longer trips", "hint": "People would need to go around the water!"}
+        ]
+    }
+    }
+
+]

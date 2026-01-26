@@ -1,0 +1,1343 @@
+[
+    {
+    "id": "food_apple",
+    "name": "Apple",
+    "aliases": ["red apple", "green apple", "fruit"],
+    "domain": "food",
+    "category": ["fruit", "healthy food", "snack"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["red", "green", "yellow", "pink", "striped"],
+        "shapes": ["round", "oval", "heart-shaped", "small stem", "dimple at bottom"],
+        "size": "fits in a child's hand",
+        "textures": ["smooth skin", "shiny", "firm", "juicy inside", "crunchy"],
+        "distinctive_parts": ["stem", "skin", "flesh", "core", "seeds", "leaves sometimes attached"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's an apple! Apples are yummy fruits.",
+            "Look, an apple! It is round and shiny.",
+            "A red apple! Apples grow on trees.",
+            "Hello, apple! Can you see its stem?",
+            "Yum, an apple! It is good to eat."
+        ],
+        "facts": [
+            {"id": "apple_t1_f1", "text": "Apples are round and can be red, green or yellow.", "category": "appearance", "wonder_score": 3},
+            {"id": "apple_t1_f2", "text": "Apples grow on trees in orchards.", "category": "origin", "wonder_score": 3},
+            {"id": "apple_t1_f3", "text": "Apples are crunchy and juicy when you bite them.", "category": "taste_texture", "wonder_score": 4},
+            {"id": "apple_t1_f4", "text": "Inside an apple are small brown seeds.", "category": "structure", "wonder_score": 3},
+            {"id": "apple_t1_f5", "text": "Apples are a healthy snack.", "category": "purpose", "wonder_score": 2}
+        ],
+        "questions": [
+            {"id": "apple_t1_q1", "text": "What color is this apple?", "type": "color", "hint": "Look at its skin!"},
+            {"id": "apple_t1_q2", "text": "What shape is an apple?", "type": "shape", "expected_answer": "round", "hint": "Like a ball!"},
+            {"id": "apple_t1_q3", "text": "Where do apples grow?", "type": "knowledge", "expected_answer": "on trees", "hint": "In big gardens called orchards."},
+            {"id": "apple_t1_q4", "text": "How does an apple feel when you bite it?", "type": "sensory", "expected_answer": "crunchy", "hint": "It makes a sound!"},
+            {"id": "apple_t1_q5", "text": "What is inside an apple?", "type": "observation", "expected_answer": "seeds", "hint": "Small brown things in the middle."}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's an apple! Did you know apples float in water?",
+            "Look at this apple! There are many different types of apples.",
+            "Here's an apple! Apples can be made into juice and sauce.",
+            "Check out this apple! It has a star shape inside if you cut it across!",
+            "Meet this apple! Apples help keep our bodies healthy."
+        ],
+        "facts": [
+            {"id": "apple_t2_f1", "text": "If you put an apple in water, it will float because it is less dense.", "category": "property", "wonder_score": 5},
+            {"id": "apple_t2_f2", "text": "There are over 7,500 different kinds of apples in the world.", "category": "diversity", "wonder_score": 5},
+            {"id": "apple_t2_f3", "text": "Apples can be made into apple juice, applesauce, and apple pie.", "category": "use", "wonder_score": 4},
+            {"id": "apple_t2_f4", "text": "Eating apples helps keep our teeth clean and our bodies strong.", "category": "health", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "apple_t2_q1", "text": "What happens if you put an apple in water?", "type": "prediction", "expected_answer": "it floats", "hint": "It doesn't sink like a rock!"},
+            {"id": "apple_t2_q2", "text": "Are there many kinds of apples?", "type": "knowledge", "expected_answer": "yes", "hint": "Thousands of types!"},
+            {"id": "apple_t2_q3", "text": "What can we make from apples?", "type": "use", "hint": "Think of drinks and food!"},
+            {"id": "apple_t2_q4", "text": "Why are apples good for our body?", "type": "reasoning", "hint": "They help clean teeth and give energy."}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's an apple! Did you know an apple tree needs bees to make fruit?",
+            "Look at this apple! The tiny seeds inside can grow into a whole new tree.",
+            "This is an apple. Once picked, it continues to ripen and can change color.",
+            "Here we have an apple. Its skin has a special wax to keep it fresh.",
+            "Consider this apple. Without bees visiting apple flowers, we might have no apples."
+        ],
+        "facts": [
+            {"id": "apple_t3_f1", "text": "Apple trees need bees to carry pollen from flower to flower to make apples grow.", "category": "growth", "wonder_score": 5},
+            {"id": "apple_t3_f2", "text": "Each apple seed can grow into a completely new apple tree, different from its parent.", "category": "life_cycle", "wonder_score": 5},
+            {"id": "apple_t3_f3", "text": "After picking, apples continue to ripen and may change color slightly due to a gas they release.", "category": "property", "wonder_score": 4},
+            {"id": "apple_t3_f4", "text": "Apple skin has a natural wax coating that helps keep moisture in and protects the fruit.", "category": "structure", "wonder_score": 4},
+            {"id": "apple_t3_f5", "text": "Apples are part of the rose family, which means they are related to roses and pears.", "category": "classification", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "apple_t3_q1", "text": "How do bees help apple trees make apples?", "type": "process", "hint": "They move yellow powder between flowers."},
+            {"id": "apple_t3_q2", "text": "What can grow from an apple seed?", "type": "life_cycle", "expected_answer": "a new apple tree", "hint": "It starts as a small plant."},
+            {"id": "apple_t3_q3", "text": "What happens to an apple after it is picked from the tree?", "type": "change", "hint": "It can get softer and sweeter."},
+            {"id": "apple_t3_q4", "text": "Why does an apple's skin feel a bit waxy?", "type": "why", "hint": "It helps the apple stay juicy."},
+            {"id": "apple_t3_q5", "text": "What other plants are apples related to?", "type": "classification", "hint": "Beautiful flowers that smell nice."}
+        ]
+    }
+    },
+    {
+    "id": "food_banana",
+    "name": "Banana",
+    "aliases": ["bananas", "nana", "yellow fruit"],
+    "domain": "food",
+    "category": ["fruit", "healthy snack", "plant"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["yellow", "green", "brown", "white"],
+        "shapes": ["long and curved", "crescent shape", "with a stem", "with peel"],
+        "size": "medium (about a hand length)",
+        "textures": ["smooth skin", "soft inside", "fibrous", "creamy"],
+        "distinctive_parts": ["yellow peel", "white fruit", "brown spots", "stem end", "stringy bits inside"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a banana! A yellow fruit. Can you find a banana?",
+            "Look, a banana! It is long and curved. What color is it?",
+            "A tasty banana! It grows on a plant. Do you like bananas?",
+            "Hello, banana! Let's peel it. What's inside?",
+            "Yum, a banana! It is soft and sweet. Is it ready to eat?"
+        ],
+        "facts": [
+            {"id": "banana_t1_f1", "text": "Bananas are long, curved, and yellow.", "category": "appearance", "wonder_score": 2},
+            {"id": "banana_t1_f2", "text": "Bananas have a peel you remove to eat.", "category": "preparation", "wonder_score": 3},
+            {"id": "banana_t1_f3", "text": "Bananas are soft and sweet inside.", "category": "taste", "wonder_score": 3},
+            {"id": "banana_t1_f4", "text": "Bananas grow in bunches on tall plants.", "category": "origin", "wonder_score": 3},
+            {"id": "banana_t1_f5", "text": "Bananas are a healthy snack for kids.", "category": "nutrition", "wonder_score": 2}
+        ],
+        "questions": [
+            {"id": "banana_t1_q1", "text": "What color is a ripe banana?", "type": "color", "expected_answer": "yellow", "hint": "Think of the sun!"},
+            {"id": "banana_t1_q2", "text": "What shape is a banana?", "type": "observation", "expected_answer": "long and curved", "hint": "Like a smile!"},
+            {"id": "banana_t1_q3", "text": "How many bananas are in this bunch?", "type": "counting", "hint": "Count each finger-shaped fruit!"},
+            {"id": "banana_t1_q4", "text": "Do we eat the banana peel?", "type": "yes_no", "expected_answer": "no", "hint": "We peel it first!"},
+            {"id": "banana_t1_q5", "text": "Is a banana a fruit or a vegetable?", "type": "category", "expected_answer": "fruit", "hint": "It grows on a plant!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a banana! Do you know that bananas come from very tall plants, not trees?",
+            "Look at this banana! When it gets brown spots, it becomes even sweeter.",
+            "Here's a banana! Bananas are packed with energy and good for our muscles.",
+            "Check out this banana! Bananas don't grow in cold places; they love warm weather.",
+            "Meet this banana! Some bananas are green, and some are yellow. Why is that?"
+        ],
+        "facts": [
+            {"id": "banana_t2_f1", "text": "Bananas start out green and turn yellow as they ripen.", "category": "life_cycle", "wonder_score": 4},
+            {"id": "banana_t2_f2", "text": "Bananas give us quick energy because they have natural sugars.", "category": "nutrition", "wonder_score": 4},
+            {"id": "banana_t2_f3", "text": "A banana plant is the world's largest herb, not a real tree.", "category": "origin", "wonder_score": 5},
+            {"id": "banana_t2_f4", "text": "Brown spots on a banana mean it is very ripe and extra sweet.", "category": "ripeness", "wonder_score": 4},
+            {"id": "banana_t2_f5", "text": "You can use mashed bananas to make yummy banana bread.", "category": "usage", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "banana_t2_q1", "text": "What color is an unripe banana?", "type": "color", "expected_answer": "green", "hint": "Think of grass!"},
+            {"id": "banana_t2_q2", "text": "Why are bananas a good snack before playing?", "type": "reasoning", "hint": "They give you energy!"},
+            {"id": "banana_t2_q3", "text": "Is a banana plant a tree or a giant herb?", "type": "category", "expected_answer": "giant herb", "hint": "It doesn't have wood!"},
+            {"id": "banana_t2_q4", "text": "What do brown spots on a banana mean?", "type": "observation", "expected_answer": "it's very ripe and sweet", "hint": "It's ready to eat!"},
+            {"id": "banana_t2_q5", "text": "What can you make with very ripe, spotty bananas?", "type": "application", "expected_answer": "banana bread", "hint": "A sweet, baked treat!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a banana! Did you know that all the bananas we eat are clones of each other?",
+            "Look at this banana! It has tiny seeds inside, but they are too small to grow new plants.",
+            "This is a banana. People have been eating them for thousands of years, all around the world.",
+            "Here we have a banana. They are picked green and travel long distances to reach our stores.",
+            "Consider this banana. It can help our bodies in many ways, from digestion to mood."
+        ],
+        "facts": [
+            {"id": "banana_t3_f1", "text": "Almost all bananas we buy in stores are from the same type of plant, called Cavendish.", "category": "variety", "wonder_score": 4},
+            {"id": "banana_t3_f2", "text": "Bananas are picked while still green so they don't spoil during shipping to stores.", "category": "supply_chain", "wonder_score": 4},
+            {"id": "banana_t3_f3", "text": "Bananas contain a special fiber that helps our digestive system work smoothly.", "category": "health_benefit", "wonder_score": 4},
+            {"id": "banana_t3_f4", "text": "Wild bananas have many big, hard seeds, but the bananas we eat have tiny seeds.", "category": "evolution", "wonder_score": 5},
+            {"id": "banana_t3_f5", "text": "If you put a banana next to other fruit, it can help them ripen faster.", "category": "property", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "banana_t3_q1", "text": "Why are most bananas in stores the same shape and taste?", "type": "why", "hint": "They come from the same kind of plant!"},
+            {"id": "banana_t3_q2", "text": "Why are bananas picked when they are green instead of yellow?", "type": "why", "hint": "Think about traveling on a truck for days!"},
+            {"id": "banana_t3_q3", "text": "How can eating a banana help your tummy feel better?", "type": "health", "hint": "It has a special kind of fiber!"},
+            {"id": "banana_t3_q4", "text": "How are wild bananas different from the ones we eat?", "type": "comparison", "expected_answer": "wild ones have big seeds", "hint": "Our bananas have tiny seeds."},
+            {"id": "banana_t3_q5", "text": "What happens if you put a banana in a bag with green avocados?", "type": "experiment", "expected_answer": "avocados ripen faster", "hint": "Bananas give off a special gas!"}
+        ]
+    }
+    },
+    {
+    "id": "food_carrot",
+    "name": "Carrot",
+    "aliases": ["orange vegetable", "bunny food", "carrot stick"],
+    "domain": "food",
+    "category": ["food", "vegetable", "plant"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["orange", "yellow", "purple", "white", "red"],
+        "shapes": ["long and thin", "cone-shaped", "pointed tip", "with green top"],
+        "size": "medium (about the length of a hand)",
+        "textures": ["crunchy", "smooth skin", "firm", "juicy when fresh"],
+        "distinctive_parts": ["long orange root", "green leafy top", "small roots on sides", "pointed end"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a carrot! Carrots are orange and crunchy.",
+            "Look, a carrot! Rabbits love to eat carrots.",
+            "A tasty carrot! It grows under the ground.",
+            "Hello, carrot! It has a green leafy top.",
+            "Yum, a carrot! It is good for your eyes."
+        ],
+        "facts": [
+            {"id": "carrot_t1_f1", "text": "Carrots are usually bright orange.", "category": "appearance", "wonder_score": 2},
+            {"id": "carrot_t1_f2", "text": "Carrots are crunchy when you bite them.", "category": "texture", "wonder_score": 3},
+            {"id": "carrot_t1_f3", "text": "Carrots grow under the ground.", "category": "growth", "wonder_score": 4},
+            {"id": "carrot_t1_f4", "text": "Rabbits love to eat carrots.", "category": "association", "wonder_score": 4},
+            {"id": "carrot_t1_f5", "text": "You can eat carrots raw or cooked.", "category": "preparation", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "carrot_t1_q1", "text": "What color is a carrot usually?", "type": "color", "expected_answer": "orange", "hint": "Think of the sun!"},
+            {"id": "carrot_t1_q2", "text": "How does a carrot feel when you bite it?", "type": "texture", "expected_answer": "crunchy", "hint": "It makes a sound!"},
+            {"id": "carrot_t1_q3", "text": "Where do carrots grow?", "type": "knowledge", "expected_answer": "under the ground", "hint": "Like potatoes!"},
+            {"id": "carrot_t1_q4", "text": "What animal likes to eat carrots?", "type": "association", "expected_answer": "rabbits", "hint": "It has long ears!"},
+            {"id": "carrot_t1_q5", "text": "Can you eat a carrot without cooking it?", "type": "yes_no", "expected_answer": "yes", "hint": "You can wash and eat!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a carrot! Did you know carrots help you see better in the dark?",
+            "Look at this carrot! The part we eat is actually the root of the plant.",
+            "Here's a carrot! Carrots come in different colors like purple and yellow.",
+            "Check out this carrot! It takes about two to three months for a carrot to grow.",
+            "Meet this carrot! You can plant the green top, but it won't grow a new carrot."
+        ],
+        "facts": [
+            {"id": "carrot_t2_f1", "text": "Carrots contain vitamin A, which helps your eyes stay healthy.", "category": "nutrition", "wonder_score": 5},
+            {"id": "carrot_t2_f2", "text": "The carrot we eat is the root of the carrot plant.", "category": "plant_part", "wonder_score": 4},
+            {"id": "carrot_t2_f3", "text": "Carrots can be purple, yellow, white, or red, not just orange.", "category": "variety", "wonder_score": 5},
+            {"id": "carrot_t2_f4", "text": "It takes about 70 to 80 days for a carrot to grow from seed.", "category": "growth", "wonder_score": 4},
+            {"id": "carrot_t2_f5", "text": "Baby carrots are not baby plants, they are cut from bigger carrots.", "category": "preparation", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "carrot_t2_q1", "text": "What vitamin in carrots helps your eyes?", "type": "knowledge", "expected_answer": "vitamin A", "hint": "The first letter is A!"},
+            {"id": "carrot_t2_q2", "text": "What part of the plant is the carrot we eat?", "type": "plant_part", "expected_answer": "the root", "hint": "It grows underground!"},
+            {"id": "carrot_t2_q3", "text": "Name one color of carrot besides orange.", "type": "variety", "expected_answer": ["purple", "yellow", "white", "red"], "hint": "Think of grapes or bananas!"},
+            {"id": "carrot_t2_q4", "text": "How long does it take for a carrot to grow from seed?", "type": "knowledge", "expected_answer": "about 70-80 days", "hint": "About two to three months!"},
+            {"id": "carrot_t2_q5", "text": "Are baby carrots really baby plants?", "type": "yes_no", "expected_answer": "no", "hint": "They are cut from big carrots!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a carrot! Did you know that eating too many carrots can make your skin turn slightly orange?",
+            "Look at this carrot! The green tops of carrots are not usually eaten because they can taste bitter.",
+            "Here's a carrot! Long ago, carrots were not orange; they were purple or yellow.",
+            "Check out this carrot! Carrots store energy in their roots to help the plant survive the winter.",
+            "Meet this carrot! If you plant a carrot top in water, it will grow new green leaves but not a new carrot."
+        ],
+        "facts": [
+            {"id": "carrot_t3_f1", "text": "If you eat too many carrots, your skin might turn slightly orange, but it's harmless.", "category": "nutrition_effect", "wonder_score": 5},
+            {"id": "carrot_t3_f2", "text": "The green leafy tops of carrots are not usually eaten because they can taste bitter.", "category": "plant_part", "wonder_score": 4},
+            {"id": "carrot_t3_f3", "text": "Originally, carrots were purple or yellow; orange carrots were developed later by farmers.", "category": "history", "wonder_score": 5},
+            {"id": "carrot_t3_f4", "text": "Carrots store sugar in their roots, which is why they taste sweet.", "category": "taste_reason", "wonder_score": 4},
+            {"id": "carrot_t3_f5", "text": "You can grow new green leaves from a carrot top in water, but it won't grow a new edible carrot.", "category": "experiment", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "carrot_t3_q1", "text": "What changes will occur to the skin if one eats too many carrots?", "type": "knowledge", "expected_answer": "skin might turn orange", "hint": "A color change!"},
+            {"id": "carrot_t3_q2", "text": "Why don't people usually eat the green tops of carrots?", "type": "why", "expected_answer": "they taste bitter", "hint": "They don't taste good!"},
+            {"id": "carrot_t3_q3", "text": "What color were carrots originally, long ago?", "type": "history", "expected_answer": ["purple", "yellow"], "hint": "Not orange!"},
+            {"id": "carrot_t3_q4", "text": "Why do carrots taste sweet?", "type": "why", "expected_answer": "they store sugar in roots", "hint": "They keep energy there!"},
+            {"id": "carrot_t3_q5", "text": "If you put a carrot top in water, what will grow?", "type": "experiment", "expected_answer": "new green leaves", "hint": "Not a new carrot!"}
+        ]
+    }
+    },
+    {
+    "id": "food_egg",
+    "name": "Egg",
+    "aliases": ["chicken egg", "breakfast egg", "hen's egg"],
+    "domain": "food",
+    "category": ["food", "protein", "ingredient"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["white", "brown", "cream", "pale yellow (yolk)", "clear (egg white raw)"],
+        "shapes": ["oval", "round at one end", "pointy at one end", "smooth"],
+        "size": "small to medium",
+        "textures": ["smooth shell", "hard shell", "runny (raw)", "creamy (yolk)", "firm (cooked)"],
+        "states": ["raw", "boiled", "fried", "scrambled"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "Look, an egg! It comes from a chicken.",
+            "It's an egg! Eggs can be white or brown.",
+            "Hello, egg! Eggs are a good food. Are they big or small?",
+            "We have an egg! Let's learn about it. Can you see its shape?",
+            "Wow, an egg! I like eggs. Do you like eggs?"
+        ],
+        "facts": [
+            {"id": "egg_t1_f1", "text": "An egg has a hard shell outside.", "category": "appearance", "wonder_score": 2},
+            {"id": "egg_t1_f2", "text": "Eggs are oval, not round like a ball.", "category": "shape", "wonder_score": 3},
+            {"id": "egg_t1_f3", "text": "Eggs come from a chicken mom.", "category": "origin", "wonder_score": 4},
+            {"id": "egg_t1_f4", "text": "We can boil, fry, or scramble an egg.", "category": "preparation", "wonder_score": 3},
+            {"id": "egg_t1_f5", "text": "An egg has two parts: the white and the yellow yolk.", "category": "structure", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "egg_t1_q1", "text": "What animal do eggs come from?", "type": "origin", "expected_answer": "chicken", "hint": "It says 'cluck cluck'!"},
+            {"id": "egg_t1_q2", "text": "What is the shape of an egg?", "type": "shape", "expected_answer": "oval", "hint": "It's not a circle!"},
+            {"id": "egg_t1_q3", "text": "What color is this egg's shell?", "type": "color", "hint": "Is it white or brown?"},
+            {"id": "egg_t1_q4", "text": "What is the yellow part inside called?", "type": "vocabulary", "expected_answer": "yolk", "hint": "It's the yellow center!"},
+            {"id": "egg_t1_q5", "text": "Can we eat eggs for breakfast?", "type": "yes_no", "expected_answer": "yes", "hint": "They are a common breakfast food!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's an egg! Eggs are full of good things that help our bodies grow strong.",
+            "Look at this egg! Did you know a raw egg and a boiled egg are very different inside?",
+            "Here's an egg! Eggs are used to make many foods, like cakes and pancakes.",
+            "Check out this egg! A raw egg is liquid, but heat makes it turn solid.",
+            "Meet this food, an egg! Some parts we eat are from animals, and eggs are one of them."
+        ],
+        "facts": [
+            {"id": "egg_t2_f1", "text": "Eggs are very healthy and help our muscles and bones grow strong.", "category": "nutrition", "wonder_score": 4},
+            {"id": "egg_t2_f2", "text": "The clear part of a raw egg is called the egg white, and it turns white when cooked.", "category": "transformation", "wonder_score": 5},
+            {"id": "egg_t2_f3", "text": "Eggs are a key ingredient in baking, helping cakes rise and become fluffy.", "category": "function", "wonder_score": 4},
+            {"id": "egg_t2_f4", "text": "A fresh egg sinks in water, but an old egg will float to the top.", "category": "property", "wonder_score": 5},
+            {"id": "egg_t2_f5", "text": "A raw egg will not spin fast, but a hard-boiled egg will spin smoothly.", "category": "property", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "egg_t2_q1", "text": "Why are eggs good food for our body?", "type": "reasoning", "hint": "They help us grow!"},
+            {"id": "egg_t2_q2", "text": "What happens to the clear egg white when we cook it?", "type": "knowledge", "expected_answer": "turns white and solid", "hint": "It changes color and texture!"},
+            {"id": "egg_t2_q3", "text": "What can we use eggs for besides eating them alone?", "type": "application", "expected_answer": "baking cakes", "hint": "Think of birthday cakes!"},
+            {"id": "egg_t2_q4", "text": "How can we test if an egg is fresh with a glass of water?", "type": "method", "hint": "See if it sinks or floats!"},
+            {"id": "egg_t2_q5", "text": "Which spins more stable, a raw egg or a boiled egg?", "type": "comparison", "expected_answer": "boiled egg", "hint": "The inside is solid!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's an egg! The shell has tiny holes you cannot see, which let air in and out.",
+            "Look at this egg! It is designed by nature to protect the baby chick growing inside.",
+            "Here's an egg. The yolk provides food for a baby chick, and the white protects it.",
+            "This food is an egg. Most eggs we eat will not hatch, because they are not fertilized.",
+            "Consider this egg. Its strong oval shape can handle pressure from the outside without breaking easily."
+        ],
+        "facts": [
+            {"id": "egg_t3_f1", "text": "An eggshell has thousands of tiny holes that allow air to pass through for a chick to breathe.", "category": "structure", "wonder_score": 5},
+            {"id": "egg_t3_f2", "text": "The yolk is the food supply for a baby chick, full of vitamins and fat to help it grow.", "category": "purpose", "wonder_score": 5},
+            {"id": "egg_t3_f3", "text": "The eggs we buy in stores usually cannot become chicks because they were not fertilized by a rooster.", "category": "origin", "wonder_score": 5},
+            {"id": "egg_t3_f4", "text": "The oval shape of an egg is very strong, distributing pressure evenly so it does not crack easily.", "category": "design", "wonder_score": 4},
+            {"id": "egg_t3_f5", "text": "If you shake a fresh egg near your ear, you will not hear much, but an old egg might make a sloshing sound.", "category": "property", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "egg_t3_q1", "text": "Why does an eggshell have tiny holes that we cannot see?", "type": "why", "hint": "Think about what living things need."},
+            {"id": "egg_t3_q2", "text": "What is the main job of the egg yolk for a baby chick?", "type": "function", "expected_answer": "to feed it / be its food", "hint": "It's full of nutrients!"},
+            {"id": "egg_t3_q3", "text": "Can a store-bought egg ever hatch into a baby chick?", "type": "knowledge", "expected_answer": "no", "hint": "It needs a mom and a dad chicken."},
+            {"id": "egg_t3_q4", "text": "Why is an egg's oval shape a good design?", "type": "reasoning", "hint": "It makes it strong against squeezing."},
+            {"id": "egg_t3_q5", "text": "If you hear a sloshing sound when shaking an egg, what does it probably mean?", "type": "inference", "expected_answer": "it is old", "hint": "The inside has changed."}
+        ]
+    }
+    },
+    {
+    "id": "food_bread",
+    "name": "Bread",
+    "aliases": ["loaf", "toast", "sandwich bread"],
+    "domain": "food",
+    "category": ["baked good", "carbohydrate", "staple food"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["brown", "golden", "white", "tan", "dark brown"],
+        "shapes": ["rectangular loaf", "round loaf", "bread slice", "braided", "bun shape", "crusty outside"],
+        "size": "varies (from small roll to large loaf)",
+        "textures": ["soft inside", "crusty outside", "fluffy", "chewy", "crumbly"],
+        "distinctive_parts": ["crust", "soft inside", "air holes", "bread slices", "bread crumbs"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's bread! We eat bread every day. What color is it?",
+            "Look, bread! It is soft inside and crusty outside.",
+            "A loaf of bread! We can slice it to make toast.",
+            "Hello, bread! It has a nice smell. Can you smell it?",
+            "Wow, bread! We eat bread with jam or butter."
+        ],
+        "facts": [
+            {"id": "bread_t1_f1", "text": "Bread is soft on the inside and crusty on the outside.", "category": "texture", "wonder_score": 3},
+            {"id": "bread_t1_f2", "text": "Bread can be white, brown, or golden in color.", "category": "appearance", "wonder_score": 2},
+            {"id": "bread_t1_f3", "text": "We slice bread to make sandwiches and toast.", "category": "use", "wonder_score": 3},
+            {"id": "bread_t1_f4", "text": "Bread comes in different shapes like loaves and rolls.", "category": "shape", "wonder_score": 3},
+            {"id": "bread_t1_f5", "text": "Bread smells good when it is fresh from the oven.", "category": "sensory", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "bread_t1_q1", "text": "What is the outside of bread called?", "type": "vocabulary", "expected_answer": "crust", "hint": "It's the hard, brown part!"},
+            {"id": "bread_t1_q2", "text": "How do we usually cut bread?", "type": "observation", "expected_answer": "in slices", "hint": "We use a knife to make flat pieces!"},
+            {"id": "bread_t1_q3", "text": "What color is this bread?", "type": "color", "hint": "Look at it!"},
+            {"id": "bread_t1_q4", "text": "Is bread soft inside or outside?", "type": "comparison", "expected_answer": "inside", "hint": "The part you bite into!"},
+            {"id": "bread_t1_q5", "text": "Can we make toast with bread?", "type": "yes_no", "expected_answer": "yes", "hint": "We put it in a toaster!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's bread! Bread is made from simple ingredients like flour and water.",
+            "Look at this bread! Did you know it has tiny air holes that make it fluffy?",
+            "Here's bread! It is a staple food in many countries around the world.",
+            "Check out this bread! Different types of bread come from different cultures.",
+            "Meet this bread! It provides us with energy to play and learn all day."
+        ],
+        "facts": [
+            {"id": "bread_t2_f1", "text": "Bread is made from flour, water, yeast, and salt mixed together.", "category": "composition", "wonder_score": 4},
+            {"id": "bread_t2_f2", "text": "The tiny holes inside bread are made by yeast bubbles when it rises.", "category": "process", "wonder_score": 5},
+            {"id": "bread_t2_f3", "text": "Bread is a good source of carbohydrates that give our bodies energy.", "category": "nutrition", "wonder_score": 4},
+            {"id": "bread_t2_f4", "text": "Different cultures have different breads like baguettes, naan, and tortillas.", "category": "diversity", "wonder_score": 4},
+            {"id": "bread_t2_f5", "text": "Bread needs to be baked in a hot oven to become the food we eat.", "category": "process", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "bread_t2_q1", "text": "What makes bread rise and become fluffy?", "type": "knowledge", "expected_answer": "yeast", "hint": "It's a tiny living thing that makes bubbles!"},
+            {"id": "bread_t2_q2", "text": "What are the main ingredients in bread?", "type": "knowledge", "expected_answer": "flour, water, yeast, salt", "hint": "Think about what bakers mix!"},
+            {"id": "bread_t2_q3", "text": "Why is bread good for giving us energy?", "type": "reasoning", "hint": "It has carbohydrates that fuel our bodies!"},
+            {"id": "bread_t2_q4", "text": "Can you name one type of bread from another country?", "type": "geography", "hint": "Like a long, thin French bread!"},
+            {"id": "bread_t2_q5", "text": "How is bread cooked?", "type": "process", "expected_answer": "baked in an oven", "hint": "It goes into a hot box to get brown!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's bread! Did you know that bread has been made by humans for over 10,000 years?",
+            "Look at this bread! The process of making bread involves fermentation, which is like magic.",
+            "This is bread. Even though it seems simple, it's the result of careful science and timing.",
+            "Here we have bread. It can go stale or moldy if we don't store it properly.",
+            "Consider this bread. It can be used in many creative ways beyond just sandwiches."
+        ],
+        "facts": [
+            {"id": "bread_t3_f1", "text": "Bread was one of the first foods ever made by humans, starting over 10,000 years ago.", "category": "history", "wonder_score": 5},
+            {"id": "bread_t3_f2", "text": "Yeast eats sugar in the dough and produces gas, which makes the bread rise and become airy.", "category": "science", "wonder_score": 5},
+            {"id": "bread_t3_f3", "text": "Bread goes stale when it loses moisture, but toasting it can make it crispy again.", "category": "properties", "wonder_score": 4},
+            {"id": "bread_t3_f4", "text": "Mold can grow on bread if it is kept in a damp and warm place for too long.", "category": "preservation", "wonder_score": 4},
+            {"id": "bread_t3_f5", "text": "Bread can be used to make breadcrumbs, croutons, and even bread pudding to avoid waste.", "category": "sustainability", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "bread_t3_q1", "text": "How long have humans been making bread?", "type": "history", "expected_answer": "over 10,000 years", "hint": "Since ancient times!"},
+            {"id": "bread_t3_q2", "text": "What does yeast do to make bread rise?", "type": "science", "hint": "It eats sugar and makes gas!"},
+            {"id": "bread_t3_q3", "text": "What happens to bread when it goes stale?", "type": "observation", "expected_answer": "it gets hard and dry", "hint": "It loses its softness!"},
+            {"id": "bread_t3_q4", "text": "Why does mold grow on old bread?", "type": "why", "hint": "Tiny living things like damp places!"},
+            {"id": "bread_t3_q5", "text": "What can we make with old bread so we don't waste it?", "type": "application", "hint": "Think about crunchy toppings or a dessert!"}
+        ]
+    }
+    },
+    {
+    "id": "food_milk",
+    "name": "Milk",
+    "aliases": ["white drink", "dairy drink", "cow milk"],
+    "domain": "food",
+    "category": ["food", "drink", "dairy", "liquid"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["white", "cream", "off-white"],
+        "shapes": ["liquid", "pourable", "no fixed shape"],
+        "size": "varies (bottle, carton, glass)",
+        "textures": ["smooth", "creamy", "thin", "thick"],
+        "temperature_states": ["cold", "warm", "room temperature"],
+        "container_forms": ["in a glass", "in a bottle", "in a carton"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's milk! Milk is a white drink.",
+            "Look, milk! It comes from cows.",
+            "A glass of milk! Milk is good for you.",
+            "Hello, milk! It is cold and yummy.",
+            "Yum, milk! We drink it with cookies."
+        ],
+        "facts": [
+            {"id": "milk_t1_f1", "text": "Milk is white like snow.", "category": "color", "wonder_score": 2},
+            {"id": "milk_t1_f2", "text": "Milk comes from cows on a farm.", "category": "origin", "wonder_score": 4},
+            {"id": "milk_t1_f3", "text": "We drink milk from a glass.", "category": "usage", "wonder_score": 2},
+            {"id": "milk_t1_f4", "text": "Milk helps make your bones strong.", "category": "benefit", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "milk_t1_q1", "text": "What color is milk?", "type": "color", "expected_answer": "white", "hint": "Think of snow!"},
+            {"id": "milk_t1_q2", "text": "Where does milk come from?", "type": "origin", "expected_answer": "cows", "hint": "Animals on a farm!"},
+            {"id": "milk_t1_q3", "text": "How do we drink milk?", "type": "usage", "expected_answer": "from a glass", "hint": "We use a cup or glass!"},
+            {"id": "milk_t1_q4", "text": "Does milk help your bones?", "type": "yes_no", "expected_answer": "yes", "hint": "It makes them strong!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's milk! Do you know milk has a special sugar called lactose?",
+            "Look at this milk! It has many vitamins that help you grow tall and strong.",
+            "Here's some milk! You can make many different foods from milk, like cheese and yogurt.",
+            "Check out this milk! Not everyone can drink milk from cows; some people drink milk from plants.",
+            "Meet this milk! It's not just a drink; it's used in cooking many delicious foods."
+        ],
+        "facts": [
+            {"id": "milk_t2_f1", "text": "Milk contains calcium, which helps build strong bones and teeth.", "category": "nutrition", "wonder_score": 4},
+            {"id": "milk_t2_f2", "text": "You can make cheese, yogurt, and butter from milk.", "category": "transformation", "wonder_score": 5},
+            {"id": "milk_t2_f3", "text": "Some people drink milk from plants, like soy milk or almond milk.", "category": "variety", "wonder_score": 4},
+            {"id": "milk_t2_f4", "text": "Milk is kept cold in the fridge so it stays fresh and good to drink.", "category": "storage", "wonder_score": 3},
+            {"id": "milk_t2_f5", "text": "Baby cows drink their mother's milk, just like human babies drink milk.", "category": "comparison", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "milk_t2_q1", "text": "What mineral in milk helps your bones?", "type": "knowledge", "expected_answer": "calcium", "hint": "It starts with 'c'!"},
+            {"id": "milk_t2_q2", "text": "Name one food we can make from milk.", "type": "knowledge", "expected_answer": "cheese", "hint": "It's yellow and tasty!"},
+            {"id": "milk_t2_q3", "text": "Where should we keep milk so it doesn't spoil?", "type": "storage", "expected_answer": "in the fridge", "hint": "A cold place!"},
+            {"id": "milk_t2_q4", "text": "What is plant milk made from?", "type": "variety", "expected_answer": "soy or almonds", "hint": "Not from animals!"},
+            {"id": "milk_t2_q5", "text": "Do baby animals drink milk like human babies?", "type": "comparison", "expected_answer": "yes", "hint": "Think of puppies and kittens!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's milk! Did you know that milk needs to be pasteurized to make it safe to drink?",
+            "Look at this milk! The white color comes from tiny fat and protein particles that reflect light.",
+            "Here's some milk! Milk is an emulsion, which means fat droplets are suspended in water.",
+            "Consider this milk. When milk gets old, bacteria make it sour and lumpy, turning it into something new.",
+            "Think about milk. If we didn't have refrigeration, how would people keep milk from spoiling long ago?"
+        ],
+        "facts": [
+            {"id": "milk_t3_f1", "text": "Milk is heated in a process called pasteurization to kill harmful germs and make it safe.", "category": "processing", "wonder_score": 5},
+            {"id": "milk_t3_f2", "text": "Milk looks white because tiny fat and protein particles scatter light in all directions.", "category": "science", "wonder_score": 5},
+            {"id": "milk_t3_f3", "text": "When milk sours, bacteria turn the lactose sugar into lactic acid, making it taste tangy.", "category": "change", "wonder_score": 5},
+            {"id": "milk_t3_f4", "text": "People long ago made milk into cheese or yogurt to preserve it without refrigeration.", "category": "preservation", "wonder_score": 4},
+            {"id": "milk_t3_f5", "text": "If you shake heavy cream for a long time, the fat clumps together to make butter.", "category": "transformation", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "milk_t3_q1", "text": "Why is milk heated before we buy it?", "type": "why", "expected_answer": "to kill germs", "hint": "To make it safe!"},
+            {"id": "milk_t3_q2", "text": "Why does milk appear white in color?", "type": "why", "hint": "Tiny particles inside!"},
+            {"id": "milk_t3_q3", "text": "What makes milk taste sour when it goes bad?", "type": "science", "expected_answer": "bacteria", "hint": "Tiny living things!"},
+            {"id": "milk_t3_q4", "text": "How did people keep milk from spoiling before refrigerators?", "type": "history", "expected_answer": "made cheese or yogurt", "hint": "They turned it into other foods!"},
+            {"id": "milk_t3_q5", "text": "What happens when you shake heavy cream for a long time?", "type": "experiment", "expected_answer": "it turns into butter", "hint": "It becomes solid!"}
+        ]
+    }
+    },
+    {
+    "id": "food_strawberry",
+    "name": "Strawberry",
+    "aliases": ["berries", "red fruit", "sweet berry"],
+    "domain": "food",
+    "category": ["fruit", "berry", "healthy food"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["red", "pink", "white", "green"],
+        "shapes": ["heart shape", "small bumps", "green leaves on top", "teardrop shape"],
+        "size": "small to medium",
+        "textures": ["smooth skin", "tiny seeds outside", "soft", "juicy"],
+        "distinctive_parts": ["red body", "green leaves cap", "tiny yellow seeds on surface", "pointed tip"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a strawberry! It's red and sweet.",
+            "Look, a strawberry! See the green leaves on top?",
+            "A yummy strawberry! It has tiny seeds on the outside.",
+            "Hello, strawberry! Let's look at this pretty fruit.",
+            "Yum, a strawberry! Can you see its heart shape?"
+        ],
+        "facts": [
+            {"id": "strawberry_t1_f1", "text": "Strawberries are bright red when ripe.", "category": "color", "wonder_score": 3},
+            {"id": "strawberry_t1_f2", "text": "Strawberries have a sweet and juicy taste.", "category": "taste", "wonder_score": 4},
+            {"id": "strawberry_t1_f3", "text": "Strawberries grow on low plants near the ground.", "category": "growth", "wonder_score": 3},
+            {"id": "strawberry_t1_f4", "text": "Strawberries have tiny yellow seeds on the outside.", "category": "appearance", "wonder_score": 4},
+            {"id": "strawberry_t1_f5", "text": "You eat the red part, not the green leaves.", "category": "eating", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "strawberry_t1_q1", "text": "What color is a ripe strawberry?", "type": "color", "expected_answer": "red", "hint": "It's a bright, pretty color!"},
+            {"id": "strawberry_t1_q2", "text": "How does a strawberry taste?", "type": "taste", "expected_answer": "sweet", "hint": "It's a yummy fruit!"},
+            {"id": "strawberry_t1_q3", "text": "Where do strawberries grow?", "type": "location", "expected_answer": "on plants", "hint": "They grow close to the ground!"},
+            {"id": "strawberry_t1_q4", "text": "Where are the seeds on a strawberry?", "type": "observation", "expected_answer": "on the outside", "hint": "Look at its skin!"},
+            {"id": "strawberry_t1_q5", "text": "Do we eat the green leaves on a strawberry?", "type": "yes_no", "expected_answer": "no", "hint": "We remove them first!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a strawberry! Did you know strawberries are not really berries?",
+            "Look at this strawberry! Its seeds grow on the outside, which is unusual for fruits.",
+            "Here's a strawberry! Strawberries belong to the rose family, just like roses!",
+            "Check out this strawberry! It's packed with Vitamin C, which keeps us healthy.",
+            "Meet this strawberry! It's one of the few fruits with seeds on the outside."
+        ],
+        "facts": [
+            {"id": "strawberry_t2_f1", "text": "Strawberries are the only fruit with seeds on the outside.", "category": "uniqueness", "wonder_score": 5},
+            {"id": "strawberry_t2_f2", "text": "Strawberries are packed with Vitamin C, which helps keep us healthy.", "category": "nutrition", "wonder_score": 4},
+            {"id": "strawberry_t2_f3", "text": "Each strawberry has about 200 tiny seeds on its surface.", "category": "counting", "wonder_score": 4},
+            {"id": "strawberry_t2_f4", "text": "Strawberries are not true berries, but bananas and tomatoes are.", "category": "classification", "wonder_score": 5},
+            {"id": "strawberry_t2_f5", "text": "Strawberries can be made into jam, which is cooked fruit with sugar.", "category": "use", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "strawberry_t2_q1", "text": "What is special about where strawberry seeds grow?", "type": "observation", "expected_answer": "on the outside", "hint": "Most fruits have seeds inside!"},
+            {"id": "strawberry_t2_q2", "text": "What vitamin in strawberries helps keep us healthy?", "type": "knowledge", "expected_answer": "Vitamin C", "hint": "It's also in oranges!"},
+            {"id": "strawberry_t2_q3", "text": "How many seeds does one strawberry have about?", "type": "counting", "expected_answer": "about 200", "hint": "It's a lot of tiny seeds!"},
+            {"id": "strawberry_t2_q4", "text": "Are strawberries true berries like bananas?", "type": "comparison", "expected_answer": "no", "hint": "They're in a different category!"},
+            {"id": "strawberry_t2_q5", "text": "What can we make from strawberries and sugar?", "type": "use", "expected_answer": "jam", "hint": "It's sweet and spreadable!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a strawberry! Did you know strawberries need bees to help them grow properly?",
+            "Look at this strawberry! The red color is actually a signal to animals that it's ready to eat.",
+            "Here's a strawberry! Each of those tiny seeds could grow into a whole new plant.",
+            "Check out this strawberry! They are called 'straw' berries because farmers used straw to protect them.",
+            "Meet this strawberry! They're one of the first fruits to ripen in springtime."
+        ],
+        "facts": [
+            {"id": "strawberry_t3_f1", "text": "Bees help strawberries grow by moving pollen from flower to flower.", "category": "growth", "wonder_score": 5},
+            {"id": "strawberry_t3_f2", "text": "The red color signals to birds and animals that the strawberry is ripe and sweet.", "category": "adaptation", "wonder_score": 4},
+            {"id": "strawberry_t3_f3", "text": "Each tiny seed on a strawberry can grow into a whole new strawberry plant.", "category": "reproduction", "wonder_score": 5},
+            {"id": "strawberry_t3_f4", "text": "Farmers used to put straw around strawberry plants to protect the fruit, hence the name.", "category": "history", "wonder_score": 4},
+            {"id": "strawberry_t3_f5", "text": "Strawberries are among the first fruits to ripen in spring, bringing early sweetness.", "category": "season", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "strawberry_t3_q1", "text": "How do bees help strawberries grow?", "type": "why", "expected_answer": "by moving pollen", "hint": "They help the flowers make fruit!"},
+            {"id": "strawberry_t3_q2", "text": "Why are strawberries red when they're ripe?", "type": "why", "expected_answer": "to signal it's sweet", "hint": "Animals can see the color!"},
+            {"id": "strawberry_t3_q3", "text": "What can grow from each tiny seed on a strawberry?", "type": "knowledge", "expected_answer": "a new plant", "hint": "It could grow into a big plant!"},
+            {"id": "strawberry_t3_q4", "text": "Why are they called 'straw' berries?", "type": "origin", "expected_answer": "farmers used straw", "hint": "Farmers used it to protect them!"},
+            {"id": "strawberry_t3_q5", "text": "When do strawberries usually ripen?", "type": "season", "expected_answer": "in spring", "hint": "It's one of the first spring fruits!"}
+        ]
+    }
+    },
+    {
+    "id": "food_rice",
+    "name": "Rice",
+    "aliases": ["cooked rice", "white rice", "steamed rice", "rice grains"],
+    "domain": "food",
+    "category": ["food", "grain", "staple food"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["white", "brown", "off-white", "translucent"],
+        "shapes": ["small grains", "oval", "long grain", "short grain", "round"],
+        "size": "small (about 5-7 mm long)",
+        "textures": ["soft", "sticky", "fluffy", "smooth", "chewy"],
+        "distinctive_parts": ["individual grains", "steamed and fluffy", "sometimes sticky"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "This is rice! Rice is a yummy food. Can you see the small white grains?",
+            "Look, rice! It is soft and fluffy. Do you like to eat rice?",
+            "Here is some rice! Rice is often served in a bowl. Is it hot or cold?",
+            "Hello, rice! Rice comes in small grains. Can you count some grains?",
+            "Yum, rice! Rice is a common food. What color is it?"
+        ],
+        "facts": [
+            {"id": "rice_t1_f1", "text": "Rice is small, white grains that we eat.", "category": "appearance", "wonder_score": 2},
+            {"id": "rice_t1_f2", "text": "Cooked rice is soft and fluffy to eat.", "category": "texture", "wonder_score": 3},
+            {"id": "rice_t1_f3", "text": "Rice is often served hot in a bowl.", "category": "serving", "wonder_score": 2},
+            {"id": "rice_t1_f4", "text": "We eat rice with chopsticks or a spoon.", "category": "utensils", "wonder_score": 2},
+            {"id": "rice_t1_f5", "text": "Rice grows in fields with lots of water.", "category": "origin", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "rice_t1_q1", "text": "What color is cooked white rice?", "type": "color", "expected_answer": "white", "hint": "Look at it, it's light colored!"},
+            {"id": "rice_t1_q2", "text": "Is cooked rice soft or hard?", "type": "texture", "expected_answer": "soft", "hint": "You can easily squish it!"},
+            {"id": "rice_t1_q3", "text": "How do we usually eat rice?", "type": "observation", "expected_answer": "with chopsticks or a spoon", "hint": "We use tools to pick it up!"},
+            {"id": "rice_t1_q4", "text": "Can you count to three rice grains?", "type": "counting", "hint": "One grain, two grains, three grains!"},
+            {"id": "rice_t1_q5", "text": "Where does rice grow?", "type": "knowledge", "expected_answer": "in fields with water", "hint": "In wet, muddy places!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "This is rice! Did you know that rice is a staple food for many people around the world?",
+            "Look at this rice! Before it is cooked, rice is hard and cannot be eaten.",
+            "Here's rice! Rice can be different colors, like white, brown, or even black.",
+            "Check out this rice! Rice is often eaten with vegetables, meat, or fish.",
+            "Meet rice! Rice plants grow in special fields called paddies that are filled with water."
+        ],
+        "facts": [
+            {"id": "rice_t2_f1", "text": "Rice is a staple food for more than half of the world's population.", "category": "importance", "wonder_score": 5},
+            {"id": "rice_t2_f2", "text": "Uncooked rice grains are hard and must be cooked in water to become soft.", "category": "preparation", "wonder_score": 4},
+            {"id": "rice_t2_f3", "text": "Brown rice is healthier than white rice because it has more nutrients.", "category": "comparison", "wonder_score": 4},
+            {"id": "rice_t2_f4", "text": "Rice is often eaten with other foods like vegetables, meat, or fish.", "category": "pairing", "wonder_score": 3},
+            {"id": "rice_t2_f5", "text": "Rice grows in special fields called paddies that are flooded with water.", "category": "growth", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "rice_t2_q1", "text": "Why do we need to cook rice before eating it?", "type": "reasoning", "expected_answer": "to make it soft", "hint": "Raw rice is too hard to chew!"},
+            {"id": "rice_t2_q2", "text": "What is the difference between white rice and brown rice?", "type": "comparison", "hint": "One has more nutrients and is darker!"},
+            {"id": "rice_t2_q3", "text": "What do we often eat with rice?", "type": "pairing", "expected_answer": "vegetables, meat, or fish", "hint": "Foods that make a meal complete!"},
+            {"id": "rice_t2_q4", "text": "What are the fields where rice grows called?", "type": "vocabulary", "expected_answer": "paddies", "hint": "They are very wet and muddy!"},
+            {"id": "rice_t2_q5", "text": "How many people in the world eat rice as a main food?", "type": "knowledge", "hint": "More than half of all people!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "This is rice! Did you know that rice plants need a lot of water and sunshine to grow?",
+            "Look at this rice! Rice is a type of grass seed that people have been eating for thousands of years.",
+            "Here's rice! When rice is cooked, it absorbs water and becomes much larger and softer.",
+            "Check out this rice! Rice is so important that in some cultures, it is a symbol of life and good luck.",
+            "Meet rice! Rice can be used to make many different foods, like rice cakes, rice noodles, and even rice milk."
+        ],
+        "facts": [
+            {"id": "rice_t3_f1", "text": "Rice plants need plenty of water, sunshine, and warm weather to grow well.", "category": "growth_conditions", "wonder_score": 4},
+            {"id": "rice_t3_f2", "text": "Rice is actually the seed of a type of grass plant that grows in water.", "category": "botany", "wonder_score": 5},
+            {"id": "rice_t3_f3", "text": "When rice is cooked, it absorbs water and swells to become much larger and softer.", "category": "cooking_science", "wonder_score": 5},
+            {"id": "rice_t3_f4", "text": "In some countries, rice is thrown at weddings for good luck and to wish a happy life.", "category": "culture", "wonder_score": 5},
+            {"id": "rice_t3_f5", "text": "Rice can be made into many foods like rice cakes, rice noodles, rice milk, and even rice vinegar.", "category": "variety", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "rice_t3_q1", "text": "What does a rice plant need to grow healthy and strong?", "type": "why", "hint": "Think about water, sun, and warmth!"},
+            {"id": "rice_t3_q2", "text": "What part of the rice plant do we actually eat?", "type": "botany", "expected_answer": "the seed", "hint": "It's the part that can grow into a new plant!"},
+            {"id": "rice_t3_q3", "text": "Why does rice become bigger and softer when we cook it?", "type": "science", "hint": "It soaks up the water like a sponge!"},
+            {"id": "rice_t3_q4", "text": "Why do people sometimes throw rice at weddings?", "type": "culture", "hint": "It is a tradition for good luck!"},
+            {"id": "rice_t3_q5", "text": "What are some other foods we can make from rice besides plain rice?", "type": "application", "hint": "Think of snacks, drinks, and more!"}
+        ]
+    }
+    },
+    {
+    "id": "food_noodles_001",
+    "name": "Noodles",
+    "aliases": ["pasta", "noodle", "ramen", "spaghetti", "vermicelli"],
+    "domain": "food",
+    "category": ["food", "carbohydrate", "grain product"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["white", "yellow", "brown", "green", "orange"],
+        "shapes": ["long strips", "curly strands", "short tubes", "flat ribbons", "shells", "bows"],
+        "size": "varies (short to very long)",
+        "textures": ["smooth", "rough", "chewy", "soft", "silky"],
+        "distinctive_parts": ["long strands", "twisted shapes", "holes in tubes", "ridged surfaces"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "These are noodles! They are long and thin. Can you see how long they are?",
+            "Look, noodles! They come in different shapes. What color are these?",
+            "Yummy noodles! We eat noodles with a fork or chopsticks. How do you eat them?",
+            "Hello, noodles! They are soft and chewy. Do you like noodles?",
+            "Wow, noodles! They can be straight or curly. Which shape do you like best?"
+        ],
+        "facts": [
+            {"id": "noodles_t1_f1", "text": "Noodles are long, thin strips of food.", "category": "appearance", "wonder_score": 2},
+            {"id": "noodles_t1_f2", "text": "Noodles can be straight, curly, or shaped like tubes.", "category": "shape", "wonder_score": 3},
+            {"id": "noodles_t1_f3", "text": "We eat noodles with chopsticks, forks, or spoons.", "category": "usage", "wonder_score": 2},
+            {"id": "noodles_t1_f4", "text": "Noodles are soft and chewy when they are cooked.", "category": "texture", "wonder_score": 3},
+            {"id": "noodles_t1_f5", "text": "Some noodles are white, and some are yellow.", "category": "color", "wonder_score": 2}
+        ],
+        "questions": [
+            {"id": "noodles_t1_q1", "text": "What shape are most noodles?", "type": "observation", "expected_answer": "long and thin", "hint": "Like strings or strips!"},
+            {"id": "noodles_t1_q2", "text": "How do we usually eat noodles?", "type": "knowledge", "expected_answer": "with chopsticks or fork", "hint": "We use tools to pick them up!"},
+            {"id": "noodles_t1_q3", "text": "Are cooked noodles soft or hard?", "type": "comparison", "expected_answer": "soft", "hint": "We can chew them easily!"},
+            {"id": "noodles_t1_q4", "text": "What color are these noodles?", "type": "color", "hint": "Look carefully!"},
+            {"id": "noodles_t1_q5", "text": "Can noodles be curly?", "type": "yes_no", "expected_answer": "yes", "hint": "Some look like springs!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "These are noodles! They are made from flour and water. Did you know they come from many countries?",
+            "Look at these noodles! Different shapes have different names, like spaghetti or ramen.",
+            "Here are noodles! They need to be cooked in boiling water before we can eat them.",
+            "Check out these noodles! Some are made with eggs, which makes them yellow and tasty.",
+            "Meet these noodles! They can be served in soup, with sauce, or stir-fried in a pan."
+        ],
+        "facts": [
+            {"id": "noodles_t2_f1", "text": "Noodles are made from flour mixed with water or eggs.", "category": "composition", "wonder_score": 4},
+            {"id": "noodles_t2_f2", "text": "Noodles need to be cooked in hot water until they become soft.", "category": "preparation", "wonder_score": 3},
+            {"id": "noodles_t2_f3", "text": "Different countries have their own special noodles, like Italian pasta or Asian ramen.", "category": "variety", "wonder_score": 4},
+            {"id": "noodles_t2_f4", "text": "Noodles can be served with soup, meat, vegetables, or cheese sauce.", "category": "serving", "wonder_score": 3},
+            {"id": "noodles_t2_f5", "text": "Noodles give us energy because they are made from grains like wheat or rice.", "category": "nutrition", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "noodles_t2_q1", "text": "What are the two main ingredients to make noodles?", "type": "knowledge", "expected_answer": "flour and water", "hint": "Think of baking ingredients!"},
+            {"id": "noodles_t2_q2", "text": "How do we cook dry noodles to make them edible?", "type": "process", "expected_answer": "boil in water", "hint": "We use a pot and hot water!"},
+            {"id": "noodles_t2_q3", "text": "Can you name one type of noodle from another country?", "type": "vocabulary", "hint": "Like spaghetti from Italy!"},
+            {"id": "noodles_t2_q4", "text": "Why do noodles give us energy?", "type": "reasoning", "expected_answer": "because they are made from grains", "hint": "Grains have carbohydrates!"},
+            {"id": "noodles_t2_q5", "text": "What can we eat together with noodles?", "type": "application", "expected_answer": "soup, meat, vegetables, sauce", "hint": "They are often mixed with other foods!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "These are noodles! Did you know that noodles were invented in China over 4,000 years ago?",
+            "Look at these noodles! The way they are dried or fresh affects how they are cooked.",
+            "Here are noodles! Some noodles are made from rice or beans, not just wheat flour.",
+            "Check out these noodles! The shape of the noodle can help it hold sauce better.",
+            "Consider these noodles! Noodles can be preserved by drying, which lets us store them for a long time."
+        ],
+        "facts": [
+            {"id": "noodles_t3_f1", "text": "Noodles were first made in ancient China and are one of the oldest prepared foods.", "category": "history", "wonder_score": 5},
+            {"id": "noodles_t3_f2", "text": "Dried noodles can be stored for months, but fresh noodles need to be eaten quickly.", "category": "preservation", "wonder_score": 4},
+            {"id": "noodles_t3_f3", "text": "Some noodles are made from rice or mung beans, which makes them without wheat.", "category": "variety", "wonder_score": 4},
+            {"id": "noodles_t3_f4", "text": "Ridged or hollow noodles like penne can hold more sauce inside them.", "category": "design", "wonder_score": 4},
+            {"id": "noodles_t3_f5", "text": "If you stretch a piece of noodle dough very thin, it can become as thin as a thread.", "category": "preparation", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "noodles_t3_q1", "text": "Which ancient country first invented noodles?", "type": "history", "expected_answer": "China", "hint": "It's a country in Asia!"},
+            {"id": "noodles_t3_q2", "text": "Why can dried noodles last longer than fresh noodles?", "type": "why", "hint": "Think about moisture and spoilage!"},
+            {"id": "noodles_t3_q3", "text": "What are two alternative ingredients to make noodles besides wheat?", "type": "knowledge", "expected_answer": "rice or beans", "hint": "Think of gluten-free options!"},
+            {"id": "noodles_t3_q4", "text": "How does a hollow noodle shape help when eating with sauce?", "type": "reasoning", "hint": "It can trap the sauce inside!"},
+            {"id": "noodles_t3_q5", "text": "What might happen if you cook noodles for too long?", "type": "prediction", "expected_answer": "they become too soft/mushy", "hint": "They might lose their shape!"}
+        ]
+    }
+    },
+    {
+    "id": "food_fish",
+    "name": "Fish",
+    "aliases": ["salmon", "tuna", "fish meat", "seafood"],
+    "domain": "food",
+    "category": ["food", "protein", "seafood", "healthy food"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["pink", "orange", "white", "red", "silver"],
+        "shapes": ["fillet", "steak", "whole fish", "flakes", "patty"],
+        "size": "varies (small to large pieces)",
+        "textures": ["flaky", "soft", "firm", "moist", "smooth"],
+        "distinctive_parts": ["bones", "skin", "flakes", "oil sheen"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's fish! Fish is good to eat. Look at its color!",
+            "Yummy fish! Fish is a healthy food. Can you see the flakes?",
+            "We eat fish! Fish comes from the water. Is it pink or white?",
+            "Hello, fish! This food is good for you. How many pieces do you see?",
+            "Tasty fish! Fish can be cooked in many ways. What shape is it?"
+        ],
+        "facts": [
+            {"id": "fish_t1_f1", "text": "Fish is a healthy food that comes from water.", "category": "origin", "wonder_score": 3},
+            {"id": "fish_t1_f2", "text": "Fish can be pink, white, or orange in color.", "category": "appearance", "wonder_score": 2},
+            {"id": "fish_t1_f3", "text": "Fish has soft, flaky meat when cooked.", "category": "texture", "wonder_score": 3},
+            {"id": "fish_t1_f4", "text": "We eat fish to help our bodies grow strong.", "category": "benefit", "wonder_score": 4},
+            {"id": "fish_t1_f5", "text": "Fish can be baked, fried, or grilled.", "category": "preparation", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "fish_t1_q1", "text": "What color is this fish?", "type": "color", "hint": "Look at the fish meat!"},
+            {"id": "fish_t1_q2", "text": "Where does fish come from?", "type": "origin", "expected_answer": "water", "hint": "Lakes, rivers, or oceans!"},
+            {"id": "fish_t1_q3", "text": "How does cooked fish feel?", "type": "texture", "expected_answer": "soft and flaky", "hint": "It falls apart easily!"},
+            {"id": "fish_t1_q4", "text": "Why do we eat fish?", "type": "benefit", "expected_answer": "to grow strong", "hint": "It makes us healthy!"},
+            {"id": "fish_t1_q5", "text": "Can we bake fish?", "type": "yes_no", "expected_answer": "yes", "hint": "Yes, in an oven!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's fish! Fish is full of good things for our body. Do you know it helps our brain?",
+            "Look at this fish! Fish oil is very healthy and helps our hearts stay strong.",
+            "Here's fish! Fish is a great source of protein, which builds our muscles.",
+            "Check out this fish! Some fish have bones, so we must eat carefully.",
+            "Meet this fish! Fish can be eaten in many ways, like in sushi or fish sticks."
+        ],
+        "facts": [
+            {"id": "fish_t2_f1", "text": "Fish contains special oils that are very good for our heart and brain.", "category": "nutrition", "wonder_score": 5},
+            {"id": "fish_t2_f2", "text": "Fish is an excellent source of protein, which helps our muscles grow.", "category": "nutrition", "wonder_score": 4},
+            {"id": "fish_t2_f3", "text": "Some fish, like salmon, have tiny bones that we need to remove before eating.", "category": "preparation", "wonder_score": 3},
+            {"id": "fish_t2_f4", "text": "Fish can be eaten raw in sushi, or cooked in many different ways.", "category": "variety", "wonder_score": 4},
+            {"id": "fish_t2_f5", "text": "Eating fish regularly can help improve our memory and concentration.", "category": "benefit", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "fish_t2_q1", "text": "What part of our body does fish oil help?", "type": "knowledge", "expected_answer": "heart and brain", "hint": "Two important organs!"},
+            {"id": "fish_t2_q2", "text": "What nutrient in fish helps muscles grow?", "type": "vocabulary", "expected_answer": "protein", "hint": "It starts with 'p'!"},
+            {"id": "fish_t2_q3", "text": "Why do we need to be careful when eating some fish?", "type": "reasoning", "expected_answer": "because of bones", "hint": "They can be small and sharp!"},
+            {"id": "fish_t2_q4", "text": "Name two ways we can eat fish.", "type": "variety", "hint": "Raw or cooked!"},
+            {"id": "fish_t2_q5", "text": "How does eating fish help us at school?", "type": "benefit", "expected_answer": "improves memory and concentration", "hint": "It helps us think and remember!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's fish! Did you know that fish is one of the healthiest foods in the world?",
+            "Look at this fish! The way we cook fish can change its nutrients and taste.",
+            "This is fish. Some people are allergic to fish, so they must avoid it.",
+            "Here we have fish. Fish populations need to be protected so we can keep eating them.",
+            "Consider this fish. If we didn't have fish, what other foods could give us the same benefits?"
+        ],
+        "facts": [
+            {"id": "fish_t3_f1", "text": "Fish contains Omega-3 fatty acids, which are essential for brain development and health.", "category": "nutrition", "wonder_score": 5},
+            {"id": "fish_t3_f2", "text": "Cooking methods like steaming or baking preserve more of fish's healthy nutrients than frying.", "category": "preparation", "wonder_score": 4},
+            {"id": "fish_t3_f3", "text": "Some people have fish allergies, which means their body reacts badly to eating fish.", "category": "safety", "wonder_score": 4},
+            {"id": "fish_t3_f4", "text": "Overfishing can reduce fish populations, so we need to choose sustainably caught fish.", "category": "sustainability", "wonder_score": 5},
+            {"id": "fish_t3_f5", "text": "If you don't eat fish, you can get similar nutrients from foods like walnuts, flaxseeds, or supplements.", "category": "alternative", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "fish_t3_q1", "text": "What special nutrient in fish helps our brains?", "type": "knowledge", "expected_answer": "Omega-3 fatty acids", "hint": "It's a type of healthy fat!"},
+            {"id": "fish_t3_q2", "text": "Which cooking method can keep the fish in its most nutritious state?", "type": "comparison", "expected_answer": "steaming or baking", "hint": "Not frying!"},
+            {"id": "fish_t3_q3", "text": "Why can't some people eat fish?", "type": "reasoning", "expected_answer": "they are allergic", "hint": "Their body thinks it's harmful!"},
+            {"id": "fish_t3_q4", "text": "Why is it important to protect fish populations?", "type": "sustainability", "hint": "So we can keep eating fish in the future!"},
+            {"id": "fish_t3_q5", "text": "What are some alternatives if someone doesn't eat fish?", "type": "alternative", "hint": "Nuts, seeds, or pills!"}
+        ]
+    }
+    },
+    {
+    "id": "food_watermelon_001",
+    "name": "Watermelon",
+    "aliases": ["melon", "summer melon", "juicy fruit"],
+    "domain": "food",
+    "category": ["fruit", "food", "summer food"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["green", "red", "pink", "black", "white", "yellow"],
+        "shapes": ["oval", "round", "large", "striped"],
+        "size": "large (usually bigger than a basketball)",
+        "textures": ["smooth skin", "juicy flesh", "hard rind", "crunchy", "watery"],
+        "distinctive_parts": ["green rind with stripes", "red juicy inside", "black seeds", "white seeds", "sweet smell"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a watermelon! Look at its green skin!",
+            "Wow, a watermelon! It is big and round. Can you see the stripes?",
+            "A juicy watermelon! It is red inside with black seeds.",
+            "Hello, watermelon! Let's tap it to hear a thump sound.",
+            "Yum, watermelon! It is sweet and juicy."
+        ],
+        "facts": [
+            {"id": "watermelon_t1_f1", "text": "Watermelons have green skin with stripes.", "category": "appearance", "wonder_score": 3},
+            {"id": "watermelon_t1_f2", "text": "Watermelons are red inside with black seeds.", "category": "appearance", "wonder_score": 3},
+            {"id": "watermelon_t1_f3", "text": "Watermelons taste sweet and juicy.", "category": "taste", "wonder_score": 4},
+            {"id": "watermelon_t1_f4", "text": "Watermelons grow on vines on the ground.", "category": "growth", "wonder_score": 4},
+            {"id": "watermelon_t1_f5", "text": "Watermelons are very heavy to carry.", "category": "physical", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "watermelon_t1_q1", "text": "What color is watermelon skin?", "type": "color", "expected_answer": "green", "hint": "Look at the outside!"},
+            {"id": "watermelon_t1_q2", "text": "How many seeds can you count in a slice?", "type": "counting", "hint": "Let's count the black dots!"},
+            {"id": "watermelon_t1_q3", "text": "What color is watermelon inside?", "type": "color", "expected_answer": "red", "hint": "It's bright red!"},
+            {"id": "watermelon_t1_q4", "text": "How does watermelon taste?", "type": "taste", "expected_answer": "sweet and juicy", "hint": "It has lots of water!"},
+            {"id": "watermelon_t1_q5", "text": "Is watermelon light or heavy?", "type": "comparison", "expected_answer": "heavy", "hint": "It's hard to lift!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a watermelon! Do you know it is 92% water? That's why it's so juicy!",
+            "Look at this watermelon! It grows from a tiny seed into a big fruit.",
+            "Here's a watermelon! Did you know some watermelons have no seeds at all?",
+            "Check out this watermelon! It's perfect for hot days because it helps keep us hydrated.",
+            "Meet this watermelon! We eat the juicy part, but the rind can be pickled or cooked too."
+        ],
+        "facts": [
+            {"id": "watermelon_t2_f1", "text": "Watermelon is 92% water, which helps keep our bodies hydrated on hot days.", "category": "composition", "wonder_score": 5},
+            {"id": "watermelon_t2_f2", "text": "Some watermelons are seedless because farmers developed special varieties.", "category": "variety", "wonder_score": 4},
+            {"id": "watermelon_t2_f3", "text": "You can tell if a watermelon is ripe by tapping it; a hollow thump means it's ready.", "category": "selection", "wonder_score": 4},
+            {"id": "watermelon_t2_f4", "text": "Watermelon seeds can be roasted and eaten as a crunchy snack.", "category": "uses", "wonder_score": 4},
+            {"id": "watermelon_t2_f5", "text": "Watermelons grow from yellow flowers that turn into small green fruits.", "category": "growth", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "watermelon_t2_q1", "text": "Why is watermelon so juicy?", "type": "reasoning", "expected_answer": "it has a lot of water", "hint": "Think about what's inside!"},
+            {"id": "watermelon_t2_q2", "text": "Are all watermelons full of black seeds?", "type": "comparison", "expected_answer": "no, some are seedless", "hint": "Some have no seeds!"},
+            {"id": "watermelon_t2_q3", "text": "How can you tell if a watermelon is ripe?", "type": "knowledge", "expected_answer": "by tapping it for a hollow sound", "hint": "Listen to the sound!"},
+            {"id": "watermelon_t2_q4", "text": "What part of the watermelon can be roasted and eaten?", "type": "knowledge", "expected_answer": "the seeds", "hint": "The small black things inside!"},
+            {"id": "watermelon_t2_q5", "text": "What color are watermelon flowers?", "type": "observation", "expected_answer": "yellow", "hint": "They grow before the fruit!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a watermelon! Did you know it's actually considered a vegetable by botanists because it's related to cucumbers?",
+            "Look at this watermelon! Its high water content not only hydrates but also helps cool our body temperature.",
+            "This is a watermelon. Seedless watermelons aren't completely seedless; they have soft, white edible seeds.",
+            "Here we have a watermelon. Farmers plant them in warm soil because they need lots of sun and space to grow.",
+            "Consider this watermelon. The striped pattern on the rind helps protect it from too much sun exposure."
+        ],
+        "facts": [
+            {"id": "watermelon_t3_f1", "text": "Watermelon is botanically classified as a vegetable because it belongs to the cucumber and squash family.", "category": "classification", "wonder_score": 5},
+            {"id": "watermelon_t3_f2", "text": "The stripes on a watermelon's rind help to regulate its temperature and protect it from sunburn.", "category": "adaptation", "wonder_score": 4},
+            {"id": "watermelon_t3_f3", "text": "Seedless watermelons are grown from seeds that produce fruits with soft, white, edible seed coats.", "category": "agriculture", "wonder_score": 4},
+            {"id": "watermelon_t3_f4", "text": "Eating watermelon can help cool your body because it contains so much water and nutrients.", "category": "health", "wonder_score": 4},
+            {"id": "watermelon_t3_f5", "text": "Watermelons need about 3-4 months of warm weather to grow from seed to harvest.", "category": "growth", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "watermelon_t3_q1", "text": "Is watermelon a fruit or a vegetable to scientists?", "type": "classification", "expected_answer": "vegetable", "hint": "It's related to cucumbers!"},
+            {"id": "watermelon_t3_q2", "text": "Why do watermelons have stripes on their rind?", "type": "why", "hint": "Think about protection from the sun!"},
+            {"id": "watermelon_t3_q3", "text": "How are seedless watermelons different from regular ones?", "type": "comparison", "expected_answer": "they have soft white seeds instead of hard black ones", "hint": "Their seeds are edible!"},
+            {"id": "watermelon_t3_q4", "text": "How does eating watermelon help on a hot day?", "type": "reasoning", "hint": "Think about what's inside it!"},
+            {"id": "watermelon_t3_q5", "text": "What kind of weather do watermelons need to grow?", "type": "knowledge", "expected_answer": "warm weather", "hint": "They love sunshine!"}
+        ]
+    }
+    },
+    {
+    "id": "food_cake",
+    "name": "Cake",
+    "aliases": ["birthday cake", "chocolate cake", "layer cake", "cupcake"],
+    "domain": "food",
+    "category": ["dessert", "sweet food", "baked good"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["white", "brown", "pink", "yellow", "chocolate", "rainbow", "red", "blue"],
+        "shapes": ["round", "square", "rectangle", "cup shape", "layered", "flat"],
+        "size": "varies (small cupcake to big birthday cake)",
+        "textures": ["soft", "fluffy", "crumbly", "smooth frosting", "sticky", "moist"],
+        "distinctive_parts": ["frosting on top", "sprinkles", "candles", "layers", "icing decorations"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a cake! Cakes are sweet and yummy!",
+            "Look, a cake! It has frosting on top. What color is it?",
+            "A birthday cake! It has candles to blow out.",
+            "Yum, cake! Is it big or small?",
+            "Hello, cake! Let's count the candles on it!"
+        ],
+        "facts": [
+            {"id": "cake_t1_f1", "text": "Cakes are sweet treats we eat for dessert.", "category": "category", "wonder_score": 2},
+            {"id": "cake_t1_f2", "text": "Cakes often have colorful frosting on top.", "category": "appearance", "wonder_score": 3},
+            {"id": "cake_t1_f3", "text": "Birthday cakes have candles to blow out.", "category": "usage", "wonder_score": 4},
+            {"id": "cake_t1_f4", "text": "Cakes can be round, square, or other shapes.", "category": "shape", "wonder_score": 3},
+            {"id": "cake_t1_f5", "text": "Cakes are soft and fluffy to eat.", "category": "texture", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "cake_t1_q1", "text": "What is on top of many cakes?", "type": "observation", "expected_answer": "frosting", "hint": "It's sweet and colorful!"},
+            {"id": "cake_t1_q2", "text": "How many candles are on this birthday cake?", "type": "counting", "hint": "Let's count them together!"},
+            {"id": "cake_t1_q3", "text": "What do we do with candles on a birthday cake?", "type": "action", "expected_answer": "blow them out", "hint": "Make a wish and blow!"},
+            {"id": "cake_t1_q4", "text": "What color is the frosting on this cake?", "type": "color", "hint": "Look at the top!"},
+            {"id": "cake_t1_q5", "text": "Is cake sweet or sour?", "type": "taste", "expected_answer": "sweet", "hint": "It tastes like sugar!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a cake! Cakes are made by baking batter in an oven.",
+            "Look at this cake! Did you know cakes need special ingredients to rise?",
+            "Here's a cake! Different types of cake have different flavors, like chocolate or vanilla.",
+            "Check out this cake! The frosting is made from sugar and butter.",
+            "Meet this cake! Cakes are often served at celebrations like birthdays and weddings."
+        ],
+        "facts": [
+            {"id": "cake_t2_f1", "text": "Cakes are baked in a hot oven to make them rise and become fluffy.", "category": "preparation", "wonder_score": 4},
+            {"id": "cake_t2_f2", "text": "Cakes need baking powder or baking soda to help them rise in the oven.", "category": "ingredients", "wonder_score": 4},
+            {"id": "cake_t2_f3", "text": "Different cakes have different flavors, like chocolate, vanilla, or strawberry.", "category": "variety", "wonder_score": 3},
+            {"id": "cake_t2_f4", "text": "Frosting is a sweet topping made from sugar, butter, and sometimes milk.", "category": "composition", "wonder_score": 4},
+            {"id": "cake_t2_f5", "text": "We often eat cakes at special times like birthdays, weddings, and holidays.", "category": "celebration", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "cake_t2_q1", "text": "Where do we bake a cake to make it cook?", "type": "knowledge", "expected_answer": "in an oven", "hint": "It's a hot kitchen tool!"},
+            {"id": "cake_t2_q2", "text": "What ingredient helps a cake rise and become fluffy?", "type": "knowledge", "expected_answer": "baking powder or baking soda", "hint": "It's a white powder!"},
+            {"id": "cake_t2_q3", "text": "Name two different flavors of cake.", "type": "variety", "expected_answer": ["chocolate", "vanilla"], "hint": "Think about your favorites!"},
+            {"id": "cake_t2_q4", "text": "What is frosting made from?", "type": "composition", "expected_answer": "sugar and butter", "hint": "Two sweet, soft things!"},
+            {"id": "cake_t2_q5", "text": "When do people often eat cake?", "type": "usage", "expected_answer": "at birthdays or celebrations", "hint": "Special happy days!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a cake! Did you know that the air bubbles in cake batter make it light and fluffy when baked?",
+            "Look at this cake! The frosting acts as a seal to keep the cake moist and fresh.",
+            "This is a cake. When we mix ingredients, we have to be careful not to overmix the batter.",
+            "Here we have a cake. The reason we add eggs to cake batter is to help hold everything together.",
+            "Consider this cake. If you baked a cake at too high a temperature, what do you think would happen?"
+        ],
+        "facts": [
+            {"id": "cake_t3_f1", "text": "Tiny air bubbles in the cake batter expand in the oven's heat, making the cake light and fluffy.", "category": "science", "wonder_score": 5},
+            {"id": "cake_t3_f2", "text": "Frosting helps to keep the cake moist by sealing in the moisture and preventing it from drying out.", "category": "function", "wonder_score": 4},
+            {"id": "cake_t3_f3", "text": "If you mix cake batter too much, the cake can become tough instead of soft and tender.", "category": "preparation_tip", "wonder_score": 4},
+            {"id": "cake_t3_f4", "text": "Eggs in cake batter act like glue, helping to bind all the other ingredients together when baked.", "category": "ingredient_function", "wonder_score": 4},
+            {"id": "cake_t3_f5", "text": "If you bake a cake at too high a temperature, the outside might burn before the inside is fully cooked.", "category": "problem", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "cake_t3_q1", "text": "What makes a cake light and fluffy when it bakes in the oven?", "type": "why", "expected_answer": "air bubbles expanding", "hint": "Think about what's inside the batter!"},
+            {"id": "cake_t3_q2", "text": "How does frosting help keep a cake fresh?", "type": "function", "expected_answer": "by sealing in moisture", "hint": "It covers the cake!"},
+            {"id": "cake_t3_q3", "text": "What might happen if you mix cake batter for too long?", "type": "problem", "expected_answer": "cake becomes tough", "hint": "It won't be soft!"},
+            {"id": "cake_t3_q4", "text": "Why do we put eggs in cake batter?", "type": "why", "expected_answer": "to bind ingredients together", "hint": "They help hold it all together!"},
+            {"id": "cake_t3_q5", "text": "What problem occurs if the oven is too hot when baking a cake?", "type": "what_if", "expected_answer": "outside burns, inside not done", "hint": "The outside cooks too fast!"}
+        ]
+    }
+    },
+    {
+    "id": "food_icecream",
+    "name": "Ice Cream",
+    "aliases": ["frozen treat", "ice cream cone", "scoop"],
+    "domain": "food",
+    "category": ["dessert", "cold food", "sweet treat"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["white", "pink", "brown", "green", "yellow", "orange", "multicolor"],
+        "shapes": ["scoop shape", "cone shape", "cup shape", "bar shape", "soft swirl"],
+        "size": "varies (from small scoop to large tub)",
+        "textures": ["smooth", "creamy", "soft", "icy", "crunchy (with toppings)"],
+        "distinctive_parts": ["scoops", "cone", "sprinkles", "chocolate coating", "stick (for popsicle)"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's ice cream! Ice cream is cold and sweet.",
+            "Look, ice cream! It comes in many colors. What color is this?",
+            "Yummy ice cream! Ice cream melts in the sun.",
+            "Hello, ice cream! Let's count the scoops. How many are there?",
+            "Wow, ice cream! I like ice cream. Do you like ice cream?"
+        ],
+        "facts": [
+            {"id": "icecream_t1_f1", "text": "Ice cream is cold and sweet.", "category": "taste", "wonder_score": 2},
+            {"id": "icecream_t1_f2", "text": "Ice cream can melt when it gets warm.", "category": "property", "wonder_score": 4},
+            {"id": "icecream_t1_f3", "text": "Ice cream comes in many colors and flavors.", "category": "variety", "wonder_score": 3},
+            {"id": "icecream_t1_f4", "text": "You eat ice cream with a cone or a cup.", "category": "serving", "wonder_score": 2},
+            {"id": "icecream_t1_f5", "text": "Ice cream can have sprinkles on top.", "category": "toppings", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "icecream_t1_q1", "text": "How does ice cream taste?", "type": "taste", "expected_answer": "sweet", "hint": "It's a yummy treat!"},
+            {"id": "icecream_t1_q2", "text": "What happens to ice cream in the sun?", "type": "observation", "expected_answer": "melts", "hint": "It gets soft and runny!"},
+            {"id": "icecream_t1_q3", "text": "How many scoops of ice cream are there?", "type": "counting", "hint": "Count the round balls!"},
+            {"id": "icecream_t1_q4", "text": "What color is this ice cream?", "type": "color", "hint": "Look at its color!"},
+            {"id": "icecream_t1_q5", "text": "Do you eat ice cream in a cone or a cup?", "type": "choice", "expected_answer": "both", "hint": "Sometimes a cone, sometimes a cup!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's ice cream! Do you know how ice cream is made? It starts as a liquid and gets frozen!",
+            "Look at this ice cream! There are many flavors like chocolate, vanilla, and strawberry.",
+            "Here's some ice cream! Did you know it's made from milk and sugar?",
+            "Check out this ice cream! Some ice cream is soft and some is hard.",
+            "Meet this ice cream! It needs to stay in the freezer or it will melt."
+        ],
+        "facts": [
+            {"id": "icecream_t2_f1", "text": "Ice cream is made by freezing a mixture of milk, sugar, and flavors.", "category": "making", "wonder_score": 4},
+            {"id": "icecream_t2_f2", "text": "There are many ice cream flavors like chocolate, vanilla, strawberry, and mint.", "category": "variety", "wonder_score": 3},
+            {"id": "icecream_t2_f3", "text": "Ice cream needs to be kept in a freezer to stay solid and cold.", "category": "storage", "wonder_score": 3},
+            {"id": "icecream_t2_f4", "text": "You can add toppings like sprinkles, chocolate sauce, or fruit to ice cream.", "category": "toppings", "wonder_score": 4},
+            {"id": "icecream_t2_f5", "text": "Ice cream cones are made from baked dough and are crunchy to eat.", "category": "serving", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "icecream_t2_q1", "text": "What are the main ingredients in ice cream?", "type": "ingredients", "expected_answer": "milk, sugar, flavors", "hint": "It comes from cows and is sweet!"},
+            {"id": "icecream_t2_q2", "text": "Name three flavors of ice cream.", "type": "naming", "hint": "Think of colors: brown, white, pink..."},
+            {"id": "icecream_t2_q3", "text": "Where should we keep ice cream so it doesn't melt?", "type": "storage", "expected_answer": "freezer", "hint": "The very cold part of the fridge!"},
+            {"id": "icecream_t2_q4", "text": "What are some toppings you can put on ice cream?", "type": "naming", "hint": "Small colorful dots, or brown sauce..."},
+            {"id": "icecream_t2_q5", "text": "What is an ice cream cone made from?", "type": "making", "expected_answer": "baked dough", "hint": "It's crunchy like a cookie!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's ice cream! Did you know that ice cream needs air mixed in to make it soft and creamy?",
+            "Look at this ice cream! Long ago, people in China made a frozen treat from milk and rice.",
+            "Here's some ice cream! When it melts, it turns from solid back to liquid because of heat.",
+            "Check out this ice cream! Some people cannot eat regular ice cream, so they eat dairy-free kinds.",
+            "Think about ice cream. If we put it in the sun, it melts faster than in the shade."
+        ],
+        "facts": [
+            {"id": "icecream_t3_f1", "text": "When making ice cream, air is mixed in to make it light and creamy, not icy.", "category": "making", "wonder_score": 4},
+            {"id": "icecream_t3_f2", "text": "Ice cream melts because heat from the air makes it change from solid to liquid.", "category": "science", "wonder_score": 5},
+            {"id": "icecream_t3_f3", "text": "Long ago, people in China mixed milk and rice and froze it to make a treat like ice cream.", "category": "history", "wonder_score": 4},
+            {"id": "icecream_t3_f4", "text": "Some people eat dairy-free ice cream made from almond milk or coconut milk.", "category": "variety", "wonder_score": 4},
+            {"id": "icecream_t3_f5", "text": "If you leave ice cream out, it will melt and then refreezing it makes it icy and hard.", "category": "property", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "icecream_t3_q1", "text": "Why is air mixed into ice cream when it's made?", "type": "why", "hint": "It makes it soft, not hard like ice!"},
+            {"id": "icecream_t3_q2", "text": "Why does ice cream melt on a hot day?", "type": "why", "hint": "Heat changes it from solid to liquid."},
+            {"id": "icecream_t3_q3", "text": "Where did an early form of ice cream come from long ago?", "type": "history", "expected_answer": "China", "hint": "A country in Asia!"},
+            {"id": "icecream_t3_q4", "text": "What can people who cannot drink cow's milk eat instead of regular ice cream?", "type": "alternative", "hint": "Ice cream made from nuts or coconuts!"},
+            {"id": "icecream_t3_q5", "text": "What happens if melted ice cream is put back in the freezer?", "type": "prediction", "expected_answer": "becomes icy/hard", "hint": "It doesn't become creamy again!"}
+        ]
+    }
+    },
+    {
+    "id": "food_tomato",
+    "name": "Tomato",
+    "aliases": ["tomatoes", "tomato fruit", "cherry tomato"],
+    "domain": "food",
+    "category": ["vegetable", "fruit", "plant food"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["red", "yellow", "orange", "green", "purple"],
+        "shapes": ["round", "oval", "small", "medium-sized", "smooth skin"],
+        "size": "varies (from small cherry to large beefsteak)",
+        "textures": ["smooth", "shiny", "soft when ripe", "firm", "juicy inside"],
+        "distinctive_parts": ["green stem", "smooth skin", "juicy pulp", "small seeds", "green leaves when growing"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "Look, a tomato! It's red and round.",
+            "This is a tomato. It grows on a plant.",
+            "A ripe tomato! It is juicy inside.",
+            "Hello, tomato! We can eat it raw or cooked.",
+            "Yummy tomato! It is good in salads."
+        ],
+        "facts": [
+            {"id": "tomato_t1_f1", "text": "Tomatoes are usually red and round.", "category": "appearance", "wonder_score": 2},
+            {"id": "tomato_t1_f2", "text": "Tomatoes grow on plants with green leaves.", "category": "origin", "wonder_score": 3},
+            {"id": "tomato_t1_f3", "text": "Tomatoes have many small seeds inside.", "category": "structure", "wonder_score": 3},
+            {"id": "tomato_t1_f4", "text": "Tomatoes can be eaten raw or cooked.", "category": "usage", "wonder_score": 3},
+            {"id": "tomato_t1_f5", "text": "Tomatoes are juicy when you bite them.", "category": "texture", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "tomato_t1_q1", "text": "What color is a ripe tomato?", "type": "color", "expected_answer": "red", "hint": "Think of a stop sign!"},
+            {"id": "tomato_t1_q2", "text": "How many tomatoes do you see?", "type": "counting", "hint": "Count them one by one!"},
+            {"id": "tomato_t1_q3", "text": "Where do tomatoes grow?", "type": "knowledge", "expected_answer": "on plants", "hint": "They grow in gardens!"},
+            {"id": "tomato_t1_q4", "text": "Can you eat a tomato raw?", "type": "yes_no", "expected_answer": "yes", "hint": "Like in a salad!"},
+            {"id": "tomato_t1_q5", "text": "What do you find inside a tomato?", "type": "observation", "expected_answer": "seeds", "hint": "Small, yellow things!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a tomato! Did you know it's actually a fruit, not a vegetable?",
+            "Look at this tomato! It's full of vitamins that are good for your body.",
+            "Here's a tomato! You can make many foods with it, like ketchup and sauce.",
+            "Check out this tomato! There are many different types, from small cherry tomatoes to big ones.",
+            "Meet this tomato! It needs sun and water to grow big and red."
+        ],
+        "facts": [
+            {"id": "tomato_t2_f1", "text": "Tomatoes are actually fruits because they have seeds inside, but we often call them vegetables.", "category": "category", "wonder_score": 5},
+            {"id": "tomato_t2_f2", "text": "Tomatoes have Vitamin C, which helps keep you healthy and strong.", "category": "nutrition", "wonder_score": 4},
+            {"id": "tomato_t2_f3", "text": "Tomatoes can be made into ketchup, pasta sauce, and tomato soup.", "category": "usage", "wonder_score": 4},
+            {"id": "tomato_t2_f4", "text": "Cherry tomatoes are small and round, while beefsteak tomatoes are large and juicy.", "category": "variety", "wonder_score": 4},
+            {"id": "tomato_t2_f5", "text": "Tomatoes need plenty of sunlight and water to grow from a small seed to a ripe fruit.", "category": "growth", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "tomato_t2_q1", "text": "Why is a tomato considered a fruit?", "type": "reasoning", "expected_answer": "it has seeds inside", "hint": "Think about what makes a fruit a fruit!"},
+            {"id": "tomato_t2_q2", "text": "What vitamin in tomatoes helps keep you healthy?", "type": "knowledge", "expected_answer": "Vitamin C", "hint": "It's also in oranges!"},
+            {"id": "tomato_t2_q3", "text": "Name one food we can make from tomatoes.", "type": "application", "expected_answer": "ketchup or sauce", "hint": "What do you put on fries?"},
+            {"id": "tomato_t2_q4", "text": "What is the difference between cherry tomatoes and beefsteak tomatoes?", "type": "comparison", "hint": "Think about their size!"},
+            {"id": "tomato_t2_q5", "text": "What do tomato plants need to grow?", "type": "knowledge", "expected_answer": "sunlight and water", "hint": "Just like other plants!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a tomato! Did you know tomatoes were once thought to be poisonous?",
+            "Look at this tomato! Its seeds are spread by animals that eat the fruit.",
+            "Here's a tomato! The green parts of the plant are not safe to eat, but the ripe fruit is.",
+            "Check out this tomato! It changes from green to red as it ripens in the sun.",
+            "Consider this tomato! If we didn't have bees, tomatoes might not grow as well."
+        ],
+        "facts": [
+            {"id": "tomato_t3_f1", "text": "Long ago, people in Europe thought tomatoes were poisonous because they are related to some toxic plants.", "category": "history", "wonder_score": 5},
+            {"id": "tomato_t3_f2", "text": "Animals eat tomatoes and spread the seeds in their droppings, helping new tomato plants grow.", "category": "ecology", "wonder_score": 5},
+            {"id": "tomato_t3_f3", "text": "The leaves and stems of tomato plants are not good to eat, but the ripe fruit is safe and healthy.", "category": "safety", "wonder_score": 4},
+            {"id": "tomato_t3_f4", "text": "Tomatoes change color from green to red as they ripen because of a natural process in the sun.", "category": "growth", "wonder_score": 4},
+            {"id": "tomato_t3_f5", "text": "Bees help tomato plants make fruit by moving pollen from one flower to another.", "category": "ecology", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "tomato_t3_q1", "text": "Why did people long ago think tomatoes were poisonous?", "type": "why", "hint": "They are related to some plants that are not safe."},
+            {"id": "tomato_t3_q2", "text": "How do animals help spread tomato seeds?", "type": "process", "hint": "They eat the fruit and then...!"},
+            {"id": "tomato_t3_q3", "text": "Which part of the tomato plant is safe to eat?", "type": "knowledge", "expected_answer": "the ripe fruit", "hint": "Not the leaves or stems!"},
+            {"id": "tomato_t3_q4", "text": "Why do tomatoes turn from green to red?", "type": "why", "hint": "It happens when they get enough sunlight."},
+            {"id": "tomato_t3_q5", "text": "What would happen if there were no bees to visit tomato flowers?", "type": "what_if", "hint": "Think about how plants make fruit."}
+        ]
+    }
+    },
+    {
+    "id": "food_corn",
+    "name": "Corn",
+    "aliases": ["maize", "corn on the cob", "sweet corn"],
+    "domain": "food",
+    "category": ["vegetable", "grain", "plant"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["yellow", "white", "bicolor", "green", "brown"],
+        "shapes": ["cylindrical cob", "small kernels in rows", "long green leaves", "silk strands on top"],
+        "size": "medium (about the size of a hand)",
+        "textures": ["smooth kernels", "bumpy cob", "fibrous husk", "silky threads", "hard when dry"],
+        "distinctive_parts": ["yellow kernels in rows", "green husk", "corn silk", "hard cob"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's corn! Corn has yellow kernels in neat rows.",
+            "Look, corn! It's a tasty vegetable. What color is it?",
+            "Corn on the cob! The kernels are arranged in straight lines.",
+            "Hello, corn! You can eat it cooked. Do you like corn?",
+            "Yummy corn! It grows on a tall plant with green leaves."
+        ],
+        "facts": [
+            {"id": "corn_t1_f1", "text": "Corn kernels are arranged in straight rows on a cob.", "category": "appearance", "wonder_score": 3},
+            {"id": "corn_t1_f2", "text": "Most corn kernels are yellow or white in color.", "category": "color", "wonder_score": 2},
+            {"id": "corn_t1_f3", "text": "Corn grows on tall plants with long green leaves.", "category": "origin", "wonder_score": 3},
+            {"id": "corn_t1_f4", "text": "We eat the yellow kernels, not the green leaves outside.", "category": "edible_part", "wonder_score": 3},
+            {"id": "corn_t1_f5", "text": "Corn on the cob is cooked and eaten hot or cold.", "category": "preparation", "wonder_score": 2}
+        ],
+        "questions": [
+            {"id": "corn_t1_q1", "text": "What color are most corn kernels?", "type": "color", "expected_answer": "yellow or white", "hint": "They can be bright yellow!"},
+            {"id": "corn_t1_q2", "text": "How are the kernels arranged on a corn cob?", "type": "observation", "expected_answer": "in straight rows", "hint": "Like lines on a paper!"},
+            {"id": "corn_t1_q3", "text": "What part of the corn do we eat?", "type": "knowledge", "expected_answer": "the kernels", "hint": "The little yellow parts!"},
+            {"id": "corn_t1_q4", "text": "Where does corn grow?", "type": "location", "expected_answer": "on tall plants", "hint": "In fields or farms!"},
+            {"id": "corn_t1_q5", "text": "Do we eat the green leaves of corn?", "type": "yes_no", "expected_answer": "no", "hint": "We take them off first!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's corn! Did you know corn can be popped to make popcorn?",
+            "Look at this corn! Corn is a type of grain, like rice and wheat.",
+            "Here's some corn! The silky threads on top help the corn grow.",
+            "Check out this corn! It can be yellow, white, or even two colors!",
+            "Meet corn! People have been eating corn for thousands of years."
+        ],
+        "facts": [
+            {"id": "corn_t2_f1", "text": "Some types of corn can pop when heated, turning into fluffy popcorn.", "category": "transformation", "wonder_score": 5},
+            {"id": "corn_t2_f2", "text": "Corn is a grain, just like rice and wheat, and gives us energy.", "category": "category", "wonder_score": 3},
+            {"id": "corn_t2_f3", "text": "The silky threads at the top of the corn catch pollen to help make kernels.", "category": "growth", "wonder_score": 4},
+            {"id": "corn_t2_f4", "text": "Corn can be eaten in many ways: boiled, grilled, or as cornflakes.", "category": "preparation", "wonder_score": 4},
+            {"id": "corn_t2_f5", "text": "A single corn plant can grow one or two cobs of corn.", "category": "yield", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "corn_t2_q1", "text": "What yummy snack can we make from some types of corn?", "type": "knowledge", "expected_answer": "popcorn", "hint": "It pops when heated!"},
+            {"id": "corn_t2_q2", "text": "Is corn a vegetable or a grain?", "type": "category", "expected_answer": "grain", "hint": "It's like rice and wheat!"},
+            {"id": "corn_t2_q3", "text": "What are the silky threads on top of the corn for?", "type": "function", "hint": "They help the corn grow kernels!"},
+            {"id": "corn_t2_q4", "text": "Name two ways we can eat corn.", "type": "enumeration", "expected_answer": "boiled, grilled, cornflakes, etc.", "hint": "Think about breakfast and dinner!"},
+            {"id": "corn_t2_q5", "text": "How many cobs of corn can one plant grow?", "type": "quantity", "expected_answer": "one or two", "hint": "Usually one or two!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's corn! Corn is so useful that it's used to make many things, not just food.",
+            "Look at this corn! It needs a lot of sunlight and water to grow tall and healthy.",
+            "This is corn. The kernels we eat are actually the seeds of the corn plant.",
+            "Here we have corn. It's one of the most important crops grown around the world.",
+            "Consider corn. If we didn't have corn, we wouldn't have popcorn, corn syrup, or even some animal feed!"
+        ],
+        "facts": [
+            {"id": "corn_t3_f1", "text": "Corn kernels are the seeds of the corn plant. If planted, they can grow into new corn plants.", "category": "life_cycle", "wonder_score": 4},
+            {"id": "corn_t3_f2", "text": "Corn needs plenty of sunshine, water, and good soil to grow from a seed to a tall plant.", "category": "growth_requirements", "wonder_score": 3},
+            {"id": "corn_t3_f3", "text": "Corn is used to make many products like corn syrup, animal feed, and even some types of fuel.", "category": "uses", "wonder_score": 4},
+            {"id": "corn_t3_f4", "text": "Popcorn pops because each kernel has a tiny bit of water inside that turns to steam and makes it explode.", "category": "science", "wonder_score": 5},
+            {"id": "corn_t3_f5", "text": "Corn is grown on every continent except Antarctica because it's too cold there for corn to grow.", "category": "geography", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "corn_t3_q1", "text": "What can a corn kernel grow into if we plant it in the soil?", "type": "life_cycle", "expected_answer": "a new corn plant", "hint": "It's a seed!"},
+            {"id": "corn_t3_q2", "text": "What three things does corn need to grow well?", "type": "requirements", "expected_answer": "sunshine, water, good soil", "hint": "Think about what plants need!"},
+            {"id": "corn_t3_q3", "text": "Name one thing besides food that is made from corn.", "type": "application", "expected_answer": "corn syrup, animal feed, fuel, etc.", "hint": "It's in many products!"},
+            {"id": "corn_t3_q4", "text": "Why does popcorn pop when we heat it?", "type": "why", "hint": "There's water inside the kernel!"},
+            {"id": "corn_t3_q5", "text": "Is corn grown in Antarctica? Why or why not?", "type": "reasoning", "expected_answer": "no, because it's too cold", "hint": "Corn needs warmth to grow!"}
+        ]
+    }
+    },
+    {
+    "id": "food_dumpling",
+    "name": "Dumpling",
+    "aliases": ["jiaozi", "potsticker", "Chinese dumpling"],
+    "domain": "food",
+    "category": ["food", "cooked food", "traditional food", "Chinese food"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["white", "brown", "golden", "pale yellow", "translucent"],
+        "shapes": ["crescent shape", "half-moon shape", "round pouch", "pleated edges", "small bundle"],
+        "size": "small (fits in a spoon)",
+        "textures": ["soft wrapper", "chewy skin", "crispy bottom", "smooth surface", "tender filling"],
+        "distinctive_parts": ["pleated edges", "filling inside", "dough wrapper", "steam holes", "golden fried side"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a dumpling! Dumplings are small and yummy!",
+            "Look, a dumpling! It has soft skin and tasty filling inside.",
+            "A hot dumpling! Dumplings are round or half-moon shaped.",
+            "Hello, dumpling! People eat dumplings with chopsticks or a fork.",
+            "Yum, a dumpling! It is warm and smells good."
+        ],
+        "facts": [
+            {"id": "dumpling_t1_f1", "text": "Dumplings have soft, white skin made from dough.", "category": "appearance", "wonder_score": 2},
+            {"id": "dumpling_t1_f2", "text": "Dumplings have tasty meat or vegetables inside.", "category": "composition", "wonder_score": 3},
+            {"id": "dumpling_t1_f3", "text": "Dumplings are small and round, like a little pouch.", "category": "shape", "wonder_score": 3},
+            {"id": "dumpling_t1_f4", "text": "Dumplings are hot and steamy when cooked.", "category": "temperature", "wonder_score": 3},
+            {"id": "dumpling_t1_f5", "text": "People eat dumplings with soy sauce for extra flavor.", "category": "eating", "wonder_score": 2}
+        ],
+        "questions": [
+            {"id": "dumpling_t1_q1", "text": "What color is the dumpling skin?", "type": "color", "expected_answer": "white", "hint": "It's made from flour!"},
+            {"id": "dumpling_t1_q2", "text": "How many dumplings are on this plate?", "type": "counting", "hint": "Let's count them together!"},
+            {"id": "dumpling_t1_q3", "text": "Is the dumpling hot or cold when we eat it?", "type": "temperature", "expected_answer": "hot", "hint": "We cook it before eating!"},
+            {"id": "dumpling_t1_q4", "text": "What is inside the dumpling?", "type": "observation", "expected_answer": "meat or vegetables", "hint": "We put filling inside!"},
+            {"id": "dumpling_t1_q5", "text": "What shape is a dumpling?", "type": "shape", "expected_answer": "round or half-moon", "hint": "Like a little moon!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a dumpling! Did you know dumplings are a traditional food in many countries?",
+            "Look at this dumpling! It can be cooked in different ways - steamed, boiled, or fried!",
+            "Here's a dumpling! The skin is made from flour and water, and the filling can be many things.",
+            "Check out this dumpling! In China, people often eat dumplings during the New Year for good luck.",
+            "Meet this dumpling! Making dumplings is a fun family activity where everyone helps fold them."
+        ],
+        "facts": [
+            {"id": "dumpling_t2_f1", "text": "Dumplings can be cooked in three main ways: steamed, boiled, or pan-fried.", "category": "cooking_method", "wonder_score": 4},
+            {"id": "dumpling_t2_f2", "text": "The dumpling wrapper is made by mixing flour and water to make dough.", "category": "ingredients", "wonder_score": 3},
+            {"id": "dumpling_t2_f3", "text": "In China, families eat dumplings during Lunar New Year for good fortune.", "category": "cultural", "wonder_score": 4},
+            {"id": "dumpling_t2_f4", "text": "Dumpling fillings can be pork, chicken, shrimp, or vegetables like cabbage.", "category": "variety", "wonder_score": 3},
+            {"id": "dumpling_t2_f5", "text": "Fried dumplings have a crispy golden bottom that is crunchy to bite.", "category": "texture", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "dumpling_t2_q1", "text": "What are the three ways to cook dumplings?", "type": "knowledge", "expected_answer": "steamed, boiled, fried", "hint": "Think about using water, steam, or oil!"},
+            {"id": "dumpling_t2_q2", "text": "What two main ingredients make the dumpling skin?", "type": "ingredients", "expected_answer": "flour and water", "hint": "They are mixed to make dough!"},
+            {"id": "dumpling_t2_q3", "text": "When do many Chinese families eat dumplings for good luck?", "type": "cultural", "expected_answer": "Lunar New Year", "hint": "A big holiday in winter or spring!"},
+            {"id": "dumpling_t2_q4", "text": "What makes fried dumplings different from boiled ones?", "type": "comparison", "expected_answer": "crispy bottom", "hint": "One is crunchy, one is soft!"},
+            {"id": "dumpling_t2_q5", "text": "Name one kind of meat that can be in dumplings.", "type": "variety", "expected_answer": "pork, chicken, or shrimp", "hint": "Animals we eat!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a dumpling! The pleats on the edge are not just pretty; they help seal the filling inside tightly.",
+            "Look at this dumpling! Why do you think dumplings are shaped like little pouches? To hold the filling!",
+            "This is a dumpling. Have you thought about why dumplings are eaten during celebrations? They symbolize wealth.",
+            "Here we have a dumpling. The dough wrapper protects the filling and keeps it juicy when cooked.",
+            "Consider this dumpling. If we didn't seal the edges well, what might happen when we boil it?"
+        ],
+        "facts": [
+            {"id": "dumpling_t3_f1", "text": "The pleated edges of a dumpling help seal the filling inside so it doesn't come out when cooking.", "category": "function", "wonder_score": 4},
+            {"id": "dumpling_t3_f2", "text": "Dumplings are shaped like ancient Chinese gold ingots, so they symbolize wealth and good luck.", "category": "symbolism", "wonder_score": 5},
+            {"id": "dumpling_t3_f3", "text": "The dough wrapper protects the juicy filling and keeps it moist during the cooking process.", "category": "function", "wonder_score": 4},
+            {"id": "dumpling_t3_f4", "text": "If you don't seal the dumpling edges well, the filling might leak out into the cooking water.", "category": "problem_solving", "wonder_score": 4},
+            {"id": "dumpling_t3_f5", "text": "Different countries have their own versions of dumplings, like Italian ravioli or Polish pierogi.", "category": "global_variety", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "dumpling_t3_q1", "text": "Why do dumplings have pleated or folded edges?", "type": "why", "expected_answer": "to seal the filling", "hint": "To keep the inside from coming out!"},
+            {"id": "dumpling_t3_q2", "text": "What do dumplings symbolize in Chinese culture?", "type": "symbolism", "expected_answer": "wealth and good luck", "hint": "They look like old money!"},
+            {"id": "dumpling_t3_q3", "text": "What might happen if you forget to seal the dumpling edges before boiling?", "type": "prediction", "expected_answer": "filling leaks out", "hint": "The inside might come out!"},
+            {"id": "dumpling_t3_q4", "text": "Why is the dough wrapper important for the filling?", "type": "why", "expected_answer": "keeps it juicy", "hint": "It protects the inside!"},
+            {"id": "dumpling_t3_q5", "text": "Can you name another country's version of dumplings?", "type": "global_knowledge", "expected_answer": "Italy (ravioli) or Poland (pierogi)", "hint": "Think about stuffed pasta!"}
+        ]
+    }
+    }
+]

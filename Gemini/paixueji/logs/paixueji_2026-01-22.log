@@ -1,0 +1,365 @@
+2026-01-22 09:53:27.876 | INFO     | stream.main:call_paixueji_stream:86 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] System-managed mode: using focus_mode=depth
+2026-01-22 09:53:27.877 | INFO     | stream.main:call_paixueji_stream:88 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] call_paixueji_stream started | session_id=6dc994b6-1c6d-4a27-a470-afae7760a39a, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2026-01-22 09:53:27.877 | INFO     | stream.main:call_paixueji_stream:131 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] Conversation state | correct_count=0, complete=False
+2026-01-22 09:53:27.877 | INFO     | stream.main:call_paixueji_stream:171 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] Routing to introduction question
+2026-01-22 09:53:27.877 | INFO     | stream.question_generators:ask_introduction_question_stream:60 | ask_introduction_question_stream started | object=banana, age=6
+2026-01-22 09:53:27.877 | DEBUG    | stream.question_generators:ask_introduction_question_stream:76 | Messages prepared for API | count=3
+2026-01-22 09:53:27.877 | DEBUG    | stream.question_generators:ask_introduction_question_stream:87 | Sending 2 messages to Gemini API
+2026-01-22 09:53:27.877 | DEBUG    | stream.question_generators:ask_introduction_question_stream:104 | Stream object type: generator
+2026-01-22 09:53:53.485 | DEBUG    | stream.question_generators:ask_introduction_question_stream:119 | Chunk 1 | length=2, total_length=2
+2026-01-22 09:53:53.515 | DEBUG    | stream.question_generators:ask_introduction_question_stream:119 | Chunk 2 | length=9, total_length=11
+2026-01-22 09:53:53.590 | DEBUG    | stream.question_generators:ask_introduction_question_stream:119 | Chunk 3 | length=64, total_length=75
+2026-01-22 09:53:53.638 | DEBUG    | stream.question_generators:ask_introduction_question_stream:119 | Chunk 4 | length=66, total_length=141
+2026-01-22 09:53:53.649 | DEBUG    | stream.question_generators:ask_introduction_question_stream:119 | Chunk 5 | length=9, total_length=150
+2026-01-22 09:53:53.654 | DEBUG    | stream.question_generators:ask_introduction_question_stream:124 | Gemini streaming API does not provide token usage in stream mode
+2026-01-22 09:53:53.654 | DEBUG    | stream.question_generators:ask_introduction_question_stream:143 | Cleaned up stream via del in finally block
+2026-01-22 09:53:53.654 | INFO     | stream.question_generators:ask_introduction_question_stream:148 | ask_introduction_question_stream completed | duration=25.777s, response_length=150
+2026-01-22 09:53:53.654 | WARNING  | stream.question_generators:ask_introduction_question_stream:154 | Slow LLM call | duration=25.777s exceeded threshold 5.0s
+2026-01-22 09:53:53.654 | INFO     | stream.main:call_paixueji_stream:671 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] call_paixueji_stream completed | response_type=introduction, duration=25.778s, total_chunks=5, response_length=150, correct_count=0, complete=False, session_finished=False
+2026-01-22 09:53:53.654 | DEBUG    | stream.main:call_paixueji_stream:679 | Full response: Ahoy there, matey! We've got a yummy banana here today!
+
+Tell me, what does a banana feel like when you touch it? Is it smooth or bumpy, soft or hard?...
+2026-01-22 09:53:53.655 | DEBUG    | stream.main:call_paixueji_stream:752 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+USER INPUT: (None)
+CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+VALIDATION: Engaged=None | Correct=None
+REASONING: N/A
+DECISION: N/A (Reason: N/A)
+RESPONSE PART 1: (None)
+RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-22 09:53:58.491 | INFO     | stream.main:call_paixueji_stream:86 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] System-managed mode: using focus_mode=depth
+2026-01-22 09:53:58.492 | INFO     | stream.main:call_paixueji_stream:88 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] call_paixueji_stream started | session_id=6dc994b6-1c6d-4a27-a470-afae7760a39a, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=12, message_history=2
+2026-01-22 09:53:58.492 | INFO     | stream.main:call_paixueji_stream:131 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] Conversation state | correct_count=0, complete=False
+2026-01-22 09:53:58.492 | INFO     | stream.main:call_paixueji_stream:180 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] Running unified AI validation for answer
+2026-01-22 09:53:59.617 | INFO     | stream.validation:decide_topic_switch_with_validation:138 | [VALIDATE] CONTINUE | new_object=None, engaged=False, correct=False, switch_reasoning=Child is stuck., correctness_reasoning=The child doesn't know the answer.
+2026-01-22 09:53:59.617 | INFO     | stream.main:call_paixueji_stream:327 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] Routing to explanation | is_engaged=False
+2026-01-22 09:53:59.617 | INFO     | stream.main:call_paixueji_stream:395 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] System-managed: focus_mode=depth, reason=Depth phase: 0/5 questions asked
+2026-01-22 09:53:59.617 | DEBUG    | stream.main:call_paixueji_stream:403 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] Streaming response (explanation)
+2026-01-22 09:53:59.617 | INFO     | stream.response_generators:generate_explanation_response_stream:147 | generate_explanation_response_stream started | object=banana, age=6
+2026-01-22 09:54:00.131 | INFO     | stream.response_generators:generate_explanation_response_stream:203 | generate_explanation_response_stream completed | duration=0.514s, length=93
+2026-01-22 09:54:00.131 | DEBUG    | stream.main:call_paixueji_stream:516 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] Streaming question
+2026-01-22 09:54:00.131 | INFO     | stream.question_generators:generate_followup_question_stream:199 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-22 09:54:00.831 | INFO     | stream.question_generators:generate_followup_question_stream:256 | generate_followup_question_stream completed | duration=0.700s, length=116
+2026-01-22 09:54:00.831 | INFO     | stream.main:call_paixueji_stream:671 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] call_paixueji_stream completed | response_type=explanation, duration=2.340s, total_chunks=8, response_length=210, correct_count=0, complete=False, session_finished=False
+2026-01-22 09:54:00.831 | DEBUG    | stream.main:call_paixueji_stream:679 | Full response: Ah, no worries, matey! A banana feels smooth and a little bit soft when you squish it gently. Tell me, matey, what color is the banana when it's ready to eat? And what color is it when it's not quite ready yet?...
+2026-01-22 09:54:00.831 | DEBUG    | stream.main:call_paixueji_stream:752 | 
+
+[DEBUG TREE NODE] Turn 1 (EXPLANATION)
+--------------------------------------------------
+USER INPUT: I don't know
+CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+VALIDATION: Engaged=False | Correct=False
+REASONING: The child doesn't know the answer.
+DECISION: CONTINUE (Reason: Child is stuck.)
+RESPONSE PART 1: Ah, no worries, matey! A banana feels smooth and a little bit soft when you squish it gently.
+RESPONSE PART 2: Tell me, matey, what color is the banana when it's ready to eat? And what color is it when it's not quite ready yet?
+--------------------------------------------------
+
+2026-01-22 09:54:07.986 | INFO     | stream.main:call_paixueji_stream:86 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] System-managed mode: using focus_mode=depth
+2026-01-22 09:54:07.986 | INFO     | stream.main:call_paixueji_stream:88 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] call_paixueji_stream started | session_id=6dc994b6-1c6d-4a27-a470-afae7760a39a, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=12, message_history=4
+2026-01-22 09:54:07.986 | INFO     | stream.main:call_paixueji_stream:131 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] Conversation state | correct_count=0, complete=False
+2026-01-22 09:54:07.986 | INFO     | stream.main:call_paixueji_stream:180 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] Running unified AI validation for answer
+2026-01-22 09:54:09.450 | INFO     | stream.validation:decide_topic_switch_with_validation:138 | [VALIDATE] CONTINUE | new_object=None, engaged=False, correct=False, switch_reasoning=Child is stuck., correctness_reasoning=Child did not provide a correct answer.
+2026-01-22 09:54:09.450 | INFO     | stream.main:call_paixueji_stream:327 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] Routing to explanation | is_engaged=False
+2026-01-22 09:54:09.450 | INFO     | stream.main:call_paixueji_stream:395 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] System-managed: focus_mode=depth, reason=Depth phase: 0/5 questions asked
+2026-01-22 09:54:09.450 | DEBUG    | stream.main:call_paixueji_stream:403 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] Streaming response (explanation)
+2026-01-22 09:54:09.450 | INFO     | stream.response_generators:generate_explanation_response_stream:147 | generate_explanation_response_stream started | object=banana, age=6
+2026-01-22 09:54:09.990 | INFO     | stream.response_generators:generate_explanation_response_stream:203 | generate_explanation_response_stream completed | duration=0.539s, length=83
+2026-01-22 09:54:09.990 | DEBUG    | stream.main:call_paixueji_stream:516 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] Streaming question
+2026-01-22 09:54:09.990 | INFO     | stream.question_generators:generate_followup_question_stream:199 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-22 09:54:10.650 | INFO     | stream.question_generators:generate_followup_question_stream:256 | generate_followup_question_stream completed | duration=0.660s, length=187
+2026-01-22 09:54:10.650 | INFO     | stream.main:call_paixueji_stream:671 | [6dc994b6-1c6d-4a27-a470-afae7760a39a] call_paixueji_stream completed | response_type=explanation, duration=2.664s, total_chunks=8, response_length=271, correct_count=0, complete=False, session_finished=False
+2026-01-22 09:54:10.650 | DEBUG    | stream.main:call_paixueji_stream:679 | Full response: A banana is yellow when it's ready to eat, and green when it's not quite ready yet. Ahoy, matey! Now that we know bananas are yellow when they're ready to eat, can you tell me, what do we *do* with a banana once it's yellow and ready? How do we enjoy this yummy treasure?...
+2026-01-22 09:54:10.650 | DEBUG    | stream.main:call_paixueji_stream:752 | 
+
+[DEBUG TREE NODE] Turn 2 (EXPLANATION)
+--------------------------------------------------
+USER INPUT: I don't know
+CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+VALIDATION: Engaged=False | Correct=False
+REASONING: Child did not provide a correct answer.
+DECISION: CONTINUE (Reason: Child is stuck.)
+RESPONSE PART 1: A banana is yellow when it's ready to eat, and green when it's not quite ready yet.
+RESPONSE PART 2: Ahoy, matey! Now that we know bananas are yellow when they're ready to eat, can you tell me, what do we *do* with a banana once it's yellow and ready? How do we enjoy this yummy treasure?
+--------------------------------------------------
+
+2026-01-22 10:11:46.427 | INFO     | stream.main:call_paixueji_stream:89 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] System-managed mode: using focus_mode=depth
+2026-01-22 10:11:46.427 | INFO     | stream.main:call_paixueji_stream:91 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] call_paixueji_stream started | session_id=8c054d07-5c35-492a-bc21-e799c0a27cc2, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=31, message_history=1
+2026-01-22 10:11:46.427 | INFO     | stream.main:call_paixueji_stream:134 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] Conversation state | correct_count=0, complete=False
+2026-01-22 10:11:46.428 | INFO     | stream.main:call_paixueji_stream:175 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] Routing to introduction question
+2026-01-22 10:11:46.428 | INFO     | stream.question_generators:ask_introduction_question_stream:62 | ask_introduction_question_stream started | object=banana, age=6
+2026-01-22 10:11:46.428 | DEBUG    | stream.question_generators:ask_introduction_question_stream:79 | Messages prepared for API | count=3
+2026-01-22 10:11:46.428 | DEBUG    | stream.question_generators:ask_introduction_question_stream:90 | Sending 2 messages to Gemini API
+2026-01-22 10:11:46.428 | DEBUG    | stream.question_generators:ask_introduction_question_stream:107 | Stream object type: generator
+2026-01-22 10:11:47.022 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 1 | length=2, total_length=2
+2026-01-22 10:11:47.031 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 2 | length=9, total_length=11
+2026-01-22 10:11:47.107 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 3 | length=70, total_length=81
+2026-01-22 10:11:47.152 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 4 | length=57, total_length=138
+2026-01-22 10:11:47.152 | DEBUG    | stream.question_generators:ask_introduction_question_stream:127 | Gemini streaming API does not provide token usage in stream mode
+2026-01-22 10:11:47.152 | DEBUG    | stream.question_generators:ask_introduction_question_stream:146 | Cleaned up stream via del in finally block
+2026-01-22 10:11:47.152 | INFO     | stream.question_generators:ask_introduction_question_stream:151 | ask_introduction_question_stream completed | duration=0.725s, response_length=138
+2026-01-22 10:11:47.152 | INFO     | stream.main:call_paixueji_stream:676 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] call_paixueji_stream completed | response_type=introduction, duration=0.726s, total_chunks=4, response_length=138, correct_count=0, complete=False, session_finished=False
+2026-01-22 10:11:47.153 | DEBUG    | stream.main:call_paixueji_stream:684 | Full response: Ahoy there, matey! Let's talk about a super yummy fruit today – the banana!
+
+Tell me, what does a banana look like when it's ready to eat?...
+2026-01-22 10:11:47.153 | DEBUG    | stream.main:call_paixueji_stream:757 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+USER INPUT: (None)
+CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+VALIDATION: Engaged=None | Correct=None
+REASONING: N/A
+DECISION: N/A (Reason: N/A)
+RESPONSE PART 1: (None)
+RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-22 10:11:56.060 | INFO     | stream.main:call_paixueji_stream:89 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] System-managed mode: using focus_mode=depth
+2026-01-22 10:11:56.060 | INFO     | stream.main:call_paixueji_stream:91 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] call_paixueji_stream started | session_id=8c054d07-5c35-492a-bc21-e799c0a27cc2, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=0, status=normal, content_length=12, message_history=2
+2026-01-22 10:11:56.060 | INFO     | stream.main:call_paixueji_stream:134 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] Conversation state | correct_count=0, complete=False
+2026-01-22 10:11:56.060 | INFO     | stream.main:call_paixueji_stream:184 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] Running unified AI validation for answer
+2026-01-22 10:11:57.254 | INFO     | stream.validation:decide_topic_switch_with_validation:138 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=Direct answer., correctness_reasoning=Bananas are yellow when ripe.
+2026-01-22 10:11:57.254 | INFO     | stream.main:call_paixueji_stream:210 | [SYSTEM_MANAGED] Depth: 1/4
+2026-01-22 10:11:57.254 | INFO     | stream.main:call_paixueji_stream:348 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] Routing to feedback | is_engaged=True, is_factually_correct=True
+2026-01-22 10:11:57.255 | INFO     | stream.main:call_paixueji_stream:399 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] System-managed: focus_mode=depth, reason=Depth phase: 1/4 questions asked
+2026-01-22 10:11:57.255 | DEBUG    | stream.main:call_paixueji_stream:407 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] Streaming response (feedback)
+2026-01-22 10:11:57.255 | INFO     | stream.response_generators:generate_feedback_response_stream:54 | generate_feedback_response_stream started | object=banana, age=6
+2026-01-22 10:11:57.891 | INFO     | stream.response_generators:generate_feedback_response_stream:109 | generate_feedback_response_stream completed | duration=0.637s, length=119
+2026-01-22 10:11:57.892 | DEBUG    | stream.main:call_paixueji_stream:521 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] Streaming question
+2026-01-22 10:11:57.892 | INFO     | stream.question_generators:generate_followup_question_stream:204 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-22 10:11:58.477 | INFO     | stream.question_generators:generate_followup_question_stream:262 | generate_followup_question_stream completed | duration=0.585s, length=77
+2026-01-22 10:11:58.477 | INFO     | stream.main:call_paixueji_stream:676 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] call_paixueji_stream completed | response_type=feedback, duration=2.417s, total_chunks=7, response_length=197, correct_count=0, complete=False, session_finished=False
+2026-01-22 10:11:58.477 | DEBUG    | stream.main:call_paixueji_stream:684 | Full response: Aye, that's right, matey! It's a lovely bright yellow, just like a little sunshine you can peel! Fantastic observation! Tell me, matey, what do you do to get to the yummy part of the banana inside?...
+2026-01-22 10:11:58.478 | DEBUG    | stream.main:call_paixueji_stream:757 | 
+
+[DEBUG TREE NODE] Turn 1 (FEEDBACK)
+--------------------------------------------------
+USER INPUT: It is yellow
+CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+VALIDATION: Engaged=True | Correct=True
+REASONING: Bananas are yellow when ripe.
+DECISION: CONTINUE (Reason: Direct answer.)
+RESPONSE PART 1: Aye, that's right, matey! It's a lovely bright yellow, just like a little sunshine you can peel! Fantastic observation!
+RESPONSE PART 2: Tell me, matey, what do you do to get to the yummy part of the banana inside?
+--------------------------------------------------
+
+2026-01-22 10:12:05.425 | INFO     | stream.main:call_paixueji_stream:89 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] System-managed mode: using focus_mode=depth
+2026-01-22 10:12:05.425 | INFO     | stream.main:call_paixueji_stream:91 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] call_paixueji_stream started | session_id=8c054d07-5c35-492a-bc21-e799c0a27cc2, age=6, object=banana, level1=foods, level2=fresh_ingredients, level3=None, correct_count=1, status=normal, content_length=4, message_history=4
+2026-01-22 10:12:05.425 | INFO     | stream.main:call_paixueji_stream:134 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] Conversation state | correct_count=1, complete=False
+2026-01-22 10:12:05.425 | INFO     | stream.main:call_paixueji_stream:184 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] Running unified AI validation for answer
+2026-01-22 10:12:07.058 | INFO     | stream.validation:decide_topic_switch_with_validation:138 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=Direct answer., correctness_reasoning=Peeling is how you open a banana.
+2026-01-22 10:12:07.058 | INFO     | stream.main:call_paixueji_stream:210 | [SYSTEM_MANAGED] Depth: 2/4
+2026-01-22 10:12:07.058 | INFO     | stream.main:call_paixueji_stream:348 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] Routing to feedback | is_engaged=True, is_factually_correct=True
+2026-01-22 10:12:07.058 | INFO     | stream.main:call_paixueji_stream:399 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] System-managed: focus_mode=depth, reason=Depth phase: 2/4 questions asked
+2026-01-22 10:12:07.059 | DEBUG    | stream.main:call_paixueji_stream:407 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] Streaming response (feedback)
+2026-01-22 10:12:07.059 | INFO     | stream.response_generators:generate_feedback_response_stream:54 | generate_feedback_response_stream started | object=banana, age=6
+2026-01-22 10:12:07.566 | INFO     | stream.response_generators:generate_feedback_response_stream:109 | generate_feedback_response_stream completed | duration=0.507s, length=73
+2026-01-22 10:12:07.566 | DEBUG    | stream.main:call_paixueji_stream:521 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] Streaming question
+2026-01-22 10:12:07.566 | INFO     | stream.question_generators:generate_followup_question_stream:204 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-01-22 10:12:08.290 | INFO     | stream.question_generators:generate_followup_question_stream:262 | generate_followup_question_stream completed | duration=0.724s, length=68
+2026-01-22 10:12:08.291 | INFO     | stream.main:call_paixueji_stream:676 | [8c054d07-5c35-492a-bc21-e799c0a27cc2] call_paixueji_stream completed | response_type=feedback, duration=2.866s, total_chunks=7, response_length=142, correct_count=1, complete=False, session_finished=False
+2026-01-22 10:12:08.291 | DEBUG    | stream.main:call_paixueji_stream:684 | Full response: You got it, matey! You peel it! That's exactly right! Hooray for peeling! Now, matey, when a banana is green, what does that tell us about it?...
+2026-01-22 10:12:08.291 | DEBUG    | stream.main:call_paixueji_stream:757 | 
+
+[DEBUG TREE NODE] Turn 2 (FEEDBACK)
+--------------------------------------------------
+USER INPUT: peel
+CONTEXT: Object='banana' | Tone='pirate' | Focus='depth'
+VALIDATION: Engaged=True | Correct=True
+REASONING: Peeling is how you open a banana.
+DECISION: CONTINUE (Reason: Direct answer.)
+RESPONSE PART 1: You got it, matey! You peel it! That's exactly right! Hooray for peeling!
+RESPONSE PART 2: Now, matey, when a banana is green, what does that tell us about it?
+--------------------------------------------------
+
+2026-01-22 13:50:54.465 | INFO     | stream.main:call_paixueji_stream:89 | [98ad5c00-0e45-4eeb-a550-b1c95fc04f5e] System-managed mode: using focus_mode=depth
+2026-01-22 13:50:54.465 | INFO     | stream.main:call_paixueji_stream:91 | [98ad5c00-0e45-4eeb-a550-b1c95fc04f5e] call_paixueji_stream started | session_id=98ad5c00-0e45-4eeb-a550-b1c95fc04f5e, age=6, object=bamboos, level1=plants, level2=useful_plants, level3=None, correct_count=0, status=normal, content_length=32, message_history=1
+2026-01-22 13:50:54.465 | INFO     | stream.main:call_paixueji_stream:134 | [98ad5c00-0e45-4eeb-a550-b1c95fc04f5e] Conversation state | correct_count=0, complete=False
+2026-01-22 13:50:54.466 | INFO     | stream.main:call_paixueji_stream:175 | [98ad5c00-0e45-4eeb-a550-b1c95fc04f5e] Routing to introduction question
+2026-01-22 13:50:54.466 | INFO     | stream.question_generators:ask_introduction_question_stream:62 | ask_introduction_question_stream started | object=bamboos, age=6
+2026-01-22 13:50:54.466 | DEBUG    | stream.question_generators:ask_introduction_question_stream:79 | Messages prepared for API | count=3
+2026-01-22 13:50:54.466 | DEBUG    | stream.question_generators:ask_introduction_question_stream:90 | Sending 2 messages to Gemini API
+2026-01-22 13:50:54.466 | DEBUG    | stream.question_generators:ask_introduction_question_stream:107 | Stream object type: generator
+2026-01-22 13:50:55.596 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 1 | length=2, total_length=2
+2026-01-22 13:50:55.607 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 2 | length=9, total_length=11
+2026-01-22 13:50:55.615 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 3 | length=74, total_length=85
+2026-01-22 13:50:55.696 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 4 | length=67, total_length=152
+2026-01-22 13:50:55.704 | DEBUG    | stream.question_generators:ask_introduction_question_stream:127 | Gemini streaming API does not provide token usage in stream mode
+2026-01-22 13:50:55.704 | DEBUG    | stream.question_generators:ask_introduction_question_stream:146 | Cleaned up stream via del in finally block
+2026-01-22 13:50:55.704 | INFO     | stream.question_generators:ask_introduction_question_stream:151 | ask_introduction_question_stream completed | duration=1.238s, response_length=152
+2026-01-22 13:50:55.704 | INFO     | stream.main:call_paixueji_stream:676 | [98ad5c00-0e45-4eeb-a550-b1c95fc04f5e] call_paixueji_stream completed | response_type=introduction, duration=1.240s, total_chunks=4, response_length=152, correct_count=0, complete=False, session_finished=False
+2026-01-22 13:50:55.704 | DEBUG    | stream.main:call_paixueji_stream:684 | Full response: Ahoy there, matey! Today we're going to talk about something super cool called bamboo!
+
+Have you ever seen bamboo before? What does it look like to you?...
+2026-01-22 13:50:55.704 | DEBUG    | stream.main:call_paixueji_stream:757 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+USER INPUT: (None)
+CONTEXT: Object='bamboos' | Tone='pirate' | Focus='depth'
+VALIDATION: Engaged=None | Correct=None
+REASONING: N/A
+DECISION: N/A (Reason: N/A)
+RESPONSE PART 1: (None)
+RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-22 13:51:09.045 | INFO     | stream.main:call_paixueji_stream:89 | [98ad5c00-0e45-4eeb-a550-b1c95fc04f5e] System-managed mode: using focus_mode=depth
+2026-01-22 13:51:09.045 | INFO     | stream.main:call_paixueji_stream:91 | [98ad5c00-0e45-4eeb-a550-b1c95fc04f5e] call_paixueji_stream started | session_id=98ad5c00-0e45-4eeb-a550-b1c95fc04f5e, age=6, object=bamboos, level1=plants, level2=useful_plants, level3=None, correct_count=0, status=normal, content_length=18, message_history=2
+2026-01-22 13:51:09.045 | INFO     | stream.main:call_paixueji_stream:134 | [98ad5c00-0e45-4eeb-a550-b1c95fc04f5e] Conversation state | correct_count=0, complete=False
+2026-01-22 13:51:09.045 | INFO     | stream.main:call_paixueji_stream:184 | [98ad5c00-0e45-4eeb-a550-b1c95fc04f5e] Running unified AI validation for answer
+2026-01-22 13:51:10.788 | INFO     | stream.validation:decide_topic_switch_with_validation:138 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=Direct answer., correctness_reasoning=Bamboo can look like a stick to a child.
+2026-01-22 13:51:10.788 | INFO     | stream.main:call_paixueji_stream:210 | [SYSTEM_MANAGED] Depth: 1/4
+2026-01-22 13:51:10.788 | INFO     | stream.main:call_paixueji_stream:348 | [98ad5c00-0e45-4eeb-a550-b1c95fc04f5e] Routing to feedback | is_engaged=True, is_factually_correct=True
+2026-01-22 13:51:10.788 | INFO     | stream.main:call_paixueji_stream:399 | [98ad5c00-0e45-4eeb-a550-b1c95fc04f5e] System-managed: focus_mode=depth, reason=Depth phase: 1/4 questions asked
+2026-01-22 13:51:10.788 | DEBUG    | stream.main:call_paixueji_stream:407 | [98ad5c00-0e45-4eeb-a550-b1c95fc04f5e] Streaming response (feedback)
+2026-01-22 13:51:10.788 | INFO     | stream.response_generators:generate_feedback_response_stream:54 | generate_feedback_response_stream started | object=bamboos, age=6
+2026-01-22 13:51:11.478 | INFO     | stream.response_generators:generate_feedback_response_stream:109 | generate_feedback_response_stream completed | duration=0.690s, length=112
+2026-01-22 13:51:11.478 | DEBUG    | stream.main:call_paixueji_stream:521 | [98ad5c00-0e45-4eeb-a550-b1c95fc04f5e] Streaming question
+2026-01-22 13:51:11.478 | INFO     | stream.question_generators:generate_followup_question_stream:204 | generate_followup_question_stream started | object=bamboos, age=6, is_switch=False
+2026-01-22 13:51:12.057 | INFO     | stream.question_generators:generate_followup_question_stream:262 | generate_followup_question_stream completed | duration=0.578s, length=98
+2026-01-22 13:51:12.057 | INFO     | stream.main:call_paixueji_stream:676 | [98ad5c00-0e45-4eeb-a550-b1c95fc04f5e] call_paixueji_stream completed | response_type=feedback, duration=3.012s, total_chunks=8, response_length=211, correct_count=0, complete=False, session_finished=False
+2026-01-22 13:51:12.057 | DEBUG    | stream.main:call_paixueji_stream:684 | Full response: That's a fantastic way to describe it, matey! Bamboo is indeed like a big, strong stick! You've got a sharp eye! Tell me, matey, what do you think bamboo is made of? Is it soft like a pillow or hard like a rock?...
+2026-01-22 13:51:12.057 | DEBUG    | stream.main:call_paixueji_stream:757 | 
+
+[DEBUG TREE NODE] Turn 1 (FEEDBACK)
+--------------------------------------------------
+USER INPUT: It is like a stick
+CONTEXT: Object='bamboos' | Tone='pirate' | Focus='depth'
+VALIDATION: Engaged=True | Correct=True
+REASONING: Bamboo can look like a stick to a child.
+DECISION: CONTINUE (Reason: Direct answer.)
+RESPONSE PART 1: That's a fantastic way to describe it, matey! Bamboo is indeed like a big, strong stick! You've got a sharp eye!
+RESPONSE PART 2: Tell me, matey, what do you think bamboo is made of? Is it soft like a pillow or hard like a rock?
+--------------------------------------------------
+
+2026-01-22 13:57:22.707 | INFO     | stream.main:call_paixueji_stream:87 | [201484d8-f763-414b-b265-9088ab9fd66c] KG Context: MISSING for 'bamboos' - using general knowledge
+2026-01-22 13:57:22.708 | INFO     | stream.main:call_paixueji_stream:93 | [201484d8-f763-414b-b265-9088ab9fd66c] System-managed mode: using focus_mode=depth
+2026-01-22 13:57:22.708 | INFO     | stream.main:call_paixueji_stream:95 | [201484d8-f763-414b-b265-9088ab9fd66c] call_paixueji_stream started | session_id=201484d8-f763-414b-b265-9088ab9fd66c, age=6, object=bamboos, level1=plants, level2=useful_plants, level3=None, correct_count=0, status=normal, content_length=32, message_history=1
+2026-01-22 13:57:22.708 | INFO     | stream.main:call_paixueji_stream:138 | [201484d8-f763-414b-b265-9088ab9fd66c] Conversation state | correct_count=0, complete=False
+2026-01-22 13:57:22.708 | INFO     | stream.main:call_paixueji_stream:179 | [201484d8-f763-414b-b265-9088ab9fd66c] Routing to introduction question
+2026-01-22 13:57:22.708 | INFO     | stream.question_generators:ask_introduction_question_stream:62 | ask_introduction_question_stream started | object=bamboos, age=6
+2026-01-22 13:57:22.708 | DEBUG    | stream.question_generators:ask_introduction_question_stream:79 | Messages prepared for API | count=3
+2026-01-22 13:57:22.708 | DEBUG    | stream.question_generators:ask_introduction_question_stream:90 | Sending 2 messages to Gemini API
+2026-01-22 13:57:22.708 | DEBUG    | stream.question_generators:ask_introduction_question_stream:107 | Stream object type: generator
+2026-01-22 13:58:12.612 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 1 | length=2, total_length=2
+2026-01-22 13:58:12.639 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 2 | length=9, total_length=11
+2026-01-22 13:58:12.669 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 3 | length=74, total_length=85
+2026-01-22 13:58:12.715 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 4 | length=67, total_length=152
+2026-01-22 13:58:12.718 | DEBUG    | stream.question_generators:ask_introduction_question_stream:127 | Gemini streaming API does not provide token usage in stream mode
+2026-01-22 13:58:12.718 | DEBUG    | stream.question_generators:ask_introduction_question_stream:146 | Cleaned up stream via del in finally block
+2026-01-22 13:58:12.718 | INFO     | stream.question_generators:ask_introduction_question_stream:151 | ask_introduction_question_stream completed | duration=50.011s, response_length=152
+2026-01-22 13:58:12.719 | WARNING  | stream.question_generators:ask_introduction_question_stream:157 | Slow LLM call | duration=50.011s exceeded threshold 5.0s
+2026-01-22 13:58:12.719 | INFO     | stream.main:call_paixueji_stream:680 | [201484d8-f763-414b-b265-9088ab9fd66c] call_paixueji_stream completed | response_type=introduction, duration=50.012s, total_chunks=4, response_length=152, correct_count=0, complete=False, session_finished=False
+2026-01-22 13:58:12.719 | DEBUG    | stream.main:call_paixueji_stream:688 | Full response: Ahoy there, matey! Today we're going to talk about something super cool called bamboo!
+
+Have you ever seen bamboo before? What does it look like to you?...
+2026-01-22 13:58:12.719 | DEBUG    | stream.main:call_paixueji_stream:761 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+USER INPUT: (None)
+CONTEXT: Object='bamboos' | Tone='pirate' | Focus='depth'
+VALIDATION: Engaged=None | Correct=None
+REASONING: N/A
+DECISION: N/A (Reason: N/A)
+RESPONSE PART 1: (None)
+RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-22 14:03:15.930 | INFO     | stream.main:call_paixueji_stream:85 | [1ac41aaa-231b-4d3f-9d9a-5097bc5a7d96] KG Context: FOUND for 'bamboos'
+2026-01-22 14:03:15.931 | INFO     | stream.main:call_paixueji_stream:93 | [1ac41aaa-231b-4d3f-9d9a-5097bc5a7d96] System-managed mode: using focus_mode=depth
+2026-01-22 14:03:15.931 | INFO     | stream.main:call_paixueji_stream:95 | [1ac41aaa-231b-4d3f-9d9a-5097bc5a7d96] call_paixueji_stream started | session_id=1ac41aaa-231b-4d3f-9d9a-5097bc5a7d96, age=6, object=bamboos, level1=plants, level2=useful_plants, level3=None, correct_count=0, status=normal, content_length=32, message_history=1
+2026-01-22 14:03:15.931 | INFO     | stream.main:call_paixueji_stream:138 | [1ac41aaa-231b-4d3f-9d9a-5097bc5a7d96] Conversation state | correct_count=0, complete=False
+2026-01-22 14:03:15.931 | INFO     | stream.main:call_paixueji_stream:179 | [1ac41aaa-231b-4d3f-9d9a-5097bc5a7d96] Routing to introduction question
+2026-01-22 14:03:15.931 | INFO     | stream.question_generators:ask_introduction_question_stream:62 | ask_introduction_question_stream started | object=bamboos, age=6
+2026-01-22 14:03:15.931 | DEBUG    | stream.question_generators:ask_introduction_question_stream:79 | Messages prepared for API | count=3
+2026-01-22 14:03:15.931 | DEBUG    | stream.question_generators:ask_introduction_question_stream:90 | Sending 2 messages to Gemini API
+2026-01-22 14:03:15.931 | DEBUG    | stream.question_generators:ask_introduction_question_stream:107 | Stream object type: generator
+2026-01-22 14:03:35.955 | ERROR    | stream.question_generators:ask_introduction_question_stream:131 | answer_question_stream LLM error | error=Server disconnected without sending a response., duration=20.023s
+2026-01-22 14:03:35.955 | DEBUG    | stream.question_generators:ask_introduction_question_stream:146 | Cleaned up stream via del in finally block
+2026-01-22 14:03:35.955 | WARNING  | stream.main:call_paixueji_stream:678 | [1ac41aaa-231b-4d3f-9d9a-5097bc5a7d96] Empty response - possible streaming error or reasoning only
+2026-01-22 14:03:35.955 | INFO     | stream.main:call_paixueji_stream:680 | [1ac41aaa-231b-4d3f-9d9a-5097bc5a7d96] call_paixueji_stream completed | response_type=introduction, duration=20.024s, total_chunks=0, response_length=0, correct_count=0, complete=False, session_finished=False
+2026-01-22 14:03:35.955 | DEBUG    | stream.main:call_paixueji_stream:688 | Full response: ...
+2026-01-22 14:03:35.955 | DEBUG    | stream.main:call_paixueji_stream:761 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+USER INPUT: (None)
+CONTEXT: Object='bamboos' | Tone='pirate' | Focus='depth'
+VALIDATION: Engaged=None | Correct=None
+REASONING: N/A
+DECISION: N/A (Reason: N/A)
+RESPONSE PART 1: (None)
+RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-22 14:05:40.563 | INFO     | stream.main:call_paixueji_stream:85 | [06d0ea41-12f4-4bb1-91f8-fb268b2de261] KG Context: FOUND for 'bamboos'
+2026-01-22 14:05:40.564 | INFO     | stream.main:call_paixueji_stream:93 | [06d0ea41-12f4-4bb1-91f8-fb268b2de261] System-managed mode: using focus_mode=depth
+2026-01-22 14:05:40.564 | INFO     | stream.main:call_paixueji_stream:95 | [06d0ea41-12f4-4bb1-91f8-fb268b2de261] call_paixueji_stream started | session_id=06d0ea41-12f4-4bb1-91f8-fb268b2de261, age=6, object=bamboos, level1=plants, level2=useful_plants, level3=None, correct_count=0, status=normal, content_length=32, message_history=1
+2026-01-22 14:05:40.564 | INFO     | stream.main:call_paixueji_stream:138 | [06d0ea41-12f4-4bb1-91f8-fb268b2de261] Conversation state | correct_count=0, complete=False
+2026-01-22 14:05:40.564 | INFO     | stream.main:call_paixueji_stream:179 | [06d0ea41-12f4-4bb1-91f8-fb268b2de261] Routing to introduction question
+2026-01-22 14:05:40.564 | INFO     | stream.question_generators:ask_introduction_question_stream:62 | ask_introduction_question_stream started | object=bamboos, age=6
+2026-01-22 14:05:40.564 | DEBUG    | stream.question_generators:ask_introduction_question_stream:79 | Messages prepared for API | count=3
+2026-01-22 14:05:40.564 | DEBUG    | stream.question_generators:ask_introduction_question_stream:90 | Sending 2 messages to Gemini API
+2026-01-22 14:05:40.564 | DEBUG    | stream.question_generators:ask_introduction_question_stream:107 | Stream object type: generator
+2026-01-22 14:05:41.091 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 1 | length=2, total_length=2
+2026-01-22 14:05:41.122 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 2 | length=9, total_length=11
+2026-01-22 14:05:41.194 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 3 | length=79, total_length=90
+2026-01-22 14:05:41.262 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 4 | length=69, total_length=159
+2026-01-22 14:05:41.308 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Chunk 5 | length=15, total_length=174
+2026-01-22 14:05:41.311 | DEBUG    | stream.question_generators:ask_introduction_question_stream:127 | Gemini streaming API does not provide token usage in stream mode
+2026-01-22 14:05:41.312 | DEBUG    | stream.question_generators:ask_introduction_question_stream:146 | Cleaned up stream via del in finally block
+2026-01-22 14:05:41.312 | INFO     | stream.question_generators:ask_introduction_question_stream:151 | ask_introduction_question_stream completed | duration=0.748s, response_length=174
+2026-01-22 14:05:41.312 | INFO     | stream.main:call_paixueji_stream:680 | [06d0ea41-12f4-4bb1-91f8-fb268b2de261] call_paixueji_stream completed | response_type=introduction, duration=0.749s, total_chunks=5, response_length=174, correct_count=0, complete=False, session_finished=False
+2026-01-22 14:05:41.312 | DEBUG    | stream.main:call_paixueji_stream:688 | Full response: Ahoy there, matey! Today, we're setting sail to learn about something super cool called **bamboo**!
+
+Have ye ever seen bamboo before? What does it look like to ye, me hearty?...
+2026-01-22 14:05:41.312 | DEBUG    | stream.main:call_paixueji_stream:761 | 
+
+[DEBUG TREE NODE] Turn 0 (INTRODUCTION)
+--------------------------------------------------
+USER INPUT: (None)
+CONTEXT: Object='bamboos' | Tone='pirate' | Focus='depth'
+VALIDATION: Engaged=None | Correct=None
+REASONING: N/A
+DECISION: N/A (Reason: N/A)
+RESPONSE PART 1: (None)
+RESPONSE PART 2: (None)
+--------------------------------------------------
+
+2026-01-22 14:07:03.009 | INFO     | stream.main:call_paixueji_stream:85 | [06d0ea41-12f4-4bb1-91f8-fb268b2de261] KG Context: FOUND for 'bamboos'
+2026-01-22 14:07:03.009 | INFO     | stream.main:call_paixueji_stream:93 | [06d0ea41-12f4-4bb1-91f8-fb268b2de261] System-managed mode: using focus_mode=depth
+2026-01-22 14:07:03.009 | INFO     | stream.main:call_paixueji_stream:95 | [06d0ea41-12f4-4bb1-91f8-fb268b2de261] call_paixueji_stream started | session_id=06d0ea41-12f4-4bb1-91f8-fb268b2de261, age=6, object=bamboos, level1=plants, level2=useful_plants, level3=None, correct_count=0, status=normal, content_length=12, message_history=2
+2026-01-22 14:07:03.009 | INFO     | stream.main:call_paixueji_stream:138 | [06d0ea41-12f4-4bb1-91f8-fb268b2de261] Conversation state | correct_count=0, complete=False
+2026-01-22 14:07:03.009 | INFO     | stream.main:call_paixueji_stream:188 | [06d0ea41-12f4-4bb1-91f8-fb268b2de261] Running unified AI validation for answer
+2026-01-22 14:07:04.769 | INFO     | stream.validation:decide_topic_switch_with_validation:138 | [VALIDATE] CONTINUE | new_object=None, engaged=False, correct=False, switch_reasoning=Child is stuck., correctness_reasoning=Child doesn't know what bamboo looks like.
+2026-01-22 14:07:04.770 | INFO     | stream.main:call_paixueji_stream:335 | [06d0ea41-12f4-4bb1-91f8-fb268b2de261] Routing to explanation | is_engaged=False
+2026-01-22 14:07:04.770 | INFO     | stream.main:call_paixueji_stream:403 | [06d0ea41-12f4-4bb1-91f8-fb268b2de261] System-managed: focus_mode=depth, reason=Depth phase: 0/4 questions asked
+2026-01-22 14:07:04.770 | DEBUG    | stream.main:call_paixueji_stream:411 | [06d0ea41-12f4-4bb1-91f8-fb268b2de261] Streaming response (explanation)
+2026-01-22 14:07:04.770 | INFO     | stream.response_generators:generate_explanation_response_stream:147 | generate_explanation_response_stream started | object=bamboos, age=6
+2026-01-22 14:07:05.443 | INFO     | stream.response_generators:generate_explanation_response_stream:203 | generate_explanation_response_stream completed | duration=0.673s, length=138
+2026-01-22 14:07:05.443 | DEBUG    | stream.main:call_paixueji_stream:525 | [06d0ea41-12f4-4bb1-91f8-fb268b2de261] Streaming question
+2026-01-22 14:07:05.443 | INFO     | stream.question_generators:generate_followup_question_stream:204 | generate_followup_question_stream started | object=bamboos, age=6, is_switch=False
+2026-01-22 14:07:06.070 | INFO     | stream.question_generators:generate_followup_question_stream:262 | generate_followup_question_stream completed | duration=0.626s, length=98
+2026-01-22 14:07:06.070 | INFO     | stream.main:call_paixueji_stream:680 | [06d0ea41-12f4-4bb1-91f8-fb268b2de261] call_paixueji_stream completed | response_type=explanation, duration=3.061s, total_chunks=7, response_length=237, correct_count=0, complete=False, session_finished=False
+2026-01-22 14:07:06.070 | DEBUG    | stream.main:call_paixueji_stream:688 | Full response: No worries, matey! Bamboo is a tall, green plant that looks like a giant grass with long, hollow stems. Sometimes it grows in big bunches! Tell me, matey, what do ye think bamboo is made of? Is it hard like a rock, or soft like a pillow?...
+2026-01-22 14:07:06.070 | DEBUG    | stream.main:call_paixueji_stream:761 | 
+
+[DEBUG TREE NODE] Turn 1 (EXPLANATION)
+--------------------------------------------------
+USER INPUT: I don't know
+CONTEXT: Object='bamboos' | Tone='pirate' | Focus='depth'
+VALIDATION: Engaged=False | Correct=False
+REASONING: Child doesn't know what bamboo looks like.
+DECISION: CONTINUE (Reason: Child is stuck.)
+RESPONSE PART 1: No worries, matey! Bamboo is a tall, green plant that looks like a giant grass with long, hollow stems. Sometimes it grows in big bunches!
+RESPONSE PART 2: Tell me, matey, what do ye think bamboo is made of? Is it hard like a rock, or soft like a pillow?
+--------------------------------------------------
+

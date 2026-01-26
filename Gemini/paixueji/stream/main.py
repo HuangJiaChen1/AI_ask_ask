@@ -79,6 +79,13 @@ async def call_paixueji_stream(
     """
     start_time = time.time()
 
+    # Retrieve KG context
+    kg_context = assistant.get_kg_context(object_name, age or 6)
+    if kg_context:
+        logger.info(f"[{session_id}] KG Context: FOUND for '{object_name}'")
+    else:
+        logger.info(f"[{session_id}] KG Context: MISSING for '{object_name}' - using general knowledge")
+
     # If system-managed mode, use the actual current focus mode instead of "system_managed"
     if assistant.system_managed_focus:
         focus_mode = assistant.current_focus_mode
@@ -165,7 +172,8 @@ async def call_paixueji_stream(
             config,
             client,
             level3_category,
-            focus_prompt=focus_prompt
+            focus_prompt=focus_prompt,
+            kg_context=kg_context
         )
         response_type = "introduction"
         logger.info(f"[{session_id}] Routing to introduction question")
@@ -507,7 +515,8 @@ async def call_paixueji_stream(
                 focus_prompt=focus_prompt,
                 config=config,
                 client=client,
-                is_topic_switch=should_switch
+                is_topic_switch=should_switch,
+                kg_context=kg_context
             )
 
         # Stream question generator (skip if None for explicit switches)

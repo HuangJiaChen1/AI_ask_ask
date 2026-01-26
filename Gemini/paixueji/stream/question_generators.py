@@ -36,7 +36,8 @@ async def ask_introduction_question_stream(
     config: dict,
     client: genai.Client,
     level3_category: str = "",
-    focus_prompt: str = ""
+    focus_prompt: str = "",
+    kg_context: str = ""
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str, dict], None]:
     """
     Stream first question about the object.
@@ -51,6 +52,7 @@ async def ask_introduction_question_stream(
         client: Gemini client instance
         level3_category: Level 3 category
         focus_prompt: Focus strategy guidance
+        kg_context: Specific Knowledge Graph context
 
     Yields:
         Tuple of (text_chunk, token_usage_or_None, full_response_so_far, decision_info)
@@ -65,7 +67,8 @@ async def ask_introduction_question_stream(
         category_prompt=category_prompt,
         age_prompt=age_prompt,
         age=age,
-        focus_prompt=focus_prompt
+        focus_prompt=focus_prompt,
+        kg_context=kg_context
     )
 
     # Prepare messages with introduction prompt
@@ -172,7 +175,8 @@ async def generate_followup_question_stream(
     focus_prompt: str,
     config: dict,
     client: genai.Client,
-    is_topic_switch: bool = False
+    is_topic_switch: bool = False,
+    kg_context: str = ""
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
     Generate ONLY follow-up question based on focus strategy. NO responses or explanations.
@@ -191,6 +195,7 @@ async def generate_followup_question_stream(
         config: Configuration dict with model settings
         client: Gemini client instance
         is_topic_switch: Whether this follows a topic switch
+        kg_context: Specific Knowledge Graph context
 
     Yields:
         Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
@@ -205,7 +210,8 @@ async def generate_followup_question_stream(
         age=age,
         focus_prompt=focus_prompt,
         category_prompt=category_prompt,
-        age_prompt=age_prompt
+        age_prompt=age_prompt,
+        kg_context=kg_context
     )
 
     # Prepare messages

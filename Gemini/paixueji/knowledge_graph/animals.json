@@ -1,0 +1,2884 @@
+[
+    {
+        "id": "animals_dog",
+        "name": "Dog",
+        "aliases": [
+            "puppy",
+            "doggy",
+            "pup",
+            "pooch"
+        ],
+        "domain": "animals",
+        "category": [
+            "animal",
+            "mammal",
+            "pet"
+        ],
+        "priority": 0,
+        "visual_features": {
+            "colors": [
+                "brown",
+                "black",
+                "white",
+                "golden",
+                "spotted",
+                "gray",
+                "cream",
+                "red",
+                "brindle"
+            ],
+            "shapes": [
+                "four legs",
+                "tail",
+                "floppy ears",
+                "pointy ears",
+                "round eyes",
+                "wet nose",
+                "paws with pads",
+                "mouth with tongue"
+            ],
+            "size": "varies (from tiny to very big)",
+            "textures": [
+                "fluffy",
+                "soft",
+                "furry",
+                "smooth",
+                "wiry",
+                "short-haired",
+                "long-haired",
+                "curly"
+            ],
+            "distinctive_parts": [
+                "wagging tail",
+                "panting tongue",
+                "wet nose",
+                "claws on paws",
+                "whiskers on face"
+            ]
+        },
+        "tier1": {
+            "intro_templates": [
+                "It's a dog! Dogs bark! Can you imitate the sound a dog makes?",
+                "Look, a dog! It has soft fur. What color is it? ",
+                "A little dog! The dog likes to play. Is it big or small?",
+                "Hello, doggy! Let's learn about our furry friend! Can you point to its ears?",
+                "Wow, a dog! I like dogs. Do you like dogs? Let's see what it can do!"
+            ],
+            "facts": [
+                {
+                    "id": "dog_t1_f1",
+                    "text": "Dogs say 'woof woof' or 'ruff ruff'!",
+                    "category": "sound",
+                    "wonder_score": 3
+                },
+                {
+                    "id": "dog_t1_f2",
+                    "text": "Dogs have soft, furry coats that you can pet.",
+                    "category": "appearance",
+                    "wonder_score": 2
+                },
+                {
+                    "id": "dog_t1_f3",
+                    "text": "Dogs wag their tails when they are happy.",
+                    "category": "behavior",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "dog_t1_f4",
+                    "text": "Dogs walk on four legs and have a tail.",
+                    "category": "body",
+                    "wonder_score": 2
+                },
+                {
+                    "id": "dog_t1_f5",
+                    "text": "A dog's nose is always wet and cool to touch.",
+                    "category": "appearance",
+                    "wonder_score": 3
+                }
+            ],
+            "questions": [
+                {
+                    "id": "dog_t1_q1",
+                    "text": "What sound does a dog make?",
+                    "type": "sound",
+                    "expected_answer": "woof",
+                    "hint": "Listen! Woof woof!"
+                },
+                {
+                    "id": "dog_t1_q2",
+                    "text": "How many legs does a dog have?",
+                    "type": "counting",
+                    "expected_answer": "4",
+                    "hint": "Let's count together: 1, 2, 3, 4!"
+                },
+                {
+                    "id": "dog_t1_q3",
+                    "text": "What does a dog do with its tail when it's happy?",
+                    "type": "observation",
+                    "expected_answer": "wags it",
+                    "hint": "It moves it back and forth!"
+                },
+                {
+                    "id": "dog_t1_q4",
+                    "text": "What color is this dog?",
+                    "type": "color",
+                    "hint": "Look at its fur!"
+                },
+                {
+                    "id": "dog_t1_q5",
+                    "text": "Is a dog's nose wet or dry?",
+                    "type": "observation",
+                    "expected_answer": "wet",
+                    "hint": "Touch it gently!"
+                }
+            ]
+        },
+        "tier2": {
+            "intro_templates": [
+                "It's a dog! Dogs are great pets. Do you know that their sense of smell is extremely sensitive?",
+                "Look at this dog! Dogs have been best friends with humans for a very long time.",
+                "Here's a dog! Did you know dogs can understand our feelings? They're very smart friends.",
+                "Check out this dog! Dogs aren't just cute; they have amazing skills, like being super smellers!",
+                "Meet this dog! Dogs love to be part of a family. What do you think they like to do with us?"
+            ],
+            "facts": [
+                {
+                    "id": "dog_t2_f1",
+                    "text": "A dog's sense of smell is super powerful - much better than a human's!",
+                    "category": "ability",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "dog_t2_f2",
+                    "text": "Dogs love to play fetch! They will chase a ball and bring it back to you.",
+                    "category": "behavior",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "dog_t2_f3",
+                    "text": "Dogs pant with their tongues out to cool down when they are hot.",
+                    "category": "body_function",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "dog_t2_f4",
+                    "text": "Puppies are baby dogs. They are very small and like to sleep a lot.",
+                    "category": "life_cycle",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "dog_t2_f5",
+                    "text": "Dogs can understand some human words, especially their name and commands like 'sit'.",
+                    "category": "intelligence",
+                    "wonder_score": 5
+                }
+            ],
+            "questions": [
+                {
+                    "id": "dog_t2_q1",
+                    "text": "Why is a dog's nose so good at smelling?",
+                    "type": "reasoning",
+                    "hint": "Think about how they find hidden treats!"
+                },
+                {
+                    "id": "dog_t2_q2",
+                    "text": "What game do many dogs love to play with a ball?",
+                    "type": "knowledge",
+                    "expected_answer": "fetch",
+                    "hint": "Throw it, and they bring it back!"
+                },
+                {
+                    "id": "dog_t2_q3",
+                    "text": "Why does a dog stick out its tongue and pant?",
+                    "type": "why",
+                    "expected_answer": "to cool down",
+                    "hint": "What do you do when you feel hot?"
+                },
+                {
+                    "id": "dog_t2_q4",
+                    "text": "What is a baby dog called?",
+                    "type": "vocabulary",
+                    "expected_answer": "puppy",
+                    "hint": "It's a small, cute dog!"
+                },
+                {
+                    "id": "dog_t2_q5",
+                    "text": "Can a dog learn its name?",
+                    "type": "yes_no",
+                    "expected_answer": "yes",
+                    "hint": "What happens when you call a dog's name?"
+                }
+            ]
+        },
+        "tier3": {
+            "intro_templates": [
+                "It's a dog! Do you know that different breeds of dogs can perform different tasks?",
+                "Look at this dog! Dogs are not just good at sniffing out scents; they can also help us in many ways!",
+                "This is a dog. But long, long ago, its ancestors were wild. Let's explore how they became 'man's best friend'.",
+                "Here we have a dog. Each dog is unique, not just in looks, but even in its nose print! Let's discover more.",
+                "Consider this dog. It communicates a lot without barking, using its body. Can you read its signals?"
+            ],
+            "facts": [
+                {
+                    "id": "dog_t3_f1",
+                    "text": "Some dogs help people who cannot see. They are called guide dogs.",
+                    "category": "role",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "dog_t3_f2",
+                    "text": "Dogs communicate with their bodies. A wagging tail often means happy, but a tucked tail can mean scared.",
+                    "category": "communication",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "dog_t3_f3",
+                    "text": "Dogs are descended from wolves, but now they are our friends and live in our homes.",
+                    "category": "history",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "dog_t3_f4",
+                    "text": "A dog's whiskers help it feel things in the dark, like a cat's whiskers do.",
+                    "category": "body_function",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "dog_t3_f5",
+                    "text": "Just like people have fingerprints, every dog's nose has a unique pattern of bumps and lines!",
+                    "category": "uniqueness",
+                    "wonder_score": 5
+                }
+            ],
+            "questions": [
+                {
+                    "id": "dog_t3_q1",
+                    "text": "What are the names of the dogs that can help blind people?",
+                    "type": "application",
+                    "expected_answer": "Guide dog",
+                    "hint": "Think about crossing the street safely."
+                },
+                {
+                    "id": "dog_t3_q2",
+                    "text": "If a dog's tail is between its legs, how might it be feeling?",
+                    "type": "empathy",
+                    "expected_answer": "scared or nervous",
+                    "hint": "How do you act when you feel shy or afraid?"
+                },
+                {
+                    "id": "dog_t3_q3",
+                    "text": "What animal were dogs' great-great-great grandparents?",
+                    "type": "history",
+                    "expected_answer": "wolves",
+                    "hint": "They howl at the moon and live in packs."
+                },
+                {
+                    "id": "dog_t3_q4",
+                    "text": "Why are whiskers important for a dog?",
+                    "type": "why",
+                    "hint": "Think about walking in a dark room."
+                },
+                {
+                    "id": "dog_t3_q5",
+                    "text": "Is every dog's nose print the same, like our fingerprints?",
+                    "type": "comparison",
+                    "expected_answer": "no, each is unique",
+                    "hint": "Are your fingerprints the same as your friend's?"
+                }
+            ]
+        }
+    },
+    {
+        "id": "animals_cat",
+        "name": "Cat",
+        "aliases": [
+            "kitten",
+            "kitty",
+            "catty",
+            "feline"
+        ],
+        "domain": "animals",
+        "category": [
+            "animal",
+            "mammal",
+            "pet"
+        ],
+        "priority": 0,
+        "visual_features": {
+            "colors": [
+                "orange",
+                "black",
+                "white",
+                "gray",
+                "calico",
+                "tabby",
+                "brown",
+                "cream",
+                "tortoiseshell"
+            ],
+            "shapes": [
+                "four legs",
+                "tail",
+                "pointy ears",
+                "round head",
+                "whiskers",
+                "slit eyes",
+                "paws with pads",
+                "small nose"
+            ],
+            "size": "varies (from small to medium)",
+            "textures": [
+                "soft",
+                "furry",
+                "fluffy",
+                "smooth",
+                "short-haired",
+                "long-haired",
+                "silky"
+            ],
+            "distinctive_parts": [
+                "whiskers",
+                "retractable claws",
+                "rough tongue",
+                "padded paws",
+                "slit-shaped pupils"
+            ]
+        },
+        "tier1": {
+            "intro_templates": [
+                "It's a cat! Cats say 'meow'! Can you meow like a cat?",
+                "Look, a cat! It has soft fur. What color is it?",
+                "A little cat! The cat likes to sleep. Is it big or small?",
+                "Hello, kitty! Let's see our furry friend! Can you point to its tail?",
+                "Wow, a cat! I like cats. Do you like cats? Let's see what it does!"
+            ],
+            "facts": [
+                {
+                    "id": "cat_t1_f1",
+                    "text": "Cats say 'meow' and 'purr'.",
+                    "category": "sound",
+                    "wonder_score": 3
+                },
+                {
+                    "id": "cat_t1_f2",
+                    "text": "Cats have soft, furry coats.",
+                    "category": "appearance",
+                    "wonder_score": 2
+                },
+                {
+                    "id": "cat_t1_f3",
+                    "text": "Cats walk on four small feet.",
+                    "category": "body",
+                    "wonder_score": 2
+                },
+                {
+                    "id": "cat_t1_f4",
+                    "text": "Cats have long whiskers on their face.",
+                    "category": "appearance",
+                    "wonder_score": 3
+                },
+                {
+                    "id": "cat_t1_f5",
+                    "text": "Cats can climb up trees very well.",
+                    "category": "ability",
+                    "wonder_score": 4
+                }
+            ],
+            "questions": [
+                {
+                    "id": "cat_t1_q1",
+                    "text": "What sound does a cat make?",
+                    "type": "sound",
+                    "expected_answer": "meow",
+                    "hint": "Listen! Meow meow!"
+                },
+                {
+                    "id": "cat_t1_q2",
+                    "text": "How many legs does a cat have?",
+                    "type": "counting",
+                    "expected_answer": "4",
+                    "hint": "Let's count: 1, 2, 3, 4!"
+                },
+                {
+                    "id": "cat_t1_q3",
+                    "text": "What does a cat have on its face?",
+                    "type": "observation",
+                    "expected_answer": "whiskers",
+                    "hint": "Long hairs near its nose!"
+                },
+                {
+                    "id": "cat_t1_q4",
+                    "text": "What color is this cat?",
+                    "type": "color",
+                    "hint": "Look at its fur!"
+                },
+                {
+                    "id": "cat_t1_q5",
+                    "text": "Can cats climb trees?",
+                    "type": "yes_no",
+                    "expected_answer": "yes",
+                    "hint": "They have sharp claws!"
+                }
+            ]
+        },
+        "tier2": {
+            "intro_templates": [
+                "It's a cat! Cats are great pets. Do you know they can see well in the dark?",
+                "Look at this cat! Cats have been living with humans for thousands of years.",
+                "Here's a cat! Did you know cats use their whiskers to feel things around them?",
+                "Check out this cat! Cats aren't just cute; they are amazing jumpers and climbers!",
+                "Meet this cat! Cats like to be clean and groom themselves often. How do they do it?"
+            ],
+            "facts": [
+                {
+                    "id": "cat_t2_f1",
+                    "text": "Cats can see very well in the dark, much better than people can.",
+                    "category": "ability",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "cat_t2_f2",
+                    "text": "A cat's whiskers help it feel things and know if it can fit through spaces.",
+                    "category": "body_function",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "cat_t2_f3",
+                    "text": "Cats groom themselves by licking their fur with their rough tongues.",
+                    "category": "behavior",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "cat_t2_f4",
+                    "text": "Kittens are baby cats. They are born with their eyes closed.",
+                    "category": "life_cycle",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "cat_t2_f5",
+                    "text": "Cats can make more than 100 different sounds to communicate.",
+                    "category": "communication",
+                    "wonder_score": 5
+                }
+            ],
+            "questions": [
+                {
+                    "id": "cat_t2_q1",
+                    "text": "Why can cats see well in the dark?",
+                    "type": "reasoning",
+                    "hint": "Think about their eyes in dim light!"
+                },
+                {
+                    "id": "cat_t2_q2",
+                    "text": "What do cats use their whiskers for?",
+                    "type": "knowledge",
+                    "expected_answer": "to feel things",
+                    "hint": "They help know about space!"
+                },
+                {
+                    "id": "cat_t2_q3",
+                    "text": "How does a cat clean its fur?",
+                    "type": "how",
+                    "expected_answer": "by licking",
+                    "hint": "It uses its tongue!"
+                },
+                {
+                    "id": "cat_t2_q4",
+                    "text": "What is a baby cat called?",
+                    "type": "vocabulary",
+                    "expected_answer": "kitten",
+                    "hint": "It's a small, cute cat!"
+                },
+                {
+                    "id": "cat_t2_q5",
+                    "text": "Can cats make many different sounds?",
+                    "type": "yes_no",
+                    "expected_answer": "yes",
+                    "hint": "They meow, purr, hiss..."
+                }
+            ]
+        },
+        "tier3": {
+            "intro_templates": [
+                "It's a cat! Do you know that cats' ancestors lived in the wild and were great hunters?",
+                "Look at this cat! Cats have a special way of landing on their feet when they fall.",
+                "This is a cat. Its rough tongue has a special job when it grooms itself. Let's find out!",
+                "Here we have a cat. Cats can communicate with their tails and ears, not just their voices.",
+                "Consider this cat. Even though they are pets now, they still have some wild instincts."
+            ],
+            "facts": [
+                {
+                    "id": "cat_t3_f1",
+                    "text": "Cats have a special 'righting reflex' that helps them land on their feet when they fall.",
+                    "category": "ability",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "cat_t3_f2",
+                    "text": "A cat's rough tongue has tiny hooks that help it clean fur and get meat off bones.",
+                    "category": "body_function",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "cat_t3_f3",
+                    "text": "Cats' ancestors were wild animals that lived in Africa and the Middle East.",
+                    "category": "history",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "cat_t3_f4",
+                    "text": "When a cat's tail is puffed up, it is scared. When it is straight up, it is happy.",
+                    "category": "communication",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "cat_t3_f5",
+                    "text": "Just like snowflakes, every cat's nose has a unique pattern of bumps and ridges.",
+                    "category": "uniqueness",
+                    "wonder_score": 5
+                }
+                ,
+                {"id": "cat_t3_f6", "text": "A cat's pupils change shape with light: thin slits in the day, big and round at night.", "category": "ability", "wonder_score": 5},
+                {"id": "cat_t3_f7", "text": "Cats walk quietly because they have thick pads on their feet.", "category": "body", "wonder_score": 4},
+                {"id": "cat_t3_f8", "text": "A cat's whiskers can sense the environment, like a tiny ruler.", "category": "ability", "wonder_score": 4},
+                {"id": "cat_t3_f9", "text": "Cats love to eat fish and mice because these foods help their eyesight.", "category": "diet", "wonder_score": 5},
+                {"id": "cat_t3_f10", "text": "Cats rarely get hurt when falling from high places, thanks to their pads and balance.", "category": "ability", "wonder_score": 5}
+            ],
+            "questions": [
+                {
+                    "id": "cat_t3_q1",
+                    "text": "How do cats usually land when they fall from a height?",
+                    "type": "knowledge",
+                    "expected_answer": "on their feet",
+                    "hint": "They have a special reflex!"
+                },
+                {
+                    "id": "cat_t3_q2",
+                    "text": "Why is a cat's tongue rough like sandpaper?",
+                    "type": "why",
+                    "hint": "Think about grooming and eating!"
+                },
+                {
+                    "id": "cat_t3_q3",
+                    "text": "Where did the first pet cats come from long ago?",
+                    "type": "history",
+                    "hint": "A hot, dry part of the world."
+                },
+                {
+                    "id": "cat_t3_q4",
+                    "text": "If a cat's tail is puffed up like a brush, how does it feel?",
+                    "type": "empathy",
+                    "expected_answer": "scared",
+                    "hint": "It wants to look bigger!"
+                },
+                {
+                    "id": "cat_t3_q5",
+                    "text": "Are any two cats' nose prints exactly the same?",
+                    "type": "comparison",
+                    "expected_answer": "no",
+                    "hint": "Like our fingerprints!"
+                }
+                ,
+                {"id": "cat_t3_q6", "text": "Why do a cat's eyes look different in the day and at night?", "type": "why", "expected_answer": "To adapt to changes in light", "hint": "Think about bright and dark places."},
+                {"id": "cat_t3_q7", "text": "Why do cats walk so quietly?", "type": "why", "expected_answer": "They have soft pads on their feet", "hint": "Look at their soft paw pads."},
+                {"id": "cat_t3_q8", "text": "What is the function of a cat's whiskers?", "type": "what", "expected_answer": "To sense direction and measure width", "hint": "Like little antennas."},
+                {"id": "cat_t3_q9", "text": "What food do cats like best?", "type": "observation", "expected_answer": "Fish and mice", "hint": "Think about food that's good for their eyes."},
+                {"id": "cat_t3_q10", "text": "Why don't cats get hurt easily when jumping from high places?", "type": "why", "expected_answer": "Their pads absorb shock and their bodies keep balance", "hint": "They adjust their posture to land safely."}
+            ]
+        }
+    },
+    {
+        "id": "animals_rabbit",
+        "name": "Rabbit",
+        "aliases": [
+            "bunny",
+            "hare",
+            "cottontail"
+        ],
+        "domain": "animals",
+        "category": [
+            "animal",
+            "mammal"
+        ],
+        "priority": 0,
+        "visual_features": {
+            "colors": [
+                "white",
+                "brown",
+                "gray",
+                "black",
+                "spotted"
+            ],
+            "shapes": [
+                "four legs",
+                "long ears",
+                "round eyes",
+                "short nose",
+                "paws with pads",
+                "back legs longer"
+            ],
+            "size": "small to medium",
+            "textures": [
+                "soft",
+                "fluffy",
+                "short fur",
+                "long fur"
+            ],
+            "distinctive_parts": [
+                "long upright ears",
+                "cotton-ball tail",
+                "strong back legs",
+                "whiskers"
+            ]
+        },
+        "tier1": {
+            "intro_templates": [
+                "It's a rabbit! Rabbits hop-hop-hop. Can you hop too?",
+                "Look, a bunny! It has very long ears. Can you see them?",
+                "A fluffy rabbit! Its tail looks like a cotton ball.",
+                "Hello, bunny! It likes to nibble veggies. What color is it?",
+                "Wow, a rabbit! Let's count its ears and legs together."
+            ],
+            "facts": [
+                {
+                    "id": "rabbit_t1_f1",
+                    "text": "Rabbits have extra-long ears that stand up tall.",
+                    "category": "appearance",
+                    "wonder_score": 3
+                },
+                {
+                    "id": "rabbit_t1_f2",
+                    "text": "A rabbit moves with quick hops using its strong back legs.",
+                    "category": "behavior",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "rabbit_t1_f3",
+                    "text": "Rabbits have a tiny tail that looks like a cotton puff.",
+                    "category": "appearance",
+                    "wonder_score": 3
+                },
+                {
+                    "id": "rabbit_t1_f4",
+                    "text": "A rabbit's nose wiggles when it sniffs.",
+                    "category": "body",
+                    "wonder_score": 3
+                },
+                {
+                    "id": "rabbit_t1_f5",
+                    "text": "Rabbits love crunchy carrots and leafy greens.",
+                    "category": "food",
+                    "wonder_score": 2
+                }
+            ],
+            "questions": [
+                {
+                    "id": "rabbit_t1_q1",
+                    "text": "How does a rabbit move?",
+                    "type": "observation",
+                    "expected_answer": "hops",
+                    "hint": "Hop-hop-hop!"
+                },
+                {
+                    "id": "rabbit_t1_q2",
+                    "text": "How many ears does a rabbit have?",
+                    "type": "counting",
+                    "expected_answer": "2",
+                    "hint": "Two tall ears."
+                },
+                {
+                    "id": "rabbit_t1_q3",
+                    "text": "What shape is a rabbit's tail?",
+                    "type": "shape",
+                    "expected_answer": "round/cotton ball",
+                    "hint": "Like a tiny puff."
+                },
+                {
+                    "id": "rabbit_t1_q4",
+                    "text": "What food do rabbits like to nibble?",
+                    "type": "food",
+                    "expected_answer": "carrots/greens",
+                    "hint": "Orange crunchy veggie."
+                },
+                {
+                    "id": "rabbit_t1_q5",
+                    "text": "What wiggles on a rabbit's face when it smells?",
+                    "type": "observation",
+                    "expected_answer": "its nose",
+                    "hint": "Twitch-twitch."
+                }
+            ]
+        },
+        "tier2": {
+            "intro_templates": [
+                "It's a rabbit! Rabbits dig burrows to feel safe.",
+                "Look at this bunny! Its long ears help it listen for danger.",
+                "Here's a rabbit! It has big back legs for fast hops.",
+                "Check out this rabbit! It chews plants all day to stay healthy.",
+                "Meet this rabbit! It can turn its ears to catch sounds."
+            ],
+            "facts": [
+                {
+                    "id": "rabbit_t2_f1",
+                    "text": "Rabbits have strong back legs that let them leap far.",
+                    "category": "ability",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "rabbit_t2_f2",
+                    "text": "A rabbit's long ears can turn like little antennas to hear better.",
+                    "category": "body_function",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "rabbit_t2_f3",
+                    "text": "Rabbits chew plants because their teeth keep growing.",
+                    "category": "body_function",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "rabbit_t2_f4",
+                    "text": "Many rabbits sleep in burrows underground called warrens.",
+                    "category": "behavior",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "rabbit_t2_f5",
+                    "text": "Baby rabbits are born with closed eyes.",
+                    "category": "life_cycle",
+                    "wonder_score": 4
+                }
+            ],
+            "questions": [
+                {
+                    "id": "rabbit_t2_q1",
+                    "text": "Why do rabbits keep chewing plants?",
+                    "type": "why",
+                    "expected_answer": "teeth keep growing",
+                    "hint": "Chewing trims their teeth."
+                },
+                {
+                    "id": "rabbit_t2_q2",
+                    "text": "Why do rabbits move their long ears?",
+                    "type": "knowledge",
+                    "expected_answer": "to hear better/turn to sounds",
+                    "hint": "Like tiny radars."
+                },
+                {
+                    "id": "rabbit_t2_q3",
+                    "text": "Where do rabbits like to sleep to feel safe?",
+                    "type": "knowledge",
+                    "expected_answer": "burrows/warrens underground",
+                    "hint": "Tunnels in the ground."
+                },
+                {
+                    "id": "rabbit_t2_q4",
+                    "text": "Which legs are stronger on a rabbit?",
+                    "type": "comparison",
+                    "expected_answer": "back legs",
+                    "hint": "They power the big hop."
+                }
+            ]
+        },
+        "tier3": {
+            "intro_templates": [
+                "It's a rabbit! Its teeth never stop growing, so it must gnaw every day.",
+                "Look at this rabbit! Its big ears also help cool it down.",
+                "This is a rabbit. It thumps its back foot to warn friends.",
+                "Here we have a rabbit. Its eyes are on the sides to watch for danger.",
+                "Consider this rabbit. Its fur color helps it hide from predators."
+            ],
+            "facts": [
+                {
+                    "id": "rabbit_t3_f1",
+                    "text": "A rabbit's ears can release heat, working like natural fans.",
+                    "category": "body_function",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "rabbit_t3_f2",
+                    "text": "Rabbits thump their back feet to signal 'danger' to other rabbits.",
+                    "category": "communication",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "rabbit_t3_f3",
+                    "text": "Side-placed eyes give rabbits a wide view to spot sneaky predators.",
+                    "category": "body_function",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "rabbit_t3_f4",
+                    "text": "Many wild rabbits change fur shades to blend with seasons.",
+                    "category": "adaptation",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "rabbit_t3_f5",
+                    "text": "Rabbits are crepuscular, most active at dawn and dusk.",
+                    "category": "behavior",
+                    "wonder_score": 4
+                }
+                ,
+                {"id": "rabbit_t3_f6", "text": "A rabbit's long ears can turn to collect sounds and detect danger.", "category": "ability", "wonder_score": 5},
+                {"id": "rabbit_t3_f7", "text": "Rabbits get water from eating lots of fresh grass and leaves.", "category": "diet", "wonder_score": 4},
+                {"id": "rabbit_t3_f8", "text": "One of a rabbit's favorite vegetables is carrot.", "category": "diet", "wonder_score": 3},
+                {"id": "rabbit_t3_f9", "text": "Rabbits have long, strong back legs and can run very fast.", "category": "body", "wonder_score": 4},
+                {"id": "rabbit_t3_f10", "text": "Rabbits have a split upper lip (three-part mouth) that helps them nibble grass and veggies.", "category": "body", "wonder_score": 4}
+            ],
+            "questions": [
+                {
+                    "id": "rabbit_t3_q1",
+                    "text": "How can rabbit ears help in hot weather?",
+                    "type": "application",
+                    "expected_answer": "release heat/cool them",
+                    "hint": "Like little radiators."
+                },
+                {
+                    "id": "rabbit_t3_q2",
+                    "text": "What does a rabbit thump mean?",
+                    "type": "empathy",
+                    "expected_answer": "a warning/danger signal",
+                    "hint": "A loud foot drum to alert friends."
+                },
+                {
+                    "id": "rabbit_t3_q3",
+                    "text": "Why are a rabbit's eyes on the sides?",
+                    "type": "why",
+                    "expected_answer": "to see wide for predators",
+                    "hint": "A big side-to-side view."
+                },
+                {
+                    "id": "rabbit_t3_q4",
+                    "text": "How does fur color help a rabbit?",
+                    "type": "reasoning",
+                    "expected_answer": "camouflage/hide",
+                    "hint": "Blends into grass or snow."
+                },
+                {
+                    "id": "rabbit_t3_q5",
+                    "text": "When are rabbits most active?",
+                    "type": "knowledge",
+                    "expected_answer": "dawn and dusk",
+                    "hint": "Soft light times."
+                }
+                ,
+                {"id": "rabbit_t3_q6", "text": "Why are a rabbit's ears so long?", "type": "why", "expected_answer": "To hear better and help cool off", "hint": "They help hear distant sounds."},
+                {"id": "rabbit_t3_q7", "text": "Why do rabbits rarely drink water directly?", "type": "why", "expected_answer": "Their food contains lots of water", "hint": "They mostly eat fresh grass and veggies."},
+                {"id": "rabbit_t3_q8", "text": "What vegetable do rabbits like best?", "type": "observation", "expected_answer": "Carrot", "hint": "A long orange vegetable."},
+                {"id": "rabbit_t3_q9", "text": "Why can rabbits run so fast?", "type": "why", "expected_answer": "Their back legs are long and strong", "hint": "Watch how they jump."},
+                {"id": "rabbit_t3_q10", "text": "What is the benefit of a rabbit's split upper lip?", "type": "why", "expected_answer": "It helps them nibble grass and food", "hint": "It moves a lot when eating."}
+            ]
+        }
+    },
+    {
+        "id": "animals_elephant",
+        "name": "Elephant",
+        "aliases": [
+            "elephant",
+            "ellie",
+            "pachyderm"
+        ],
+        "domain": "animals",
+        "category": [
+            "animal",
+            "mammal"
+        ],
+        "priority": 0,
+        "visual_features": {
+            "colors": [
+                "gray",
+                "dusty brown"
+            ],
+            "shapes": [
+                "four thick legs",
+                "very large body",
+                "long trunk",
+                "big ears",
+                "tiny tail",
+                "curved tusks"
+            ],
+            "size": "very large",
+            "textures": [
+                "wrinkled skin",
+                "rough",
+                "sparse hair"
+            ],
+            "distinctive_parts": [
+                "trunk",
+                "tusks",
+                "fan-like ears",
+                "big round feet",
+                "small eyes"
+            ]
+        },
+        "tier1": {
+            "intro_templates": [
+                "It's an elephant! Look at its long trunk. Can you pretend to swing a trunk?",
+                "Wow, an elephant! It's huge. Is it bigger than a car?",
+                "Hello, elephant! Its ears are like big fans. Can you flap your arms like ears?",
+                "A giant elephant! It has tusks like curved teeth. Can you spot them?",
+                "An elephant friend! Its feet go stomp-stomp. Can you make a stomp sound?"
+            ],
+            "facts": [
+                {
+                    "id": "elephant_t1_f1",
+                    "text": "Elephants have a long trunk they use like a super arm.",
+                    "category": "body",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "elephant_t1_f2",
+                    "text": "An elephant is one of the biggest land animals.",
+                    "category": "size",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "elephant_t1_f3",
+                    "text": "Elephants have big ears shaped like giant leaves.",
+                    "category": "appearance",
+                    "wonder_score": 3
+                },
+                {
+                    "id": "elephant_t1_f4",
+                    "text": "An elephant's feet make loud stomps when it walks.",
+                    "category": "sound",
+                    "wonder_score": 3
+                },
+                {
+                    "id": "elephant_t1_f5",
+                    "text": "Elephants like to spray water with their trunks.",
+                    "category": "behavior",
+                    "wonder_score": 4
+                }
+            ],
+            "questions": [
+                {
+                    "id": "elephant_t1_q1",
+                    "text": "What is the elephant's long nose called?",
+                    "type": "vocabulary",
+                    "expected_answer": "trunk",
+                    "hint": "It swings and sprays water."
+                },
+                {
+                    "id": "elephant_t1_q2",
+                    "text": "Is an elephant big or small?",
+                    "type": "comparison",
+                    "expected_answer": "big",
+                    "hint": "Bigger than a car!"
+                },
+                {
+                    "id": "elephant_t1_q3",
+                    "text": "What shape are an elephant's ears like?",
+                    "type": "shape",
+                    "expected_answer": "big fans/leaves",
+                    "hint": "Wave your arms!"
+                },
+                {
+                    "id": "elephant_t1_q4",
+                    "text": "What sound do elephant feet make when walking?",
+                    "type": "sound",
+                    "expected_answer": "stomp",
+                    "hint": "Heavy steps."
+                },
+                {
+                    "id": "elephant_t1_q5",
+                    "text": "What does an elephant do with water?",
+                    "type": "behavior",
+                    "expected_answer": "sprays it",
+                    "hint": "Splash from its trunk."
+                }
+            ]
+        },
+        "tier2": {
+            "intro_templates": [
+                "It's an elephant! Its trunk can pick up tiny things and big logs.",
+                "Look at this elephant! Its ears help it cool down.",
+                "Here's an elephant! It lives in families called herds.",
+                "Check out this elephant! It uses tusks to dig and move branches.",
+                "Meet this elephant! It can drink lots of water at once."
+            ],
+            "facts": [
+                {
+                    "id": "elephant_t2_f1",
+                    "text": "An elephant's trunk has thousands of muscles, strong enough to lift logs.",
+                    "category": "ability",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "elephant_t2_f2",
+                    "text": "Elephants flap big ears to cool their bodies like fans.",
+                    "category": "body_function",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "elephant_t2_f3",
+                    "text": "Elephants live in herds led often by an older female called a matriarch.",
+                    "category": "social",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "elephant_t2_f4",
+                    "text": "Tusks are long teeth; elephants use them to dig for water and bark.",
+                    "category": "body_function",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "elephant_t2_f5",
+                    "text": "Baby elephants are called calves and drink milk from their mothers.",
+                    "category": "life_cycle",
+                    "wonder_score": 4
+                }
+            ],
+            "questions": [
+                {
+                    "id": "elephant_t2_q1",
+                    "text": "How do elephants cool their big bodies?",
+                    "type": "why",
+                    "expected_answer": "flap ears like fans",
+                    "hint": "Wave the ears."
+                },
+                {
+                    "id": "elephant_t2_q2",
+                    "text": "What are elephant tusks and what do they do?",
+                    "type": "application",
+                    "expected_answer": "long teeth used to dig/move things",
+                    "hint": "Curved tools on the face."
+                },
+                {
+                    "id": "elephant_t2_q3",
+                    "text": "How strong is an elephant's trunk?",
+                    "type": "knowledge",
+                    "expected_answer": "can lift heavy logs/pick tiny things",
+                    "hint": "Super-strong nose-arm."
+                }
+            ]
+        },
+        "tier3": {
+            "intro_templates": [
+                "It's an elephant! It can feel sounds through the ground with its feet.",
+                "Look at this elephant! It remembers water holes for years.",
+                "This is an elephant. Its deep rumbles travel far, like secret calls.",
+                "Here we have an elephant. Its skin wrinkles help keep moisture.",
+                "Consider this elephant. It uses mud baths like sunscreen."
+            ],
+            "facts": [
+                {
+                    "id": "elephant_t3_f1",
+                    "text": "Elephants can sense low sounds through their feet, almost like hearing with the ground.",
+                    "category": "communication",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "elephant_t3_f2",
+                    "text": "Elephants remember safe paths and water spots for many years.",
+                    "category": "intelligence",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "elephant_t3_f3",
+                    "text": "Their rumbles are so low humans might not hear, but other elephants do far away.",
+                    "category": "communication",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "elephant_t3_f4",
+                    "text": "Wrinkled skin holds water and mud, helping elephants stay cool.",
+                    "category": "adaptation",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "elephant_t3_f5",
+                    "text": "A mud bath works like sunscreen and bug spray for elephants.",
+                    "category": "behavior",
+                    "wonder_score": 4
+                }
+            ],
+            "questions": [
+                {
+                    "id": "elephant_t3_q1",
+                    "text": "How can elephants feel sounds without using ears?",
+                    "type": "application",
+                    "expected_answer": "through feet/ground vibrations",
+                    "hint": "They 'listen' with their feet."
+                },
+                {
+                    "id": "elephant_t3_q2",
+                    "text": "Why do elephants take mud baths?",
+                    "type": "why",
+                    "expected_answer": "to cool and block sun/bugs",
+                    "hint": "Mud is nature's sunscreen."
+                },
+                {
+                    "id": "elephant_t3_q3",
+                    "text": "What helps elephants remember where water is?",
+                    "type": "reasoning",
+                    "expected_answer": "strong memory",
+                    "hint": "They never forget!"
+                },
+                {
+                    "id": "elephant_t3_q4",
+                    "text": "How far can elephant rumbles travel?",
+                    "type": "knowledge",
+                    "expected_answer": "very far/long distance",
+                    "hint": "Secret long-distance calls."
+                },
+                {
+                    "id": "elephant_t3_q5",
+                    "text": "Why does wrinkled skin help elephants?",
+                    "type": "why",
+                    "expected_answer": "holds water/mud to keep cool",
+                    "hint": "Tiny folds trap moisture."
+                }
+            ]
+        }
+    },
+    {
+        "id": "animals_lion",
+        "name": "Lion",
+        "aliases": [
+            "lion",
+            "big cat",
+            "king of the jungle"
+        ],
+        "domain": "animals",
+        "category": [
+            "animal",
+            "mammal",
+            "carnivore"
+        ],
+        "priority": 0,
+        "visual_features": {
+            "colors": [
+                "golden",
+                "tan",
+                "light brown"
+            ],
+            "shapes": [
+                "four legs",
+                "muscular body",
+                "long tail with tuft",
+                "round ears",
+                "broad face"
+            ],
+            "size": "large",
+            "textures": [
+                "short fur",
+                "coarse mane"
+            ],
+            "distinctive_parts": [
+                "mane on males",
+                "tail tuft",
+                "big paws",
+                "sharp claws",
+                "strong jaws"
+            ]
+        },
+        "tier1": {
+            "intro_templates": [
+                "It's a lion! Lions roar loudly. Can you roar like a lion?",
+                "Look, a lion! It has a fluffy mane. Do you see the mane?",
+                "A big lion! Its tail ends with a cute tuft of hair.",
+                "Hello, lion! It walks with big paws. Can you stomp like it?",
+                "Wow, a lion! People call it the king of the jungle."
+            ],
+            "facts": [
+                {
+                    "id": "lion_t1_f1",
+                    "text": "Lions can roar so loud you can hear it far away.",
+                    "category": "sound",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "lion_t1_f2",
+                    "text": "Male lions have a mane, a big fluffy collar of hair.",
+                    "category": "appearance",
+                    "wonder_score": 3
+                },
+                {
+                    "id": "lion_t1_f3",
+                    "text": "A lion's tail ends with a furry tuft.",
+                    "category": "appearance",
+                    "wonder_score": 2
+                },
+                {
+                    "id": "lion_t1_f4",
+                    "text": "Lions walk on four strong legs with big paws.",
+                    "category": "body",
+                    "wonder_score": 2
+                },
+                {
+                    "id": "lion_t1_f5",
+                    "text": "Lion cubs are playful and chase each other's tails.",
+                    "category": "behavior",
+                    "wonder_score": 3
+                }
+            ],
+            "questions": [
+                {
+                    "id": "lion_t1_q1",
+                    "text": "What loud sound does a lion make?",
+                    "type": "sound",
+                    "expected_answer": "roar",
+                    "hint": "Roaaar!"
+                },
+                {
+                    "id": "lion_t1_q2",
+                    "text": "What is the fluffy hair around a male lion's head called?",
+                    "type": "vocabulary",
+                    "expected_answer": "mane",
+                    "hint": "Like a big collar."
+                },
+                {
+                    "id": "lion_t1_q3",
+                    "text": "How many legs does a lion have?",
+                    "type": "counting",
+                    "expected_answer": "4",
+                    "hint": "Four paws."
+                },
+                {
+                    "id": "lion_t1_q4",
+                    "text": "What is at the end of a lion's tail?",
+                    "type": "observation",
+                    "expected_answer": "a tuft of hair",
+                    "hint": "A tiny brush."
+                }
+            ]
+        },
+        "tier2": {
+            "intro_templates": [
+                "It's a lion! Lions live in groups called prides.",
+                "Look at this lion! Its roar can warn others away.",
+                "Here's a lion! Lions rest many hours in the day.",
+                "Check out this lion! Lionesses hunt together.",
+                "Meet this lion! Its mane can make it look bigger."
+            ],
+            "facts": [
+                {
+                    "id": "lion_t2_f1",
+                    "text": "Lions live in social groups called prides.",
+                    "category": "social",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "lion_t2_f2",
+                    "text": "A lion's roar can travel several kilometers.",
+                    "category": "ability",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "lion_t2_f3",
+                    "text": "Lionesses often hunt together to catch food.",
+                    "category": "behavior",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "lion_t2_f4",
+                    "text": "Lions rest up to 20 hours a day to save energy.",
+                    "category": "behavior",
+                    "wonder_score": 3
+                },
+                {
+                    "id": "lion_t2_f5",
+                    "text": "A mane can protect a male lion's neck during fights.",
+                    "category": "body_function",
+                    "wonder_score": 4
+                }
+            ],
+            "questions": [
+                {
+                    "id": "lion_t2_q1",
+                    "text": "What is a lion family group called?",
+                    "type": "knowledge",
+                    "expected_answer": "pride",
+                    "hint": "Rhymes with 'ride'."
+                },
+                {
+                    "id": "lion_t2_q2",
+                    "text": "How far can a lion's roar be heard?",
+                    "type": "reasoning",
+                    "expected_answer": "far/several kilometers",
+                    "hint": "Farther than a playground."
+                },
+                {
+                    "id": "lion_t2_q3",
+                    "text": "Who usually leads the lion group in hunting? Male lion or female lion?",
+                    "type": "knowledge",
+                    "expected_answer": "lionesses/females",
+                    "hint": "The mothers team up."
+                },
+                {
+                    "id": "lion_t2_q4",
+                    "text": "Why do lions sleep so much?",
+                    "type": "why",
+                    "expected_answer": "save energy for hunting",
+                    "hint": "Rest to be strong."
+                },
+                {
+                    "id": "lion_t2_q5",
+                    "text": "What does a mane help protect?",
+                    "type": "application",
+                    "expected_answer": "neck",
+                    "hint": "Around the throat area."
+                }
+            ]
+        },
+        "tier3": {
+            "intro_templates": [
+                "It's a lion! Its mane can show age and strength.",
+                "Look at this lion! Prides share food with cubs first.",
+                "This is a lion. Its roar is like a long-distance message.",
+                "Here we have a lion. Its tail tuft can help signal moves.",
+                "Consider this lion. Lions work together like a team."
+            ],
+            "facts": [
+                {
+                    "id": "lion_t3_f1",
+                    "text": "Darker, fuller manes can signal a stronger or older male lion.",
+                    "category": "communication",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "lion_t3_f2",
+                    "text": "In a pride, cubs often get to eat first to grow strong.",
+                    "category": "social",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "lion_t3_f3",
+                    "text": "A lion's roar helps tell other lions: 'This is our space.'",
+                    "category": "communication",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "lion_t3_f4",
+                    "text": "Lions flick tails and body-posture to signal when to move or chase.",
+                    "category": "communication",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "lion_t3_f5",
+                    "text": "Team hunting lets lions bring down larger prey than one lion could alone.",
+                    "category": "strategy",
+                    "wonder_score": 4
+                }
+            ],
+            "questions": [
+                {
+                    "id": "lion_t3_q1",
+                    "text": "What can a dark mane tell other lions?",
+                    "type": "application",
+                    "expected_answer": "strong/older male",
+                    "hint": "Like a badge of strength."
+                },
+                {
+                    "id": "lion_t3_q2",
+                    "text": "Who eats first in many prides?Adult lion or lion cub?",
+                    "type": "knowledge",
+                    "expected_answer": "cubs",
+                    "hint": "Smallest mouths first."
+                },
+                {
+                    "id": "lion_t3_q3",
+                    "text": "What message does a lion roar send?",
+                    "type": "reasoning",
+                    "expected_answer": "claiming space/territory",
+                    "hint": "Saying 'this is ours'."
+                },
+                {
+                    "id": "lion_t3_q4",
+                    "text": "How do lions signal each other during a hunt?",
+                    "type": "application",
+                    "expected_answer": "tail flicks/body posture",
+                    "hint": "Watch the tails move."
+                },
+                {
+                    "id": "lion_t3_q5",
+                    "text": "Why do lions hunt together?",
+                    "type": "why",
+                    "expected_answer": "to catch bigger prey",
+                    "hint": "Team power."
+                }
+            ]
+        }
+    },
+    {
+        "id": "animals_tiger",
+        "name": "Tiger",
+        "aliases": [
+            "tiger",
+            "big cat",
+            "striped cat"
+        ],
+        "domain": "animals",
+        "category": [
+            "animal",
+            "mammal",
+            "carnivore"
+        ],
+        "priority": 0,
+        "visual_features": {
+            "colors": [
+                "orange",
+                "white",
+                "black"
+            ],
+            "shapes": [
+                "four legs",
+                "muscular body",
+                "long tail",
+                "round ears",
+                "broad head"
+            ],
+            "size": "large",
+            "textures": [
+                "striped fur",
+                "soft",
+                "thick coat"
+            ],
+            "distinctive_parts": [
+                "black stripes",
+                "white belly",
+                "long whiskers",
+                "powerful shoulders"
+            ]
+        },
+        "tier1": {
+            "intro_templates": [
+                "It's a tiger! Look at its black stripes. Can you count some?",
+                "Wow, a tiger! It is big and orange. What color are the stripes?",
+                "Hello, tiger! It moves quietly. Can you tiptoe like it?",
+                "A strong tiger! It has a long tail. Can you spot it?",
+                "A tiger friend! Tigers growl. Can you make a low growl?"
+            ],
+            "facts": [
+                {
+                    "id": "tiger_t1_f1",
+                    "text": "Tigers have bold black stripes on orange fur with a white belly.",
+                    "category": "appearance",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "tiger_t1_f2",
+                    "text": "Each tiger has a unique stripe pattern like a fingerprint.",
+                    "category": "uniqueness",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "tiger_t1_f3",
+                    "text": "Tigers walk on four strong legs and have big paws.",
+                    "category": "body",
+                    "wonder_score": 2
+                },
+                {
+                    "id": "tiger_t1_f4",
+                    "text": "Tigers can growl and roar with deep voices.",
+                    "category": "sound",
+                    "wonder_score": 3
+                },
+                {
+                    "id": "tiger_t1_f5",
+                    "text": "Tiger cubs play and practice pouncing.",
+                    "category": "behavior",
+                    "wonder_score": 3
+                }
+            ],
+            "questions": [
+                {
+                    "id": "tiger_t1_q1",
+                    "text": "What pattern is on a tiger's fur?",
+                    "type": "observation",
+                    "expected_answer": "stripes",
+                    "hint": "Lines of black."
+                },
+                {
+                    "id": "tiger_t1_q2",
+                    "text": "How many legs does a tiger have?",
+                    "type": "counting",
+                    "expected_answer": "4",
+                    "hint": "Four big paws."
+                },
+                {
+                    "id": "tiger_t1_q3",
+                    "text": "What sound can a tiger make?",
+                    "type": "sound",
+                    "expected_answer": "growl/roar",
+                    "hint": "Low and loud."
+                },
+                {
+                    "id": "tiger_t1_q4",
+                    "text": "What color is a tiger's belly?",
+                    "type": "color",
+                    "expected_answer": "white",
+                    "hint": "Lighter than its back."
+                }
+            ]
+        },
+        "tier2": {
+            "intro_templates": [
+                "It's a tiger! Tigers are powerful solo hunters.",
+                "Look at this tiger! Its stripes help it hide in tall grass.",
+                "Here's a tiger! It loves to swim more than most big cats.",
+                "Check out this tiger! It has strong jaws for biting.",
+                "Meet this tiger! It marks territory with scent scratches."
+            ],
+            "facts": [
+                {
+                    "id": "tiger_t2_f1",
+                    "text": "Tigers are solitary hunters that usually hunt alone.",
+                    "category": "behavior",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "tiger_t2_f2",
+                    "text": "Stripes help tigers blend with shadows in grass and forests.",
+                    "category": "adaptation",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "tiger_t2_f3",
+                    "text": "Tigers are strong swimmers and enjoy water.",
+                    "category": "behavior",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "tiger_t2_f4",
+                    "text": "A tiger's jaws and teeth are built to bite through thick hides.",
+                    "category": "body_function",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "tiger_t2_f5",
+                    "text": "Tiger cubs are born blind and depend on their mother.",
+                    "category": "life_cycle",
+                    "wonder_score": 4
+                }
+            ],
+            "questions": [
+                {
+                    "id": "tiger_t2_q1",
+                    "text": "Do tigers usually hunt alone or in groups?",
+                    "type": "knowledge",
+                    "expected_answer": "alone",
+                    "hint": "Solo hunters."
+                },
+                {
+                    "id": "tiger_t2_q2",
+                    "text": "How do stripes help a tiger?",
+                    "type": "reasoning",
+                    "expected_answer": "camouflage/hide",
+                    "hint": "They blend with grass shadows."
+                },
+                {
+                    "id": "tiger_t2_q3",
+                    "text": "Can tigers swim?",
+                    "type": "yes_no",
+                    "expected_answer": "yes",
+                    "hint": "They swim well."
+                },
+                {
+                    "id": "tiger_t2_q4",
+                    "text": "What part makes a tiger's bite powerful?",
+                    "type": "application",
+                    "expected_answer": "strong jaws/teeth",
+                    "hint": "Big mouth muscles."
+                },
+                {
+                    "id": "tiger_t2_q5",
+                    "text": "How are tiger cubs when they are born?",
+                    "type": "knowledge",
+                    "expected_answer": "blind",
+                    "hint": "Eyes closed at first."
+                }
+            ]
+        },
+        "tier3": {
+            "intro_templates": [
+                "It's a tiger! Its stripe pattern is unique like a barcode.",
+                "Look at this tiger! It uses scent and scratches to say 'this is my place'.",
+                "This is a tiger. Its deep chuff sound is a friendly greeting.",
+                "Here we have a tiger. Its whiskers help judge spaces in the dark.",
+                "Consider this tiger. It swims to cool off and sneak on prey."
+            ],
+            "facts": [
+                {
+                    "id": "tiger_t3_f1",
+                    "text": "No two tigers have the same stripe pattern, even on their skin.",
+                    "category": "uniqueness",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "tiger_t3_f2",
+                    "text": "Tigers use scent marks and tree scratches to map their territory.",
+                    "category": "communication",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "tiger_t3_f3",
+                    "text": "Long whiskers help tigers sense space, handy in the dark.",
+                    "category": "body_function",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "tiger_t3_f4",
+                    "text": "Swimming lets tigers cool down and get closer to prey quietly.",
+                    "category": "strategy",
+                    "wonder_score": 4
+                }
+            ],
+            "questions": [
+                {
+                    "id": "tiger_t3_q1",
+                    "text": "Are tiger stripes the same on every tiger?",
+                    "type": "comparison",
+                    "expected_answer": "no, each is unique",
+                    "hint": "Like fingerprints."
+                },
+                {
+                    "id": "tiger_t3_q2",
+                    "text": "How does a tiger say 'this is my area'?",
+                    "type": "application",
+                    "expected_answer": "scent marks/scratches",
+                    "hint": "Claw marks on trees."
+                },
+                {
+                    "id": "tiger_t3_q3",
+                    "text": "Why are whiskers useful to a tiger at night?",
+                    "type": "reasoning",
+                    "expected_answer": "sense space/avoid bumping",
+                    "hint": "Feel the path."
+                },
+                {
+                    "id": "tiger_t3_q4",
+                    "text": "Why might a tiger swim during a hunt?",
+                    "type": "why",
+                    "expected_answer": "to cool and sneak closer",
+                    "hint": "Quiet water approach."
+                }
+            ]
+        }
+    },
+    {
+        "id": "animals_giraffe",
+        "name": "Giraffe",
+        "aliases": [
+            "tall animal",
+            "long neck",
+            "spotted animal"
+        ],
+        "domain": "animals",
+        "category": [
+            "animal",
+            "mammal",
+            "wild animal"
+        ],
+        "priority": 0,
+        "visual_features": {
+            "colors": [
+                "brown",
+                "orange",
+                "yellow",
+                "white",
+                "tan"
+            ],
+            "shapes": [
+                "very long neck",
+                "four long legs",
+                "tail with tassel",
+                "two small horns",
+                "large body",
+                "triangular head"
+            ],
+            "size": "very tall (tallest animal in the world)",
+            "textures": [
+                "furry",
+                "short-haired",
+                "spotted",
+                "rough"
+            ],
+            "distinctive_parts": [
+                "long neck",
+                "spotted pattern",
+                "long legs",
+                "two small horns",
+                "long dark tongue"
+            ]
+        },
+        "tier1": {
+            "intro_templates": [
+                "It's a giraffe! Look at its long neck!",
+                "Wow, a giraffe! It is so tall. Can you see its spots?",
+                "A tall giraffe! It has a long neck and long legs.",
+                "Hello, giraffe! It has a cute tail with hair on the end.",
+                "Look up high! A giraffe eats leaves from trees."
+            ],
+            "facts": [
+                {
+                    "id": "giraffe_t1_f1",
+                    "text": "Giraffes are the tallest animals in the world.",
+                    "category": "size",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "giraffe_t1_f2",
+                    "text": "Giraffes have long necks and long legs.",
+                    "category": "appearance",
+                    "wonder_score": 3
+                },
+                {
+                    "id": "giraffe_t1_f3",
+                    "text": "Giraffes have brown spots on their bodies.",
+                    "category": "appearance",
+                    "wonder_score": 2
+                },
+                {
+                    "id": "giraffe_t1_f4",
+                    "text": "Giraffes eat leaves from tall trees.",
+                    "category": "diet",
+                    "wonder_score": 3
+                },
+                {
+                    "id": "giraffe_t1_f5",
+                    "text": "Giraffes walk with a slow, swaying gait.",
+                    "category": "movement",
+                    "wonder_score": 3
+                }
+            ],
+            "questions": [
+                {
+                    "id": "giraffe_t1_q1",
+                    "text": "What is special about a giraffe's neck?",
+                    "type": "observation",
+                    "expected_answer": "very long",
+                    "hint": "It can reach high trees!"
+                },
+                {
+                    "id": "giraffe_t1_q2",
+                    "text": "How many legs does a giraffe have?",
+                    "type": "counting",
+                    "expected_answer": "4",
+                    "hint": "Count them: 1, 2, 3, 4!"
+                },
+                {
+                    "id": "giraffe_t1_q3",
+                    "text": "What color are giraffe's spots?",
+                    "type": "color",
+                    "expected_answer": "brown",
+                    "hint": "They are darker than their body!"
+                },
+                {
+                    "id": "giraffe_t1_q4",
+                    "text": "What do giraffes eat?",
+                    "type": "knowledge",
+                    "expected_answer": "leaves",
+                    "hint": "They eat from high trees!"
+                },
+                {
+                    "id": "giraffe_t1_q5",
+                    "text": "Are giraffes tall or short?",
+                    "type": "comparison",
+                    "expected_answer": "tall",
+                    "hint": "They are the tallest animals!"
+                }
+            ]
+        },
+        "tier2": {
+            "intro_templates": [
+                "It's a giraffe! Do you know why it has such a long neck?",
+                "Look at this giraffe! Its tongue is very special. It's long and dark!",
+                "Here's a giraffe! Did you know giraffes only need to sleep a little bit?",
+                "Check out this giraffe! Even baby giraffes are very tall when they are born!",
+                "Meet this giraffe! It uses its long neck to look out for danger."
+            ],
+            "facts": [
+                {
+                    "id": "giraffe_t2_f1",
+                    "text": "A giraffe's tongue is very long and dark purple, perfect for grabbing leaves.",
+                    "category": "body_function",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "giraffe_t2_f2",
+                    "text": "Giraffes only need to sleep for about 30 minutes a day, often standing up.",
+                    "category": "behavior",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "giraffe_t2_f3",
+                    "text": "A baby giraffe is called a calf, and it can stand up just one hour after birth.",
+                    "category": "life_cycle",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "giraffe_t2_f4",
+                    "text": "Giraffes have big hearts to pump blood all the way up their long necks.",
+                    "category": "body_function",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "giraffe_t2_f5",
+                    "text": "Each giraffe has a unique pattern of spots, like our fingerprints.",
+                    "category": "uniqueness",
+                    "wonder_score": 4
+                }
+            ],
+            "questions": [
+                {
+                    "id": "giraffe_t2_q1",
+                    "text": "Why is a giraffe's tongue long and dark?",
+                    "type": "reasoning",
+                    "hint": "Think about reaching leaves in the sun!"
+                },
+                {
+                    "id": "giraffe_t2_q2",
+                    "text": "How long do giraffes sleep each day?",
+                    "type": "knowledge",
+                    "expected_answer": "about 30 minutes",
+                    "hint": "A very short time!"
+                },
+                {
+                    "id": "giraffe_t2_q3",
+                    "text": "What is a baby giraffe called?",
+                    "type": "vocabulary",
+                    "expected_answer": "calf",
+                    "hint": "Like a baby cow!"
+                },
+                {
+                    "id": "giraffe_t2_q4",
+                    "text": "Why do giraffes need such big hearts?",
+                    "type": "why",
+                    "hint": "Think about their long necks!"
+                },
+                {
+                    "id": "giraffe_t2_q5",
+                    "text": "Are all giraffe spot patterns the same?",
+                    "type": "comparison",
+                    "expected_answer": "no",
+                    "hint": "Each one is special!"
+                }
+            ]
+        },
+        "tier3": {
+            "intro_templates": [
+                "It's a giraffe! Did you know that despite its long neck, it has the same number of neck bones as we do?",
+                "Look at this giraffe! Their long necks are not just for eating; they also help them spot predators from far away.",
+                "This is a giraffe. They have a special way of drinking water that requires them to spread their legs wide.",
+                "Here we have a giraffe. Even though they are so tall, they can run very fast when they need to.",
+                "Consider this giraffe. Their spots are not just for show; they help them hide in the sunlight and shadows of trees."
+            ],
+            "facts": [
+                {
+                    "id": "giraffe_t3_f1",
+                    "text": "Giraffes have only seven bones in their neck, the same number as humans, but each bone is much longer.",
+                    "category": "anatomy",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "giraffe_t3_f2",
+                    "text": "When a giraffe drinks water, it must spread its front legs wide apart to reach the ground.",
+                    "category": "behavior",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "giraffe_t3_f3",
+                    "text": "Giraffes can run up to 35 miles per hour for short distances, which is as fast as a car in the city.",
+                    "category": "ability",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "giraffe_t3_f4",
+                    "text": "The spots on a giraffe's skin help to camouflage them in the patterns of sunlight and shadows in the trees.",
+                    "category": "adaptation",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "giraffe_t3_f5",
+                    "text": "Giraffes use their long necks to engage in 'necking' fights, where they swing their necks to hit each other.",
+                    "category": "behavior",
+                    "wonder_score": 4
+                }
+            ],
+            "questions": [
+                {
+                    "id": "giraffe_t3_q1",
+                    "text": "How many neck bones do giraffes have compared to humans?",
+                    "type": "comparison",
+                    "expected_answer": "same number",
+                    "hint": "Seven, but much longer!"
+                },
+                {
+                    "id": "giraffe_t3_q2",
+                    "text": "What does a giraffe do with its legs when it drinks water?",
+                    "type": "observation",
+                    "hint": "It has to bend down low!"
+                },
+                {
+                    "id": "giraffe_t3_q3",
+                    "text": "How fast can a giraffe run when it is scared?",
+                    "type": "knowledge",
+                    "hint": "As fast as a slow car!"
+                },
+                {
+                    "id": "giraffe_t3_q4",
+                    "text": "Why do giraffes have spot patterns on their skin?",
+                    "type": "why",
+                    "hint": "Think about hiding in the trees!"
+                },
+                {
+                    "id": "giraffe_t3_q5",
+                    "text": "What might two male giraffes do with their long necks when they are competing?",
+                    "type": "application",
+                    "hint": "They might fight by swinging them!"
+                }
+            ]
+        }
+    },
+    {
+        "id": "animals_monkey",
+        "name": "Monkey",
+        "aliases": [
+            "primate",
+            "simian",
+            "ape"
+        ],
+        "domain": "animals",
+        "category": [
+            "animal",
+            "mammal",
+            "wild animal"
+        ],
+        "priority": 0,
+        "visual_features": {
+            "colors": [
+                "brown",
+                "gray",
+                "black",
+                "golden",
+                "white"
+            ],
+            "shapes": [
+                "long tail",
+                "four limbs",
+                "round head",
+                "small ears",
+                "opposable thumbs",
+                "fingers and toes"
+            ],
+            "size": "varies (small to medium)",
+            "textures": [
+                "furry",
+                "hairy",
+                "rough",
+                "smooth"
+            ],
+            "distinctive_parts": [
+                "long tail",
+                "opposable thumbs",
+                "bare face",
+                "expressive eyes",
+                "grasping feet"
+            ]
+        },
+        "tier1": {
+            "intro_templates": [
+                "It's a monkey! Monkeys like to climb trees!",
+                "Look, a monkey! It has a long tail. Can you see its face?",
+                "A funny monkey! It swings from branch to branch.",
+                "Hello, monkey! Let's watch our playful friend!",
+                "Wow, a monkey! I like monkeys. Do you like monkeys?"
+            ],
+            "facts": [
+                {
+                    "id": "monkey_t1_f1",
+                    "text": "Monkeys have long tails that help them balance.",
+                    "category": "body",
+                    "wonder_score": 3
+                },
+                {
+                    "id": "monkey_t1_f2",
+                    "text": "Monkeys use their hands and feet to climb trees.",
+                    "category": "ability",
+                    "wonder_score": 3
+                },
+                {
+                    "id": "monkey_t1_f3",
+                    "text": "Monkeys eat fruits like bananas and apples.",
+                    "category": "diet",
+                    "wonder_score": 2
+                },
+                {
+                    "id": "monkey_t1_f4",
+                    "text": "Monkeys live in trees in warm forests.",
+                    "category": "habitat",
+                    "wonder_score": 2
+                },
+                {
+                    "id": "monkey_t1_f5",
+                    "text": "Monkeys make sounds like 'ooh ooh ah ah'.",
+                    "category": "sound",
+                    "wonder_score": 3
+                }
+            ],
+            "questions": [
+                {
+                    "id": "monkey_t1_q1",
+                    "text": "What does a monkey have that is long?",
+                    "type": "observation",
+                    "expected_answer": "tail",
+                    "hint": "It hangs behind them!"
+                },
+                {
+                    "id": "monkey_t1_q2",
+                    "text": "How many legs does a monkey have?",
+                    "type": "counting",
+                    "expected_answer": "4",
+                    "hint": "They walk and climb with them!"
+                },
+                {
+                    "id": "monkey_t1_q3",
+                    "text": "What do monkeys like to eat?",
+                    "type": "knowledge",
+                    "expected_answer": "fruits/bananas",
+                    "hint": "They love yellow curved fruit!"
+                },
+                {
+                    "id": "monkey_t1_q4",
+                    "text": "Where do monkeys live?",
+                    "type": "knowledge",
+                    "expected_answer": "trees/forest",
+                    "hint": "High up in warm places!"
+                },
+                {
+                    "id": "monkey_t1_q5",
+                    "text": "Can monkeys climb trees?",
+                    "type": "yes_no",
+                    "expected_answer": "yes",
+                    "hint": "They are very good at it!"
+                }
+            ]
+        },
+        "tier2": {
+            "intro_templates": [
+                "It's a monkey! Monkeys are very smart and can use tools.",
+                "Look at this monkey! Did you know monkeys have thumbs like us?",
+                "Here's a monkey! Monkeys live in groups called troops.",
+                "Check out this monkey! Monkeys groom each other to be friends.",
+                "Meet this monkey! Some monkeys have cheek pouches to store food."
+            ],
+            "facts": [
+                {
+                    "id": "monkey_t2_f1",
+                    "text": "Monkeys have thumbs that can grip things, just like human hands.",
+                    "category": "body_function",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "monkey_t2_f2",
+                    "text": "Monkeys live in big groups called troops, with many friends and family.",
+                    "category": "social_structure",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "monkey_t2_f3",
+                    "text": "Some monkeys have special cheek pouches to store food for later.",
+                    "category": "adaptation",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "monkey_t2_f4",
+                    "text": "Monkeys use grooming to clean each other and show friendship.",
+                    "category": "social_behavior",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "monkey_t2_f5",
+                    "text": "Monkey babies, called infants, cling to their mothers' backs for safety.",
+                    "category": "life_cycle",
+                    "wonder_score": 5
+                }
+            ],
+            "questions": [
+                {
+                    "id": "monkey_t2_q1",
+                    "text": "What special part do monkeys have on their hands?",
+                    "type": "observation",
+                    "expected_answer": "thumbs",
+                    "hint": "They can pick up things!"
+                },
+                {
+                    "id": "monkey_t2_q2",
+                    "text": "What is a group of monkeys called?",
+                    "type": "vocabulary",
+                    "expected_answer": "troop",
+                    "hint": "Like a big family group!"
+                },
+                {
+                    "id": "monkey_t2_q3",
+                    "text": "Why do some monkeys have cheek pouches?",
+                    "type": "reasoning",
+                    "expected_answer": "to store food",
+                    "hint": "For eating later!"
+                },
+                {
+                    "id": "monkey_t2_q4",
+                    "text": "How do monkeys show they are friends?",
+                    "type": "knowledge",
+                    "expected_answer": "groom each other",
+                    "hint": "They pick bugs and dirt!"
+                },
+                {
+                    "id": "monkey_t2_q5",
+                    "text": "Where do baby monkeys ride?",
+                    "type": "knowledge",
+                    "expected_answer": "mother's back",
+                    "hint": "A safe and cozy place!"
+                }
+            ]
+        },
+        "tier3": {
+            "intro_templates": [
+                "It's a monkey! Did you know monkeys are our closest animal relatives?",
+                "Look at this monkey! Their intelligence helps them solve problems in the wild.",
+                "This is a monkey. Different monkey species have adapted to eat different foods.",
+                "Here we have a monkey. They communicate with sounds, faces, and body language.",
+                "Consider this monkey. Their prehensile tail acts like a fifth hand for grasping."
+            ],
+            "facts": [
+                {
+                    "id": "monkey_t3_f1",
+                    "text": "Monkeys are primates, which means they are close relatives to humans.",
+                    "category": "classification",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "monkey_t3_f2",
+                    "text": "Some monkeys have prehensile tails that can grab and hold objects like a hand.",
+                    "category": "adaptation",
+                    "wonder_score": 5
+                },
+                {
+                    "id": "monkey_t3_f3",
+                    "text": "Monkeys communicate with a variety of vocalizations, facial expressions, and gestures.",
+                    "category": "communication",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "monkey_t3_f4",
+                    "text": "Different species of monkeys have different diets, including fruits, leaves, insects, and even small animals.",
+                    "category": "diet",
+                    "wonder_score": 4
+                },
+                {
+                    "id": "monkey_t3_f5",
+                    "text": "Monkeys use their intelligence to remember where food is and how to use simple tools.",
+                    "category": "intelligence",
+                    "wonder_score": 5
+                }
+            ],
+            "questions": [
+                {
+                    "id": "monkey_t3_q1",
+                    "text": "What animal group are monkeys part of, which is close to humans?",
+                    "type": "classification",
+                    "expected_answer": "primates",
+                    "hint": "We are in the same group!"
+                },
+                {
+                    "id": "monkey_t3_q2",
+                    "text": "What can some monkeys do with their tails?",
+                    "type": "function",
+                    "expected_answer": "grab/hold things",
+                    "hint": "Like an extra hand!"
+                },
+                {
+                    "id": "monkey_t3_q3",
+                    "text": "How do monkeys talk to each other?",
+                    "type": "knowledge",
+                    "expected_answer": "sounds/faces/gestures",
+                    "hint": "Not just with voices!"
+                },
+                {
+                    "id": "monkey_t3_q4",
+                    "text": "Why might different monkeys eat different things?",
+                    "type": "why",
+                    "expected_answer": "different species/adaptation",
+                    "hint": "They live in different places!"
+                },
+                {
+                    "id": "monkey_t3_q5",
+                    "text": "How do monkeys show they are smart?",
+                    "type": "application",
+                    "expected_answer": "remember food/use tools",
+                    "hint": "They solve problems!"
+                }
+            ]
+        }
+    },
+    {
+    "id": "animals_panda",
+    "name": "Panda",
+    "aliases": ["giant panda", "panda bear", "bamboo bear"],
+    "domain": "animals",
+    "category": ["animal", "mammal", "wild animal"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["black", "white"],
+        "shapes": ["round body", "round head", "round ears", "four legs", "short tail", "big face"],
+        "size": "big and round (like a big teddy bear)",
+        "textures": ["furry", "fluffy", "soft-looking", "thick fur"],
+        "distinctive_parts": ["black patches around eyes", "black ears", "black legs", "white face and body", "black band across shoulders"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a panda! Look at its black and white fur!",
+            "Wow, a panda! It is so cute. Can you see its round body?",
+            "A panda! It eats bamboo all day.",
+            "Hello, panda! It has black patches around its eyes.",
+            "Look, a panda! It looks like a big teddy bear."
+        ],
+        "facts": [
+            {"id": "panda_t1_f1", "text": "Pandas have black and white fur.", "category": "appearance", "wonder_score": 3},
+            {"id": "panda_t1_f2", "text": "Pandas eat bamboo most of the time.", "category": "diet", "wonder_score": 3},
+            {"id": "panda_t1_f3", "text": "Pandas have big, round bodies and round heads.", "category": "appearance", "wonder_score": 3},
+            {"id": "panda_t1_f4", "text": "Pandas walk on four legs.", "category": "body", "wonder_score": 2},
+            {"id": "panda_t1_f5", "text": "Pandas live in bamboo forests.", "category": "habitat", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "panda_t1_q1", "text": "What colors are a panda's fur?", "type": "color", "expected_answer": "black and white", "hint": "Two colors, like a zebra but different pattern!"},
+            {"id": "panda_t1_q2", "text": "How many legs does a panda have?", "type": "counting", "expected_answer": "4", "hint": "Count them: 1, 2, 3, 4!"},
+            {"id": "panda_t1_q3", "text": "What do pandas eat?", "type": "knowledge", "expected_answer": "bamboo", "hint": "It's a green plant that grows in forests!"},
+            {"id": "panda_t1_q4", "text": "Where do pandas live?", "type": "knowledge", "expected_answer": "in bamboo forests", "hint": "In forests full of their favorite food!"},
+            {"id": "panda_t1_q5", "text": "Are pandas big or small?", "type": "comparison", "expected_answer": "big", "hint": "They look like big teddy bears!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a panda! Do you know that pandas spend most of their day eating?",
+            "Look at this panda! Even though they are big, they are very good climbers.",
+            "Here's a panda! Did you know baby pandas are born very small and pink?",
+            "Check out this panda! They have a special thumb-like bone to hold bamboo.",
+            "Meet this panda! Pandas are from China and are a special symbol there."
+        ],
+        "facts": [
+            {"id": "panda_t2_f1", "text": "Pandas spend about 12 hours a day eating bamboo to get enough energy.", "category": "behavior", "wonder_score": 4},
+            {"id": "panda_t2_f2", "text": "Baby pandas are born very small, pink, and blind, and they weigh about as much as an apple.", "category": "life_cycle", "wonder_score": 5},
+            {"id": "panda_t2_f3", "text": "Pandas have a special wrist bone that works like a thumb to help them hold bamboo.", "category": "body_function", "wonder_score": 5},
+            {"id": "panda_t2_f4", "text": "Pandas are very good climbers and can climb trees even when they are adults.", "category": "ability", "wonder_score": 4},
+            {"id": "panda_t2_f5", "text": "Pandas are from China and are considered a national treasure there.", "category": "geography", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "panda_t2_q1", "text": "How long do pandas eat each day?", "type": "knowledge", "expected_answer": "about 12 hours", "hint": "More than half the day!"},
+            {"id": "panda_t2_q2", "text": "What do baby pandas look like when they are born?", "type": "description", "expected_answer": "small, pink, and blind", "hint": "They are not black and white at first!"},
+            {"id": "panda_t2_q3", "text": "What special bone helps pandas hold bamboo?", "type": "knowledge", "expected_answer": "a wrist bone like a thumb", "hint": "It's not a real thumb, but it works like one!"},
+            {"id": "panda_t2_q4", "text": "Can pandas climb trees?", "type": "yes_no", "expected_answer": "yes", "hint": "Even big ones can climb!"},
+            {"id": "panda_t2_q5", "text": "What country are pandas from?", "type": "geography", "expected_answer": "China", "hint": "It's a big country in Asia!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a panda! Did you know that pandas are actually bears, but they don't hibernate like other bears?",
+            "Look at this panda! Their black and white coloring might help them hide in snowy and rocky places.",
+            "This is a panda. Even though they eat mostly plants, their digestive system is like that of a meat-eater.",
+            "Here we have a panda. They are very rare and people work hard to protect them.",
+            "Consider this panda. They communicate with each other using sounds and scent marks."
+        ],
+        "facts": [
+            {"id": "panda_t3_f1", "text": "Pandas are bears, but unlike most bears, they do not hibernate during the winter.", "category": "classification", "wonder_score": 5},
+            {"id": "panda_t3_f2", "text": "The black and white colors of a panda might help it camouflage in snowy mountains and dark forests.", "category": "adaptation", "wonder_score": 4},
+            {"id": "panda_t3_f3", "text": "A panda's digestive system is designed for meat, but they eat mostly bamboo, so they must eat a lot to get energy.", "category": "physiology", "wonder_score": 5},
+            {"id": "panda_t3_f4", "text": "Pandas are an endangered species, which means there are not many left in the wild and they need protection.", "category": "conservation", "wonder_score": 4},
+            {"id": "panda_t3_f5", "text": "Pandas use different sounds like bleats, honks, and growls to communicate with each other.", "category": "communication", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "panda_t3_q1", "text": "Do pandas sleep all winter like some other bears?", "type": "comparison", "expected_answer": "no", "hint": "They stay awake and keep eating!"},
+            {"id": "panda_t3_q2", "text": "Why might pandas have black and white fur?", "type": "reasoning", "expected_answer": "to help them hide", "hint": "Think about snow and shadows!"},
+            {"id": "panda_t3_q3", "text": "Why do pandas need to eat so much bamboo?", "type": "why", "expected_answer": "their digestion is not efficient for plants", "hint": "Their stomachs are meant for meat!"},
+            {"id": "panda_t3_q4", "text": "What does 'endangered' mean for pandas?", "type": "definition", "expected_answer": "there are very few left", "hint": "They need our help to survive!"},
+            {"id": "panda_t3_q5", "text": "How do pandas talk to each other?", "type": "knowledge", "expected_answer": "with sounds like bleats and honks", "hint": "They make funny noises!"}
+        ]
+    }
+    },
+    {
+    "id": "animals_cow",
+    "name": "Cow",
+    "aliases": ["cattle", "bull", "calf", "moo cow"],
+    "domain": "animals",
+    "category": ["animal", "mammal", "farm animal"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["black", "white", "brown", "yellow", "spotted", "patched"],
+        "shapes": ["large body", "four legs", "long tail", "two horns", "droopy ears", "wide nose", "udders"],
+        "size": "large (big farm animal)",
+        "textures": ["short-haired", "smooth", "furry", "leathery nose"],
+        "distinctive_parts": ["big wet nose", "swishing tail", "chewing mouth", "hooves", "udder on females"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a cow! Cows say 'moo'! Can you moo like a cow?",
+            "Look, a big cow! It has spots on its body. What color is it?",
+            "A farm cow! Cows eat grass all day long.",
+            "Hello, cow! See its long tail that swishes flies away.",
+            "Wow, a cow! It is big and strong. Do you see its horns?"
+        ],
+        "facts": [
+            {"id": "cow_t1_f1", "text": "Cows say 'moo' with a loud, deep voice.", "category": "sound", "wonder_score": 3},
+            {"id": "cow_t1_f2", "text": "Cows have four legs with hard feet called hooves.", "category": "body", "wonder_score": 2},
+            {"id": "cow_t1_f3", "text": "Many cows are black and white with spots or patches.", "category": "appearance", "wonder_score": 2},
+            {"id": "cow_t1_f4", "text": "Cows eat grass in the field all day long.", "category": "diet", "wonder_score": 3},
+            {"id": "cow_t1_f5", "text": "Cows have big, wet noses that feel soft and leathery.", "category": "appearance", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "cow_t1_q1", "text": "What sound does a cow make?", "type": "sound", "expected_answer": "moo", "hint": "Listen! Mooooo!"},
+            {"id": "cow_t1_q2", "text": "How many legs does a cow have?", "type": "counting", "expected_answer": "4", "hint": "Let's count: 1, 2, 3, 4!"},
+            {"id": "cow_t1_q3", "text": "What do cows like to eat?", "type": "knowledge", "expected_answer": "grass", "hint": "They eat green plants in the field!"},
+            {"id": "cow_t1_q4", "text": "What are a cow's feet called?", "type": "vocabulary", "expected_answer": "hooves", "hint": "They are hard, not soft like paws!"},
+            {"id": "cow_t1_q5", "text": "Is a cow's nose wet or dry?", "type": "observation", "expected_answer": "wet", "hint": "Touch it gently! It's moist."}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a cow! Cows give us milk. Do you know where milk comes from?",
+            "Look at this cow! Cows have a special stomach that lets them eat grass.",
+            "Here's a cow! Did you know a baby cow is called a calf?",
+            "Check out this cow! Cows chew their food in a special way called 'chewing cud'.",
+            "Meet this cow! They live in groups called herds and like to be with friends."
+        ],
+        "facts": [
+            {"id": "cow_t2_f1", "text": "Mother cows make milk for their babies, and we can drink that milk too.", "category": "product", "wonder_score": 4},
+            {"id": "cow_t2_f2", "text": "Cows have one big stomach with four parts to help digest tough grass.", "category": "body_function", "wonder_score": 5},
+            {"id": "cow_t2_f3", "text": "A baby cow is called a calf. It can stand and walk soon after it is born.", "category": "life_cycle", "wonder_score": 4},
+            {"id": "cow_t2_f4", "text": "Cows spend about 8 hours every day chewing their food, which is called chewing cud.", "category": "behavior", "wonder_score": 4},
+            {"id": "cow_t2_f5", "text": "Cows are very social animals and feel happiest when they are with other cows.", "category": "behavior", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "cow_t2_q1", "text": "What important food do we get from cows?", "type": "knowledge", "expected_answer": "milk", "hint": "We drink it white and cold!"},
+            {"id": "cow_t2_q2", "text": "How many parts does a cow's stomach have?", "type": "counting", "expected_answer": "4", "hint": "It's one stomach with four rooms!"},
+            {"id": "cow_t2_q3", "text": "What is a baby cow called?", "type": "vocabulary", "expected_answer": "calf", "hint": "It's a small, young cow!"},
+            {"id": "cow_t2_q4", "text": "What is it called when a cow chews its food again?", "type": "knowledge", "expected_answer": "chewing cud", "hint": "It brings food back to its mouth!"},
+            {"id": "cow_t2_q5", "text": "Do cows like to live alone or with other cows?", "type": "choice", "expected_answer": "with other cows", "hint": "They are herd animals!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a cow! Did you know cows help turn grass, which we can't eat, into food we can, like milk?",
+            "Look at this cow! Their special digestion is why they can live on a diet of just grass.",
+            "This is a cow. Different breeds of cows can look very different and are good for different things.",
+            "Here we have a cow. They have almost 360-degree vision to watch for danger while they eat.",
+            "Consider this cow. They remember faces and can form strong friendships with other cows."
+        ],
+        "facts": [
+            {"id": "cow_t3_f1", "text": "Cows are ruminants, which means they ferment grass in their stomach first before digesting it fully.", "category": "body_function", "wonder_score": 5},
+            {"id": "cow_t3_f2", "text": "A cow's eyes are on the sides of its head, giving it very wide vision to spot predators.", "category": "adaptation", "wonder_score": 4},
+            {"id": "cow_t3_f3", "text": "There are over 800 different breeds of cows, like Holsteins for milk and Angus for beef.", "category": "diversity", "wonder_score": 4},
+            {"id": "cow_t3_f4", "text": "Cows have an excellent sense of smell and can detect odors from several miles away.", "category": "ability", "wonder_score": 4},
+            {"id": "cow_t3_f5", "text": "Cows communicate with each other using different moos, and they even have moos for their own calves.", "category": "communication", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "cow_t3_q1", "text": "Why can cows eat grass, but people cannot?", "type": "why", "hint": "They have a special stomach system!"},
+            {"id": "cow_t3_q2", "text": "How does having eyes on the side of its head help a cow?", "type": "reasoning", "expected_answer": "to see danger all around", "hint": "It can see without turning its head much!"},
+            {"id": "cow_t3_q3", "text": "What is one breed of cow that gives a lot of milk?", "type": "knowledge", "expected_answer": "Holstein", "hint": "They are often black and white!"},
+            {"id": "cow_t3_q4", "text": "If a cow smells something far away, what might it be trying to do?", "type": "inference", "hint": "Find food, friends, or sense danger!"},
+            {"id": "cow_t3_q5", "text": "How might a mother cow call her own baby calf?", "type": "application", "expected_answer": "with a special moo", "hint": "She uses her voice in a unique way!"}
+        ]
+    }
+    },
+    {
+    "id": "animals_horse",
+    "name": "Horse",
+    "aliases": ["pony", "foal", "mare", "stallion", "steed"],
+    "domain": "animals",
+    "category": ["animal", "mammal", "farm animal", "pet"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["brown", "black", "white", "gray", "chestnut", "tan", "spotted", "golden"],
+        "shapes": ["four long legs", "long neck", "long face", "pointy ears", "tail with long hair", "mane on neck", "rounded body"],
+        "size": "varies (from pony to very large)",
+        "textures": ["short hair", "smooth", "shiny", "soft nose", "rough mane and tail"],
+        "distinctive_parts": ["long mane", "flowing tail", "hooves on feet", "large eyes", "nostrils on muzzle"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a horse! Horses say 'neigh'! Can you make that sound?",
+            "Look, a horse! It has a long tail and mane. What color is it?",
+            "A big horse! Horses like to run fast. Is it big or small?",
+            "Hello, horse! Let's see our strong friend. Can you point to its hooves?",
+            "Wow, a horse! I like horses. Do you like horses? Let's see what it can do!"
+        ],
+        "facts": [
+            {"id": "horse_t1_f1", "text": "Horses say 'neigh' and 'whinny'.", "category": "sound", "wonder_score": 3},
+            {"id": "horse_t1_f2", "text": "Horses have four strong legs with hard hooves.", "category": "body", "wonder_score": 3},
+            {"id": "horse_t1_f3", "text": "Horses have a long tail and a mane on their neck.", "category": "appearance", "wonder_score": 3},
+            {"id": "horse_t1_f4", "text": "Horses can run very fast on their legs.", "category": "ability", "wonder_score": 4},
+            {"id": "horse_t1_f5", "text": "Horses eat grass, hay, and sometimes carrots.", "category": "diet", "wonder_score": 2}
+        ],
+        "questions": [
+            {"id": "horse_t1_q1", "text": "What sound does a horse make?", "type": "sound", "expected_answer": "neigh", "hint": "Listen! Neigh neigh!"},
+            {"id": "horse_t1_q2", "text": "How many legs does a horse have?", "type": "counting", "expected_answer": "4", "hint": "Let's count: 1, 2, 3, 4!"},
+            {"id": "horse_t1_q3", "text": "What does a horse have on its neck?", "type": "observation", "expected_answer": "mane", "hint": "Long hair on its neck!"},
+            {"id": "horse_t1_q4", "text": "What color is this horse?", "type": "color", "hint": "Look at its coat!"},
+            {"id": "horse_t1_q5", "text": "Can horses run fast?", "type": "yes_no", "expected_answer": "yes", "hint": "They have strong legs!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a horse! Horses are strong animals. Did you know they can sleep standing up?",
+            "Look at this horse! Horses have been friends with humans for thousands of years.",
+            "Here's a horse! Did you know baby horses can walk soon after they are born?",
+            "Check out this horse! Horses aren't just fast runners; they are also very smart!",
+            "Meet this horse! Horses help people in many ways, like on farms and in sports."
+        ],
+        "facts": [
+            {"id": "horse_t2_f1", "text": "Horses can sleep both lying down and standing up, using a special leg lock.", "category": "behavior", "wonder_score": 5},
+            {"id": "horse_t2_f2", "text": "A baby horse is called a foal, and it can stand and walk just a few hours after birth.", "category": "life_cycle", "wonder_score": 5},
+            {"id": "horse_t2_f3", "text": "Horses have very large eyes that let them see almost all around their body.", "category": "body_function", "wonder_score": 5},
+            {"id": "horse_t2_f4", "text": "Horses communicate with sounds like neighs and whinnies, and also with their ears and tail.", "category": "communication", "wonder_score": 4},
+            {"id": "horse_t2_f5", "text": "People ride horses for fun, for sport, and to help with work on farms.", "category": "role", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "horse_t2_q1", "text": "How can horses sleep standing up?", "type": "reasoning", "hint": "They have a special leg lock!"},
+            {"id": "horse_t2_q2", "text": "What is a baby horse called?", "type": "vocabulary", "expected_answer": "foal", "hint": "A young horse!"},
+            {"id": "horse_t2_q3", "text": "Why do horses have such large eyes?", "type": "why", "expected_answer": "to see all around", "hint": "They need to watch for danger!"},
+            {"id": "horse_t2_q4", "text": "How do horses communicate with each other?", "type": "knowledge", "hint": "They use sounds and body language!"},
+            {"id": "horse_t2_q5", "text": "Can people ride horses?", "type": "yes_no", "expected_answer": "yes", "hint": "For fun, sport, and work!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a horse! Did you know horses were one of the first animals to be tamed by humans?",
+            "Look at this horse! Their hooves are actually like one big toenail that keeps growing.",
+            "This is a horse. They have a special way of showing feelings with their ears and face.",
+            "Here we have a horse. Even though they are big, they can be very gentle and friendly.",
+            "Consider this horse. Their long legs and strong heart make them perfect for running fast."
+        ],
+        "facts": [
+            {"id": "horse_t3_f1", "text": "Horses were domesticated by humans over 5,000 years ago and changed how people traveled and farmed.", "category": "history", "wonder_score": 5},
+            {"id": "horse_t3_f2", "text": "A horse's hooves are made of a hard material like our fingernails, and they need to be trimmed regularly.", "category": "body_function", "wonder_score": 4},
+            {"id": "horse_t3_f3", "text": "Horses show their mood with their ears: forward means curious, pinned back means upset or angry.", "category": "communication", "wonder_score": 4},
+            {"id": "horse_t3_f4", "text": "Horses have a very strong sense of hearing and can move their ears to pinpoint sounds.", "category": "ability", "wonder_score": 4},
+            {"id": "horse_t3_f5", "text": "Just like people are right or left-handed, horses can be right or left-hoofed, preferring one side for leading.", "category": "uniqueness", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "horse_t3_q1", "text": "How long ago did humans first tame horses?", "type": "knowledge", "expected_answer": "over 5,000 years", "hint": "A very long time ago!"},
+            {"id": "horse_t3_q2", "text": "What are horse hooves made of, and why do they need trimming?", "type": "why", "hint": "Think about our fingernails!"},
+            {"id": "horse_t3_q3", "text": "What does it mean when a horse's ears are pinned back?", "type": "observation", "expected_answer": "upset or angry", "hint": "It might be feeling grumpy!"},
+            {"id": "horse_t3_q4", "text": "Why can horses hear so well?", "type": "reasoning", "hint": "They can move their ears to catch sounds!"},
+            {"id": "horse_t3_q5", "text": "Can horses have a preferred side, like people being right or left-handed?", "type": "comparison", "expected_answer": "yes", "hint": "They might lead with one hoof!"}
+        ]
+    }
+    },
+    {
+    "id": "animals_sheep",
+    "name": "Sheep",
+    "aliases": ["lamb", "ewe", "ram", "woolly animal"],
+    "domain": "animals",
+    "category": ["animal", "mammal", "farm animal", "herbivore"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["white", "black", "brown", "gray", "tan"],
+        "shapes": ["four legs", "curly wool", "small tail", "oval body", "long face", "pointy ears"],
+        "size": "medium (about as big as a large dog)",
+        "textures": ["woolly", "furry", "soft", "fluffy", "thick"],
+        "distinctive_parts": ["thick wool coat", "curved horns (on some)", "hooves", "split upper lip", "oval pupils"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a sheep! Sheep say 'baa'! Can you make that sound?",
+            "Look, a sheep! It has thick, woolly fur. It looks so soft!",
+            "A fluffy sheep! The sheep eats grass all day. Can you see its wool?",
+            "Hello, sheep! It has four legs and a small tail. What color is it?",
+            "Wow, a sheep! Sheep live on farms. They give us wool for warm clothes."
+        ],
+        "facts": [
+            {"id": "sheep_t1_f1", "text": "Sheep say 'baa baa' when they talk.", "category": "sound", "wonder_score": 3},
+            {"id": "sheep_t1_f2", "text": "Sheep have thick, woolly coats that keep them warm.", "category": "appearance", "wonder_score": 4},
+            {"id": "sheep_t1_f3", "text": "Sheep walk on four legs and have hooves.", "category": "body", "wonder_score": 2},
+            {"id": "sheep_t1_f4", "text": "Sheep eat grass and plants in fields.", "category": "diet", "wonder_score": 2},
+            {"id": "sheep_t1_f5", "text": "Sheep live in groups called flocks.", "category": "behavior", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "sheep_t1_q1", "text": "What sound does a sheep make?", "type": "sound", "expected_answer": "baa", "hint": "Listen! Baa baa!"},
+            {"id": "sheep_t1_q2", "text": "How many legs does a sheep have?", "type": "counting", "expected_answer": "4", "hint": "Let's count: 1, 2, 3, 4!"},
+            {"id": "sheep_t1_q3", "text": "What do sheep eat?", "type": "knowledge", "expected_answer": "grass", "hint": "They eat green plants in fields!"},
+            {"id": "sheep_t1_q4", "text": "What covers a sheep's body to keep it warm?", "type": "observation", "expected_answer": "wool", "hint": "It's thick and curly!"},
+            {"id": "sheep_t1_q5", "text": "Do sheep live alone or in groups?", "type": "choice", "expected_answer": "in groups", "hint": "They like to be together!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a sheep! Sheep give us wool that is made into warm sweaters and blankets.",
+            "Look at this sheep! Did you know sheep have excellent memory and can recognize faces?",
+            "Here's a sheep! Sheep are very social animals and like to stay close to their friends.",
+            "Check out this sheep! Farmers shear their wool once a year, and then it grows back.",
+            "Meet this sheep! Baby sheep are called lambs, and they can walk soon after they are born."
+        ],
+        "facts": [
+            {"id": "sheep_t2_f1", "text": "Sheep's wool is sheared (cut off) once a year to make yarn for clothes.", "category": "human_use", "wonder_score": 4},
+            {"id": "sheep_t2_f2", "text": "Sheep have rectangular pupils that give them wide-angle vision to spot danger.", "category": "body_function", "wonder_score": 5},
+            {"id": "sheep_t2_f3", "text": "A baby sheep is called a lamb, and it can stand and walk within minutes of birth.", "category": "life_cycle", "wonder_score": 5},
+            {"id": "sheep_t2_f4", "text": "Sheep are herd animals and feel scared and nervous when they are alone.", "category": "behavior", "wonder_score": 4},
+            {"id": "sheep_t2_f5", "text": "Sheep have no top front teeth, just a hard pad to help them bite grass.", "category": "anatomy", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "sheep_t2_q1", "text": "What do people make from sheep's wool?", "type": "knowledge", "expected_answer": "clothes or yarn", "hint": "Sweaters, blankets, and socks!"},
+            {"id": "sheep_t2_q2", "text": "Why do sheep have rectangular pupils in their eyes?", "type": "reasoning", "hint": "It helps them see predators coming!"},
+            {"id": "sheep_t2_q3", "text": "What is a baby sheep called?", "type": "vocabulary", "expected_answer": "lamb", "hint": "It starts with L!"},
+            {"id": "sheep_t2_q4", "text": "How do sheep feel when they are alone?", "type": "empathy", "expected_answer": "scared or nervous", "hint": "They prefer to be in groups!"},
+            {"id": "sheep_t2_q5", "text": "Do sheep have top front teeth to bite grass?", "type": "yes_no", "expected_answer": "no", "hint": "They have a hard gum pad instead!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a sheep! Did you know sheep were among the first animals to be domesticated by humans?",
+            "Look at this sheep! Their wool grows continuously, just like our hair and nails do.",
+            "This is a sheep. They have a special four-chambered stomach to digest tough grass.",
+            "Here we have a sheep. Their thick wool not only keeps them warm but also helps them float in water!",
+            "Consider this sheep. Farmers use sheep to help manage fields because they eat weeds and fertilize the soil."
+        ],
+        "facts": [
+            {"id": "sheep_t3_f1", "text": "Sheep were first domesticated by humans over 10,000 years ago for wool, meat, and milk.", "category": "history", "wonder_score": 5},
+            {"id": "sheep_t3_f2", "text": "Sheep have a four-chambered stomach that helps them digest tough grasses and plants.", "category": "anatomy", "wonder_score": 4},
+            {"id": "sheep_t3_f3", "text": "Sheep's wool contains lanolin, a natural oil that makes it water-resistant and helps sheep stay dry.", "category": "adaptation", "wonder_score": 5},
+            {"id": "sheep_t3_f4", "text": "Sheep are used in some places to graze and naturally control weeds without using chemicals.", "category": "human_use", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "sheep_t3_q1", "text": "Why did humans first keep sheep long ago?", "type": "reasoning", "expected_answer": "for wool, meat, and milk", "hint": "For food and clothing materials!"},
+            {"id": "sheep_t3_q2", "text": "How many chambers are in a sheep's stomach to help digest grass?", "type": "knowledge", "expected_answer": "4", "hint": "It's a special number!"},
+            {"id": "sheep_t3_q3", "text": "What natural oil in sheep's wool helps keep them dry in rain?", "type": "knowledge", "expected_answer": "lanolin", "hint": "It starts with L!"},
+            {"id": "sheep_t3_q4", "text": "How can sheep help farmers take care of fields without using weed killers?", "type": "application", "hint": "They eat the unwanted plants!"}
+        ]
+    }
+    },
+    {
+    "id": "animals_pig",
+    "name": "Pig",
+    "aliases": ["piggy", "hog", "swine", "porker"],
+    "domain": "animals",
+    "category": ["animal", "mammal", "farm animal"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["pink", "black", "white", "brown", "spotted", "red"],
+        "shapes": ["round body", "four short legs", "curly tail", "large head", "floppy ears", "snout"],
+        "size": "medium (varies from small to large)",
+        "textures": ["hairy", "bristly", "smooth skin", "sometimes muddy"],
+        "distinctive_parts": ["curly tail", "flat snout", "floppy ears", "hooves", "sometimes muddy coat"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a pig! Pigs say 'oink oink'! Can you oink like a pig?",
+            "Look, a pig! It has a round body. What color is it?",
+            "A cute piggy! It has a curly tail. See the tail?",
+            "Hello, pig! Let's look at the pig. Can you see its snout?",
+            "Wow, a pig! Pigs like to roll in mud. Do you know why?"
+        ],
+        "facts": [
+            {"id": "pig_t1_f1", "text": "Pigs say 'oink oink' when they talk.", "category": "sound", "wonder_score": 3},
+            {"id": "pig_t1_f2", "text": "Pigs have a round body and short legs.", "category": "appearance", "wonder_score": 2},
+            {"id": "pig_t1_f3", "text": "Pigs have a flat nose called a snout.", "category": "body", "wonder_score": 3},
+            {"id": "pig_t1_f4", "text": "Pigs have a curly tail that wiggles.", "category": "appearance", "wonder_score": 3},
+            {"id": "pig_t1_f5", "text": "Pigs like to roll around in the mud.", "category": "behavior", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "pig_t1_q1", "text": "What sound does a pig make?", "type": "sound", "expected_answer": "oink", "hint": "Listen! Oink oink!"},
+            {"id": "pig_t1_q2", "text": "How many legs does a pig have?", "type": "counting", "expected_answer": "4", "hint": "Count: 1, 2, 3, 4!"},
+            {"id": "pig_t1_q3", "text": "What shape is a pig's tail?", "type": "observation", "expected_answer": "curly", "hint": "It looks like a little curl!"},
+            {"id": "pig_t1_q4", "text": "What color is this pig?", "type": "color", "expected_answer": "pink", "hint": "Many pigs are pink!"},
+            {"id": "pig_t1_q5", "text": "Do pigs like mud?", "type": "yes_no", "expected_answer": "yes", "hint": "They roll in it!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a pig! Pigs are very smart animals, just like dogs!",
+            "Look at this pig! Its snout is not just cute; it's a super tool for finding food!",
+            "Here's a pig! Did you know pigs can't sweat like we do? That's why they like mud.",
+            "Check out this pig! Pigs are farm animals and give us bacon and ham.",
+            "Meet this pig! Baby pigs are called piglets and they are born in a litter."
+        ],
+        "facts": [
+            {"id": "pig_t2_f1", "text": "Pigs are very intelligent animals and can learn tricks, just like dogs.", "category": "intelligence", "wonder_score": 5},
+            {"id": "pig_t2_f2", "text": "A pig's snout is strong and flexible, perfect for digging in the ground to find food.", "category": "body_function", "wonder_score": 4},
+            {"id": "pig_t2_f3", "text": "Pigs roll in mud to cool down because they do not have sweat glands like humans.", "category": "behavior", "wonder_score": 5},
+            {"id": "pig_t2_f4", "text": "A baby pig is called a piglet, and they often have many brothers and sisters at once.", "category": "life_cycle", "wonder_score": 4},
+            {"id": "pig_t2_f5", "text": "Pigs are omnivores, which means they eat both plants and small animals.", "category": "diet", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "pig_t2_q1", "text": "Are pigs smart animals?", "type": "yes_no", "expected_answer": "yes", "hint": "They can learn tricks!"},
+            {"id": "pig_t2_q2", "text": "Why do pigs like to roll in mud?", "type": "why", "expected_answer": "to cool down", "hint": "They don't sweat like us!"},
+            {"id": "pig_t2_q3", "text": "What is a baby pig called?", "type": "vocabulary", "expected_answer": "piglet", "hint": "A small, cute pig!"},
+            {"id": "pig_t2_q4", "text": "What does a pig use its snout for?", "type": "function", "expected_answer": "digging for food", "hint": "It's like a shovel!"},
+            {"id": "pig_t2_q5", "text": "Do pigs eat only plants?", "type": "yes_no", "expected_answer": "no", "hint": "They eat plants and sometimes small animals."}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a pig! Despite their reputation, pigs are actually very clean animals when they can be.",
+            "Look at this pig! They have an excellent sense of smell, even better than some dogs.",
+            "This is a pig. In the wild, pigs live in groups called sounders, led by a female.",
+            "Here we have a pig. Their curly tails might look cute, but they serve a purpose too.",
+            "Consider this pig. They are important farm animals that provide us with many products."
+        ],
+        "facts": [
+            {"id": "pig_t3_f1", "text": "Pigs are naturally clean animals and will choose a specific spot far from their sleeping area to go to the bathroom.", "category": "behavior", "wonder_score": 5},
+            {"id": "pig_t3_f2", "text": "A pig's sense of smell is so strong that it can find truffles, a special mushroom, deep underground.", "category": "ability", "wonder_score": 5},
+            {"id": "pig_t3_f3", "text": "Wild pigs live in groups called sounders, which are usually made up of female pigs and their young.", "category": "social_structure", "wonder_score": 4},
+            {"id": "pig_t3_f4", "text": "A pig's curly tail helps keep flies and other insects away from its body.", "category": "body_function", "wonder_score": 4},
+            {"id": "pig_t3_f5", "text": "Pigs provide us with many products like pork, bacon, ham, and even some medicines.", "category": "human_use", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "pig_t3_q1", "text": "Are pigs clean or dirty animals by nature?", "type": "knowledge", "expected_answer": "clean", "hint": "They keep their living area tidy."},
+            {"id": "pig_t3_q2", "text": "Why are pigs sometimes used to find truffles?", "type": "why", "expected_answer": "they have a strong sense of smell", "hint": "Their noses are very powerful!"},
+            {"id": "pig_t3_q3", "text": "What is a group of wild pigs called?", "type": "vocabulary", "expected_answer": "sounder", "hint": "It starts with 's'."},
+            {"id": "pig_t3_q4", "text": "How does a pig's curly tail help it?", "type": "function", "expected_answer": "keeps flies away", "hint": "It swishes like a fly swatter."},
+            {"id": "pig_t3_q5", "text": "What are some products we get from pigs?", "type": "knowledge", "expected_answer": "pork, bacon, ham", "hint": "Think about breakfast meat!"}
+        ]
+    }
+    },
+    {
+    "id": "animals_duck",
+    "name": "Duck",
+    "aliases": ["duckling", "waterfowl", "mallard", "quacker"],
+    "domain": "animals",
+    "category": ["animal", "bird", "water bird"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["yellow", "white", "brown", "green", "black", "gray", "orange"],
+        "shapes": ["webbed feet", "flat beak", "round body", "short legs", "wings", "short tail"],
+        "size": "medium (about the size of a big book)",
+        "textures": ["feathers", "smooth", "soft", "downy"],
+        "distinctive_parts": ["webbed feet", "flat wide beak", "waterproof feathers", "waddle walk"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a duck! Ducks say 'quack quack'! Can you quack like a duck?",
+            "Look, a duck! It has soft feathers. What color is it?",
+            "A little duck! The duck likes to swim. Is it in the water?",
+            "Hello, duck! Let's see our feathered friend! Can you point to its beak?",
+            "Wow, a duck! I like ducks. Do you like ducks? Let's see what it can do!"
+        ],
+        "facts": [
+            {"id": "duck_t1_f1", "text": "Ducks say 'quack quack' when they talk.", "category": "sound", "wonder_score": 3},
+            {"id": "duck_t1_f2", "text": "Ducks have soft feathers and a flat beak.", "category": "appearance", "wonder_score": 2},
+            {"id": "duck_t1_f3", "text": "Ducks have webbed feet to help them swim.", "category": "body", "wonder_score": 4},
+            {"id": "duck_t1_f4", "text": "Ducks like to swim in water.", "category": "habitat", "wonder_score": 3},
+            {"id": "duck_t1_f5", "text": "A baby duck is called a duckling.", "category": "life_cycle", "wonder_score": 3}
+        ],
+        "questions": [
+            {"id": "duck_t1_q1", "text": "What sound does a duck make?", "type": "sound", "expected_answer": "quack", "hint": "Listen! Quack quack!"},
+            {"id": "duck_t1_q2", "text": "How many legs does a duck have?", "type": "counting", "expected_answer": "2", "hint": "Let's count: 1, 2!"},
+            {"id": "duck_t1_q3", "text": "What kind of feet does a duck have?", "type": "observation", "expected_answer": "webbed feet", "hint": "Good for swimming!"},
+            {"id": "duck_t1_q4", "text": "Where do ducks like to swim?", "type": "knowledge", "expected_answer": "in water", "hint": "Ponds, lakes, or rivers!"},
+            {"id": "duck_t1_q5", "text": "What is a baby duck called?", "type": "vocabulary", "expected_answer": "duckling", "hint": "A little duck!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a duck! Ducks are great swimmers. Do you know why their feet are webbed?",
+            "Look at this duck! Ducks have special feathers that keep them dry in water.",
+            "Here's a duck! Did you know ducks can sleep with one eye open?",
+            "Check out this duck! Ducks eat plants and small insects from the water.",
+            "Meet this duck! Ducklings follow their mother in a line called a 'parade'."
+        ],
+        "facts": [
+            {"id": "duck_t2_f1", "text": "Ducks have special oil on their feathers that makes them waterproof.", "category": "adaptation", "wonder_score": 5},
+            {"id": "duck_t2_f2", "text": "A duck's webbed feet work like paddles to push water when they swim.", "category": "function", "wonder_score": 4},
+            {"id": "duck_t2_f3", "text": "Ducks can sleep with one eye open to watch for danger.", "category": "behavior", "wonder_score": 5},
+            {"id": "duck_t2_f4", "text": "Ducks use their flat beaks to scoop up plants and bugs from the water.", "category": "diet", "wonder_score": 4},
+            {"id": "duck_t2_f5", "text": "Ducklings can swim and find food just a day after they hatch.", "category": "life_cycle", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "duck_t2_q1", "text": "Why don't ducks get wet when they swim?", "type": "reasoning", "expected_answer": "waterproof feathers", "hint": "They have special oil!"},
+            {"id": "duck_t2_q2", "text": "How do webbed feet help a duck swim?", "type": "function", "expected_answer": "like paddles", "hint": "They push the water!"},
+            {"id": "duck_t2_q3", "text": "How can a duck sleep and stay safe at the same time?", "type": "knowledge", "expected_answer": "one eye open", "hint": "It watches for danger!"},
+            {"id": "duck_t2_q4", "text": "What does a duck eat with its flat beak?", "type": "diet", "expected_answer": "plants and bugs", "hint": "From the water!"},
+            {"id": "duck_t2_q5", "text": "Can ducklings swim soon after they hatch?", "type": "yes_no", "expected_answer": "yes", "hint": "They learn very fast!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a duck! Did you know that ducks have three eyelids to protect their eyes underwater?",
+            "Look at this duck! Ducks can fly long distances when they migrate to warmer places.",
+            "This is a duck. Their quacks can echo, but did you know not all ducks quack the same?",
+            "Here we have a duck. They have a special gland near their tail that makes waterproof oil.",
+            "Consider this duck. Even though they seem calm, ducks have a complex social structure in their groups."
+        ],
+        "facts": [
+            {"id": "duck_t3_f1", "text": "Ducks have three eyelids: one for blinking, one for sleeping, and one clear eyelid for seeing underwater.", "category": "anatomy", "wonder_score": 5},
+            {"id": "duck_t3_f2", "text": "Some ducks fly thousands of miles to warm places in winter, which is called migration.", "category": "behavior", "wonder_score": 5},
+            {"id": "duck_t3_f3", "text": "Only female ducks make the classic 'quack' sound; male ducks make softer, raspy sounds.", "category": "communication", "wonder_score": 5},
+            {"id": "duck_t3_f4", "text": "Ducks have a special gland near their tail that produces oil to waterproof their feathers.", "category": "adaptation", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "duck_t3_q1", "text": "How many eyelids does a duck have, and why?", "type": "knowledge", "expected_answer": "three, for protection", "hint": "One is clear for underwater!"},
+            {"id": "duck_t3_q2", "text": "Why do some ducks fly very far in the fall?", "type": "why", "expected_answer": "to find warm weather", "hint": "They migrate for winter!"},
+            {"id": "duck_t3_q3", "text": "Do all ducks quack the same way?", "type": "comparison", "expected_answer": "no", "hint": "Males and females differ!"},
+            {"id": "duck_t3_q4", "text": "Where does the waterproof oil on a duck's feathers come from?", "type": "anatomy", "expected_answer": "a gland near the tail", "hint": "A special body part!"}
+        ]
+    }
+    },
+    {
+    "id": "animals_chicken",
+    "name": "Chicken",
+    "aliases": ["hen", "rooster", "chick", "poultry", "fowl"],
+    "domain": "animals",
+    "category": ["animal", "bird", "farm animal"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["white", "brown", "red", "black", "yellow", "speckled"],
+        "shapes": ["two legs", "wings", "beak", "comb on head", "tail feathers", "claws"],
+        "size": "small to medium (about knee-high to a child)",
+        "textures": ["feathers", "soft down", "smooth beak", "scaly legs"],
+        "distinctive_parts": ["red comb", "feathery tail", "pointed beak", "wings that flap", "clawed feet"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a chicken! Chickens say 'cluck cluck'! Can you make chicken sounds?",
+            "Look, a chicken! It has feathers. What color are its feathers?",
+            "A little chicken! It has two legs and a beak. Is it big or small?",
+            "Hello, chicken! Let's see our farm friend! Can you point to its beak?",
+            "Wow, a chicken! I like chickens. Do you like chickens? Let's see what it can do!"
+        ],
+        "facts": [
+            {"id": "chicken_t1_f1", "text": "Chickens say 'cluck cluck' and 'peep peep'.", "category": "sound", "wonder_score": 3},
+            {"id": "chicken_t1_f2", "text": "Chickens have soft feathers all over their body.", "category": "appearance", "wonder_score": 2},
+            {"id": "chicken_t1_f3", "text": "Chickens walk on two legs and have two wings.", "category": "body", "wonder_score": 2},
+            {"id": "chicken_t1_f4", "text": "Chickens have a red comb on top of their head.", "category": "appearance", "wonder_score": 3},
+            {"id": "chicken_t1_f5", "text": "Chickens peck at the ground to find food.", "category": "behavior", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "chicken_t1_q1", "text": "What sound does a chicken make?", "type": "sound", "expected_answer": "cluck cluck", "hint": "Listen! Cluck, cluck!"},
+            {"id": "chicken_t1_q2", "text": "How many legs does a chicken have?", "type": "counting", "expected_answer": "2", "hint": "Let's count: 1, 2!"},
+            {"id": "chicken_t1_q3", "text": "What does a chicken have on its head?", "type": "observation", "expected_answer": "red comb", "hint": "A red, fleshy part!"},
+            {"id": "chicken_t1_q4", "text": "What covers a chicken's body?", "type": "observation", "expected_answer": "feathers", "hint": "They are soft and fluffy!"},
+            {"id": "chicken_t1_q5", "text": "How does a chicken eat food from the ground?", "type": "observation", "expected_answer": "pecks at it", "hint": "It uses its beak!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a chicken! Chickens are farm birds. Do you know that they lay eggs we can eat?",
+            "Look at this chicken! Chickens have different names: a female is a hen, a male is a rooster.",
+            "Here's a chicken! Did you know chickens dust bathe to keep clean?",
+            "Check out this chicken! Chickens aren't just for eggs; they also eat bugs and worms!",
+            "Meet this chicken! Baby chickens are called chicks and they are very fluffy."
+        ],
+        "facts": [
+            {"id": "chicken_t2_f1", "text": "Hens (female chickens) lay eggs that we can cook and eat for breakfast.", "category": "function", "wonder_score": 5},
+            {"id": "chicken_t2_f2", "text": "Roosters (male chickens) crow 'cock-a-doodle-doo' in the morning to wake everyone up.", "category": "sound", "wonder_score": 5},
+            {"id": "chicken_t2_f3", "text": "Chickens take dust baths by rolling in dry dirt to clean their feathers and remove pests.", "category": "behavior", "wonder_score": 4},
+            {"id": "chicken_t2_f4", "text": "Chicks are baby chickens. They are born from eggs and are covered in soft down.", "category": "life_cycle", "wonder_score": 4},
+            {"id": "chicken_t2_f5", "text": "Chickens have excellent eyesight and can see colors, even ultraviolet light.", "category": "ability", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "chicken_t2_q1", "text": "What does a hen give us that we can eat?", "type": "knowledge", "expected_answer": "eggs", "hint": "They are oval and come from the hen!"},
+            {"id": "chicken_t2_q2", "text": "What sound does a rooster make in the morning?", "type": "sound", "expected_answer": "cock-a-doodle-doo", "hint": "It's a loud crowing sound!"},
+            {"id": "chicken_t2_q3", "text": "Why do chickens roll in the dirt?", "type": "why", "expected_answer": "to take a dust bath and get clean", "hint": "It helps them stay clean and healthy!"},
+            {"id": "chicken_t2_q4", "text": "What is a baby chicken called?", "type": "vocabulary", "expected_answer": "chick", "hint": "It's small and fluffy!"},
+            {"id": "chicken_t2_q5", "text": "Can chickens see well?", "type": "yes_no", "expected_answer": "yes", "hint": "They have good eyesight!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a chicken! Did you know that chickens are the closest living relatives to the mighty Tyrannosaurus Rex?",
+            "Look at this chicken! They have a special way of communicating with different clucks for different dangers.",
+            "This is a chicken. Their combs and wattles help them stay cool in hot weather.",
+            "Here we have a chicken. Even though they have wings, most chickens can only fly short distances.",
+            "Consider this chicken. They are social animals and have a 'pecking order' to organize their group."
+        ],
+        "facts": [
+            {"id": "chicken_t3_f1", "text": "Chickens are the closest living relatives to the Tyrannosaurus Rex, a giant dinosaur.", "category": "evolution", "wonder_score": 5},
+            {"id": "chicken_t3_f2", "text": "Chickens have different alarm calls for different predators, like a hawk in the sky versus a fox on the ground.", "category": "communication", "wonder_score": 5},
+            {"id": "chicken_t3_f3", "text": "The red comb and wattles on a chicken's head help to release extra body heat and keep them cool.", "category": "adaptation", "wonder_score": 4},
+            {"id": "chicken_t3_f4", "text": "Chickens can only fly short distances, usually to reach a low perch or escape danger.", "category": "ability", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "chicken_t3_q1", "text": "What giant dinosaur are chickens closely related to?", "type": "knowledge", "expected_answer": "Tyrannosaurus Rex", "hint": "A big, scary dinosaur with tiny arms!"},
+            {"id": "chicken_t3_q2", "text": "Why might a chicken make a different sound for a hawk than for a fox?", "type": "why", "expected_answer": "to warn others about different dangers", "hint": "Different predators come from different directions!"},
+            {"id": "chicken_t3_q3", "text": "How does a chicken's red comb help it on a hot day?", "type": "function", "expected_answer": "It helps release heat and cool the chicken down.", "hint": "It's like a built-in radiator!"},
+            {"id": "chicken_t3_q4", "text": "Can chickens fly long distances like many other birds?", "type": "comparison", "expected_answer": "no, only short distances", "hint": "They are not strong fliers."}
+        ]
+    }
+    },
+    {
+    "id": "animals_bird",
+    "name": "Bird",
+    "aliases": ["birdie", "feathered friend", "winged animal"],
+    "domain": "animals",
+    "category": ["animal", "bird", "wild animal"],
+    "priority": 0,
+    "visual_features": {
+        "colors": ["brown", "black", "white", "red", "blue", "yellow", "gray", "green"],
+        "shapes": ["two wings", "two legs", "beak", "tail feathers", "round body", "small head"],
+        "size": "varies (from tiny to medium)",
+        "textures": ["feathery", "soft", "smooth", "fluffy"],
+        "distinctive_parts": ["feathers", "wings", "beak", "claws on feet", "tail"]
+    },
+    "tier1": {
+        "intro_templates": [
+            "It's a bird! Look, it has feathers!",
+            "Wow, a bird! It can fly in the sky.",
+            "A little bird! It has two wings and a beak.",
+            "Hello, birdie! Listen, it makes chirping sounds.",
+            "Look up! A bird sits on a tree branch."
+        ],
+        "facts": [
+            {"id": "bird_t1_f1", "text": "Birds have feathers all over their bodies.", "category": "appearance", "wonder_score": 3},
+            {"id": "bird_t1_f2", "text": "Birds have two wings and can fly.", "category": "body", "wonder_score": 4},
+            {"id": "bird_t1_f3", "text": "Birds make chirping or tweeting sounds.", "category": "sound", "wonder_score": 3},
+            {"id": "bird_t1_f4", "text": "Birds have a beak and two legs.", "category": "body", "wonder_score": 2},
+            {"id": "bird_t1_f5", "text": "Birds lay eggs in nests.", "category": "reproduction", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "bird_t1_q1", "text": "What covers a bird's body?", "type": "observation", "expected_answer": "feathers", "hint": "Soft and light things!"},
+            {"id": "bird_t1_q2", "text": "How many wings does a bird have?", "type": "counting", "expected_answer": "2", "hint": "One on each side!"},
+            {"id": "bird_t1_q3", "text": "What sound does a small bird make?", "type": "sound", "expected_answer": "chirp", "hint": "Tweet tweet!"},
+            {"id": "bird_t1_q4", "text": "What does a bird use to eat?", "type": "observation", "expected_answer": "beak", "hint": "It's hard and pointed!"},
+            {"id": "bird_t1_q5", "text": "Where do birds lay their eggs?", "type": "knowledge", "expected_answer": "in nests", "hint": "They build homes in trees!"}
+        ]
+    },
+    "tier2": {
+        "intro_templates": [
+            "It's a bird! Do you know that not all birds can fly?",
+            "Look at this bird! Its beak shape tells us what it eats.",
+            "Here's a bird! Did you know birds build different kinds of nests?",
+            "Check out this bird! Some birds can mimic sounds they hear.",
+            "Meet this bird! Birds migrate long distances to find warm weather."
+        ],
+        "facts": [
+            {"id": "bird_t2_f1", "text": "Different birds have different shaped beaks for eating different foods.", "category": "adaptation", "wonder_score": 4},
+            {"id": "bird_t2_f2", "text": "Some birds, like penguins and ostriches, cannot fly but are still birds.", "category": "comparison", "wonder_score": 5},
+            {"id": "bird_t2_f3", "text": "Birds build nests from twigs, grass, and mud to keep their eggs safe.", "category": "behavior", "wonder_score": 4},
+            {"id": "bird_t2_f4", "text": "Baby birds hatch from eggs and are called chicks.", "category": "life_cycle", "wonder_score": 4},
+            {"id": "bird_t2_f5", "text": "Many birds fly south for the winter to find warmer places, called migration.", "category": "behavior", "wonder_score": 5}
+        ],
+        "questions": [
+            {"id": "bird_t2_q1", "text": "Why do birds have different shaped beaks?", "type": "reasoning", "hint": "Think about the food they eat!"},
+            {"id": "bird_t2_q2", "text": "Can all birds fly high in the sky?", "type": "comparison", "expected_answer": "no", "hint": "Some birds live on the ground!"},
+            {"id": "bird_t2_q3", "text": "What materials do birds use to build nests?", "type": "knowledge", "expected_answer": "twigs, grass, mud", "hint": "Things found in nature!"},
+            {"id": "bird_t2_q4", "text": "What is a baby bird called?", "type": "vocabulary", "expected_answer": "chick", "hint": "A fluffy little bird!"},
+            {"id": "bird_t2_q5", "text": "Why do some birds fly to warmer places in winter?", "type": "why", "expected_answer": "to find food and warmth", "hint": "It gets cold and food is scarce!"}
+        ]
+    },
+    "tier3": {
+        "intro_templates": [
+            "It's a bird! Did you know that feathers do more than just help them fly?",
+            "Look at this bird! Their hollow bones make them light enough to fly.",
+            "This is a bird. They have excellent eyesight to spot food from far away.",
+            "Here we have a bird. Some birds can use tools, like sticks, to get food.",
+            "Consider this bird. Their feathers are waterproof, which helps them stay dry in rain."
+        ],
+        "facts": [
+            {"id": "bird_t3_f1", "text": "Bird feathers are not just for flying; they also keep birds warm and help them stay dry.", "category": "adaptation", "wonder_score": 5},
+            {"id": "bird_t3_f2", "text": "Birds have hollow bones that make their bodies lighter for flying long distances.", "category": "anatomy", "wonder_score": 5},
+            {"id": "bird_t3_f3", "text": "Many birds have very good eyesight, which helps them spot small insects or seeds from high up.", "category": "ability", "wonder_score": 4},
+            {"id": "bird_t3_f4", "text": "Some smart birds, like crows, can use sticks as tools to get insects out of tree bark.", "category": "intelligence", "wonder_score": 5},
+            {"id": "bird_t3_f5", "text": "Birds' feathers have special oils that make them waterproof, so they don't get too wet in the rain.", "category": "adaptation", "wonder_score": 4}
+        ],
+        "questions": [
+            {"id": "bird_t3_q1", "text": "What are three things that feathers do for birds?", "type": "knowledge", "expected_answer": "help fly, keep warm, stay dry", "hint": "Think about flying, weather, and water!"},
+            {"id": "bird_t3_q2", "text": "Why are bird bones hollow?", "type": "why", "hint": "It makes them lighter!"},
+            {"id": "bird_t3_q3", "text": "How does good eyesight help a bird find food?", "type": "reasoning", "expected_answer": "spot food from far away", "hint": "They can see tiny things from high up!"},
+            {"id": "bird_t3_q4", "text": "What is an example of a bird using a tool?", "type": "example", "expected_answer": "crow using a stick", "hint": "A smart black bird!"},
+            {"id": "bird_t3_q5", "text": "How do birds stay dry when it rains?", "type": "how", "expected_answer": "waterproof feathers", "hint": "Their feathers have special oil!"}
+        ]
+    }
+    }
+
+]

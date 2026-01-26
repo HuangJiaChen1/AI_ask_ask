@@ -91,6 +91,10 @@ class PaixuejiAssistant:
         import paixueji_prompts
         self.prompts = paixueji_prompts.get_prompts()
 
+        # Load Knowledge Graph
+        self.kg_index = {}
+        self._load_knowledge_graph()
+
         # Initialize system-managed focus mode
         import random
         self.system_managed_focus = system_managed
@@ -110,6 +114,96 @@ class PaixuejiAssistant:
             config = json.load(f)
 
         return config
+
+    def _load_knowledge_graph(self):
+        """Load and index all KG files from knowledge_graph directory."""
+        kg_path = "knowledge_graph"
+        self.kg_index = {}
+        
+        if not os.path.exists(kg_path):
+            safe_print(f"[WARNING] Knowledge graph directory not found: {kg_path}")
+            return
+
+        safe_print(f"[KG] Loading Knowledge Graph from {kg_path}...")
+        count = 0
+        for filename in os.listdir(kg_path):
+            if filename.endswith(".json"):
+                file_path = os.path.join(kg_path, filename)
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        data = json.load(f)
+                        if isinstance(data, list):
+                            for item in data:
+                                # Index by ID
+                                if 'id' in item:
+                                    self.kg_index[item['id'].lower()] = item
+                                # Index by Name
+                                if 'name' in item:
+                                    self.kg_index[item['name'].lower()] = item
+                                # Index by Aliases
+                                for alias in item.get('aliases', []):
+                                    self.kg_index[alias.lower()] = item
+                                count += 1
+                except Exception as e:
+                    safe_print(f"[ERROR] Failed to load KG file {filename}: {e}")
+        safe_print(f"[KG] Loaded {count} objects into index.")
+
+    def get_kg_context(self, object_name, age):
+        """Retrieve and format specific knowledge graph context."""
+        if not object_name:
+            return ""
+            
+        key = object_name.lower()
+        obj_data = self.kg_index.get(key)
+        
+        # Simple pluralization fallback
+        if not obj_data:
+            # Try removing 's' (bamboos -> bamboo)
+            if key.endswith('s'):
+                obj_data = self.kg_index.get(key[:-1])
+            
+            # Try removing 'es' (boxes -> box)
+            if not obj_data and key.endswith('es'):
+                obj_data = self.kg_index.get(key[:-2])
+
+            # Try removing 'ies' + 'y' (cherries -> cherry)
+            if not obj_data and key.endswith('ies'):
+                obj_data = self.kg_index.get(key[:-3] + 'y')
+
+        if not obj_data:
+            safe_print(f"[KG] No context found for '{object_name}'")
+            return ""
+
+        # Determine Tier based on Age
+        tier = "tier1"
+        if age >= 7:
+            tier = "tier3"
+        elif age >= 5:
+            tier = "tier2"
+            
+        safe_print(f"[KG] Found context for '{object_name}' using {tier}")
+        tier_data = obj_data.get(tier, {})
+        visuals = obj_data.get('visual_features', {})
+        
+        # Format Facts
+        facts = "\n  * ".join([f.get('text', '') for f in tier_data.get('facts', [])])
+        
+        # Format Questions
+        questions = "\n  * ".join([q.get('text', '') for q in tier_data.get('questions', [])])
+        
+        # Format Visuals
+        colors = ", ".join(visuals.get('colors', []))
+        shapes = ", ".join(visuals.get('shapes', []))
+        
+        context = f"""
+[SPECIFIC KNOWLEDGE for "{obj_data.get('name')}"]
+- VISUALS: Colors({colors}), Shapes({shapes})
+- KEY FACTS (Teach these):
+  * {facts}
+- SUGGESTED QUESTIONS:
+  * {questions}
+"""
+        return context
 
     def init_flow_tree(self, session_id, age, object_name, tone, focus_mode):
         """
