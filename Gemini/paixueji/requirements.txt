@@ -4,3 +4,8 @@ google-genai
 requests
 pydantic
 loguru
+pytest
+pytest-asyncio
+pytest-mock
+langgraph
+langchain

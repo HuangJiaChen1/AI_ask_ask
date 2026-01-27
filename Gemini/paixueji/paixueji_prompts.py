@@ -76,8 +76,9 @@ YOUR TASK:
 Gently correct the child while maintaining their confidence.
 1. Acknowledge effort positively ("Good try!", "I like your thinking!")
 2. Gently provide the correct information based on the 'Reasoning' provided.
-3. Bridge their answer to {object_name}. Explain how {child_answer} is different from what we are looking for in {object_name}.
-   (e.g., if asked for a color, explain that "{child_answer}" is usually a different color, while "{object_name}" is [correct color]).
+3. Bridge their answer to {object_name} ONLY IF they named a different object or property. 
+   - If they named something specific (e.g., said "Blue" for a "Banana"), explain that "{child_answer}" is usually a different color.
+   - If their answer was just a phrase expressing difficulty or confusion, DO NOT compare it to {object_name}. Just provide the help.
 4. DO NOT ask any follow-up questions.
 5. Match vocabulary to age {age}.
 6. Maintain your established tone.

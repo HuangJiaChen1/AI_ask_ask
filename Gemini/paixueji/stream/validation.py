@@ -86,7 +86,9 @@ CONTEXT:
 TASK: Evaluate Engagement, Correctness, and Topic Switching.
 
 RULES:
-1. **Engagement**: "I don't know", "idk", empty = NOT ENGAGED. Real words = ENGAGED.
+1. **Engagement**: Determine if the child provided a substantive answer or attempt.
+   - **ENGAGED**: The child provides a clear, specific word, guess, or description that demonstrates a deliberate intent to answer the question.
+   - **NOT ENGAGED**: The child provides only fillers, hesitation sounds, meaningless fragments, expresses uncertainty, asks for help, or expresses confusion.
 2. **Correctness**: Check if answer matches reality for the question. Accept age-appropriate answers.
 3. **Switching**:
    - **SWITCH** if child explicitly names a NEW object to talk about (e.g. "Let's talk about cars").

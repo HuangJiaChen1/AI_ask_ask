@@ -17,9 +17,11 @@ from google.genai.types import HttpOptions
 from loguru import logger
 
 from paixueji_assistant import PaixuejiAssistant
-from paixueji_stream import call_paixueji_stream
+# from paixueji_stream import call_paixueji_stream # Deprecated, replaced by graph
+from graph import paixueji_graph
 from schema import StreamChunk
 import paixueji_prompts
+import time
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
@@ -100,6 +102,54 @@ def sse_event(event_type, data):
         json_data = json.dumps(data)
 
     return f"event: {event_type}\ndata: {json_data}\n\n"
+
+# Helper to bridge Graph execution to SSE stream
+async def stream_graph_execution(initial_state):
+    """
+    Executes the LangGraph workflow and yields StreamChunks as they are produced.
+    """
+    import asyncio
+    
+    # Queue for passing chunks from graph nodes to this generator
+    queue = asyncio.Queue()
+    
+    # Callback injected into state
+    async def stream_callback(chunk):
+        await queue.put(chunk)
+        
+    initial_state["stream_callback"] = stream_callback
+    initial_state["start_time"] = time.time()
+    
+    # Start graph execution in background task
+    task = asyncio.create_task(paixueji_graph.ainvoke(initial_state))
+    
+    while True:
+        # Wait for next chunk or completion
+        get_chunk = asyncio.create_task(queue.get())
+        done, pending = await asyncio.wait(
+            [get_chunk, task],
+            return_when=asyncio.FIRST_COMPLETED
+        )
+        
+        # Check for new chunk
+        if get_chunk in done:
+            chunk = get_chunk.result()
+            yield chunk
+            
+        # Check for graph completion (or error)
+        if task in done:
+            # Check for exceptions
+            if task.exception():
+                # If we have a pending get_chunk, cancel it
+                if not get_chunk.done():
+                    get_chunk.cancel()
+                raise task.exception()
+            
+            # Flush any remaining chunks in queue
+            while not queue.empty():
+                yield await queue.get()
+                
+            break
 
 
 @app.route('/')
@@ -227,26 +277,47 @@ def start_conversation():
 
             try:
                 async def stream_introduction():
-                    async for chunk in call_paixueji_stream(
-                        age=age,
-                        messages=assistant.conversation_history.copy(),
-                        content=introduction_content,
-                        status="normal",
-                        session_id=session_id,
-                        request_id=request_id,
-                        config=assistant.config,
-                        client=assistant.client,
-                        assistant=assistant,
-                        age_prompt=age_prompt,
-                        object_name=object_name,
-                        level1_category=level1_category,
-                        level2_category=level2_category,
-                        level3_category=level3_category,
-                        correct_answer_count=0,
-                        category_prompt=category_prompt,
-                        focus_prompt=focus_prompt,
-                        focus_mode=focus_mode
-                    ):
+                    # Construct Initial State for Graph
+                    initial_state = {
+                        "age": age,
+                        "messages": assistant.conversation_history.copy(),
+                        "content": introduction_content,
+                        "status": "normal",
+                        "session_id": session_id,
+                        "request_id": request_id,
+                        "config": assistant.config,
+                        "client": assistant.client,
+                        "assistant": assistant,
+                        "age_prompt": age_prompt,
+                        "object_name": object_name,
+                        "level1_category": level1_category,
+                        "level2_category": level2_category,
+                        "level3_category": level3_category,
+                        "correct_answer_count": 0,
+                        "kg_context": assistant.get_kg_context(object_name, age or 6),
+                        "category_prompt": category_prompt,
+                        "focus_prompt": focus_prompt,
+                        "focus_mode": focus_mode,
+                        
+                        # Initialize outputs
+                        "full_response_text": "",
+                        "full_question_text": "",
+                        "sequence_number": 0,
+                        
+                        # Initialize flags
+                        "is_engaged": None,
+                        "is_factually_correct": None,
+                        "correctness_reasoning": None,
+                        "switch_decision_reasoning": None,
+                        "new_object_name": None,
+                        "detected_object_name": None,
+                        "response_type": None,
+                        "suggested_objects": None,
+                        "natural_topic_completion": False,
+                        "validation_result": {}
+                    }
+                    
+                    async for chunk in stream_graph_execution(initial_state):
                         # Yield StreamChunk as SSE event (pass directly for optimized serialization)
                         # Update conversation history with final response
                         if chunk.finish:
@@ -349,7 +420,7 @@ def continue_conversation():
             # Get focus prompt
             focus_prompt = assistant.get_focus_prompt(focus_mode)
 
-            # NOTE: Validation now happens inside call_paixueji_stream() using unified AI validation
+            # NOTE: Validation now happens inside graph logic using unified AI validation
             # Increment logic moved to stream handler below based on chunk.is_factually_correct
             # NOTE: User message is added to conversation_history inside call_paixueji_stream()
 
@@ -359,28 +430,55 @@ def continue_conversation():
             try:
                 async def stream_response():
                     should_increment = False
+                    
+                    # Prepare messages (append current user input)
+                    # Note: We append here for the Graph execution context, but ONLY append to 
+                    # assistant.conversation_history after successful completion/streaming.
+                    current_messages = assistant.conversation_history.copy()
+                    current_messages.append({"role": "user", "content": child_input})
+                    
+                    # Construct Initial State
+                    initial_state = {
+                        "age": assistant.age,
+                        "messages": current_messages,
+                        "content": child_input,
+                        "status": "normal",
+                        "session_id": session_id,
+                        "request_id": request_id,
+                        "config": assistant.config,
+                        "client": assistant.client,
+                        "assistant": assistant,
+                        "age_prompt": age_prompt,
+                        "object_name": assistant.object_name,
+                        "level1_category": assistant.level1_category,
+                        "level2_category": assistant.level2_category,
+                        "level3_category": assistant.level3_category,
+                        "correct_answer_count": assistant.correct_answer_count,
+                        "kg_context": assistant.get_kg_context(assistant.object_name, assistant.age or 6),
+                        "category_prompt": category_prompt,
+                        "focus_prompt": focus_prompt,
+                        "focus_mode": focus_mode,
+                        
+                        # Initialize outputs
+                        "full_response_text": "",
+                        "full_question_text": "",
+                        "sequence_number": 0,
+                        
+                        # Initialize flags
+                        "is_engaged": None,
+                        "is_factually_correct": None,
+                        "correctness_reasoning": None,
+                        "switch_decision_reasoning": None,
+                        "new_object_name": None,
+                        "detected_object_name": None,
+                        "response_type": None,
+                        "suggested_objects": None,
+                        "natural_topic_completion": False,
+                        "validation_result": {}
+                    }
 
-                    async for chunk in call_paixueji_stream(
-                        age=assistant.age,
-                        messages=assistant.conversation_history.copy(),
-                        content=child_input,
-                        status="normal",
-                        session_id=session_id,
-                        request_id=request_id,
-                        config=assistant.config,
-                        client=assistant.client,
-                        assistant=assistant,
-                        age_prompt=age_prompt,
-                        object_name=assistant.object_name,
-                        level1_category=assistant.level1_category,
-                        level2_category=assistant.level2_category,
-                        level3_category=assistant.level3_category,
-                        correct_answer_count=assistant.correct_answer_count,
-                        category_prompt=category_prompt,
-                        focus_prompt=focus_prompt,
-                        focus_mode=focus_mode
-                    ):
-                        # NEW: Topic switching and classification now handled in ask_followup_question_stream()
+                    async for chunk in stream_graph_execution(initial_state):
+                        # NEW: Topic switching and classification now handled in graph nodes
                         # The decision step happens BEFORE response generation
                         # Object name and categories are already updated if switch occurred
 
@@ -390,6 +488,19 @@ def continue_conversation():
 
                         # Update conversation history with final response
                         if chunk.finish:
+                            # Also append the USER message to history now that turn is complete
+                            # (matches logic in original call_paixueji_stream which did it early, 
+                            # but safer to do here or assuming app.py handles it?)
+                            # Original: "messages.append... assistant.conversation_history.append" 
+                            # inside stream meant it was added early. 
+                            # In `continue_conversation` (app.py), we only see:
+                            # "if chunk.finish: assistant.conversation_history.append(... response ...)"
+                            # WHERE is the user message added to assistant.conversation_history?
+                            # In original `call_paixueji_stream`:
+                            # "assistant.conversation_history.append({'role': 'user', 'content': content})"
+                            # So I MUST do it here too if the graph doesn't mutate assistant history.
+                            assistant.conversation_history.append({"role": "user", "content": child_input})
+                            
                             assistant.conversation_history.append({
                                 "role": "assistant",
                                 "content": chunk.response
