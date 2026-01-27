@@ -53,7 +53,8 @@ async def call_paixueji_stream(
     correct_answer_count: int = 0,
     category_prompt: str = "",
     focus_prompt: str = "",
-    focus_mode: str | None = None
+    focus_mode: str | None = None,
+    character_prompt: str = ""
 ) -> AsyncGenerator[StreamChunk, None]:
     """
     Main streaming function for Paixueji assistant.
@@ -76,6 +77,7 @@ async def call_paixueji_stream(
         category_prompt: Category guidance
         focus_prompt: Focus strategy guidance
         focus_mode: The focus mode key (e.g., depth, width_color)
+        character_prompt: Character guidance
     """
     start_time = time.time()
 
@@ -128,7 +130,7 @@ async def call_paixueji_stream(
             "level2_category": level2_category,
             "correct_answer_count": correct_answer_count,
             "focus_mode": focus_mode,
-            "tone": assistant.tone
+            "character": assistant.character
         }
         current_node.user_input = content if turn_number > 0 else None
 
@@ -515,6 +517,7 @@ async def call_paixueji_stream(
                 focus_prompt=focus_prompt,
                 config=config,
                 client=client,
+                character_prompt=character_prompt,
                 is_topic_switch=should_switch,
                 kg_context=kg_context
             )
@@ -750,7 +753,7 @@ async def call_paixueji_stream(
             f"\n\n[DEBUG TREE NODE] Turn {current_node.turn_number} ({current_node.type.upper()})\n"
             f"--------------------------------------------------\n"
             f"USER INPUT: {current_node.user_input or '(None)'}\n"
-            f"CONTEXT: Object='{state_b.get('object_name')}' | Tone='{state_b.get('tone')}' | Focus='{state_b.get('focus_mode')}'\n"
+            f"CONTEXT: Object='{state_b.get('object_name')}' | Character='{state_b.get('character')}' | Focus='{state_b.get('focus_mode')}'\n"
             f"VALIDATION: Engaged={val.get('is_engaged')} | Correct={val.get('is_factually_correct')}\n"
             f"REASONING: {val.get('correctness_reasoning') or 'N/A'}\n"
             f"DECISION: {dec.get('decision_type') or 'N/A'} (Reason: {dec.get('switch_reasoning') or 'N/A'})\n"

@@ -31,7 +31,7 @@ let contextMessage = null;
 let buggyResponseIndex = null;
 let isRestoredSession = false;
 let currentObject = null;  // Current object being discussed
-let currentTone = null;  // Current tone
+let currentCharacter = null;  // Current character
 let currentFocusMode = null;  // Current focus mode
 
 // DOM elements
@@ -130,17 +130,17 @@ async function startConversation() {
     const level1Category = document.getElementById('level1Category').value;
     const level2Category = document.getElementById('level2Category').value;
     const level3Category = document.getElementById('level3Category').value;
-    const tone = document.getElementById('assistantTone').value;
+    const character = document.getElementById('assistantCharacter').value;
     const focusMode = document.getElementById('nextQuestionFocus').value;
     systemManagedMode = (focusMode === 'system_managed');
 
     // Save state for debug panel
     currentObject = objectName;
-    currentTone = tone;
+    currentCharacter = character;
     currentFocusMode = focusMode;
 
-    // Save tone preference
-    localStorage.setItem('paixueji_tone', tone);
+    // Save character preference
+    localStorage.setItem('paixueji_character', character);
 
     // Set active focus mode dropdown to match start selection
     const activeFocusSelect = document.getElementById('activeFocusMode');
@@ -227,7 +227,7 @@ async function startConversation() {
                 level1_category: level1Value,
                 level2_category: level2Value,
                 level3_category: level3Value,
-                tone: tone,
+                character: character,
                 focus_mode: focusMode,
                 system_managed: systemManagedMode
             }),
@@ -848,10 +848,10 @@ function updateDebugPanel() {
         objectElement.textContent = currentObject || '-';
     }
 
-    // Update tone
-    const toneElement = document.getElementById('debugTone');
-    if (toneElement) {
-        toneElement.textContent = currentTone ? formatCategoryName(currentTone) : '-';
+    // Update character
+    const characterElement = document.getElementById('debugCharacter');
+    if (characterElement) {
+        characterElement.textContent = currentCharacter ? formatCategoryName(currentCharacter) : '-';
     }
 
     // Update focus mode
@@ -947,12 +947,12 @@ function init() {
     // Load category data
     loadCategoryData();
 
-    // Load saved tone preference
-    const savedTone = localStorage.getItem('paixueji_tone');
-    if (savedTone) {
-        const toneSelect = document.getElementById('assistantTone');
-        if (toneSelect) {
-            toneSelect.value = savedTone;
+    // Load saved character preference
+    const savedCharacter = localStorage.getItem('paixueji_character');
+    if (savedCharacter) {
+        const characterSelect = document.getElementById('assistantCharacter');
+        if (characterSelect) {
+            characterSelect.value = savedCharacter;
         }
     }
 
@@ -1332,7 +1332,7 @@ async function restoreState() {
         }
 
         // Update current state variables for debug panel
-        currentTone = state.session_state.tone;
+        currentCharacter = state.session_state.character;
         currentFocusMode = savedFocusMode;
         currentObject = state.session_state.object_name;
 

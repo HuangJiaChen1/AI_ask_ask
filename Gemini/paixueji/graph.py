@@ -47,6 +47,7 @@ class PaixuejiState(TypedDict):
 
     # --- Prompts ---
     age_prompt: str
+    character_prompt: str
     category_prompt: str
     focus_prompt: str
 
@@ -503,6 +504,7 @@ async def node_generate_question(state: PaixuejiState) -> dict:
             focus_prompt=state["focus_prompt"],
             config=state["config"],
             client=state["client"],
+            character_prompt=state["character_prompt"],
             is_topic_switch=is_topic_switch,
             kg_context=state["kg_context"]
         )
@@ -587,7 +589,14 @@ def build_paixueji_graph():
         return "route_logic"
 
     workflow.add_edge(START, "analyze_input")
-    workflow.add_conditional_edges("analyze_input", check_intro)
+    workflow.add_conditional_edges(
+        "analyze_input", 
+        check_intro,
+        {
+            "generate_response": "generate_response", 
+            "route_logic": "route_logic"
+        }
+    )
     
     workflow.add_edge("route_logic", "generate_response")
     workflow.add_edge("generate_response", "generate_question")

@@ -43,7 +43,7 @@ class PaixuejiAssistant:
         self.conversation_history = []
         self.state = ConversationState.INTRODUCTION
         self.age = None
-        self.tone = None
+        self.character = None
 
         # Paixueji-specific fields
         self.object_name = None
@@ -205,7 +205,7 @@ class PaixuejiAssistant:
 """
         return context
 
-    def init_flow_tree(self, session_id, age, object_name, tone, focus_mode):
+    def init_flow_tree(self, session_id, age, object_name, character, focus_mode):
         """
         Initialize conversation flow tree for debugging.
 
@@ -213,7 +213,7 @@ class PaixuejiAssistant:
             session_id: Session ID for this conversation
             age: Child's age
             object_name: Initial object being discussed
-            tone: Conversation tone
+            character: Conversation character (Teacher/Buddy)
             focus_mode: Focus mode (depth, width, etc.)
         """
         from conversation_tree import ConversationFlowTree
@@ -225,7 +225,7 @@ class PaixuejiAssistant:
                 "created_at": datetime.now().isoformat(),
                 "initial_object": object_name,
                 "child_age": age,
-                "tone": tone,
+                "character": character,
                 "initial_focus": focus_mode
             }
         )
@@ -264,13 +264,13 @@ class PaixuejiAssistant:
         else:
             return age_groups.get('5-6', {}).get('prompt', '')
 
-    def get_tone_prompt(self, tone_key):
-        """Get the appropriate tone-based prompt."""
-        if not tone_key:
+    def get_character_prompt(self, character_key):
+        """Get the appropriate character-based prompt."""
+        if not character_key:
             return ""
         
-        tone_prompts = self.prompts.get('tone_prompts', {})
-        return tone_prompts.get(tone_key, "")
+        character_prompts = self.prompts.get('character_prompts', {})
+        return character_prompts.get(character_key, "")
 
     def get_focus_prompt(self, focus_mode):
         """Get the appropriate focus strategy prompt."""

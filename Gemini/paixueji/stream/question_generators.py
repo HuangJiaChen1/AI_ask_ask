@@ -175,6 +175,7 @@ async def generate_followup_question_stream(
     focus_prompt: str,
     config: dict,
     client: genai.Client,
+    character_prompt: str = "",
     is_topic_switch: bool = False,
     kg_context: str = ""
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
@@ -194,6 +195,7 @@ async def generate_followup_question_stream(
         focus_prompt: Focus strategy guidance
         config: Configuration dict with model settings
         client: Gemini client instance
+        character_prompt: Character-specific guidance (Teacher vs Buddy)
         is_topic_switch: Whether this follows a topic switch
         kg_context: Specific Knowledge Graph context
 
@@ -211,6 +213,7 @@ async def generate_followup_question_stream(
         focus_prompt=focus_prompt,
         category_prompt=category_prompt,
         age_prompt=age_prompt,
+        character_prompt=character_prompt,
         kg_context=kg_context
     )
 

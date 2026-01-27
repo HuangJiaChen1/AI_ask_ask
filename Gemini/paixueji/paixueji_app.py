@@ -193,7 +193,7 @@ def start_conversation():
     level1_category = data.get('level1_category')
     level2_category = data.get('level2_category')
     level3_category = data.get('level3_category')
-    tone = data.get('tone')
+    character = data.get('character')
     focus_mode = data.get('focus_mode', 'depth')  # Default to depth if not provided
     system_managed = data.get('system_managed', False)  # System-managed focus mode
 
@@ -221,7 +221,7 @@ def start_conversation():
     sessions[session_id] = assistant
 
     # Initialize flow tree for debugging
-    assistant.init_flow_tree(session_id, age, object_name, tone, focus_mode)
+    assistant.init_flow_tree(session_id, age, object_name, character, focus_mode)
 
     # Store session state
     assistant.age = age
@@ -229,14 +229,14 @@ def start_conversation():
     assistant.level1_category = level1_category
     assistant.level2_category = level2_category
     assistant.level3_category = level3_category
-    assistant.tone = tone
+    assistant.character = character
     assistant.correct_answer_count = 0
 
     # Generate unique request ID for this stream
     request_id = str(uuid.uuid4())
 
     print(f"[INFO] Created Paixueji session {session_id[:8]}... | age={age}, object={object_name}, "
-          f"level1={level1_category}, level2={level2_category}, level3={level3_category}, tone={tone}, focus={focus_mode}, request_id={request_id[:8]}...")
+          f"level1={level1_category}, level2={level2_category}, level3={level3_category}, character={character}, focus={focus_mode}, request_id={request_id[:8]}...")
 
     def generate():
         """Generator for SSE stream."""
@@ -251,10 +251,10 @@ def start_conversation():
                 if age_prompt:
                     system_prompt += f"\n\nAGE-SPECIFIC GUIDANCE:\n{age_prompt}"
 
-            # Get tone prompt
-            tone_prompt = assistant.get_tone_prompt(tone)
-            if tone_prompt:
-                system_prompt += f"\n\nTONE GUIDANCE:\n{tone_prompt}"
+            # Get character prompt
+            character_prompt = assistant.get_character_prompt(character)
+            if character_prompt:
+                system_prompt += f"\n\nCHARACTER GUIDANCE:\n{character_prompt}"
 
             # Get category prompt
             category_prompt = assistant.get_category_prompt(level1_category, level2_category, level3_category)
@@ -289,6 +289,7 @@ def start_conversation():
                         "client": assistant.client,
                         "assistant": assistant,
                         "age_prompt": age_prompt,
+                        "character_prompt": character_prompt,
                         "object_name": object_name,
                         "level1_category": level1_category,
                         "level2_category": level2_category,
@@ -410,6 +411,9 @@ def continue_conversation():
             if assistant.age is not None:
                 age_prompt = assistant.get_age_prompt(assistant.age)
 
+            # Get character prompt
+            character_prompt = assistant.get_character_prompt(assistant.character)
+
             # Get category prompt
             category_prompt = assistant.get_category_prompt(
                 assistant.level1_category,
@@ -449,6 +453,7 @@ def continue_conversation():
                         "client": assistant.client,
                         "assistant": assistant,
                         "age_prompt": age_prompt,
+                        "character_prompt": character_prompt,
                         "object_name": assistant.object_name,
                         "level1_category": assistant.level1_category,
                         "level2_category": assistant.level2_category,
@@ -701,11 +706,11 @@ def convert_tree_to_mermaid(flow_tree):
         logic_id = f"{node_id}_logic"
         logic_lines = []
         
-        # Context (Object + Tone + Score)
+        # Context (Object + Character + Score)
         obj = node.state_before.get('object_name', 'N/A')
-        tone = node.state_before.get('tone', 'Default')
+        character = node.state_before.get('character', 'Default')
         score = node.state_before.get('correct_answer_count', 0)
-        logic_lines.append(f"<b>Context:</b> Object='{obj}' | Tone='{tone}' | Score={score}")
+        logic_lines.append(f"<b>Context:</b> Object='{obj}' | Character='{character}' | Score={score}")
         
         # Active Strategy (Focus Mode)
         focus_mode = node.state_before.get('focus_mode')
@@ -1054,7 +1059,7 @@ def build_save_state(assistant, session_id):
             "level1_category": assistant.level1_category,
             "level2_category": assistant.level2_category,
             "level3_category": assistant.level3_category,
-            "tone": assistant.tone,
+            "character": assistant.character,
             "correct_answer_count": assistant.correct_answer_count,
             "system_managed_focus": assistant.system_managed_focus,
             "current_focus_mode": assistant.current_focus_mode,
@@ -1153,7 +1158,7 @@ def restore_from_state(state, client=None):
     assistant.level1_category = session_state.get('level1_category')
     assistant.level2_category = session_state.get('level2_category')
     assistant.level3_category = session_state.get('level3_category')
-    assistant.tone = session_state.get('tone')
+    assistant.character = session_state.get('character')
     assistant.correct_answer_count = session_state.get('correct_answer_count', 0)
 
     # Restore system-managed focus state
@@ -1318,7 +1323,7 @@ def restore_session_state():
             session_id=new_session_id,
             age=assistant.age,
             object_name=assistant.object_name,
-            tone=assistant.tone,
+            character=assistant.character,
             focus_mode=assistant.current_focus_mode
         )
 
