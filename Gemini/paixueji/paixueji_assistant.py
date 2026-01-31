@@ -60,15 +60,15 @@ class PaixuejiAssistant:
         self.width_categories_tried = []  # ['color', 'shape', 'category']
         self.depth_target = 0  # 4 or 5, randomly chosen per object
 
-        # Conversation flow tree for debugging
-        self.flow_tree = None
+        # Theme Guide fields
+        self.guide_mode = False
+        self.target_theme = None
+        self.current_plan = []
+        self.themes = []
+        self._load_themes()
 
-        # Set up authentication if credentials file is specified in environment
-        credentials_path = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
-        if credentials_path and not os.environ.get('GOOGLE_APPLICATION_CREDENTIALS_SET'):
-            # Ensure the environment variable is set for the Google client
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = credentials_path
-            os.environ['GOOGLE_APPLICATION_CREDENTIALS_SET'] = '1'
+        # Debugging Flow Tree
+        self.flow_tree = None
 
         # Initialize Google Gemini client
         if client:
@@ -104,6 +104,35 @@ class PaixuejiAssistant:
             self.depth_questions_count = 0
             self.width_wrong_count = 0
             self.width_categories_tried = []
+
+    def _load_themes(self):
+        """Load themes from themes.json."""
+        themes_path = os.path.join("knowledge_graph", "themes.json")
+        if os.path.exists(themes_path):
+            try:
+                with open(themes_path, 'r', encoding='utf-8') as f:
+                    self.themes = json.load(f)
+                safe_print(f"[THEME] Loaded {len(self.themes)} themes.")
+            except Exception as e:
+                safe_print(f"[ERROR] Failed to load themes: {e}")
+
+    def start_theme_guide(self, theme_id):
+        """Enable guide mode for a specific theme."""
+        theme = next((t for t in self.themes if t['id'] == theme_id), None)
+        if theme:
+            self.guide_mode = True
+            self.target_theme = theme
+            self.current_plan = []
+            safe_print(f"[THEME] Guide mode STARTED for: {theme['name']}")
+            return True
+        return False
+
+    def stop_theme_guide(self):
+        """Disable guide mode."""
+        self.guide_mode = False
+        self.target_theme = None
+        self.current_plan = []
+        safe_print(f"[THEME] Guide mode STOPPED.")
 
     def _load_config(self, config_path):
         """Load configuration from JSON file."""

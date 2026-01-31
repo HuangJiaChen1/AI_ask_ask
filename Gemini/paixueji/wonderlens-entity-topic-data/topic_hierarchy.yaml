@@ -1,0 +1,271 @@
+version: "1.0"
+updated_at: "2026-01-30"
+
+topics:
+  # Level 1: Nature Exploration
+  - id: nature
+    name: Nature Exploration
+    level: 1
+    parent_id: null
+    min_age_tier: 1
+    children:
+      # Level 2: Animals
+      - id: animal
+        name: Animal
+        level: 2
+        parent_id: nature
+        min_age_tier: 1
+        children:
+          - id: animal_appearance
+            name: Animal Appearance
+            level: 3
+            parent_id: animal
+            min_age_tier: 1
+            keywords: ["color", "size", "shape", "fur", "skin"]
+          - id: animal_behavior
+            name: Animal Behavior
+            level: 3
+            parent_id: animal
+            min_age_tier: 1
+            keywords: ["sound", "movement", "habits"]
+          - id: animal_habitat
+            name: Animal Habitat
+            level: 3
+            parent_id: animal
+            min_age_tier: 2
+            keywords: ["home", "environment", "location"]
+          - id: animal_lifecycle
+            name: Animal Lifecycle
+            level: 3
+            parent_id: animal
+            min_age_tier: 3
+            keywords: ["growth", "change", "metamorphosis"]
+          - id: animal_senses
+            name: Animal Senses
+            level: 3
+            parent_id: animal
+            min_age_tier: 2
+            keywords: ["smell", "hearing", "sight", "touch"]
+          - id: animal_breathing
+            name: Animal Breathing
+            level: 3
+            parent_id: animal
+            min_age_tier: 2
+            keywords: ["gills", "lungs", "breathing"]
+          - id: animal_adaptation
+            name: Animal Adaptation
+            level: 3
+            parent_id: animal
+            min_age_tier: 3
+            keywords: ["beak", "feet", "survival", "evolution"]
+          - id: animal_classification
+            name: Animal Classification
+            level: 3
+            parent_id: animal
+            min_age_tier: 3
+            keywords: ["mammal", "bird", "fish", "insect", "reptile"]
+
+      # Level 2: Plants
+      - id: plant
+        name: Plant
+        level: 2
+        parent_id: nature
+        min_age_tier: 1
+        children:
+          - id: plant_appearance
+            name: Plant Appearance
+            level: 3
+            parent_id: plant
+            min_age_tier: 1
+            keywords: ["color", "shape", "flower", "leaf"]
+          - id: plant_growth
+            name: Plant Growth
+            level: 3
+            parent_id: plant
+            min_age_tier: 2
+            keywords: ["sunlight", "water", "soil", "growing"]
+          - id: plant_lifecycle
+            name: Plant Lifecycle
+            level: 3
+            parent_id: plant
+            min_age_tier: 3
+            keywords: ["seed", "sprout", "bloom", "fruit"]
+          - id: plant_parts
+            name: Plant Parts
+            level: 3
+            parent_id: plant
+            min_age_tier: 1
+            keywords: ["stem", "leaf", "root", "petal"]
+          - id: pollination
+            name: Pollination
+            level: 3
+            parent_id: plant
+            min_age_tier: 2
+            keywords: ["bee", "butterfly", "pollen", "nectar"]
+
+      # Level 2: Natural Phenomena
+      - id: nature_phenomenon
+        name: Natural Phenomenon
+        level: 2
+        parent_id: nature
+        min_age_tier: 1
+        children:
+          - id: weather
+            name: Weather
+            level: 3
+            parent_id: nature_phenomenon
+            min_age_tier: 1
+            keywords: ["sunny", "rainy", "windy", "snow"]
+          - id: celestial_body
+            name: Celestial Body
+            level: 3
+            parent_id: nature_phenomenon
+            min_age_tier: 2
+            keywords: ["sun", "moon", "stars"]
+          - id: light_phenomenon
+            name: Light Phenomenon
+            level: 3
+            parent_id: nature_phenomenon
+            min_age_tier: 2
+            keywords: ["rainbow", "shadow", "reflection"]
+          - id: water_cycle
+            name: Water Cycle
+            level: 3
+            parent_id: nature_phenomenon
+            min_age_tier: 2
+            keywords: ["rain", "evaporation", "clouds"]
+
+  # Level 1: Daily Life
+  - id: daily_life
+    name: Daily Life
+    level: 1
+    parent_id: null
+    min_age_tier: 1
+    children:
+      # Level 2: Food
+      - id: food
+        name: Food
+        level: 2
+        parent_id: daily_life
+        min_age_tier: 1
+        children:
+          - id: fruit_knowledge
+            name: Fruit Knowledge
+            level: 3
+            parent_id: food
+            min_age_tier: 1
+            keywords: ["fruit", "sweet", "vitamin"]
+          - id: vegetable_knowledge
+            name: Vegetable Knowledge
+            level: 3
+            parent_id: food
+            min_age_tier: 1
+            keywords: ["vegetable", "healthy", "nutrition"]
+          - id: food_processing
+            name: Food Processing
+            level: 3
+            parent_id: food
+            min_age_tier: 2
+            keywords: ["making", "cooking", "processing"]
+          - id: food_origin
+            name: Food Origin
+            level: 3
+            parent_id: food
+            min_age_tier: 2
+            keywords: ["where from", "source", "farm"]
+          - id: nutrition
+            name: Nutrition
+            level: 3
+            parent_id: food
+            min_age_tier: 2
+            keywords: ["healthy", "vitamins", "calcium", "protein"]
+
+      # Level 2: Daily Objects
+      - id: daily_object
+        name: Daily Object
+        level: 2
+        parent_id: daily_life
+        min_age_tier: 1
+        children:
+          - id: object_function
+            name: Object Function
+            level: 3
+            parent_id: daily_object
+            min_age_tier: 1
+            keywords: ["use", "function", "purpose"]
+          - id: material_knowledge
+            name: Material Knowledge
+            level: 3
+            parent_id: daily_object
+            min_age_tier: 2
+            keywords: ["material", "made of", "source"]
+
+      # Level 2: Transport
+      - id: transport
+        name: Transport
+        level: 2
+        parent_id: daily_life
+        min_age_tier: 1
+        children:
+          - id: land_transport
+            name: Land Transport
+            level: 3
+            parent_id: transport
+            min_age_tier: 1
+            keywords: ["car", "bicycle", "train"]
+          - id: air_transport
+            name: Air Transport
+            level: 3
+            parent_id: transport
+            min_age_tier: 1
+            keywords: ["airplane", "helicopter", "balloon"]
+          - id: water_transport
+            name: Water Transport
+            level: 3
+            parent_id: transport
+            min_age_tier: 1
+            keywords: ["boat", "ship", "ferry"]
+          - id: traffic_safety
+            name: Traffic Safety
+            level: 3
+            parent_id: transport
+            min_age_tier: 2
+            keywords: ["safety", "rules", "traffic light"]
+          - id: vehicle_parts
+            name: Vehicle Parts
+            level: 3
+            parent_id: transport
+            min_age_tier: 2
+            keywords: ["wheels", "engine", "wings"]
+          - id: vehicle_principles
+            name: Vehicle Principles
+            level: 3
+            parent_id: transport
+            min_age_tier: 3
+            keywords: ["buoyancy", "lift", "propulsion"]
+
+  # Level 1: Imagination
+  - id: imagination
+    name: Imagination
+    level: 1
+    parent_id: null
+    min_age_tier: 1
+    children:
+      - id: prehistoric
+        name: Prehistoric
+        level: 2
+        parent_id: imagination
+        min_age_tier: 1
+        keywords: ["dinosaur", "fossil", "extinction"]
+      - id: mythology
+        name: Mythology
+        level: 2
+        parent_id: imagination
+        min_age_tier: 1
+        keywords: ["unicorn", "fairy", "magic"]
+      - id: technology_future
+        name: Technology & Future
+        level: 2
+        parent_id: imagination
+        min_age_tier: 2
+        keywords: ["robot", "AI", "future"]

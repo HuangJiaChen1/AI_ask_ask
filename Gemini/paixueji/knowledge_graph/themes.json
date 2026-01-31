@@ -1,0 +1,26 @@
+[
+  {
+    "id": "indoor_activities",
+    "name": "Indoor Activities",
+    "description": "Playing, reading, and doing things inside the house.",
+    "keywords": ["room", "house", "toys", "reading", "drawing", "inside"]
+  },
+  {
+    "id": "nature_exploration",
+    "name": "Nature Exploration",
+    "description": "Learning about plants, animals, and the world outside.",
+    "keywords": ["garden", "trees", "park", "bugs", "flowers", "outside"]
+  },
+  {
+    "id": "daily_routines",
+    "name": "Daily Routines",
+    "description": "Things we do every day like washing hands, eating, and sleeping.",
+    "keywords": ["morning", "night", "brushing teeth", "eating", "washing", "habits"]
+  },
+  {
+    "id": "seasons",
+    "name": "Seasons",
+    "description": "The four seasons in a cycle each year: spring, summer, autumn and winter",
+    "keywords": ["spring", "summer", "autumn", "winter"]
+  }
+]
