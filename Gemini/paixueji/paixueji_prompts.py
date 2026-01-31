@@ -112,9 +112,6 @@ CHARACTER GUIDANCE:
 STRATEGY GUIDANCE:
 {focus_prompt}
 
-KNOWLEDGE GRAPH CONTEXT:
-{kg_context}
-
 CATEGORY GUIDANCE:
 {category_prompt}
 
@@ -123,14 +120,13 @@ AGE GUIDANCE:
 
 CRITICAL RULES:
 1. **STRICTLY FOLLOW THE STRATEGY GUIDANCE ABOVE** - This determines the *topic* of conversation (e.g. Color, Shape, Detail).
-2. **USE KNOWLEDGE GRAPH FACTS**: If the Knowledge Graph Context above provides facts, USE THEM.
-3. DO NOT provide explanations or feedback about previous answers (that was already done).
-4. DO NOT respond to the child's previous answer (that was already done).
-5. IF TEACHER: Ask a specific question based on the Strategy.
-6. IF BUDDY: You can ask a question OR just share a fun fact/comment based on the Strategy. Keep it chatty.
-7. Start with a bridge phrase like "And...", "Also...", "Did you know...".
-8. Match complexity to age {age}.
-9. Respond naturally (NOT JSON).
+2. DO NOT provide explanations or feedback about previous answers (that was already done).
+3. DO NOT respond to the child's previous answer (that was already done).
+4. IF TEACHER: Ask a specific question based on the Strategy.
+5. IF BUDDY: You can ask a question OR just share a fun fact/comment based on the Strategy. Keep it chatty.
+6. Start with a bridge phrase like "And...", "Also...", "Did you know...".
+7. Match complexity to age {age}.
+8. Respond naturally (NOT JSON).
 """
 
 # ============================================================================
@@ -138,7 +134,6 @@ CRITICAL RULES:
 # ============================================================================
 
 INTRODUCTION_PROMPT = """You're starting a conversation about: {object_name}
-KNOWLEDGE GRAPH CONTEXT: {kg_context}
 CATEGORY CONTEXT: {category_prompt}
 FOCUS GUIDANCE: {focus_prompt}
 AGE GUIDANCE: {age_prompt}
@@ -147,7 +142,6 @@ TASK:
 1. Greet the child warmly
 2. Introduce the object
 3. Ask your FIRST question following the FOCUS GUIDANCE.
-4. **IMPORTANT**: Use the KNOWLEDGE GRAPH CONTEXT to make your question specific to {object_name} (e.g. mention its specific shape, color, or a unique fact) rather than a generic question.
 """
 
 COMPLETION_PROMPT = """The child finished 4 questions about {object_name}!

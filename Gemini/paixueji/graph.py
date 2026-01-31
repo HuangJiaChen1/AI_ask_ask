@@ -43,7 +43,6 @@ class PaixuejiState(TypedDict):
     level2_category: str
     level3_category: str
     correct_answer_count: int
-    kg_context: str
 
     # --- Prompts ---
     age_prompt: str
@@ -347,8 +346,7 @@ async def node_generate_response(state: PaixuejiState) -> dict:
             config=state["config"],
             client=state["client"],
             level3_category=state["level3_category"],
-            focus_prompt=state["focus_prompt"],
-            kg_context=state["kg_context"]
+            focus_prompt=state["focus_prompt"]
         )
     elif response_type == "explicit_switch":
         generator = generate_explicit_switch_response_stream(
@@ -505,8 +503,7 @@ async def node_generate_question(state: PaixuejiState) -> dict:
             config=state["config"],
             client=state["client"],
             character_prompt=state["character_prompt"],
-            is_topic_switch=is_topic_switch,
-            kg_context=state["kg_context"]
+            is_topic_switch=is_topic_switch
         )
 
     full_text, new_seq = await stream_generator_to_callback(generator, state, response_type_override="followup_question")
