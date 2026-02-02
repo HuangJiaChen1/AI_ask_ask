@@ -5,8 +5,7 @@
       "Bash(python -m py_compile:*)",
       "Bash(ls:*)",
       "Bash(wc:*)",
-      "Bash(python:*)",
-      "Bash(dir /b \"C:\\\\Users\\\\123\\\\Documents\\\\GitHub\\\\AI_ask_ask\\\\Gemini\\\\wonderlens-entity-topic-data\")"
+      "Bash(python:*)"
     ]
   }
 }

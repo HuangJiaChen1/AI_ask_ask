@@ -33,10 +33,8 @@ from .focus_mode import (
     handle_width_wrong_answer,
     generate_object_suggestions
 )
-# Import Theme Guide classes (legacy)
+# Import new Theme Guide classes
 from .theme_guide import ThemeNavigator, ThemeDriver
-# Import new Pathway Guide classes
-from .pathway_guide import PathwayNavigator, PathwayDriver, PathwayController
 
 
 async def call_paixueji_stream(
@@ -64,6 +62,13 @@ async def call_paixueji_stream(
     Main streaming function for Paixueji assistant.
     """
     start_time = time.time()
+
+    # Retrieve KG context
+    kg_context = assistant.get_kg_context(object_name, age or 6)
+    if kg_context:
+        logger.info(f"[{session_id}] KG Context: FOUND for '{object_name}'")
+    else:
+        logger.info(f"[{session_id}] KG Context: MISSING for '{object_name}' - using general knowledge")
 
     # If system-managed mode, use the actual current focus mode
     if assistant.system_managed_focus:
@@ -128,163 +133,48 @@ async def call_paixueji_stream(
     suggested_objects = None
 
     # =========================================================================
-    # PATHWAY GUIDE LOGIC (New - uses WonderLens structured data)
+    # THEME GUIDE LOGIC (Navigator & Driver Architecture)
     # =========================================================================
-    if assistant.pathway_mode and assistant.current_pathway:
-        logger.info(f"[{session_id}] PATHWAY GUIDE ACTIVE: {assistant.current_pathway.object_name} "
-                    f"(round {assistant.current_round + 1}/{len(assistant.current_pathway.steps)})")
-
-        # Initialize Pathway Controller
-        pathway_controller = PathwayController(client, config)
-        pathway = assistant.current_pathway
-
-        # Detect if this is the start trigger
-        is_intro = (content == f"Start conversation about {object_name}")
-
-        if is_intro:
-            # Special handling for introduction - use pathway's initial response template
-            nav_plan = {
-                "status": "ON_TRACK",
-                "strategy": "ADVANCE",
-                "reasoning": "Starting pathway introduction",
-                "instruction": pathway.initial_response_template,
-                "should_advance": False  # Don't advance on intro, we're at round 0
-            }
-
-            # Get the first step's default question
-            first_step = assistant.get_current_step()
-            first_option = first_step.get_default_option() if first_step else None
-            first_question = first_option.question if first_option else "What do you notice?"
-
-            # Store nav state for debugging
-            assistant.last_navigation_state = nav_plan
-
-            # Generate intro response with first question
-            intro_text = f"{pathway.initial_response_template} {first_question}"
-
-            # Stream the intro
-            for i, char_chunk in enumerate([intro_text[j:j+20] for j in range(0, len(intro_text), 20)]):
-                full_response += char_chunk
-                sequence_number += 1
-                yield StreamChunk(
-                    response=char_chunk,
-                    session_finished=False,
-                    duration=0.0,
-                    token_usage=None,
-                    finish=False,
-                    sequence_number=sequence_number,
-                    timestamp=time.time(),
-                    session_id=session_id,
-                    request_id=request_id,
-                    is_stuck=False,
-                    correct_answer_count=correct_answer_count,
-                    conversation_complete=False,
-                    focus_mode="pathway_guide",
-                    response_type="pathway_introduction",
-                    switch_decision_reasoning=nav_plan.get("reasoning")
-                )
-
-            response_type = "pathway_introduction"
-        else:
-            # Normal turn - use PathwayController
-            response_type = "pathway_guidance"
-            nav_plan = None
-
-            async for text_chunk, chunk_token_usage, full_text, plan in pathway_controller.process_turn(
-                history=prepared_messages,
-                user_input=content,
-                assistant=assistant,
-                character_prompt=character_prompt,
-                age=age or 6
-            ):
-                if plan:
-                    nav_plan = plan
-
-                if chunk_token_usage:
-                    token_usage = chunk_token_usage
-
-                if text_chunk:
-                    full_response += text_chunk
-                    sequence_number += 1
-                    yield StreamChunk(
-                        response=text_chunk,
-                        session_finished=False,
-                        duration=0.0,
-                        token_usage=None,
-                        finish=False,
-                        sequence_number=sequence_number,
-                        timestamp=time.time(),
-                        session_id=session_id,
-                        request_id=request_id,
-                        is_stuck=False,
-                        correct_answer_count=correct_answer_count,
-                        conversation_complete=False,
-                        focus_mode="pathway_guide",
-                        response_type=response_type,
-                        switch_decision_reasoning=nav_plan.get("reasoning") if nav_plan else None
-                    )
-
-        # Final Chunk
-        end_time = time.time()
-        pathway_complete = not assistant.pathway_mode  # True if pathway was just completed
-        yield StreamChunk(
-            response="",
-            session_finished=False,
-            duration=end_time - start_time,
-            token_usage=token_usage,
-            finish=True,
-            sequence_number=sequence_number + 1,
-            timestamp=time.time(),
-            session_id=session_id,
-            request_id=request_id,
-            is_stuck=False,
-            correct_answer_count=correct_answer_count,
-            conversation_complete=pathway_complete,
-            focus_mode="pathway_guide",
-            response_type=response_type,
-            switch_decision_reasoning=nav_plan.get("reasoning") if nav_plan else None
-        )
-
-        # Add to history
-        assistant.conversation_history.append({"role": "assistant", "content": full_response})
-        return  # Exit, turn handled
-
-    # =========================================================================
-    # LEGACY THEME GUIDE LOGIC (Navigator & Driver Architecture)
-    # =========================================================================
-    if assistant.guide_mode and assistant.target_theme and not assistant.pathway_mode:
-        logger.info(f"[{session_id}] LEGACY THEME GUIDE ACTIVE: {assistant.target_theme['name']}")
-
+    if assistant.guide_mode and assistant.target_theme:
+        logger.info(f"[{session_id}] THEME GUIDE ACTIVE: {assistant.target_theme['name']}")
+        
         # 1. Initialize Agents
+        # Optimization: Use 'gemini-1.5-flash-8b' for the Navigator if it exists, as it's faster for logic.
+        # Otherwise, it defaults to the main model.
         navigator = ThemeNavigator(client, config)
         driver = ThemeDriver(client, config)
-
+        
         # 2. NAVIGATOR STEP (Plan)
+        # Detect if this is the start trigger
         is_intro = (content == f"Start conversation about {object_name}")
-
+        
         if is_intro:
-            nav_plan = {
-                "status": "ON_TRACK",
-                "strategy": "ADVANCE",
-                "instruction": f"Introduce {object_name} enthusiastically and ask a simple question that bridges towards {assistant.target_theme['name']}."
-            }
+             # Special plan for intro
+             nav_plan = {
+                 "status": "ON_TRACK",
+                 "strategy": "ADVANCE",
+                 "instruction": f"Introduce {object_name} enthusiastically and ask a simple question that bridges towards {assistant.target_theme['name']}."
+             }
         else:
-            nav_plan = navigator.analyze_turn(
+             nav_plan = navigator.analyze_turn(
                 history=prepared_messages,
                 user_input=content,
                 current_topic=object_name,
                 target_theme=assistant.target_theme,
                 age=age or 6
-            )
-
+             )
+        
         # Store plan for debugging/visualization
         assistant.last_navigation_state = nav_plan
-
+        
         # Check completion
         if nav_plan.get("status") == "COMPLETED" or nav_plan.get("strategy") == "COMPLETE":
             logger.info(f"[{session_id}] Theme Guide COMPLETED via Navigator.")
             assistant.stop_theme_guide()
-
+            # We can let the driver generate one last wrap-up message here or fall through.
+            # Let's let the driver do the wrap up based on the "COMPLETE" instruction.
+            # But we must update assistant state so next turn is normal.
+        
         # 3. DRIVER STEP (Act)
         stream_generator = driver.generate_response_stream(
             history=prepared_messages,
@@ -302,10 +192,10 @@ async def call_paixueji_stream(
         # Execute stream
         async for chunk_data in wrapped_theme_stream():
             text_chunk, chunk_token_usage, full_text, _ = chunk_data
-
+            
             if chunk_token_usage:
                 token_usage = chunk_token_usage
-
+            
             if text_chunk:
                 full_response += text_chunk
                 sequence_number += 1
@@ -324,9 +214,9 @@ async def call_paixueji_stream(
                     conversation_complete=False,
                     focus_mode="theme_guide",
                     response_type=response_type,
-                    switch_decision_reasoning=nav_plan.get("reasoning")
+                    switch_decision_reasoning=nav_plan.get("reasoning") # Expose reasoning
                 )
-
+        
         # Final Chunk
         end_time = time.time()
         yield StreamChunk(
@@ -346,13 +236,13 @@ async def call_paixueji_stream(
             response_type=response_type,
             switch_decision_reasoning=nav_plan.get("reasoning")
         )
-
+        
         # Add to history
         assistant.conversation_history.append({"role": "assistant", "content": full_response})
-        return  # Exit, turn handled
+        return # Exit, turn handled
 
     # =========================================================================
-    # STANDARD LOGIC (Non-Guide Mode)
+    # STANDARD LOGIC (Non-Theme Guide)
     # =========================================================================
 
     # Check if this is truly the first interaction (no assistant messages yet)
@@ -369,7 +259,8 @@ async def call_paixueji_stream(
             config,
             client,
             level3_category,
-            focus_prompt=focus_prompt
+            focus_prompt=focus_prompt,
+            kg_context=kg_context
         )
         response_type = "introduction"
         logger.info(f"[{session_id}] Routing to introduction question")
@@ -631,7 +522,8 @@ async def call_paixueji_stream(
                 config=config,
                 client=client,
                 character_prompt=character_prompt,
-                is_topic_switch=should_switch
+                is_topic_switch=should_switch,
+                kg_context=kg_context
             )
 
         # Stream Question
