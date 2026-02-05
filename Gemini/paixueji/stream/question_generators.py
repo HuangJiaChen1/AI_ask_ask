@@ -36,7 +36,11 @@ async def ask_introduction_question_stream(
     config: dict,
     client: genai.Client,
     level3_category: str = "",
-    focus_prompt: str = ""
+    focus_prompt: str = "",
+    fun_fact: str = "",
+    fun_fact_hook: str = "",
+    fun_fact_question: str = "",
+    real_facts: str = ""
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str, dict], None]:
     """
     Stream first question about the object.
@@ -51,13 +55,28 @@ async def ask_introduction_question_stream(
         client: Gemini client instance
         level3_category: Level 3 category
         focus_prompt: Focus strategy guidance
+        fun_fact: Grounded fun fact to share (empty string if unavailable)
+        fun_fact_hook: Excited greeting hook (empty string if unavailable)
+        fun_fact_question: Follow-up question from fun fact (empty string if unavailable)
+        real_facts: Grounded real facts about the object (empty string if unavailable)
 
     Yields:
         Tuple of (text_chunk, token_usage_or_None, full_response_so_far, decision_info)
         Note: decision_info contains new_object_name which is always None for introduction
     """
     start_time = time.time()
-    logger.info(f"ask_introduction_question_stream started | object={object_name}, age={age}")
+    logger.info(f"ask_introduction_question_stream started | object={object_name}, age={age}, has_fun_fact={bool(fun_fact)}")
+
+    # Build grounded facts section dynamically
+    if fun_fact:
+        grounded_facts_section = (
+            f"\nVERIFIED FACTS ABOUT {object_name}:\n{real_facts}\n\n"
+            f"FUN FACT TO SHARE:\n{fun_fact}"
+        )
+        fun_fact_instruction = "Share the fun fact naturally in your greeting, then ask the FOCUS GUIDANCE question."
+    else:
+        grounded_facts_section = ""
+        fun_fact_instruction = "Ask your FIRST question following the FOCUS GUIDANCE."
 
     prompts = paixueji_prompts.get_prompts()
     introduction_prompt = prompts['introduction_prompt'].format(
@@ -65,7 +84,9 @@ async def ask_introduction_question_stream(
         category_prompt=category_prompt,
         age_prompt=age_prompt,
         age=age,
-        focus_prompt=focus_prompt
+        focus_prompt=focus_prompt,
+        grounded_facts_section=grounded_facts_section,
+        fun_fact_instruction=fun_fact_instruction
     )
 
     # Prepare messages with introduction prompt

@@ -137,13 +137,49 @@ INTRODUCTION_PROMPT = """You're starting a conversation about: {object_name}
 CATEGORY CONTEXT: {category_prompt}
 FOCUS GUIDANCE: {focus_prompt}
 AGE GUIDANCE: {age_prompt}
-
+{grounded_facts_section}
 TASK:
 1. Greet the child warmly
-2. Introduce the object
-3. Ask your FIRST question following the FOCUS GUIDANCE.
-4. **IMPORTANT**: Use your own extensive knowledge about {object_name} to make your question specific (e.g. mention its specific shape, color, or a unique fact) rather than a generic question.
-"""
+2. Introduce the object with excitement
+3. {fun_fact_instruction}
+4. **IMPORTANT**: Use the VERIFIED FACTS provided above to make your question specific rather than generic. Do NOT make up facts."""
+
+FUN_FACT_GROUNDING_PROMPT = """Research "{object_name}" for a children's education app (child age: {age}).
+Category: {category}
+
+Provide:
+1. KEY FACTS: What is {object_name}? List its main characteristics, notable traits, and interesting properties. Be specific and factual.
+2. FUN FACTS: Give me 3 to 5 simple, verified, amazing fun facts about "{object_name}" that would delight a {age}-year-old child.
+
+Requirements for ALL facts:
+- TRUE and verifiable
+- Safe for young children
+- Simple words appropriate for age {age}
+- Specific and concrete (not vague generalizations)"""
+
+FUN_FACT_STRUCTURING_PROMPT = """Format these verified facts about "{object_name}" for a children's education app (age: {age}).
+
+RESEARCH RESULTS:
+{grounded_text}
+
+Return JSON with this exact structure:
+{{
+  "is_safe_for_kids": boolean (false if ANY content mentions violence/death/danger/fear),
+  "real_facts": string (2-4 sentence summary of key characteristics, written for a {age}-year-old),
+  "fun_facts": [
+    {{
+      "fun_fact": string (rewrite for a {age}-year-old, start with "Did you know..."),
+      "hook": string (short excited greeting, e.g. "Wow, look at this {object_name}!"),
+      "question": string (engaging follow-up question for a {age}-year-old)
+    }}
+  ]
+}}
+
+Requirements:
+- fun_facts array should have 3-5 items
+- Each fun_fact must be distinct
+- No emojis anywhere
+- All text must be age-appropriate for {age}-year-old"""
 
 COMPLETION_PROMPT = """The child finished 4 questions about {object_name}!
 Their final answer: "{child_answer}"
@@ -191,5 +227,7 @@ def get_prompts():
         'completion_prompt': COMPLETION_PROMPT,
         'character_prompts': CHARACTER_PROMPTS,
         'focus_prompts': FOCUS_PROMPTS,
-        'classification_prompt': CLASSIFICATION_PROMPT
+        'classification_prompt': CLASSIFICATION_PROMPT,
+        'fun_fact_grounding_prompt': FUN_FACT_GROUNDING_PROMPT,
+        'fun_fact_structuring_prompt': FUN_FACT_STRUCTURING_PROMPT,
     }

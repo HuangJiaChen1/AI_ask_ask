@@ -320,10 +320,16 @@ def start_conversation():
                         "switch_decision_reasoning": None,
                         "new_object_name": None,
                         "detected_object_name": None,
-                        "response_type": None,
+                        "response_type": "introduction",
                         "suggested_objects": None,
                         "natural_topic_completion": False,
-                        "validation_result": {}
+                        "validation_result": {},
+
+                        # Fun fact (grounded)
+                        "fun_fact": "",
+                        "fun_fact_hook": "",
+                        "fun_fact_question": "",
+                        "real_facts": "",
                     }
                     
                     async for chunk in stream_graph_execution(initial_state):
@@ -486,7 +492,13 @@ def continue_conversation():
                         "response_type": None,
                         "suggested_objects": None,
                         "natural_topic_completion": False,
-                        "validation_result": {}
+                        "validation_result": {},
+
+                        # Fun fact (not used in continue, but required by state schema)
+                        "fun_fact": "",
+                        "fun_fact_hook": "",
+                        "fun_fact_question": "",
+                        "real_facts": "",
                     }
 
                     async for chunk in stream_graph_execution(initial_state):

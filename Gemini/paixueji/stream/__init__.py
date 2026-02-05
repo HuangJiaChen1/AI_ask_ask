@@ -54,6 +54,9 @@ from .focus_mode import (
     generate_object_suggestions
 )
 
+# Fun fact (grounded)
+from .fun_fact import generate_fun_fact
+
 __all__ = [
     # Utils
     'safe_print',
@@ -84,4 +87,7 @@ __all__ = [
     'decide_next_focus_mode',
     'handle_width_wrong_answer',
     'generate_object_suggestions',
+
+    # Fun fact (grounded)
+    'generate_fun_fact',
 ]

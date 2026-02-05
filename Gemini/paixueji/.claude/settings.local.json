@@ -5,7 +5,10 @@
       "Bash(python -m py_compile:*)",
       "Bash(ls:*)",
       "Bash(wc:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "WebFetch(domain:ai.google.dev)",
+      "WebSearch",
+      "WebFetch(domain:github.com)"
     ]
   },
   "outputStyle": "Explanatory"

@@ -66,6 +66,12 @@ class PaixuejiState(TypedDict):
     suggested_objects: Optional[List[str]]
     natural_topic_completion: bool
     
+    # --- Fun Fact (Grounded) ---
+    fun_fact: Optional[str]
+    fun_fact_hook: Optional[str]
+    fun_fact_question: Optional[str]
+    real_facts: Optional[str]
+
     # --- Output Accumulation ---
     full_response_text: str
     full_question_text: str
@@ -152,6 +158,33 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
 
     logger.info(f"[{state['session_id']}] Node: Analyze Input finished in {time.time() - start_time:.3f}s")
     return updates
+
+
+async def node_generate_fun_fact(state: PaixuejiState) -> dict:
+    """
+    Generate grounded fun facts for the introduction using Google Search.
+    Only called on the introduction path (skips analyze_input).
+    """
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Generate Fun Fact for '{state['object_name']}'")
+
+    from stream.fun_fact import generate_fun_fact
+
+    fact_data = await generate_fun_fact(
+        object_name=state["object_name"],
+        age=state["age"] or 6,
+        config=state["config"],
+        client=state["client"],
+        category=state.get("level1_category", "")
+    )
+
+    logger.info(f"[{state['session_id']}] Node: Generate Fun Fact finished in {time.time() - start_time:.3f}s")
+    return {
+        "fun_fact": fact_data.get("fun_fact", ""),
+        "fun_fact_hook": fact_data.get("hook", ""),
+        "fun_fact_question": fact_data.get("question", ""),
+        "real_facts": fact_data.get("real_facts", "")
+    }
 
 
 async def node_route_logic(state: PaixuejiState) -> dict:
@@ -360,7 +393,11 @@ async def node_generate_response(state: PaixuejiState) -> dict:
             config=state["config"],
             client=state["client"],
             level3_category=state["level3_category"],
-            focus_prompt=state["focus_prompt"]
+            focus_prompt=state["focus_prompt"],
+            fun_fact=state.get("fun_fact", ""),
+            fun_fact_hook=state.get("fun_fact_hook", ""),
+            fun_fact_question=state.get("fun_fact_question", ""),
+            real_facts=state.get("real_facts", "")
         )
     elif response_type == "explicit_switch":
         generator = generate_explicit_switch_response_stream(
@@ -592,34 +629,41 @@ async def node_finalize(state: PaixuejiState) -> dict:
 
 def build_paixueji_graph():
     workflow = StateGraph(PaixuejiState)
-    
+
     workflow.add_node("analyze_input", node_analyze_input)
+    workflow.add_node("generate_fun_fact", node_generate_fun_fact)
     workflow.add_node("route_logic", node_route_logic)
     workflow.add_node("generate_response", node_generate_response)
     workflow.add_node("generate_question", node_generate_question)
     workflow.add_node("finalize", node_finalize)
-    
-    # Conditional edge from analyze
-    def check_intro(state):
-        if state.get("response_type") == "introduction":
-            return "generate_response"
-        return "route_logic"
 
-    workflow.add_edge(START, "analyze_input")
+    # Route from START: introductions go to fun fact generation,
+    # everything else goes to analyze_input
+    def route_from_start(state):
+        if state.get("response_type") == "introduction":
+            return "generate_fun_fact"
+        return "analyze_input"
+
     workflow.add_conditional_edges(
-        "analyze_input", 
-        check_intro,
+        START,
+        route_from_start,
         {
-            "generate_response": "generate_response", 
-            "route_logic": "route_logic"
+            "generate_fun_fact": "generate_fun_fact",
+            "analyze_input": "analyze_input"
         }
     )
-    
+
+    # Fun fact -> generate_response (introduction path)
+    workflow.add_edge("generate_fun_fact", "generate_response")
+
+    # analyze_input -> route_logic (non-introduction path)
+    workflow.add_edge("analyze_input", "route_logic")
+
     workflow.add_edge("route_logic", "generate_response")
     workflow.add_edge("generate_response", "generate_question")
     workflow.add_edge("generate_question", "finalize")
     workflow.add_edge("finalize", END)
-    
+
     return workflow.compile()
 
 # Global graph instance
