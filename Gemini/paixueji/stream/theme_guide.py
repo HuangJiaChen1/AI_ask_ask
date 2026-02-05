@@ -20,7 +20,7 @@ class ThemeNavigator:
     def __init__(self, client: genai.Client, config: Dict[str, Any], model_override: Optional[str] = None):
         self.client = client
         self.config = config
-        # Allow using a faster model (e.g. gemini-1.5-flash-8b) for logic steps
+        # Allow using a faster model (e.g. gemini-2.5-flash-lite) for logic steps
         self.model_name = model_override or config.get("navigator_model") or config["model_name"]
 
     def analyze_turn(

@@ -9,10 +9,11 @@ Functions:
     - is_answer_reasonable: Simple heuristic for engagement check
 """
 import json
+import time
 from loguru import logger
 
 
-def decide_topic_switch_with_validation(
+async def decide_topic_switch_with_validation(
     assistant,
     child_answer: str,
     object_name: str,
@@ -123,16 +124,20 @@ Evaluate now:
 """
 
     try:
-        # Call Gemini with JSON mode / structured output
-        response = assistant.client.models.generate_content(
-            model=assistant.config.get("model", "gemini-2.0-flash-exp"),
+        # Call Gemini with JSON mode via async client
+        t0 = time.time()
+        # Use gemini-1.5-flash for stable and fast validation
+        response = await assistant.client.aio.models.generate_content(
+            model="gemini-2.5-flash-lite",
             contents=decision_prompt,
             config={
-                "response_mime_type": "application/json",  # Force JSON output
-                "temperature": 0.1,  # Low temp for consistent decisions
-                "max_output_tokens": 200  # Increased from 150 for additional fields
+                "response_mime_type": "application/json",
+                "temperature": 0.1,
+                "max_output_tokens": 200
             }
         )
+        t1 = time.time()
+        logger.info(f"[VALIDATE] LLM Call Duration: {t1 - t0:.3f}s (using gemini-2.5-flash-lite async)")
 
         # Parse JSON response
         decision_data = json.loads(response.text)
@@ -147,6 +152,20 @@ Evaluate now:
         )
 
         return decision_data
+
+    except Exception as e:
+        logger.error(f"[VALIDATE] Error: {e}, defaulting to safe state")
+        import traceback
+        traceback.print_exc()
+        return {
+            'decision': 'CONTINUE',
+            'new_object': None,
+            'switching_reasoning': f'Error in validation: {str(e)}',
+            'is_engaged': True,
+            'is_factually_correct': True,
+            'correctness_reasoning': 'Could not evaluate due to error'
+        }
+
 
     except Exception as e:
         logger.error(f"[VALIDATE] Error: {e}, defaulting to safe state")

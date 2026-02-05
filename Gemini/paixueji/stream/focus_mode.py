@@ -155,7 +155,7 @@ def handle_width_wrong_answer(assistant) -> dict:
     }
 
 
-def generate_object_suggestions(assistant, config, client, age: int) -> list[str]:
+async def generate_object_suggestions(assistant, config, client, age: int) -> list[str]:
     """
     Use AI to generate 3-4 related object suggestions.
 
@@ -183,8 +183,9 @@ Respond with ONLY a JSON array of object names:
 """
 
     try:
-        response = client.models.generate_content(
-            model=config.get("model_name", "gemini-2.0-flash-exp"),
+        # Using async client
+        response = await client.aio.models.generate_content(
+            model=config.get("model_name", "gemini-2.5-flash-lite"),
             contents=prompt,
             config={
                 "response_mime_type": "application/json",

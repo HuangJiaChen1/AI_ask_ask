@@ -17,7 +17,6 @@ from google.genai.types import HttpOptions
 from loguru import logger
 
 from paixueji_assistant import PaixuejiAssistant
-# from paixueji_stream import call_paixueji_stream # Deprecated, replaced by graph
 from graph import paixueji_graph
 from schema import StreamChunk
 import paixueji_prompts
@@ -138,6 +137,16 @@ async def stream_graph_execution(initial_state):
             
         # Check for graph completion (or error)
         if task in done:
+            # If we have a pending get_chunk, cancel it to avoid "Task was destroyed but it is pending"
+            # and "Event loop is closed" errors. This happens on both success and failure because
+            # a waiting get_chunk task is always active when the graph finishes.
+            if not get_chunk.done():
+                get_chunk.cancel()
+                try:
+                    await get_chunk
+                except asyncio.CancelledError:
+                    pass
+
             # Check for exceptions
             if task.exception():
                 # If we have a pending get_chunk, cancel it
@@ -295,16 +304,15 @@ def start_conversation():
                         "level2_category": level2_category,
                         "level3_category": level3_category,
                         "correct_answer_count": 0,
-                        "kg_context": assistant.get_kg_context(object_name, age or 6),
                         "category_prompt": category_prompt,
                         "focus_prompt": focus_prompt,
                         "focus_mode": focus_mode,
-                        
+
                         # Initialize outputs
                         "full_response_text": "",
                         "full_question_text": "",
                         "sequence_number": 0,
-                        
+
                         # Initialize flags
                         "is_engaged": None,
                         "is_factually_correct": None,
@@ -459,16 +467,15 @@ def continue_conversation():
                         "level2_category": assistant.level2_category,
                         "level3_category": assistant.level3_category,
                         "correct_answer_count": assistant.correct_answer_count,
-                        "kg_context": assistant.get_kg_context(assistant.object_name, assistant.age or 6),
                         "category_prompt": category_prompt,
                         "focus_prompt": focus_prompt,
                         "focus_mode": focus_mode,
-                        
+
                         # Initialize outputs
                         "full_response_text": "",
                         "full_question_text": "",
                         "sequence_number": 0,
-                        
+
                         # Initialize flags
                         "is_engaged": None,
                         "is_factually_correct": None,

@@ -20,8 +20,8 @@ from google import genai
 from google.genai.types import GenerateContentConfig
 from loguru import logger
 
-from Gemini.paixueji.schema import TokenUsage
-import Gemini.paixueji.paixueji_prompts
+from schema import TokenUsage
+import paixueji_prompts
 from .utils import clean_messages_for_api, convert_messages_to_gemini_format
 
 

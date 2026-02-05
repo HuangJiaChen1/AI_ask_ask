@@ -14,9 +14,6 @@ It is organized into several sub-modules:
 All public functions are re-exported from this module for backward compatibility.
 """
 
-# Main entry point
-from .main import call_paixueji_stream
-
 # Utilities
 from .utils import (
     safe_print,
@@ -58,9 +55,6 @@ from .focus_mode import (
 )
 
 __all__ = [
-    # Main
-    'call_paixueji_stream',
-
     # Utils
     'safe_print',
     'clean_messages_for_api',

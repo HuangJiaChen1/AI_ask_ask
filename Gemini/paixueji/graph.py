@@ -43,7 +43,6 @@ class PaixuejiState(TypedDict):
     level2_category: str
     level3_category: str
     correct_answer_count: int
-    kg_context: str
 
     # --- Prompts ---
     age_prompt: str
@@ -86,6 +85,7 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
     First node: Check if it's the first turn (Intro) or requires validation.
     Also handles system-managed focus mode logic.
     """
+    start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Analyze Input")
     
     # Check if introduction (no assistant messages yet and correct count 0)
@@ -103,13 +103,14 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
     is_intro = (state["correct_answer_count"] == 0 and not has_asked_questions)
     
     if is_intro:
+        logger.info(f"[{state['session_id']}] Node: Analyze Input finished in {time.time() - start_time:.3f}s")
         return {"response_type": "introduction"}
     
     # --- Validation Logic ---
     assistant = state["assistant"]
     is_awaiting_topic_selection = (assistant.state.value == "awaiting_topic_selection")
     
-    validation_result = decide_topic_switch_with_validation(
+    validation_result = await decide_topic_switch_with_validation(
         assistant=assistant,
         child_answer=state["content"],
         object_name=state["object_name"],
@@ -149,6 +150,7 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
         if assistant.current_focus_mode.startswith('width_') and updates["is_factually_correct"]:
             assistant.width_wrong_count = 0
 
+    logger.info(f"[{state['session_id']}] Node: Analyze Input finished in {time.time() - start_time:.3f}s")
     return updates
 
 
@@ -156,6 +158,7 @@ async def node_route_logic(state: PaixuejiState) -> dict:
     """
     Determine the response type and next steps based on validation results.
     """
+    start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Route Logic")
     
     val_result = state["validation_result"]
@@ -239,6 +242,7 @@ async def node_route_logic(state: PaixuejiState) -> dict:
             updates["focus_mode"] = focus_decision['focus_mode']
             updates["focus_prompt"] = assistant.get_focus_prompt(updates["focus_mode"])
 
+    logger.info(f"[{state['session_id']}] Node: Route Logic finished in {time.time() - start_time:.3f}s")
     return updates
 
 
@@ -256,8 +260,15 @@ async def stream_generator_to_callback(generator, state: PaixuejiState, response
     # The `stream_callback` expects a StreamChunk.
     
     sequence = state["sequence_number"]
+    start_time = time.time()
+    first_token_received = False
     
     async for item in generator:
+        if not first_token_received:
+            ttft = time.time() - start_time
+            logger.info(f"[{state['session_id']}] Time to First Token (TTFT): {ttft:.3f}s for {response_type_override or state.get('response_type', 'unknown')}")
+            first_token_received = True
+
         # Normalize item format
         # Intro: (text, usage, full, info)
         # Others: (text, usage, full) or (text, usage, full, info)
@@ -322,6 +333,7 @@ async def stream_generator_to_callback(generator, state: PaixuejiState, response
                 state["detected_object_name"] = None
                 state["switch_decision_reasoning"] = None
 
+    logger.info(f"[{state['session_id']}] Stream finished in {time.time() - start_time:.3f}s for {response_type_override or state.get('response_type', 'unknown')}")
     return full_text, sequence
 
 
@@ -329,6 +341,7 @@ async def node_generate_response(state: PaixuejiState) -> dict:
     """
     Generate the first part of the response (Feedback, Explanation, Correction, Switch).
     """
+    start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Generate Response ({state['response_type']})")
     
     response_type = state["response_type"]
@@ -347,8 +360,7 @@ async def node_generate_response(state: PaixuejiState) -> dict:
             config=state["config"],
             client=state["client"],
             level3_category=state["level3_category"],
-            focus_prompt=state["focus_prompt"],
-            kg_context=state["kg_context"]
+            focus_prompt=state["focus_prompt"]
         )
     elif response_type == "explicit_switch":
         generator = generate_explicit_switch_response_stream(
@@ -453,6 +465,7 @@ async def node_generate_response(state: PaixuejiState) -> dict:
 
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     
+    logger.info(f"[{state['session_id']}] Node: Generate Response finished in {time.time() - start_time:.3f}s")
     return {
         "full_response_text": full_text, 
         "sequence_number": new_seq
@@ -463,10 +476,12 @@ async def node_generate_question(state: PaixuejiState) -> dict:
     """
     Generate the follow-up question (Part 2).
     """
+    start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Generate Question")
     
     # If explicit switch, we don't ask a follow-up question
     if state["response_type"] == "explicit_switch":
+        logger.info(f"[{state['session_id']}] Node: Generate Question finished in {time.time() - start_time:.3f}s (Skipped)")
         return {}
         
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
@@ -505,12 +520,12 @@ async def node_generate_question(state: PaixuejiState) -> dict:
             config=state["config"],
             client=state["client"],
             character_prompt=state["character_prompt"],
-            is_topic_switch=is_topic_switch,
-            kg_context=state["kg_context"]
+            is_topic_switch=is_topic_switch
         )
 
     full_text, new_seq = await stream_generator_to_callback(generator, state, response_type_override="followup_question")
     
+    logger.info(f"[{state['session_id']}] Node: Generate Question finished in {time.time() - start_time:.3f}s")
     return {
         "full_question_text": full_text,
         "sequence_number": new_seq
@@ -521,6 +536,7 @@ async def node_finalize(state: PaixuejiState) -> dict:
     """
     Send final chunk and update history.
     """
+    start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Finalize")
     
     full_response = state["full_response_text"]
@@ -566,6 +582,7 @@ async def node_finalize(state: PaixuejiState) -> dict:
     # "if chunk.finish: assistant.conversation_history.append(...)"
     # We'll stick to that contract. The app loop handles history update based on chunks.
     
+    logger.info(f"[{state['session_id']}] Node: Finalize finished in {time.time() - start_time:.3f}s")
     return {}
 
 

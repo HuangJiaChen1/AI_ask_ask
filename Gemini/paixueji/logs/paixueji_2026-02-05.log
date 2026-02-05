@@ -1,0 +1,74 @@
+2026-02-05 09:40:14.656 | INFO     | graph:node_analyze_input:89 | [cb3d6bbb-c772-41c0-bd30-453e139eda10] Node: Analyze Input
+2026-02-05 09:40:14.656 | INFO     | graph:node_analyze_input:106 | [cb3d6bbb-c772-41c0-bd30-453e139eda10] Node: Analyze Input finished in 0.001s
+2026-02-05 09:40:14.658 | INFO     | graph:node_generate_response:345 | [cb3d6bbb-c772-41c0-bd30-453e139eda10] Node: Generate Response (introduction)
+2026-02-05 09:40:14.658 | INFO     | stream.question_generators:ask_introduction_question_stream:60 | ask_introduction_question_stream started | object=banana, age=6
+2026-02-05 09:40:14.658 | DEBUG    | stream.question_generators:ask_introduction_question_stream:76 | Messages prepared for API | count=2
+2026-02-05 09:40:14.658 | DEBUG    | stream.question_generators:ask_introduction_question_stream:87 | Sending 1 messages to Gemini API
+2026-02-05 09:40:14.658 | DEBUG    | stream.question_generators:ask_introduction_question_stream:104 | Stream object type: generator
+2026-02-05 09:40:25.739 | ERROR    | stream.question_generators:ask_introduction_question_stream:128 | answer_question_stream LLM error | error=HTTPSConnectionPool(host='oauth2.googleapis.com', port=443): Max retries exceeded with url: /token (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x0000028A2B80FED0>: Failed to resolve 'oauth2.googleapis.com' ([Errno 11001] getaddrinfo failed)")), duration=11.081s
+2026-02-05 09:40:25.739 | DEBUG    | stream.question_generators:ask_introduction_question_stream:143 | Cleaned up stream via del in finally block
+2026-02-05 09:40:25.740 | INFO     | graph:stream_generator_to_callback:336 | [cb3d6bbb-c772-41c0-bd30-453e139eda10] Stream finished in 11.082s for introduction
+2026-02-05 09:40:25.740 | INFO     | graph:node_generate_response:468 | [cb3d6bbb-c772-41c0-bd30-453e139eda10] Node: Generate Response finished in 11.082s
+2026-02-05 09:40:25.740 | INFO     | graph:node_generate_question:480 | [cb3d6bbb-c772-41c0-bd30-453e139eda10] Node: Generate Question
+2026-02-05 09:40:25.740 | INFO     | graph:node_finalize:540 | [cb3d6bbb-c772-41c0-bd30-453e139eda10] Node: Finalize
+2026-02-05 09:40:25.740 | INFO     | graph:node_finalize:585 | [cb3d6bbb-c772-41c0-bd30-453e139eda10] Node: Finalize finished in 0.000s
+2026-02-05 09:44:11.263 | INFO     | graph:node_analyze_input:89 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Analyze Input
+2026-02-05 09:44:11.264 | INFO     | graph:node_analyze_input:106 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Analyze Input finished in 0.001s
+2026-02-05 09:44:11.265 | INFO     | graph:node_generate_response:345 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Generate Response (introduction)
+2026-02-05 09:44:11.265 | INFO     | stream.question_generators:ask_introduction_question_stream:60 | ask_introduction_question_stream started | object=banana, age=6
+2026-02-05 09:44:11.265 | DEBUG    | stream.question_generators:ask_introduction_question_stream:76 | Messages prepared for API | count=2
+2026-02-05 09:44:11.265 | DEBUG    | stream.question_generators:ask_introduction_question_stream:87 | Sending 1 messages to Gemini API
+2026-02-05 09:44:11.265 | DEBUG    | stream.question_generators:ask_introduction_question_stream:104 | Stream object type: generator
+2026-02-05 09:44:11.926 | DEBUG    | stream.question_generators:ask_introduction_question_stream:119 | Chunk 1 | length=5, total_length=5
+2026-02-05 09:44:11.926 | INFO     | graph:stream_generator_to_callback:269 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Time to First Token (TTFT): 0.661s for introduction
+2026-02-05 09:44:12.042 | DEBUG    | stream.question_generators:ask_introduction_question_stream:119 | Chunk 2 | length=81, total_length=86
+2026-02-05 09:44:12.120 | DEBUG    | stream.question_generators:ask_introduction_question_stream:119 | Chunk 3 | length=80, total_length=166
+2026-02-05 09:44:12.149 | DEBUG    | stream.question_generators:ask_introduction_question_stream:119 | Chunk 4 | length=8, total_length=174
+2026-02-05 09:44:12.151 | DEBUG    | stream.question_generators:ask_introduction_question_stream:124 | Gemini streaming API does not provide token usage in stream mode
+2026-02-05 09:44:12.151 | DEBUG    | stream.question_generators:ask_introduction_question_stream:143 | Cleaned up stream via del in finally block
+2026-02-05 09:44:12.151 | INFO     | stream.question_generators:ask_introduction_question_stream:148 | ask_introduction_question_stream completed | duration=0.886s, response_length=174
+2026-02-05 09:44:12.151 | INFO     | graph:stream_generator_to_callback:336 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Stream finished in 0.886s for introduction
+2026-02-05 09:44:12.151 | INFO     | graph:node_generate_response:468 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Generate Response finished in 0.886s
+2026-02-05 09:44:12.152 | INFO     | graph:node_generate_question:480 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Generate Question
+2026-02-05 09:44:12.154 | INFO     | graph:node_finalize:540 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Finalize
+2026-02-05 09:44:12.154 | INFO     | graph:node_finalize:585 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Finalize finished in 0.000s
+2026-02-05 09:44:23.752 | INFO     | graph:node_analyze_input:89 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Analyze Input
+2026-02-05 09:44:25.228 | INFO     | stream.validation:decide_topic_switch_with_validation:140 | [VALIDATE] LLM Call Duration: 1.476s (using gemini-2.5-flash-lite async)
+2026-02-05 09:44:25.228 | INFO     | stream.validation:decide_topic_switch_with_validation:145 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=Direct answer., correctness_reasoning=Bananas are typically yellow when ripe.
+2026-02-05 09:44:25.229 | INFO     | graph:node_analyze_input:153 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Analyze Input finished in 1.476s
+2026-02-05 09:44:25.229 | INFO     | graph:node_route_logic:162 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Route Logic
+2026-02-05 09:44:25.230 | INFO     | graph:node_route_logic:245 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Route Logic finished in 0.000s
+2026-02-05 09:44:25.230 | INFO     | graph:node_generate_response:345 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Generate Response (feedback)
+2026-02-05 09:44:25.230 | INFO     | stream.response_generators:generate_feedback_response_stream:54 | generate_feedback_response_stream started | object=banana, age=6
+2026-02-05 09:44:26.572 | INFO     | graph:stream_generator_to_callback:269 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Time to First Token (TTFT): 1.342s for feedback
+2026-02-05 09:44:26.692 | INFO     | stream.response_generators:generate_feedback_response_stream:109 | generate_feedback_response_stream completed | duration=1.463s, length=105
+2026-02-05 09:44:26.693 | INFO     | graph:stream_generator_to_callback:336 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Stream finished in 1.463s for feedback
+2026-02-05 09:44:26.693 | INFO     | graph:node_generate_response:468 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Generate Response finished in 1.463s
+2026-02-05 09:44:26.693 | INFO     | graph:node_generate_question:480 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Generate Question
+2026-02-05 09:44:26.694 | INFO     | stream.question_generators:generate_followup_question_stream:201 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-02-05 09:44:27.175 | INFO     | graph:stream_generator_to_callback:269 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Time to First Token (TTFT): 0.482s for followup_question
+2026-02-05 09:44:27.272 | INFO     | stream.question_generators:generate_followup_question_stream:259 | generate_followup_question_stream completed | duration=0.578s, length=83
+2026-02-05 09:44:27.272 | INFO     | graph:stream_generator_to_callback:336 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Stream finished in 0.579s for followup_question
+2026-02-05 09:44:27.273 | INFO     | graph:node_generate_question:528 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Generate Question finished in 0.579s
+2026-02-05 09:44:27.274 | INFO     | graph:node_finalize:540 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Finalize
+2026-02-05 09:44:27.274 | INFO     | graph:node_finalize:585 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Finalize finished in 0.000s
+2026-02-05 09:44:46.184 | INFO     | graph:node_analyze_input:89 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Analyze Input
+2026-02-05 09:44:47.814 | INFO     | stream.validation:decide_topic_switch_with_validation:140 | [VALIDATE] LLM Call Duration: 1.630s (using gemini-2.5-flash-lite async)
+2026-02-05 09:44:47.814 | INFO     | stream.validation:decide_topic_switch_with_validation:145 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=Direct answer., correctness_reasoning=Bananas are generally smooth when touched.
+2026-02-05 09:44:47.814 | INFO     | graph:node_analyze_input:153 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Analyze Input finished in 1.630s
+2026-02-05 09:44:47.815 | INFO     | graph:node_route_logic:162 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Route Logic
+2026-02-05 09:44:47.815 | INFO     | graph:node_route_logic:245 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Route Logic finished in 0.000s
+2026-02-05 09:44:47.815 | INFO     | graph:node_generate_response:345 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Generate Response (feedback)
+2026-02-05 09:44:47.815 | INFO     | stream.response_generators:generate_feedback_response_stream:54 | generate_feedback_response_stream started | object=banana, age=6
+2026-02-05 09:44:49.011 | INFO     | graph:stream_generator_to_callback:269 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Time to First Token (TTFT): 1.195s for feedback
+2026-02-05 09:44:49.108 | INFO     | stream.response_generators:generate_feedback_response_stream:109 | generate_feedback_response_stream completed | duration=1.293s, length=62
+2026-02-05 09:44:49.108 | INFO     | graph:stream_generator_to_callback:336 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Stream finished in 1.293s for feedback
+2026-02-05 09:44:49.109 | INFO     | graph:node_generate_response:468 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Generate Response finished in 1.294s
+2026-02-05 09:44:49.111 | INFO     | graph:node_generate_question:480 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Generate Question
+2026-02-05 09:44:49.112 | INFO     | stream.question_generators:generate_followup_question_stream:201 | generate_followup_question_stream started | object=banana, age=6, is_switch=False
+2026-02-05 09:44:49.556 | INFO     | graph:stream_generator_to_callback:269 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Time to First Token (TTFT): 0.444s for followup_question
+2026-02-05 09:44:49.651 | INFO     | stream.question_generators:generate_followup_question_stream:259 | generate_followup_question_stream completed | duration=0.539s, length=64
+2026-02-05 09:44:49.651 | INFO     | graph:stream_generator_to_callback:336 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Stream finished in 0.539s for followup_question
+2026-02-05 09:44:49.651 | INFO     | graph:node_generate_question:528 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Generate Question finished in 0.540s
+2026-02-05 09:44:49.652 | INFO     | graph:node_finalize:540 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Finalize
+2026-02-05 09:44:49.652 | INFO     | graph:node_finalize:585 | [230ac57c-d0c4-4510-a158-c9f9bff6d6c2] Node: Finalize finished in 0.000s

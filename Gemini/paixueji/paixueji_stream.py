@@ -19,9 +19,6 @@ for backward compatibility.
 
 # Re-export everything from the stream module
 from stream import (
-    # Main entry point
-    call_paixueji_stream,
-
     # Utils
     safe_print,
     clean_messages_for_api,
@@ -54,9 +51,6 @@ from stream import (
 )
 
 __all__ = [
-    # Main
-    'call_paixueji_stream',
-
     # Utils
     'safe_print',
     'clean_messages_for_api',
