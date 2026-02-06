@@ -39,6 +39,15 @@ class PaixuejiAssistant:
 
     def __init__(self, config_path="config.json", age_prompts_path="age_prompts.json", object_prompts_path="object_prompts.json", system_managed=False, client=None):
         """Initialize the assistant with configuration and Gemini client."""
+        # Resolve paths relative to this file
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        if not os.path.isabs(config_path):
+            config_path = os.path.join(base_dir, config_path)
+        if not os.path.isabs(age_prompts_path):
+            age_prompts_path = os.path.join(base_dir, age_prompts_path)
+        if not os.path.isabs(object_prompts_path):
+            object_prompts_path = os.path.join(base_dir, object_prompts_path)
+
         self.config = self._load_config(config_path)
         self.conversation_history = []
         self.state = ConversationState.INTRODUCTION
@@ -66,6 +75,14 @@ class PaixuejiAssistant:
         self.current_plan = []
         self.themes = []
         self._load_themes()
+
+        # IB PYP Theme Classification fields
+        self.ibpyp_theme = None  # Theme ID (e.g., "Category_Nature_And_Physics")
+        self.ibpyp_theme_name = None  # Theme name (e.g., "How the World Works")
+        self.ibpyp_theme_reason = None  # Classification reasoning
+        self.key_concept = None
+        self.bridge_question = None
+        self.guide_phase = None # "bridge", "success", etc.
 
         # Debugging Flow Tree
         self.flow_tree = None
@@ -103,14 +120,48 @@ class PaixuejiAssistant:
 
     def _load_themes(self):
         """Load themes from themes.json."""
-        themes_path = "themes.json"
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        themes_path = os.path.join(base_dir, "themes.json")
         if os.path.exists(themes_path):
             try:
                 with open(themes_path, 'r', encoding='utf-8') as f:
-                    self.themes = json.load(f)
+                    data = json.load(f)
+                    # Handle new structure with "themes" key
+                    if isinstance(data, dict) and "themes" in data:
+                        self.themes = data["themes"]
+                    else:
+                        self.themes = data
                 safe_print(f"[THEME] Loaded {len(self.themes)} themes.")
             except Exception as e:
                 safe_print(f"[ERROR] Failed to load themes: {e}")
+
+    def classify_theme_background(self, object_name: str):
+        """
+        Trigger background IB PYP theme classification for an object.
+        Updates self.ibpyp_theme, ibpyp_theme_name, ibpyp_theme_reason when complete.
+        """
+        import threading
+        from theme_classifier import classify_object_to_theme
+
+        def _classify():
+            # Create a localized client copy or usage might be tricky if client isn't thread-safe?
+            # Gemini client should be thread-safe for generation.
+            result = classify_object_to_theme(
+                object_name=object_name,
+                client=self.client,
+                config=self.config
+            )
+            if result:
+                self.ibpyp_theme = result.theme_id
+                self.ibpyp_theme_name = result.theme_name
+                self.ibpyp_theme_reason = result.reason
+                self.key_concept = result.key_concept
+                self.bridge_question = result.bridge_question
+                safe_print(f"[THEME_CLASSIFY] Background classification complete: {result.theme_id} | Concept: {result.key_concept}")
+
+        # Fire and forget thread
+        thread = threading.Thread(target=_classify, daemon=True)
+        thread.start()
 
     def start_theme_guide(self, theme_id):
         """Enable guide mode for a specific theme."""

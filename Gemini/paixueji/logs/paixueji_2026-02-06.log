@@ -1,0 +1,49 @@
+2026-02-06 09:29:45.259 | INFO     | graph:node_generate_fun_fact:171 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Generate Fun Fact for 'banana'
+2026-02-06 09:29:45.263 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'banana' (model=gemini-2.5-flash-lite)
+2026-02-06 09:29:45.265 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: banana
+2026-02-06 09:29:47.352 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: banana -> Category_Nature_And_Physics | Concept: Change | Question: Look at the banana peel. Why do you think it changes from green to yellow as it gets older? | Thinking: 1. Analyze Object: A banana is a fruit, yellow when ripe, soft, sweet, grows on a plant, has a peel. 2. Match Theme: 'How the World Works' is the best fit because it encompasses nature, growth, and biological processes. 'Who We Are' could fit if focusing on health, but the natural origin is stronger. 'Sharing the Planet' could fit regarding cultivation, but the core is its natural existence. 3. Match Concept: 'Change' is the most engaging concept for a banana. Children can observe its transformation from green to yellow, and potentially to brown. 'Form' is too static. 'Function' is limited to eating. 'Causation' is complex for its origin. 'Connection' could be about its ecosystem, but 'Change' is more direct. 'Perspective' and 'Responsibility' are less relevant to the object itself. 4. Draft Question: Focus on the peel and its transformation.
+2026-02-06 09:29:50.454 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 5.191s | text_length=1031
+2026-02-06 09:29:50.454 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'banana'
+2026-02-06 09:29:52.531 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 2.076s
+2026-02-06 09:29:52.531 | INFO     | stream.fun_fact:cache_fun_fact:78 | [FUN_FACT] Cached 4 fun facts for 'banana'
+2026-02-06 09:29:52.531 | INFO     | stream.fun_fact:generate_fun_fact:206 | [FUN_FACT] Success for 'banana' | facts_count=4, selected='Did you know that not all bananas are yellow? Some bananas c...'
+2026-02-06 09:29:52.531 | INFO     | graph:node_generate_fun_fact:186 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Generate Fun Fact finished in 7.272s
+2026-02-06 09:29:52.532 | INFO     | graph:node_generate_response:385 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Generate Response (introduction)
+2026-02-06 09:29:52.532 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=banana, age=6, has_fun_fact=True
+2026-02-06 09:29:52.532 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-06 09:29:52.532 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-06 09:29:52.532 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: generator
+2026-02-06 09:29:53.497 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=3, total_length=3
+2026-02-06 09:29:53.497 | INFO     | graph:stream_generator_to_callback:309 | [917f63a7-b599-46f9-916b-a8eddb43a967] Time to First Token (TTFT): 0.966s for introduction
+2026-02-06 09:29:53.523 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=9, total_length=12
+2026-02-06 09:29:53.557 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=53, total_length=65
+2026-02-06 09:29:53.617 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=72, total_length=137
+2026-02-06 09:29:53.772 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=129, total_length=266
+2026-02-06 09:29:53.778 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-06 09:29:53.778 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-06 09:29:53.778 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=1.246s, response_length=266
+2026-02-06 09:29:53.778 | INFO     | graph:stream_generator_to_callback:376 | [917f63a7-b599-46f9-916b-a8eddb43a967] Stream finished in 1.246s for introduction
+2026-02-06 09:29:53.778 | INFO     | graph:node_generate_response:512 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Generate Response finished in 1.246s
+2026-02-06 09:29:53.780 | INFO     | graph:node_generate_question:524 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Generate Question
+2026-02-06 09:29:53.781 | INFO     | graph:node_finalize:733 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Finalize
+2026-02-06 09:29:53.782 | INFO     | graph:node_finalize:785 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Finalize finished in 0.000s
+2026-02-06 09:30:34.904 | INFO     | graph:node_analyze_input:95 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Analyze Input
+2026-02-06 09:30:36.176 | INFO     | stream.validation:decide_topic_switch_with_validation:140 | [VALIDATE] LLM Call Duration: 1.272s (using gemini-2.5-flash-lite async)
+2026-02-06 09:30:36.176 | INFO     | stream.validation:decide_topic_switch_with_validation:145 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=False, switch_reasoning=The child answered the question about the banana., correctness_reasoning=Bananas are not always yellow when they are ready to be picked; they can be green or even red depending on the variety.
+2026-02-06 09:30:36.176 | INFO     | graph:node_analyze_input:161 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Analyze Input finished in 1.272s
+2026-02-06 09:30:36.177 | INFO     | graph:node_route_logic:200 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Route Logic
+2026-02-06 09:30:36.177 | INFO     | graph:node_route_logic:285 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Route Logic finished in 0.000s
+2026-02-06 09:30:36.177 | INFO     | graph:node_generate_response:385 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Generate Response (gentle_correction)
+2026-02-06 09:30:36.177 | INFO     | stream.response_generators:generate_correction_response_stream:239 | generate_correction_response_stream started | object=banana, age=6
+2026-02-06 09:30:37.193 | INFO     | graph:stream_generator_to_callback:309 | [917f63a7-b599-46f9-916b-a8eddb43a967] Time to First Token (TTFT): 1.016s for gentle_correction
+2026-02-06 09:30:37.571 | INFO     | stream.response_generators:generate_correction_response_stream:295 | generate_correction_response_stream completed | duration=1.394s, length=286
+2026-02-06 09:30:37.572 | INFO     | graph:stream_generator_to_callback:376 | [917f63a7-b599-46f9-916b-a8eddb43a967] Stream finished in 1.395s for gentle_correction
+2026-02-06 09:30:37.572 | INFO     | graph:node_generate_response:512 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Generate Response finished in 1.395s
+2026-02-06 09:30:37.573 | INFO     | graph:route_after_response:860 | [917f63a7-b599-46f9-916b-a8eddb43a967] Triggering Theme Guide (Count: 4+1)
+2026-02-06 09:30:37.574 | INFO     | graph:node_start_guide:584 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Start Guide
+2026-02-06 09:30:37.575 | INFO     | graph:node_finalize:733 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Finalize
+2026-02-06 09:30:37.575 | INFO     | graph:node_finalize:785 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Finalize finished in 0.000s
+2026-02-06 09:30:53.887 | INFO     | graph:node_guide_commit:630 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Guide Commit Logic
+2026-02-06 09:30:55.086 | INFO     | graph:node_guide_success:675 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Guide Success
+2026-02-06 09:30:55.089 | INFO     | graph:node_finalize:733 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Finalize
+2026-02-06 09:30:55.090 | INFO     | graph:node_finalize:785 | [917f63a7-b599-46f9-916b-a8eddb43a967] Node: Finalize finished in 0.001s

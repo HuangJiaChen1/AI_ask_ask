@@ -34,7 +34,8 @@ sessions = {}
 def init_global_client():
     """Initialize a global Gemini client instance to avoid cold starts."""
     try:
-        config_path = "config.json"
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        config_path = os.path.join(base_dir, "config.json")
         if not os.path.exists(config_path):
             print(f"[WARNING] Config file not found: {config_path}")
             return None
@@ -239,7 +240,7 @@ def start_conversation():
     assistant.level2_category = level2_category
     assistant.level3_category = level3_category
     assistant.character = character
-    assistant.correct_answer_count = 0
+    assistant.correct_answer_count = data.get('correct_answer_count', 0)
 
     # Generate unique request ID for this stream
     request_id = str(uuid.uuid4())

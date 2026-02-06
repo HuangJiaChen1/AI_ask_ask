@@ -1,26 +1,80 @@
-[
-  {
-    "id": "indoor_activities",
-    "name": "Indoor Activities",
-    "description": "Playing, reading, and doing things inside the house.",
-    "keywords": ["room", "house", "toys", "reading", "drawing", "inside"]
-  },
-  {
-    "id": "nature_exploration",
-    "name": "Nature Exploration",
-    "description": "Learning about plants, animals, and the world outside.",
-    "keywords": ["garden", "trees", "park", "bugs", "flowers", "outside"]
-  },
-  {
-    "id": "daily_routines",
-    "name": "Daily Routines",
-    "description": "Things we do every day like washing hands, eating, and sleeping.",
-    "keywords": ["morning", "night", "brushing teeth", "eating", "washing", "habits"]
-  },
-  {
-    "id": "seasons",
-    "name": "Seasons",
-    "description": "The four seasons in a cycle each year: spring, summer, autumn and winter",
-    "keywords": ["spring", "summer", "autumn", "winter"]
-  }
-]
+{
+  "themes": [
+    {
+      "id": "Category_Identity_And_Health",
+      "name": "Who We Are",
+      "description": "Self, family, relationships, body, health",
+      "keywords": [
+        "person",
+        "body",
+        "emotion",
+        "personal items",
+        "health",
+        "family"
+      ]
+    },
+    {
+      "id": "Category_Nature_And_Physics",
+      "name": "How the World Works",
+      "description": "Nature, physics, science, materials",
+      "keywords": [
+        "nature",
+        "physics",
+        "science",
+        "biology",
+        "materials",
+        "mechanics"
+      ]
+    },
+    {
+      "id": "Category_Society_And_Systems",
+      "name": "How We Organize Ourselves",
+      "description": "Community, social systems, occupations, transportation, rules",
+      "keywords": [
+        "society",
+        "systems",
+        "occupation",
+        "transportation",
+        "rules",
+        "public facilities"
+      ]
+    },
+    {
+      "id": "Category_Environment_And_Resources",
+      "name": "Sharing the Planet",
+      "description": "Resource allocation, environmental protection, biodiversity, peace",
+      "keywords": [
+        "environment",
+        "ecology",
+        "resources",
+        "protection",
+        "responsibility"
+      ]
+    },
+    {
+      "id": "Category_Art_And_Culture",
+      "name": "How We Express Ourselves",
+      "description": "Emotional expression, art, cultural symbols, beliefs",
+      "keywords": [
+        "art",
+        "culture",
+        "emotion",
+        "symbols",
+        "communication",
+        "aesthetics"
+      ]
+    },
+    {
+      "id": "Category_Time_And_Space",
+      "name": "Where We Are in Place and Time",
+      "description": "History, geography, exploration, human civilization",
+      "keywords": [
+        "time",
+        "history",
+        "geography",
+        "space",
+        "civilization"
+      ]
+    }
+  ]
+}

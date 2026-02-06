@@ -138,6 +138,7 @@ class StreamChunk(BaseModel):
         description="Session identifier matching the request session_id.",
     )
     request_id: str
+    response_type: str | None = None
     is_stuck: bool = False
     correct_answer_count: int = 0
     conversation_complete: bool = False
@@ -150,6 +151,23 @@ class StreamChunk(BaseModel):
     is_engaged: bool | None = None  # Is child trying to answer? (replaces is_correct)
     is_factually_correct: bool | None = None  # Is answer semantically correct? (only if engaged)
     correctness_reasoning: str | None = None  # Why answer is right/wrong
+
+    # Fun fact state
+    fun_fact: Optional[str] = None
+    fun_fact_hook: Optional[str] = None
+    fun_fact_question: Optional[str] = None
+    real_facts: Optional[str] = None
+
+    # IB PYP Theme info
+    ibpyp_theme: Optional[str] = None
+    ibpyp_theme_name: Optional[str] = None
+    theme_classification_reason: Optional[str] = None
+    
+    # Theme Guide info
+    guide_phase: Optional[str] = None  # "anchor", "bridge", "commit", "success"
+    key_concept: Optional[str] = None
+    bridge_question: Optional[str] = None
+    is_guide_success: Optional[bool] = None
 
     # Topic switching fields:
     new_object_name: str | None = None

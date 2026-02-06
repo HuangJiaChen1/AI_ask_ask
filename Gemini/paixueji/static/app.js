@@ -132,6 +132,7 @@ async function startConversation() {
     const level3Category = document.getElementById('level3Category').value;
     const character = document.getElementById('assistantCharacter').value;
     const focusMode = document.getElementById('nextQuestionFocus').value;
+    const initialCorrectCount = parseInt(document.getElementById('initialCorrectCount').value) || 0;
     systemManagedMode = (focusMode === 'system_managed');
 
     // Save state for debug panel
@@ -194,7 +195,7 @@ async function startConversation() {
     thinkingTimeDisplay.style.opacity = 0;
 
     // Reset progress
-    correctAnswerCount = 0;
+    correctAnswerCount = initialCorrectCount;
     conversationComplete = false;
     updateProgressIndicator();
 
@@ -229,6 +230,7 @@ async function startConversation() {
                 level3_category: level3Value,
                 character: character,
                 focus_mode: focusMode,
+                correct_answer_count: initialCorrectCount,
                 system_managed: systemManagedMode
             }),
             signal: currentStreamController.signal

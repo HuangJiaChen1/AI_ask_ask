@@ -1,0 +1,53 @@
+{
+    "concepts": [
+        {
+            "id": "Form",
+            "name": "Form",
+            "prompt_logic": "What is it like?",
+            "description": "Focuses on observing visible features, shapes, and textures.",
+            "lens": "Observation"
+        },
+        {
+            "id": "Function",
+            "name": "Function",
+            "prompt_logic": "How does it work?",
+            "description": "Focuses on exploring uses, mechanisms, and roles of parts.",
+            "lens": "Analysis"
+        },
+        {
+            "id": "Causation",
+            "name": "Causation",
+            "prompt_logic": "Why is it like this?",
+            "description": "Focuses on cause and effect, origins, and power sources.",
+            "lens": "Reasoning"
+        },
+        {
+            "id": "Change",
+            "name": "Change",
+            "prompt_logic": "How is it changing?",
+            "description": "Focuses on time dimension, transformation, and growth processes.",
+            "lens": "Comparison"
+        },
+        {
+            "id": "Connection",
+            "name": "Connection",
+            "prompt_logic": "How is it connected to other things?",
+            "description": "Focuses on system links, interdependence, and assembly.",
+            "lens": "Association"
+        },
+        {
+            "id": "Perspective",
+            "name": "Perspective",
+            "prompt_logic": "What are the points of view?",
+            "description": "Focuses on different opinions, subjective feelings, and multiple angles.",
+            "lens": "Empathy"
+        },
+        {
+            "id": "Responsibility",
+            "name": "Responsibility",
+            "prompt_logic": "What is our responsibility?",
+            "description": "Focuses on consequences, protection awareness, and proper usage.",
+            "lens": "Action"
+        }
+    ]
+}

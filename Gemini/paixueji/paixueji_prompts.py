@@ -215,6 +215,81 @@ FOCUS_PROMPTS = {
     "width_category": "Focus Strategy: WIDTH - CATEGORY. Talk about OTHER objects in the same CATEGORY as {object_name}."
 }
 
+THEME_CLASSIFICATION_PROMPT = """
+### ROLE & OBJECTIVE
+You are Kido, an AI engine for the IB Primary Years Programme (PYP). 
+Your task is to take a raw input `{object_name}`, and perform a full "Object-to-Inquiry" mapping process:
+1.  **CLASSIFY:** Map the object to the most relevant **Transdisciplinary Theme**.
+2.  **SELECT:** Choose the best **Key Concept** to act as a "lens" for this object.
+3.  **GENERATE:** Create a "Bridge Question" that leads a child from the object to the theme.
+
+### INPUT ARGUMENTS
+**Target Object:** "{object_name}"
+
+**Candidate Themes (Select One):**
+{themes_json}
+
+**Candidate Concepts (Select One):**
+{concepts_json}
+
+### DECISION RULES (Logic Engine)
+1.  **Theme Selection:** Choose the theme based on the *deepest* potential for inquiry, not just the surface label.
+    * *Example:* A "Family Photo" fits *Who We Are* (Relationships) better than *How We Express Ourselves* (Art).
+2.  **Concept Selection:** Choose the concept that creates the strongest "Aha!" moment for a 3-6 year old.
+    * *Avoid:* "Causation" for static objects (hard to explain).
+    * *Prefer:* "Function" or "Form" for machines; "Change" for nature.
+
+### GENERATION RULES (Creative Engine)
+1.  **Sensory Hook:** The question MUST reference a visible/tactile part of the object (e.g., "wheels," "handle," "leaves").
+2.  **No Abstract Terms:** Do not use the Theme Name or Concept Name in the question itself.
+3.  **Heuristic Style:** Use "What if," "Look closely," or "Why do you think..."
+
+### CHAIN OF THOUGHT (Execute this internally)
+1.  **Analyze Object:** What is {object_name}? What are its physical features?
+2.  **Match Theme:** Compare object against the definitions in {themes_json}. Pick the best fit.
+3.  **Match Concept:** Which concept from {concepts_json} unlocks a fun mystery about this object?
+4.  **Draft Question:** Write the question based on the selected Concept.
+
+### OUTPUT FORMAT
+Return strictly VALID JSON. No markdown, no pre-text.
+
+{{
+  "theme_id": "<ID of the selected theme from input>",
+  "theme_name": "<Name of the selected theme>",
+  "reason": "<Brief logic: Why does this object belong to this Theme?>",
+  "key_concept": "<Name of the selected concept from input>",
+  "key_concept_reason": "<Brief logic: Why is this concept the best lens?>",
+  "thinking": "<Internal CoT: Object Features -> Theme Match -> Concept Selection>",
+  "bridge_question": "<The final concrete, sensory bridge question for the child>"
+}}
+"""
+
+INTENT_CHECK_PROMPT = """
+You are analyzing a child's response to a "Bridge Question" during a learning guide sequence.
+
+**Context:**
+- Object: {object_name}
+- Theme: {theme_name}
+- Key Concept: {key_concept}
+- Bridge Question Asked: "{bridge_question}"
+- Child's Response: "{child_input}"
+
+**Goal:** Determine the child's intent.
+
+**Categories:**
+1. **CONFIRM**: The child answered the question (even if simple/wrong) OR showed curiosity/engagement.
+   - Examples: "Yes", "Because it has wheels", "I don't know, why?", "It's red", (Action like holding up object).
+2. **DROP_OFF**: The child wants to quit, switch topic, or is completely ignoring the question.
+   - Examples: "I want to play something else", "Look at this dog", "No" (refusal to engage, not answer to question).
+3. **UNCLEAR**: The response is unintelligible or unrelated but not clearly a drop-off.
+
+Return ONLY valid JSON:
+{{
+    "intent": "CONFIRM" | "DROP_OFF" | "UNCLEAR",
+    "reasoning": "<Brief explanation>"
+}}
+"""
+
 def get_prompts():
     return {
         'system_prompt': SYSTEM_PROMPT,
