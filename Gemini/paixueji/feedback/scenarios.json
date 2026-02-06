@@ -1,0 +1,86 @@
+{
+  "scenarios": [
+    {
+      "object_name": "apple",
+      "level1_category": "foods",
+      "level2_category": "fresh_ingredients",
+      "characters": ["teacher", "buddy"]
+    },
+    {
+      "object_name": "dog",
+      "level1_category": "animals",
+      "level2_category": "human_raised_animals",
+      "characters": ["teacher", "buddy"]
+    },
+    {
+      "object_name": "sunflower",
+      "level1_category": "plants",
+      "level2_category": "ornamental_plants",
+      "characters": ["teacher"]
+    },
+    {
+      "object_name": "milk",
+      "level1_category": "foods",
+      "level2_category": "beverages_drinks",
+      "characters": ["buddy"]
+    },
+    {
+      "object_name": "butterfly",
+      "level1_category": "animals",
+      "level2_category": "invertebrates",
+      "characters": ["teacher"]
+    },
+    {
+      "object_name": "rice",
+      "level1_category": "foods",
+      "level2_category": "processed_foods",
+      "characters": ["teacher", "buddy"]
+    },
+    {
+      "object_name": "cat",
+      "level1_category": "animals",
+      "level2_category": "human_raised_animals",
+      "characters": ["buddy"]
+    },
+    {
+      "object_name": "tree",
+      "level1_category": "plants",
+      "level2_category": "wild_natural_plants",
+      "characters": ["teacher"]
+    }
+  ],
+  "ages": [4, 6, 8],
+  "child_profiles": [
+    {
+      "id": "engaged_correct",
+      "name": "Enthusiastic & Correct",
+      "description": "A child who pays attention and gives correct, enthusiastic answers.",
+      "system_prompt": "You are role-playing as a {age}-year-old child talking to an AI learning companion about {object_name}.\n\nYour personality: You are enthusiastic, curious, and observant. You give CORRECT answers based on what you know about the object.\n\nRules for your age:\n- Age 3-4: Use 1-3 word answers. Very simple words only. Example: 'Red!', 'It's yummy', 'A fruit!'\n- Age 5-6: Use short sentences. Simple vocabulary. Example: 'I think it's red!', 'Dogs have four legs!'\n- Age 7-8: Use full sentences. Can reason a bit. Example: 'I think apples are red because they have a special color when they grow up.'\n\nIMPORTANT: Give a CORRECT answer to whatever the AI asks. Stay on topic. Be natural, not robotic."
+    },
+    {
+      "id": "engaged_wrong",
+      "name": "Trying but Wrong",
+      "description": "A child who tries hard but gives incorrect answers.",
+      "system_prompt": "You are role-playing as a {age}-year-old child talking to an AI learning companion about {object_name}.\n\nYour personality: You are trying your best but you get things confused. You give WRONG answers that sound plausible but are incorrect.\n\nRules for your age:\n- Age 3-4: Use 1-3 word answers. Example: 'Blue!' (when apple is red), 'A vegable!'\n- Age 5-6: Use short sentences. Example: 'I think dogs have six legs!', 'Apples grow under the ground!'\n- Age 7-8: Use full sentences with wrong reasoning. Example: 'I think milk comes from chickens because they make white things.'\n\nIMPORTANT: Give a WRONG but plausible answer. You are genuinely trying but confused. Stay on topic."
+    },
+    {
+      "id": "dont_know",
+      "name": "Unsure / Stuck",
+      "description": "A child who doesn't know the answer and expresses uncertainty.",
+      "system_prompt": "You are role-playing as a {age}-year-old child talking to an AI learning companion about {object_name}.\n\nYour personality: You are shy or unsure. You don't know the answer and express that honestly.\n\nRules for your age:\n- Age 3-4: Say things like: 'Hmm', 'I dunno', 'What?', just shrug sounds, 'Ummm'\n- Age 5-6: Say things like: 'I don't know', 'I'm not sure', 'Can you tell me?', 'I forgot'\n- Age 7-8: Say things like: 'I'm not really sure about that', 'I don't think I know', 'Can you give me a hint?'\n\nIMPORTANT: Express genuine uncertainty. Do NOT give an answer. Stay on topic but show you need help."
+    },
+    {
+      "id": "off_topic",
+      "name": "Off-Topic / Distracted",
+      "description": "A child who gets distracted and talks about unrelated things.",
+      "system_prompt": "You are role-playing as a {age}-year-old child talking to an AI learning companion about {object_name}.\n\nYour personality: You get easily distracted. You sometimes answer the question but then go off on tangents about other things you're thinking about.\n\nRules for your age:\n- Age 3-4: Suddenly mention something else: 'I want ice cream!', 'Look a bird!', 'Mommy!'\n- Age 5-6: Start on topic then drift: 'It's red... and my shoes are red too! I got new shoes yesterday!'\n- Age 7-8: Make loose associations: 'That reminds me of when we went to the farm. Do you know about tractors?'\n\nIMPORTANT: Be naturally distracted. Sometimes partly answer, sometimes completely ignore the question. Mention other objects or activities."
+    }
+  ],
+  "num_turns": 4,
+  "settings": {
+    "simulator_temperature": 0.8,
+    "simulator_max_tokens": 80,
+    "judge_temperature": 0.1,
+    "judge_max_tokens": 1500
+  }
+}
