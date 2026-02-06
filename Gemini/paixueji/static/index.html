@@ -46,8 +46,15 @@
             </div>
             <div id="classifyStatus" class="classify-status"></div>
 
-            <label for="initialCorrectCount">Initial Correct Answers (Debug):</label>
-            <input type="number" id="initialCorrectCount" value="0" min="0" max="10" />
+            <div class="guide-test-section" style="margin: 15px 0; padding: 15px; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px;">
+                <h3 style="margin: 0 0 8px 0; color: #92400e; font-size: 1em;">Test Guide Mode</h3>
+                <p style="font-size: 0.85em; color: #78350f; margin: 0 0 10px 0;">
+                    Skip introduction and jump directly into theme guide testing
+                </p>
+                <button type="button" onclick="startGuideTest()" style="background: #f59e0b; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                    Start Guide Mode Test
+                </button>
+            </div>
 
             <label for="level1Category">Level 1 Category:</label>
             <select id="level1Category" onchange="onLevel1Change()">
@@ -184,6 +191,14 @@
             <div>
                 <strong>Correct Answers:</strong>
                 <div style="color: #10b981; font-weight: bold;" id="debugCorrectCount">0/4</div>
+            </div>
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #94a3b8;">
+                <strong>Guide Mode:</strong>
+                <div style="color: #f59e0b;" id="debugGuidePhase">-</div>
+            </div>
+            <div style="margin-top: 4px;">
+                <strong>Guide Turn:</strong>
+                <div style="color: #0f172a;" id="debugGuideTurn">-</div>
             </div>
         </div>
 

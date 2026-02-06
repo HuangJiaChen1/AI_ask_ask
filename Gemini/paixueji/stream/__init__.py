@@ -47,15 +47,17 @@ from .validation import (
     is_answer_reasonable
 )
 
-# Focus mode
+# Focus mode (WIDTH mode removed, DEPTH only)
 from .focus_mode import (
     decide_next_focus_mode,
-    handle_width_wrong_answer,
     generate_object_suggestions
 )
 
 # Fun fact (grounded)
 from .fun_fact import generate_fun_fact
+
+# Guide hint (LLM-generated)
+from .guide_hint import generate_guide_hint
 
 __all__ = [
     # Utils
@@ -85,9 +87,11 @@ __all__ = [
 
     # Focus mode
     'decide_next_focus_mode',
-    'handle_width_wrong_answer',
     'generate_object_suggestions',
 
     # Fun fact (grounded)
     'generate_fun_fact',
+
+    # Guide hint (LLM-generated)
+    'generate_guide_hint',
 ]

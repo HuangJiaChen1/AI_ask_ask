@@ -209,10 +209,7 @@ CHARACTER_PROMPTS = {
 }
 
 FOCUS_PROMPTS = {
-    "depth": "Focus Strategy: DEPTH. Talk about features, parts, materials, or uses of {object_name}.",
-    "width_shape": "Focus Strategy: WIDTH - SHAPE. Talk about OTHER objects with the same SHAPE as {object_name}.",
-    "width_color": "Focus Strategy: WIDTH - COLOR. Talk about OTHER objects with the same COLOR as {object_name}.",
-    "width_category": "Focus Strategy: WIDTH - CATEGORY. Talk about OTHER objects in the same CATEGORY as {object_name}."
+    "depth": "Focus Strategy: DEPTH. Talk about features, parts, materials, or uses of {object_name}."
 }
 
 THEME_CLASSIFICATION_PROMPT = """

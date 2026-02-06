@@ -8,7 +8,8 @@
       "Bash(python:*)",
       "WebFetch(domain:ai.google.dev)",
       "WebSearch",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(node --check:*)"
     ]
   },
   "outputStyle": "Explanatory"

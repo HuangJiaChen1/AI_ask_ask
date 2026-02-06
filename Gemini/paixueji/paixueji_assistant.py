@@ -61,12 +61,10 @@ class PaixuejiAssistant:
         self.level3_category = None
         self.correct_answer_count = 0
 
-        # System-managed focus mode tracking
+        # System-managed focus mode tracking (DEPTH only, WIDTH removed)
         self.system_managed_focus = False
         self.current_focus_mode = 'depth'
         self.depth_questions_count = 0
-        self.width_wrong_count = 0
-        self.width_categories_tried = []  # ['color', 'shape', 'category']
         self.depth_target = 0  # 4 or 5, randomly chosen per object
 
         # Theme Guide fields
@@ -82,7 +80,15 @@ class PaixuejiAssistant:
         self.ibpyp_theme_reason = None  # Classification reasoning
         self.key_concept = None
         self.bridge_question = None
-        self.guide_phase = None # "bridge", "success", etc.
+        self.guide_phase = None  # "active", "success", "exit", etc.
+
+        # Multi-turn guide state (new Navigator/Driver integration)
+        self.guide_turn_count = 0
+        self.guide_max_turns = 6
+        self.hint_given = False  # Track if hint was given at timeout
+        self.last_navigation_state = None  # Last Navigator analysis result
+        self.consecutive_stuck_count = 0  # Track consecutive STUCK statuses (renamed from resistance)
+        self.scaffold_level = 0  # 0=original question, 1-4=progressive hint levels
 
         # Debugging Flow Tree
         self.flow_tree = None
@@ -108,15 +114,13 @@ class PaixuejiAssistant:
         import paixueji_prompts
         self.prompts = paixueji_prompts.get_prompts()
 
-        # Initialize system-managed focus mode
+        # Initialize system-managed focus mode (DEPTH only)
         import random
         self.system_managed_focus = system_managed
         if system_managed:
             self.current_focus_mode = 'depth'
             self.depth_target = random.randint(4, 5)
             self.depth_questions_count = 0
-            self.width_wrong_count = 0
-            self.width_categories_tried = []
 
     def _load_themes(self):
         """Load themes from themes.json."""
@@ -407,10 +411,10 @@ class PaixuejiAssistant:
         import random
         self.object_name = new_object_name
         self.depth_questions_count = 0
-        self.width_wrong_count = 0
-        self.width_categories_tried = []
         self.current_focus_mode = 'depth'
         self.depth_target = random.randint(4, 5)
+        # Reset guide state for new object
+        self.exit_guide_mode()
 
     def reset(self):
         """Reset the conversation."""
@@ -424,3 +428,90 @@ class PaixuejiAssistant:
         self.level2_category = None
         self.level3_category = None
         self.correct_answer_count = 0
+
+        # Reset guide state
+        self.exit_guide_mode()
+
+    # =========================================================================
+    # MULTI-TURN GUIDE STATE MANAGEMENT
+    # =========================================================================
+
+    def enter_guide_mode(self):
+        """
+        Called when entering theme guide after 4 correct answers.
+        Initializes the multi-turn guide state.
+        """
+        self.guide_phase = "active"
+        self.guide_turn_count = 0
+        self.hint_given = False
+        self.last_navigation_state = None
+        self.consecutive_stuck_count = 0
+        self.scaffold_level = 0  # Start with no scaffolding
+        safe_print(f"[GUIDE] Entered guide mode for theme: {self.ibpyp_theme_name}")
+
+    def update_navigation_state(self, nav_state: dict):
+        """
+        Update state after Navigator analysis.
+
+        Args:
+            nav_state: Dictionary from ThemeNavigator.analyze_turn() containing:
+                - status: ON_TRACK, DRIFTING, STUCK, COMPLETED
+                - strategy: ADVANCE, PIVOT, SCAFFOLD, COMPLETE
+                - scaffold_level: 1-4 (only if SCAFFOLD)
+                - reasoning: Brief explanation
+                - instruction: Instruction for the Driver
+        """
+        self.guide_turn_count += 1
+        self.last_navigation_state = nav_state
+
+        # Track consecutive stuck and update scaffold level
+        if nav_state.get("status") == "STUCK":
+            self.consecutive_stuck_count += 1
+            # Use Navigator's suggested scaffold level, or increment our own
+            suggested_level = nav_state.get("scaffold_level", 0)
+            if suggested_level:
+                self.scaffold_level = min(suggested_level, 4)
+            else:
+                self.scaffold_level = min(self.scaffold_level + 1, 4)
+        else:
+            # Reset stuck count on progress, but keep scaffold_level for reference
+            self.consecutive_stuck_count = 0
+
+        safe_print(f"[GUIDE] Turn {self.guide_turn_count}/{self.guide_max_turns} | "
+                   f"Status: {nav_state.get('status')} | Strategy: {nav_state.get('strategy')} | "
+                   f"Scaffold: L{self.scaffold_level}")
+
+    def give_hint(self):
+        """Mark that a hint was given at timeout."""
+        self.hint_given = True
+        safe_print(f"[GUIDE] Hint given for concept: {self.key_concept}")
+
+    def exit_guide_mode(self):
+        """
+        Reset guide state after completion/exit.
+        Called when guide succeeds, times out, or child drops off.
+        """
+        self.guide_phase = None
+        self.guide_turn_count = 0
+        self.hint_given = False
+        self.last_navigation_state = None
+        self.consecutive_stuck_count = 0
+        self.scaffold_level = 0
+        safe_print(f"[GUIDE] Exited guide mode")
+
+    def should_give_hint(self) -> bool:
+        """Check if we should give a hint (max turns reached, no hint yet)."""
+        return self.guide_turn_count >= self.guide_max_turns and not self.hint_given
+
+    def should_exit_guide(self) -> bool:
+        """Check if we should exit guide (scaffold level 4 reached twice or hint already given at max turns)."""
+        # Exit if stuck at max scaffold level (gave direct answer but still stuck)
+        if self.consecutive_stuck_count >= 2 and self.scaffold_level >= 4:
+            return True
+        if self.guide_turn_count >= self.guide_max_turns and self.hint_given:
+            return True
+        return False
+
+    def get_current_scaffold_level(self) -> int:
+        """Get the current scaffolding level for the Navigator."""
+        return self.scaffold_level

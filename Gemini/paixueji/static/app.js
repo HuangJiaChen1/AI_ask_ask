@@ -33,6 +33,8 @@ let isRestoredSession = false;
 let currentObject = null;  // Current object being discussed
 let currentCharacter = null;  // Current character
 let currentFocusMode = null;  // Current focus mode
+let guidePhase = null;  // Guide phase (active, success, hint, exit)
+let guideTurnCount = 0;  // Current turn in guide mode
 
 // DOM elements
 const messagesContainer = document.getElementById('messages');
@@ -132,7 +134,6 @@ async function startConversation() {
     const level3Category = document.getElementById('level3Category').value;
     const character = document.getElementById('assistantCharacter').value;
     const focusMode = document.getElementById('nextQuestionFocus').value;
-    const initialCorrectCount = parseInt(document.getElementById('initialCorrectCount').value) || 0;
     systemManagedMode = (focusMode === 'system_managed');
 
     // Save state for debug panel
@@ -195,7 +196,7 @@ async function startConversation() {
     thinkingTimeDisplay.style.opacity = 0;
 
     // Reset progress
-    correctAnswerCount = initialCorrectCount;
+    correctAnswerCount = 0;
     conversationComplete = false;
     updateProgressIndicator();
 
@@ -230,7 +231,6 @@ async function startConversation() {
                 level3_category: level3Value,
                 character: character,
                 focus_mode: focusMode,
-                correct_answer_count: initialCorrectCount,
                 system_managed: systemManagedMode
             }),
             signal: currentStreamController.signal
@@ -288,6 +288,158 @@ async function startConversation() {
         }
 
         console.error('[ERROR] Failed to start conversation:', error);
+        messagesContainer.innerHTML = '';
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'error-message';
+        errorDiv.textContent = `Error: ${error.message}. Please check if the server is running.`;
+        messagesContainer.appendChild(errorDiv);
+    } finally {
+        // Clear stream controller
+        currentStreamController = null;
+
+        // Show debug panel when session starts
+        if (sessionId) {
+            document.getElementById('debugPanel').style.display = 'block';
+            updateDebugPanel();
+        }
+
+        // Re-enable send button
+        isStreaming = false;
+        sendBtn.disabled = false;
+        updateStopButton();
+        userInput.focus();
+    }
+}
+
+/**
+ * Start a direct guide mode test - skips introduction and enters guide phase immediately.
+ */
+async function startGuideTest() {
+    const age = parseInt(document.getElementById('age').value);
+    const objectName = document.getElementById('objectName').value.trim();
+    const character = document.getElementById('assistantCharacter').value;
+
+    // Save state for debug panel
+    currentObject = objectName;
+    currentCharacter = character;
+    currentFocusMode = 'depth';  // Guide mode always uses depth
+
+    // Validation - only object name is required
+    if (!objectName) {
+        alert('Please enter an object name');
+        return;
+    }
+
+    // Clear previous messages
+    messagesContainer.innerHTML = '';
+    sessionId = null;
+    thinkingTimeDisplay.textContent = '';
+    thinkingTimeDisplay.style.opacity = 0;
+
+    // Set progress to 4 (simulating 4 correct answers)
+    correctAnswerCount = 4;
+    conversationComplete = false;
+    systemManagedMode = false;
+    updateProgressIndicator();
+
+    // Hide start form, show progress indicator and messages
+    startForm.style.display = 'none';
+    progressIndicator.style.display = 'flex';
+    messagesContainer.style.display = 'flex';
+    document.querySelector('.input-area').style.display = 'flex';
+
+    // Hide active focus control in guide mode
+    const activeFocusControl = document.getElementById('activeFocusControl');
+    if (activeFocusControl) {
+        activeFocusControl.style.display = 'none';
+    }
+
+    // Disable send button during streaming
+    sendBtn.disabled = true;
+    isStreaming = true;
+    updateStopButton();
+
+    // Add status message
+    const statusDiv = document.createElement('div');
+    statusDiv.className = 'status-message';
+    statusDiv.style.cssText = 'background: #fef3c7; padding: 10px; border-radius: 6px; margin-bottom: 10px; color: #92400e; font-style: italic;';
+    statusDiv.textContent = 'Running theme classification...';
+    messagesContainer.appendChild(statusDiv);
+
+    try {
+        console.log('[INFO] Starting GUIDE TEST | age:', age, 'object:', objectName, 'character:', character);
+
+        // Create AbortController for this stream
+        currentStreamController = new AbortController();
+
+        const response = await fetch(`${API_BASE}/start-guide`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                age: age,
+                object_name: objectName,
+                character: character
+            }),
+            signal: currentStreamController.signal
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        // Remove status message once streaming starts
+        statusDiv.remove();
+
+        // Create message bubble for streaming response (will be created on first chunk)
+        currentMessageDiv = null;
+
+        // Read streaming response
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+
+            if (done) {
+                console.log('[INFO] Guide test stream ended');
+                break;
+            }
+
+            // Decode chunk and add to buffer
+            buffer += decoder.decode(value, { stream: true });
+
+            // Process complete SSE events (separated by \n\n)
+            const lines = buffer.split('\n\n');
+            buffer = lines.pop(); // Keep incomplete event in buffer
+
+            for (const line of lines) {
+                if (!line.trim()) continue;
+
+                // Parse SSE event
+                const eventMatch = line.match(/^event: (.+)$/m);
+                const dataMatch = line.match(/^data: (.+)$/m);
+
+                if (eventMatch && dataMatch) {
+                    const eventType = eventMatch[1];
+                    const data = JSON.parse(dataMatch[1]);
+
+                    // Handle event
+                    await handleSSEEvent(eventType, data);
+                }
+            }
+        }
+
+    } catch (error) {
+        // Handle abort gracefully
+        if (error.name === 'AbortError') {
+            console.log('[INFO] Guide test stream interrupted by user');
+            return;
+        }
+
+        console.error('[ERROR] Failed to start guide test:', error);
         messagesContainer.innerHTML = '';
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
@@ -621,6 +773,18 @@ function handleStreamChunk(chunk) {
         updateDebugPanel();
         console.log('[INFO] Object switched to:', currentObject);
     }
+
+    // Update guide mode state if present
+    if (chunk.guide_phase !== undefined) {
+        guidePhase = chunk.guide_phase;
+    }
+    if (chunk.guide_turn_count !== undefined) {
+        guideTurnCount = chunk.guide_turn_count;
+    }
+    // Update debug panel when guide state changes
+    if (chunk.guide_phase || chunk.guide_turn_count) {
+        updateDebugPanel();
+    }
 }
 
 /**
@@ -872,6 +1036,26 @@ function updateDebugPanel() {
     const correctCountElement = document.getElementById('debugCorrectCount');
     if (correctCountElement) {
         correctCountElement.textContent = `${correctAnswerCount}/4`;
+    }
+
+    // Update guide phase
+    const guidePhaseElement = document.getElementById('debugGuidePhase');
+    if (guidePhaseElement) {
+        guidePhaseElement.textContent = guidePhase || '-';
+        // Color code the phase
+        if (guidePhase === 'active') {
+            guidePhaseElement.style.color = '#f59e0b';  // Amber
+        } else if (guidePhase === 'success') {
+            guidePhaseElement.style.color = '#10b981';  // Green
+        } else if (guidePhase === 'exit') {
+            guidePhaseElement.style.color = '#ef4444';  // Red
+        }
+    }
+
+    // Update guide turn count
+    const guideTurnElement = document.getElementById('debugGuideTurn');
+    if (guideTurnElement) {
+        guideTurnElement.textContent = guideTurnCount > 0 ? `${guideTurnCount}/6` : '-';
     }
 }
 

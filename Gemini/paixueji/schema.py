@@ -164,10 +164,17 @@ class StreamChunk(BaseModel):
     theme_classification_reason: Optional[str] = None
     
     # Theme Guide info
-    guide_phase: Optional[str] = None  # "anchor", "bridge", "commit", "success"
+    guide_phase: Optional[str] = None  # "active", "success", "hint", "exit"
     key_concept: Optional[str] = None
     bridge_question: Optional[str] = None
     is_guide_success: Optional[bool] = None
+
+    # Multi-turn guide state (Navigator/Driver integration)
+    guide_turn_count: Optional[int] = None  # Current turn in guide (1-based)
+    guide_max_turns: Optional[int] = None   # Maximum turns before timeout
+    guide_status: Optional[str] = None      # ON_TRACK, DRIFTING, STUCK, COMPLETED
+    guide_strategy: Optional[str] = None    # ADVANCE, PIVOT, SCAFFOLD, COMPLETE
+    scaffold_level: Optional[int] = None    # 1-4, progressive hint levels (only if SCAFFOLD)
 
     # Topic switching fields:
     new_object_name: str | None = None

@@ -240,7 +240,7 @@ def start_conversation():
     assistant.level2_category = level2_category
     assistant.level3_category = level3_category
     assistant.character = character
-    assistant.correct_answer_count = data.get('correct_answer_count', 0)
+    assistant.correct_answer_count = 0
 
     # Generate unique request ID for this stream
     request_id = str(uuid.uuid4())
@@ -362,6 +362,225 @@ def start_conversation():
             print(f"[INFO] Session {session_id[:8]}... client disconnected")
         except Exception as e:
             print(f"[ERROR] Error in start_conversation: {e}")
+            import traceback
+            traceback.print_exc()
+            yield sse_event("error", {"message": str(e)})
+
+    return Response(generate(), mimetype='text/event-stream')
+
+
+@app.route('/api/start-guide', methods=['POST'])
+def start_guide_test():
+    """
+    Start a direct guide mode test - skips introduction, runs theme classification,
+    and immediately enters guide phase.
+
+    This endpoint is for testing the Navigator/Driver guide flow without going
+    through the normal conversation flow.
+
+    Request body:
+        {
+            "age": 6 (optional, 3-8),
+            "object_name": "banana" (required),
+            "character": "teacher" (optional)
+        }
+
+    SSE Events:
+        - chunk: StreamChunk object (serialized as JSON)
+        - complete: Final completion marker
+        - error: Error information
+    """
+    from theme_classifier import classify_object_to_theme
+    from google.genai.types import GenerateContentConfig
+
+    data = request.get_json() or {}
+    age = data.get('age')
+    object_name = data.get('object_name')
+    character = data.get('character', 'teacher')
+
+    # Validate required fields
+    if not object_name:
+        return jsonify({
+            "success": False,
+            "error": "object_name is required"
+        }), 400
+
+    # Validate age
+    if age is not None:
+        try:
+            age = int(age)
+            if age < 3 or age > 8:
+                print(f"[WARNING] Invalid age {age}, using 6")
+                age = 6
+        except (ValueError, TypeError):
+            print(f"[WARNING] Invalid age format {age}, using 6")
+            age = 6
+    else:
+        age = 6  # Default age for guide testing
+
+    # Create session
+    session_id = str(uuid.uuid4())
+    assistant = PaixuejiAssistant(client=GLOBAL_GEMINI_CLIENT)
+    sessions[session_id] = assistant
+
+    # Initialize flow tree for debugging
+    assistant.init_flow_tree(session_id, age, object_name, character, 'depth')
+
+    # Store session state
+    assistant.age = age
+    assistant.object_name = object_name
+    assistant.character = character
+    assistant.correct_answer_count = 4  # Simulate 4 correct answers
+
+    # Generate unique request ID for this stream
+    request_id = str(uuid.uuid4())
+
+    print(f"[INFO] Starting GUIDE TEST session {session_id[:8]}... | age={age}, object={object_name}, character={character}, request_id={request_id[:8]}...")
+
+    def generate():
+        """Generator for SSE stream."""
+        try:
+            # Step 1: Run theme classification SYNCHRONOUSLY
+            print(f"[GUIDE-TEST] Running theme classification for '{object_name}'...")
+
+            result = classify_object_to_theme(object_name, assistant.client, assistant.config)
+
+            if result:
+                assistant.ibpyp_theme = result.theme_id
+                assistant.ibpyp_theme_name = result.theme_name
+                assistant.key_concept = result.key_concept
+                assistant.bridge_question = result.bridge_question
+                print(f"[GUIDE-TEST] Classification complete: theme={result.theme_name}, concept={result.key_concept}")
+            else:
+                print(f"[GUIDE-TEST] Classification failed, using fallback")
+                assistant.ibpyp_theme = "how_the_world_works"
+                assistant.ibpyp_theme_name = "How the World Works"
+                assistant.key_concept = "Change"
+                assistant.bridge_question = f"What happens to {object_name} over time?"
+
+            # Step 2: Enter guide mode
+            assistant.enter_guide_mode()
+            print(f"[GUIDE-TEST] Entered guide mode, phase={assistant.guide_phase}")
+
+            # Step 3: Build system prompt and initialize conversation
+            system_prompt = assistant.prompts['system_prompt']
+
+            age_prompt = assistant.get_age_prompt(age)
+            if age_prompt:
+                system_prompt += f"\n\nAGE-SPECIFIC GUIDANCE:\n{age_prompt}"
+
+            character_prompt = assistant.get_character_prompt(character)
+            if character_prompt:
+                system_prompt += f"\n\nCHARACTER GUIDANCE:\n{character_prompt}"
+
+            # Initialize conversation history with system prompt
+            assistant.conversation_history = [
+                {"role": "system", "content": system_prompt}
+            ]
+
+            # Get new event loop for this request
+            loop = get_event_loop()
+
+            try:
+                async def stream_bridge():
+                    """Stream the bridge question as the first guide turn."""
+                    # Build prompt for introducing the bridge question naturally
+                    bridge_prompt = f"""You are a friendly teacher guiding a {age}-year-old child.
+
+The child has been learning about "{object_name}" and you want to help them discover something deeper.
+
+Your task: Introduce this question naturally and engagingly:
+"{assistant.bridge_question}"
+
+RULES:
+- Make it feel like a natural conversation transition
+- Be warm and encouraging
+- Keep it short (2-3 sentences max)
+- End with the question
+- Do NOT mention "themes" or "concepts" - just ask naturally
+"""
+
+                    # Stream the bridge question
+                    full_response = ""
+                    seq = 0
+                    start_time = time.time()
+
+                    stream = assistant.client.models.generate_content_stream(
+                        model=assistant.config["model_name"],
+                        contents=bridge_prompt,
+                        config=GenerateContentConfig(
+                            temperature=0.7,
+                            max_output_tokens=200
+                        )
+                    )
+
+                    for chunk in stream:
+                        if chunk.text:
+                            full_response += chunk.text
+                            seq += 1
+                            yield StreamChunk(
+                                session_id=session_id,
+                                request_id=request_id,
+                                sequence_number=seq,
+                                response=chunk.text,
+                                finish=False,
+                                session_finished=False,
+                                duration=0.0,
+                                timestamp=time.time(),
+                                correct_answer_count=4,
+                                response_type="guide_bridge",
+                                guide_phase=assistant.guide_phase,
+                                guide_turn_count=assistant.guide_turn_count,
+                                current_object_name=object_name
+                            )
+
+                    # Yield final chunk
+                    duration = time.time() - start_time
+                    yield StreamChunk(
+                        session_id=session_id,
+                        request_id=request_id,
+                        sequence_number=seq + 1,
+                        response=full_response,
+                        finish=True,
+                        session_finished=False,
+                        duration=duration,
+                        timestamp=time.time(),
+                        correct_answer_count=4,
+                        response_type="guide_bridge",
+                        guide_phase=assistant.guide_phase,
+                        guide_turn_count=assistant.guide_turn_count,
+                        current_object_name=object_name
+                    )
+
+                async def run_stream():
+                    async for chunk in stream_bridge():
+                        # Update conversation history with final response
+                        if chunk.finish:
+                            assistant.conversation_history.append({
+                                "role": "assistant",
+                                "content": chunk.response
+                            })
+                            # Increment guide turn count
+                            assistant.guide_turn_count = 1
+
+                        yield sse_event("chunk", chunk)
+
+                    # Send completion event
+                    yield sse_event("complete", {"success": True})
+
+                # Stream the response
+                gen = run_stream()
+                for event in async_gen_to_sync(gen, loop):
+                    yield event
+
+                print(f"[GUIDE-TEST] Session {session_id[:8]}... bridge question streamed")
+            finally:
+                pass
+
+        except GeneratorExit:
+            print(f"[INFO] Session {session_id[:8]}... client disconnected")
+        except Exception as e:
+            print(f"[ERROR] Error in start_guide_test: {e}")
             import traceback
             traceback.print_exc()
             yield sse_event("error", {"message": str(e)})
