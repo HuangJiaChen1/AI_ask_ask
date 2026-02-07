@@ -1,4 +1,5 @@
 import asyncio
+import functools
 from typing import TypedDict, Annotated, List, Optional, Any
 from langgraph.graph import StateGraph, END, START
 
@@ -90,11 +91,74 @@ class PaixuejiState(TypedDict):
     stream_callback: Any  # Async callback function(chunk: StreamChunk) -> None
     start_time: float
 
+    # --- Execution Tracing ---
+    nodes_executed: List[dict]  # [{"node": str, "time_ms": float, "changes": dict}]
+
+
+# ============================================================================
+# NODE EXECUTION TRACING
+# ============================================================================
+
+# Key state fields to track for changes
+KEY_STATE_FIELDS = [
+    "response_type", "is_engaged", "is_factually_correct",
+    "guide_phase", "guide_status", "guide_strategy",
+    "new_object_name", "natural_topic_completion"
+]
+
+
+def trace_node(func):
+    """
+    Decorator to trace node execution for critique reports.
+
+    Captures:
+    - Node name (derived from function name)
+    - Execution time in milliseconds
+    - Key state changes (before vs after)
+
+    The trace is appended to state["nodes_executed"] for later inclusion
+    in critique reports, helping debuggers identify which nodes
+    caused pedagogical issues.
+    """
+    @functools.wraps(func)
+    async def wrapper(state: PaixuejiState) -> dict:
+        start_time = time.time()
+        node_name = func.__name__.replace('node_', '')
+
+        # Capture key state before execution
+        state_before = {k: state.get(k) for k in KEY_STATE_FIELDS}
+
+        # Execute the actual node function
+        result = await func(state)
+
+        # Compute state changes
+        state_after = {k: result.get(k, state.get(k)) for k in KEY_STATE_FIELDS}
+        changes = {
+            k: v for k, v in state_after.items()
+            if v != state_before.get(k) and v is not None
+        }
+
+        # Build trace entry
+        trace_entry = {
+            "node": node_name,
+            "time_ms": round((time.time() - start_time) * 1000, 1),
+            "changes": changes
+        }
+
+        # Append to existing traces (immutable merge)
+        current_traces = state.get("nodes_executed", []) or []
+        result["nodes_executed"] = current_traces + [trace_entry]
+
+        return result
+
+    return wrapper
+
 
 # ============================================================================
 # NODES
 # ============================================================================
 
+@trace_node
 async def node_analyze_input(state: PaixuejiState) -> dict:
     """
     First node: Check if it's the first turn (Intro) or requires validation.
@@ -156,6 +220,7 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
     return updates
 
 
+@trace_node
 async def node_generate_fun_fact(state: PaixuejiState) -> dict:
     """
     Generate grounded fun facts for the introduction using Google Search.
@@ -186,6 +251,7 @@ async def node_generate_fun_fact(state: PaixuejiState) -> dict:
     }
 
 
+@trace_node
 async def node_route_logic(state: PaixuejiState) -> dict:
     """
     Determine the response type and next steps based on validation results.
@@ -371,6 +437,7 @@ async def stream_generator_to_callback(generator, state: PaixuejiState, response
     return full_text, sequence
 
 
+@trace_node
 async def node_generate_response(state: PaixuejiState) -> dict:
     """
     Generate the first part of the response (Feedback, Explanation, Correction, Switch).
@@ -510,6 +577,7 @@ async def node_generate_response(state: PaixuejiState) -> dict:
     }
 
 
+@trace_node
 async def node_generate_question(state: PaixuejiState) -> dict:
     """
     Generate the follow-up question (Part 2).
@@ -570,6 +638,7 @@ async def node_generate_question(state: PaixuejiState) -> dict:
     }
 
 
+@trace_node
 async def node_start_guide(state: PaixuejiState):
     """
     Start the IB PYP Guide Phase.
@@ -618,6 +687,7 @@ async def node_start_guide(state: PaixuejiState):
         "sequence_number": new_seq
     }
 
+@trace_node
 async def node_guide_navigator(state: PaixuejiState):
     """
     Navigator node: Analyze child's response using the Navigator pattern.
@@ -667,6 +737,7 @@ async def node_guide_navigator(state: PaixuejiState):
     }
 
 
+@trace_node
 async def node_guide_driver(state: PaixuejiState):
     """
     Driver node: Generate response following the Navigator's instruction.
@@ -745,6 +816,7 @@ async def node_guide_driver(state: PaixuejiState):
     }
 
 
+@trace_node
 async def node_guide_hint(state: PaixuejiState):
     """
     Give the child a helpful hint when max turns are reached.
@@ -800,6 +872,7 @@ async def node_guide_hint(state: PaixuejiState):
     }
 
 
+@trace_node
 async def node_guide_exit(state: PaixuejiState):
     """
     Graceful exit from guide mode.
@@ -838,6 +911,7 @@ async def node_guide_exit(state: PaixuejiState):
         "guide_phase": "exit"
     }
 
+@trace_node
 async def node_guide_success(state: PaixuejiState):
     """
     Guide Success! Child has articulated understanding of the concept.
@@ -889,6 +963,7 @@ async def node_guide_success(state: PaixuejiState):
 
 
 
+@trace_node
 async def node_finalize(state: PaixuejiState) -> dict:
     """
     Send final chunk and update history.
@@ -935,7 +1010,10 @@ async def node_finalize(state: PaixuejiState) -> dict:
         key_concept=state["assistant"].key_concept if state.get("guide_phase") else None,
         ibpyp_theme_name=state["assistant"].ibpyp_theme_name if state.get("guide_phase") else None,
         bridge_question=state["assistant"].bridge_question if state.get("guide_phase") else None,
-        is_guide_success=state.get("is_guide_success", False)
+        is_guide_success=state.get("is_guide_success", False),
+
+        # Node execution trace (for critique reports)
+        nodes_executed=state.get("nodes_executed", [])
     )
     await state["stream_callback"](final_chunk)
     

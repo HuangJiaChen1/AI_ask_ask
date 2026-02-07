@@ -164,6 +164,12 @@ class ExchangeCritique(BaseModel):
     child_response: str = Field(description="What the child said")
     model_actual: str = Field(description="How the model responded")
 
+    # Node execution trace for debugging
+    nodes_executed: list[dict] = Field(
+        default_factory=list,
+        description="Node execution trace for this exchange [{'node': str, 'time_ms': float, 'changes': dict}]"
+    )
+
     # Pedagogical context
     context: PedagogicalContext = Field(
         description="Extracted pedagogical context"

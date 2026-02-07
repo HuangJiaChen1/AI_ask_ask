@@ -131,6 +131,11 @@ class CritiqueReportGenerator:
         lines.append(f"- **Knowledge Gap:** {exchange.context.knowledge_gap}")
         lines.append("")
 
+        # Node execution trace (if available)
+        if exchange.nodes_executed:
+            lines.extend(CritiqueReportGenerator._format_node_trace(exchange.nodes_executed))
+            lines.append("")
+
         # Expected vs Actual
         if exchange.expected_vs_actual:
             lines.append("#### Expected vs Actual")
@@ -173,6 +178,42 @@ class CritiqueReportGenerator:
             lines.append("")
 
         lines.append("---")
+
+        return lines
+
+    @staticmethod
+    def _format_node_trace(nodes_executed: list[dict]) -> list[str]:
+        """
+        Format node execution trace as a Markdown table.
+
+        Args:
+            nodes_executed: List of trace entries with node, time_ms, and changes
+
+        Returns:
+            List of Markdown lines for the trace table
+        """
+        lines = []
+        lines.append("#### Node Execution Trace")
+        lines.append("")
+        lines.append("| Node | Time | State Changes |")
+        lines.append("|------|------|---------------|")
+
+        total_time = 0
+        for trace in nodes_executed:
+            node = trace.get("node", "unknown")
+            time_ms = trace.get("time_ms", 0)
+            total_time += time_ms
+            changes = trace.get("changes", {})
+
+            # Format changes as compact key=value pairs
+            if changes:
+                changes_str = ", ".join(f"{k}={v}" for k, v in changes.items())
+            else:
+                changes_str = "-"
+
+            lines.append(f"| {node} | {time_ms:.0f}ms | {changes_str} |")
+
+        lines.append(f"**Total:** {total_time:.0f}ms")
 
         return lines
 

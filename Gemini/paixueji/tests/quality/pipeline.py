@@ -220,6 +220,8 @@ class PedagogicalCritiquePipeline:
                 model_question = transcript[i]["content"]
                 child_response = transcript[i + 1]["content"]
                 model_actual = transcript[i + 2]["content"]
+                # Extract node execution trace from the model's response
+                nodes_executed = transcript[i + 2].get("nodes_executed", [])
 
                 # Extract context
                 context = await self.analyzer.analyze(
@@ -238,6 +240,9 @@ class PedagogicalCritiquePipeline:
                     setup=setup,
                     evaluation=evaluation,
                 )
+
+                # Attach node execution trace to the critique
+                critique.nodes_executed = nodes_executed
 
                 exchange_critiques.append(critique)
                 i += 2  # Move past child response, next iteration starts from model_actual

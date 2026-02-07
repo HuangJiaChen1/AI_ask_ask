@@ -331,15 +331,19 @@ def start_conversation():
                         "fun_fact_hook": "",
                         "fun_fact_question": "",
                         "real_facts": "",
+
+                        # Node execution tracing
+                        "nodes_executed": [],
                     }
-                    
+
                     async for chunk in stream_graph_execution(initial_state):
                         # Yield StreamChunk as SSE event (pass directly for optimized serialization)
                         # Update conversation history with final response
                         if chunk.finish:
                             assistant.conversation_history.append({
                                 "role": "assistant",
-                                "content": chunk.response
+                                "content": chunk.response,
+                                "nodes_executed": chunk.nodes_executed or []
                             })
 
                         yield sse_event("chunk", chunk)
@@ -719,6 +723,9 @@ def continue_conversation():
                         "fun_fact_hook": "",
                         "fun_fact_question": "",
                         "real_facts": "",
+
+                        # Node execution tracing
+                        "nodes_executed": [],
                     }
 
                     async for chunk in stream_graph_execution(initial_state):
@@ -744,10 +751,11 @@ def continue_conversation():
                             # "assistant.conversation_history.append({'role': 'user', 'content': content})"
                             # So I MUST do it here too if the graph doesn't mutate assistant history.
                             assistant.conversation_history.append({"role": "user", "content": child_input})
-                            
+
                             assistant.conversation_history.append({
                                 "role": "assistant",
-                                "content": chunk.response
+                                "content": chunk.response,
+                                "nodes_executed": chunk.nodes_executed or []
                             })
 
                             # NEW: Increment only if factually correct
@@ -1861,13 +1869,17 @@ def critique_conversation():
 
     assistant = sessions[session_id]
 
-    # Build transcript from conversation history
+    # Build transcript from conversation history (with node execution traces)
     transcript = []
     for msg in assistant.conversation_history:
         if msg["role"] == "system":
             continue
         role = "model" if msg["role"] == "assistant" else "child"
-        transcript.append({"role": role, "content": msg["content"]})
+        entry = {"role": role, "content": msg["content"]}
+        # Include node execution traces for model messages
+        if role == "model" and "nodes_executed" in msg:
+            entry["nodes_executed"] = msg["nodes_executed"]
+        transcript.append(entry)
 
     if len(transcript) < 3:
         return jsonify({
@@ -1917,8 +1929,18 @@ def critique_conversation():
         full_report += "---\n\n"
         full_report += "## Conversation Transcript\n\n"
         for msg in transcript:
-            role = "**Model:**" if msg["role"] == "model" else "**Child:**"
-            full_report += f"{role} {msg['content']}\n\n"
+            if msg["role"] == "model":
+                # Format node trace summary for model messages
+                nodes_executed = msg.get("nodes_executed", [])
+                if nodes_executed:
+                    node_names = [n["node"] for n in nodes_executed]
+                    total_time = sum(n.get("time_ms", 0) for n in nodes_executed)
+                    trace_summary = f"[{' → '.join(node_names)}] ({total_time:.0f}ms)"
+                    full_report += f"**Model:** {trace_summary}\n{msg['content']}\n\n"
+                else:
+                    full_report += f"**Model:** {msg['content']}\n\n"
+            else:
+                full_report += f"**Child:** {msg['content']}\n\n"
         full_report += "---\n\n"
         full_report += report_md
 

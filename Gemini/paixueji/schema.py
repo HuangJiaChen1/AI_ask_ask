@@ -186,3 +186,6 @@ class StreamChunk(BaseModel):
     suggested_objects: list[str] | None = None  # Objects to choose from
     system_focus_mode: str | None = None  # Current system-managed focus mode
     depth_progress: str | None = None  # e.g., "3/5" depth questions completed
+
+    # Node execution tracing (for critique reports)
+    nodes_executed: list[dict] | None = None  # Passed through final chunk
