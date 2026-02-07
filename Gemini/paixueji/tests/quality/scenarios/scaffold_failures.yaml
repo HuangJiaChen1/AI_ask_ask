@@ -1,0 +1,137 @@
+# Scaffolding Failure Scenarios
+# Tests whether the model scaffolds effectively when children are stuck
+
+scenarios:
+  - id: "SCAFFOLD-WHY-001"
+    name: "Child says 'I don't know' to WHY question"
+    description: "Tests whether model scaffolds toward causal understanding when child is stuck"
+
+    setup:
+      object_name: "banana"
+      key_concept: "color change / ripening / oxidation"
+      age: 5
+      guide_phase: "active"
+
+    conversation:
+      - role: "model"
+        content: "Why do you think the banana peel changes color as it gets older?"
+        pedagogical_intent: "Elicit understanding of oxidation/ripening"
+        question_type: "WHY"
+        target_knowledge: "Air causes chemical changes (oxidation) that turn banana brown"
+
+      - role: "child"
+        content: "I don't know"
+        response_type: "DONT_KNOW"
+        knowledge_gap: "Doesn't understand the mechanism of color change"
+
+    evaluation:
+      must_do:
+        - "Provide a hint about the mechanism (air, oxidation, ripening)"
+        - "Add NEW information not in the original question"
+        - "Keep focus on WHY, not just WHAT"
+        - "Use age-appropriate language"
+      must_not_do:
+        - "Rephrase as WHAT/HOW question without adding info"
+        - "Ask child to re-observe the same phenomenon"
+        - "Change topic or abandon explanation"
+        - "Give the full answer without scaffolding"
+      ideal_response_pattern: "air|oxygen|chemical|change.*because|clue|hint.*why"
+
+  - id: "SCAFFOLD-WHY-002"
+    name: "Child gives wrong answer to WHY question"
+    description: "Tests whether model corrects misconceptions while scaffolding"
+
+    setup:
+      object_name: "ice cube"
+      key_concept: "melting / heat transfer"
+      age: 6
+      guide_phase: "active"
+
+    conversation:
+      - role: "model"
+        content: "Why do you think the ice cube melts when you hold it?"
+        pedagogical_intent: "Elicit understanding of heat transfer"
+        question_type: "WHY"
+        target_knowledge: "Heat from hand transfers to ice, causing it to melt"
+
+      - role: "child"
+        content: "Because my hand is wet"
+        response_type: "ANSWER"
+        knowledge_gap: "Confuses effect (wet hand) with cause (heat transfer)"
+
+    evaluation:
+      must_do:
+        - "Acknowledge the observation (hand gets wet)"
+        - "Redirect to the actual cause (heat/warmth)"
+        - "Connect the cause to the effect"
+      must_not_do:
+        - "Simply say 'no, that's wrong'"
+        - "Ignore the misconception"
+        - "Move on without addressing the confusion"
+      ideal_response_pattern: "warm|heat|hot|temperature.*hand"
+
+  - id: "SCAFFOLD-HOW-001"
+    name: "Child is confused about a process"
+    description: "Tests whether model breaks down complex processes"
+
+    setup:
+      object_name: "seed"
+      key_concept: "plant growth"
+      age: 5
+      guide_phase: "active"
+
+    conversation:
+      - role: "model"
+        content: "How does a tiny seed become a big plant?"
+        pedagogical_intent: "Understand the growth process"
+        question_type: "HOW"
+        target_knowledge: "Seeds need water, soil, sunlight to germinate and grow"
+
+      - role: "child"
+        content: "Um... magic?"
+        response_type: "CONFUSED"
+        knowledge_gap: "Doesn't understand the natural process of growth"
+
+    evaluation:
+      must_do:
+        - "Validate curiosity ('It does seem like magic!')"
+        - "Break down into simple first step (water, soil)"
+        - "Use concrete, observable examples"
+      must_not_do:
+        - "Lecture about photosynthesis"
+        - "Dismiss the 'magic' response"
+        - "Overwhelm with too many concepts at once"
+      ideal_response_pattern: "water|soil|sun|grow|first"
+
+  - id: "SCAFFOLD-PARTIAL-001"
+    name: "Child gives partially correct answer"
+    description: "Tests whether model builds on partial understanding"
+
+    setup:
+      object_name: "moon"
+      key_concept: "moon phases"
+      age: 7
+      guide_phase: "active"
+
+    conversation:
+      - role: "model"
+        content: "Why does the moon look different on different nights?"
+        pedagogical_intent: "Understand moon phases"
+        question_type: "WHY"
+        target_knowledge: "Moon orbits Earth, sun lights different parts"
+
+      - role: "child"
+        content: "Because it moves around?"
+        response_type: "PARTIAL"
+        knowledge_gap: "Knows moon moves, doesn't understand light/shadow aspect"
+
+    evaluation:
+      must_do:
+        - "Affirm the correct part (yes, it moves!)"
+        - "Build on it to add the missing piece (sun/light)"
+        - "Connect movement to appearance change"
+      must_not_do:
+        - "Ignore the partial answer"
+        - "Start over as if answer was wrong"
+        - "Ask the same question again"
+      ideal_response_pattern: "yes|right|moves.*sun|light|shadow"

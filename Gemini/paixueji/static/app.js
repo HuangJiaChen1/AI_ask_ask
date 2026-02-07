@@ -1247,99 +1247,56 @@ function dismissSwitchPanel() {
 // ============================================================================
 
 // ============================================================================
-// Flow Tree Debugging Functions
+// Critique Report Functions
 // ============================================================================
 
-// Initialize Mermaid
-if (typeof mermaid !== 'undefined') {
-    mermaid.initialize({ startOnLoad: false, theme: 'default' });
-}
-
 /**
- * Show conversation flow tree in a modal popup
+ * Send critique report for engineer review.
+ * Saves report to the reports/ folder on the server.
  */
-async function showFlowTreeModal() {
-    const modal = document.getElementById('flowTreeModal');
-    const diagramContainer = document.getElementById('modalMermaidDiagram');
-
+async function sendReport() {
     if (!sessionId) {
         alert('No active session');
         return;
     }
 
-    // Show modal immediately
-    modal.style.display = 'flex';
-    diagramContainer.innerHTML = '<div style="text-align: center; padding: 20px;">Loading...</div>';
+    const btn = document.getElementById('sendReportBtn');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Analyzing...';
 
     try {
-        const response = await fetch(`${API_BASE}/debug/flow-tree/${sessionId}?format=mermaid`);
-        const data = await response.json();
+        const response = await fetch(`${API_BASE}/critique`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ session_id: sessionId })
+        });
+        const result = await response.json();
 
-        if (data.success) {
-            // Clear previous diagram
-            diagramContainer.innerHTML = '';
-
-            // Create a new div for the diagram
-            const diagramDiv = document.createElement('div');
-            diagramDiv.className = 'mermaid';
-            diagramDiv.textContent = data.diagram;
-            diagramContainer.appendChild(diagramDiv);
-
-            // Render the Mermaid diagram
-            await mermaid.run({ nodes: [diagramDiv] });
+        if (result.success) {
+            btn.textContent = 'Report Saved!';
+            btn.style.background = '#10b981';
+            console.log('[INFO] Report saved to:', result.report_path);
+            console.log('[INFO] Overall effectiveness:', result.overall_effectiveness + '%');
         } else {
-            diagramContainer.innerHTML = `<div style="color: red; padding: 20px;">Error: ${data.error}</div>`;
+            btn.textContent = 'Error';
+            btn.style.background = '#ef4444';
+            console.error('[ERROR] Critique failed:', result.error);
+            alert('Failed to generate report: ' + result.error);
         }
-    } catch (error) {
-        console.error('Flow tree error:', error);
-        diagramContainer.innerHTML = `<div style="color: red; padding: 20px;">Failed to load flow tree: ${error.message}</div>`;
-    }
-}
-
-/**
- * Close the flow tree modal
- */
-function closeFlowTreeModal() {
-    document.getElementById('flowTreeModal').style.display = 'none';
-}
-
-/**
- * Download debug logs for this session
- */
-async function downloadDebugLogs() {
-    if (!sessionId) {
-        alert('No active session');
-        return;
+    } catch (e) {
+        btn.textContent = 'Error';
+        btn.style.background = '#ef4444';
+        console.error('[ERROR] Critique request failed:', e);
+        alert('Failed to send report: ' + e.message);
     }
 
-    try {
-        // Fetch logs from backend
-        const response = await fetch(`${API_BASE}/debug/logs/${sessionId}`);
-        const data = await response.json();
-
-        if (!data.success) {
-            throw new Error(data.error || 'Failed to retrieve logs');
-        }
-
-        // Create log file content
-        const logContent = data.logs.join('\n');
-
-        // Download log file
-        const blob = new Blob([logContent], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `debug-logs-${sessionId.substring(0, 8)}.log`;
-        link.click();
-        URL.revokeObjectURL(url);
-
-        console.log(`[INFO] Downloaded ${data.logs.length} log lines for session ${sessionId.substring(0, 8)}`);
-        alert(`Downloaded debug logs (${data.logs.length} lines)`);
-
-    } catch (error) {
-        console.error('Download error:', error);
-        alert(`Failed to download logs: ${error.message}`);
-    }
+    // Reset button after 2 seconds
+    setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = originalText;
+        btn.style.background = '#f59e0b';
+    }, 2000);
 }
 
 /**

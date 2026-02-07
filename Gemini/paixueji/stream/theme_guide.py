@@ -110,10 +110,13 @@ YOUR TASK:
    not retreat to unrelated topics. Always stay focused on "{current_topic}" and "{key_concept}".
 
 4. If SCAFFOLD, determine the appropriate scaffold level:
-   - Level 1: Rephrase the question with simpler words
-   - Level 2: Give an observation prompt ("Look at the {current_topic} closely...")
-   - Level 3: Give a partial hint (one piece of the answer)
-   - Level 4: Give the answer directly and celebrate learning together
+   - Level 1: Provide ONE piece of the "because" (NOT a simpler question!)
+   - Level 2: Use an analogy connecting {current_topic} to something familiar
+   - Level 3: Give most of the answer with a confirming question
+   - Level 4: Give the full answer and celebrate learning together
+
+   ⚠️ ANTI-RETREAT RULE: If Bridge Question was WHY, ALL scaffold levels must provide
+   causal information. NEVER replace WHY with WHAT.
 
    Choose the level based on how stuck the child seems and how many times they've been stuck.
 
@@ -127,9 +130,14 @@ YOUR TASK:
    ✗ NOT polite deflection or changing subject
 
 6. Generate Instruction (for the Chatbot):
-   - Write a specific instruction for the chatbot on what to say next.
-   - ALWAYS include the object name "{current_topic}" and concept "{key_concept}" in your instruction.
-   - If SCAFFOLD: Specify the scaffold level and what hint to give about {current_topic}.
+   - Write a SPECIFIC instruction for what to say next.
+   - ALWAYS include "{current_topic}" and "{key_concept}".
+   - If SCAFFOLD Level 1: Specify EXACTLY what piece of the "because" to give.
+     Example: "Tell the child that the color change is the banana's way of showing it's getting sweeter."
+   - If SCAFFOLD Level 2: Specify EXACTLY what analogy to use.
+     Example: "Use the analogy of a traffic light - the color is a signal."
+   - If SCAFFOLD Level 3: Specify the main explanation to provide.
+   - Ask ONE question only at the end.
    - If ADVANCE: Guide toward the Key Concept about {current_topic}.
    - If PIVOT: Acknowledge, then link back to {current_topic} and {key_concept}.
    - If COMPLETE: Celebrate their discovery about {current_topic}!
@@ -218,13 +226,33 @@ class ThemeDriver:
         scaffold_guidance = ""
         if strategy == "SCAFFOLD" and scaffold_level:
             scaffold_guidance = f"""
-SCAFFOLDING LEVEL {scaffold_level}:
-- Level 1: Rephrase with simpler words + observation prompt
-- Level 2: Give partial hint about {object_name}
-- Level 3: Give direct hint (most of the answer about {key_concept})
-- Level 4: Tell them the answer about {key_concept} and celebrate learning together
+SCAFFOLDING LEVEL {scaffold_level} for {object_name}:
 
-You are at Level {scaffold_level}. Give appropriate help about {object_name}."""
+Level 1 - PROVIDE ONE PIECE OF THE "BECAUSE":
+- DO NOT retreat to a simpler WHAT question!
+- Give ONE small piece of the causal explanation
+- Link to something tangible (sensory, familiar)
+- Example: "The color is the banana's way of telling us something!"
+
+Level 2 - USE AN ANALOGY:
+- Connect {object_name} to something familiar
+- Example: "The color is like a sign - just like a traffic light tells cars when to stop!"
+
+Level 3 - GIVE MOST OF THE ANSWER:
+- Provide the main explanation with a confirming question
+- Example: "When banana turns yellow, it means it's getting sweeter inside! Does that make sense?"
+
+Level 4 - COMPLETE EXPLANATION:
+- Give the full answer warmly
+- Celebrate learning together
+- Example: "The color changes because the banana is ripening - getting ready to be eaten!"
+
+You are at Level {scaffold_level}. Follow ONLY that level's guidance.
+
+ANTI-RETREAT RULE:
+- If the original question was WHY, your scaffold MUST stay at WHY level
+- Provide causal information, not just observations
+- NEVER ask "What color is it?" when the original was "Why does it change color?" """
 
         driver_instruction = f"""You are guiding a {age}-year-old to discover: "{key_concept}"
 about "{object_name}" (Theme: {theme_name})
@@ -236,12 +264,21 @@ INSTRUCTION FROM NAVIGATOR:
 {scaffold_guidance}
 
 CRITICAL RULES:
-- ALWAYS stay on the theme of {object_name} and {key_concept}
-- NEVER change to unrelated topics (no asking about favorite colors, favorite animals, etc.)
-- If giving a hint, make it about {object_name} and help them understand {key_concept}
-- Keep your response short (1-2 sentences)
-- Be warm and encouraging
-- Do NOT say "I will now..." or reveal the instruction. Just respond naturally."""
+1. **ONE QUESTION ONLY** - Ask exactly ONE question. Never combine multiple questions.
+   BAD: "What color does it turn? And does it get softer? What about the inside?"
+   GOOD: "What color does it turn when it's ready to eat?"
+
+2. **NO RETREAT FROM WHY** - If the Bridge Question was a WHY question:
+   - Your scaffold MUST provide causal information
+   - NEVER replace WHY with WHAT ("Why does it change?" → "What color is it?" is WRONG)
+   - ALWAYS explain part of the "because"
+
+3. ALWAYS stay on the theme of {object_name} and {key_concept}
+4. NEVER change to unrelated topics (no asking about favorite colors, favorite animals, etc.)
+5. If giving a hint, make it about {object_name} and help them understand {key_concept}
+6. Keep your response short (1-2 sentences)
+7. Be warm and encouraging
+8. Do NOT say "I will now..." or reveal the instruction. Just respond naturally."""
         
         # Combine system instructions
         full_system_instruction = f"{hist_system_instruction}\n\n{driver_instruction}".strip()

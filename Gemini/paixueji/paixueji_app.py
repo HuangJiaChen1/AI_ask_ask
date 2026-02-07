@@ -1813,6 +1813,136 @@ def get_session_logs(session_id):
 # ============================================================================
 
 
+# ============================================================================
+# Critique Endpoint for Engineer Review
+# ============================================================================
+
+@app.route('/api/critique', methods=['POST'])
+def critique_conversation():
+    """
+    Critique the current conversation and save report to folder for engineer review.
+
+    Request body:
+        {
+            "session_id": "uuid-string"
+        }
+
+    Response:
+        {
+            "success": true,
+            "report_path": "reports/banana_20260207_143025.md",
+            "overall_effectiveness": 75.5
+        }
+    """
+    from datetime import datetime
+    from pathlib import Path
+
+    data = request.get_json()
+
+    if not data:
+        return jsonify({
+            "success": False,
+            "error": "Request body must be JSON"
+        }), 400
+
+    session_id = data.get('session_id')
+
+    if not session_id:
+        return jsonify({
+            "success": False,
+            "error": "Missing session_id"
+        }), 400
+
+    if session_id not in sessions:
+        return jsonify({
+            "success": False,
+            "error": "Session not found"
+        }), 404
+
+    assistant = sessions[session_id]
+
+    # Build transcript from conversation history
+    transcript = []
+    for msg in assistant.conversation_history:
+        if msg["role"] == "system":
+            continue
+        role = "model" if msg["role"] == "assistant" else "child"
+        transcript.append({"role": role, "content": msg["content"]})
+
+    if len(transcript) < 3:
+        return jsonify({
+            "success": False,
+            "error": "Need at least one complete exchange (model→child→model) to critique"
+        }), 400
+
+    try:
+        # Import critique components
+        from tests.quality.pipeline import PedagogicalCritiquePipeline
+        from tests.quality.critique_report import CritiqueReportGenerator
+
+        # Run critique (async call in sync context)
+        async def run_critique():
+            pipeline = PedagogicalCritiquePipeline(GLOBAL_GEMINI_CLIENT)
+            return await pipeline.critique_transcript(
+                transcript=transcript,
+                object_name=assistant.object_name,
+                key_concept=assistant.key_concept or "learning objective",
+                age=assistant.age or 6,
+            )
+
+        loop = asyncio.new_event_loop()
+        try:
+            critique = loop.run_until_complete(run_critique())
+        finally:
+            loop.close()
+
+        # Generate markdown report
+        report_md = CritiqueReportGenerator.to_markdown(critique)
+
+        # Save to reports folder
+        reports_dir = Path(__file__).parent / "reports"
+        reports_dir.mkdir(exist_ok=True)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # Sanitize object name for filename
+        safe_object_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in (assistant.object_name or "unknown"))
+        filename = f"{safe_object_name}_{timestamp}.md"
+        report_path = reports_dir / filename
+
+        # Build full report with conversation transcript
+        full_report = f"# Critique Report: {assistant.object_name}\n\n"
+        full_report += f"**Session:** {session_id}\n"
+        full_report += f"**Age:** {assistant.age}\n"
+        full_report += f"**Date:** {datetime.now().isoformat()}\n\n"
+        full_report += "---\n\n"
+        full_report += "## Conversation Transcript\n\n"
+        for msg in transcript:
+            role = "**Model:**" if msg["role"] == "model" else "**Child:**"
+            full_report += f"{role} {msg['content']}\n\n"
+        full_report += "---\n\n"
+        full_report += report_md
+
+        report_path.write_text(full_report, encoding='utf-8')
+
+        print(f"[INFO] Critique report saved: {report_path}")
+        print(f"[INFO] Overall effectiveness: {critique.overall_effectiveness:.1f}%")
+
+        return jsonify({
+            "success": True,
+            "report_path": str(report_path),
+            "overall_effectiveness": critique.overall_effectiveness,
+        })
+
+    except Exception as e:
+        print(f"[ERROR] Critique error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
 def async_gen_to_sync(async_gen, loop):
     """
     Bridge async generator to sync generator WITHOUT buffering.
