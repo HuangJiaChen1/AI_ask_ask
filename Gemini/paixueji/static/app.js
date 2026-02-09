@@ -1251,14 +1251,29 @@ function dismissSwitchPanel() {
 // ============================================================================
 
 /**
- * Send critique report for engineer review.
- * Saves report to the reports/ folder on the server.
+ * Show the critique choice modal (AI vs Manual).
  */
-async function sendReport() {
+function showCritiqueChoice() {
     if (!sessionId) {
         alert('No active session');
         return;
     }
+    const modal = document.getElementById('critiqueChoiceModal');
+    modal.style.display = 'flex';
+}
+
+/**
+ * Close the critique choice modal.
+ */
+function closeCritiqueChoice() {
+    document.getElementById('critiqueChoiceModal').style.display = 'none';
+}
+
+/**
+ * Send AI critique (existing automated flow).
+ */
+async function sendAICritique() {
+    closeCritiqueChoice();
 
     const btn = document.getElementById('sendReportBtn');
     const originalText = btn.textContent;
@@ -1276,8 +1291,7 @@ async function sendReport() {
         if (result.success) {
             btn.textContent = 'Report Saved!';
             btn.style.background = '#10b981';
-            console.log('[INFO] Report saved to:', result.report_path);
-            console.log('[INFO] Overall effectiveness:', result.overall_effectiveness + '%');
+            console.log('[INFO] AI report saved to:', result.report_path);
         } else {
             btn.textContent = 'Error';
             btn.style.background = '#ef4444';
@@ -1291,12 +1305,221 @@ async function sendReport() {
         alert('Failed to send report: ' + e.message);
     }
 
-    // Reset button after 2 seconds
     setTimeout(() => {
         btn.disabled = false;
         btn.textContent = originalText;
         btn.style.background = '#f59e0b';
     }, 2000);
+}
+
+/**
+ * Fetch exchanges and show the manual critique form.
+ */
+async function showManualCritiqueForm() {
+    closeCritiqueChoice();
+
+    try {
+        const response = await fetch(`${API_BASE}/exchanges/${sessionId}`);
+        const result = await response.json();
+
+        if (!result.success) {
+            alert('Failed to load exchanges: ' + result.error);
+            return;
+        }
+
+        if (result.exchanges.length === 0) {
+            alert('No complete exchanges found. Need at least one model→child→model triplet.');
+            return;
+        }
+
+        // Populate the exchange list
+        const exchangeList = document.getElementById('exchangeList');
+        exchangeList.innerHTML = '';
+
+        result.exchanges.forEach(exchange => {
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'margin-bottom:16px; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;';
+
+            // Checkbox header with preview
+            const header = document.createElement('div');
+            header.style.cssText = 'padding:12px; background:#f8fafc; display:flex; align-items:flex-start; gap:10px; cursor:pointer;';
+            header.innerHTML = `
+                <input type="checkbox" id="exchange_cb_${exchange.index}" data-index="${exchange.index}" style="margin-top:3px; cursor:pointer;" onchange="toggleExchangeCritique(${exchange.index})">
+                <div style="flex:1; min-width:0;">
+                    <strong style="color:#1e293b;">Exchange ${exchange.index}</strong>
+                    <div style="font-size:0.85em; color:#64748b; margin-top:4px;">
+                        <div><b>Q:</b> ${escapeHtml(truncate(exchange.model_question, 80))}</div>
+                        <div><b>A:</b> ${escapeHtml(truncate(exchange.child_response, 80))}</div>
+                        <div><b>R:</b> ${escapeHtml(truncate(exchange.model_response, 80))}</div>
+                    </div>
+                </div>
+            `;
+            header.onclick = function(e) {
+                if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                    const cb = document.getElementById('exchange_cb_' + exchange.index);
+                    cb.checked = !cb.checked;
+                    toggleExchangeCritique(exchange.index);
+                }
+            };
+
+            // Collapsible critique form (hidden by default)
+            const formDiv = document.createElement('div');
+            formDiv.id = `exchange_form_${exchange.index}`;
+            formDiv.style.cssText = 'display:none; padding:16px; border-top:1px solid #e2e8f0;';
+            formDiv.innerHTML = buildExchangeCritiqueFormHTML(exchange);
+
+            wrapper.appendChild(header);
+            wrapper.appendChild(formDiv);
+            exchangeList.appendChild(wrapper);
+        });
+
+        // Clear global conclusion
+        document.getElementById('globalConclusion').value = '';
+
+        // Show overlay
+        document.getElementById('manualCritiqueOverlay').style.display = 'block';
+
+    } catch (e) {
+        console.error('[ERROR] Failed to load exchanges:', e);
+        alert('Failed to load exchanges: ' + e.message);
+    }
+}
+
+/**
+ * Build HTML for a single exchange critique form.
+ */
+function buildExchangeCritiqueFormHTML(exchange) {
+    const idx = exchange.index;
+    return `
+        <div style="margin-bottom:16px;">
+            <div style="font-weight:bold; color:#475569; margin-bottom:6px;">Model Question</div>
+            <div style="background:#f0f9ff; padding:8px; border-radius:4px; font-size:0.9em; margin-bottom:8px; white-space:pre-wrap;">${escapeHtml(exchange.model_question)}</div>
+            <div style="display:flex; gap:8px;">
+                <div style="flex:1;"><label style="font-size:0.8em; color:#64748b;">What is expected</label><textarea id="mq_exp_${idx}" rows="2" style="width:100%; box-sizing:border-box; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-family:inherit; resize:vertical;" placeholder="What should the model have asked?"></textarea></div>
+                <div style="flex:1;"><label style="font-size:0.8em; color:#64748b;">Why is it problematic</label><textarea id="mq_prob_${idx}" rows="2" style="width:100%; box-sizing:border-box; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-family:inherit; resize:vertical;" placeholder="What's wrong with this question?"></textarea></div>
+            </div>
+        </div>
+        <div style="margin-bottom:16px;">
+            <div style="font-weight:bold; color:#475569; margin-bottom:6px;">Child Response</div>
+            <div style="background:#fefce8; padding:8px; border-radius:4px; font-size:0.9em; margin-bottom:8px; white-space:pre-wrap;">${escapeHtml(exchange.child_response)}</div>
+        </div>
+        <div style="margin-bottom:16px;">
+            <div style="font-weight:bold; color:#475569; margin-bottom:6px;">Model Response</div>
+            <div style="background:#f0fdf4; padding:8px; border-radius:4px; font-size:0.9em; margin-bottom:8px; white-space:pre-wrap;">${escapeHtml(exchange.model_response)}</div>
+            <div style="display:flex; gap:8px;">
+                <div style="flex:1;"><label style="font-size:0.8em; color:#64748b;">What is expected</label><textarea id="mr_exp_${idx}" rows="2" style="width:100%; box-sizing:border-box; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-family:inherit; resize:vertical;" placeholder="How should the model have responded?"></textarea></div>
+                <div style="flex:1;"><label style="font-size:0.8em; color:#64748b;">Why is it problematic</label><textarea id="mr_prob_${idx}" rows="2" style="width:100%; box-sizing:border-box; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-family:inherit; resize:vertical;" placeholder="What's wrong with this response?"></textarea></div>
+            </div>
+        </div>
+        <div>
+            <label style="font-weight:bold; color:#475569; font-size:0.9em;">Exchange Conclusion</label>
+            <textarea id="ec_concl_${idx}" rows="2" style="width:100%; box-sizing:border-box; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-family:inherit; resize:vertical; margin-top:4px;" placeholder="Summary of issues in this exchange..."></textarea>
+        </div>
+    `;
+}
+
+/**
+ * Toggle visibility of an exchange critique form when checkbox changes.
+ */
+function toggleExchangeCritique(index) {
+    const cb = document.getElementById('exchange_cb_' + index);
+    const form = document.getElementById('exchange_form_' + index);
+    if (cb && form) {
+        form.style.display = cb.checked ? 'block' : 'none';
+    }
+}
+
+/**
+ * Close and reset the manual critique form.
+ */
+function closeManualCritique() {
+    document.getElementById('manualCritiqueOverlay').style.display = 'none';
+}
+
+/**
+ * Collect all checked exchanges and submit manual critique.
+ */
+async function submitManualCritique() {
+    // Collect checked exchanges
+    const exchangeCritiques = [];
+    const checkboxes = document.querySelectorAll('[id^="exchange_cb_"]');
+
+    checkboxes.forEach(cb => {
+        if (!cb.checked) return;
+        const idx = parseInt(cb.dataset.index);
+
+        exchangeCritiques.push({
+            exchange_index: idx,
+            model_question_expected: (document.getElementById('mq_exp_' + idx) || {}).value || '',
+            model_question_problem: (document.getElementById('mq_prob_' + idx) || {}).value || '',
+            model_response_expected: (document.getElementById('mr_exp_' + idx) || {}).value || '',
+            model_response_problem: (document.getElementById('mr_prob_' + idx) || {}).value || '',
+            conclusion: (document.getElementById('ec_concl_' + idx) || {}).value || ''
+        });
+    });
+
+    if (exchangeCritiques.length === 0) {
+        alert('Please select at least one exchange to critique.');
+        return;
+    }
+
+    const globalConclusion = document.getElementById('globalConclusion').value;
+    const submitBtn = document.getElementById('submitManualCritiqueBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+
+    try {
+        const response = await fetch(`${API_BASE}/manual-critique`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                session_id: sessionId,
+                exchange_critiques: exchangeCritiques,
+                global_conclusion: globalConclusion
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            closeManualCritique();
+            const btn = document.getElementById('sendReportBtn');
+            btn.textContent = 'Report Saved!';
+            btn.style.background = '#10b981';
+            console.log('[INFO] Manual critique saved to:', result.report_path);
+            console.log('[INFO] Exchanges critiqued:', result.exchanges_critiqued);
+            setTimeout(() => {
+                btn.textContent = '\uD83D\uDCDD Send Report for Review';
+                btn.style.background = '#f59e0b';
+            }, 2000);
+        } else {
+            alert('Failed to save critique: ' + result.error);
+        }
+    } catch (e) {
+        console.error('[ERROR] Manual critique failed:', e);
+        alert('Failed to submit critique: ' + e.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Critique';
+    }
+}
+
+/**
+ * Truncate text to a maximum length with ellipsis.
+ */
+function truncate(text, maxLen) {
+    if (!text) return '';
+    return text.length > maxLen ? text.substring(0, maxLen) + '...' : text;
+}
+
+/**
+ * Escape HTML entities to prevent XSS.
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(text));
+    return div.innerHTML;
 }
 
 /**

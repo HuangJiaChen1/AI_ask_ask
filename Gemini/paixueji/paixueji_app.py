@@ -30,6 +30,12 @@ CORS(app)
 # For production, consider using Redis or database storage
 sessions = {}
 
+# Background critique task tracking
+# {task_id: {"status": "pending"|"running"|"completed"|"failed",
+#            "session_id": str, "report_path": str|None,
+#            "error": str|None, "started_at": float}}
+critique_tasks = {}
+
 # Initialize global Gemini client to enable connection reuse
 def init_global_client():
     """Initialize a global Gemini client instance to avoid cold starts."""
@@ -1822,13 +1828,116 @@ def get_session_logs(session_id):
 
 
 # ============================================================================
-# Critique Endpoint for Engineer Review
+# Background Critique Worker
+# ============================================================================
+
+def run_critique_background(task_id: str, session_id: str, transcript: list,
+                            object_name: str, key_concept: str, age: int):
+    """
+    Background worker for critique generation.
+
+    Runs the PedagogicalCritiquePipeline in a separate thread to avoid
+    blocking HTTP requests (critique takes 30-60s for multi-exchange conversations).
+
+    Args:
+        task_id: Unique identifier for this critique task
+        session_id: Session ID being critiqued
+        transcript: Conversation transcript [{role, content}, ...]
+        object_name: Object being discussed
+        key_concept: Key learning concept
+        age: Child's age
+    """
+    from datetime import datetime
+    from pathlib import Path
+    from tests.quality.pipeline import PedagogicalCritiquePipeline
+    from tests.quality.critique_report import CritiqueReportGenerator
+
+    try:
+        critique_tasks[task_id]["status"] = "running"
+        logger.info(f"[CRITIQUE] Task {task_id[:8]}... started for session {session_id[:8]}...")
+
+        # Create event loop for this thread
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        try:
+            # Run the pipeline
+            pipeline = PedagogicalCritiquePipeline(GLOBAL_GEMINI_CLIENT)
+            critique = loop.run_until_complete(
+                pipeline.critique_transcript(
+                    transcript=transcript,
+                    object_name=object_name,
+                    key_concept=key_concept,
+                    age=age,
+                )
+            )
+        finally:
+            loop.close()
+
+        # Generate markdown report
+        report_md = CritiqueReportGenerator.to_markdown(critique)
+
+        # Save to reports folder
+        reports_dir = Path(__file__).parent / "reports" / "AIF"
+        reports_dir.mkdir(parents=True, exist_ok=True)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        # Sanitize object name for filename
+        safe_object_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in (object_name or "unknown"))
+        filename = f"{safe_object_name}_{timestamp}.md"
+        report_path = reports_dir / filename
+
+        # Build full report with conversation transcript
+        full_report = f"# Critique Report: {object_name}\n\n"
+        full_report += f"**Session:** {session_id}\n"
+        full_report += f"**Age:** {age}\n"
+        full_report += f"**Date:** {datetime.now().isoformat()}\n\n"
+        full_report += "---\n\n"
+        full_report += "## Conversation Transcript\n\n"
+        for msg in transcript:
+            if msg["role"] == "model":
+                # Format node trace summary for model messages
+                nodes_executed = msg.get("nodes_executed", [])
+                if nodes_executed:
+                    node_names = [n["node"] for n in nodes_executed]
+                    total_time = sum(n.get("time_ms", 0) for n in nodes_executed)
+                    trace_summary = f"[{' → '.join(node_names)}] ({total_time:.0f}ms)"
+                    full_report += f"**Model:** {trace_summary}\n{msg['content']}\n\n"
+                else:
+                    full_report += f"**Model:** {msg['content']}\n\n"
+            else:
+                full_report += f"**Child:** {msg['content']}\n\n"
+        full_report += "---\n\n"
+        full_report += report_md
+
+        report_path.write_text(full_report, encoding='utf-8')
+
+        # Update task status
+        critique_tasks[task_id]["status"] = "completed"
+        critique_tasks[task_id]["report_path"] = str(report_path)
+        critique_tasks[task_id]["overall_effectiveness"] = critique.overall_effectiveness
+
+        logger.info(f"[CRITIQUE] Task {task_id[:8]}... completed | report: {report_path} | score: {critique.overall_effectiveness:.1f}%")
+
+    except Exception as e:
+        critique_tasks[task_id]["status"] = "failed"
+        critique_tasks[task_id]["error"] = str(e)
+        logger.error(f"[CRITIQUE] Task {task_id[:8]}... failed: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+# ============================================================================
+# Critique Endpoints for Engineer Review
 # ============================================================================
 
 @app.route('/api/critique', methods=['POST'])
 def critique_conversation():
     """
-    Critique the current conversation and save report to folder for engineer review.
+    Start a background critique of the current conversation.
+
+    Returns immediately with a task_id. Poll /api/critique/status/<task_id>
+    to check progress, then GET /api/critique/report/<task_id> to retrieve.
 
     Request body:
         {
@@ -1838,13 +1947,10 @@ def critique_conversation():
     Response:
         {
             "success": true,
-            "report_path": "reports/banana_20260207_143025.md",
-            "overall_effectiveness": 75.5
+            "task_id": "uuid-string",
+            "message": "Critique started. Poll /api/critique/status/<task_id> for progress."
         }
     """
-    from datetime import datetime
-    from pathlib import Path
-
     data = request.get_json()
 
     if not data:
@@ -1887,82 +1993,458 @@ def critique_conversation():
             "error": "Need at least one complete exchange (model→child→model) to critique"
         }), 400
 
+    # Create task entry
+    task_id = str(uuid.uuid4())
+    critique_tasks[task_id] = {
+        "status": "pending",
+        "session_id": session_id,
+        "report_path": None,
+        "error": None,
+        "overall_effectiveness": None,
+        "started_at": time.time()
+    }
+
+    # Capture session state for background worker (session may be deleted while critique runs)
+    object_name = assistant.object_name
+    key_concept = assistant.key_concept or "learning objective"
+    age = assistant.age or 6
+
+    # Spawn background worker
+    thread = threading.Thread(
+        target=run_critique_background,
+        args=(task_id, session_id, transcript, object_name, key_concept, age),
+        daemon=True
+    )
+    thread.start()
+
+    logger.info(f"[CRITIQUE] Task {task_id[:8]}... spawned for session {session_id[:8]}...")
+
+    return jsonify({
+        "success": True,
+        "task_id": task_id,
+        "message": "Critique started. Poll /api/critique/status/<task_id> for progress."
+    })
+
+
+@app.route('/api/critique/status/<task_id>', methods=['GET'])
+def critique_status(task_id):
+    """
+    Check status of a background critique task.
+
+    Response:
+        {
+            "success": true,
+            "task_id": "uuid-string",
+            "status": "pending" | "running" | "completed" | "failed",
+            "report_path": "reports/banana_20260207.md" (if completed),
+            "overall_effectiveness": 75.5 (if completed),
+            "error": "..." (if failed),
+            "elapsed_seconds": 15.2
+        }
+    """
+    if task_id not in critique_tasks:
+        return jsonify({
+            "success": False,
+            "error": "Task not found"
+        }), 404
+
+    task = critique_tasks[task_id]
+    return jsonify({
+        "success": True,
+        "task_id": task_id,
+        "status": task["status"],
+        "session_id": task["session_id"],
+        "report_path": task["report_path"],
+        "overall_effectiveness": task["overall_effectiveness"],
+        "error": task["error"],
+        "elapsed_seconds": round(time.time() - task["started_at"], 1)
+    })
+
+
+@app.route('/api/exchanges/<session_id>', methods=['GET'])
+def get_exchanges(session_id):
+    """
+    Extract exchange triplets (model→child→model) from conversation history.
+
+    Returns structured exchanges for the manual critique form.
+
+    Response:
+        {
+            "success": true,
+            "exchanges": [
+                {
+                    "index": 1,
+                    "model_question": "...",
+                    "child_response": "...",
+                    "model_response": "...",
+                    "nodes_executed": [...]
+                }
+            ],
+            "object_name": "apple",
+            "age": 6
+        }
+    """
+    assistant = sessions.get(session_id)
+
+    if not assistant:
+        return jsonify({
+            "success": False,
+            "error": "Session not found"
+        }), 404
+
+    # Build transcript from conversation history (skip system message)
+    transcript = []
+    for msg in assistant.conversation_history:
+        if msg["role"] == "system":
+            continue
+        role = "model" if msg["role"] == "assistant" else "child"
+        entry = {"role": role, "content": msg["content"]}
+        if role == "model" and "nodes_executed" in msg:
+            entry["nodes_executed"] = msg["nodes_executed"]
+        transcript.append(entry)
+
+    # Extract triplets: model → child → model
+    exchanges = []
+    exchange_index = 0
+    i = 0
+    while i < len(transcript) - 2:
+        if (transcript[i].get("role") == "model" and
+            transcript[i + 1].get("role") == "child" and
+            transcript[i + 2].get("role") == "model"):
+
+            exchange_index += 1
+            exchanges.append({
+                "index": exchange_index,
+                "model_question": transcript[i]["content"],
+                "child_response": transcript[i + 1]["content"],
+                "model_response": transcript[i + 2]["content"],
+                "nodes_executed": transcript[i + 2].get("nodes_executed", [])
+            })
+            i += 2  # Move past child response, next iteration checks from model response
+        else:
+            i += 1
+
+    return jsonify({
+        "success": True,
+        "exchanges": exchanges,
+        "object_name": assistant.object_name,
+        "age": assistant.age
+    })
+
+
+@app.route('/api/manual-critique', methods=['POST'])
+def manual_critique():
+    """
+    Save a manual (human feedback) critique report.
+
+    Request body:
+        {
+            "session_id": "uuid",
+            "exchange_critiques": [
+                {
+                    "exchange_index": 1,
+                    "model_question_expected": "...",
+                    "model_question_problem": "...",
+                    "model_response_expected": "...",
+                    "model_response_problem": "...",
+                    "conclusion": "..."
+                }
+            ],
+            "global_conclusion": "..."
+        }
+
+    Response:
+        {
+            "success": true,
+            "report_path": "reports/HF/apple_20260209_143045.md",
+            "exchanges_critiqued": 2
+        }
+    """
+    from datetime import datetime
+    from pathlib import Path
+
+    data = request.get_json()
+
+    if not data:
+        return jsonify({
+            "success": False,
+            "error": "Request body must be JSON"
+        }), 400
+
+    session_id = data.get('session_id')
+    exchange_critiques = data.get('exchange_critiques', [])
+    global_conclusion = data.get('global_conclusion', '')
+
+    if not session_id:
+        return jsonify({
+            "success": False,
+            "error": "Missing session_id"
+        }), 400
+
+    if not exchange_critiques:
+        return jsonify({
+            "success": False,
+            "error": "At least one exchange must be critiqued"
+        }), 400
+
+    assistant = sessions.get(session_id)
+
+    if not assistant:
+        return jsonify({
+            "success": False,
+            "error": "Session not found"
+        }), 404
+
+    # Build transcript from conversation history (with node traces)
+    transcript = []
+    for msg in assistant.conversation_history:
+        if msg["role"] == "system":
+            continue
+        role = "model" if msg["role"] == "assistant" else "child"
+        entry = {"role": role, "content": msg["content"]}
+        if role == "model" and "nodes_executed" in msg:
+            entry["nodes_executed"] = msg["nodes_executed"]
+        transcript.append(entry)
+
+    # Re-extract all exchanges to match indices
+    all_exchanges = []
+    i = 0
+    while i < len(transcript) - 2:
+        if (transcript[i].get("role") == "model" and
+            transcript[i + 1].get("role") == "child" and
+            transcript[i + 2].get("role") == "model"):
+            all_exchanges.append({
+                "model_question": transcript[i]["content"],
+                "child_response": transcript[i + 1]["content"],
+                "model_response": transcript[i + 2]["content"],
+                "nodes_executed": transcript[i + 2].get("nodes_executed", [])
+            })
+            i += 2
+        else:
+            i += 1
+
     try:
-        # Import critique components
-        from tests.quality.pipeline import PedagogicalCritiquePipeline
-        from tests.quality.critique_report import CritiqueReportGenerator
+        report_md = build_human_feedback_report(
+            object_name=assistant.object_name,
+            age=assistant.age,
+            session_id=session_id,
+            transcript=transcript,
+            all_exchanges=all_exchanges,
+            exchange_critiques=exchange_critiques,
+            global_conclusion=global_conclusion
+        )
 
-        # Run critique (async call in sync context)
-        async def run_critique():
-            pipeline = PedagogicalCritiquePipeline(GLOBAL_GEMINI_CLIENT)
-            return await pipeline.critique_transcript(
-                transcript=transcript,
-                object_name=assistant.object_name,
-                key_concept=assistant.key_concept or "learning objective",
-                age=assistant.age or 6,
-            )
-
-        loop = asyncio.new_event_loop()
-        try:
-            critique = loop.run_until_complete(run_critique())
-        finally:
-            loop.close()
-
-        # Generate markdown report
-        report_md = CritiqueReportGenerator.to_markdown(critique)
-
-        # Save to reports folder
-        reports_dir = Path(__file__).parent / "reports"
-        reports_dir.mkdir(exist_ok=True)
+        # Save to reports/HF/
+        reports_dir = Path(__file__).parent / "reports" / "HF"
+        reports_dir.mkdir(parents=True, exist_ok=True)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        # Sanitize object name for filename
-        safe_object_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in (assistant.object_name or "unknown"))
+        safe_object_name = "".join(
+            c if c.isalnum() or c in "-_" else "_"
+            for c in (assistant.object_name or "unknown")
+        )
         filename = f"{safe_object_name}_{timestamp}.md"
         report_path = reports_dir / filename
 
-        # Build full report with conversation transcript
-        full_report = f"# Critique Report: {assistant.object_name}\n\n"
-        full_report += f"**Session:** {session_id}\n"
-        full_report += f"**Age:** {assistant.age}\n"
-        full_report += f"**Date:** {datetime.now().isoformat()}\n\n"
-        full_report += "---\n\n"
-        full_report += "## Conversation Transcript\n\n"
-        for msg in transcript:
-            if msg["role"] == "model":
-                # Format node trace summary for model messages
-                nodes_executed = msg.get("nodes_executed", [])
-                if nodes_executed:
-                    node_names = [n["node"] for n in nodes_executed]
-                    total_time = sum(n.get("time_ms", 0) for n in nodes_executed)
-                    trace_summary = f"[{' → '.join(node_names)}] ({total_time:.0f}ms)"
-                    full_report += f"**Model:** {trace_summary}\n{msg['content']}\n\n"
-                else:
-                    full_report += f"**Model:** {msg['content']}\n\n"
-            else:
-                full_report += f"**Child:** {msg['content']}\n\n"
-        full_report += "---\n\n"
-        full_report += report_md
+        report_path.write_text(report_md, encoding='utf-8')
 
-        report_path.write_text(full_report, encoding='utf-8')
-
-        print(f"[INFO] Critique report saved: {report_path}")
-        print(f"[INFO] Overall effectiveness: {critique.overall_effectiveness:.1f}%")
+        logger.info(f"[MANUAL-CRITIQUE] Report saved: {report_path} | "
+                     f"exchanges critiqued: {len(exchange_critiques)}")
 
         return jsonify({
             "success": True,
             "report_path": str(report_path),
-            "overall_effectiveness": critique.overall_effectiveness,
+            "exchanges_critiqued": len(exchange_critiques)
         })
 
     except Exception as e:
-        print(f"[ERROR] Critique error: {e}")
+        logger.error(f"[MANUAL-CRITIQUE] Error: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({
             "success": False,
             "error": str(e)
         }), 500
+
+
+def build_human_feedback_report(object_name, age, session_id, transcript,
+                                 all_exchanges, exchange_critiques,
+                                 global_conclusion):
+    """
+    Generate a markdown report for human feedback critique.
+
+    Args:
+        object_name: Object being discussed
+        age: Child's age
+        session_id: Session ID
+        transcript: Full conversation transcript [{role, content, nodes_executed?}]
+        all_exchanges: All extracted exchanges (list of dicts)
+        exchange_critiques: User-submitted critiques (list of dicts)
+        global_conclusion: Overall conclusion text
+
+    Returns:
+        str: Markdown report content
+    """
+    from datetime import datetime
+
+    total_exchanges = len(all_exchanges)
+    critiqued_count = len(exchange_critiques)
+
+    # Build critiqued index set for quick lookup
+    critiqued_indices = {ec["exchange_index"] for ec in exchange_critiques}
+
+    report = f"# Human Feedback Critique Report: {object_name}\n\n"
+    report += f"**Session:** {session_id}\n"
+    report += f"**Age:** {age}\n"
+    report += f"**Date:** {datetime.now().isoformat()}\n"
+    report += f"**Feedback Type:** Manual (Human)\n"
+    report += f"**Exchanges Critiqued:** {critiqued_count} / {total_exchanges}\n\n"
+    report += "---\n\n"
+
+    # Conversation transcript (same format as AI reports)
+    report += "## Conversation Transcript\n\n"
+    for msg in transcript:
+        if msg["role"] == "model":
+            nodes_executed = msg.get("nodes_executed", [])
+            if nodes_executed:
+                node_names = [n["node"] for n in nodes_executed]
+                total_time = sum(n.get("time_ms", 0) for n in nodes_executed)
+                trace_summary = f"[{' → '.join(node_names)}] ({total_time:.0f}ms)"
+                report += f"**Model:** {trace_summary}\n{msg['content']}\n\n"
+            else:
+                report += f"**Model:** {msg['content']}\n\n"
+        else:
+            report += f"**Child:** {msg['content']}\n\n"
+
+    report += "---\n\n"
+
+    # Detailed exchange analysis (only flagged exchanges)
+    report += "## Detailed Exchange Analysis\n\n"
+
+    for ec in exchange_critiques:
+        idx = ec["exchange_index"]
+
+        # Validate index
+        if idx < 1 or idx > total_exchanges:
+            continue
+
+        exchange = all_exchanges[idx - 1]  # 1-indexed to 0-indexed
+
+        report += f"### Exchange {idx}\n\n"
+        report += f"**Model asked:** \"{exchange['model_question']}\"\n\n"
+        report += f"**Child said:** \"{exchange['child_response']}\"\n\n"
+        report += f"**Model responded:** \"{exchange['model_response']}\"\n\n"
+
+        # Node execution trace
+        nodes_executed = exchange.get("nodes_executed", [])
+        if nodes_executed:
+            report += "#### Node Execution Trace\n\n"
+            report += "| Node | Time | State Changes |\n"
+            report += "|------|------|---------------|\n"
+            for node in nodes_executed:
+                node_name = node.get("node", "?")
+                time_ms = node.get("time_ms", 0)
+                changes = node.get("state_changes", {})
+                changes_str = ", ".join(
+                    f"{k}: {v}" for k, v in changes.items()
+                ) if changes else "-"
+                report += f"| {node_name} | {time_ms:.0f}ms | {changes_str} |\n"
+            report += "\n"
+
+        # Human critique sections
+        report += "#### Human Critique\n\n"
+
+        # Model Question critique
+        mq_expected = ec.get("model_question_expected", "").strip()
+        mq_problem = ec.get("model_question_problem", "").strip()
+        if mq_expected or mq_problem:
+            report += "**Model Question:**\n"
+            if mq_expected:
+                report += f"- *What is expected:* {mq_expected}\n"
+            if mq_problem:
+                report += f"- *Why is it problematic:* {mq_problem}\n"
+            report += "\n"
+
+        # Model Response critique
+        mr_expected = ec.get("model_response_expected", "").strip()
+        mr_problem = ec.get("model_response_problem", "").strip()
+        if mr_expected or mr_problem:
+            report += "**Model Response:**\n"
+            if mr_expected:
+                report += f"- *What is expected:* {mr_expected}\n"
+            if mr_problem:
+                report += f"- *Why is it problematic:* {mr_problem}\n"
+            report += "\n"
+
+        # Per-exchange conclusion
+        conclusion = ec.get("conclusion", "").strip()
+        if conclusion:
+            report += f"#### Conclusion\n\n{conclusion}\n\n"
+
+        report += "---\n\n"
+
+    # Global conclusion
+    if global_conclusion and global_conclusion.strip():
+        report += f"## Global Conclusion\n\n{global_conclusion.strip()}\n"
+
+    return report
+
+
+@app.route('/api/critique/report/<task_id>', methods=['GET'])
+def get_critique_report(task_id):
+    """
+    Retrieve the generated critique report content.
+
+    Response:
+        {
+            "success": true,
+            "report_content": "# Critique Report...",
+            "report_path": "reports/banana_20260207.md",
+            "overall_effectiveness": 75.5
+        }
+    """
+    from pathlib import Path
+
+    if task_id not in critique_tasks:
+        return jsonify({
+            "success": False,
+            "error": "Task not found"
+        }), 404
+
+    task = critique_tasks[task_id]
+
+    if task["status"] == "pending":
+        return jsonify({
+            "success": False,
+            "error": "Task is pending, not yet started"
+        }), 400
+
+    if task["status"] == "running":
+        return jsonify({
+            "success": False,
+            "error": f"Task is still running ({round(time.time() - task['started_at'], 1)}s elapsed)"
+        }), 400
+
+    if task["status"] == "failed":
+        return jsonify({
+            "success": False,
+            "error": f"Task failed: {task['error']}"
+        }), 400
+
+    # Status is "completed"
+    report_path = Path(task["report_path"])
+    if not report_path.exists():
+        return jsonify({
+            "success": False,
+            "error": "Report file not found on disk"
+        }), 404
+
+    return jsonify({
+        "success": True,
+        "report_content": report_path.read_text(encoding='utf-8'),
+        "report_path": str(report_path),
+        "overall_effectiveness": task["overall_effectiveness"]
+    })
 
 
 def async_gen_to_sync(async_gen, loop):
