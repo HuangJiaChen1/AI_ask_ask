@@ -349,7 +349,8 @@ def start_conversation():
                             assistant.conversation_history.append({
                                 "role": "assistant",
                                 "content": chunk.response,
-                                "nodes_executed": chunk.nodes_executed or []
+                                "nodes_executed": chunk.nodes_executed or [],
+                                "mode": "guide" if chunk.guide_phase else "chat",
                             })
 
                         yield sse_event("chunk", chunk)
@@ -568,7 +569,8 @@ RULES:
                         if chunk.finish:
                             assistant.conversation_history.append({
                                 "role": "assistant",
-                                "content": chunk.response
+                                "content": chunk.response,
+                                "mode": "guide",
                             })
                             # Increment guide turn count
                             assistant.guide_turn_count = 1
@@ -761,7 +763,8 @@ def continue_conversation():
                             assistant.conversation_history.append({
                                 "role": "assistant",
                                 "content": chunk.response,
-                                "nodes_executed": chunk.nodes_executed or []
+                                "nodes_executed": chunk.nodes_executed or [],
+                                "mode": "guide" if chunk.guide_phase else "chat",
                             })
 
                             # NEW: Increment only if factually correct
@@ -1832,20 +1835,22 @@ def get_session_logs(session_id):
 # ============================================================================
 
 def run_critique_background(task_id: str, session_id: str, transcript: list,
-                            object_name: str, key_concept: str, age: int):
+                            object_name: str, key_concept: str, age: int,
+                            ibpyp_theme_name: str = None):
     """
     Background worker for critique generation.
 
-    Runs the PedagogicalCritiquePipeline in a separate thread to avoid
-    blocking HTTP requests (critique takes 30-60s for multi-exchange conversations).
+    Splits the transcript by mode (chat vs guide), runs the critique pipeline
+    separately for each phase, then combines into a single 2-in-1 report.
 
     Args:
         task_id: Unique identifier for this critique task
         session_id: Session ID being critiqued
-        transcript: Conversation transcript [{role, content}, ...]
+        transcript: Conversation transcript [{role, content, mode?, nodes_executed?}, ...]
         object_name: Object being discussed
         key_concept: Key learning concept
         age: Child's age
+        ibpyp_theme_name: IB PYP theme name (optional)
     """
     from datetime import datetime
     from pathlib import Path
@@ -1856,55 +1861,98 @@ def run_critique_background(task_id: str, session_id: str, transcript: list,
         critique_tasks[task_id]["status"] = "running"
         logger.info(f"[CRITIQUE] Task {task_id[:8]}... started for session {session_id[:8]}...")
 
+        # Split transcript into chat and guide sub-transcripts by mode
+        chat_transcript = []
+        guide_transcript = []
+        i = 0
+        while i < len(transcript) - 2:
+            if (transcript[i].get("role") == "model" and
+                transcript[i + 1].get("role") == "child" and
+                transcript[i + 2].get("role") == "model"):
+
+                mode = transcript[i + 2].get("mode", "chat")
+                triplet = [transcript[i], transcript[i + 1], transcript[i + 2]]
+                if mode == "guide":
+                    guide_transcript.extend(triplet)
+                else:
+                    chat_transcript.extend(triplet)
+                i += 2
+            else:
+                i += 1
+
         # Create event loop for this thread
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
 
         try:
-            # Run the pipeline
             pipeline = PedagogicalCritiquePipeline(GLOBAL_GEMINI_CLIENT)
-            critique = loop.run_until_complete(
-                pipeline.critique_transcript(
-                    transcript=transcript,
-                    object_name=object_name,
-                    key_concept=key_concept,
-                    age=age,
+
+            # Run chat pipeline (if chat exchanges exist)
+            chat_critique = None
+            if chat_transcript:
+                logger.info(f"[CRITIQUE] Task {task_id[:8]}... running chat phase ({len(chat_transcript) // 3} exchanges)")
+                chat_critique = loop.run_until_complete(
+                    pipeline.critique_transcript(
+                        transcript=chat_transcript,
+                        object_name=object_name,
+                        key_concept=f"general knowledge about {object_name}",
+                        age=age,
+                        mode="chat",
+                    )
                 )
-            )
+
+            # Run guide pipeline (if guide exchanges exist)
+            guide_critique = None
+            if guide_transcript:
+                logger.info(f"[CRITIQUE] Task {task_id[:8]}... running guide phase ({len(guide_transcript) // 3} exchanges)")
+                guide_critique = loop.run_until_complete(
+                    pipeline.critique_transcript(
+                        transcript=guide_transcript,
+                        object_name=object_name,
+                        key_concept=key_concept,
+                        age=age,
+                        mode="guide",
+                    )
+                )
         finally:
             loop.close()
 
-        # Generate markdown report
-        report_md = CritiqueReportGenerator.to_markdown(critique)
+        # Generate combined markdown report
+        report_md = CritiqueReportGenerator.to_combined_markdown(
+            chat_critique, guide_critique, key_concept=key_concept
+        )
 
         # Save to reports folder
         reports_dir = Path(__file__).parent / "reports" / "AIF"
         reports_dir.mkdir(parents=True, exist_ok=True)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        # Sanitize object name for filename
         safe_object_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in (object_name or "unknown"))
         filename = f"{safe_object_name}_{timestamp}.md"
         report_path = reports_dir / filename
 
-        # Build full report with conversation transcript
+        # Build full report with conversation transcript (with mode labels)
         full_report = f"# Critique Report: {object_name}\n\n"
         full_report += f"**Session:** {session_id}\n"
         full_report += f"**Age:** {age}\n"
+        if ibpyp_theme_name:
+            full_report += f"**IB PYP Theme:** {ibpyp_theme_name}\n"
+        if key_concept:
+            full_report += f"**Key Concept:** {key_concept}\n"
         full_report += f"**Date:** {datetime.now().isoformat()}\n\n"
         full_report += "---\n\n"
         full_report += "## Conversation Transcript\n\n"
         for msg in transcript:
             if msg["role"] == "model":
-                # Format node trace summary for model messages
+                mode_label = msg.get("mode", "chat").upper()
                 nodes_executed = msg.get("nodes_executed", [])
                 if nodes_executed:
                     node_names = [n["node"] for n in nodes_executed]
                     total_time = sum(n.get("time_ms", 0) for n in nodes_executed)
                     trace_summary = f"[{' → '.join(node_names)}] ({total_time:.0f}ms)"
-                    full_report += f"**Model:** {trace_summary}\n{msg['content']}\n\n"
+                    full_report += f"**Model** `[{mode_label}]`**:** {trace_summary}\n{msg['content']}\n\n"
                 else:
-                    full_report += f"**Model:** {msg['content']}\n\n"
+                    full_report += f"**Model** `[{mode_label}]`**:** {msg['content']}\n\n"
             else:
                 full_report += f"**Child:** {msg['content']}\n\n"
         full_report += "---\n\n"
@@ -1912,12 +1960,22 @@ def run_critique_background(task_id: str, session_id: str, transcript: list,
 
         report_path.write_text(full_report, encoding='utf-8')
 
+        # Calculate combined effectiveness (weighted average)
+        chat_eff = chat_critique.overall_effectiveness if chat_critique else 0
+        guide_eff = guide_critique.overall_effectiveness if guide_critique else 0
+        chat_n = chat_critique.total_exchanges if chat_critique else 0
+        guide_n = guide_critique.total_exchanges if guide_critique else 0
+        total_n = chat_n + guide_n
+        combined_effectiveness = ((chat_eff * chat_n + guide_eff * guide_n) / total_n) if total_n > 0 else 0
+
         # Update task status
         critique_tasks[task_id]["status"] = "completed"
         critique_tasks[task_id]["report_path"] = str(report_path)
-        critique_tasks[task_id]["overall_effectiveness"] = critique.overall_effectiveness
+        critique_tasks[task_id]["overall_effectiveness"] = combined_effectiveness
 
-        logger.info(f"[CRITIQUE] Task {task_id[:8]}... completed | report: {report_path} | score: {critique.overall_effectiveness:.1f}%")
+        logger.info(f"[CRITIQUE] Task {task_id[:8]}... completed | report: {report_path} | "
+                     f"chat: {chat_eff:.1f}% ({chat_n}ex) | guide: {guide_eff:.1f}% ({guide_n}ex) | "
+                     f"combined: {combined_effectiveness:.1f}%")
 
     except Exception as e:
         critique_tasks[task_id]["status"] = "failed"
@@ -1975,16 +2033,17 @@ def critique_conversation():
 
     assistant = sessions[session_id]
 
-    # Build transcript from conversation history (with node execution traces)
+    # Build transcript from conversation history (with node execution traces + mode)
     transcript = []
     for msg in assistant.conversation_history:
         if msg["role"] == "system":
             continue
         role = "model" if msg["role"] == "assistant" else "child"
         entry = {"role": role, "content": msg["content"]}
-        # Include node execution traces for model messages
-        if role == "model" and "nodes_executed" in msg:
-            entry["nodes_executed"] = msg["nodes_executed"]
+        if role == "model":
+            if "nodes_executed" in msg:
+                entry["nodes_executed"] = msg["nodes_executed"]
+            entry["mode"] = msg.get("mode", "chat")
         transcript.append(entry)
 
     if len(transcript) < 3:
@@ -2007,12 +2066,13 @@ def critique_conversation():
     # Capture session state for background worker (session may be deleted while critique runs)
     object_name = assistant.object_name
     key_concept = assistant.key_concept or "learning objective"
+    ibpyp_theme_name = assistant.ibpyp_theme_name
     age = assistant.age or 6
 
     # Spawn background worker
     thread = threading.Thread(
         target=run_critique_background,
-        args=(task_id, session_id, transcript, object_name, key_concept, age),
+        args=(task_id, session_id, transcript, object_name, key_concept, age, ibpyp_theme_name),
         daemon=True
     )
     thread.start()
@@ -2099,8 +2159,10 @@ def get_exchanges(session_id):
             continue
         role = "model" if msg["role"] == "assistant" else "child"
         entry = {"role": role, "content": msg["content"]}
-        if role == "model" and "nodes_executed" in msg:
-            entry["nodes_executed"] = msg["nodes_executed"]
+        if role == "model":
+            if "nodes_executed" in msg:
+                entry["nodes_executed"] = msg["nodes_executed"]
+            entry["mode"] = msg.get("mode", "chat")
         transcript.append(entry)
 
     # Extract triplets: model → child → model
@@ -2118,7 +2180,8 @@ def get_exchanges(session_id):
                 "model_question": transcript[i]["content"],
                 "child_response": transcript[i + 1]["content"],
                 "model_response": transcript[i + 2]["content"],
-                "nodes_executed": transcript[i + 2].get("nodes_executed", [])
+                "nodes_executed": transcript[i + 2].get("nodes_executed", []),
+                "mode": transcript[i + 2].get("mode", "chat"),
             })
             i += 2  # Move past child response, next iteration checks from model response
         else:
@@ -2128,7 +2191,9 @@ def get_exchanges(session_id):
         "success": True,
         "exchanges": exchanges,
         "object_name": assistant.object_name,
-        "age": assistant.age
+        "age": assistant.age,
+        "key_concept": assistant.key_concept,
+        "ibpyp_theme_name": assistant.ibpyp_theme_name
     })
 
 
@@ -2195,15 +2260,17 @@ def manual_critique():
             "error": "Session not found"
         }), 404
 
-    # Build transcript from conversation history (with node traces)
+    # Build transcript from conversation history (with node traces + mode)
     transcript = []
     for msg in assistant.conversation_history:
         if msg["role"] == "system":
             continue
         role = "model" if msg["role"] == "assistant" else "child"
         entry = {"role": role, "content": msg["content"]}
-        if role == "model" and "nodes_executed" in msg:
-            entry["nodes_executed"] = msg["nodes_executed"]
+        if role == "model":
+            if "nodes_executed" in msg:
+                entry["nodes_executed"] = msg["nodes_executed"]
+            entry["mode"] = msg.get("mode", "chat")
         transcript.append(entry)
 
     # Re-extract all exchanges to match indices
@@ -2217,7 +2284,8 @@ def manual_critique():
                 "model_question": transcript[i]["content"],
                 "child_response": transcript[i + 1]["content"],
                 "model_response": transcript[i + 2]["content"],
-                "nodes_executed": transcript[i + 2].get("nodes_executed", [])
+                "nodes_executed": transcript[i + 2].get("nodes_executed", []),
+                "mode": transcript[i + 2].get("mode", "chat"),
             })
             i += 2
         else:
@@ -2231,7 +2299,8 @@ def manual_critique():
             transcript=transcript,
             all_exchanges=all_exchanges,
             exchange_critiques=exchange_critiques,
-            global_conclusion=global_conclusion
+            global_conclusion=global_conclusion,
+            key_concept=assistant.key_concept,
         )
 
         # Save to reports/HF/
@@ -2269,18 +2338,22 @@ def manual_critique():
 
 def build_human_feedback_report(object_name, age, session_id, transcript,
                                  all_exchanges, exchange_critiques,
-                                 global_conclusion):
+                                 global_conclusion, key_concept=None):
     """
     Generate a markdown report for human feedback critique.
+
+    Structures the report into Chat Phase and Guide Phase sections,
+    mirroring the two-phase structure of the AI critique report.
 
     Args:
         object_name: Object being discussed
         age: Child's age
         session_id: Session ID
-        transcript: Full conversation transcript [{role, content, nodes_executed?}]
-        all_exchanges: All extracted exchanges (list of dicts)
+        transcript: Full conversation transcript [{role, content, nodes_executed?, mode?}]
+        all_exchanges: All extracted exchanges (list of dicts with mode)
         exchange_critiques: User-submitted critiques (list of dicts)
         global_conclusion: Overall conclusion text
+        key_concept: Key concept being taught in guide phase
 
     Returns:
         str: Markdown report content
@@ -2290,103 +2363,135 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
     total_exchanges = len(all_exchanges)
     critiqued_count = len(exchange_critiques)
 
-    # Build critiqued index set for quick lookup
-    critiqued_indices = {ec["exchange_index"] for ec in exchange_critiques}
-
     report = f"# Human Feedback Critique Report: {object_name}\n\n"
     report += f"**Session:** {session_id}\n"
     report += f"**Age:** {age}\n"
+    if key_concept:
+        report += f"**Key Concept:** {key_concept}\n"
     report += f"**Date:** {datetime.now().isoformat()}\n"
     report += f"**Feedback Type:** Manual (Human)\n"
     report += f"**Exchanges Critiqued:** {critiqued_count} / {total_exchanges}\n\n"
     report += "---\n\n"
 
-    # Conversation transcript (same format as AI reports)
+    # Conversation transcript (with mode labels)
     report += "## Conversation Transcript\n\n"
     for msg in transcript:
         if msg["role"] == "model":
+            mode_label = msg.get("mode", "chat").upper()
             nodes_executed = msg.get("nodes_executed", [])
             if nodes_executed:
                 node_names = [n["node"] for n in nodes_executed]
                 total_time = sum(n.get("time_ms", 0) for n in nodes_executed)
                 trace_summary = f"[{' → '.join(node_names)}] ({total_time:.0f}ms)"
-                report += f"**Model:** {trace_summary}\n{msg['content']}\n\n"
+                report += f"**Model** `[{mode_label}]`**:** {trace_summary}\n{msg['content']}\n\n"
             else:
-                report += f"**Model:** {msg['content']}\n\n"
+                report += f"**Model** `[{mode_label}]`**:** {msg['content']}\n\n"
         else:
             report += f"**Child:** {msg['content']}\n\n"
 
     report += "---\n\n"
 
-    # Detailed exchange analysis (only flagged exchanges)
-    report += "## Detailed Exchange Analysis\n\n"
+    # Build critiqued exchange lookup: index → critique data
+    critique_by_index = {ec["exchange_index"]: ec for ec in exchange_critiques}
 
+    # Classify exchanges by mode
+    chat_critiqued = []
+    guide_critiqued = []
     for ec in exchange_critiques:
         idx = ec["exchange_index"]
-
-        # Validate index
         if idx < 1 or idx > total_exchanges:
             continue
+        exchange = all_exchanges[idx - 1]
+        mode = exchange.get("mode", "chat")
+        if mode == "guide":
+            guide_critiqued.append((idx, exchange, ec))
+        else:
+            chat_critiqued.append((idx, exchange, ec))
 
-        exchange = all_exchanges[idx - 1]  # 1-indexed to 0-indexed
+    # Chat Phase section
+    if chat_critiqued:
+        report += "## Chat Phase — Human Critique\n\n"
+        report += "> Exploratory Q&A. NOT evaluated for key concept guidance.\n\n"
+        for idx, exchange, ec in chat_critiqued:
+            report += _render_hf_exchange(idx, exchange, ec)
+        report += "\n"
 
-        report += f"### Exchange {idx}\n\n"
-        report += f"**Model asked:** \"{exchange['model_question']}\"\n\n"
-        report += f"**Child said:** \"{exchange['child_response']}\"\n\n"
-        report += f"**Model responded:** \"{exchange['model_response']}\"\n\n"
-
-        # Node execution trace
-        nodes_executed = exchange.get("nodes_executed", [])
-        if nodes_executed:
-            report += "#### Node Execution Trace\n\n"
-            report += "| Node | Time | State Changes |\n"
-            report += "|------|------|---------------|\n"
-            for node in nodes_executed:
-                node_name = node.get("node", "?")
-                time_ms = node.get("time_ms", 0)
-                changes = node.get("state_changes", {})
-                changes_str = ", ".join(
-                    f"{k}: {v}" for k, v in changes.items()
-                ) if changes else "-"
-                report += f"| {node_name} | {time_ms:.0f}ms | {changes_str} |\n"
-            report += "\n"
-
-        # Human critique sections
-        report += "#### Human Critique\n\n"
-
-        # Model Question critique
-        mq_expected = ec.get("model_question_expected", "").strip()
-        mq_problem = ec.get("model_question_problem", "").strip()
-        if mq_expected or mq_problem:
-            report += "**Model Question:**\n"
-            if mq_expected:
-                report += f"- *What is expected:* {mq_expected}\n"
-            if mq_problem:
-                report += f"- *Why is it problematic:* {mq_problem}\n"
-            report += "\n"
-
-        # Model Response critique
-        mr_expected = ec.get("model_response_expected", "").strip()
-        mr_problem = ec.get("model_response_problem", "").strip()
-        if mr_expected or mr_problem:
-            report += "**Model Response:**\n"
-            if mr_expected:
-                report += f"- *What is expected:* {mr_expected}\n"
-            if mr_problem:
-                report += f"- *Why is it problematic:* {mr_problem}\n"
-            report += "\n"
-
-        # Per-exchange conclusion
-        conclusion = ec.get("conclusion", "").strip()
-        if conclusion:
-            report += f"#### Conclusion\n\n{conclusion}\n\n"
-
+    # Separator between phases
+    if chat_critiqued and guide_critiqued:
         report += "---\n\n"
+
+    # Guide Phase section
+    if guide_critiqued:
+        report += "## Guide Phase — Human Critique\n\n"
+        concept_display = key_concept or "unknown"
+        report += f"> Key Concept: **{concept_display}**. Evaluated for concept advancement.\n\n"
+        for idx, exchange, ec in guide_critiqued:
+            report += _render_hf_exchange(idx, exchange, ec)
+        report += "\n"
+
+    # Fallback: if no exchanges were critiqued in either phase, show empty section
+    if not chat_critiqued and not guide_critiqued:
+        report += "## Detailed Exchange Analysis\n\n"
+        report += "*No exchanges were critiqued.*\n\n"
 
     # Global conclusion
     if global_conclusion and global_conclusion.strip():
         report += f"## Global Conclusion\n\n{global_conclusion.strip()}\n"
 
+    return report
+
+
+def _render_hf_exchange(idx, exchange, ec):
+    """Render a single HF exchange critique as markdown."""
+    report = f"### Exchange {idx}\n\n"
+    report += f"**Model asked:** \"{exchange['model_question']}\"\n\n"
+    report += f"**Child said:** \"{exchange['child_response']}\"\n\n"
+    report += f"**Model responded:** \"{exchange['model_response']}\"\n\n"
+
+    # Node execution trace
+    nodes_executed = exchange.get("nodes_executed", [])
+    if nodes_executed:
+        report += "#### Node Execution Trace\n\n"
+        report += "| Node | Time | State Changes |\n"
+        report += "|------|------|---------------|\n"
+        for node in nodes_executed:
+            node_name = node.get("node", "?")
+            time_ms = node.get("time_ms", 0)
+            changes = node.get("state_changes", {})
+            changes_str = ", ".join(
+                f"{k}: {v}" for k, v in changes.items()
+            ) if changes else "-"
+            report += f"| {node_name} | {time_ms:.0f}ms | {changes_str} |\n"
+        report += "\n"
+
+    # Human critique sections
+    report += "#### Human Critique\n\n"
+
+    mq_expected = ec.get("model_question_expected", "").strip()
+    mq_problem = ec.get("model_question_problem", "").strip()
+    if mq_expected or mq_problem:
+        report += "**Model Question:**\n"
+        if mq_expected:
+            report += f"- *What is expected:* {mq_expected}\n"
+        if mq_problem:
+            report += f"- *Why is it problematic:* {mq_problem}\n"
+        report += "\n"
+
+    mr_expected = ec.get("model_response_expected", "").strip()
+    mr_problem = ec.get("model_response_problem", "").strip()
+    if mr_expected or mr_problem:
+        report += "**Model Response:**\n"
+        if mr_expected:
+            report += f"- *What is expected:* {mr_expected}\n"
+        if mr_problem:
+            report += f"- *Why is it problematic:* {mr_problem}\n"
+        report += "\n"
+
+    conclusion = ec.get("conclusion", "").strip()
+    if conclusion:
+        report += f"#### Conclusion\n\n{conclusion}\n\n"
+
+    report += "---\n\n"
     return report
 
 

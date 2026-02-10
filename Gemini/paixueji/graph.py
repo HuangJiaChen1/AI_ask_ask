@@ -1005,10 +1005,13 @@ async def node_finalize(state: PaixuejiState) -> dict:
         system_focus_mode=state["assistant"].current_focus_mode if state["assistant"].system_managed_focus else None,
         depth_progress=f"{state['assistant'].depth_questions_count}/{state['assistant'].depth_target}" if state["assistant"].system_managed_focus else None,
         
+        # Theme classification fields (always sent for debug visibility)
+        key_concept=state["assistant"].key_concept or None,
+        ibpyp_theme_name=state["assistant"].ibpyp_theme_name or None,
+        theme_classification_reason=state["assistant"].ibpyp_theme_reason or None,
+
         # Guide Phase specific fields
         guide_phase=state.get("guide_phase"),
-        key_concept=state["assistant"].key_concept if state.get("guide_phase") else None,
-        ibpyp_theme_name=state["assistant"].ibpyp_theme_name if state.get("guide_phase") else None,
         bridge_question=state["assistant"].bridge_question if state.get("guide_phase") else None,
         is_guide_success=state.get("is_guide_success", False),
 

@@ -35,6 +35,8 @@ let currentCharacter = null;  // Current character
 let currentFocusMode = null;  // Current focus mode
 let guidePhase = null;  // Guide phase (active, success, hint, exit)
 let guideTurnCount = 0;  // Current turn in guide mode
+let currentThemeName = null;  // IB PYP theme name
+let currentKeyConcept = null;  // Key concept for theme
 
 // DOM elements
 const messagesContainer = document.getElementById('messages');
@@ -774,6 +776,17 @@ function handleStreamChunk(chunk) {
         console.log('[INFO] Object switched to:', currentObject);
     }
 
+    // Update theme classification if present
+    if (chunk.ibpyp_theme_name) {
+        currentThemeName = chunk.ibpyp_theme_name;
+    }
+    if (chunk.key_concept) {
+        currentKeyConcept = chunk.key_concept;
+    }
+    if (chunk.ibpyp_theme_name || chunk.key_concept) {
+        updateDebugPanel();
+    }
+
     // Update guide mode state if present
     if (chunk.guide_phase !== undefined) {
         guidePhase = chunk.guide_phase;
@@ -1036,6 +1049,18 @@ function updateDebugPanel() {
     const correctCountElement = document.getElementById('debugCorrectCount');
     if (correctCountElement) {
         correctCountElement.textContent = `${correctAnswerCount}/4`;
+    }
+
+    // Update theme name
+    const themeNameElement = document.getElementById('debugThemeName');
+    if (themeNameElement) {
+        themeNameElement.textContent = currentThemeName || '-';
+    }
+
+    // Update key concept
+    const keyConceptElement = document.getElementById('debugKeyConcept');
+    if (keyConceptElement) {
+        keyConceptElement.textContent = currentKeyConcept || '-';
     }
 
     // Update guide phase
@@ -1332,21 +1357,31 @@ async function showManualCritiqueForm() {
             return;
         }
 
-        // Populate the exchange list
+        // Populate the exchange list, grouped by phase
         const exchangeList = document.getElementById('exchangeList');
         exchangeList.innerHTML = '';
 
-        result.exchanges.forEach(exchange => {
+        // Split exchanges into chat and guide groups
+        const chatExchanges = result.exchanges.filter(e => (e.mode || 'chat') !== 'guide');
+        const guideExchanges = result.exchanges.filter(e => (e.mode || 'chat') === 'guide');
+
+        // Helper: render a single exchange card
+        function renderExchangeCard(exchange) {
             const wrapper = document.createElement('div');
             wrapper.style.cssText = 'margin-bottom:16px; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;';
 
-            // Checkbox header with preview
+            // Mode badge colors
+            const mode = exchange.mode || 'chat';
+            const badgeColor = mode === 'guide' ? '#7c3aed' : '#0891b2';
+            const badgeLabel = mode.toUpperCase();
+
             const header = document.createElement('div');
             header.style.cssText = 'padding:12px; background:#f8fafc; display:flex; align-items:flex-start; gap:10px; cursor:pointer;';
             header.innerHTML = `
                 <input type="checkbox" id="exchange_cb_${exchange.index}" data-index="${exchange.index}" style="margin-top:3px; cursor:pointer;" onchange="toggleExchangeCritique(${exchange.index})">
                 <div style="flex:1; min-width:0;">
                     <strong style="color:#1e293b;">Exchange ${exchange.index}</strong>
+                    <span style="display:inline-block; background:${badgeColor}; color:#fff; font-size:0.7em; font-weight:600; padding:1px 7px; border-radius:9px; margin-left:6px; vertical-align:middle;">${badgeLabel}</span>
                     <div style="font-size:0.85em; color:#64748b; margin-top:4px;">
                         <div><b>Q:</b> ${escapeHtml(truncate(exchange.model_question, 80))}</div>
                         <div><b>A:</b> ${escapeHtml(truncate(exchange.child_response, 80))}</div>
@@ -1362,7 +1397,6 @@ async function showManualCritiqueForm() {
                 }
             };
 
-            // Collapsible critique form (hidden by default)
             const formDiv = document.createElement('div');
             formDiv.id = `exchange_form_${exchange.index}`;
             formDiv.style.cssText = 'display:none; padding:16px; border-top:1px solid #e2e8f0;';
@@ -1370,8 +1404,27 @@ async function showManualCritiqueForm() {
 
             wrapper.appendChild(header);
             wrapper.appendChild(formDiv);
-            exchangeList.appendChild(wrapper);
-        });
+            return wrapper;
+        }
+
+        // Chat Phase section
+        if (chatExchanges.length > 0) {
+            const chatHeader = document.createElement('div');
+            chatHeader.style.cssText = 'background:#e0f2fe; padding:10px 14px; border-radius:8px; margin-bottom:12px; font-weight:600; color:#0c4a6e;';
+            chatHeader.innerHTML = `Chat Phase <span style="font-weight:400; font-size:0.85em; color:#0369a1;">(${chatExchanges.length} exchange${chatExchanges.length !== 1 ? 's' : ''} &mdash; exploratory Q&A)</span>`;
+            exchangeList.appendChild(chatHeader);
+            chatExchanges.forEach(ex => exchangeList.appendChild(renderExchangeCard(ex)));
+        }
+
+        // Guide Phase section
+        if (guideExchanges.length > 0) {
+            const guideHeader = document.createElement('div');
+            guideHeader.style.cssText = 'background:#ede9fe; padding:10px 14px; border-radius:8px; margin-bottom:12px; margin-top:16px; font-weight:600; color:#4c1d95;';
+            const conceptText = result.key_concept ? ` &mdash; Key Concept: <em>${escapeHtml(result.key_concept)}</em>` : '';
+            guideHeader.innerHTML = `Guide Phase <span style="font-weight:400; font-size:0.85em; color:#5b21b6;">(${guideExchanges.length} exchange${guideExchanges.length !== 1 ? 's' : ''}${conceptText})</span>`;
+            exchangeList.appendChild(guideHeader);
+            guideExchanges.forEach(ex => exchangeList.appendChild(renderExchangeCard(ex)));
+        }
 
         // Clear global conclusion
         document.getElementById('globalConclusion').value = '';

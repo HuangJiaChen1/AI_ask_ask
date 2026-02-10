@@ -164,6 +164,9 @@ class ExchangeCritique(BaseModel):
     child_response: str = Field(description="What the child said")
     model_actual: str = Field(description="How the model responded")
 
+    # Phase mode for this exchange
+    mode: str = Field(default="chat", description="Exchange mode: 'chat' or 'guide'")
+
     # Node execution trace for debugging
     nodes_executed: list[dict] = Field(
         default_factory=list,

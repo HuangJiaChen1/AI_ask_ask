@@ -182,6 +182,7 @@ class PedagogicalCritiquePipeline:
         object_name: str,
         key_concept: str,
         age: int = 5,
+        mode: str = "chat",
     ) -> ConversationCritique:
         """
         Critique a raw conversation transcript.
@@ -191,19 +192,48 @@ class PedagogicalCritiquePipeline:
             object_name: Object being discussed
             key_concept: Key concept being taught
             age: Child's age
+            mode: "chat" or "guide" — determines evaluation criteria
 
         Returns:
             Full conversation critique
         """
-        setup = ScenarioSetup(
-            object_name=object_name,
-            key_concept=key_concept,
-            age=age,
-        )
-        evaluation = ScenarioEvaluation(
-            must_do=["Advance the child's understanding"],
-            must_not_do=["Rephrase questions without adding information"],
-        )
+        if mode == "guide":
+            setup = ScenarioSetup(
+                object_name=object_name,
+                key_concept=key_concept,
+                age=age,
+                guide_phase="active",
+            )
+            evaluation = ScenarioEvaluation(
+                must_do=[
+                    "Advance understanding toward the key concept",
+                    "Scaffold when child is stuck",
+                ],
+                must_not_do=[
+                    "Rephrase without adding information",
+                    "Abandon the key concept",
+                ],
+            )
+            scenario_name = "Guide Phase Analysis"
+        else:
+            setup = ScenarioSetup(
+                object_name=object_name,
+                key_concept=f"general knowledge about {object_name}",
+                age=age,
+                guide_phase="chat",
+            )
+            evaluation = ScenarioEvaluation(
+                must_do=[
+                    "Engage curiosity",
+                    "Ask age-appropriate questions",
+                    "Respond with encouragement and new information",
+                ],
+                must_not_do=[
+                    "Rephrase without adding information",
+                    "Ignore the child's responses",
+                ],
+            )
+            scenario_name = "Chat Phase Analysis"
 
         exchange_critiques = []
         turn_number = 0
@@ -241,8 +271,9 @@ class PedagogicalCritiquePipeline:
                     evaluation=evaluation,
                 )
 
-                # Attach node execution trace to the critique
+                # Attach node execution trace and mode to the critique
                 critique.nodes_executed = nodes_executed
+                critique.mode = mode
 
                 exchange_critiques.append(critique)
                 i += 2  # Move past child response, next iteration starts from model_actual
@@ -251,7 +282,7 @@ class PedagogicalCritiquePipeline:
 
         return compile_conversation_critique(
             scenario_id="transcript",
-            scenario_name="Raw Transcript Analysis",
+            scenario_name=scenario_name,
             exchange_critiques=exchange_critiques,
         )
 

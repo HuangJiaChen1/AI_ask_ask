@@ -87,6 +87,111 @@ class CritiqueReportGenerator:
         return "\n".join(lines)
 
     @staticmethod
+    def to_combined_markdown(chat_critique, guide_critique, key_concept=None):
+        """
+        Generate a combined two-phase markdown report from separate chat and guide critiques.
+
+        Either critique can be None or have 0 exchanges — only non-empty phases are rendered.
+
+        Args:
+            chat_critique: ConversationCritique for chat phase (or None)
+            guide_critique: ConversationCritique for guide phase (or None)
+            key_concept: The key concept being taught in guide phase
+
+        Returns:
+            str: Combined markdown report
+        """
+        lines = []
+
+        # Common header
+        chat_count = chat_critique.total_exchanges if chat_critique else 0
+        guide_count = guide_critique.total_exchanges if guide_critique else 0
+        total = chat_count + guide_count
+
+        lines.append("# Pedagogical Critique Report")
+        lines.append("")
+        lines.append(f"**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        lines.append(f"**Total Exchanges:** {total} (Chat: {chat_count}, Guide: {guide_count})")
+        lines.append("")
+
+        # Chat Phase section
+        if chat_critique and chat_critique.total_exchanges > 0:
+            lines.append("## Chat Phase — AI Critique")
+            lines.append("")
+            lines.append("> Exploratory Q&A. NOT evaluated for key concept guidance.")
+            lines.append("")
+
+            effectiveness_emoji = "✅" if chat_critique.overall_effectiveness >= 70 else "⚠️" if chat_critique.overall_effectiveness >= 40 else "❌"
+            lines.append(f"### Overall Effectiveness: {effectiveness_emoji} {chat_critique.overall_effectiveness:.1f}/100")
+            lines.append("")
+            lines.append(f"- **Exchanges Analyzed:** {chat_critique.total_exchanges}")
+            lines.append(f"- **Exchanges with Failures:** {chat_critique.failed_exchanges}")
+            lines.append("")
+
+            if chat_critique.failure_breakdown:
+                lines.append("### Failure Breakdown")
+                lines.append("")
+                lines.append("| Failure Type | Count |")
+                lines.append("|-------------|-------|")
+                for failure_type, count in sorted(chat_critique.failure_breakdown.items(), key=lambda x: -x[1]):
+                    lines.append(f"| {failure_type} | {count} |")
+                lines.append("")
+
+            if chat_critique.critical_failures:
+                lines.append("### ⚠️ Critical Failures")
+                lines.append("")
+                for failure in chat_critique.critical_failures:
+                    lines.append(f"- {failure}")
+                lines.append("")
+
+            for exchange in chat_critique.exchange_critiques:
+                lines.extend(CritiqueReportGenerator._format_exchange_markdown(exchange))
+                lines.append("")
+
+        # Separator between phases
+        if (chat_critique and chat_critique.total_exchanges > 0 and
+                guide_critique and guide_critique.total_exchanges > 0):
+            lines.append("---")
+            lines.append("")
+
+        # Guide Phase section
+        if guide_critique and guide_critique.total_exchanges > 0:
+            lines.append("## Guide Phase — AI Critique")
+            lines.append("")
+            concept_display = key_concept or "unknown"
+            lines.append(f"> Key Concept: **{concept_display}**. Evaluated for concept advancement.")
+            lines.append("")
+
+            effectiveness_emoji = "✅" if guide_critique.overall_effectiveness >= 70 else "⚠️" if guide_critique.overall_effectiveness >= 40 else "❌"
+            lines.append(f"### Overall Effectiveness: {effectiveness_emoji} {guide_critique.overall_effectiveness:.1f}/100")
+            lines.append("")
+            lines.append(f"- **Exchanges Analyzed:** {guide_critique.total_exchanges}")
+            lines.append(f"- **Exchanges with Failures:** {guide_critique.failed_exchanges}")
+            lines.append("")
+
+            if guide_critique.failure_breakdown:
+                lines.append("### Failure Breakdown")
+                lines.append("")
+                lines.append("| Failure Type | Count |")
+                lines.append("|-------------|-------|")
+                for failure_type, count in sorted(guide_critique.failure_breakdown.items(), key=lambda x: -x[1]):
+                    lines.append(f"| {failure_type} | {count} |")
+                lines.append("")
+
+            if guide_critique.critical_failures:
+                lines.append("### ⚠️ Critical Failures")
+                lines.append("")
+                for failure in guide_critique.critical_failures:
+                    lines.append(f"- {failure}")
+                lines.append("")
+
+            for exchange in guide_critique.exchange_critiques:
+                lines.extend(CritiqueReportGenerator._format_exchange_markdown(exchange))
+                lines.append("")
+
+        return "\n".join(lines)
+
+    @staticmethod
     def _format_exchange_markdown(exchange: ExchangeCritique) -> list[str]:
         """Format a single exchange critique as Markdown."""
         lines = []
