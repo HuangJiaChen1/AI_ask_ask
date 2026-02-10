@@ -55,3 +55,33 @@
 2026-02-10 09:57:11.225 | INFO     | graph:node_generate_question:586 | [596609da-8c3f-4285-afeb-45a9cc50036d] Node: Generate Question
 2026-02-10 09:57:11.226 | INFO     | graph:node_finalize:972 | [596609da-8c3f-4285-afeb-45a9cc50036d] Node: Finalize
 2026-02-10 09:57:11.226 | INFO     | graph:node_finalize:1030 | [596609da-8c3f-4285-afeb-45a9cc50036d] Node: Finalize finished in 0.000s
+2026-02-10 17:54:13.913 | INFO     | graph:node_guide_navigator:696 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Guide Navigator
+2026-02-10 17:54:16.128 | INFO     | graph:node_guide_navigator:729 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Navigator result: status=STUCK, strategy=SCAFFOLD, turn=1
+2026-02-10 17:54:16.129 | INFO     | graph:node_guide_driver:749 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Guide Driver
+2026-02-10 17:54:16.913 | INFO     | graph:node_finalize:972 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Finalize
+2026-02-10 17:54:16.913 | INFO     | graph:node_finalize:1030 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Finalize finished in 0.000s
+2026-02-10 17:54:16.915 | INFO     | graph:node_guide_navigator:696 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Guide Navigator
+2026-02-10 17:54:18.113 | INFO     | graph:node_guide_navigator:729 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Navigator result: status=ON_TRACK, strategy=ADVANCE, turn=2
+2026-02-10 17:54:18.114 | INFO     | graph:node_guide_driver:749 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Guide Driver
+2026-02-10 17:54:18.949 | INFO     | graph:node_finalize:972 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Finalize
+2026-02-10 17:54:18.950 | INFO     | graph:node_finalize:1030 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Finalize finished in 0.000s
+2026-02-10 17:57:39.114 | INFO     | graph:node_guide_navigator:696 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Guide Navigator
+2026-02-10 17:57:41.626 | INFO     | graph:node_guide_navigator:729 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Navigator result: status=STUCK, strategy=SCAFFOLD, turn=1
+2026-02-10 17:57:41.627 | INFO     | graph:node_guide_driver:749 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Guide Driver
+2026-02-10 17:57:42.268 | INFO     | graph:node_finalize:972 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Finalize
+2026-02-10 17:57:42.268 | INFO     | graph:node_finalize:1030 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Finalize finished in 0.000s
+2026-02-10 17:57:42.269 | INFO     | graph:node_guide_navigator:696 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Guide Navigator
+2026-02-10 17:57:43.470 | INFO     | graph:node_guide_navigator:729 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Navigator result: status=ON_TRACK, strategy=ADVANCE, turn=2
+2026-02-10 17:57:43.472 | INFO     | graph:node_guide_driver:749 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Guide Driver
+2026-02-10 17:57:44.245 | INFO     | graph:node_finalize:972 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Finalize
+2026-02-10 17:57:44.245 | INFO     | graph:node_finalize:1030 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Finalize finished in 0.000s
+2026-02-10 18:00:51.551 | INFO     | graph:node_guide_navigator:696 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Guide Navigator
+2026-02-10 18:00:53.623 | INFO     | graph:node_guide_navigator:729 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Navigator result: status=STUCK, strategy=SCAFFOLD, turn=1
+2026-02-10 18:00:53.624 | INFO     | graph:node_guide_driver:749 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Guide Driver
+2026-02-10 18:00:54.299 | INFO     | graph:node_finalize:972 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Finalize
+2026-02-10 18:00:54.299 | INFO     | graph:node_finalize:1030 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Finalize finished in 0.000s
+2026-02-10 18:00:54.300 | INFO     | graph:node_guide_navigator:696 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Guide Navigator
+2026-02-10 18:00:55.545 | INFO     | graph:node_guide_navigator:729 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Navigator result: status=ON_TRACK, strategy=ADVANCE, turn=2
+2026-02-10 18:00:55.546 | INFO     | graph:node_guide_driver:749 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Guide Driver
+2026-02-10 18:00:56.210 | INFO     | graph:node_finalize:972 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Finalize
+2026-02-10 18:00:56.210 | INFO     | graph:node_finalize:1030 | [scenario-evolution-06087fb4-659b-4834-9f49-4dc6cfd2b5a5] Node: Finalize finished in 0.000s

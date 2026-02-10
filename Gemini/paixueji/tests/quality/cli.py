@@ -7,6 +7,7 @@ Usage:
     python -m tests.quality.cli list-scenarios
     python -m tests.quality.cli generate-responses --scenario SCAFFOLD-WHY-001 --output responses/
     python -m tests.quality.cli run-and-critique --scenario SCAFFOLD-WHY-001 --output report.md
+    python -m meta_agent evolve <report> --max-iterations 5
 """
 
 import asyncio
