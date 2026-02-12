@@ -353,7 +353,7 @@ def start_conversation():
                                 "role": "assistant",
                                 "content": chunk.response,
                                 "nodes_executed": chunk.nodes_executed or [],
-                                "mode": "guide" if chunk.guide_phase else "chat",
+                                "mode": "guide" if (chunk.guide_phase or assistant.guide_phase in {"active", "hint", "success", "exit"}) else "chat",
                             })
 
                         yield sse_event("chunk", chunk)
@@ -722,12 +722,21 @@ def continue_conversation():
                         "is_factually_correct": None,
                         "correctness_reasoning": None,
                         "switch_decision_reasoning": None,
+                        "child_question_text": None,
+                        "is_child_question": None,
+                        "child_question_type": None,
                         "new_object_name": None,
                         "detected_object_name": None,
                         "response_type": None,
                         "suggested_objects": None,
                         "natural_topic_completion": False,
                         "validation_result": {},
+                        "guide_phase": assistant.guide_phase,
+                        "guide_status": assistant.last_navigation_state.get("status") if assistant.last_navigation_state else None,
+                        "guide_strategy": assistant.last_navigation_state.get("strategy") if assistant.last_navigation_state else None,
+                        "guide_turn_count": assistant.guide_turn_count,
+                        "scaffold_level": assistant.scaffold_level,
+                        "last_navigation_state": assistant.last_navigation_state,
 
                         # Fun fact (not used in continue, but required by state schema)
                         "fun_fact": "",
@@ -767,7 +776,7 @@ def continue_conversation():
                                 "role": "assistant",
                                 "content": chunk.response,
                                 "nodes_executed": chunk.nodes_executed or [],
-                                "mode": "guide" if chunk.guide_phase else "chat",
+                                "mode": "guide" if (chunk.guide_phase or assistant.guide_phase in {"active", "hint", "success", "exit"}) else "chat",
                             })
 
                             # NEW: Increment only if factually correct

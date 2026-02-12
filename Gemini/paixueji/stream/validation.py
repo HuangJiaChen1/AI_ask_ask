@@ -50,6 +50,28 @@ def _looks_like_information_question(child_answer: str) -> bool:
     return bool(re.match(rf"^({'|'.join(question_starters)})\b", text))
 
 
+def _classify_child_question_type(child_answer: str) -> str | None:
+    """
+    Lightweight question intent classification for guide flexibility.
+
+    Returns one of: topic_curiosity | naming | causal | unknown | None
+    """
+    if not _looks_like_information_question(child_answer):
+        return None
+
+    text = (child_answer or "").strip().lower()
+    if not text:
+        return "unknown"
+
+    if any(token in text for token in ["name", "called", "what dinosaur is this", "which dinosaur"]):
+        return "naming"
+    if text.startswith("why") or "why " in text:
+        return "causal"
+    if text.startswith("what") or text.startswith("how") or text.startswith("can"):
+        return "topic_curiosity"
+    return "unknown"
+
+
 async def decide_topic_switch_with_validation(
     assistant,
     child_answer: str,
@@ -79,6 +101,7 @@ async def decide_topic_switch_with_validation(
             - correctness_reasoning: Brief reason
             - is_child_question: True or False
             - child_question_text: Original child question or None
+            - child_question_type: topic_curiosity | naming | causal | unknown | null
     """
     # Extract the last question the model asked from conversation history
     conversation_history = assistant.conversation_history
@@ -148,7 +171,8 @@ RESPOND WITH VALID JSON:
     "is_factually_correct": true or false,
     "correctness_reasoning": "Brief reason",
     "is_child_question": true or false,
-    "child_question_text": "question text" or null
+    "child_question_text": "question text" or null,
+    "child_question_type": "topic_curiosity" | "naming" | "causal" | "unknown" | null
 }}
 
 EXAMPLES:
@@ -194,11 +218,14 @@ Evaluate now:
         # Backward compatibility for older model outputs.
         decision_data.setdefault("is_child_question", False)
         decision_data.setdefault("child_question_text", None)
+        decision_data.setdefault("child_question_type", None)
 
         # Heuristic safety net: force child question routing if this turn clearly asks a question.
-        if _looks_like_information_question(child_answer):
+        question_type = _classify_child_question_type(child_answer)
+        if question_type:
             decision_data["is_child_question"] = True
             decision_data["child_question_text"] = child_answer.strip()
+            decision_data["child_question_type"] = question_type
             if decision_data.get("decision") != "SWITCH":
                 decision_data["decision"] = "CONTINUE"
                 decision_data["new_object"] = None
@@ -209,6 +236,7 @@ Evaluate now:
             f"engaged={decision_data.get('is_engaged')}, "
             f"correct={decision_data.get('is_factually_correct')}, "
             f"is_child_question={decision_data.get('is_child_question')}, "
+            f"child_question_type={decision_data.get('child_question_type')}, "
             f"switch_reasoning={decision_data.get('switching_reasoning')}, "
             f"correctness_reasoning={decision_data.get('correctness_reasoning')}"
         )
@@ -227,23 +255,8 @@ Evaluate now:
             'is_factually_correct': True,
             'correctness_reasoning': 'Could not evaluate due to error',
             'is_child_question': _looks_like_information_question(child_answer),
-            'child_question_text': child_answer.strip() if _looks_like_information_question(child_answer) else None
-        }
-
-
-    except Exception as e:
-        logger.error(f"[VALIDATE] Error: {e}, defaulting to safe state")
-        import traceback
-        traceback.print_exc()
-        return {
-            'decision': 'CONTINUE',
-            'new_object': None,
-            'switching_reasoning': f'Error in validation: {str(e)}',
-            'is_engaged': True,  # Safe default - continue conversation
-            'is_factually_correct': True,  # Safe default - don't incorrectly penalize
-            'correctness_reasoning': 'Could not evaluate due to error',
-            'is_child_question': _looks_like_information_question(child_answer),
-            'child_question_text': child_answer.strip() if _looks_like_information_question(child_answer) else None
+            'child_question_text': child_answer.strip() if _looks_like_information_question(child_answer) else None,
+            'child_question_type': _classify_child_question_type(child_answer)
         }
 
 

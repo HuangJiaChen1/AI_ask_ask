@@ -351,3 +351,13 @@
 2026-02-12 17:06:29.220 | INFO     | graph:node_finalize:990 | [87b124dc-8d0c-42d9-ad15-2c430fbe8646] Node: Finalize
 2026-02-12 17:06:29.220 | INFO     | graph:node_finalize:1048 | [87b124dc-8d0c-42d9-ad15-2c430fbe8646] Node: Finalize finished in 0.000s
 2026-02-12 17:08:41.720 | INFO     | __main__:manual_critique:1822 | [MANUAL-CRITIQUE] Report saved: C:\Users\123\Documents\GitHub\AI_ask_ask\Gemini\paixueji\reports\HF\dinosaur_bone_20260212_170841.md | exchanges critiqued: 2 | case bundle: C:\Users\123\Documents\GitHub\AI_ask_ask\Gemini\paixueji\reports\HF_cases\dinosaur_bone_20260212_170841.json
+2026-02-12 17:28:18.675 | INFO     | graph:node_guide_navigator:744 | [hf-replay-87b124dc-8d0c-42d9-ad15-2c430fbe8646] Node: Guide Navigator
+2026-02-12 17:28:56.011 | INFO     | graph:node_guide_navigator:800 | [hf-replay-87b124dc-8d0c-42d9-ad15-2c430fbe8646] Navigator result: status=DRIFTING, strategy=PIVOT, turn=1
+2026-02-12 17:28:56.012 | INFO     | graph:node_guide_driver:820 | [hf-replay-87b124dc-8d0c-42d9-ad15-2c430fbe8646] Node: Guide Driver
+2026-02-12 17:28:56.598 | INFO     | graph:node_finalize:1043 | [hf-replay-87b124dc-8d0c-42d9-ad15-2c430fbe8646] Node: Finalize
+2026-02-12 17:28:56.598 | INFO     | graph:node_finalize:1101 | [hf-replay-87b124dc-8d0c-42d9-ad15-2c430fbe8646] Node: Finalize finished in 0.000s
+2026-02-12 17:29:12.957 | INFO     | graph:node_guide_navigator:744 | [hf-replay-87b124dc-8d0c-42d9-ad15-2c430fbe8646] Node: Guide Navigator
+2026-02-12 17:29:14.683 | INFO     | graph:node_guide_navigator:800 | [hf-replay-87b124dc-8d0c-42d9-ad15-2c430fbe8646] Navigator result: status=DRIFTING, strategy=PIVOT, turn=1
+2026-02-12 17:29:14.684 | INFO     | graph:node_guide_driver:820 | [hf-replay-87b124dc-8d0c-42d9-ad15-2c430fbe8646] Node: Guide Driver
+2026-02-12 17:29:15.341 | INFO     | graph:node_finalize:1043 | [hf-replay-87b124dc-8d0c-42d9-ad15-2c430fbe8646] Node: Finalize
+2026-02-12 17:29:15.342 | INFO     | graph:node_finalize:1101 | [hf-replay-87b124dc-8d0c-42d9-ad15-2c430fbe8646] Node: Finalize finished in 0.001s

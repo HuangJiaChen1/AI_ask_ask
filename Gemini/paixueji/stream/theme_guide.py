@@ -42,7 +42,8 @@ class ThemeNavigator:
         key_concept: Optional[str] = None,
         bridge_question: Optional[str] = None,
         turn_count: int = 0,
-        max_turns: int = 6
+        max_turns: int = 6,
+        child_question_type: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Analyze the current turn and generate a navigation instruction.
@@ -77,6 +78,7 @@ Target Theme: "{target_theme['name']}" ({goal_description})
 Key Concept: "{key_concept or 'Not specified'}"
 Bridge Question: "{bridge_question or 'Not specified'}"
 Turn: {turn_count}/{max_turns}
+Child Question Type: "{child_question_type or 'none'}"
 """
 
         prompt = f"""You are the Strategy Navigator for a guided conversation with a {age}-year-old child.
@@ -104,10 +106,12 @@ YOUR TASK:
    - "ADVANCE": Child is on track. Move 1 step closer to the Key Concept.
    - "PIVOT": Child is slightly off-topic. Acknowledge their point, then link back to the theme.
    - "SCAFFOLD": Child is stuck. Provide a hint to help them understand (see scaffold levels below).
+   - "MICRO_ANSWER_BRIDGE": Child asks a curiosity question. Give a brief answer, then bridge back.
    - "COMPLETE": Success! Child demonstrated understanding.
 
    ⚠️ NEVER abandon the theme. If child says "I don't know", use SCAFFOLD to HELP them,
    not retreat to unrelated topics. Always stay focused on "{current_topic}" and "{key_concept}".
+   Briefly answering child curiosity is allowed only if you reconnect to the concept in the same turn.
 
 4. If SCAFFOLD, determine the appropriate scaffold level:
    - Level 1: Provide ONE piece of the "because" (NOT a simpler question!)
@@ -145,7 +149,7 @@ YOUR TASK:
 OUTPUT JSON ONLY:
 {{
   "status": "ON_TRACK" | "DRIFTING" | "STUCK" | "COMPLETED",
-  "strategy": "ADVANCE" | "PIVOT" | "SCAFFOLD" | "COMPLETE",
+  "strategy": "ADVANCE" | "PIVOT" | "SCAFFOLD" | "MICRO_ANSWER_BRIDGE" | "COMPLETE",
   "scaffold_level": 1 | 2 | 3 | 4,
   "reasoning": "Brief explanation of your logic",
   "instruction": "Specific instruction including {current_topic} and {key_concept}"
@@ -273,12 +277,18 @@ CRITICAL RULES:
    - NEVER replace WHY with WHAT ("Why does it change?" → "What color is it?" is WRONG)
    - ALWAYS explain part of the "because"
 
-3. ALWAYS stay on the theme of {object_name} and {key_concept}
-4. NEVER change to unrelated topics (no asking about favorite colors, favorite animals, etc.)
-5. If giving a hint, make it about {object_name} and help them understand {key_concept}
-6. Keep your response short (1-2 sentences)
-7. Be warm and encouraging
-8. Do NOT say "I will now..." or reveal the instruction. Just respond naturally."""
+3. If strategy is MICRO_ANSWER_BRIDGE:
+   - Start with one short direct answer to the child's question.
+   - Then add one bridge sentence linking to {object_name} and {key_concept}.
+   - End with exactly one bridging question.
+
+4. ALWAYS stay on the theme of {object_name} and {key_concept}
+5. Avoid repeating the exact same bridge question from the previous turn.
+6. NEVER change to unrelated topics (no asking about favorite colors, favorite animals, etc.)
+7. If giving a hint, make it about {object_name} and help them understand {key_concept}
+8. Keep your response short (1-2 sentences, or 3 short clauses max for MICRO_ANSWER_BRIDGE)
+9. Be warm and encouraging
+10. Do NOT say "I will now..." or reveal the instruction. Just respond naturally."""
         
         # Combine system instructions
         full_system_instruction = f"{hist_system_instruction}\n\n{driver_instruction}".strip()

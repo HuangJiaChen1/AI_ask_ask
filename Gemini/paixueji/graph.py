@@ -1,5 +1,6 @@
 import asyncio
 import functools
+import re
 from typing import TypedDict, Annotated, List, Optional, Any
 from langgraph.graph import StateGraph, END, START
 
@@ -63,6 +64,7 @@ class PaixuejiState(TypedDict):
     switch_decision_reasoning: Optional[str]
     child_question_text: Optional[str]
     is_child_question: Optional[bool]
+    child_question_type: Optional[str]
 
     new_object_name: Optional[str]
     detected_object_name: Optional[str]
@@ -212,7 +214,8 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
         "new_object_name": validation_result.get("new_object"),
         "detected_object_name": validation_result.get("detected_object") if not validation_result.get("new_object") else None,
         "is_child_question": validation_result.get("is_child_question", False),
-        "child_question_text": validation_result.get("child_question_text")
+        "child_question_text": validation_result.get("child_question_text"),
+        "child_question_type": validation_result.get("child_question_type")
     }
     
     # --- System Managed Focus Logic (Pre-Routing) ---
@@ -705,6 +708,33 @@ async def node_start_guide(state: PaixuejiState):
         "sequence_number": new_seq
     }
 
+
+def _normalize_text_for_similarity(text: str) -> list[str]:
+    cleaned = re.sub(r"[^a-z0-9\s]", " ", (text or "").lower())
+    return [t for t in cleaned.split() if t]
+
+
+def _jaccard_similarity(a: str, b: str) -> float:
+    sa = set(_normalize_text_for_similarity(a))
+    sb = set(_normalize_text_for_similarity(b))
+    if not sa or not sb:
+        return 0.0
+    return len(sa & sb) / len(sa | sb)
+
+
+def _recent_guide_assistant_messages(messages: list[dict], limit: int = 2) -> list[str]:
+    recent: list[str] = []
+    for msg in reversed(messages):
+        if msg.get("role") != "assistant":
+            continue
+        # Guide turns are tagged in conversation history; if missing we still keep text.
+        if msg.get("mode") in {"guide", None}:
+            recent.append(msg.get("content", ""))
+        if len(recent) >= limit:
+            break
+    recent.reverse()
+    return recent
+
 @trace_node
 async def node_guide_navigator(state: PaixuejiState):
     """
@@ -738,8 +768,31 @@ async def node_guide_navigator(state: PaixuejiState):
         key_concept=assistant.key_concept,
         bridge_question=assistant.bridge_question,
         turn_count=assistant.guide_turn_count,
-        max_turns=assistant.guide_max_turns
+        max_turns=assistant.guide_max_turns,
+        child_question_type=state.get("child_question_type"),
     )
+
+    # Deterministic anti-repetition guard: avoid near-identical instruction loops.
+    instruction = nav_result.get("instruction", "")
+    recent_prompts = _recent_guide_assistant_messages(state.get("messages", []), limit=2)
+    max_similarity = 0.0
+    for old in recent_prompts:
+        max_similarity = max(max_similarity, _jaccard_similarity(instruction, old))
+
+    threshold = 0.75
+    if max_similarity >= threshold and state.get("is_child_question"):
+        child_q = state.get("child_question_text") or state.get("content", "")
+        nav_result["status"] = nav_result.get("status") or "DRIFTING"
+        nav_result["strategy"] = "MICRO_ANSWER_BRIDGE"
+        nav_result["reasoning"] = (
+            f"Anti-repetition guard triggered (similarity={max_similarity:.2f}); "
+            "switch to brief answer then bridge."
+        )
+        nav_result["instruction"] = (
+            f"Answer the child's question briefly: '{child_q}'. "
+            f"Then connect back to {state['object_name']} and the concept "
+            f"'{assistant.key_concept or 'the key concept'}' with one new question."
+        )
 
     # Update assistant state
     assistant.update_navigation_state(nav_result)
