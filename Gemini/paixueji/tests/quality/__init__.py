@@ -33,6 +33,9 @@ from .expert_critic import ExpertCritic
 from .critique_report import CritiqueReportGenerator
 from .pipeline import PedagogicalCritiquePipeline
 from .scenario_runner import ScenarioRunner, run_scenario_to_json
+from .hf_replay_pipeline import run_hf_replay
+from .hf_replay_runner import HFReplayRunner
+from .hf_replay_judge import HFReplayJudge
 
 __all__ = [
     # Enums
@@ -59,4 +62,8 @@ __all__ = [
     # Scenario Runner
     "ScenarioRunner",
     "run_scenario_to_json",
+    # HF replay
+    "run_hf_replay",
+    "HFReplayRunner",
+    "HFReplayJudge",
 ]

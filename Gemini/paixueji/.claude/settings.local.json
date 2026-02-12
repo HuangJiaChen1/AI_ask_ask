@@ -9,7 +9,8 @@
       "WebFetch(domain:ai.google.dev)",
       "WebSearch",
       "WebFetch(domain:github.com)",
-      "Bash(node --check:*)"
+      "Bash(node --check:*)",
+      "Bash(dir:*)"
     ]
   },
   "outputStyle": "Explanatory"

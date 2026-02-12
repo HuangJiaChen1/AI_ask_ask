@@ -10,7 +10,44 @@ Functions:
 """
 import json
 import time
+import re
 from loguru import logger
+
+
+def _looks_like_information_question(child_answer: str) -> bool:
+    """
+    Heuristic detector for child turns that are likely genuine questions.
+
+    This is used as a safety net when validator LLM output is inconsistent.
+    """
+    if not child_answer:
+        return False
+
+    text = child_answer.strip().lower()
+    if not text:
+        return False
+
+    # Topic-switch intents should not be treated as factual follow-up questions.
+    switch_signals = [
+        "let's talk about",
+        "lets talk about",
+        "can we talk about",
+        "i want to talk about",
+        "change topic",
+        "new topic",
+    ]
+    if any(signal in text for signal in switch_signals):
+        return False
+
+    # Common child question openings; punctuation is often missing.
+    question_starters = (
+        "what", "why", "how", "where", "when", "which", "who",
+        "is", "are", "do", "does", "did", "can", "could",
+    )
+    if text.endswith("?"):
+        return True
+
+    return bool(re.match(rf"^({'|'.join(question_starters)})\b", text))
 
 
 async def decide_topic_switch_with_validation(
@@ -40,6 +77,8 @@ async def decide_topic_switch_with_validation(
             - is_engaged: True or False
             - is_factually_correct: True or False
             - correctness_reasoning: Brief reason
+            - is_child_question: True or False
+            - child_question_text: Original child question or None
     """
     # Extract the last question the model asked from conversation history
     conversation_history = assistant.conversation_history
@@ -91,6 +130,10 @@ RULES:
    - **ENGAGED**: The child provides a clear, specific word, guess, or description that demonstrates a deliberate intent to answer the question.
    - **NOT ENGAGED**: The child provides only fillers, hesitation sounds, meaningless fragments, expresses uncertainty, asks for help, or expresses confusion.
 2. **Correctness**: Check if answer matches reality for the question. Accept age-appropriate answers.
+3. **Child Question Detection**:
+   - Set **is_child_question=true** if the child asks a direct information-seeking question (e.g., "what do dinosaurs eat", "why is it red", "how does it work").
+   - For these, keep **decision=CONTINUE** unless they explicitly ask to switch topics.
+   - Put the original question in **child_question_text**.
 3. **Switching**:
    - **SWITCH** if child explicitly names a NEW object to talk about (e.g. "Let's talk about cars").
    - **CONTINUE** if child answers the question (even if answer is a noun like "Banana"), mentions a part/category, or is stuck.
@@ -103,7 +146,9 @@ RESPOND WITH VALID JSON:
     "switching_reasoning": "Brief reason",
     "is_engaged": true or false,
     "is_factually_correct": true or false,
-    "correctness_reasoning": "Brief reason"
+    "correctness_reasoning": "Brief reason",
+    "is_child_question": true or false,
+    "child_question_text": "question text" or null
 }}
 
 EXAMPLES:
@@ -119,6 +164,10 @@ Q: "Color?" A: "Blue"
 3. Topic Switch (SWITCH)
 Q: "Color?" A: "Can we talk about cars?"
 → {{"decision": "SWITCH", "new_object": "car", "is_engaged": true, "is_factually_correct": false, "correctness_reasoning": "N/A", "switching_reasoning": "Explicit switch request."}}
+
+4. Child Follow-up Question (CONTINUE + child question)
+Q: "What did the dinosaur bone help it do?" A: "what does dinosaurs like to eat?"
+→ {{"decision": "CONTINUE", "new_object": null, "is_engaged": true, "is_factually_correct": true, "correctness_reasoning": "Child asked a related follow-up question.", "switching_reasoning": "No topic switch.", "is_child_question": true, "child_question_text": "what does dinosaurs like to eat?"}}
 
 Evaluate now:
 """
@@ -142,11 +191,24 @@ Evaluate now:
         # Parse JSON response
         decision_data = json.loads(response.text)
 
+        # Backward compatibility for older model outputs.
+        decision_data.setdefault("is_child_question", False)
+        decision_data.setdefault("child_question_text", None)
+
+        # Heuristic safety net: force child question routing if this turn clearly asks a question.
+        if _looks_like_information_question(child_answer):
+            decision_data["is_child_question"] = True
+            decision_data["child_question_text"] = child_answer.strip()
+            if decision_data.get("decision") != "SWITCH":
+                decision_data["decision"] = "CONTINUE"
+                decision_data["new_object"] = None
+
         logger.info(
             f"[VALIDATE] {decision_data['decision']} | "
             f"new_object={decision_data.get('new_object')}, "
             f"engaged={decision_data.get('is_engaged')}, "
             f"correct={decision_data.get('is_factually_correct')}, "
+            f"is_child_question={decision_data.get('is_child_question')}, "
             f"switch_reasoning={decision_data.get('switching_reasoning')}, "
             f"correctness_reasoning={decision_data.get('correctness_reasoning')}"
         )
@@ -163,7 +225,9 @@ Evaluate now:
             'switching_reasoning': f'Error in validation: {str(e)}',
             'is_engaged': True,
             'is_factually_correct': True,
-            'correctness_reasoning': 'Could not evaluate due to error'
+            'correctness_reasoning': 'Could not evaluate due to error',
+            'is_child_question': _looks_like_information_question(child_answer),
+            'child_question_text': child_answer.strip() if _looks_like_information_question(child_answer) else None
         }
 
 
@@ -177,7 +241,9 @@ Evaluate now:
             'switching_reasoning': f'Error in validation: {str(e)}',
             'is_engaged': True,  # Safe default - continue conversation
             'is_factually_correct': True,  # Safe default - don't incorrectly penalize
-            'correctness_reasoning': 'Could not evaluate due to error'
+            'correctness_reasoning': 'Could not evaluate due to error',
+            'is_child_question': _looks_like_information_question(child_answer),
+            'child_question_text': child_answer.strip() if _looks_like_information_question(child_answer) else None
         }
 
 

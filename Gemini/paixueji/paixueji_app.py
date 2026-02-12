@@ -1,4 +1,4 @@
-"""
+﻿"""
 Flask API for Paixueji Assistant with Server-Sent Events (SSE) streaming.
 
 This provides real-time streaming responses where the LLM asks questions about objects.
@@ -8,9 +8,12 @@ from flask import Flask, request, Response, jsonify
 from flask_cors import CORS
 import json
 import uuid
+import hashlib
 import asyncio
 import threading
 import os
+from datetime import datetime
+from pathlib import Path
 
 from google import genai
 from google.genai.types import HttpOptions
@@ -943,7 +946,7 @@ def convert_tree_to_mermaid(flow_tree):
         node_id = node.node_id
         
         # Create a subgraph for this turn to group related steps
-        lines.append(f'    subgraph Turn_{node.turn_number} ["🔄 Turn {node.turn_number}: {node.type.upper()}"]')
+        lines.append(f'    subgraph Turn_{node.turn_number} ["Turn {node.turn_number}: {node.type.upper()}"]')
         lines.append('    direction TB')
 
         # === 1. USER INPUT ===
@@ -954,7 +957,7 @@ def convert_tree_to_mermaid(flow_tree):
         elif node.turn_number > 0:
             input_content = "(No Input / System Trigger)"
             
-        lines.append(f'    {input_id}["👤 User Input:<br/>{input_content}"]')
+        lines.append(f'    {input_id}["User Input:<br/>{input_content}"]')
         lines.append(f'    style {input_id} fill:#e3f2fd,stroke:#2196f3,stroke-width:2px')
 
         # === 2. DECISION LOGIC & CONTEXT ===
@@ -979,10 +982,10 @@ def convert_tree_to_mermaid(flow_tree):
             engaged = node.validation.get('is_engaged')
             correct = node.validation.get('is_factually_correct')
             
-            status_icon = "⚪"
-            if engaged is False: status_icon = "❌ STUCK"
-            elif correct is True: status_icon = "✅ CORRECT"
-            elif correct is False: status_icon = "❌ WRONG"
+            status_icon = "UNKNOWN"
+            if engaged is False: status_icon = "STUCK"
+            elif correct is True: status_icon = "CORRECT"
+            elif correct is False: status_icon = "WRONG"
             
             logic_lines.append(f"<b>Validation:</b> {status_icon}")
             
@@ -1002,7 +1005,7 @@ def convert_tree_to_mermaid(flow_tree):
                 logic_lines.append(f"<i>Logic:</i> {escape_mermaid_text(node.decision['switch_reasoning'])}")
 
         logic_content = "<br/>".join(logic_lines) if logic_lines else "No logic data"
-        lines.append(f'    {logic_id}["🧠 Logic & Analysis:<br/>{logic_content}"]')
+        lines.append(f'    {logic_id}["Logic and Analysis:<br/>{logic_content}"]')
         lines.append(f'    style {logic_id} fill:#fff9c4,stroke:#fbc02d,stroke-width:2px')
 
         # === 3. SYSTEM ACTION ===
@@ -1023,7 +1026,7 @@ def convert_tree_to_mermaid(flow_tree):
                 action_lines.append("<b>State Updates:</b><br/>" + "<br/>".join(changes))
         
         action_content = "<br/>".join(action_lines)
-        lines.append(f'    {action_id}["⚙️ System Action:<br/>{action_content}"]')
+        lines.append(f'    {action_id}["System Action:<br/>{action_content}"]')
         lines.append(f'    style {action_id} fill:#f3e5f5,stroke:#9c27b0,stroke-width:2px')
 
         # === 4. AI RESPONSE (Split into Parts) ===
@@ -1039,7 +1042,7 @@ def convert_tree_to_mermaid(flow_tree):
                 part1_content = escape_mermaid_text(node.ai_response_part1)
                 
             part1_id = f"{node_id}_resp1"
-            lines.append(f'    {part1_id}["🗣️ Feedback / Explanation:<br/>{part1_content}"]')
+            lines.append(f'    {part1_id}["Feedback / Explanation:<br/>{part1_content}"]')
             lines.append(f'    style {part1_id} fill:#c8e6c9,stroke:#388e3c,stroke-width:2px')
             
             # PART 2: Follow-up Question
@@ -1048,7 +1051,7 @@ def convert_tree_to_mermaid(flow_tree):
                 part2_content = escape_mermaid_text(node.ai_response_part2)
                 
             part2_id = f"{node_id}_resp2"
-            lines.append(f'    {part2_id}["❓ Follow-up Question:<br/>{part2_content}"]')
+            lines.append(f'    {part2_id}["Follow-up Question:<br/>{part2_content}"]')
             lines.append(f'    style {part2_id} fill:#b3e5fc,stroke:#0288d1,stroke-width:2px')
             
             # Link Action -> Part 1 -> Part 2
@@ -1064,7 +1067,7 @@ def convert_tree_to_mermaid(flow_tree):
             if node.ai_response:
                 output_content = escape_mermaid_text(node.ai_response)
             
-            lines.append(f'    {output_id}["🤖 AI Response:<br/>{output_content}"]')
+            lines.append(f'    {output_id}["AI Response:<br/>{output_content}"]')
             lines.append(f'    style {output_id} fill:#e8f5e9,stroke:#4caf50,stroke-width:2px')
             
             lines.append(f'    {action_id} --> {output_id}')
@@ -1260,512 +1263,6 @@ def force_switch():
         }), 500
 
 
-# ============================================================================
-# Bug Reproduction Helper Functions
-# ============================================================================
-
-def build_save_state(assistant, session_id):
-    """
-    Build complete save state from PaixuejiAssistant instance.
-
-    IMPORTANT: Now keeps the FULL conversation including the last assistant message
-    (buggy response) for bug tracking purposes. Marks the buggy response index in metadata.
-
-    Args:
-        assistant: PaixuejiAssistant instance to serialize
-        session_id: Current session ID
-
-    Returns:
-        dict: Complete save state matching schema
-    """
-    from datetime import datetime
-
-    # Copy conversation history - keep FULL conversation including buggy response
-    conversation_history = assistant.conversation_history.copy()
-
-    # Track buggy response index and metadata
-    excluded_buggy_response = None
-    last_user_message = None
-    buggy_response_index = None
-
-    if len(conversation_history) > 1 and conversation_history[-1]['role'] == 'assistant':
-        # Mark the buggy response index (last assistant message)
-        buggy_response_index = len(conversation_history) - 1
-        excluded_buggy_response = conversation_history[-1]['content']  # Keep for reference
-
-        # Find the last user message
-        for msg in reversed(conversation_history):
-            if msg['role'] == 'user':
-                last_user_message = msg['content']
-                break
-
-    state = {
-        "metadata": {
-            "saved_at": datetime.now().isoformat(),
-            "version": "1.0",
-            "session_id": session_id,
-            "app_version": "paixueji-v1.0",
-            "excluded_buggy_response": excluded_buggy_response,
-            "last_user_message": last_user_message,
-            "buggy_response_index": buggy_response_index
-        },
-        "session_state": {
-            "age": assistant.age,
-            "object_name": assistant.object_name,
-            "level1_category": assistant.level1_category,
-            "level2_category": assistant.level2_category,
-            "level3_category": assistant.level3_category,
-            "character": assistant.character,
-            "correct_answer_count": assistant.correct_answer_count,
-            "system_managed_focus": assistant.system_managed_focus,
-            "current_focus_mode": assistant.current_focus_mode,
-            "depth_questions_count": assistant.depth_questions_count,
-            "width_wrong_count": assistant.width_wrong_count,
-            "width_categories_tried": assistant.width_categories_tried.copy(),
-            "depth_target": assistant.depth_target
-        },
-        "conversation_history": conversation_history
-    }
-
-    # Add flow tree if available
-    if assistant.flow_tree:
-        try:
-            state["flow_tree"] = assistant.flow_tree.to_json()
-        except Exception as e:
-            print(f"[WARNING] Could not serialize flow tree: {e}")
-            state["flow_tree"] = None
-
-    return state
-
-
-def validate_state_schema(state):
-    """
-    Validate saved state schema.
-
-    Args:
-        state: State dict to validate
-
-    Returns:
-        tuple: (is_valid, error_message)
-    """
-    # Check top-level keys
-    if not all(k in state for k in ['metadata', 'session_state', 'conversation_history']):
-        return False, "Missing required top-level keys (metadata, session_state, or conversation_history)"
-
-    # Check metadata
-    if 'version' not in state['metadata']:
-        return False, "Missing metadata.version"
-
-    if state['metadata']['version'] != '1.0':
-        return False, f"Unsupported schema version: {state['metadata']['version']}"
-
-    # Check session_state required fields
-    required_session_fields = ['object_name', 'correct_answer_count']
-    for field in required_session_fields:
-        if field not in state['session_state']:
-            return False, f"Missing session_state.{field}"
-
-    # Check conversation_history is array
-    if not isinstance(state['conversation_history'], list):
-        return False, "conversation_history must be an array"
-
-    # Validate each message
-    for i, msg in enumerate(state['conversation_history']):
-        if 'role' not in msg or 'content' not in msg:
-            return False, f"Message {i} missing role or content"
-        if msg['role'] not in ['system', 'user', 'assistant']:
-            return False, f"Message {i} has invalid role: {msg['role']}"
-
-    # Validate data types and ranges
-    if state['session_state'].get('age') is not None:
-        age = state['session_state']['age']
-        if not isinstance(age, int) or age < 3 or age > 8:
-            return False, f"Invalid age: {age} (must be integer 3-8)"
-
-    if not isinstance(state['session_state']['correct_answer_count'], int):
-        return False, "correct_answer_count must be integer"
-
-    if state['session_state']['correct_answer_count'] < 0:
-        return False, "correct_answer_count must be >= 0"
-
-    return True, None
-
-
-def restore_from_state(state, client=None):
-    """
-    Restore PaixuejiAssistant instance from saved state.
-
-    Args:
-        state: Validated state dict
-        client: Optional Gemini client to reuse
-
-    Returns:
-        PaixuejiAssistant: Restored assistant instance
-    """
-    session_state = state['session_state']
-
-    # Create new assistant
-    system_managed = session_state.get('system_managed_focus', False)
-    assistant = PaixuejiAssistant(system_managed=system_managed, client=client)
-
-    # Restore state fields
-    assistant.age = session_state.get('age')
-    assistant.object_name = session_state.get('object_name')
-    assistant.level1_category = session_state.get('level1_category')
-    assistant.level2_category = session_state.get('level2_category')
-    assistant.level3_category = session_state.get('level3_category')
-    assistant.character = session_state.get('character')
-    assistant.correct_answer_count = session_state.get('correct_answer_count', 0)
-
-    # Restore system-managed focus state
-    assistant.system_managed_focus = session_state.get('system_managed_focus', False)
-    assistant.current_focus_mode = session_state.get('current_focus_mode', 'depth')
-    assistant.depth_questions_count = session_state.get('depth_questions_count', 0)
-    assistant.width_wrong_count = session_state.get('width_wrong_count', 0)
-    assistant.width_categories_tried = session_state.get('width_categories_tried', [])
-    assistant.depth_target = session_state.get('depth_target', 4)
-
-    # Restore conversation history - TRIM last user message and buggy response
-    conversation_history = state['conversation_history'].copy()
-    buggy_response_index = state.get('metadata', {}).get('buggy_response_index')
-
-    # If this is a bug tracking restore (has buggy_response_index), trim the last 2 messages
-    if buggy_response_index is not None and len(conversation_history) >= 2:
-        # Remove last 2 messages: last user message + buggy assistant response
-        # This prevents duplication when auto-replay resends the user message
-        conversation_history = conversation_history[:-2]
-
-    assistant.conversation_history = conversation_history
-
-    # Note: Flow tree restoration is skipped for simplicity
-    # A new flow tree will be initialized for the restored session
-
-    return assistant
-
-
-@app.route('/api/save-state', methods=['POST'])
-def save_session_state():
-    """
-    Save current session state to JSON for bug reproduction.
-
-    Excludes the last assistant message (buggy response) so saved state
-    ends with the user's message that triggered the bug.
-
-    Request body:
-        {
-            "session_id": "uuid-string"
-        }
-
-    Response:
-        {
-            "success": true,
-            "state": { ... },
-            "filename": "bug_2026-01-06_14-30-45.json"
-        }
-    """
-    data = request.get_json()
-
-    if not data:
-        return jsonify({
-            "success": False,
-            "error": "Request body must be JSON"
-        }), 400
-
-    session_id = data.get('session_id')
-
-    if not session_id:
-        return jsonify({
-            "success": False,
-            "error": "Missing session_id"
-        }), 400
-
-    if session_id not in sessions:
-        return jsonify({
-            "success": False,
-            "error": "Session not found"
-        }), 404
-
-    try:
-        assistant = sessions[session_id]
-
-        # Build save state (excludes last assistant message if present)
-        state = build_save_state(assistant, session_id)
-
-        # Generate filename
-        from datetime import datetime
-        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        filename = f"bug_{timestamp}.json"
-
-        print(f"[INFO] Saved session state {session_id[:8]}... to {filename}")
-
-        if state['metadata']['excluded_buggy_response']:
-            print(f"[INFO] Excluded buggy response: {state['metadata']['excluded_buggy_response'][:100]}...")
-
-        return jsonify({
-            "success": True,
-            "state": state,
-            "filename": filename
-        })
-
-    except Exception as e:
-        print(f"[ERROR] Error saving state: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
-
-
-@app.route('/api/restore-state', methods=['POST'])
-def restore_session_state():
-    """
-    Restore session from saved state JSON for bug reproduction.
-
-    Creates a new session with the restored state. Conversation history
-    will end with a user message, ready for auto-replay.
-
-    Request body:
-        {
-            "state": { ... }
-        }
-
-    Response:
-        {
-            "success": true,
-            "session_id": "new-uuid",
-            "restored_state": {
-                "object_name": "apple",
-                "conversation_turns": 3,
-                "correct_answer_count": 2,
-                "last_user_message": "What color is the apple?"
-            }
-        }
-    """
-    data = request.get_json()
-
-    if not data:
-        return jsonify({
-            "success": False,
-            "error": "Request body must be JSON"
-        }), 400
-
-    state = data.get('state')
-
-    if not state:
-        return jsonify({
-            "success": False,
-            "error": "Missing state object"
-        }), 400
-
-    try:
-        # Validate schema
-        is_valid, error_msg = validate_state_schema(state)
-        if not is_valid:
-            return jsonify({
-                "success": False,
-                "error": f"Invalid state format: {error_msg}"
-            }), 400
-
-        # Restore assistant
-        assistant = restore_from_state(state, client=GLOBAL_GEMINI_CLIENT)
-
-        # Create new session
-        new_session_id = str(uuid.uuid4())
-        sessions[new_session_id] = assistant
-
-        # Initialize flow tree for new session
-        assistant.init_flow_tree(
-            session_id=new_session_id,
-            age=assistant.age,
-            object_name=assistant.object_name,
-            character=assistant.character,
-            focus_mode=assistant.current_focus_mode
-        )
-
-        # Extract last user message from metadata (correctly saved before trimming)
-        last_user_message = state.get('metadata', {}).get('last_user_message')
-
-        print(f"[INFO] Restored session {new_session_id[:8]}... from saved state | "
-              f"object={assistant.object_name}, turns={len(assistant.conversation_history)}")
-
-        return jsonify({
-            "success": True,
-            "session_id": new_session_id,
-            "restored_state": {
-                "object_name": assistant.object_name,
-                "conversation_turns": len(assistant.conversation_history) - 1,  # Exclude system message
-                "correct_answer_count": assistant.correct_answer_count,
-                "last_user_message": last_user_message
-            }
-        })
-
-    except Exception as e:
-        print(f"[ERROR] Error restoring state: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
-
-
-def generate_comparison_html(buggy_response, new_response, context_message):
-    """Generate standalone HTML file with side-by-side comparison."""
-    import html
-    from datetime import datetime
-
-    # Escape content to prevent XSS
-    buggy_escaped = html.escape(buggy_response)
-    new_escaped = html.escape(new_response)
-    context_escaped = html.escape(context_message)
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-    return f'''<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Bugfix Comparison - {timestamp}</title>
-    <style>
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: #f5f5f5;
-        }}
-        .container {{
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }}
-        .header {{
-            background: #10b981;
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }}
-        .context {{
-            background: #f0f9ff;
-            padding: 15px 20px;
-            margin: 20px;
-            border-left: 4px solid #3b82f6;
-            border-radius: 4px;
-        }}
-        .context h3 {{
-            margin: 0 0 10px 0;
-            color: #1e40af;
-        }}
-        .comparison {{
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            padding: 20px;
-        }}
-        .column {{
-            border: 2px solid;
-            border-radius: 8px;
-            padding: 15px;
-        }}
-        .before {{
-            border-color: #ef4444;
-            background: #fef2f2;
-        }}
-        .after {{
-            border-color: #10b981;
-            background: #f0fdf4;
-        }}
-        .column-header {{
-            font-weight: bold;
-            font-size: 18px;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid currentColor;
-        }}
-        .before .column-header {{
-            color: #dc2626;
-        }}
-        .after .column-header {{
-            color: #059669;
-        }}
-        .response-text {{
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            line-height: 1.6;
-            color: #333;
-        }}
-        @media (max-width: 768px) {{
-            .comparison {{
-                grid-template-columns: 1fr;
-            }}
-        }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🐛 Bugfix Comparison Report</h1>
-            <p>Generated: {timestamp}</p>
-        </div>
-
-        <div class="context">
-            <h3>📝 Context - Last User Message:</h3>
-            <p>{context_escaped}</p>
-        </div>
-
-        <div class="comparison">
-            <div class="column before">
-                <div class="column-header">❌ Before (Buggy Response)</div>
-                <div class="response-text">{buggy_escaped}</div>
-            </div>
-
-            <div class="column after">
-                <div class="column-header">✅ After (Fixed Response)</div>
-                <div class="response-text">{new_escaped}</div>
-            </div>
-        </div>
-    </div>
-</body>
-</html>'''
-
-
-@app.route('/api/generate-bugfix-comparison', methods=['POST'])
-def generate_bugfix_comparison():
-    """Generate HTML comparison file for buggy vs fixed response."""
-    try:
-        data = request.get_json()
-        buggy_response = data.get('buggy_response')
-        new_response = data.get('new_response')
-        context_message = data.get('context_message')
-
-        # Validation
-        if not all([buggy_response, new_response, context_message]):
-            return jsonify({'error': 'Missing required fields'}), 400
-
-        # HTML template with embedded CSS
-        html_content = generate_comparison_html(
-            buggy_response,
-            new_response,
-            context_message
-        )
-
-        # Generate filename
-        from datetime import datetime
-        timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-        filename = f'bugfix_{timestamp}.html'
-
-        return jsonify({
-            'html': html_content,
-            'filename': filename
-        })
-
-    except Exception as e:
-        logger.error(f"Error generating comparison: {e}")
-        return jsonify({'error': str(e)}), 500
-
-
 @app.route('/api/debug/logs/<session_id>', methods=['GET'])
 def get_session_logs(session_id):
     """
@@ -1949,7 +1446,7 @@ def run_critique_background(task_id: str, session_id: str, transcript: list,
                 if nodes_executed:
                     node_names = [n["node"] for n in nodes_executed]
                     total_time = sum(n.get("time_ms", 0) for n in nodes_executed)
-                    trace_summary = f"[{' → '.join(node_names)}] ({total_time:.0f}ms)"
+                    trace_summary = f"[{' -> '.join(node_names)}] ({total_time:.0f}ms)"
                     full_report += f"**Model** `[{mode_label}]`**:** {trace_summary}\n{msg['content']}\n\n"
                 else:
                     full_report += f"**Model** `[{mode_label}]`**:** {msg['content']}\n\n"
@@ -2049,7 +1546,7 @@ def critique_conversation():
     if len(transcript) < 3:
         return jsonify({
             "success": False,
-            "error": "Need at least one complete exchange (model→child→model) to critique"
+            "error": "Need at least one complete exchange (model->child->model) to critique"
         }), 400
 
     # Create task entry
@@ -2124,7 +1621,7 @@ def critique_status(task_id):
 @app.route('/api/exchanges/<session_id>', methods=['GET'])
 def get_exchanges(session_id):
     """
-    Extract exchange triplets (model→child→model) from conversation history.
+    Extract exchange triplets (model->child->model) from conversation history.
 
     Returns structured exchanges for the manual critique form.
 
@@ -2165,7 +1662,7 @@ def get_exchanges(session_id):
             entry["mode"] = msg.get("mode", "chat")
         transcript.append(entry)
 
-    # Extract triplets: model → child → model
+    # Extract triplets: model -> child -> model
     exchanges = []
     exchange_index = 0
     i = 0
@@ -2274,22 +1771,7 @@ def manual_critique():
         transcript.append(entry)
 
     # Re-extract all exchanges to match indices
-    all_exchanges = []
-    i = 0
-    while i < len(transcript) - 2:
-        if (transcript[i].get("role") == "model" and
-            transcript[i + 1].get("role") == "child" and
-            transcript[i + 2].get("role") == "model"):
-            all_exchanges.append({
-                "model_question": transcript[i]["content"],
-                "child_response": transcript[i + 1]["content"],
-                "model_response": transcript[i + 2]["content"],
-                "nodes_executed": transcript[i + 2].get("nodes_executed", []),
-                "mode": transcript[i + 2].get("mode", "chat"),
-            })
-            i += 2
-        else:
-            i += 1
+    all_exchanges = _extract_exchange_triplets_with_positions(transcript)
 
     try:
         report_md = build_human_feedback_report(
@@ -2317,12 +1799,34 @@ def manual_critique():
 
         report_path.write_text(report_md, encoding='utf-8')
 
+        # Save structured HF case bundle for automated replay/regression
+        hf_cases_dir = Path(__file__).parent / "reports" / "HF_cases"
+        hf_cases_dir.mkdir(parents=True, exist_ok=True)
+        bundle_filename = f"{safe_object_name}_{timestamp}.json"
+        bundle_path = hf_cases_dir / bundle_filename
+        case_bundle = build_hf_case_bundle(
+            object_name=assistant.object_name,
+            age=assistant.age,
+            session_id=session_id,
+            transcript=transcript,
+            all_exchanges=all_exchanges,
+            exchange_critiques=exchange_critiques,
+            key_concept=assistant.key_concept,
+            assistant=assistant,
+        )
+        bundle_path.write_text(
+            json.dumps(case_bundle, ensure_ascii=False, indent=2),
+            encoding='utf-8'
+        )
+
         logger.info(f"[MANUAL-CRITIQUE] Report saved: {report_path} | "
-                     f"exchanges critiqued: {len(exchange_critiques)}")
+                     f"exchanges critiqued: {len(exchange_critiques)} | "
+                     f"case bundle: {bundle_path}")
 
         return jsonify({
             "success": True,
             "report_path": str(report_path),
+            "hf_case_bundle_path": str(bundle_path),
             "exchanges_critiqued": len(exchange_critiques)
         })
 
@@ -2382,7 +1886,7 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
             if nodes_executed:
                 node_names = [n["node"] for n in nodes_executed]
                 total_time = sum(n.get("time_ms", 0) for n in nodes_executed)
-                trace_summary = f"[{' → '.join(node_names)}] ({total_time:.0f}ms)"
+                trace_summary = f"[{' -> '.join(node_names)}] ({total_time:.0f}ms)"
                 report += f"**Model** `[{mode_label}]`**:** {trace_summary}\n{msg['content']}\n\n"
             else:
                 report += f"**Model** `[{mode_label}]`**:** {msg['content']}\n\n"
@@ -2391,7 +1895,7 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
 
     report += "---\n\n"
 
-    # Build critiqued exchange lookup: index → critique data
+    # Build critiqued exchange lookup: index -> critique data
     critique_by_index = {ec["exchange_index"]: ec for ec in exchange_critiques}
 
     # Classify exchanges by mode
@@ -2410,7 +1914,7 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
 
     # Chat Phase section
     if chat_critiqued:
-        report += "## Chat Phase — Human Critique\n\n"
+        report += "## Chat Phase - Human Critique\n\n"
         report += "> Exploratory Q&A. NOT evaluated for key concept guidance.\n\n"
         for idx, exchange, ec in chat_critiqued:
             report += _render_hf_exchange(idx, exchange, ec)
@@ -2422,7 +1926,7 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
 
     # Guide Phase section
     if guide_critiqued:
-        report += "## Guide Phase — Human Critique\n\n"
+        report += "## Guide Phase - Human Critique\n\n"
         concept_display = key_concept or "unknown"
         report += f"> Key Concept: **{concept_display}**. Evaluated for concept advancement.\n\n"
         for idx, exchange, ec in guide_critiqued:
@@ -2493,6 +1997,154 @@ def _render_hf_exchange(idx, exchange, ec):
 
     report += "---\n\n"
     return report
+
+
+def _extract_exchange_triplets_with_positions(transcript):
+    """Extract model->child->model exchanges and preserve transcript indices."""
+    exchanges = []
+    i = 0
+    while i < len(transcript) - 2:
+        if (transcript[i].get("role") == "model" and
+            transcript[i + 1].get("role") == "child" and
+            transcript[i + 2].get("role") == "model"):
+            exchanges.append({
+                "model_question": transcript[i]["content"],
+                "child_response": transcript[i + 1]["content"],
+                "model_response": transcript[i + 2]["content"],
+                "nodes_executed": transcript[i + 2].get("nodes_executed", []),
+                "mode": transcript[i + 2].get("mode", "chat"),
+                "model_question_pos": i,
+                "child_pos": i + 1,
+                "model_response_pos": i + 2,
+            })
+            i += 2
+        else:
+            i += 1
+    return exchanges
+
+
+def _snapshot_version_fingerprint():
+    """Build a fingerprint for snapshot compatibility checks."""
+    base = Path(__file__).parent
+    files_to_hash = [
+        "config.json",
+        "age_prompts.json",
+        "object_prompts.json",
+        "paixueji_prompts.py",
+        "graph.py",
+        "stream/validation.py",
+        "stream/response_generators.py",
+        "stream/question_generators.py",
+        "stream/guide_hint.py",
+        "stream/theme_guide.py",
+        "stream/focus_mode.py",
+    ]
+
+    hasher = hashlib.sha256()
+    for rel_path in files_to_hash:
+        path = base / rel_path
+        if not path.exists():
+            continue
+        hasher.update(rel_path.encode("utf-8"))
+        hasher.update(path.read_bytes())
+    return hasher.hexdigest()
+
+
+def build_hf_case_bundle(
+    object_name,
+    age,
+    session_id,
+    transcript,
+    all_exchanges,
+    exchange_critiques,
+    key_concept=None,
+    assistant=None,
+):
+    """
+    Build structured replay cases from a manual HF submission.
+
+    - Critiqued exchanges become fix-target cases.
+    - Unchecked exchanges are retained in `guard_cases` for backward compatibility,
+      but current HF replay focuses on critiqued exchanges only.
+    """
+    critiqued_by_index = {}
+    for critique in exchange_critiques:
+        index = critique.get("exchange_index")
+        if isinstance(index, int):
+            critiqued_by_index[index] = critique
+
+    critiqued_cases = []
+    guard_cases = []
+
+    for index, exchange in enumerate(all_exchanges, start=1):
+        child_pos = exchange.get("child_pos")
+        if not isinstance(child_pos, int):
+            continue
+
+        prefix = []
+        for msg in transcript[:child_pos + 1]:
+            if msg.get("role") not in {"model", "child"}:
+                continue
+            entry = {
+                "role": msg.get("role"),
+                "content": msg.get("content", ""),
+            }
+            if entry["role"] == "model":
+                entry["mode"] = msg.get("mode", "chat")
+            prefix.append(entry)
+
+        case_base = {
+            "exchange_index": index,
+            "mode": exchange.get("mode", "chat"),
+            "conversation_prefix": prefix,
+            "model_question": exchange.get("model_question", ""),
+            "child_response": exchange.get("child_response", ""),
+            "baseline_model_response": exchange.get("model_response", ""),
+            "original_model_response": exchange.get("model_response", ""),
+            "baseline_nodes_executed": exchange.get("nodes_executed", []),
+        }
+
+        if index in critiqued_by_index:
+            critique = critiqued_by_index[index]
+            critiqued_cases.append({
+                **case_base,
+                "human_feedback": {
+                    "model_question_expected": critique.get("model_question_expected", ""),
+                    "model_question_problem": critique.get("model_question_problem", ""),
+                    "model_response_expected": critique.get("model_response_expected", ""),
+                    "model_response_problem": critique.get("model_response_problem", ""),
+                    "conclusion": critique.get("conclusion", ""),
+                    "severity": critique.get("severity", "major"),
+                }
+            })
+        else:
+            guard_cases.append(case_base)
+
+    assistant_snapshot = {}
+    if assistant is not None:
+        assistant_snapshot = {
+            "level1_category": getattr(assistant, "level1_category", None),
+            "level2_category": getattr(assistant, "level2_category", None),
+            "level3_category": getattr(assistant, "level3_category", None),
+            "ibpyp_theme": getattr(assistant, "ibpyp_theme", None),
+            "ibpyp_theme_name": getattr(assistant, "ibpyp_theme_name", None),
+            "guide_phase": getattr(assistant, "guide_phase", None),
+            "character": getattr(assistant, "character", None),
+            "current_focus_mode": getattr(assistant, "current_focus_mode", None),
+        }
+
+    return {
+        "case_bundle_id": f"hf-{session_id}-{int(time.time())}",
+        "session_id": session_id,
+        "created_at": datetime.now().isoformat(),
+        "snapshot_version": _snapshot_version_fingerprint(),
+        "object_name": object_name,
+        "age": age,
+        "key_concept": key_concept,
+        "assistant_snapshot": assistant_snapshot,
+        "critiqued_cases": critiqued_cases,
+        "guard_cases": guard_cases,
+    }
 
 
 @app.route('/api/critique/report/<task_id>', methods=['GET'])
@@ -2620,3 +2272,7 @@ if __name__ == '__main__':
     print("=" * 60)
 
     app.run(host='0.0.0.0', port=5001, debug=True, threaded=True)
+
+
+
+

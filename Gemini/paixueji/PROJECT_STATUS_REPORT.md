@@ -1,4 +1,4 @@
-# Paixueji Project Status Report
+﻿# Paixueji Project Status Report
 
 **Last Updated:** January 7, 2026
 **Project State:** Stable - Production-Ready with Known Limitations
@@ -8,14 +8,14 @@
 
 ## Executive Summary
 
-**Paixueji** (拍学级 - "Take learning levels") is an interactive educational AI assistant designed for young children (ages 3-8) that teaches about objects through guided questioning and conversation. Instead of telling children facts, the AI asks carefully crafted questions to encourage observation, critical thinking, and deeper understanding of objects around them.
+**Paixueji** (鎷嶅绾?- "Take learning levels") is an interactive educational AI assistant designed for young children (ages 3-8) that teaches about objects through guided questioning and conversation. Instead of telling children facts, the AI asks carefully crafted questions to encourage observation, critical thinking, and deeper understanding of objects around them.
 
 **Current Status:**
-- ✅ Core functionality is complete and operational
-- ✅ Dual-parallel architecture implemented
-- ✅ Real-time streaming and debug infrastructure in place
-- ⚠️ Several production-critical gaps (session persistence, test coverage)
-- ⚠️ Technical debt items identified for future work
+- 鉁?Core functionality is complete and operational
+- 鉁?Dual-parallel architecture implemented
+- 鉁?Real-time streaming and debug infrastructure in place
+- 鈿狅笍 Several production-critical gaps (session persistence, test coverage)
+- 鈿狅笍 Technical debt items identified for future work
 
 **Last Activity:** Multiple test sessions on January 7, 2026, validating focus mode transitions and conversation flow.
 
@@ -67,7 +67,7 @@ Paixueji enables object-based learning through:
 - **Conversation Flow Tree**: Debug infrastructure for incident analysis
 - **Session Save/Restore**: Export/import conversation state as JSON
 - **Manual Topic Switch Override**: AI detects new objects but offers user confirmation
-- **System-Managed Focus**: Automatic depth→width transitions based on performance
+- **System-Managed Focus**: Automatic depth鈫抴idth transitions based on performance
 - **Debug Panel**: Real-time session metadata and flow tree visualization
 - **Age-Based Question Types**:
   - 3-4 years: WHAT questions only
@@ -80,8 +80,7 @@ Paixueji enables object-based learning through:
 
 ### Major Features Implemented
 
-#### 1. Dual-Parallel Response Architecture ✅
-- **Location:** `paixueji_stream.py`
+#### 1. Dual-Parallel Response Architecture 鉁?- **Location:** `paixueji_stream.py`
 - **Description:** Responses split into two parts:
   - Part 1: Feedback/explanation (validates answer correctness)
   - Part 2: Follow-up question (continues learning)
@@ -90,8 +89,7 @@ Paixueji enables object-based learning through:
   - `e6306dc` - Merged dual-parallel branch
   - `5d530e6` - "final ver before handling"
 
-#### 2. Conversation Flow Tree Debugging System ✅
-- **Location:** `conversation_tree.py` (249 lines)
+#### 2. Conversation Flow Tree Debugging System 鉁?- **Location:** `conversation_tree.py` (249 lines)
 - **Features:**
   - Tree-based conversation tracking
   - Node types: introduction, followup, explanation, gentle_correction
@@ -101,8 +99,7 @@ Paixueji enables object-based learning through:
 - **Use Case:** Incident debugging and conversation analysis
 - **Status:** Fully operational, integrated into main flow
 
-#### 3. Real-Time SSE Streaming ✅
-- **Locations:** `app.py`, `paixueji_stream.py`, `static/app.js`
+#### 3. Real-Time SSE Streaming 鉁?- **Locations:** `app.py`, `paixueji_stream.py`, `static/app.js`
 - **Implementation:**
   - Async generators for streaming responses
   - Queue-based async-to-sync bridge (`async_gen_to_sync`)
@@ -111,26 +108,18 @@ Paixueji enables object-based learning through:
 - **Performance:** 3-15 second response times (logged)
 - **Edge Cases Handled:** Timeout detection, error fallbacks
 
-#### 4. System-Managed & Manual Focus Modes ✅
-- **Location:** `static/app.js` (focus mode control panel)
+#### 4. System-Managed & Manual Focus Modes 鉁?- **Location:** `static/app.js` (focus mode control panel)
 - **Modes:**
-  - **System-managed**: Auto depth→width transitions after 3-4 questions
+  - **System-managed**: Auto depth鈫抴idth transitions after 3-4 questions
   - **Manual**: User selects depth/width_shape/width_color/width_category
   - **Mid-chat switching**: Dropdown to change focus during conversation
 - **Logic:** Tracks depth_questions_count, depth_target, width_categories_tried
 - **Status:** Both modes operational and tested
 
-#### 5. Session Save/Restore Functionality ✅
-- **Location:** `static/app.js` (saveState/restoreState functions)
-- **Features:**
-  - Download conversation state as JSON file
-  - Upload and replay previous sessions
-  - Auto-replay of last user message
-  - Preserves: conversation history, focus mode, correct answers count
-- **Use Case:** Resume paused conversations or share sessions
+#### 5. Session Save/Restore Functionality (Removed)
+- **Status:** Deprecated and removed from UI and API as part of codebase cleanup.
 
-#### 6. AI-Powered Answer Validation & Routing ✅
-- **Location:** `paixueji_stream.py` (`decide_topic_switch_with_validation`)
+#### 6. AI-Powered Answer Validation & Routing 鉁?- **Location:** `paixueji_stream.py` (`decide_topic_switch_with_validation`)
 - **Routes to 5 Response Types:**
   1. **Positive feedback** (correct answer)
   2. **Explanation** (child unsure or says "I don't know")
@@ -140,8 +129,7 @@ Paixueji enables object-based learning through:
 - **Validation Fields:** `is_engaged`, `is_factually_correct`, `correctness_reasoning`
 - **Status:** Fully operational with streaming integration
 
-#### 7. Manual Topic Switch with Detection Override ✅
-- **Location:** `static/app.js` (manual topic switch panel)
+#### 7. Manual Topic Switch with Detection Override 鉁?- **Location:** `static/app.js` (manual topic switch panel)
 - **Flow:**
   1. AI detects child mentioned new object
   2. Shows detected object + reasoning
@@ -150,8 +138,7 @@ Paixueji enables object-based learning through:
 - **UI:** Inline panel with object name, reasoning, and action buttons
 - **Status:** Implemented and tested
 
-#### 8. Age-Appropriate Question Generation ✅
-- **Location:** `age_prompts.json`, `paixueji_stream.py`
+#### 8. Age-Appropriate Question Generation 鉁?- **Location:** `age_prompts.json`, `paixueji_stream.py`
 - **Age Groups:**
   - **3-4 years**: Simple WHAT questions, concrete concepts
   - **5-6 years**: WHAT + HOW questions, cause-and-effect
@@ -159,8 +146,7 @@ Paixueji enables object-based learning through:
 - **Integration:** Age guidance appended to system messages
 - **Status:** Fully operational
 
-#### 9. Debug Panel & Flow Tree Visualization ✅
-- **Location:** `static/index.html`, `static/app.js`
+#### 9. Debug Panel & Flow Tree Visualization 鉁?- **Location:** `static/index.html`, `static/app.js`
 - **Features:**
   - Fixed-position debug panel (right side)
   - Real-time display: Session ID, object, tone, focus mode, correct answers
@@ -169,8 +155,7 @@ Paixueji enables object-based learning through:
 - **Endpoints:** `/api/debug/flow-tree/<session_id>`, `/api/debug/logs/<session_id>`
 - **Status:** Fully functional
 
-#### 10. Comprehensive Operational Documentation ✅
-- **Location:** `docs/action-flow-graph/`, `OPERATIONAL_ARCHITECTURE.md`
+#### 10. Comprehensive Operational Documentation 鉁?- **Location:** `docs/action-flow-graph/`, `OPERATIONAL_ARCHITECTURE.md`
 - **Contents:**
   - Action taxonomy (56 actions categorized)
   - State models (frontend, session, streaming)
@@ -210,14 +195,14 @@ Paixueji enables object-based learning through:
 
 ### Critical (Production-Blocking)
 
-#### 1. No Session Persistence ⚠️
+#### 1. No Session Persistence 鈿狅笍
 - **Issue:** Sessions stored in-memory Python dict (`sessions = {}` in `app.py:23`)
 - **Impact:** All sessions lost on server restart
 - **Location:** `app.py:23` (NOTE comment acknowledges this)
 - **Recommendation:** Implement Redis or database storage for production
 - **Affected Scenarios:** Completeness checklist #20-22 (session edge cases)
 
-#### 2. Zero Test Coverage ⚠️
+#### 2. Zero Test Coverage 鈿狅笍
 - **Issue:** No test files exist in codebase
 - **Impact:** No automated verification of:
   - Validation logic (`decide_topic_switch_with_validation`)
@@ -229,7 +214,7 @@ Paixueji enables object-based learning through:
 - **Recommendation:** Create pytest suite covering critical paths
 - **Priority:** High (before production deployment)
 
-#### 3. Incomplete Error Handling ⚠️
+#### 3. Incomplete Error Handling 鈿狅笍
 - **Issue:** 76 try/except blocks use generic `except Exception` with fallback messages
 - **Impact:** No granular error recovery for specific failure modes
 - **Examples:**
@@ -240,7 +225,7 @@ Paixueji enables object-based learning through:
 
 ### Documentation Gaps
 
-#### 4. Phase 4-9 Transition Tables Incomplete ⚠️
+#### 4. Phase 4-9 Transition Tables Incomplete 鈿狅笍
 - **Location:** `docs/action-flow-graph/README.md:63-73`
 - **Missing Files:**
   - `phase4-dual-parallel.md` (TODO)
@@ -252,7 +237,7 @@ Paixueji enables object-based learning through:
 - **Workaround:** Use master flow diagram + completeness checklist
 - **Priority:** Medium (helpful for new developers)
 
-#### 5. Missing Deployment Documentation ⚠️
+#### 5. Missing Deployment Documentation 鈿狅笍
 - **Issue:** No deployment guide or production setup instructions
 - **Missing:**
   - Environment-specific configs (.dev, .prod, .test)
@@ -263,14 +248,14 @@ Paixueji enables object-based learning through:
 
 ### Technical Debt
 
-#### 6. Unbounded Conversation History ⚠️
+#### 6. Unbounded Conversation History 鈿狅笍
 - **Issue:** No truncation/pagination for long conversations
 - **Impact:** Memory growth in extended sessions (1000+ messages)
 - **Location:** Documented in `docs/action-flow-graph/README.md:325`
 - **Affected Scenario:** Completeness checklist #46
 - **Recommendation:** Implement sliding window or database pagination
 
-#### 7. Large Module Sizes ⚠️
+#### 7. Large Module Sizes 鈿狅笍
 - **Issue:** Single responsibility principle violated
 - **Files:**
   - `paixueji_stream.py`: 2,877 lines (validation + streaming + response + question generation + focus management)
@@ -278,13 +263,13 @@ Paixueji enables object-based learning through:
 - **Impact:** Harder to maintain, test, and onboard new developers
 - **Recommendation:** Refactor into smaller modules by responsibility
 
-#### 8. Silent Exception Handlers ⚠️
+#### 8. Silent Exception Handlers 鈿狅笍
 - **Issue:** 14 instances of bare `pass` statements in exception handlers
 - **Locations:** `app.py:233, 388`; `paixueji_stream.py:240, 342, 436, 528, 615, 706, 801, 898, 1383, 1519, 1653, 2001`
 - **Impact:** Errors suppressed with no logging or recovery
 - **Recommendation:** Add logging statements or specific error handling
 
-#### 9. No Dependency Version Pinning ⚠️
+#### 9. No Dependency Version Pinning 鈿狅笍
 - **Issue:** `requirements.txt` has no version constraints
 - **Dependencies:**
   ```
@@ -298,7 +283,7 @@ Paixueji enables object-based learning through:
 - **Impact:** Breaking changes in dependencies can cause failures
 - **Recommendation:** Pin to specific versions (e.g., `flask==3.0.0`)
 
-#### 10. No Environment-Specific Configuration ⚠️
+#### 10. No Environment-Specific Configuration 鈿狅笍
 - **Issue:** `config.json` has hardcoded credentials
 - **Missing:** Dev/staging/prod environment separation
 - **Location:** `config.json` (54 bytes, minimal)
@@ -306,13 +291,13 @@ Paixueji enables object-based learning through:
 
 ### Performance & Monitoring
 
-#### 11. Performance Metrics Not Actively Used ⚠️
+#### 11. Performance Metrics Not Actively Used 鈿狅笍
 - **Issue:** `SLOW_LLM_CALL_THRESHOLD = 5.0` defined but not reported to users
 - **Location:** `paixueji_stream.py:32`
 - **Missing:** Performance dashboard, metrics aggregation
 - **Recommendation:** Add monitoring with alerts for slow responses
 
-#### 12. Event Loop Resource Management ⚠️
+#### 12. Event Loop Resource Management 鈿狅笍
 - **Issue:** Event loops created per request, relies on garbage collection
 - **Location:** `app.py` (event loop creation in routes)
 - **Missing:** Explicit cleanup in finally blocks
@@ -327,21 +312,20 @@ Paixueji enables object-based learning through:
 
 ```
 User Browser
-    ↓
-Flask Server (:5001)
-    ↓ POST /api/start or /api/continue
+    鈫?Flask Server (:5001)
+    鈫?POST /api/start or /api/continue
 Session Management (in-memory dict)
-    ↓ Create/retrieve PaixuejiAssistant
+    鈫?Create/retrieve PaixuejiAssistant
 Async Stream Engine (paixueji_stream.py)
-    ↓ Async generators
+    鈫?Async generators
 Google Gemini API (Vertex AI)
-    ↓ Streaming responses
+    鈫?Streaming responses
 SSE Event Loop Bridge (async_gen_to_sync)
-    ↓ Queue-based bridge
+    鈫?Queue-based bridge
 Flask Response Stream
-    ↓ Server-Sent Events
+    鈫?Server-Sent Events
 Browser JavaScript (SSE listener)
-    ↓ Real-time chunk rendering
+    鈫?Real-time chunk rendering
 Chat UI (messages, progress, thinking time)
 ```
 
@@ -357,8 +341,6 @@ Chat UI (messages, progress, thinking time)
 | POST | `/api/classify` | JSON | Classify object into categories |
 | POST | `/api/force-switch` | JSON | Force topic switch |
 | POST | `/api/select-object` | JSON | Select object from suggestions |
-| POST | `/api/save-state` | JSON | Save conversation state |
-| POST | `/api/restore-state` | JSON | Restore previous session |
 | GET | `/api/debug/flow-tree/<id>` | JSON | Get conversation flow tree |
 | GET | `/api/debug/logs/<id>` | JSON | Get session logs |
 | GET | `/api/sessions` | JSON | List all active sessions |
@@ -380,42 +362,29 @@ Chat UI (messages, progress, thinking time)
 
 ```
 User fills form (age, object, categories, tone, focus_mode)
-    ↓
-POST /api/start
-    ↓
-Create PaixuejiAssistant instance
-    ↓
-Initialize conversation history with system prompt
-    ↓
-Call ask_introduction_question_stream()
-    ↓
-LLM generates first question (streamed)
-    ↓
-SSE chunks → browser → render gradually
+    鈫?POST /api/start
+    鈫?Create PaixuejiAssistant instance
+    鈫?Initialize conversation history with system prompt
+    鈫?Call ask_introduction_question_stream()
+    鈫?LLM generates first question (streamed)
+    鈫?SSE chunks 鈫?browser 鈫?render gradually
 ```
 
 ### Data Flow: Continue Conversation
 
 ```
 User types answer
-    ↓
-POST /api/continue
-    ↓
-Validate answer (correctness + engagement)
-    ↓
-Route to response type:
-   - Correct → Positive feedback
-   - Unsure → Explanation
-   - Wrong → Gentle correction
-   - New object → Topic switch
-    ↓
-Generate Part 1: Feedback (streamed)
-    ↓
-Generate Part 2: Follow-up question (streamed)
-    ↓
-Update session state
-    ↓
-SSE chunks → browser → render
+    鈫?POST /api/continue
+    鈫?Validate answer (correctness + engagement)
+    鈫?Route to response type:
+   - Correct 鈫?Positive feedback
+   - Unsure 鈫?Explanation
+   - Wrong 鈫?Gentle correction
+   - New object 鈫?Topic switch
+    鈫?Generate Part 1: Feedback (streamed)
+    鈫?Generate Part 2: Follow-up question (streamed)
+    鈫?Update session state
+    鈫?SSE chunks 鈫?browser 鈫?render
 ```
 
 ---
@@ -479,7 +448,7 @@ python app.py
 4. **Debug features:**
    - View session info in right-side debug panel
    - Click "Show Flow Tree" to see conversation diagram
-   - Use "Save State" to export conversation as JSON
+   - Session save/restore UI removed from the web interface
 
 ### Key Files to Know
 
@@ -555,7 +524,7 @@ python app.py
   - Use environment variables for secrets
   - Create config templates for each environment
   - Add config validation at startup
-- **Files to modify:** `config.json` → `config.template.json`, add `.env` support
+- **Files to modify:** `config.json` 鈫?`config.template.json`, add `.env` support
 - **Estimated complexity:** Low
 
 ### Priority 3: Medium (Quality Improvements)
@@ -629,7 +598,7 @@ python app.py
 
 | File | Lines | Purpose | Key Functions |
 |------|-------|---------|---------------|
-| `static/app.js` | 1,410 | SSE handling, UI rendering, state management | `startConversation`, `continueConversation`, `saveState`, `restoreState` |
+| `static/app.js` | 1,410 | SSE handling, UI rendering, state management | `startConversation`, `continueConversation` |
 | `static/index.html` | - | Web interface, forms, debug panel | Form layout, chat area, focus controls |
 | `static/style.css` | - | Styling and responsive design | Layout, animations, debug panel positioning |
 
@@ -671,7 +640,7 @@ C:\Users\123\Documents\GitHub\AI_ask_ask\Gemini\paixueji\
 
 **Git Status (as of Jan 7, 2026):**
 - Branch: `main`
-- Recent merge: `dual-parallel` → `main`
+- Recent merge: `dual-parallel` 鈫?`main`
 - Modified files: `__pycache__/*`, `static/app.js`, `static/index.html`
 - Untracked: `logs/paixueji_2026-01-07.log`
 
@@ -698,3 +667,5 @@ With these critical items addressed, the system would be production-ready for de
 ---
 
 **End of Status Report**
+
+

@@ -30,6 +30,7 @@ from .response_generators import (
     generate_explanation_response_stream,
     generate_correction_response_stream,
     generate_topic_switch_response_stream,
+    generate_child_question_response_stream,
     generate_natural_topic_completion_stream,
     generate_explicit_switch_response_stream
 )
@@ -73,6 +74,7 @@ __all__ = [
     'generate_explanation_response_stream',
     'generate_correction_response_stream',
     'generate_topic_switch_response_stream',
+    'generate_child_question_response_stream',
     'generate_natural_topic_completion_stream',
     'generate_explicit_switch_response_stream',
 

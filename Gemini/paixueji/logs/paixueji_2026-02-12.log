@@ -1,0 +1,353 @@
+2026-02-12 16:10:25.678 | INFO     | graph:node_generate_fun_fact:230 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Node: Generate Fun Fact for 'dinosaur bone'
+2026-02-12 16:10:25.681 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'dinosaur bone' (model=gemini-2.5-flash-lite)
+2026-02-12 16:10:25.682 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: dinosaur bone
+2026-02-12 16:10:28.140 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: dinosaur bone -> Category_Time_And_Space | Concept: Change | Question: Look closely at this hard dinosaur bone. What do you think happened to it to make it so different from a bone you might find today? | Thinking: 1. **Analyze Object:** A dinosaur bone is a fossilized remnant of a prehistoric animal. It's hard, often found in the ground, and tells us about life long ago. 
+2. **Match Theme:** 'Where We Are in Place and Time' is the best fit because dinosaur bones are direct evidence of past life and historical periods. 'How the World Works' is a secondary fit but 'Time and Space' captures the historical aspect more deeply. 
+3. **Match Concept:** 'Change' is the most compelling concept. It prompts inquiry into how a living bone becomes a fossil, how the dinosaur itself changed over its life, and how the world has changed since dinosaurs roamed. 'Form' is too static, 'Function' is difficult for a fossil, and 'Causation' might be too complex for the initial hook. 
+4. **Draft Question:** Focus on the transformation from living to fossil.
+2026-02-12 16:10:29.815 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 4.135s | text_length=1749
+2026-02-12 16:10:29.816 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'dinosaur bone'
+2026-02-12 16:10:31.517 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 1.702s
+2026-02-12 16:10:31.517 | INFO     | stream.fun_fact:cache_fun_fact:78 | [FUN_FACT] Cached 4 fun facts for 'dinosaur bone'
+2026-02-12 16:10:31.517 | INFO     | stream.fun_fact:generate_fun_fact:206 | [FUN_FACT] Success for 'dinosaur bone' | facts_count=4, selected='Did you know... dinosaur bones are like the skeleton inside ...'
+2026-02-12 16:10:31.518 | INFO     | graph:node_generate_fun_fact:245 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Node: Generate Fun Fact finished in 5.840s
+2026-02-12 16:10:31.518 | INFO     | graph:node_generate_response:446 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Node: Generate Response (introduction)
+2026-02-12 16:10:31.518 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=dinosaur bone, age=6, has_fun_fact=True
+2026-02-12 16:10:31.518 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-12 16:10:31.518 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-12 16:10:31.518 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: generator
+2026-02-12 16:10:32.031 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=5, total_length=5
+2026-02-12 16:10:32.031 | INFO     | graph:stream_generator_to_callback:369 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Time to First Token (TTFT): 0.513s for introduction
+2026-02-12 16:10:32.056 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=9, total_length=14
+2026-02-12 16:10:32.068 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=77, total_length=91
+2026-02-12 16:10:32.102 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=87, total_length=178
+2026-02-12 16:10:32.223 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=139, total_length=317
+2026-02-12 16:10:32.250 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 6 | length=1, total_length=318
+2026-02-12 16:10:32.252 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-12 16:10:32.252 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-12 16:10:32.252 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=0.734s, response_length=318
+2026-02-12 16:10:32.252 | INFO     | graph:stream_generator_to_callback:436 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Stream finished in 0.734s for introduction
+2026-02-12 16:10:32.252 | INFO     | graph:node_generate_response:573 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Node: Generate Response finished in 0.734s
+2026-02-12 16:10:32.255 | INFO     | graph:node_generate_question:586 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Node: Generate Question
+2026-02-12 16:10:32.256 | INFO     | graph:node_finalize:972 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Node: Finalize
+2026-02-12 16:10:32.256 | INFO     | graph:node_finalize:1030 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Node: Finalize finished in 0.000s
+2026-02-12 16:10:50.593 | INFO     | graph:node_analyze_input:168 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Node: Analyze Input
+2026-02-12 16:10:52.017 | INFO     | stream.validation:decide_topic_switch_with_validation:140 | [VALIDATE] LLM Call Duration: 1.424s (using gemini-2.5-flash-lite async)
+2026-02-12 16:10:52.018 | INFO     | stream.validation:decide_topic_switch_with_validation:145 | [VALIDATE] SWITCH | new_object=food, engaged=True, correct=False, switch_reasoning=The child asked a question about what dinosaurs eat, which is a new topic., correctness_reasoning=The question asked about the appearance of a dinosaur bone, not what dinosaurs eat.
+2026-02-12 16:10:52.018 | INFO     | graph:node_analyze_input:219 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Node: Analyze Input finished in 1.425s
+2026-02-12 16:10:52.018 | INFO     | graph:node_route_logic:260 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Node: Route Logic
+2026-02-12 16:10:52.020 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: food
+2026-02-12 16:10:53.124 | INFO     | graph:node_route_logic:345 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Node: Route Logic finished in 1.106s
+2026-02-12 16:10:53.125 | INFO     | graph:node_generate_response:446 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Node: Generate Response (topic_switch)
+2026-02-12 16:10:53.125 | INFO     | stream.response_generators:generate_topic_switch_response_stream:327 | generate_topic_switch_response_stream started | the previous object -> food, age=6
+2026-02-12 16:10:53.532 | INFO     | graph:stream_generator_to_callback:369 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Time to First Token (TTFT): 0.407s for topic_switch
+2026-02-12 16:10:53.699 | INFO     | stream.response_generators:generate_topic_switch_response_stream:382 | generate_topic_switch_response_stream completed | duration=0.574s, length=173
+2026-02-12 16:10:53.699 | INFO     | graph:stream_generator_to_callback:436 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Stream finished in 0.574s for topic_switch
+2026-02-12 16:10:53.700 | INFO     | graph:node_generate_response:573 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Node: Generate Response finished in 0.575s
+2026-02-12 16:10:53.701 | INFO     | graph:node_generate_question:586 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Node: Generate Question
+2026-02-12 16:10:53.701 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=food, age=6, is_switch=True
+2026-02-12 16:10:54.206 | INFO     | graph:stream_generator_to_callback:369 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Time to First Token (TTFT): 0.505s for followup_question
+2026-02-12 16:10:54.365 | INFO     | stream.question_generators:generate_followup_question_stream:280 | generate_followup_question_stream completed | duration=0.664s, length=229
+2026-02-12 16:10:54.366 | INFO     | graph:stream_generator_to_callback:436 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Stream finished in 0.665s for followup_question
+2026-02-12 16:10:54.366 | INFO     | graph:node_generate_question:634 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Node: Generate Question finished in 0.665s
+2026-02-12 16:10:54.368 | INFO     | graph:node_finalize:972 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Node: Finalize
+2026-02-12 16:10:54.369 | INFO     | graph:node_finalize:1030 | [db176da3-977b-4a08-83d9-e2b8ee31c18e] Node: Finalize finished in 0.000s
+2026-02-12 16:10:54.474 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: food -> Category_Identity_And_Health | Concept: Function | Question: Look at this apple! Why do you think our bodies need to eat yummy food like this? | Thinking: 1. **Analyze Object:** Food is something we eat for energy and growth. It comes in many forms (fruits, vegetables, grains, etc.) and has different tastes, textures, and smells. Its primary purpose is to nourish the body. 
+2. **Match Theme:** 'Who We Are' is the best fit because food directly impacts our bodies, health, and well-being. While 'How the World Works' could apply to its origins, and 'Sharing the Planet' to its production, the most immediate and personal connection for a child is how food relates to *them*.
+3. **Match Concept:** 'Function' is the strongest concept. Children are naturally curious about what things *do*. Asking 'How does food work?' or 'What does food do for us?' leads to exploring its role in giving energy, helping us grow, and keeping us healthy. 'Form' is too static, 'Change' could apply to cooking but not the core purpose, 'Causation' is too abstract for a child's initial inquiry about food's purpose, 'Connection' is secondary, 'Perspective' is about opinions, and 'Responsibility' comes later. 
+4. **Draft Question:** Focus on the sensory aspects and the purpose.
+2026-02-12 16:14:44.176 | INFO     | graph:node_generate_fun_fact:230 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Fun Fact for 'dinosaur bone'
+2026-02-12 16:14:44.178 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'dinosaur bone' (model=gemini-2.5-flash-lite)
+2026-02-12 16:14:44.179 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: dinosaur bone
+2026-02-12 16:14:48.825 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: dinosaur bone -> Category_Time_And_Space | Concept: Change | Question: Look at this hard dinosaur bone! What do you think happened to make it change from a part of a living dinosaur into this stone? | Thinking: 1. **Analyze Object:** A dinosaur bone is a fossilized remnant of a prehistoric animal. It's hard, often found in the ground, and tells us about life long ago. 
+2. **Match Theme:** 'Where We Are in Place and Time' is the best fit because dinosaur bones are direct evidence of past life and historical periods. 'How the World Works' is a secondary fit but 'Where We Are in Place and Time' focuses more on the historical aspect. 
+3. **Match Concept:** 'Change' is the most engaging concept. It prompts questions about how a living bone becomes a hard fossil over millions of years, and how the dinosaur itself changed over its lifetime. 'Form' is too static, 'Function' is irrelevant for a fossil, and 'Causation' might be too complex for the initial hook. 
+4. **Draft Question:** Focus on the transformation from living to fossil and the passage of time.
+2026-02-12 16:14:49.421 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 5.243s | text_length=1174
+2026-02-12 16:14:49.421 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'dinosaur bone'
+2026-02-12 16:14:51.204 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 1.783s
+2026-02-12 16:14:51.204 | INFO     | stream.fun_fact:cache_fun_fact:78 | [FUN_FACT] Cached 4 fun facts for 'dinosaur bone'
+2026-02-12 16:14:51.204 | INFO     | stream.fun_fact:generate_fun_fact:206 | [FUN_FACT] Success for 'dinosaur bone' | facts_count=4, selected='Did you know that even though we call them dinosaur bones, t...'
+2026-02-12 16:14:51.204 | INFO     | graph:node_generate_fun_fact:245 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Fun Fact finished in 7.029s
+2026-02-12 16:14:51.205 | INFO     | graph:node_generate_response:446 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Response (introduction)
+2026-02-12 16:14:51.205 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=dinosaur bone, age=6, has_fun_fact=True
+2026-02-12 16:14:51.205 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-12 16:14:51.205 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-12 16:14:51.205 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: generator
+2026-02-12 16:14:51.691 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=5, total_length=5
+2026-02-12 16:14:51.691 | INFO     | graph:stream_generator_to_callback:369 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Time to First Token (TTFT): 0.486s for introduction
+2026-02-12 16:14:51.730 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=13, total_length=18
+2026-02-12 16:14:51.808 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=72, total_length=90
+2026-02-12 16:14:51.847 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=81, total_length=171
+2026-02-12 16:14:51.931 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=143, total_length=314
+2026-02-12 16:14:51.976 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 6 | length=65, total_length=379
+2026-02-12 16:14:51.978 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-12 16:14:51.978 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-12 16:14:51.978 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=0.773s, response_length=379
+2026-02-12 16:14:51.978 | INFO     | graph:stream_generator_to_callback:436 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Stream finished in 0.773s for introduction
+2026-02-12 16:14:51.978 | INFO     | graph:node_generate_response:573 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Response finished in 0.773s
+2026-02-12 16:14:51.980 | INFO     | graph:node_generate_question:586 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Question
+2026-02-12 16:14:51.981 | INFO     | graph:node_finalize:972 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Finalize
+2026-02-12 16:14:51.981 | INFO     | graph:node_finalize:1030 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Finalize finished in 0.000s
+2026-02-12 16:15:04.601 | INFO     | graph:node_analyze_input:168 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Analyze Input
+2026-02-12 16:15:05.753 | INFO     | stream.validation:decide_topic_switch_with_validation:140 | [VALIDATE] LLM Call Duration: 1.152s (using gemini-2.5-flash-lite async)
+2026-02-12 16:15:05.753 | INFO     | stream.validation:decide_topic_switch_with_validation:145 | [VALIDATE] SWITCH | new_object=food, engaged=True, correct=False, switch_reasoning=The child asked a question about what dinosaurs eat, which is a new topic., correctness_reasoning=The question was about what a dinosaur bone helped a dinosaur do, not what dinosaurs eat.
+2026-02-12 16:15:05.753 | INFO     | graph:node_analyze_input:219 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Analyze Input finished in 1.152s
+2026-02-12 16:15:05.753 | INFO     | graph:node_route_logic:260 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Route Logic
+2026-02-12 16:15:05.755 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: food
+2026-02-12 16:15:06.842 | INFO     | graph:node_route_logic:345 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Route Logic finished in 1.089s
+2026-02-12 16:15:06.843 | INFO     | graph:node_generate_response:446 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Response (topic_switch)
+2026-02-12 16:15:06.843 | INFO     | stream.response_generators:generate_topic_switch_response_stream:327 | generate_topic_switch_response_stream started | the previous object -> food, age=6
+2026-02-12 16:15:07.240 | INFO     | graph:stream_generator_to_callback:369 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Time to First Token (TTFT): 0.397s for topic_switch
+2026-02-12 16:15:07.481 | INFO     | stream.response_generators:generate_topic_switch_response_stream:382 | generate_topic_switch_response_stream completed | duration=0.638s, length=240
+2026-02-12 16:15:07.481 | INFO     | graph:stream_generator_to_callback:436 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Stream finished in 0.638s for topic_switch
+2026-02-12 16:15:07.482 | INFO     | graph:node_generate_response:573 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Response finished in 0.639s
+2026-02-12 16:15:07.484 | INFO     | graph:node_generate_question:586 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Question
+2026-02-12 16:15:07.484 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=food, age=6, is_switch=True
+2026-02-12 16:15:08.002 | INFO     | graph:stream_generator_to_callback:369 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Time to First Token (TTFT): 0.518s for followup_question
+2026-02-12 16:15:08.270 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: food -> Category_Identity_And_Health | Concept: Function | Question: Look at this apple! Why do you think our bodies need to eat yummy food like this? | Thinking: 1. **Analyze Object:** Food is sustenance for living beings. It has various forms, textures, tastes, and origins. Its primary purpose is to provide energy and nutrients. 
+2. **Match Theme:** Food is most deeply connected to 'Who We Are' because it directly impacts our health, bodies, and survival. While it relates to 'How the World Works' (biology, agriculture) and 'Sharing the Planet' (resources), its most immediate and personal connection for a child is to their own body and well-being.
+3. **Match Concept:** 'Function' is the best fit because it prompts children to ask 'How does food work for us?' This leads to inquiries about energy, growth, and health, which are central to understanding ourselves. 'Form' is too superficial, 'Causation' is complex for food's effects, 'Change' could apply to cooking but not the core concept of food itself, 'Connection' is too broad, 'Perspective' is about opinions, and 'Responsibility' is a later stage. 'Function' is the most engaging and age-appropriate for exploring what food *does*.
+4. **Draft Question:** Focus on the sensory aspects and the purpose of food.
+2026-02-12 16:15:08.345 | INFO     | stream.question_generators:generate_followup_question_stream:280 | generate_followup_question_stream completed | duration=0.861s, length=183
+2026-02-12 16:15:08.345 | INFO     | graph:stream_generator_to_callback:436 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Stream finished in 0.861s for followup_question
+2026-02-12 16:15:08.345 | INFO     | graph:node_generate_question:634 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Question finished in 0.861s
+2026-02-12 16:15:08.346 | INFO     | graph:node_finalize:972 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Finalize
+2026-02-12 16:15:08.346 | INFO     | graph:node_finalize:1030 | [5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Finalize finished in 0.000s
+2026-02-12 16:16:01.216 | INFO     | __main__:manual_critique:1822 | [MANUAL-CRITIQUE] Report saved: C:\Users\123\Documents\GitHub\AI_ask_ask\Gemini\paixueji\reports\HF\food_20260212_161601.md | exchanges critiqued: 1 | case bundle: C:\Users\123\Documents\GitHub\AI_ask_ask\Gemini\paixueji\reports\HF_cases\food_20260212_161601.json
+2026-02-12 16:20:48.624 | INFO     | stream.validation:decide_topic_switch_with_validation:189 | [VALIDATE] LLM Call Duration: 0.000s (using gemini-2.5-flash-lite async)
+2026-02-12 16:20:48.624 | INFO     | stream.validation:decide_topic_switch_with_validation:206 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, is_child_question=True, switch_reasoning=Direct answer, correctness_reasoning=ok
+2026-02-12 16:20:48.626 | INFO     | stream.validation:decide_topic_switch_with_validation:189 | [VALIDATE] LLM Call Duration: 0.000s (using gemini-2.5-flash-lite async)
+2026-02-12 16:20:48.627 | INFO     | stream.validation:decide_topic_switch_with_validation:206 | [VALIDATE] SWITCH | new_object=cars, engaged=True, correct=False, is_child_question=False, switch_reasoning=explicit switch, correctness_reasoning=n/a
+2026-02-12 16:20:49.408 | INFO     | graph:node_generate_fun_fact:235 | [0933e0e5-f4eb-4504-be5d-677dbe5a6ea5] Node: Generate Fun Fact for 'apple'
+2026-02-12 16:20:49.410 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'apple' (model=gemini-2.5-flash-lite)
+2026-02-12 16:20:49.410 | ERROR    | stream.fun_fact:generate_fun_fact:157 | [FUN_FACT] Step 1 (grounding) failed for 'apple': 'MockGeminiClient' object has no attribute 'aio'
+2026-02-12 16:20:49.410 | INFO     | graph:node_generate_fun_fact:250 | [0933e0e5-f4eb-4504-be5d-677dbe5a6ea5] Node: Generate Fun Fact finished in 0.002s
+2026-02-12 16:20:49.411 | INFO     | graph:node_generate_response:455 | [0933e0e5-f4eb-4504-be5d-677dbe5a6ea5] Node: Generate Response (introduction)
+2026-02-12 16:20:49.411 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=False
+2026-02-12 16:20:49.411 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-12 16:20:49.411 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-12 16:20:49.411 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: MockStream
+2026-02-12 16:20:49.411 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=5, total_length=5
+2026-02-12 16:20:49.411 | INFO     | graph:stream_generator_to_callback:378 | [0933e0e5-f4eb-4504-be5d-677dbe5a6ea5] Time to First Token (TTFT): 0.001s for introduction
+2026-02-12 16:20:49.411 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-02-12 16:20:49.412 | ERROR    | theme_classifier:classify_object_to_theme:78 | [THEME_CLASSIFY] Error classifying object: Expecting value: line 1 column 1 (char 0)
+2026-02-12 16:20:49.412 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=9, total_length=14
+2026-02-12 16:20:49.412 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-12 16:20:49.412 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-12 16:20:49.412 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=0.001s, response_length=14
+2026-02-12 16:20:49.412 | INFO     | graph:stream_generator_to_callback:445 | [0933e0e5-f4eb-4504-be5d-677dbe5a6ea5] Stream finished in 0.001s for introduction
+2026-02-12 16:20:49.412 | INFO     | graph:node_generate_response:591 | [0933e0e5-f4eb-4504-be5d-677dbe5a6ea5] Node: Generate Response finished in 0.001s
+2026-02-12 16:20:49.413 | INFO     | graph:node_generate_question:604 | [0933e0e5-f4eb-4504-be5d-677dbe5a6ea5] Node: Generate Question
+2026-02-12 16:20:49.414 | INFO     | graph:node_finalize:990 | [0933e0e5-f4eb-4504-be5d-677dbe5a6ea5] Node: Finalize
+2026-02-12 16:20:49.414 | INFO     | graph:node_finalize:1048 | [0933e0e5-f4eb-4504-be5d-677dbe5a6ea5] Node: Finalize finished in 0.000s
+2026-02-12 16:20:49.419 | INFO     | graph:node_generate_fun_fact:235 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Node: Generate Fun Fact for 'apple'
+2026-02-12 16:20:49.419 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'apple' (model=gemini-2.5-flash-lite)
+2026-02-12 16:20:49.419 | ERROR    | stream.fun_fact:generate_fun_fact:157 | [FUN_FACT] Step 1 (grounding) failed for 'apple': 'MockGeminiClient' object has no attribute 'aio'
+2026-02-12 16:20:49.420 | INFO     | graph:node_generate_fun_fact:250 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Node: Generate Fun Fact finished in 0.001s
+2026-02-12 16:20:49.420 | INFO     | graph:node_generate_response:455 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Node: Generate Response (introduction)
+2026-02-12 16:20:49.420 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=False
+2026-02-12 16:20:49.420 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-12 16:20:49.421 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-12 16:20:49.421 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: MockStream
+2026-02-12 16:20:49.421 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=5, total_length=5
+2026-02-12 16:20:49.421 | INFO     | graph:stream_generator_to_callback:378 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Time to First Token (TTFT): 0.000s for introduction
+2026-02-12 16:20:49.421 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=9, total_length=14
+2026-02-12 16:20:49.421 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-12 16:20:49.421 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-12 16:20:49.421 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=0.001s, response_length=14
+2026-02-12 16:20:49.421 | INFO     | graph:stream_generator_to_callback:445 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Stream finished in 0.001s for introduction
+2026-02-12 16:20:49.421 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-02-12 16:20:49.422 | ERROR    | theme_classifier:classify_object_to_theme:78 | [THEME_CLASSIFY] Error classifying object: Expecting value: line 1 column 1 (char 0)
+2026-02-12 16:20:49.422 | INFO     | graph:node_generate_response:591 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Node: Generate Response finished in 0.001s
+2026-02-12 16:20:49.423 | INFO     | graph:node_generate_question:604 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Node: Generate Question
+2026-02-12 16:20:49.423 | INFO     | graph:node_finalize:990 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Node: Finalize
+2026-02-12 16:20:49.423 | INFO     | graph:node_finalize:1048 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Node: Finalize finished in 0.000s
+2026-02-12 16:20:49.426 | INFO     | graph:node_analyze_input:171 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Node: Analyze Input
+2026-02-12 16:20:49.426 | ERROR    | stream.validation:decide_topic_switch_with_validation:219 | [VALIDATE] Error: 'MockGeminiClient' object has no attribute 'aio', defaulting to safe state
+2026-02-12 16:20:49.428 | INFO     | graph:node_analyze_input:224 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Node: Analyze Input finished in 0.002s
+2026-02-12 16:20:49.428 | INFO     | graph:node_route_logic:265 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Node: Route Logic
+2026-02-12 16:20:49.428 | INFO     | graph:node_route_logic:354 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Node: Route Logic finished in 0.000s
+2026-02-12 16:20:49.429 | INFO     | graph:node_generate_response:455 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Node: Generate Response (feedback)
+2026-02-12 16:20:49.429 | INFO     | stream.response_generators:generate_feedback_response_stream:55 | generate_feedback_response_stream started | object=apple, age=6
+2026-02-12 16:20:49.429 | INFO     | graph:stream_generator_to_callback:378 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Time to First Token (TTFT): 0.000s for feedback
+2026-02-12 16:20:49.429 | INFO     | stream.response_generators:generate_feedback_response_stream:110 | generate_feedback_response_stream completed | duration=0.000s, length=14
+2026-02-12 16:20:49.429 | INFO     | graph:stream_generator_to_callback:445 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Stream finished in 0.000s for feedback
+2026-02-12 16:20:49.429 | INFO     | graph:node_generate_response:591 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Node: Generate Response finished in 0.000s
+2026-02-12 16:20:49.430 | INFO     | graph:node_generate_question:604 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Node: Generate Question
+2026-02-12 16:20:49.430 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=apple, age=6, is_switch=False
+2026-02-12 16:20:49.430 | INFO     | graph:stream_generator_to_callback:378 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Time to First Token (TTFT): 0.000s for followup_question
+2026-02-12 16:20:49.430 | INFO     | stream.question_generators:generate_followup_question_stream:280 | generate_followup_question_stream completed | duration=0.000s, length=28
+2026-02-12 16:20:49.431 | INFO     | graph:stream_generator_to_callback:445 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Stream finished in 0.000s for followup_question
+2026-02-12 16:20:49.431 | INFO     | graph:node_generate_question:652 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Node: Generate Question finished in 0.000s
+2026-02-12 16:20:49.431 | INFO     | graph:node_finalize:990 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Node: Finalize
+2026-02-12 16:20:49.431 | INFO     | graph:node_finalize:1048 | [234b11df-75b1-4ee4-85fb-56a7023db89a] Node: Finalize finished in 0.000s
+2026-02-12 16:27:43.053 | INFO     | graph:node_analyze_input:171 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Analyze Input
+2026-02-12 16:27:57.990 | INFO     | stream.validation:decide_topic_switch_with_validation:189 | [VALIDATE] LLM Call Duration: 14.937s (using gemini-2.5-flash-lite async)
+2026-02-12 16:27:57.991 | INFO     | stream.validation:decide_topic_switch_with_validation:206 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, is_child_question=True, switch_reasoning=The child asked a question about dinosaurs, which is related to the original topic., correctness_reasoning=The child asked a question about what dinosaurs eat, which is a valid question related to dinosaurs.
+2026-02-12 16:27:57.991 | INFO     | graph:node_analyze_input:224 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Analyze Input finished in 14.938s
+2026-02-12 16:27:57.992 | INFO     | graph:node_route_logic:265 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Route Logic
+2026-02-12 16:27:57.992 | INFO     | graph:node_route_logic:354 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Route Logic finished in 0.000s
+2026-02-12 16:27:57.993 | INFO     | graph:node_generate_response:455 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Response (child_question_answer)
+2026-02-12 16:27:57.993 | INFO     | stream.response_generators:generate_child_question_response_stream:403 | generate_child_question_response_stream started | object=food, age=6
+2026-02-12 16:27:58.760 | INFO     | graph:stream_generator_to_callback:378 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Time to First Token (TTFT): 0.767s for child_question_answer
+2026-02-12 16:27:58.967 | INFO     | stream.response_generators:generate_child_question_response_stream:452 | generate_child_question_response_stream completed | duration=0.974s, length=220
+2026-02-12 16:27:58.967 | INFO     | graph:stream_generator_to_callback:445 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Stream finished in 0.975s for child_question_answer
+2026-02-12 16:27:58.968 | INFO     | graph:node_generate_response:591 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Response finished in 0.975s
+2026-02-12 16:27:58.969 | INFO     | graph:node_generate_question:604 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Question
+2026-02-12 16:27:58.969 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=food, age=6, is_switch=False
+2026-02-12 16:27:59.408 | INFO     | graph:stream_generator_to_callback:378 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Time to First Token (TTFT): 0.440s for followup_question
+2026-02-12 16:27:59.665 | INFO     | stream.question_generators:generate_followup_question_stream:280 | generate_followup_question_stream completed | duration=0.696s, length=231
+2026-02-12 16:27:59.665 | INFO     | graph:stream_generator_to_callback:445 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Stream finished in 0.697s for followup_question
+2026-02-12 16:27:59.666 | INFO     | graph:node_generate_question:652 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Question finished in 0.697s
+2026-02-12 16:27:59.666 | INFO     | graph:node_finalize:990 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Finalize
+2026-02-12 16:27:59.667 | INFO     | graph:node_finalize:1048 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Finalize finished in 0.000s
+2026-02-12 16:27:59.670 | INFO     | graph:node_analyze_input:171 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Analyze Input
+2026-02-12 16:28:00.529 | INFO     | stream.validation:decide_topic_switch_with_validation:189 | [VALIDATE] LLM Call Duration: 0.859s (using gemini-2.5-flash-lite async)
+2026-02-12 16:28:00.529 | INFO     | stream.validation:decide_topic_switch_with_validation:206 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, is_child_question=True, switch_reasoning=The child asked a question about dinosaurs, which is related to the original topic., correctness_reasoning=The child asked a question about what dinosaurs eat, which is a valid follow-up question related to dinosaurs.
+2026-02-12 16:28:00.530 | INFO     | graph:node_analyze_input:224 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Analyze Input finished in 0.860s
+2026-02-12 16:28:00.530 | INFO     | graph:node_route_logic:265 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Route Logic
+2026-02-12 16:28:00.530 | INFO     | graph:node_route_logic:354 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Route Logic finished in 0.000s
+2026-02-12 16:28:00.531 | INFO     | graph:node_generate_response:455 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Response (child_question_answer)
+2026-02-12 16:28:00.531 | INFO     | stream.response_generators:generate_child_question_response_stream:403 | generate_child_question_response_stream started | object=food, age=6
+2026-02-12 16:28:01.129 | INFO     | graph:stream_generator_to_callback:378 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Time to First Token (TTFT): 0.598s for child_question_answer
+2026-02-12 16:28:01.362 | INFO     | stream.response_generators:generate_child_question_response_stream:452 | generate_child_question_response_stream completed | duration=0.831s, length=230
+2026-02-12 16:28:01.362 | INFO     | graph:stream_generator_to_callback:445 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Stream finished in 0.831s for child_question_answer
+2026-02-12 16:28:01.362 | INFO     | graph:node_generate_response:591 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Response finished in 0.831s
+2026-02-12 16:28:01.363 | INFO     | graph:node_generate_question:604 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Question
+2026-02-12 16:28:01.363 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=food, age=6, is_switch=False
+2026-02-12 16:28:01.852 | INFO     | graph:stream_generator_to_callback:378 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Time to First Token (TTFT): 0.489s for followup_question
+2026-02-12 16:28:02.151 | INFO     | stream.question_generators:generate_followup_question_stream:280 | generate_followup_question_stream completed | duration=0.788s, length=235
+2026-02-12 16:28:02.151 | INFO     | graph:stream_generator_to_callback:445 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Stream finished in 0.788s for followup_question
+2026-02-12 16:28:02.152 | INFO     | graph:node_generate_question:652 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Question finished in 0.788s
+2026-02-12 16:28:02.152 | INFO     | graph:node_finalize:990 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Finalize
+2026-02-12 16:28:02.152 | INFO     | graph:node_finalize:1048 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Finalize finished in 0.000s
+2026-02-12 16:53:08.329 | INFO     | graph:node_analyze_input:171 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Analyze Input
+2026-02-12 16:53:32.032 | ERROR    | stream.validation:decide_topic_switch_with_validation:219 | [VALIDATE] Error: HTTPSConnectionPool(host='oauth2.googleapis.com', port=443): Max retries exceeded with url: /token (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x000002018C099D30>: Failed to establish a new connection: [WinError 10013] 以一种访问权限不允许的方式做了一个访问套接字的尝试。')), defaulting to safe state
+2026-02-12 16:53:32.283 | INFO     | graph:node_analyze_input:224 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Analyze Input finished in 23.954s
+2026-02-12 16:53:32.284 | INFO     | graph:node_route_logic:265 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Route Logic
+2026-02-12 16:53:32.284 | INFO     | graph:node_route_logic:354 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Route Logic finished in 0.000s
+2026-02-12 16:53:32.284 | INFO     | graph:node_generate_response:455 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Response (child_question_answer)
+2026-02-12 16:53:32.284 | INFO     | stream.response_generators:generate_child_question_response_stream:403 | generate_child_question_response_stream started | object=food, age=6
+2026-02-12 16:53:32.286 | ERROR    | stream.response_generators:generate_child_question_response_stream:440 | generate_child_question_response_stream error | error=HTTPSConnectionPool(host='oauth2.googleapis.com', port=443): Max retries exceeded with url: /token (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x000002018C5802D0>: Failed to establish a new connection: [WinError 10013] 以一种访问权限不允许的方式做了一个访问套接字的尝试。')), duration=0.002s
+2026-02-12 16:53:32.287 | INFO     | graph:stream_generator_to_callback:445 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Stream finished in 0.002s for child_question_answer
+2026-02-12 16:53:32.287 | INFO     | graph:node_generate_response:591 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Response finished in 0.002s
+2026-02-12 16:53:32.288 | INFO     | graph:node_generate_question:604 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Question
+2026-02-12 16:53:32.288 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=food, age=6, is_switch=False
+2026-02-12 16:53:32.302 | ERROR    | stream.question_generators:generate_followup_question_stream:268 | generate_followup_question_stream error | error=HTTPSConnectionPool(host='oauth2.googleapis.com', port=443): Max retries exceeded with url: /token (Caused by NewConnectionError('<urllib3.connection.HTTPSConnection object at 0x000002018C581590>: Failed to establish a new connection: [WinError 10013] 以一种访问权限不允许的方式做了一个访问套接字的尝试。')), duration=0.014s
+2026-02-12 16:53:32.302 | INFO     | graph:stream_generator_to_callback:445 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Stream finished in 0.014s for followup_question
+2026-02-12 16:53:32.302 | INFO     | graph:node_generate_question:652 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Question finished in 0.014s
+2026-02-12 16:53:32.303 | INFO     | graph:node_finalize:990 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Finalize
+2026-02-12 16:53:32.303 | INFO     | graph:node_finalize:1048 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Finalize finished in 0.000s
+2026-02-12 16:53:50.339 | INFO     | graph:node_generate_fun_fact:235 | [fb8077b3-61e2-4657-8d9e-546d4d212735] Node: Generate Fun Fact for 'apple'
+2026-02-12 16:53:50.342 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'apple' (model=gemini-2.5-flash-lite)
+2026-02-12 16:53:50.342 | ERROR    | stream.fun_fact:generate_fun_fact:157 | [FUN_FACT] Step 1 (grounding) failed for 'apple': 'MockGeminiClient' object has no attribute 'aio'
+2026-02-12 16:53:50.342 | INFO     | graph:node_generate_fun_fact:250 | [fb8077b3-61e2-4657-8d9e-546d4d212735] Node: Generate Fun Fact finished in 0.003s
+2026-02-12 16:53:50.343 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-02-12 16:53:50.343 | ERROR    | theme_classifier:classify_object_to_theme:78 | [THEME_CLASSIFY] Error classifying object: Expecting value: line 1 column 1 (char 0)
+2026-02-12 16:53:50.344 | INFO     | graph:node_generate_response:455 | [fb8077b3-61e2-4657-8d9e-546d4d212735] Node: Generate Response (introduction)
+2026-02-12 16:53:50.344 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=False
+2026-02-12 16:53:50.344 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-12 16:53:50.344 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-12 16:53:50.344 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: MockStream
+2026-02-12 16:53:50.344 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=5, total_length=5
+2026-02-12 16:53:50.345 | INFO     | graph:stream_generator_to_callback:378 | [fb8077b3-61e2-4657-8d9e-546d4d212735] Time to First Token (TTFT): 0.000s for introduction
+2026-02-12 16:53:50.345 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=9, total_length=14
+2026-02-12 16:53:50.345 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-12 16:53:50.345 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-12 16:53:50.345 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=0.001s, response_length=14
+2026-02-12 16:53:50.345 | INFO     | graph:stream_generator_to_callback:445 | [fb8077b3-61e2-4657-8d9e-546d4d212735] Stream finished in 0.001s for introduction
+2026-02-12 16:53:50.345 | INFO     | graph:node_generate_response:591 | [fb8077b3-61e2-4657-8d9e-546d4d212735] Node: Generate Response finished in 0.001s
+2026-02-12 16:53:50.346 | INFO     | graph:node_generate_question:604 | [fb8077b3-61e2-4657-8d9e-546d4d212735] Node: Generate Question
+2026-02-12 16:53:50.346 | INFO     | graph:node_finalize:990 | [fb8077b3-61e2-4657-8d9e-546d4d212735] Node: Finalize
+2026-02-12 16:53:50.347 | INFO     | graph:node_finalize:1048 | [fb8077b3-61e2-4657-8d9e-546d4d212735] Node: Finalize finished in 0.000s
+2026-02-12 16:53:50.352 | INFO     | graph:node_generate_fun_fact:235 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Node: Generate Fun Fact for 'apple'
+2026-02-12 16:53:50.352 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'apple' (model=gemini-2.5-flash-lite)
+2026-02-12 16:53:50.352 | ERROR    | stream.fun_fact:generate_fun_fact:157 | [FUN_FACT] Step 1 (grounding) failed for 'apple': 'MockGeminiClient' object has no attribute 'aio'
+2026-02-12 16:53:50.352 | INFO     | graph:node_generate_fun_fact:250 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Node: Generate Fun Fact finished in 0.001s
+2026-02-12 16:53:50.353 | INFO     | graph:node_generate_response:455 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Node: Generate Response (introduction)
+2026-02-12 16:53:50.353 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=False
+2026-02-12 16:53:50.353 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-12 16:53:50.353 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-12 16:53:50.353 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: MockStream
+2026-02-12 16:53:50.353 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=5, total_length=5
+2026-02-12 16:53:50.353 | INFO     | graph:stream_generator_to_callback:378 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Time to First Token (TTFT): 0.000s for introduction
+2026-02-12 16:53:50.354 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=9, total_length=14
+2026-02-12 16:53:50.354 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-02-12 16:53:50.354 | ERROR    | theme_classifier:classify_object_to_theme:78 | [THEME_CLASSIFY] Error classifying object: Expecting value: line 1 column 1 (char 0)
+2026-02-12 16:53:50.354 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-12 16:53:50.354 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-12 16:53:50.354 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=0.001s, response_length=14
+2026-02-12 16:53:50.354 | INFO     | graph:stream_generator_to_callback:445 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Stream finished in 0.002s for introduction
+2026-02-12 16:53:50.354 | INFO     | graph:node_generate_response:591 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Node: Generate Response finished in 0.002s
+2026-02-12 16:53:50.355 | INFO     | graph:node_generate_question:604 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Node: Generate Question
+2026-02-12 16:53:50.356 | INFO     | graph:node_finalize:990 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Node: Finalize
+2026-02-12 16:53:50.356 | INFO     | graph:node_finalize:1048 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Node: Finalize finished in 0.000s
+2026-02-12 16:53:50.359 | INFO     | graph:node_analyze_input:171 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Node: Analyze Input
+2026-02-12 16:53:50.359 | ERROR    | stream.validation:decide_topic_switch_with_validation:219 | [VALIDATE] Error: 'MockGeminiClient' object has no attribute 'aio', defaulting to safe state
+2026-02-12 16:53:50.360 | INFO     | graph:node_analyze_input:224 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Node: Analyze Input finished in 0.001s
+2026-02-12 16:53:50.360 | INFO     | graph:node_route_logic:265 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Node: Route Logic
+2026-02-12 16:53:50.360 | INFO     | graph:node_route_logic:354 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Node: Route Logic finished in 0.000s
+2026-02-12 16:53:50.361 | INFO     | graph:node_generate_response:455 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Node: Generate Response (feedback)
+2026-02-12 16:53:50.361 | INFO     | stream.response_generators:generate_feedback_response_stream:55 | generate_feedback_response_stream started | object=apple, age=6
+2026-02-12 16:53:50.361 | INFO     | graph:stream_generator_to_callback:378 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Time to First Token (TTFT): 0.000s for feedback
+2026-02-12 16:53:50.361 | INFO     | stream.response_generators:generate_feedback_response_stream:110 | generate_feedback_response_stream completed | duration=0.000s, length=14
+2026-02-12 16:53:50.361 | INFO     | graph:stream_generator_to_callback:445 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Stream finished in 0.000s for feedback
+2026-02-12 16:53:50.361 | INFO     | graph:node_generate_response:591 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Node: Generate Response finished in 0.000s
+2026-02-12 16:53:50.362 | INFO     | graph:node_generate_question:604 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Node: Generate Question
+2026-02-12 16:53:50.362 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=apple, age=6, is_switch=False
+2026-02-12 16:53:50.362 | INFO     | graph:stream_generator_to_callback:378 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Time to First Token (TTFT): 0.000s for followup_question
+2026-02-12 16:53:50.362 | INFO     | stream.question_generators:generate_followup_question_stream:280 | generate_followup_question_stream completed | duration=0.000s, length=28
+2026-02-12 16:53:50.362 | INFO     | graph:stream_generator_to_callback:445 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Stream finished in 0.000s for followup_question
+2026-02-12 16:53:50.362 | INFO     | graph:node_generate_question:652 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Node: Generate Question finished in 0.001s
+2026-02-12 16:53:50.363 | INFO     | graph:node_finalize:990 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Node: Finalize
+2026-02-12 16:53:50.363 | INFO     | graph:node_finalize:1048 | [637b93a5-517e-42a1-b37d-a00eba1d6059] Node: Finalize finished in 0.000s
+2026-02-12 17:03:29.400 | INFO     | graph:node_analyze_input:171 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Analyze Input
+2026-02-12 17:03:55.450 | INFO     | stream.validation:decide_topic_switch_with_validation:189 | [VALIDATE] LLM Call Duration: 26.049s (using gemini-2.5-flash-lite async)
+2026-02-12 17:03:55.450 | INFO     | stream.validation:decide_topic_switch_with_validation:206 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, is_child_question=True, switch_reasoning=The child asked a question about dinosaurs, which is related to the original topic., correctness_reasoning=The child asked a question about what dinosaurs eat, which is a valid question related to dinosaurs.
+2026-02-12 17:03:55.450 | INFO     | graph:node_analyze_input:224 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Analyze Input finished in 26.050s
+2026-02-12 17:03:55.451 | INFO     | graph:node_route_logic:265 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Route Logic
+2026-02-12 17:03:55.451 | INFO     | graph:node_route_logic:354 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Route Logic finished in 0.000s
+2026-02-12 17:03:55.452 | INFO     | graph:node_generate_response:455 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Response (child_question_answer)
+2026-02-12 17:03:55.452 | INFO     | stream.response_generators:generate_child_question_response_stream:403 | generate_child_question_response_stream started | object=food, age=6
+2026-02-12 17:03:56.465 | INFO     | graph:stream_generator_to_callback:378 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Time to First Token (TTFT): 1.013s for child_question_answer
+2026-02-12 17:03:56.687 | INFO     | stream.response_generators:generate_child_question_response_stream:452 | generate_child_question_response_stream completed | duration=1.235s, length=249
+2026-02-12 17:03:56.687 | INFO     | graph:stream_generator_to_callback:445 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Stream finished in 1.235s for child_question_answer
+2026-02-12 17:03:56.687 | INFO     | graph:node_generate_response:591 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Response finished in 1.235s
+2026-02-12 17:03:56.688 | INFO     | graph:node_generate_question:604 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Question
+2026-02-12 17:03:56.688 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=food, age=6, is_switch=False
+2026-02-12 17:03:57.143 | INFO     | graph:stream_generator_to_callback:378 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Time to First Token (TTFT): 0.454s for followup_question
+2026-02-12 17:03:57.408 | INFO     | stream.question_generators:generate_followup_question_stream:280 | generate_followup_question_stream completed | duration=0.719s, length=210
+2026-02-12 17:03:57.408 | INFO     | graph:stream_generator_to_callback:445 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Stream finished in 0.720s for followup_question
+2026-02-12 17:03:57.408 | INFO     | graph:node_generate_question:652 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Generate Question finished in 0.720s
+2026-02-12 17:03:57.409 | INFO     | graph:node_finalize:990 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Finalize
+2026-02-12 17:03:57.410 | INFO     | graph:node_finalize:1048 | [hf-replay-5fdac7a4-f49b-44e9-bf01-c1580c990b23] Node: Finalize finished in 0.000s
+2026-02-12 17:05:39.425 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: dinosaur bone
+2026-02-12 17:05:44.226 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: dinosaur bone -> Category_Time_And_Space | Concept: Change | Question: Look closely at this hard dinosaur bone. What do you think happened to the dinosaur to make its bone feel like this after so, so long? | Thinking: 1. **Analyze Object:** A dinosaur bone is a fossilized remnant of a creature that lived millions of years ago. It's hard, often found in the ground, and tells us about past life. 
+2. **Match Theme:** 
+    - Who We Are: Not directly related to personal identity or health.
+    - How the World Works: While it's a material, its primary significance is historical.
+    - How We Organize Ourselves: No direct link to social structures.
+    - Sharing the Planet: Could relate to past biodiversity, but 'Where We Are in Place and Time' is more direct for historical artifacts.
+    - How We Express Ourselves: Not an artistic or cultural expression.
+    - Where We Are in Place and Time: This theme strongly aligns as dinosaur bones are direct evidence of past life and historical periods. 
+3. **Match Concept:** 
+    - Form: Useful for describing the bone, but doesn't capture the mystery of its existence.
+    - Function: The bone's original function is relevant, but its current state as a fossil is more intriguing.
+    - Causation: 'Why is it like this?' could work, but 'Change' is more encompassing for the transformation from life to fossil.
+    - Change: 'How is it changing?' or 'How has it changed?' perfectly captures the transformation from a living dinosaur to a fossil over millions of years. This is a strong 'Aha!' concept.
+    - Connection: Could explore how bones connect to a skeleton, but the temporal aspect is stronger.
+    - Perspective: Less relevant for an inanimate object.
+    - Responsibility: Not the primary focus for a dinosaur bone.
+4. **Draft Question:** Focus on the transformation and the visible aspect of the bone.
+2026-02-12 17:06:09.243 | INFO     | graph:node_guide_navigator:714 | [87b124dc-8d0c-42d9-ad15-2c430fbe8646] Node: Guide Navigator
+2026-02-12 17:06:10.572 | INFO     | graph:node_guide_navigator:747 | [87b124dc-8d0c-42d9-ad15-2c430fbe8646] Navigator result: status=DRIFTING, strategy=PIVOT, turn=2
+2026-02-12 17:06:10.573 | INFO     | graph:node_guide_driver:767 | [87b124dc-8d0c-42d9-ad15-2c430fbe8646] Node: Guide Driver
+2026-02-12 17:06:11.232 | INFO     | graph:node_finalize:990 | [87b124dc-8d0c-42d9-ad15-2c430fbe8646] Node: Finalize
+2026-02-12 17:06:11.232 | INFO     | graph:node_finalize:1048 | [87b124dc-8d0c-42d9-ad15-2c430fbe8646] Node: Finalize finished in 0.000s
+2026-02-12 17:06:26.865 | INFO     | graph:node_guide_navigator:714 | [87b124dc-8d0c-42d9-ad15-2c430fbe8646] Node: Guide Navigator
+2026-02-12 17:06:28.456 | INFO     | graph:node_guide_navigator:747 | [87b124dc-8d0c-42d9-ad15-2c430fbe8646] Navigator result: status=DRIFTING, strategy=PIVOT, turn=3
+2026-02-12 17:06:28.459 | INFO     | graph:node_guide_driver:767 | [87b124dc-8d0c-42d9-ad15-2c430fbe8646] Node: Guide Driver
+2026-02-12 17:06:29.220 | INFO     | graph:node_finalize:990 | [87b124dc-8d0c-42d9-ad15-2c430fbe8646] Node: Finalize
+2026-02-12 17:06:29.220 | INFO     | graph:node_finalize:1048 | [87b124dc-8d0c-42d9-ad15-2c430fbe8646] Node: Finalize finished in 0.000s
+2026-02-12 17:08:41.720 | INFO     | __main__:manual_critique:1822 | [MANUAL-CRITIQUE] Report saved: C:\Users\123\Documents\GitHub\AI_ask_ask\Gemini\paixueji\reports\HF\dinosaur_bone_20260212_170841.md | exchanges critiqued: 2 | case bundle: C:\Users\123\Documents\GitHub\AI_ask_ask\Gemini\paixueji\reports\HF_cases\dinosaur_bone_20260212_170841.json

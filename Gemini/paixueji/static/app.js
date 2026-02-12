@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Paixueji Assistant - Streaming Chat Client
  *
  * This file handles:
@@ -24,12 +24,6 @@ let detectedObject = null;  // For manual topic switch override
 let systemManagedMode = false;  // System-managed focus mode flag
 let awaitingObjectSelection = false;  // Waiting for object choice flag
 
-// Bug tracking state for restore → auto-replay → approval flow
-let buggyResponse = null;
-let newResponse = null;
-let contextMessage = null;
-let buggyResponseIndex = null;
-let isRestoredSession = false;
 let currentObject = null;  // Current object being discussed
 let currentCharacter = null;  // Current character
 let currentFocusMode = null;  // Current focus mode
@@ -72,7 +66,7 @@ function addMessage(role, initialText = '', focus = null, isCorrect = null) {
     if (role === 'assistant' && isCorrect !== null) {
         const feedbackBadge = document.createElement('span');
         feedbackBadge.className = `feedback-badge ${isCorrect ? 'correct' : 'encouraging'}`;
-        feedbackBadge.textContent = isCorrect ? '✅ ' : '🤔 ';
+        feedbackBadge.textContent = isCorrect ? 'OK' : 'Hint';
         bubble.appendChild(feedbackBadge);
     }
 
@@ -640,12 +634,6 @@ async function handleSSEEvent(eventType, data) {
         case 'complete':
             // Stream completed successfully
             console.log('[INFO] Stream complete:', data);
-
-            // If this is a restored session, track the new response and show approval buttons
-            if (isRestoredSession && currentMessageDiv) {
-                newResponse = currentMessageDiv.textContent;
-                showApprovalButtons();
-            }
             break;
 
         case 'interrupted':
@@ -658,7 +646,7 @@ async function handleSSEEvent(eventType, data) {
             // Error occurred during streaming
             console.error('[ERROR] Stream error:', data);
             if (currentMessageDiv) {
-                currentMessageDiv.textContent = '⚠ Error: ' + (data.message || 'An error occurred');
+                currentMessageDiv.textContent = 'Error: ' + (data.message || 'An error occurred');
                 currentMessageDiv.style.color = '#d32f2f';
             }
             break;
@@ -742,14 +730,6 @@ function handleStreamChunk(chunk) {
 
         if (chunk.token_usage) {
             console.log('[INFO] Token usage:', chunk.token_usage);
-        }
-
-        // Show save button after first response completes
-        if (sessionId) {
-            const saveBtn = document.getElementById('saveStateBtn');
-            if (saveBtn) {
-                saveBtn.style.display = 'inline-block';
-            }
         }
 
         // INFINITE MODE: No completion UI - conversation never ends
@@ -976,7 +956,7 @@ async function classifyObject() {
             level2Select.value = level2_category;
 
             classifyStatus.className = 'classify-status success';
-            classifyStatus.textContent = `✓ Classified as: ${formatCategoryName(level2_category)} (${formatCategoryName(level1_category)})`;
+            classifyStatus.textContent = `Classified as: ${formatCategoryName(level2_category)} (${formatCategoryName(level1_category)})`;
         }
 
     } catch (error) {
@@ -989,7 +969,7 @@ async function classifyObject() {
 }
 
 /**
- * Format category name for display (e.g., "fresh_ingredients" → "Fresh Ingredients")
+ * Format category name for display (e.g., "fresh_ingredients" -> "Fresh Ingredients")
  */
 function formatCategoryName(name) {
     return name.split('_')
@@ -1181,7 +1161,7 @@ function init() {
         const emptyState = document.createElement('div');
         emptyState.className = 'empty-state';
         emptyState.innerHTML = `
-            <p>👋 Welcome to Paixueji!</p>
+            <p>Welcome to Paixueji!</p>
             <small>Enter an object name, click "Classify" to auto-categorize, then "Start Learning!" to begin</small>
         `;
         messagesContainer.appendChild(emptyState);
@@ -1232,7 +1212,7 @@ async function forceSwitch() {
             updateDebugPanel();
 
             // Add system message to chat
-            const systemMsg = addMessage('system', `✨ Switched to ${result.new_object}!`);
+            const systemMsg = addMessage('system', `Switched to ${result.new_object}!`);
             systemMsg.style.background = '#d1fae5';
             systemMsg.style.borderLeft = '4px solid #10b981';
             systemMsg.style.padding = '10px';
@@ -1353,7 +1333,7 @@ async function showManualCritiqueForm() {
         }
 
         if (result.exchanges.length === 0) {
-            alert('No complete exchanges found. Need at least one model→child→model triplet.');
+            alert('No complete exchanges found. Need at least one model->child->model triplet.');
             return;
         }
 
@@ -1575,388 +1555,9 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-/**
- * Save current session state to JSON file for bug reproduction
- * Excludes the last assistant message (buggy response)
- */
-async function saveState() {
-    if (!sessionId) {
-        alert('No active session to save');
-        return;
-    }
-
-    try {
-        console.log('[INFO] Saving session state...');
-
-        const response = await fetch(`${API_BASE}/save-state`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ session_id: sessionId })
-        });
-
-        const result = await response.json();
-
-        if (!result.success) {
-            throw new Error(result.error || 'Failed to save state');
-        }
-
-        // Download JSON file
-        const blob = new Blob([JSON.stringify(result.state, null, 2)],
-                              { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = result.filename;
-        link.click();
-        URL.revokeObjectURL(url);
-
-        console.log('[INFO] State saved:', result.filename);
-
-        // Show info about excluded response
-        if (result.state.metadata.excluded_buggy_response) {
-            alert(`Session state saved to ${result.filename}\n\nExcluded last AI response (buggy) from save.\nConversation ends with your last message, ready for replay after fixing the bug.`);
-        } else {
-            alert(`Session state saved to ${result.filename}`);
-        }
-
-    } catch (error) {
-        console.error('[ERROR] Failed to save state:', error);
-        alert(`Failed to save state: ${error.message}`);
-    }
-}
-
-/**
- * Restore session from uploaded JSON file and auto-replay last user message
- */
-async function restoreState() {
-    const fileInput = document.getElementById('restoreFileInput');
-    const restoreStatus = document.getElementById('restoreStatus');
-
-    if (!fileInput.files || fileInput.files.length === 0) {
-        restoreStatus.style.color = '#ef4444';
-        restoreStatus.textContent = 'Please select a file first';
-        return;
-    }
-
-    const file = fileInput.files[0];
-
-    try {
-        restoreStatus.style.color = '#3b82f6';
-        restoreStatus.textContent = 'Loading file...';
-
-        // Read file
-        const fileText = await file.text();
-        const state = JSON.parse(fileText);
-
-        // Validate basic structure
-        if (!state.metadata || !state.session_state || !state.conversation_history) {
-            throw new Error('Invalid state file format');
-        }
-
-        restoreStatus.textContent = 'Restoring session...';
-
-        // Send to backend
-        const response = await fetch(`${API_BASE}/restore-state`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ state: state })
-        });
-
-        const result = await response.json();
-
-        if (!result.success) {
-            throw new Error(result.error || 'Failed to restore state');
-        }
-
-        // Update frontend state
-        sessionId = result.session_id;
-        currentObject = result.restored_state.object_name;
-        correctAnswerCount = result.restored_state.correct_answer_count;
-
-        // Clear and populate messages
-        messagesContainer.innerHTML = '';
-
-        // Extract buggy response metadata
-        buggyResponseIndex = state.metadata.buggy_response_index;
-        contextMessage = state.metadata.last_user_message;
-
-        // Find last user message index (the one before buggy response)
-        let lastUserMessageIndex = null;
-        for (let i = state.conversation_history.length - 1; i >= 0; i--) {
-            if (state.conversation_history[i].role === 'user') {
-                lastUserMessageIndex = i;
-                break;
-            }
-        }
-
-        // Render conversation history, SKIP:
-        // 1. System message (idx 0)
-        // 2. Last user message (will be auto-replayed, avoid duplicate)
-        // 3. Buggy assistant response
-        state.conversation_history.forEach((msg, idx) => {
-            if (idx === 0) return; // Skip system message
-
-            // Skip last user message (will be auto-replayed)
-            if (lastUserMessageIndex !== null && idx === lastUserMessageIndex) {
-                return; // Don't render it (auto-replay will add it)
-            }
-
-            // Skip rendering the buggy response (even though it's in the data)
-            if (buggyResponseIndex !== null && idx === buggyResponseIndex) {
-                buggyResponse = msg.content; // Store for later comparison
-                return; // Don't render it
-            }
-
-            if (msg.role === 'user') {
-                addMessage('user', msg.content);
-            } else if (msg.role === 'assistant') {
-                addMessage('assistant', msg.content);
-            }
-        });
-
-        // Mark as restored session for approval flow
-        isRestoredSession = true;
-
-        // Update UI
-        startForm.style.display = 'none';
-        progressIndicator.style.display = 'flex';
-        messagesContainer.style.display = 'flex';
-        document.querySelector('.input-area').style.display = 'flex';
-
-        // Set up activeFocusControl dropdown based on restored state
-        const activeFocusSelect = document.getElementById('activeFocusMode');
-        const activeFocusControl = document.getElementById('activeFocusControl');
-        const wasSystemManaged = state.session_state.system_managed_focus;
-        const savedFocusMode = state.session_state.current_focus_mode || 'depth';
-
-        if (activeFocusSelect && activeFocusControl) {
-            // Set dropdown value to saved focus mode
-            activeFocusSelect.value = savedFocusMode;
-
-            // If was system_managed, disable the entire dropdown
-            if (wasSystemManaged) {
-                activeFocusSelect.disabled = true;
-                systemManagedMode = true;  // Update global flag
-            } else {
-                // In manual mode, disable the "System Managed" option
-                activeFocusSelect.disabled = false;
-                const systemOption = activeFocusSelect.querySelector('option[value="system_managed"]');
-                if (systemOption) {
-                    systemOption.disabled = true;
-                }
-            }
-
-            // Show the control
-            activeFocusControl.style.display = 'flex';
-        }
-
-        // Update current state variables for debug panel
-        currentCharacter = state.session_state.character;
-        currentFocusMode = savedFocusMode;
-        currentObject = state.session_state.object_name;
-
-        updateProgressIndicator();
-        updateDebugPanel();
-
-        // Show save button
-        document.getElementById('saveStateBtn').style.display = 'inline-block';
-
-        // Enable input
-        sendBtn.disabled = false;
-        userInput.disabled = false;
-        userInput.focus();
-
-        restoreStatus.style.color = '#10b981';
-        restoreStatus.textContent = `✓ Session restored (${result.restored_state.conversation_turns} messages)`;
-
-        console.log('[INFO] Session restored:', result.session_id);
-
-        // Auto-replay: Send the last user message automatically
-        if (result.restored_state.last_user_message) {
-            const lastUserMsg = result.restored_state.last_user_message;
-            console.log(`[INFO] Auto-replaying last user message: "${lastUserMsg}"`);
-
-            // Wait a moment for UI to settle, then send the message
-            setTimeout(async () => {
-                // Add the user message to the UI (it was skipped during restore)
-                addMessage('user', lastUserMsg);
-
-                // Get current focus mode
-                const activeFocusMode = document.getElementById('activeFocusMode');
-                const focusMode = activeFocusMode ? activeFocusMode.value : 'depth';
-
-                // Disable send button during streaming
-                sendBtn.disabled = true;
-                isStreaming = true;
-
-                restoreStatus.textContent += ' | Auto-replaying last message...';
-
-                try {
-                    // Create AbortController for this stream
-                    currentStreamController = new AbortController();
-
-                    const response = await fetch(`${API_BASE}/continue`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            session_id: sessionId,
-                            child_input: lastUserMsg,
-                            focus_mode: focusMode
-                        }),
-                        signal: currentStreamController.signal
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                    }
-
-                    // Create message bubble for streaming response
-                    currentMessageDiv = null;
-
-                    // Read streaming response
-                    const reader = response.body.getReader();
-                    const decoder = new TextDecoder();
-                    let buffer = '';
-
-                    while (true) {
-                        const { done, value } = await reader.read();
-
-                        if (done) {
-                            console.log('[INFO] Auto-replay stream ended');
-                            break;
-                        }
-
-                        // Decode chunk and add to buffer
-                        buffer += decoder.decode(value, { stream: true });
-
-                        // Process complete SSE events
-                        const lines = buffer.split('\n\n');
-                        buffer = lines.pop();
-
-                        for (const line of lines) {
-                            if (!line.trim()) continue;
-
-                            // Parse SSE event
-                            const eventMatch = line.match(/^event: (.+)$/m);
-                            const dataMatch = line.match(/^data: (.+)$/m);
-
-                            if (eventMatch && dataMatch) {
-                                const eventType = eventMatch[1];
-                                const data = JSON.parse(dataMatch[1]);
-
-                                // Handle event
-                                await handleSSEEvent(eventType, data);
-                            }
-                        }
-                    }
-
-                } catch (error) {
-                    console.error('[ERROR] Auto-replay error:', error);
-                    alert(`Auto-replay failed: ${error.message}`);
-                } finally {
-                    isStreaming = false;
-                    sendBtn.disabled = false;
-                    currentStreamController = null;
-                }
-            }, 500);
-        }
-
-    } catch (error) {
-        console.error('[ERROR] Failed to restore state:', error);
-        restoreStatus.style.color = '#ef4444';
-        restoreStatus.textContent = `Error: ${error.message}`;
-    }
-}
-
-/**
- * Show approval buttons after auto-replay completes
- */
-function showApprovalButtons() {
-    // Validate we have all required data
-    if (!buggyResponse || !newResponse || !contextMessage) {
-        console.warn('Missing comparison data, skipping approval UI');
-        return;
-    }
-
-    const approvalContainer = document.getElementById('approvalContainer');
-    if (approvalContainer) {
-        approvalContainer.style.display = 'flex';
-    }
-}
-
-/**
- * Handle approval of bugfix - generate and download HTML comparison
- */
-async function handleApproval() {
-    // Disable buttons to prevent double-click
-    const approveBtn = document.getElementById('approveBtn');
-    const rejectBtn = document.getElementById('rejectBtn');
-    approveBtn.disabled = true;
-    rejectBtn.disabled = true;
-
-    try {
-        const response = await fetch(`${API_BASE}/generate-bugfix-comparison`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                buggy_response: buggyResponse,
-                new_response: newResponse,
-                context_message: contextMessage
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-
-        const result = await response.json();
-
-        // Create blob and download HTML file
-        const blob = new Blob([result.html], { type: 'text/html' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = result.filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
-
-        alert(`✓ Bug comparison saved as ${result.filename}`);
-
-        // Hide approval buttons and reset state
-        document.getElementById('approvalContainer').style.display = 'none';
-        resetBugTrackingState();
-
-    } catch (error) {
-        console.error('Error generating comparison:', error);
-        alert(`Failed to generate comparison: ${error.message}`);
-        approveBtn.disabled = false;
-        rejectBtn.disabled = false;
-    }
-}
-
-/**
- * Handle rejection of bugfix - just hide buttons
- */
-function handleRejection() {
-    // Simply hide approval buttons
-    document.getElementById('approvalContainer').style.display = 'none';
-    resetBugTrackingState();
-}
-
-/**
- * Reset bug tracking state variables
- */
-function resetBugTrackingState() {
-    buggyResponse = null;
-    newResponse = null;
-    contextMessage = null;
-    buggyResponseIndex = null;
-    isRestoredSession = false;
-}
-
 // Initialize on page load
 init();
+
+
+
+

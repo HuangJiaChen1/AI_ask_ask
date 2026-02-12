@@ -21,6 +21,8 @@ from .pipeline import PedagogicalCritiquePipeline, ScenarioLoader, run_critique_
 from .critique_report import CritiqueReportGenerator
 from .schema import Scenario
 from .scenario_runner import ScenarioRunner, run_scenario_to_json
+from .hf_replay_pipeline import run_hf_replay
+from .hf_replay_report import save_report_files
 
 
 def get_client() -> genai.Client:
@@ -352,6 +354,80 @@ def run_and_critique(args):
         print(f"Responses saved to: {responses_path}")
 
 
+def hf_replay_list(args):
+    """List available HF case bundles."""
+    cases_dir = Path(args.cases_dir)
+    if not cases_dir.exists():
+        print(f"No such directory: {cases_dir}")
+        return
+
+    bundles = sorted(cases_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+    if not bundles:
+        print(f"No HF case bundles found in: {cases_dir}")
+        return
+
+    print(f"\nFound {len(bundles)} HF case bundle(s):\n")
+    print("-" * 80)
+    for bundle in bundles:
+        print(f"File: {bundle.name}")
+        print(f"Modified: {bundle.stat().st_mtime}")
+        print("-" * 80)
+
+
+def hf_replay_run(args):
+    """Run HF replay regression checks from a case bundle."""
+    bundle_path: Path | None = None
+    if args.cases_bundle:
+        bundle_path = Path(args.cases_bundle)
+    else:
+        cases_dir = Path(args.cases_dir)
+        bundles = sorted(cases_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+        if not bundles:
+            print(f"No HF case bundles found in: {cases_dir}")
+            sys.exit(1)
+        bundle_path = bundles[0]
+
+    if not bundle_path.exists():
+        print(f"Bundle not found: {bundle_path}")
+        sys.exit(1)
+
+    client = get_client()
+    print(f"\nRunning HF replay from: {bundle_path}")
+
+    async def run():
+        return await run_hf_replay(
+            client=client,
+            bundle_path=bundle_path,
+            judge_model=args.judge_model,
+        )
+
+    result = asyncio.run(run())
+
+    if args.output or args.output_json:
+        md_path, json_path = save_report_files(
+            result,
+            output_md=args.output,
+            output_json=args.output_json,
+        )
+        if md_path:
+            print(f"Markdown report saved to: {md_path}")
+        if json_path:
+            print(f"JSON report saved to: {json_path}")
+
+    print("\n" + "=" * 60)
+    print("HF REPLAY SUMMARY")
+    print("=" * 60)
+    print(f"Final Verdict: {result['final_verdict'].upper()}")
+    print(f"Critiqued Cases: {len(result['critiqued_results'])}")
+    if result["blocking_reasons"]:
+        print("\nBlocking Reasons:")
+        for reason in result["blocking_reasons"]:
+            print(f"  - {reason}")
+
+    if result["final_verdict"] != "pass":
+        sys.exit(1)
+
+
 def demo(args):
     """Run a demo critique with a built-in example."""
     print("\n" + "=" * 60)
@@ -479,6 +555,8 @@ Examples:
   %(prog)s generate-responses -o responses/        Generate responses for all scenarios
   %(prog)s generate-responses -s SCAFFOLD-WHY-001  Generate responses for one scenario
   %(prog)s run-and-critique -s SCAFFOLD-WHY-001    Run scenario then critique
+  %(prog)s hf-replay-list                          List HF replay bundles
+  %(prog)s hf-replay-run --cases-bundle bundle.json
         """,
     )
 
@@ -552,6 +630,47 @@ Examples:
         help="Optional path to save the captured responses JSON"
     )
     rac_parser.set_defaults(func=run_and_critique)
+
+    # HF replay list command
+    hfl_parser = subparsers.add_parser(
+        "hf-replay-list",
+        help="List available HF replay case bundles"
+    )
+    hfl_parser.add_argument(
+        "--cases-dir",
+        default="reports/HF_cases",
+        help="Directory containing HF case bundles (default: reports/HF_cases)"
+    )
+    hfl_parser.set_defaults(func=hf_replay_list)
+
+    # HF replay run command
+    hfr_parser = subparsers.add_parser(
+        "hf-replay-run",
+        help="Replay HF cases and evaluate fix/regression verdicts"
+    )
+    hfr_parser.add_argument(
+        "--cases-bundle",
+        help="Path to a specific HF case bundle JSON file"
+    )
+    hfr_parser.add_argument(
+        "--cases-dir",
+        default="reports/HF_cases",
+        help="Directory for bundle lookup when --cases-bundle is omitted"
+    )
+    hfr_parser.add_argument(
+        "--judge-model",
+        default="gemini-2.5-pro",
+        help="Judge model (default: gemini-2.5-pro)"
+    )
+    hfr_parser.add_argument(
+        "-o", "--output",
+        help="Markdown output path"
+    )
+    hfr_parser.add_argument(
+        "--output-json",
+        help="JSON output path"
+    )
+    hfr_parser.set_defaults(func=hf_replay_run)
 
     args = parser.parse_args()
 

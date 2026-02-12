@@ -13,6 +13,7 @@ from stream import (
     generate_explicit_switch_response_stream,
     generate_object_suggestions,
     generate_topic_switch_response_stream,
+    generate_child_question_response_stream,
     generate_explanation_response_stream,
     generate_feedback_response_stream,
     generate_correction_response_stream,
@@ -60,6 +61,8 @@ class PaixuejiState(TypedDict):
     is_factually_correct: Optional[bool]
     correctness_reasoning: Optional[str]
     switch_decision_reasoning: Optional[str]
+    child_question_text: Optional[str]
+    is_child_question: Optional[bool]
 
     new_object_name: Optional[str]
     detected_object_name: Optional[str]
@@ -207,7 +210,9 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
         "correctness_reasoning": validation_result.get("correctness_reasoning"),
         "switch_decision_reasoning": validation_result.get("switching_reasoning"),
         "new_object_name": validation_result.get("new_object"),
-        "detected_object_name": validation_result.get("detected_object") if not validation_result.get("new_object") else None
+        "detected_object_name": validation_result.get("detected_object") if not validation_result.get("new_object") else None,
+        "is_child_question": validation_result.get("is_child_question", False),
+        "child_question_text": validation_result.get("child_question_text")
     }
     
     # --- System Managed Focus Logic (Pre-Routing) ---
@@ -315,6 +320,10 @@ async def node_route_logic(state: PaixuejiState) -> dict:
             state["assistant"].level2_category,
             state["assistant"].level3_category
         )
+    elif val_result.get("is_child_question"):
+        updates["response_type"] = "child_question_answer"
+        from paixueji_assistant import ConversationState
+        state["assistant"].state = ConversationState.ASKING_QUESTION
 
     elif not state["is_engaged"]:
         updates["response_type"] = "explanation"
@@ -492,6 +501,15 @@ async def node_generate_response(state: PaixuejiState) -> dict:
             messages=messages,
             previous_object="the previous object", # Minor regression potential
             new_object=state["object_name"],
+            age=state["age"],
+            config=state["config"],
+            client=state["client"]
+        )
+    elif response_type == "child_question_answer":
+        generator = generate_child_question_response_stream(
+            messages=messages,
+            child_question=state.get("child_question_text") or state["content"],
+            object_name=state["object_name"],
             age=state["age"],
             config=state["config"],
             client=state["client"]

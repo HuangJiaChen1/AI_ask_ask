@@ -99,6 +99,19 @@ Celebrate the transition to the new object.
 5. Respond naturally (NOT JSON)
 """
 
+# Used when child asks a direct question during exploration
+CHILD_QUESTION_RESPONSE_PROMPT = """The child asked: "{child_question}"
+Current discussion topic: {object_name}
+
+YOUR TASK:
+1. Answer the child's question directly first.
+2. Keep the answer factual, simple, and age-appropriate for age {age}.
+3. If useful, briefly connect the answer back to {object_name}.
+4. Keep it short (1-3 sentences).
+5. DO NOT ask a follow-up question.
+6. Respond naturally (NOT JSON).
+"""
+
 # ============================================================================
 # 3. FOLLOW-UP QUESTION PART (DECOUPLED FOCUS STRATEGY)
 # ============================================================================
@@ -295,6 +308,7 @@ def get_prompts():
         'explanation_response_prompt': EXPLANATION_RESPONSE_PROMPT,
         'correction_response_prompt': CORRECTION_RESPONSE_PROMPT,
         'topic_switch_response_prompt': TOPIC_SWITCH_RESPONSE_PROMPT,
+        'child_question_response_prompt': CHILD_QUESTION_RESPONSE_PROMPT,
         'followup_question_prompt': FOLLOWUP_QUESTION_PROMPT,
         'completion_prompt': COMPLETION_PROMPT,
         'character_prompts': CHARACTER_PROMPTS,

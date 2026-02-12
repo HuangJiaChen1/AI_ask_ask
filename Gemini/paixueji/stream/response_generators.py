@@ -10,6 +10,7 @@ Functions:
     - generate_explanation_response_stream: Explanation when child says "I don't know"
     - generate_correction_response_stream: Gentle correction for wrong answers
     - generate_topic_switch_response_stream: Celebration for topic transitions
+    - generate_child_question_response_stream: Direct answer to child's follow-up question
     - generate_natural_topic_completion_stream: Natural topic completion
     - generate_explicit_switch_response_stream: Response for explicit switch requests
 """
@@ -382,6 +383,73 @@ async def generate_topic_switch_response_stream(
     logger.info(f"generate_topic_switch_response_stream completed | duration={duration:.3f}s, length={len(full_response)}")
 
     # Final yield
+    yield ("", token_usage, full_response)
+
+
+async def generate_child_question_response_stream(
+    messages: list[dict],
+    child_question: str,
+    object_name: str,
+    age: int,
+    config: dict,
+    client: genai.Client
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
+    """
+    Generate ONLY a direct answer when the child asks a follow-up question.
+
+    This keeps response generation separate from follow-up question generation.
+    """
+    start_time = time.time()
+    logger.info(f"generate_child_question_response_stream started | object={object_name}, age={age}")
+
+    prompts = paixueji_prompts.get_prompts()
+    prompt = prompts['child_question_response_prompt'].format(
+        child_question=child_question,
+        object_name=object_name,
+        age=age
+    )
+
+    messages_to_send = messages + [{"role": "user", "content": prompt}]
+    clean_messages = clean_messages_for_api(messages_to_send)
+    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
+
+    full_response = ""
+    token_usage = None
+    stream = None
+
+    try:
+        gen_config = GenerateContentConfig(
+            temperature=config.get("temperature", 0.3),
+            max_output_tokens=config.get("max_tokens", 600),
+            system_instruction=system_instruction if system_instruction else None
+        )
+
+        stream = client.models.generate_content_stream(
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config
+        )
+
+        for chunk in stream:
+            if chunk.text:
+                full_response += chunk.text
+                yield (chunk.text, None, full_response)
+
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(f"generate_child_question_response_stream error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        if full_response:
+            yield ("", token_usage, full_response)
+        return
+    finally:
+        if stream is not None:
+            try:
+                del stream
+            except:
+                pass
+
+    duration = time.time() - start_time
+    logger.info(f"generate_child_question_response_stream completed | duration={duration:.3f}s, length={len(full_response)}")
     yield ("", token_usage, full_response)
 
 
