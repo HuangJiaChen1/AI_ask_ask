@@ -16,7 +16,7 @@ from pathlib import Path
 from google import genai
 
 from . import evolve, analyze_report, diagnose, parse_report
-from .schema import EvolutionResult
+from .schema import EvolutionResult, ChangeType
 
 
 def get_client() -> genai.Client:
@@ -49,17 +49,18 @@ def _format_markdown(result: EvolutionResult) -> str:
 
     lines.append(f"## Summary\n{result.summary}\n")
 
-    if result.final_effectiveness is not None:
-        lines.append(f"**Final Effectiveness:** {result.final_effectiveness:.1f}/100\n")
-
     if result.verified_changes:
         lines.append("## Verified Changes (Tested & Proven)\n")
         for i, vc in enumerate(result.verified_changes, 1):
             lines.append(f"### {i}. {vc.change.target}")
             lines.append(f"- **Type:** {vc.change.change_type.value}")
-            lines.append(f"- **Delta:** +{vc.delta:.1f} ({vc.old_effectiveness:.1f} → {vc.new_effectiveness:.1f})")
+            lines.append(f"- **Failures eliminated:** {', '.join(vc.primary_failures_eliminated)}")
+            lines.append(f"- **CV scenarios tested:** {', '.join(vc.cv_scenarios_tested) or 'none'}")
+            lines.append(f"- **CV regressions:** {vc.cv_regressions}")
             lines.append(f"- **Iterations:** {vc.iterations_needed}")
             lines.append(f"- **Rationale:** {vc.change.rationale}")
+            if vc.saved_scenario_path:
+                lines.append(f"- **Saved scenario:** {vc.saved_scenario_path}")
             if vc.change.prompt_proposed:
                 lines.append(f"\n**New Prompt:**\n```\n{vc.change.prompt_proposed}\n```\n")
 
@@ -71,19 +72,56 @@ def _format_markdown(result: EvolutionResult) -> str:
             lines.append(f"- **Risk:** {pc.risk_level}")
             lines.append(f"- **Description:** {pc.description}")
             lines.append(f"- **Rationale:** {pc.rationale}")
+            if pc.graph_position:
+                lines.append(f"- **Position:** {pc.graph_position}")
+            if pc.router_conditions:
+                lines.append(f"- **Conditions:** {pc.router_conditions}")
             lines.append("")
 
     if result.rejected_attempts:
         lines.append("## Rejected Attempts (Learning Record)\n")
         for att in result.rejected_attempts:
+            details = f"[{att.rejection_type}]"
+            if att.rejection_type == "HARDCODED":
+                details += f" Violations: {'; '.join(att.violations[:2])}"
+            elif att.rejection_type == "INEFFECTIVE":
+                details += f" Remaining: {', '.join(att.remaining_failures)}"
+            elif att.rejection_type == "OVERFITTING":
+                details += f" CV regressions: {len(att.cv_regressions)}"
             lines.append(
-                f"- **Iter {att.iteration}** {att.change_applied.target}: "
-                f"{att.old_effectiveness:.1f} → {att.new_effectiveness:.1f} "
-                f"({att.rejection_reason})"
+                f"- **Iter {att.iteration}** {att.change_applied.target}: {details}"
             )
         lines.append("")
 
     return "\n".join(lines)
+
+
+def _print_structural_proposals(result: EvolutionResult):
+    """Print structural proposals in a prominent format for human review."""
+    structural = [
+        p for p in result.unverified_proposals
+        if p.change_type != ChangeType.MODIFY_PROMPT
+    ]
+    if not structural:
+        return
+
+    print()
+    print("=" * 59)
+    print("  STRUCTURAL CHANGES PROPOSED (requires human review)")
+    print("=" * 59)
+
+    for i, pc in enumerate(structural, 1):
+        print(f"\n{i}. [{pc.change_type.value}] \"{pc.target}\" (priority: {pc.priority}, risk: {pc.risk_level})")
+        print(f"   Purpose: {pc.description}")
+        if pc.graph_position:
+            print(f"   Position: {pc.graph_position}")
+        if pc.router_conditions:
+            print(f"   Conditions: {pc.router_conditions}")
+        print(f"   Rationale: {pc.rationale}")
+
+    print(f"\nTo continue evolution after implementing these changes:")
+    print(f"  python -m meta_agent evolve <new_report>")
+    print("=" * 59)
 
 
 # ============================================================================
@@ -177,7 +215,6 @@ def cmd_evolve(args):
             client=client,
             report_path=args.report,
             max_iterations=args.max_iterations,
-            improvement_threshold=args.threshold,
             no_verify=args.no_verify,
             verbose=args.verbose,
         )
@@ -202,11 +239,19 @@ def cmd_evolve(args):
     print(f"EVOLUTION RESULT")
     print(f"{'=' * 50}")
     print(f"Verified changes: {len(result.verified_changes)}")
+    for vc in result.verified_changes:
+        print(f"  - {vc.change.target}: eliminated {', '.join(vc.primary_failures_eliminated)}")
+        if vc.saved_scenario_path:
+            print(f"    Scenario saved: {vc.saved_scenario_path}")
     print(f"Unverified proposals: {len(result.unverified_proposals)}")
     print(f"Rejected attempts: {len(result.rejected_attempts)}")
-    if result.final_effectiveness is not None:
-        print(f"Final effectiveness: {result.final_effectiveness:.1f}/100")
+    for att in result.rejected_attempts:
+        print(f"  - [{att.rejection_type}] {att.change_applied.target} (iter {att.iteration})")
+
     print(f"\n{result.summary}")
+
+    # Print structural proposals prominently
+    _print_structural_proposals(result)
 
 
 def main():
@@ -253,10 +298,6 @@ Examples:
     evolve_parser.add_argument(
         "--max-iterations", type=int, default=3,
         help="Max verification attempts per change (default: 3)",
-    )
-    evolve_parser.add_argument(
-        "--threshold", type=float, default=5.0,
-        help="Min effectiveness gain to accept a change (default: 5.0)",
     )
     evolve_parser.add_argument(
         "--no-verify", action="store_true",

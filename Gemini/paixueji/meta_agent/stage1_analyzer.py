@@ -76,11 +76,17 @@ async def analyze_report(
     if evolution_history and evolution_history.attempts:
         attempts_lines = []
         for attempt in evolution_history.attempts:
+            detail = f"[{attempt.rejection_type}]" if attempt.rejection_type else "[UNKNOWN]"
+            if attempt.rejection_type == "INEFFECTIVE":
+                detail += f" Remaining: {', '.join(attempt.remaining_failures) or 'unknown'}"
+            elif attempt.rejection_type == "OVERFITTING":
+                detail += f" CV regressions: {len(attempt.cv_regressions)}"
+            elif attempt.rejection_type == "HARDCODED":
+                detail += f" Violations: {len(attempt.violations)}"
             attempts_lines.append(
                 f"- Iteration {attempt.iteration}: Changed {attempt.change_applied.target}. "
-                f"Result: effectiveness {attempt.old_effectiveness:.1f} → {attempt.new_effectiveness:.1f}. "
-                f"New failures: {', '.join(attempt.new_failures) or 'none'}. "
-                f"Reason: {attempt.rejection_reason}"
+                f"Result: {detail}. "
+                f"New failures: {', '.join(attempt.new_failures) or 'none'}."
             )
         previous_attempts_section = STAGE1_PREVIOUS_ATTEMPTS.format(
             attempts_text="\n".join(attempts_lines)

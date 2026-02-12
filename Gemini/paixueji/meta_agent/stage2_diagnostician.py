@@ -18,7 +18,7 @@ from .schema import (
     EvolutionHistory,
 )
 from .architecture_manifest import build_architecture_context
-from .prompts import STAGE2_SYSTEM, STAGE2_PROMPT, STAGE2_PREVIOUS_ATTEMPTS
+from .prompts import STAGE2_SYSTEM, STAGE2_PROMPT, STAGE2_PREVIOUS_ATTEMPTS, format_feedback_injection
 
 
 async def diagnose(
@@ -64,21 +64,8 @@ async def diagnose(
     # Step 2: Build the LLM prompt
     analysis_json = analysis.model_dump_json(indent=2)
 
-    previous_attempts_section = ""
-    if evolution_history and evolution_history.attempts:
-        attempts_lines = []
-        for attempt in evolution_history.attempts:
-            attempts_lines.append(
-                f"- Iteration {attempt.iteration}: "
-                f"Changed {attempt.change_applied.change_type.value} on '{attempt.change_applied.target}'. "
-                f"Description: {attempt.change_applied.description}. "
-                f"Result: effectiveness {attempt.old_effectiveness:.1f} → {attempt.new_effectiveness:.1f}. "
-                f"New failures: {', '.join(attempt.new_failures) or 'none'}. "
-                f"Reason: {attempt.rejection_reason}"
-            )
-        previous_attempts_section = STAGE2_PREVIOUS_ATTEMPTS.format(
-            attempts_text="\n".join(attempts_lines)
-        )
+    # Use rejection-type-specific feedback injection for retries
+    previous_attempts_section = format_feedback_injection(evolution_history)
 
     prompt = STAGE2_PROMPT.format(
         analysis_json=analysis_json,

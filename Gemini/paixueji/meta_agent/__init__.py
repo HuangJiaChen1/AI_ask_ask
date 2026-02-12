@@ -1,10 +1,13 @@
 """
 Meta-Agent Evolution System for Paixueji.
 
-A three-stage meta-agent that:
+A three-stage meta-agent with a verification loop that:
 1. Analyzes critic reports to identify failing nodes (Stage 1)
 2. Diagnoses root causes and proposes architectural changes (Stage 2)
-3. Verifies prompt changes via a test-compare loop (Stage 3)
+3. Verifies prompt changes via a 3-layer test-compare loop (Stage 3):
+   - Layer 1: Constraint (anti-hardcoding rules in prompts)
+   - Layer 2: Detection (automated hardcoding scan)
+   - Layer 3: Cross-validation (primary + CV scenarios, failure-based acceptance)
 
 Usage:
     python -m meta_agent evolve reports/AIF/banana_20260209_102935.md
@@ -31,7 +34,6 @@ async def evolve(
     client,
     report_path: str,
     max_iterations: int = 3,
-    improvement_threshold: float = 5.0,
     no_verify: bool = False,
     model_name: str = "gemini-2.5-pro",
     verbose: bool = False,
@@ -39,15 +41,14 @@ async def evolve(
     """
     Run the full meta-agent evolution loop.
 
-    Stage 1: Analyze the report → ReportAnalysis
-    Stage 2: Diagnose root causes → ArchitectureDiagnosis
-    Stage 3: Verify prompt changes → EvolutionResult
+    Stage 1: Analyze the report -> ReportAnalysis
+    Stage 2: Diagnose root causes -> ArchitectureDiagnosis
+    Stage 3: Verify prompt changes -> EvolutionResult (with cross-validation)
 
     Args:
         client: Google GenAI client (Vertex AI)
         report_path: Path to the .md critic report
         max_iterations: Max verification attempts per change
-        improvement_threshold: Min effectiveness gain to accept a change
         no_verify: If True, skip Stage 3 (return Stage 1+2 results only)
         model_name: Gemini model for LLM calls
         verbose: Print intermediate results
@@ -87,10 +88,8 @@ async def evolve(
     )
 
     if no_verify:
-        # Return Stage 1+2 results without verification
         return EvolutionResult(
             unverified_proposals=diagnosis.proposed_changes,
-            final_effectiveness=analysis.overall_effectiveness,
             summary=(
                 f"Analysis + Diagnosis complete (verification skipped). "
                 f"{len(diagnosis.proposed_changes)} change(s) proposed. "
@@ -108,7 +107,6 @@ async def evolve(
 
     verification_config = VerificationConfig(
         max_iterations=max_iterations,
-        improvement_threshold=improvement_threshold,
     )
 
     result = await verify_changes(

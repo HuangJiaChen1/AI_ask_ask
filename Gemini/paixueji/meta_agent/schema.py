@@ -4,7 +4,7 @@ Schema definitions for the Meta-Agent Evolution System.
 Defines all Pydantic models for:
 - Stage 1: Report Analysis (parsed reports + LLM analysis)
 - Stage 2: Architecture Diagnosis (root causes + proposed changes)
-- Stage 3: Verification Loop (attempts, results, evolution history)
+- Stage 3: Verification Loop (failure-based acceptance, cross-validation, auto-save)
 """
 
 from enum import Enum
@@ -161,24 +161,33 @@ class ArchitectureDiagnosis(BaseModel):
 
 
 # ============================================================================
-# Stage 3: Verification Loop
+# Stage 3: Verification Loop (failure-based acceptance with cross-validation)
 # ============================================================================
 
 class VerificationConfig(BaseModel):
     """Configuration for the verification loop."""
-    max_iterations: int = 3
-    improvement_threshold: float = 5.0  # Min effectiveness gain to accept
-    batch_changes: bool = False  # True = apply all prompt changes at once
+    max_iterations: int = 3          # Max Stage 2 re-attempts per prompt target
+    min_cv_scenarios: int = 2        # Minimum cross-validation scenarios required
+    max_cv_scenarios: int = 4        # Maximum (to bound cost)
 
 
 class AttemptResult(BaseModel):
     """Result of a single verification attempt."""
     iteration: int
     change_applied: ProposedChange
-    old_effectiveness: float
-    new_effectiveness: float
-    new_failures: list[str] = Field(default_factory=list)
-    rejection_reason: str = ""
+    rejection_type: str = ""          # "HARDCODED" / "INEFFECTIVE" / "OVERFITTING"
+
+    # For INEFFECTIVE:
+    remaining_failures: list[str] = Field(default_factory=list)  # Failure types still present
+    new_failures: list[str] = Field(default_factory=list)        # New failure types introduced
+
+    # For OVERFITTING:
+    primary_passed: bool = False
+    cv_regressions: list[dict] = Field(default_factory=list)
+    # e.g. [{"scenario_id": "...", "new_failures_introduced": ["..."]}]
+
+    # For HARDCODED:
+    violations: list[str] = Field(default_factory=list)  # From detect_hardcoding()
 
 
 class EvolutionHistory(BaseModel):
@@ -190,10 +199,11 @@ class EvolutionHistory(BaseModel):
 class VerifiedChange(BaseModel):
     """A change that has been tested and proven to improve effectiveness."""
     change: ProposedChange
-    old_effectiveness: float
-    new_effectiveness: float
-    delta: float
+    primary_failures_eliminated: list[str] = Field(default_factory=list)  # FailureTypes fixed
+    cv_scenarios_tested: list[str] = Field(default_factory=list)          # Scenario IDs used for CV
+    cv_regressions: int = 0                                               # 0 if clean
     iterations_needed: int
+    saved_scenario_path: str = ""     # Path to auto-saved YAML
 
 
 class EvolutionResult(BaseModel):
@@ -201,5 +211,4 @@ class EvolutionResult(BaseModel):
     verified_changes: list[VerifiedChange] = Field(default_factory=list)
     unverified_proposals: list[ProposedChange] = Field(default_factory=list)
     rejected_attempts: list[AttemptResult] = Field(default_factory=list)
-    final_effectiveness: float | None = None
     summary: str
