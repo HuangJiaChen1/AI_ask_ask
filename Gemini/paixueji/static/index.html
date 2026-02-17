@@ -72,18 +72,6 @@
                 <option value="">Select...</option>
             </select>
 
-            <div class="restore-section" style="margin-top: 20px; padding: 15px; background: #f0f9ff; border-radius: 8px; border: 2px dashed #3b82f6;">
-                <h3 style="margin-top: 0; color: #3b82f6;">Restore Previous Session</h3>
-                <p style="font-size: 0.9em; color: #64748b; margin-bottom: 10px;">
-                    Upload a saved state file to restore a previous conversation
-                </p>
-                <input type="file" id="restoreFileInput" accept=".json" style="margin-bottom: 10px;">
-                <button onclick="restoreState()" id="restoreBtn" style="background: #3b82f6; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
-                    Restore Session
-                </button>
-                <div id="restoreStatus" style="margin-top: 10px; font-size: 0.9em;"></div>
-            </div>
-
             <button onclick="startConversation()">Start Learning!</button>
         </div>
 
@@ -145,19 +133,8 @@
                     placeholder="Type your answer here..."
                     onkeypress="if(event.key==='Enter' && !event.shiftKey) sendMessage()"
                 >
-                <button id="saveStateBtn" onclick="saveState()" style="display: none;">Save State</button>
                 <button id="stopBtn" onclick="stopStreaming()" style="display: none;">Stop</button>
                 <button id="sendBtn" onclick="sendMessage()" disabled>Send</button>
-            </div>
-
-            <!-- Approval buttons (shown after restore + auto-replay) -->
-            <div id="approvalContainer" style="display: none;">
-                <button id="approveBtn" class="approve-btn" onclick="handleApproval()">
-                    ✓ Approve
-                </button>
-                <button id="rejectBtn" class="reject-btn" onclick="handleRejection()">
-                    ✗ Reject
-                </button>
             </div>
         </div>
     </div>

@@ -257,41 +257,11 @@ class ConversationCritique(BaseModel):
 
 
 # ============================================================================
-# Scenario Definition
+# Manual Critique Configuration
 # ============================================================================
 
-class ScenarioExchange(BaseModel):
-    """A single exchange in a test scenario."""
-    role: Literal["model", "child"] = Field(description="Who is speaking")
-    content: str = Field(description="What they said")
-
-    # Optional metadata for model turns
-    pedagogical_intent: str | None = Field(
-        default=None,
-        description="What the model is trying to teach"
-    )
-    question_type: QuestionType | None = Field(
-        default=None,
-        description="Type of question asked"
-    )
-    target_knowledge: str | None = Field(
-        default=None,
-        description="Knowledge being targeted"
-    )
-
-    # Optional metadata for child turns
-    response_type: ResponseType | None = Field(
-        default=None,
-        description="Type of child response"
-    )
-    knowledge_gap: str | None = Field(
-        default=None,
-        description="Gap revealed by the response"
-    )
-
-
 class ScenarioEvaluation(BaseModel):
-    """Evaluation criteria for a scenario."""
+    """Evaluation criteria for a critique."""
     must_do: list[str] = Field(
         default_factory=list,
         description="Actions the model MUST take"
@@ -307,27 +277,11 @@ class ScenarioEvaluation(BaseModel):
 
 
 class ScenarioSetup(BaseModel):
-    """Setup context for a scenario."""
+    """Setup context for a critique."""
     object_name: str = Field(description="Object being discussed")
     key_concept: str = Field(description="Key concept being taught")
     age: int = Field(ge=3, le=12, description="Child's age")
     guide_phase: str = Field(
         default="active",
         description="Current phase of the conversation"
-    )
-
-
-class Scenario(BaseModel):
-    """A complete pedagogical test scenario."""
-    id: str = Field(description="Unique scenario identifier")
-    name: str = Field(description="Human-readable scenario name")
-    description: str = Field(description="What this scenario tests")
-
-    setup: ScenarioSetup = Field(description="Scenario context")
-    conversation: list[ScenarioExchange] = Field(
-        default_factory=list,
-        description="The conversation exchanges"
-    )
-    evaluation: ScenarioEvaluation = Field(
-        description="How to evaluate responses"
     )

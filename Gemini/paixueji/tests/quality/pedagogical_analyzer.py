@@ -209,34 +209,3 @@ class PedagogicalAnalyzer:
                 acceptable_actions=[],
                 unacceptable_actions=[],
             )
-
-    @staticmethod
-    def from_scenario_metadata(
-        exchange_model: "ScenarioExchange",
-        exchange_child: "ScenarioExchange",
-        setup: ScenarioSetup,
-    ) -> PedagogicalContext:
-        """
-        Create PedagogicalContext from pre-defined scenario metadata.
-
-        When scenarios include explicit pedagogical metadata, use it
-        instead of calling the LLM for extraction.
-
-        Args:
-            exchange_model: The model's exchange with metadata
-            exchange_child: The child's exchange with metadata
-            setup: Scenario setup
-
-        Returns:
-            PedagogicalContext built from scenario metadata
-        """
-        return PedagogicalContext(
-            question_type=exchange_model.question_type or QuestionType.OPEN,
-            question_intent=exchange_model.pedagogical_intent or "Not specified",
-            target_knowledge=exchange_model.target_knowledge or setup.key_concept,
-            child_response_type=exchange_child.response_type or ResponseType.ANSWER,
-            knowledge_gap=exchange_child.knowledge_gap or "Not specified",
-            ideal_next_action="As specified in scenario evaluation",
-            acceptable_actions=[],
-            unacceptable_actions=[],
-        )
