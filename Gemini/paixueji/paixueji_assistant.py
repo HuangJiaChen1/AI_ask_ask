@@ -90,9 +90,6 @@ class PaixuejiAssistant:
         self.consecutive_stuck_count = 0  # Track consecutive STUCK statuses (renamed from resistance)
         self.scaffold_level = 0  # 0=original question, 1-4=progressive hint levels
 
-        # Debugging Flow Tree
-        self.flow_tree = None
-
         # Initialize Google Gemini client
         if client:
             self.client = client
@@ -194,31 +191,6 @@ class PaixuejiAssistant:
             config = json.load(f)
 
         return config
-
-    def init_flow_tree(self, session_id, age, object_name, character, focus_mode):
-        """
-        Initialize conversation flow tree for debugging.
-
-        Args:
-            session_id: Session ID for this conversation
-            age: Child's age
-            object_name: Initial object being discussed
-            character: Conversation character (Teacher/Buddy)
-            focus_mode: Focus mode (depth, width, etc.)
-        """
-        from conversation_tree import ConversationFlowTree
-        from datetime import datetime
-
-        self.flow_tree = ConversationFlowTree(
-            session_id=session_id,
-            metadata={
-                "created_at": datetime.now().isoformat(),
-                "initial_object": object_name,
-                "child_age": age,
-                "character": character,
-                "initial_focus": focus_mode
-            }
-        )
 
     def _load_age_prompts(self, age_prompts_path):
         """Load age-based prompts from JSON file."""
