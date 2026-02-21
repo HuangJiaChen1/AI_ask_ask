@@ -1530,6 +1530,7 @@ def manual_critique():
                 "model_question": transcript[i]["content"],
                 "child_response": transcript[i + 1]["content"],
                 "model_response": transcript[i + 2]["content"],
+                "question_nodes_executed": transcript[i].get("nodes_executed", []),
                 "nodes_executed": transcript[i + 2].get("nodes_executed", []),
                 "mode": transcript[i + 2].get("mode", "chat"),
             })
