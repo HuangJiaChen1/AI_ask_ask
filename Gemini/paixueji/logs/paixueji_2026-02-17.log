@@ -410,3 +410,35 @@
 2026-02-17 14:26:01.147 | INFO     | paixueji_app:critique_conversation:1282 | [CRITIQUE] Task 72a74431... spawned for session fbd223d2...
 2026-02-17 14:26:01.149 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: banana
 2026-02-17 14:26:01.149 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: banana -> nature | Concept: Change | Question: How does it change? | Thinking: Test
+2026-02-17 15:09:11.333 | INFO     | graph:node_generate_fun_fact:230 | [0e0cbff9-bc50-432b-83b5-12738e15eb2e] Node: Generate Fun Fact for 'truck'
+2026-02-17 15:09:11.337 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'truck' (model=gemini-2.5-flash-lite)
+2026-02-17 15:09:11.340 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: truck
+2026-02-17 15:09:15.278 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: truck -> Category_Society_And_Systems | Concept: Function | Question: Look at the big wheels on the truck! What do you think they help the truck do? | Thinking: 1. **Analyze Object:** A truck is a vehicle designed for transporting goods. It has wheels, an engine, a cargo area, and a driver's cabin. It's a man-made object used in daily life.
+2. **Match Theme:** 'How We Organize Ourselves' is the best fit because trucks are integral to transportation systems, which are key societal structures for moving resources and connecting communities. 'How the World Works' is too broad, and while trucks involve physics, their primary role is societal organization.
+3. **Match Concept:** 'Function' is the strongest concept. Children can easily grasp the idea of what a truck *does* (carries things). 'Form' is also possible but less inquiry-driven for a machine. 'Causation' is difficult for a complex machine. 'Change' isn't the primary focus. 'Connection' is relevant but secondary to its core purpose. 'Perspective' and 'Responsibility' are less direct for the object itself.
+4. **Draft Question:** Focus on the truck's purpose and parts.
+2026-02-17 15:09:18.870 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 7.533s | text_length=2081
+2026-02-17 15:09:18.870 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'truck'
+2026-02-17 15:09:21.324 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 2.453s
+2026-02-17 15:09:21.324 | INFO     | stream.fun_fact:cache_fun_fact:78 | [FUN_FACT] Cached 5 fun facts for 'truck'
+2026-02-17 15:09:21.324 | INFO     | stream.fun_fact:generate_fun_fact:206 | [FUN_FACT] Success for 'truck' | facts_count=5, selected='Did you know some big trucks that carry very heavy things ha...'
+2026-02-17 15:09:21.324 | INFO     | graph:node_generate_fun_fact:245 | [0e0cbff9-bc50-432b-83b5-12738e15eb2e] Node: Generate Fun Fact finished in 9.991s
+2026-02-17 15:09:21.325 | INFO     | graph:node_generate_response:446 | [0e0cbff9-bc50-432b-83b5-12738e15eb2e] Node: Generate Response (introduction)
+2026-02-17 15:09:21.325 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=truck, age=6, has_fun_fact=True
+2026-02-17 15:09:21.326 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-17 15:09:21.326 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-17 15:09:21.326 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: generator
+2026-02-17 15:09:22.962 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=5, total_length=5
+2026-02-17 15:09:22.963 | INFO     | graph:stream_generator_to_callback:369 | [0e0cbff9-bc50-432b-83b5-12738e15eb2e] Time to First Token (TTFT): 1.637s for introduction
+2026-02-17 15:09:22.963 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=13, total_length=18
+2026-02-17 15:09:23.010 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=67, total_length=85
+2026-02-17 15:09:23.126 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=93, total_length=178
+2026-02-17 15:09:23.345 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=115, total_length=293
+2026-02-17 15:09:23.347 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-17 15:09:23.347 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-17 15:09:23.347 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=2.021s, response_length=293
+2026-02-17 15:09:23.347 | INFO     | graph:stream_generator_to_callback:436 | [0e0cbff9-bc50-432b-83b5-12738e15eb2e] Stream finished in 2.022s for introduction
+2026-02-17 15:09:23.347 | INFO     | graph:node_generate_response:573 | [0e0cbff9-bc50-432b-83b5-12738e15eb2e] Node: Generate Response finished in 2.022s
+2026-02-17 15:09:23.351 | INFO     | graph:node_generate_question:586 | [0e0cbff9-bc50-432b-83b5-12738e15eb2e] Node: Generate Question
+2026-02-17 15:09:23.352 | INFO     | graph:node_finalize:972 | [0e0cbff9-bc50-432b-83b5-12738e15eb2e] Node: Finalize
+2026-02-17 15:09:23.353 | INFO     | graph:node_finalize:1030 | [0e0cbff9-bc50-432b-83b5-12738e15eb2e] Node: Finalize finished in 0.000s

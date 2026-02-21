@@ -337,6 +337,27 @@ def start_conversation():
 
                         # Node execution tracing
                         "nodes_executed": [],
+
+                        # Input state snapshot for TraceObject assembly
+                        "_input_state_snapshot": {
+                            "object_name": assistant.object_name,
+                            "age": assistant.age,
+                            "correct_answer_count": assistant.correct_answer_count,
+                            "content": introduction_content,
+                            "conversation_state": assistant.state.value,
+                            "guide_phase": assistant.guide_phase,
+                            "guide_turn_count": assistant.guide_turn_count,
+                            "scaffold_level": assistant.scaffold_level,
+                            "hint_given": assistant.hint_given,
+                            "focus_mode": focus_mode,
+                            "depth_questions_count": assistant.depth_questions_count,
+                            "depth_target": assistant.depth_target,
+                            "ibpyp_theme_name": assistant.ibpyp_theme_name,
+                            "key_concept": assistant.key_concept,
+                            "level1_category": assistant.level1_category,
+                            "level2_category": assistant.level2_category,
+                            "level3_category": assistant.level3_category,
+                        },
                     }
 
                     async for chunk in stream_graph_execution(initial_state):
@@ -348,6 +369,7 @@ def start_conversation():
                                 "content": chunk.response,
                                 "nodes_executed": chunk.nodes_executed or [],
                                 "mode": "guide" if chunk.guide_phase else "chat",
+                                "_input_state_snapshot": initial_state.get("_input_state_snapshot", {}),
                             })
 
                         yield sse_event("chunk", chunk)
@@ -728,6 +750,27 @@ def continue_conversation():
 
                         # Node execution tracing
                         "nodes_executed": [],
+
+                        # Input state snapshot for TraceObject assembly
+                        "_input_state_snapshot": {
+                            "object_name": assistant.object_name,
+                            "age": assistant.age,
+                            "correct_answer_count": assistant.correct_answer_count,
+                            "content": child_input,
+                            "conversation_state": assistant.state.value,
+                            "guide_phase": assistant.guide_phase,
+                            "guide_turn_count": assistant.guide_turn_count,
+                            "scaffold_level": assistant.scaffold_level,
+                            "hint_given": assistant.hint_given,
+                            "focus_mode": focus_mode,
+                            "depth_questions_count": assistant.depth_questions_count,
+                            "depth_target": assistant.depth_target,
+                            "ibpyp_theme_name": assistant.ibpyp_theme_name,
+                            "key_concept": assistant.key_concept,
+                            "level1_category": assistant.level1_category,
+                            "level2_category": assistant.level2_category,
+                            "level3_category": assistant.level3_category,
+                        },
                     }
 
                     async for chunk in stream_graph_execution(initial_state):
@@ -742,10 +785,10 @@ def continue_conversation():
                         # Update conversation history with final response
                         if chunk.finish:
                             # Also append the USER message to history now that turn is complete
-                            # (matches logic in original call_paixueji_stream which did it early, 
+                            # (matches logic in original call_paixueji_stream which did it early,
                             # but safer to do here or assuming app.py handles it?)
-                            # Original: "messages.append... assistant.conversation_history.append" 
-                            # inside stream meant it was added early. 
+                            # Original: "messages.append... assistant.conversation_history.append"
+                            # inside stream meant it was added early.
                             # In `continue_conversation` (app.py), we only see:
                             # "if chunk.finish: assistant.conversation_history.append(... response ...)"
                             # WHERE is the user message added to assistant.conversation_history?
@@ -759,6 +802,7 @@ def continue_conversation():
                                 "content": chunk.response,
                                 "nodes_executed": chunk.nodes_executed or [],
                                 "mode": "guide" if chunk.guide_phase else "chat",
+                                "_input_state_snapshot": initial_state.get("_input_state_snapshot", {}),
                             })
 
                             # NEW: Increment only if factually correct
@@ -1522,10 +1566,28 @@ def manual_critique():
         logger.info(f"[MANUAL-CRITIQUE] Report saved: {report_path} | "
                      f"exchanges critiqued: {len(exchange_critiques)}")
 
+        # Assemble TraceObjects for each critiqued exchange
+        from trace_assembler import assemble_trace_object, save_trace_object
+        trace_paths = []
+        for ec in exchange_critiques:
+            idx = ec.get("exchange_index")
+            if idx is None or idx < 1 or idx > len(all_exchanges):
+                continue
+            try:
+                trace_obj = assemble_trace_object(
+                    session_id, assistant, idx, all_exchanges[idx - 1], ec
+                )
+                trace_path = save_trace_object(trace_obj)
+                trace_paths.append(trace_path)
+            except Exception as trace_err:
+                logger.warning(f"[MANUAL-CRITIQUE] Failed to assemble trace for exchange {idx}: {trace_err}")
+
         return jsonify({
             "success": True,
             "report_path": str(report_path),
-            "exchanges_critiqued": len(exchange_critiques)
+            "exchanges_critiqued": len(exchange_critiques),
+            "trace_paths": trace_paths,
+            "traces_assembled": len(trace_paths),
         })
 
     except Exception as e:

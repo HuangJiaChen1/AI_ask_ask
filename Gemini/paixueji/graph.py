@@ -103,7 +103,9 @@ class PaixuejiState(TypedDict):
 KEY_STATE_FIELDS = [
     "response_type", "is_engaged", "is_factually_correct",
     "guide_phase", "guide_status", "guide_strategy",
-    "new_object_name", "natural_topic_completion"
+    "new_object_name", "natural_topic_completion",
+    "correctness_reasoning", "switch_decision_reasoning",
+    "focus_mode", "scaffold_level", "guide_turn_count"
 ]
 
 
@@ -115,18 +117,21 @@ def trace_node(func):
     - Node name (derived from function name)
     - Execution time in milliseconds
     - Key state changes (before vs after)
+    - state_before: key fields snapshot before the node ran
+    - validation_result: if returned by the node (e.g. node_analyze_input)
+    - navigation_result: if returned by the node (e.g. node_guide_navigator)
 
     The trace is appended to state["nodes_executed"] for later inclusion
-    in critique reports, helping debuggers identify which nodes
-    caused pedagogical issues.
+    in critique reports and TraceObject assembly.
     """
     @functools.wraps(func)
     async def wrapper(state: PaixuejiState) -> dict:
         start_time = time.time()
         node_name = func.__name__.replace('node_', '')
 
-        # Capture key state before execution
-        state_before = {k: state.get(k) for k in KEY_STATE_FIELDS}
+        # Capture key state before execution (filtered to non-None)
+        state_before_raw = {k: state.get(k) for k in KEY_STATE_FIELDS}
+        state_before = {k: v for k, v in state_before_raw.items() if v is not None}
 
         # Execute the actual node function
         result = await func(state)
@@ -135,15 +140,24 @@ def trace_node(func):
         state_after = {k: result.get(k, state.get(k)) for k in KEY_STATE_FIELDS}
         changes = {
             k: v for k, v in state_after.items()
-            if v != state_before.get(k) and v is not None
+            if v != state_before_raw.get(k) and v is not None
         }
 
-        # Build trace entry
+        # Build trace entry with enriched fields
         trace_entry = {
             "node": node_name,
             "time_ms": round((time.time() - start_time) * 1000, 1),
-            "changes": changes
+            "changes": changes,
+            "state_before": state_before,
         }
+
+        # Capture validation_result if present (from node_analyze_input)
+        if "validation_result" in result and result["validation_result"]:
+            trace_entry["validation_result"] = result["validation_result"]
+
+        # Capture navigation_result if present (from node_guide_navigator)
+        if "last_navigation_state" in result and result["last_navigation_state"]:
+            trace_entry["navigation_result"] = result["last_navigation_state"]
 
         # Append to existing traces (immutable merge)
         current_traces = state.get("nodes_executed", []) or []
@@ -152,6 +166,56 @@ def trace_node(func):
         return result
 
     return wrapper
+
+
+def trace_router(capture_fields):
+    """
+    Decorator to trace router (conditional edge) decisions.
+
+    Since routers are not graph nodes, they can't append to state["nodes_executed"]
+    directly. Instead, traces are stored on the assistant object (passed by reference)
+    and merged into nodes_executed by node_finalize.
+
+    Args:
+        capture_fields: list of state keys to capture for debugging context
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(state):
+            start_time = time.time()
+
+            # Capture relevant state the router inspects
+            state_before = {k: state.get(k) for k in capture_fields if state.get(k) is not None}
+
+            # Also check assistant attributes for fields not in state dict
+            assistant = state.get("assistant")
+            if assistant:
+                for field in capture_fields:
+                    if field not in state_before and hasattr(assistant, field):
+                        val = getattr(assistant, field)
+                        if val is not None:
+                            state_before[field] = val
+
+            # Execute the router function
+            destination = func(state)
+
+            # Build router trace entry
+            trace_entry = {
+                "node": f"router:{func.__name__}",
+                "time_ms": round((time.time() - start_time) * 1000, 1),
+                "changes": {"destination": destination},
+                "state_before": state_before,
+            }
+
+            # Store on assistant object for later merging in node_finalize
+            if assistant:
+                if not hasattr(assistant, '_router_traces'):
+                    assistant._router_traces = []
+                assistant._router_traces.append(trace_entry)
+
+            return destination
+        return wrapper
+    return decorator
 
 
 # ============================================================================
@@ -974,7 +1038,16 @@ async def node_finalize(state: PaixuejiState) -> dict:
     full_response = state.get("full_response_text", "")
     if state.get("full_question_text"):
         full_response += " " + state["full_question_text"]
-        
+
+    # Merge router traces into nodes_executed
+    assistant = state["assistant"]
+    if hasattr(assistant, '_router_traces') and assistant._router_traces:
+        node_traces = state.get("nodes_executed", []) or []
+        # Router traces go at the beginning (they ran before nodes in each step)
+        merged = assistant._router_traces + node_traces
+        state["nodes_executed"] = merged
+        assistant._router_traces = []
+
     # Send final chunk
     final_chunk = StreamChunk(
         response=full_response,
@@ -1058,6 +1131,7 @@ def build_paixueji_graph():
 
     # Route from START: introductions go to fun fact generation,
     # guide phase goes to navigator, everything else to analyze_input
+    @trace_router(["guide_phase", "response_type"])
     def route_from_start(state):
         # Check for Guide Phase routing (multi-turn conversation)
         guide_phase = state.get("guide_phase") or state["assistant"].guide_phase
@@ -1090,6 +1164,7 @@ def build_paixueji_graph():
     workflow.add_edge("route_logic", "generate_response")
 
     # Check if we should guide instead of asking normal question
+    @trace_router(["correct_answer_count", "is_factually_correct"])
     def route_after_response(state):
         try:
             current_count = state["correct_answer_count"]
@@ -1127,6 +1202,7 @@ def build_paixueji_graph():
     workflow.add_edge("start_guide", "finalize")  # First turn - present bridge question
 
     # Route after Navigator analysis
+    @trace_router(["guide_strategy", "guide_status", "hint_given", "consecutive_stuck_count"])
     def route_after_navigator(state):
         """
         Route based on Navigator's analysis result.
