@@ -93,3 +93,18 @@ class TraceObject(BaseModel):
     exchange_index: int
     conversation_length: int = 0
     total_execution_time_ms: float = 0
+
+
+class OptimizationResult(BaseModel):
+    """Records a prompt optimization: before/after prompt, evidence, and preview."""
+    optimization_id: str                # UUID
+    timestamp: str
+    culprit_name: str                   # e.g. "generate_fun_fact"
+    prompt_name: str                    # e.g. "fun_fact_structuring_prompt"
+    original_prompt: str                # Snapshot BEFORE optimization (for diff + rollback)
+    optimized_prompt: str               # The new version
+    failure_pattern: str                # LLM's 1-sentence diagnosis of the general failure class
+    rationale: str                      # Why the change generalizes beyond the specific instances
+    trace_ids: list[str]                # Which TraceObject IDs were used as evidence
+    confidence_level: ConfidenceLevel
+    preview_response: str = ""          # Real LLM output generated with the new prompt

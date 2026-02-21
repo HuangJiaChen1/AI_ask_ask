@@ -1570,6 +1570,7 @@ def manual_critique():
         # Assemble TraceObjects for each critiqued exchange
         from trace_assembler import assemble_trace_object, save_trace_object
         trace_paths = []
+        saved_traces = []
         for ec in exchange_critiques:
             idx = ec.get("exchange_index")
             if idx is None or idx < 1 or idx > len(all_exchanges):
@@ -1580,6 +1581,7 @@ def manual_critique():
                 )
                 trace_path = save_trace_object(trace_obj)
                 trace_paths.append(trace_path)
+                saved_traces.append(trace_obj)
             except Exception as trace_err:
                 logger.warning(f"[MANUAL-CRITIQUE] Failed to assemble trace for exchange {idx}: {trace_err}")
 
@@ -1589,6 +1591,15 @@ def manual_critique():
             "exchanges_critiqued": len(exchange_critiques),
             "trace_paths": trace_paths,
             "traces_assembled": len(trace_paths),
+            "traces": [
+                {
+                    "exchange_index": t.exchange_index,
+                    "trace_id": t.trace_id,
+                    "culprit_name": t.culprit.culprit_name,
+                    "prompt_template_name": t.culprit.prompt_template_name,
+                }
+                for t in saved_traces
+            ],
         })
 
     except Exception as e:
@@ -1599,6 +1610,108 @@ def manual_critique():
             "success": False,
             "error": str(e)
         }), 500
+
+
+# ============================================================================
+# Prompt Optimization Endpoints
+# ============================================================================
+
+@app.route('/api/optimize-prompt', methods=['POST'])
+def optimize_prompt():
+    """
+    Run prompt optimization for a given culprit.
+
+    Request body:
+        {
+            "culprit_name": "generate_fun_fact",
+            "prompt_name": null   # optional explicit override
+        }
+
+    Response: full OptimizationResult JSON (optimization_id, failure_pattern,
+              rationale, original_prompt, optimized_prompt, preview_response, ...)
+    """
+    from prompt_optimizer import run_optimization
+
+    data = request.get_json() or {}
+    culprit_name = data.get("culprit_name")
+    prompt_name = data.get("prompt_name")  # optional
+
+    if not culprit_name:
+        return jsonify({"success": False, "error": "culprit_name is required"}), 400
+
+    try:
+        result = run_optimization(
+            client=GLOBAL_GEMINI_CLIENT,
+            config=_load_config(),
+            culprit_name=culprit_name,
+            prompt_name=prompt_name or None,
+        )
+        return jsonify(result.model_dump())
+    except ValueError as e:
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        logger.error(f"[OPTIMIZE] Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/optimize-prompt/<optimization_id>/approve', methods=['POST'])
+def approve_optimization(optimization_id):
+    """
+    Approve a pending optimization: merge into prompt_overrides.json and archive.
+
+    Response: {"status": "approved", "prompt_name": ..., "optimization_id": ...}
+    """
+    from pathlib import Path
+    from trace_schema import OptimizationResult
+    from prompt_optimizer import save_optimization
+
+    pending_path = Path(__file__).parent / "optimizations" / "pending" / f"{optimization_id}.json"
+
+    if not pending_path.exists():
+        return jsonify({"success": False, "error": "Pending optimization not found"}), 404
+
+    try:
+        result = OptimizationResult.model_validate_json(
+            pending_path.read_text(encoding="utf-8")
+        )
+        save_optimization(result, approved=True)
+        logger.info(f"[OPTIMIZE] Approved optimization {optimization_id} for '{result.prompt_name}'")
+        return jsonify({
+            "status": "approved",
+            "prompt_name": result.prompt_name,
+            "optimization_id": optimization_id,
+        })
+    except Exception as e:
+        logger.error(f"[OPTIMIZE] Approval error: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/optimize-prompt/<optimization_id>/reject', methods=['POST'])
+def reject_optimization(optimization_id):
+    """
+    Reject a pending optimization: delete the pending file.
+
+    Response: {"status": "rejected"}
+    """
+    from pathlib import Path
+
+    pending_path = Path(__file__).parent / "optimizations" / "pending" / f"{optimization_id}.json"
+
+    if pending_path.exists():
+        pending_path.unlink()
+        logger.info(f"[OPTIMIZE] Rejected and deleted pending optimization {optimization_id}")
+
+    return jsonify({"status": "rejected"})
+
+
+def _load_config() -> dict:
+    """Load config.json (used by optimization endpoints that run outside request context)."""
+    import os
+    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+    with open(config_path, "r") as f:
+        return json.load(f)
 
 
 def build_human_feedback_report(object_name, age, session_id, transcript,

@@ -1505,7 +1505,6 @@ async function submitManualCritique() {
         const result = await response.json();
 
         if (result.success) {
-            closeManualCritique();
             const btn = document.getElementById('sendReportBtn');
             btn.textContent = 'Report Saved!';
             btn.style.background = '#10b981';
@@ -1514,7 +1513,14 @@ async function submitManualCritique() {
             setTimeout(() => {
                 btn.textContent = '\uD83D\uDCDD Send Report for Review';
                 btn.style.background = '#f59e0b';
-            }, 2000);
+            }, 4000);
+
+            // Show optimization suggestions if any culprits were identified
+            if (result.traces && result.traces.length > 0) {
+                showOptimizationPrompts(result.traces);
+            } else {
+                closeManualCritique();
+            }
         } else {
             alert('Failed to save critique: ' + result.error);
         }
@@ -1543,6 +1549,191 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.appendChild(document.createTextNode(text));
     return div.innerHTML;
+}
+
+// ============================================================================
+// Prompt Optimization Flow
+// ============================================================================
+
+/**
+ * Show "Optimize prompt" buttons for each trace culprit returned by
+ * /api/manual-critique. Buttons appear inside the critique overlay so the
+ * engineer can immediately trigger optimization without closing the form.
+ */
+function showOptimizationPrompts(traces) {
+    const container = document.getElementById('optimizationSuggestions');
+    container.innerHTML = '';
+    container.style.display = 'block';
+
+    const heading = document.createElement('p');
+    heading.style.cssText = 'font-weight:bold; color:#1e293b; margin:0 0 8px 0; font-size:0.9em;';
+    heading.textContent = 'Culprits identified — optimize their prompts:';
+    container.appendChild(heading);
+
+    traces.forEach(trace => {
+        if (!trace.culprit_name || trace.culprit_name === 'unknown') return;
+        const btn = document.createElement('button');
+        btn.textContent = 'Optimize prompt for: ' + trace.culprit_name;
+        btn.style.cssText = 'width:100%; margin-top:8px; padding:10px; background:#3b82f6; ' +
+            'color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.9em;';
+        btn.onclick = () => runOptimization(
+            trace.culprit_name,
+            trace.prompt_template_name  // may be null — backend will error with helpful message
+        );
+        container.appendChild(btn);
+    });
+}
+
+/** Tracks the optimization_id returned by /api/optimize-prompt. */
+let currentOptimizationId = null;
+
+/**
+ * Compute a line-level diff between two strings.
+ * Returns { beforeHtml, afterHtml } with changed lines highlighted.
+ */
+function computePromptDiff(oldText, newText) {
+    function esc(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    const oldLines = oldText.split('\n');
+    const newLines = newText.split('\n');
+
+    // Build LCS table (line level)
+    const m = oldLines.length, n = newLines.length;
+    const dp = Array.from({length: m + 1}, () => new Array(n + 1).fill(0));
+    for (let i = m - 1; i >= 0; i--) {
+        for (let j = n - 1; j >= 0; j--) {
+            if (oldLines[i] === newLines[j]) {
+                dp[i][j] = 1 + dp[i+1][j+1];
+            } else {
+                dp[i][j] = Math.max(dp[i+1][j], dp[i][j+1]);
+            }
+        }
+    }
+
+    // Walk the LCS to build diff
+    let beforeHtml = '', afterHtml = '';
+    let i = 0, j = 0;
+    while (i < m || j < n) {
+        if (i < m && j < n && oldLines[i] === newLines[j]) {
+            // Unchanged
+            beforeHtml += esc(oldLines[i]) + '\n';
+            afterHtml  += esc(newLines[j]) + '\n';
+            i++; j++;
+        } else if (j < n && (i >= m || dp[i][j+1] >= dp[i+1][j])) {
+            // Added in new
+            afterHtml += `<span style="background:#86efac; display:inline-block; width:100%;">${esc(newLines[j])}</span>\n`;
+            j++;
+        } else {
+            // Removed from old
+            beforeHtml += `<span style="background:#fca5a5; display:inline-block; width:100%;">${esc(oldLines[i])}</span>\n`;
+            i++;
+        }
+    }
+    return { beforeHtml, afterHtml };
+}
+
+/**
+ * Call /api/optimize-prompt, then show the result modal for human review.
+ */
+async function runOptimization(culpritName, promptName) {
+    const modal = document.getElementById('optimizationModal');
+    modal.style.display = 'block';
+
+    // Reset modal to loading state
+    document.getElementById('optPreviewResponse').textContent =
+        'Generating optimization\u2026 (this may take 15\u201330s)';
+    document.getElementById('optOriginalPrompt').textContent = '';
+    document.getElementById('optOptimizedPrompt').textContent = '';
+    document.getElementById('optFailurePattern').textContent = '';
+    document.getElementById('optRationale').textContent = '';
+    document.getElementById('approveOptBtn').disabled = true;
+
+    try {
+        const response = await fetch(`${API_BASE}/optimize-prompt`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({culprit_name: culpritName, prompt_name: promptName})
+        });
+        const result = await response.json();
+
+        if (!response.ok) {
+            document.getElementById('optPreviewResponse').textContent =
+                'Error: ' + (result.error || response.statusText);
+            return;
+        }
+
+        currentOptimizationId = result.optimization_id;
+
+        document.getElementById('optFailurePattern').textContent =
+            'Failure pattern: ' + result.failure_pattern;
+        const diff = computePromptDiff(result.original_prompt, result.optimized_prompt);
+        document.getElementById('optOriginalPrompt').innerHTML = diff.beforeHtml;
+        document.getElementById('optOptimizedPrompt').innerHTML = diff.afterHtml;
+        document.getElementById('optPreviewResponse').textContent = result.preview_response;
+        document.getElementById('optRationale').textContent = result.rationale;
+        document.getElementById('approveOptBtn').disabled = false;
+
+    } catch (e) {
+        document.getElementById('optPreviewResponse').textContent =
+            'Request failed: ' + e.message;
+    }
+}
+
+/**
+ * Approve the current optimization — merges prompt into prompt_overrides.json.
+ */
+async function approveOptimization() {
+    if (!currentOptimizationId) return;
+    const btn = document.getElementById('approveOptBtn');
+    btn.disabled = true;
+    btn.textContent = 'Applying\u2026';
+
+    try {
+        const response = await fetch(
+            `${API_BASE}/optimize-prompt/${currentOptimizationId}/approve`,
+            {method: 'POST'}
+        );
+        const result = await response.json();
+
+        if (result.status === 'approved') {
+            closeOptimizationModal();
+            alert('Prompt optimization applied. New sessions will use the updated prompt.');
+        } else {
+            alert('Failed to approve: ' + JSON.stringify(result));
+            btn.disabled = false;
+            btn.textContent = 'Approve \u2014 Apply this fix';
+        }
+    } catch (e) {
+        alert('Approval request failed: ' + e.message);
+        btn.disabled = false;
+        btn.textContent = 'Approve \u2014 Apply this fix';
+    }
+}
+
+/**
+ * Reject the current optimization — deletes the pending file.
+ */
+async function rejectOptimization() {
+    if (currentOptimizationId) {
+        await fetch(
+            `${API_BASE}/optimize-prompt/${currentOptimizationId}/reject`,
+            {method: 'POST'}
+        ).catch(() => {});  // Fire-and-forget; discard any errors
+    }
+    closeOptimizationModal();
+}
+
+function closeOptimizationModal() {
+    document.getElementById('optimizationModal').style.display = 'none';
+    currentOptimizationId = null;
+    // Reset approve button label for next use
+    const btn = document.getElementById('approveOptBtn');
+    if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Approve \u2014 Apply this fix';
+    }
 }
 
 // Initialize on page load

@@ -1084,8 +1084,8 @@ async def node_finalize(state: PaixuejiState) -> dict:
         theme_classification_reason=state["assistant"].ibpyp_theme_reason or None,
 
         # Guide Phase specific fields
-        guide_phase=state.get("guide_phase"),
-        bridge_question=state["assistant"].bridge_question if state.get("guide_phase") else None,
+        guide_phase=state.get("guide_phase") or state["assistant"].guide_phase,
+        bridge_question=state["assistant"].bridge_question if (state.get("guide_phase") or state["assistant"].guide_phase) else None,
         is_guide_success=state.get("is_guide_success", False),
 
         # Node execution trace (for critique reports)

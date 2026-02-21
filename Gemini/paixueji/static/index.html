@@ -237,7 +237,73 @@
                 <button onclick="closeManualCritique()" style="padding:10px 20px; background:#e2e8f0; color:#475569; border:none; border-radius:6px; cursor:pointer;">Cancel</button>
                 <button id="submitManualCritiqueBtn" onclick="submitManualCritique()" style="padding:10px 20px; background:#0ea5e9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Submit Critique</button>
             </div>
+
+            <!-- Optimization suggestions (shown after successful submission) -->
+            <div id="optimizationSuggestions" style="display:none; margin-top:12px;"></div>
         </div>
+    </div>
+
+    <!-- Optimization result modal -->
+    <div id="optimizationModal" style="display:none; position:fixed; top:0; left:0;
+        width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:2200; overflow-y:auto;">
+      <div style="background:white; max-width:860px; margin:30px auto;
+                  border-radius:12px; padding:30px; box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+          <h2 style="margin:0;">Prompt Optimization Preview</h2>
+          <button onclick="closeOptimizationModal()"
+                  style="background:none; border:none; font-size:1.5em; cursor:pointer;">&#x2715;</button>
+        </div>
+
+        <!-- Failure pattern chip -->
+        <div id="optFailurePattern" style="background:#fef3c7; border:1px solid #fbbf24;
+            border-radius:6px; padding:12px; margin-bottom:16px; font-size:0.9em;"></div>
+
+        <!-- Before/after prompt diff -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+          <div>
+            <div style="font-weight:bold; color:#dc2626; margin-bottom:6px;">Before</div>
+            <pre id="optOriginalPrompt" style="background:#fef2f2; padding:12px;
+                 border-radius:6px; font-size:0.75em; max-height:200px;
+                 overflow-y:auto; white-space:pre-wrap; word-break:break-word;"></pre>
+          </div>
+          <div>
+            <div style="font-weight:bold; color:#16a34a; margin-bottom:6px;">After</div>
+            <pre id="optOptimizedPrompt" style="background:#f0fdf4; padding:12px;
+                 border-radius:6px; font-size:0.75em; max-height:200px;
+                 overflow-y:auto; white-space:pre-wrap; word-break:break-word;"></pre>
+          </div>
+        </div>
+
+        <!-- Real after-fix response -->
+        <div style="margin-bottom:20px;">
+          <div style="font-weight:bold; color:#1e40af; margin-bottom:6px;">
+            What the child would see after the fix:
+          </div>
+          <div id="optPreviewResponse" style="background:#eff6ff; border:1px solid #bfdbfe;
+               border-radius:6px; padding:14px; font-size:0.95em; line-height:1.6;"></div>
+        </div>
+
+        <!-- Rationale -->
+        <div id="optRationale" style="color:#475569; font-size:0.85em;
+             margin-bottom:20px; font-style:italic;"></div>
+
+        <!-- Approve / Reject -->
+        <div style="display:flex; gap:12px;">
+          <button id="approveOptBtn" onclick="approveOptimization()"
+                  style="flex:1; padding:12px; background:#16a34a; color:white;
+                         border:none; border-radius:8px; cursor:pointer;
+                         font-weight:bold; font-size:1em;">
+            Approve - Apply this fix
+          </button>
+          <button onclick="rejectOptimization()"
+                  style="flex:1; padding:12px; background:#dc2626; color:white;
+                         border:none; border-radius:8px; cursor:pointer;
+                         font-weight:bold; font-size:1em;">
+            Reject - Discard
+          </button>
+        </div>
+      </div>
     </div>
 
     <script src="/static/app.js"></script>

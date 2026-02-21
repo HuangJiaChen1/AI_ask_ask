@@ -288,7 +288,10 @@ Return ONLY valid JSON:
 """
 
 def get_prompts():
-    return {
+    import json
+    from pathlib import Path
+
+    prompts = {
         'system_prompt': SYSTEM_PROMPT,
         'introduction_prompt': INTRODUCTION_PROMPT,
         'feedback_response_prompt': FEEDBACK_RESPONSE_PROMPT,
@@ -303,3 +306,14 @@ def get_prompts():
         'fun_fact_grounding_prompt': FUN_FACT_GROUNDING_PROMPT,
         'fun_fact_structuring_prompt': FUN_FACT_STRUCTURING_PROMPT,
     }
+
+    # Merge approved optimizations at call time (no restart required)
+    overrides_path = Path(__file__).parent / "prompt_overrides.json"
+    if overrides_path.exists():
+        try:
+            overrides = json.loads(overrides_path.read_text(encoding="utf-8"))
+            prompts.update(overrides)
+        except Exception:
+            pass  # Corrupted overrides file — silently fall back to defaults
+
+    return prompts

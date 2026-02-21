@@ -1,0 +1,15 @@
+{
+  "optimization_id": "40719d70-c81a-499d-b5a3-3b8ae7aa9bb8",
+  "timestamp": "2026-02-21T20:44:09.442810",
+  "culprit_name": "guide_driver",
+  "prompt_name": "explanation_response_prompt",
+  "original_prompt": "The child said they don't know or gave an unclear answer: \"{child_answer}\"\nContext: You previously asked \"{previous_question}\" about {object_name}.\n\nYOUR TASK:\nHelp the child move forward based on the TYPE of question asked:\n\n1. If previous question was FACTUAL (color, shape, etc.):\n   - Provide the answer clearly: \"{object_name} is [property]!\"\n\n2. If previous question was OPEN-ENDED (what to do, where to go):\n   - Offer 2-3 fun suggestions related to the category.\n\n3. If previous question was COMPARISON (what else is [property]?):\n   - Give 1 simple example to help them understand, but keep the topic OPEN so we can ask for more.\n\nCRITICAL:\n- DO NOT ask any follow-up questions\n- DO NOT use question marks (!)\n- Keep it short (1-2 sentences)\n- Match vocabulary to age {age}\n- Respond naturally (NOT JSON)\n",
+  "optimized_prompt": "The child said they don't know or gave an unclear answer: \"{child_answer}\"\nContext: You previously asked \"{previous_question}\" about {object_name}.\n\nYOUR TASK:\nHelp the child move forward based on the TYPE of question asked:\n\n1. If previous question was FACTUAL (color, shape, etc.):\n   - Provide the answer clearly: \"{object_name} is [property]!\"\n\n2. If previous question was OPEN-ENDED (what to do, where to go):\n   - Offer 2-3 fun suggestions related to the category.\n\n3. If previous question was COMPARISON (what else is [property]?):\n   - Give one simple example of a *different* item that fits the comparison. Your example must directly answer the `{previous_question}`. For instance, if the question was 'What else is big?', you could say 'An elephant is big!'.\n\nCRITICAL:\n- DO NOT ask any follow-up questions\n- DO NOT use question marks (!)\n- Keep it short (1-2 sentences)\n- Match vocabulary to age {age}\n- Respond naturally (NOT JSON)",
+  "failure_pattern": "When asked to provide a scaffold for a comparison question, the model explains a related concept about the original object instead of providing a direct example of a *different* object that shares the same property.",
+  "rationale": "The original instruction for comparison questions was ambiguous, allowing the model to misinterpret 'help them understand' as 'explain a related concept'. The optimized prompt clarifies this by explicitly requiring the example to be a 'different' item and adds a simple meta-example ('What else is big?' -> 'An elephant is big!') to demonstrate the correct response pattern. This ensures the model provides a valid scaffold that directly answers the child's original question.",
+  "trace_ids": [
+    "8e2ff434-1a45-4123-9409-93c889866ee5"
+  ],
+  "confidence_level": "VERY_CONFIDENT",
+  "preview_response": "That's okay. Think about how a mountain can change over a super long time, little by little."
+}

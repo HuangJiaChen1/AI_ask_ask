@@ -111,7 +111,7 @@ Output a single JSON object with EXACTLY these fields:
   "culprit_name": "<exact node or component name from the glossary above>",
   "confidence_level": "LOW" | "MODERATE" | "CONFIDENT" | "VERY_CONFIDENT",
   "reasoning": "<2-4 sentences referencing the actual exchange content and why this component is responsible>",
-  "prompt_template_name": "<response_type>_prompt or null if not applicable"
+  "prompt_template_name": "<exact key from this list that this node uses as its primary prompt: fun_fact_structuring_prompt, fun_fact_grounding_prompt, introduction_prompt, followup_question_prompt, feedback_response_prompt, explanation_response_prompt, correction_response_prompt, topic_switch_response_prompt. Use null ONLY for routers (route_from_start, route_logic, route_after_response) and internal nodes (analyze_input, finalize) that have no user-facing prompt.>"
 }}
 """
 
