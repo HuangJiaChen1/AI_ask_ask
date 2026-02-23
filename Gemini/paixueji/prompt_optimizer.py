@@ -326,6 +326,168 @@ def generate_preview_response(
 
 
 # ============================================================================
+# Refinement template + helpers
+# ============================================================================
+
+REFINE_PROMPT_TEMPLATE = """\
+You are an expert prompt engineer for a child-educational AI system.
+Improve a prompt template to fix a GENERAL CLASS of failure, without hardcoding specific cases.
+
+CRITICAL RULES:
+1. Do NOT add rules about specific content from the failure examples.
+   Bad: "Never ask 'what do you think it was like for the dinosaur'"
+   Good: "Prefer concrete sensory questions (what does it look like? feel like?)
+          over abstract or philosophical ones."
+2. All existing {{placeholder}} variables must be preserved exactly as-is.
+3. The improved prompt must handle ALL valid inputs, not just the failure cases.
+4. Add guidance, not prohibitions.
+
+[CULPRIT NODE]: {culprit_name}
+[PROMPT BEING OPTIMIZED]: {prompt_name}
+
+[CURRENT PROMPT TEMPLATE]:
+{current_prompt}
+
+[FAILURE EVIDENCE — {n} instance(s)]:
+{failure_evidence}
+
+[PREVIOUS OPTIMIZATION ATTEMPT — REJECTED BY HUMAN]:
+{previous_optimized_prompt}
+
+[HUMAN'S REJECTION REASON]:
+{rejection_reason}
+
+Your task: Generate a BETTER optimization that:
+1. Still fixes the general failure class described in the failure evidence.
+2. Specifically addresses the human's rejection reason above.
+3. Does not repeat the shortcomings of the previous attempt.
+
+Output JSON:
+{{
+  "failure_pattern": "<1-2 sentences: the general class of behavior that is wrong>",
+  "optimized_prompt": "<full improved prompt, all {{placeholders}} preserved>",
+  "rationale": "<2-3 sentences: what changed and why it generalizes>",
+  "confidence_level": "LOW" | "MODERATE" | "CONFIDENT" | "VERY_CONFIDENT"
+}}
+"""
+
+
+def optimize_prompt_llm_refine(
+    client,
+    config: dict,
+    culprit_name: str,
+    prompt_name: str,
+    current_prompt: str,
+    traces: list[TraceObject],
+    previous_optimized_prompt: str,
+    rejection_reason: str,
+) -> OptimizationResult:
+    """
+    Call the high-reasoning model to generate a refined optimization.
+
+    Identical flow to optimize_prompt_llm() but uses REFINE_PROMPT_TEMPLATE,
+    injecting the previous attempt and the human's rejection reason.
+    """
+    failure_evidence = build_failure_evidence(traces)
+    prompt = REFINE_PROMPT_TEMPLATE.format(
+        culprit_name=culprit_name,
+        prompt_name=prompt_name,
+        current_prompt=current_prompt,
+        n=len(traces),
+        failure_evidence=failure_evidence,
+        previous_optimized_prompt=previous_optimized_prompt,
+        rejection_reason=rejection_reason,
+    )
+
+    model_name = config.get("high_reasoning_model", "gemini-2.5-pro")
+    logger.info(f"[Optimizer] Calling {model_name} to REFINE '{prompt_name}'")
+
+    response = client.models.generate_content(
+        model=model_name,
+        contents=prompt,
+        config=GenerateContentConfig(
+            response_mime_type="application/json",
+            temperature=0.3,
+        ),
+    )
+    text = response.text.strip()
+    if "```json" in text:
+        text = text.split("```json")[1].split("```")[0].strip()
+
+    data = json.loads(text)
+
+    return OptimizationResult(
+        optimization_id=str(uuid.uuid4()),
+        timestamp=datetime.now().isoformat(),
+        culprit_name=culprit_name,
+        prompt_name=prompt_name,
+        original_prompt=current_prompt,
+        optimized_prompt=data["optimized_prompt"],
+        failure_pattern=data["failure_pattern"],
+        rationale=data["rationale"],
+        trace_ids=[t.trace_id for t in traces],
+        confidence_level=ConfidenceLevel(data["confidence_level"]),
+        preview_response="",  # Filled by run_refinement
+    )
+
+
+def run_refinement(
+    client,
+    config: dict,
+    previous_result: OptimizationResult,
+    rejection_reason: str,
+) -> OptimizationResult:
+    """
+    Full refinement pipeline:
+      1. Load traces for the same culprit
+      2. Call the refine LLM (previous attempt + rejection reason injected)
+      3. Generate a preview response with the new prompt
+      4. Delete the old pending file, save the new one
+
+    Note: current_prompt stays as original_prompt (not the previous attempt)
+    to avoid prompt drift across multiple refinement rounds.
+    """
+    traces = load_traces_for_culprit(previous_result.culprit_name)
+    if not traces:
+        raise ValueError(
+            f"No traces found for culprit '{previous_result.culprit_name}'."
+        )
+
+    new_result = optimize_prompt_llm_refine(
+        client, config,
+        culprit_name=previous_result.culprit_name,
+        prompt_name=previous_result.prompt_name,
+        current_prompt=previous_result.original_prompt,   # always the original
+        traces=traces,
+        previous_optimized_prompt=previous_result.optimized_prompt,
+        rejection_reason=rejection_reason,
+    )
+
+    # Populate audit chain fields
+    new_result.refined_from_id = previous_result.optimization_id
+    new_result.rejection_reason = rejection_reason
+
+    # Generate preview with new prompt
+    try:
+        new_result.preview_response = generate_preview_response(
+            client, config, traces[0], new_result.optimized_prompt, new_result.prompt_name
+        )
+    except Exception as e:
+        new_result.preview_response = f"(Preview generation failed: {e})"
+
+    # Delete the old pending file, save new one
+    old_pending = (
+        Path(__file__).parent / "optimizations" / "pending"
+        / f"{previous_result.optimization_id}.json"
+    )
+    if old_pending.exists():
+        old_pending.unlink()
+
+    save_optimization(new_result, approved=False)
+    return new_result
+
+
+# ============================================================================
 # Persistence
 # ============================================================================
 

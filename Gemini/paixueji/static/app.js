@@ -1713,20 +1713,90 @@ async function approveOptimization() {
 }
 
 /**
- * Reject the current optimization — deletes the pending file.
+ * Show feedback textarea when the engineer clicks "Reject — Not good enough".
  */
-async function rejectOptimization() {
+function showRejectionFeedback() {
+    document.getElementById('optActionButtons').style.display = 'none';
+    document.getElementById('optRejectionSection').style.display = 'block';
+    document.getElementById('optRejectionReason').value = '';
+    document.getElementById('optRejectionReason').focus();
+}
+
+/**
+ * Submit rejection feedback and call /refine to get a better attempt.
+ */
+async function submitRejectionAndRetry() {
+    const reason = document.getElementById('optRejectionReason').value.trim();
+    if (!reason) {
+        alert('Please explain why the fix is not satisfying before retrying.');
+        return;
+    }
+
+    const previousId = currentOptimizationId;
+
+    // Transition modal back to loading state
+    document.getElementById('optRejectionSection').style.display = 'none';
+    document.getElementById('optActionButtons').style.display = 'flex';
+    document.getElementById('optPreviewResponse').textContent =
+        'Refining based on your feedback\u2026 (this may take 15\u201330s)';
+    document.getElementById('optOriginalPrompt').textContent = '';
+    document.getElementById('optOptimizedPrompt').textContent = '';
+    document.getElementById('optFailurePattern').textContent = '';
+    document.getElementById('optRationale').textContent = '';
+    document.getElementById('approveOptBtn').disabled = true;
+
+    try {
+        const response = await fetch(`${API_BASE}/optimize-prompt/${previousId}/refine`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({rejection_reason: reason})
+        });
+        const result = await response.json();
+
+        if (!response.ok) {
+            document.getElementById('optPreviewResponse').textContent =
+                'Error: ' + (result.error || response.statusText);
+            document.getElementById('approveOptBtn').disabled = false;
+            return;
+        }
+
+        // Update modal with refined result
+        currentOptimizationId = result.optimization_id;
+        document.getElementById('optFailurePattern').textContent =
+            'Failure pattern: ' + result.failure_pattern;
+        const diff = computePromptDiff(result.original_prompt, result.optimized_prompt);
+        document.getElementById('optOriginalPrompt').innerHTML = diff.beforeHtml;
+        document.getElementById('optOptimizedPrompt').innerHTML = diff.afterHtml;
+        document.getElementById('optPreviewResponse').textContent = result.preview_response;
+        document.getElementById('optRationale').textContent = result.rationale;
+        document.getElementById('approveOptBtn').disabled = false;
+
+    } catch (e) {
+        document.getElementById('optPreviewResponse').textContent =
+            'Request failed: ' + e.message;
+        document.getElementById('approveOptBtn').disabled = false;
+    }
+}
+
+/**
+ * Hard discard — deletes the pending file and closes the modal.
+ */
+async function discardOptimization() {
     if (currentOptimizationId) {
         await fetch(
             `${API_BASE}/optimize-prompt/${currentOptimizationId}/reject`,
             {method: 'POST'}
-        ).catch(() => {});  // Fire-and-forget; discard any errors
+        ).catch(() => {});
     }
     closeOptimizationModal();
 }
 
 function closeOptimizationModal() {
     document.getElementById('optimizationModal').style.display = 'none';
+    // Reset rejection section for next use
+    document.getElementById('optRejectionSection').style.display = 'none';
+    document.getElementById('optActionButtons').style.display = 'flex';
+    document.getElementById('optRejectionReason').value = '';
     currentOptimizationId = null;
     // Reset approve button label for next use
     const btn = document.getElementById('approveOptBtn');

@@ -1688,6 +1688,44 @@ def approve_optimization(optimization_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@app.route('/api/optimize-prompt/<optimization_id>/refine', methods=['POST'])
+def refine_optimization(optimization_id):
+    """
+    Re-run optimization with human rejection feedback.
+
+    Body: {"rejection_reason": "The suggested fix is still too abstract..."}
+    Response: new full OptimizationResult JSON
+    """
+    from pathlib import Path
+    from trace_schema import OptimizationResult
+    from prompt_optimizer import run_refinement
+
+    data = request.get_json() or {}
+    rejection_reason = data.get("rejection_reason", "").strip()
+    if not rejection_reason:
+        return jsonify({"success": False, "error": "rejection_reason is required"}), 400
+
+    pending_path = Path(__file__).parent / "optimizations" / "pending" / f"{optimization_id}.json"
+    if not pending_path.exists():
+        return jsonify({"success": False, "error": "Pending optimization not found"}), 404
+
+    try:
+        previous_result = OptimizationResult.model_validate_json(
+            pending_path.read_text(encoding="utf-8")
+        )
+        new_result = run_refinement(
+            client=GLOBAL_GEMINI_CLIENT,
+            config=_load_config(),
+            previous_result=previous_result,
+            rejection_reason=rejection_reason,
+        )
+        return jsonify(new_result.model_dump())
+    except Exception as e:
+        logger.error(f"[OPTIMIZE] Refine error: {e}")
+        import traceback; traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/optimize-prompt/<optimization_id>/reject', methods=['POST'])
 def reject_optimization(optimization_id):
     """

@@ -108,3 +108,5 @@ class OptimizationResult(BaseModel):
     trace_ids: list[str]                # Which TraceObject IDs were used as evidence
     confidence_level: ConfidenceLevel
     preview_response: str = ""          # Real LLM output generated with the new prompt
+    refined_from_id: Optional[str] = None   # ID of the rejected optimization this refines
+    rejection_reason: Optional[str] = None  # Human's explanation for rejecting the prior attempt

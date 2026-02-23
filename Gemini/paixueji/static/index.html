@@ -289,19 +289,43 @@
              margin-bottom:20px; font-style:italic;"></div>
 
         <!-- Approve / Reject -->
-        <div style="display:flex; gap:12px;">
+        <div id="optActionButtons" style="display:flex; gap:12px;">
           <button id="approveOptBtn" onclick="approveOptimization()"
                   style="flex:1; padding:12px; background:#16a34a; color:white;
                          border:none; border-radius:8px; cursor:pointer;
                          font-weight:bold; font-size:1em;">
-            Approve - Apply this fix
+            Approve &#8212; Apply this fix
           </button>
-          <button onclick="rejectOptimization()"
+          <button onclick="showRejectionFeedback()"
                   style="flex:1; padding:12px; background:#dc2626; color:white;
                          border:none; border-radius:8px; cursor:pointer;
                          font-weight:bold; font-size:1em;">
-            Reject - Discard
+            Reject &#8212; Not good enough
           </button>
+        </div>
+
+        <!-- Rejection feedback section (hidden until Reject is clicked) -->
+        <div id="optRejectionSection" style="display:none; margin-top:16px;
+             border-top:2px solid #fca5a5; padding-top:16px;">
+          <div style="font-weight:bold; color:#dc2626; margin-bottom:8px;">
+            Why is this fix not satisfying?
+          </div>
+          <textarea id="optRejectionReason" rows="3"
+            placeholder="e.g. The fix is too generic &#8212; it doesn&#39;t address the specific issue of age-inappropriate language..."
+            style="width:100%; box-sizing:border-box; padding:10px; border:1px solid #fca5a5;
+                   border-radius:6px; font-family:inherit; resize:vertical;"></textarea>
+          <div style="display:flex; gap:10px; margin-top:10px;">
+            <button id="submitRefinementBtn" onclick="submitRejectionAndRetry()"
+                    style="flex:1; padding:10px; background:#7c3aed; color:white;
+                           border:none; border-radius:6px; cursor:pointer; font-weight:bold;">
+              Submit Feedback &amp; Retry
+            </button>
+            <button onclick="discardOptimization()"
+                    style="flex:1; padding:10px; background:#e2e8f0; color:#475569;
+                           border:none; border-radius:6px; cursor:pointer;">
+              Discard (no retry)
+            </button>
+          </div>
         </div>
       </div>
     </div>
