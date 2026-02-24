@@ -732,9 +732,18 @@ async def node_start_guide(state: PaixuejiState):
     bridge_question = assistant.bridge_question
     key_concept = assistant.key_concept
     theme_name = assistant.ibpyp_theme_name
+    object_name = state["object_name"]
 
-    # Construct response with bridge question
-    full_response = bridge_question
+    # 3-part combined response (zero extra LLM call — template only for TTFT-optimal delivery)
+    # Part 1: Confirm the child's correct answer
+    confirmation = "Yes, that's right! Great job! 🌟 "
+    # Part 2: Mode-shift invitation — signals transition from "naming things" to "discovering secrets"
+    inquiry_invitation = (
+        f"Ooh wait — I just thought of a mystery! "
+        f"Let's be explorers together and find out a secret about {object_name}... "
+    )
+    # Part 3: The causal bridge question
+    full_response = confirmation + inquiry_invitation + bridge_question
 
     # Stream it
     callback = state.get("stream_callback")
@@ -1175,7 +1184,34 @@ def build_paixueji_graph():
     )
 
     workflow.add_edge("analyze_input", "route_logic")
-    workflow.add_edge("route_logic", "generate_response")
+
+    # Pre-router: check guide trigger BEFORE generate_response streams anything.
+    # Uses response_type (set by route_logic) instead of is_factually_correct to avoid None bug.
+    @trace_router(["response_type", "correct_answer_count", "guide_phase"])
+    def route_to_guide_or_chat(state):
+        """Pre-route to guide phase before generate_response if the trigger condition is met."""
+        response_type = state.get("response_type", "")
+        current_count = state["correct_answer_count"]
+        # response_type == "feedback" is set exactly when is_factually_correct is True
+        is_correct = (response_type == "feedback")
+        should_trigger = (current_count >= 3 and is_correct) or current_count >= 4
+
+        assistant = state["assistant"]
+        has_guide_info = bool(assistant.ibpyp_theme and assistant.key_concept and assistant.bridge_question)
+
+        if should_trigger and has_guide_info:
+            logger.info(f"[{state['session_id']}] Pre-router: Guide trigger (count={current_count}, type={response_type}) → start_guide")
+            return "start_guide"
+        return "generate_response"
+
+    workflow.add_conditional_edges(
+        "route_logic",
+        route_to_guide_or_chat,
+        {
+            "generate_response": "generate_response",
+            "start_guide": "start_guide",
+        }
+    )
 
     # Check if we should guide instead of asking normal question
     @trace_router(["correct_answer_count", "is_factually_correct"])

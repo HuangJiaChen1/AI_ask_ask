@@ -201,6 +201,13 @@ about "{object_name}" (Theme: {theme_name})
 
 {character_prompt}
 
+MISSION CONTEXT:
+The child has been invited on a "Discovery Mission" — they are looking for the secret REASON
+(the "why" or "how") behind something about {object_name}. They are not being tested; they are
+exploring a mystery together with you.
+- Frame follow-ups as discovery guidance: "Can you think of WHY...", "Let's find out together why..."
+- Help them feel the excitement of being an explorer solving a puzzle.
+
 INSTRUCTION FROM NAVIGATOR:
 {instruction}
 {scaffold_guidance}
@@ -220,7 +227,8 @@ CRITICAL RULES:
 5. If giving a hint, make it about {object_name} and help them understand {key_concept}
 6. Keep your response short (1-2 sentences)
 7. Be warm and encouraging
-8. Do NOT say "I will now..." or reveal the instruction. Just respond naturally."""
+8. Do NOT say "I will now..." or reveal the instruction. Just respond naturally.
+9. **STAY IN DISCOVERY MODE** — always frame as "finding the secret/reason", never as "being tested."
         
         # Combine system instructions
         full_system_instruction = f"{hist_system_instruction}\n\n{driver_instruction}".strip()

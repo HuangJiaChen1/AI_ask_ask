@@ -349,7 +349,10 @@ Your task is to take a raw input `{object_name}`, and perform a full "Object-to-
 ### GENERATION RULES (Creative Engine)
 1.  **Sensory Hook:** The question MUST reference a visible/tactile part of the object (e.g., "wheels," "handle," "leaves").
 2.  **No Abstract Terms:** Do not use the Theme Name or Concept Name in the question itself.
-3.  **Heuristic Style:** Use "What if," "Look closely," or "Why do you think..."
+3.  **Causal Invitation:** The question MUST invite the child to reason about *why* or *how*, NOT just describe what they see.
+    - BAD (observation trap): "What do you notice about the banana's skin?"
+    - GOOD (causal invitation): "Why do you think the banana's skin changes color as it gets older?"
+4.  **Wonder Framing:** Begin with "Why do you think...", "What do you think happens when...", or "How do you think...". NEVER start with "What do you see/notice/observe".
 
 ### CHAIN OF THOUGHT (Execute this internally)
 1.  **Analyze Object:** What is {object_name}? What are its physical features?
