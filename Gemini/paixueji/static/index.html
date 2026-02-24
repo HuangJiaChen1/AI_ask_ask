@@ -275,13 +275,30 @@
           </div>
         </div>
 
-        <!-- Real after-fix response -->
+        <!-- Real after-fix response — one card per (trace, critiqued-aspect) pair -->
         <div style="margin-bottom:20px;">
-          <div style="font-weight:bold; color:#1e40af; margin-bottom:6px;">
+          <div style="font-weight:bold; color:#1e40af; margin-bottom:8px;">
             What the child would see after the fix:
           </div>
-          <div id="optPreviewResponse" style="background:#eff6ff; border:1px solid #bfdbfe;
-               border-radius:6px; padding:14px; font-size:0.95em; line-height:1.6;"></div>
+          <div id="optPreviewContainer" style="display:flex; flex-direction:column; gap:12px;"></div>
+        </div>
+
+        <!-- Routing Table Patch (shown only when router_patch is present) -->
+        <div id="optRouterPatchSection" style="display:none; margin-bottom:20px;">
+          <div style="font-weight:bold; color:#7c3aed; margin-bottom:6px;">
+            Routing Table Patch (will be written to router_overrides.json):
+          </div>
+          <div style="background:#f5f3ff; border:1px solid #c4b5fd; border-radius:6px; padding:12px;">
+            <table style="width:100%; border-collapse:collapse; font-size:0.85em;">
+              <thead>
+                <tr>
+                  <th style="text-align:left; padding:6px 10px; border-bottom:1px solid #c4b5fd; color:#5b21b6;">New strategy value</th>
+                  <th style="text-align:left; padding:6px 10px; border-bottom:1px solid #c4b5fd; color:#5b21b6;">Routes to node</th>
+                </tr>
+              </thead>
+              <tbody id="optRouterPatchRows"></tbody>
+            </table>
+          </div>
         </div>
 
         <!-- Rationale -->

@@ -51,6 +51,7 @@ class CulpritIdentification(BaseModel):
     confidence_level: ConfidenceLevel
     reasoning: str
     prompt_template_name: Optional[str] = None
+    culprit_phase: Optional[str] = None   # "question" | "response" | None (routers/validators)
 
 
 class HumanCritique(BaseModel):
@@ -83,7 +84,8 @@ class TraceObject(BaseModel):
 
     input_state: dict = Field(default_factory=dict)
     execution_path: list[NodeTrace] = Field(default_factory=list)
-    culprit: CulpritIdentification
+    culprit: Optional[CulpritIdentification] = None   # deprecated; kept for old traces on disk
+    culprits: list[CulpritIdentification] = Field(default_factory=list)  # new: one per critiqued aspect
     critique: HumanCritique
     exchange: ExchangeContext
 
@@ -93,6 +95,7 @@ class TraceObject(BaseModel):
     exchange_index: int
     conversation_length: int = 0
     total_execution_time_ms: float = 0
+    conversation_history: list[dict] = Field(default_factory=list)
 
 
 class OptimizationResult(BaseModel):
@@ -107,6 +110,22 @@ class OptimizationResult(BaseModel):
     rationale: str                      # Why the change generalizes beyond the specific instances
     trace_ids: list[str]                # Which TraceObject IDs were used as evidence
     confidence_level: ConfidenceLevel
-    preview_response: str = ""          # Real LLM output generated with the new prompt
+    preview_response: str = ""          # First preview text — kept for refinement flow + backward compat
+    previews: list[dict] = Field(default_factory=list)  # Each: {trace_id, exchange_index, culprit_phase, original, preview}
     refined_from_id: Optional[str] = None   # ID of the rejected optimization this refines
     rejection_reason: Optional[str] = None  # Human's explanation for rejecting the prior attempt
+    router_patch: Optional[dict] = None     # Proposed routing table additions for router_overrides.json
+
+
+def effective_culprits(trace: "TraceObject") -> list[CulpritIdentification]:
+    """
+    Return the list of CulpritIdentification objects for a trace.
+
+    New traces populate `culprits` directly. Old traces on disk have
+    `culprit=<obj>, culprits=[]` — this helper bridges both.
+    """
+    if trace.culprits:
+        return trace.culprits
+    if trace.culprit:
+        return [trace.culprit]
+    return []

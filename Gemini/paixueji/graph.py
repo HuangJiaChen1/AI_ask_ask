@@ -1,5 +1,7 @@
 import asyncio
 import functools
+import json
+from pathlib import Path
 from typing import TypedDict, Annotated, List, Optional, Any
 from langgraph.graph import StateGraph, END, START
 
@@ -26,6 +28,18 @@ from stream import (
 )
 from stream.theme_guide import ThemeNavigator, ThemeDriver
 from schema import StreamChunk, TokenUsage
+
+
+def _load_router_overrides() -> dict:
+    """Load router_overrides.json for data-driven strategy→node routing."""
+    p = Path(__file__).parent / "router_overrides.json"
+    if p.exists():
+        try:
+            return json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+    return {}
+
 
 class PaixuejiState(TypedDict):
     # --- Inputs ---
@@ -1232,7 +1246,15 @@ def build_paixueji_graph():
             logger.info(f"[{state['session_id']}] Guide: Exiting (resistance or post-hint timeout).")
             return "guide_exit"
 
-        # Continue conversation with Driver
+        # Data-driven strategy → node lookup (from router_overrides.json)
+        overrides = _load_router_overrides()
+        strategy_routes = overrides.get("navigator_strategy_routes", {})
+        if guide_strategy in strategy_routes:
+            target = strategy_routes[guide_strategy]
+            logger.info(f"[{state['session_id']}] Guide: Routing '{guide_strategy}' → '{target}' (from router_overrides.json).")
+            return target
+
+        # Continue conversation with Driver (default)
         return "guide_driver"
 
     workflow.add_conditional_edges(

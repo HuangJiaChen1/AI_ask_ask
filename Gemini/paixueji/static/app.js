@@ -1578,7 +1578,8 @@ function showOptimizationPrompts(traces) {
             'color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.9em;';
         btn.onclick = () => runOptimization(
             trace.culprit_name,
-            trace.prompt_template_name  // may be null — backend will error with helpful message
+            trace.prompt_template_name,  // may be null — backend will error with helpful message
+            trace.trace_id               // single-trace mode: only this evidence used
         );
         container.appendChild(btn);
     });
@@ -1635,32 +1636,90 @@ function computePromptDiff(oldText, newText) {
 }
 
 /**
+ * Render side-by-side preview cards into #optPreviewContainer.
+ * Each card shows Exchange N label, original (red) vs fixed preview (green).
+ * Falls back to a single card with fallbackText when previews is empty.
+ */
+function renderPreviewCards(previews, fallbackText) {
+    const container = document.getElementById('optPreviewContainer');
+    container.innerHTML = '';
+
+    const items = (previews && previews.length > 0) ? previews : [{
+        exchange_index: '?', culprit_phase: null, original: '', preview: fallbackText || ''
+    }];
+
+    items.forEach(item => {
+        const label = document.createElement('div');
+        const phaseTag = item.culprit_phase ? ` · ${item.culprit_phase}` : '';
+        label.textContent = `Exchange ${item.exchange_index}${phaseTag}`;
+        label.style.cssText = 'font-weight:bold; color:#374151; margin-bottom:6px; font-size:0.85em;';
+
+        const row = document.createElement('div');
+        row.style.cssText = 'display:grid; grid-template-columns:1fr 1fr; gap:8px;';
+
+        const origLabel = document.createElement('div');
+        origLabel.textContent = 'Original (bad)';
+        origLabel.style.cssText = 'font-size:0.75em; color:#dc2626; font-weight:bold; margin-bottom:4px;';
+
+        const origBox = document.createElement('div');
+        origBox.style.cssText = 'background:#fef2f2; border:1px solid #fca5a5; border-radius:6px; padding:10px; font-size:0.9em; white-space:pre-wrap; line-height:1.5;';
+        origBox.textContent = item.original || '(no original stored)';
+
+        const origCol = document.createElement('div');
+        origCol.appendChild(origLabel);
+        origCol.appendChild(origBox);
+
+        const previewLabel = document.createElement('div');
+        previewLabel.textContent = 'Fixed preview';
+        previewLabel.style.cssText = 'font-size:0.75em; color:#16a34a; font-weight:bold; margin-bottom:4px;';
+
+        const previewBox = document.createElement('div');
+        previewBox.style.cssText = 'background:#f0fdf4; border:1px solid #86efac; border-radius:6px; padding:10px; font-size:0.9em; white-space:pre-wrap; line-height:1.5;';
+        previewBox.textContent = item.preview;
+
+        const previewCol = document.createElement('div');
+        previewCol.appendChild(previewLabel);
+        previewCol.appendChild(previewBox);
+
+        row.appendChild(origCol);
+        row.appendChild(previewCol);
+
+        const card = document.createElement('div');
+        card.style.cssText = 'border:1px solid #e2e8f0; border-radius:8px; padding:12px; background:#fafafa;';
+        card.appendChild(label);
+        card.appendChild(row);
+        container.appendChild(card);
+    });
+}
+
+/**
  * Call /api/optimize-prompt, then show the result modal for human review.
  */
-async function runOptimization(culpritName, promptName) {
+async function runOptimization(culpritName, promptName, traceId) {
     const modal = document.getElementById('optimizationModal');
     modal.style.display = 'block';
 
     // Reset modal to loading state
-    document.getElementById('optPreviewResponse').textContent =
-        'Generating optimization\u2026 (this may take 15\u201330s)';
+    document.getElementById('optPreviewContainer').innerHTML =
+        '<div style="color:#64748b; padding:12px;">Generating optimization\u2026 (this may take 15\u201330s)</div>';
     document.getElementById('optOriginalPrompt').textContent = '';
     document.getElementById('optOptimizedPrompt').textContent = '';
     document.getElementById('optFailurePattern').textContent = '';
     document.getElementById('optRationale').textContent = '';
     document.getElementById('approveOptBtn').disabled = true;
+    _renderRouterPatch(null);
 
     try {
         const response = await fetch(`${API_BASE}/optimize-prompt`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({culprit_name: culpritName, prompt_name: promptName})
+            body: JSON.stringify({culprit_name: culpritName, prompt_name: promptName, trace_id: traceId})
         });
         const result = await response.json();
 
         if (!response.ok) {
-            document.getElementById('optPreviewResponse').textContent =
-                'Error: ' + (result.error || response.statusText);
+            document.getElementById('optPreviewContainer').innerHTML =
+                `<div style="color:#dc2626; padding:12px;">Error: ${result.error || response.statusText}</div>`;
             return;
         }
 
@@ -1671,14 +1730,46 @@ async function runOptimization(culpritName, promptName) {
         const diff = computePromptDiff(result.original_prompt, result.optimized_prompt);
         document.getElementById('optOriginalPrompt').innerHTML = diff.beforeHtml;
         document.getElementById('optOptimizedPrompt').innerHTML = diff.afterHtml;
-        document.getElementById('optPreviewResponse').textContent = result.preview_response;
+        renderPreviewCards(result.previews, result.preview_response);
         document.getElementById('optRationale').textContent = result.rationale;
         document.getElementById('approveOptBtn').disabled = false;
 
+        // Show routing table patch section if present
+        _renderRouterPatch(result.router_patch);
+
     } catch (e) {
-        document.getElementById('optPreviewResponse').textContent =
-            'Request failed: ' + e.message;
+        document.getElementById('optPreviewContainer').innerHTML =
+            `<div style="color:#dc2626; padding:12px;">Request failed: ${e.message}</div>`;
     }
+}
+
+/**
+ * Render the router_patch table in the modal (or hide it if null).
+ */
+function _renderRouterPatch(routerPatch) {
+    const section = document.getElementById('optRouterPatchSection');
+    const tbody = document.getElementById('optRouterPatchRows');
+    if (!routerPatch) {
+        section.style.display = 'none';
+        tbody.innerHTML = '';
+        return;
+    }
+    tbody.innerHTML = '';
+    const stratRoutes = routerPatch.navigator_strategy_routes || {};
+    const entries = Object.entries(stratRoutes);
+    if (entries.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+    entries.forEach(([strategy, node]) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="padding:6px 10px; font-family:monospace; color:#6d28d9;">${strategy}</td>
+            <td style="padding:6px 10px; font-family:monospace; color:#15803d;">${node}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+    section.style.display = 'block';
 }
 
 /**
@@ -1737,8 +1828,8 @@ async function submitRejectionAndRetry() {
     // Transition modal back to loading state
     document.getElementById('optRejectionSection').style.display = 'none';
     document.getElementById('optActionButtons').style.display = 'flex';
-    document.getElementById('optPreviewResponse').textContent =
-        'Refining based on your feedback\u2026 (this may take 15\u201330s)';
+    document.getElementById('optPreviewContainer').innerHTML =
+        '<div style="color:#64748b; padding:12px;">Refining based on your feedback\u2026 (this may take 15\u201330s)</div>';
     document.getElementById('optOriginalPrompt').textContent = '';
     document.getElementById('optOptimizedPrompt').textContent = '';
     document.getElementById('optFailurePattern').textContent = '';
@@ -1754,8 +1845,8 @@ async function submitRejectionAndRetry() {
         const result = await response.json();
 
         if (!response.ok) {
-            document.getElementById('optPreviewResponse').textContent =
-                'Error: ' + (result.error || response.statusText);
+            document.getElementById('optPreviewContainer').innerHTML =
+                `<div style="color:#dc2626; padding:12px;">Error: ${result.error || response.statusText}</div>`;
             document.getElementById('approveOptBtn').disabled = false;
             return;
         }
@@ -1767,13 +1858,14 @@ async function submitRejectionAndRetry() {
         const diff = computePromptDiff(result.original_prompt, result.optimized_prompt);
         document.getElementById('optOriginalPrompt').innerHTML = diff.beforeHtml;
         document.getElementById('optOptimizedPrompt').innerHTML = diff.afterHtml;
-        document.getElementById('optPreviewResponse').textContent = result.preview_response;
+        renderPreviewCards(result.previews, result.preview_response);
         document.getElementById('optRationale').textContent = result.rationale;
         document.getElementById('approveOptBtn').disabled = false;
+        _renderRouterPatch(result.router_patch);
 
     } catch (e) {
-        document.getElementById('optPreviewResponse').textContent =
-            'Request failed: ' + e.message;
+        document.getElementById('optPreviewContainer').innerHTML =
+            `<div style="color:#dc2626; padding:12px;">Request failed: ${e.message}</div>`;
         document.getElementById('approveOptBtn').disabled = false;
     }
 }

@@ -11,6 +11,7 @@ Functions:
 import json
 import time
 from loguru import logger
+import paixueji_prompts
 
 
 async def decide_topic_switch_with_validation(
@@ -75,7 +76,10 @@ RULES FOR THIS STATE:
    - **DECISION: SWITCH** (to their new topic).
 """
 
-    # Build contextual THREE-PART validation prompt
+    # Rules block is overridable via prompt_overrides.json (supports self-evolution)
+    rules = paixueji_prompts.get_prompts()["input_analyzer_rules"]
+
+    # Build contextual THREE-PART validation prompt (context section + overridable rules)
     decision_prompt = f"""You are an educational AI helping a {age}-year-old child learn.
 
 CONTEXT:
@@ -83,45 +87,7 @@ CONTEXT:
 - Question: "{last_model_question}"
 - Answer: "{child_answer}"
 {topic_selection_instructions}
-
-TASK: Evaluate Engagement, Correctness, and Topic Switching.
-
-RULES:
-1. **Engagement**: Determine if the child provided a substantive answer or attempt.
-   - **ENGAGED**: The child provides a clear, specific word, guess, or description that demonstrates a deliberate intent to answer the question.
-   - **NOT ENGAGED**: The child provides only fillers, hesitation sounds, meaningless fragments, expresses uncertainty, asks for help, or expresses confusion.
-2. **Correctness**: Check if answer matches reality for the question. Accept age-appropriate answers.
-3. **Switching**:
-   - **SWITCH** if child explicitly names a NEW object to talk about (e.g. "Let's talk about cars").
-   - **CONTINUE** if child answers the question (even if answer is a noun like "Banana"), mentions a part/category, or is stuck.
-   - **CONTINUE** if the new word is just the ANSWER to your question.
-
-RESPOND WITH VALID JSON:
-{{
-    "decision": "SWITCH" or "CONTINUE",
-    "new_object": "ObjectName" or null,
-    "switching_reasoning": "Brief reason",
-    "is_engaged": true or false,
-    "is_factually_correct": true or false,
-    "correctness_reasoning": "Brief reason"
-}}
-
-EXAMPLES:
-
-1. Correct Answer (CONTINUE)
-Q: "Color?" A: "Red"
-→ {{"decision": "CONTINUE", "new_object": null, "is_engaged": true, "is_factually_correct": true, "correctness_reasoning": "Correct color.", "switching_reasoning": "Direct answer."}}
-
-2. Wrong Answer (CONTINUE)
-Q: "Color?" A: "Blue"
-→ {{"decision": "CONTINUE", "new_object": null, "is_engaged": true, "is_factually_correct": false, "correctness_reasoning": "Apples are not blue.", "switching_reasoning": "Direct answer."}}
-
-3. Topic Switch (SWITCH)
-Q: "Color?" A: "Can we talk about cars?"
-→ {{"decision": "SWITCH", "new_object": "car", "is_engaged": true, "is_factually_correct": false, "correctness_reasoning": "N/A", "switching_reasoning": "Explicit switch request."}}
-
-Evaluate now:
-"""
+{rules}"""
 
     try:
         # Call Gemini with JSON mode via async client

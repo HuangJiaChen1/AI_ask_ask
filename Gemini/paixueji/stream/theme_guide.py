@@ -11,6 +11,7 @@ from google.genai.types import GenerateContentConfig
 from loguru import logger
 from schema import TokenUsage
 from .utils import convert_messages_to_gemini_format
+import paixueji_prompts
 
 class ThemeNavigator:
     """
@@ -79,6 +80,9 @@ Bridge Question: "{bridge_question or 'Not specified'}"
 Turn: {turn_count}/{max_turns}
 """
 
+        # Rules block is overridable via prompt_overrides.json (supports self-evolution)
+        rules = paixueji_prompts.get_prompts()["theme_navigator_rules"]
+
         prompt = f"""You are the Strategy Navigator for a guided conversation with a {age}-year-old child.
 
 {context_section}
@@ -88,69 +92,7 @@ Turn: {turn_count}/{max_turns}
 
 User's Latest Input: "{user_input}"
 
-YOUR TASK:
-1. Analyze the User's Input against the Key Concept and Bridge Question:
-   - Are they showing understanding or curiosity about the Key Concept?
-   - Are they engaged but off-topic?
-   - Are they stuck or saying "I don't know"?
-
-2. Determine Status:
-   - "ON_TRACK": Child is engaged and moving toward understanding the Key Concept.
-   - "DRIFTING": Child is engaged but wandering off-topic.
-   - "STUCK": Child is stuck - "I don't know", confused, needs help, can't answer.
-   - "COMPLETED": Child has ARTICULATED understanding or genuine curiosity about the Key Concept.
-
-3. Determine Strategy:
-   - "ADVANCE": Child is on track. Move 1 step closer to the Key Concept.
-   - "PIVOT": Child is slightly off-topic. Acknowledge their point, then link back to the theme.
-   - "SCAFFOLD": Child is stuck. Provide a hint to help them understand (see scaffold levels below).
-   - "COMPLETE": Success! Child demonstrated understanding.
-
-   ⚠️ NEVER abandon the theme. If child says "I don't know", use SCAFFOLD to HELP them,
-   not retreat to unrelated topics. Always stay focused on "{current_topic}" and "{key_concept}".
-
-4. If SCAFFOLD, determine the appropriate scaffold level:
-   - Level 1: Provide ONE piece of the "because" (NOT a simpler question!)
-   - Level 2: Use an analogy connecting {current_topic} to something familiar
-   - Level 3: Give most of the answer with a confirming question
-   - Level 4: Give the full answer and celebrate learning together
-
-   ⚠️ ANTI-RETREAT RULE: If Bridge Question was WHY, ALL scaffold levels must provide
-   causal information. NEVER replace WHY with WHAT.
-
-   Choose the level based on how stuck the child seems and how many times they've been stuck.
-
-5. STRICT SUCCESS CRITERIA for "COMPLETED":
-   ✓ Child articulated something showing understanding or curiosity about the Key Concept
-   ✓ Child made a connection between object and theme/concept
-   ✓ Examples: "Because wheels roll!", "So the car can move!", "It helps us go places!"
-
-   ✗ NOT just "yes", "ok", "uh huh" (parroting)
-   ✗ NOT "I don't know" (this is STUCK, needs SCAFFOLD)
-   ✗ NOT polite deflection or changing subject
-
-6. Generate Instruction (for the Chatbot):
-   - Write a SPECIFIC instruction for what to say next.
-   - ALWAYS include "{current_topic}" and "{key_concept}".
-   - If SCAFFOLD Level 1: Specify EXACTLY what piece of the "because" to give.
-     Example: "Tell the child that the color change is the banana's way of showing it's getting sweeter."
-   - If SCAFFOLD Level 2: Specify EXACTLY what analogy to use.
-     Example: "Use the analogy of a traffic light - the color is a signal."
-   - If SCAFFOLD Level 3: Specify the main explanation to provide.
-   - Ask ONE question only at the end.
-   - If ADVANCE: Guide toward the Key Concept about {current_topic}.
-   - If PIVOT: Acknowledge, then link back to {current_topic} and {key_concept}.
-   - If COMPLETE: Celebrate their discovery about {current_topic}!
-
-OUTPUT JSON ONLY:
-{{
-  "status": "ON_TRACK" | "DRIFTING" | "STUCK" | "COMPLETED",
-  "strategy": "ADVANCE" | "PIVOT" | "SCAFFOLD" | "COMPLETE",
-  "scaffold_level": 1 | 2 | 3 | 4,
-  "reasoning": "Brief explanation of your logic",
-  "instruction": "Specific instruction including {current_topic} and {key_concept}"
-}}
-"""
+{rules}"""
         try:
             # Note: Using sync call as per existing patterns in this project
             response = self.client.models.generate_content(

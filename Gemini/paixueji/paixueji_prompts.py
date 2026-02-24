@@ -191,7 +191,117 @@ Respond with ONLY the category key or "none".
 """
 
 # ============================================================================
-# 5. GUIDANCE MAPPINGS
+# 5. ROUTER RULES BLOCKS (overridable via prompt_overrides.json)
+# ============================================================================
+
+# Rules-only block for decide_topic_switch_with_validation() in stream/validation.py.
+# Context injection (age, topic, question, answer) stays in the calling function's f-string.
+INPUT_ANALYZER_RULES = """\
+TASK: Evaluate Engagement, Correctness, and Topic Switching.
+
+RULES:
+1. **Engagement**: Determine if the child provided a substantive answer or attempt.
+   - **ENGAGED**: The child provides a clear, specific word, guess, or description that demonstrates a deliberate intent to answer the question.
+   - **NOT ENGAGED**: The child provides only fillers, hesitation sounds, meaningless fragments, expresses uncertainty, asks for help, or expresses confusion.
+2. **Correctness**: Check if answer matches reality for the question. Accept age-appropriate answers.
+3. **Switching**:
+   - **SWITCH** if child explicitly names a NEW object to talk about (e.g. "Let's talk about cars").
+   - **CONTINUE** if child answers the question (even if answer is a noun like "Banana"), mentions a part/category, or is stuck.
+   - **CONTINUE** if the new word is just the ANSWER to your question.
+
+RESPOND WITH VALID JSON:
+{
+    "decision": "SWITCH" or "CONTINUE",
+    "new_object": "ObjectName" or null,
+    "switching_reasoning": "Brief reason",
+    "is_engaged": true or false,
+    "is_factually_correct": true or false,
+    "correctness_reasoning": "Brief reason"
+}
+
+EXAMPLES:
+
+1. Correct Answer (CONTINUE)
+Q: "Color?" A: "Red"
+-> {"decision": "CONTINUE", "new_object": null, "is_engaged": true, "is_factually_correct": true, "correctness_reasoning": "Correct color.", "switching_reasoning": "Direct answer."}
+
+2. Wrong Answer (CONTINUE)
+Q: "Color?" A: "Blue"
+-> {"decision": "CONTINUE", "new_object": null, "is_engaged": true, "is_factually_correct": false, "correctness_reasoning": "Apples are not blue.", "switching_reasoning": "Direct answer."}
+
+3. Topic Switch (SWITCH)
+Q: "Color?" A: "Can we talk about cars?"
+-> {"decision": "SWITCH", "new_object": "car", "is_engaged": true, "is_factually_correct": false, "correctness_reasoning": "N/A", "switching_reasoning": "Explicit switch request."}
+
+Evaluate now:
+"""
+
+# Rules-only block for ThemeNavigator.analyze_turn() in stream/theme_guide.py.
+# Context injection (object, theme, concept, conversation history) stays in the calling method's f-string.
+THEME_NAVIGATOR_RULES = """\
+YOUR TASK:
+1. Analyze the User's Input against the Key Concept and Bridge Question:
+   - Are they showing understanding or curiosity about the Key Concept?
+   - Are they engaged but off-topic?
+   - Are they stuck or saying "I don't know"?
+
+2. Determine Status:
+   - "ON_TRACK": Child is engaged and moving toward understanding the Key Concept.
+   - "DRIFTING": Child is engaged but wandering off-topic.
+   - "STUCK": Child is stuck - "I don't know", confused, needs help, can't answer.
+   - "COMPLETED": Child has ARTICULATED understanding or genuine curiosity about the Key Concept.
+
+3. Determine Strategy:
+   - "ADVANCE": Child is on track. Move 1 step closer to the Key Concept.
+   - "PIVOT": Child is slightly off-topic. Acknowledge their point, then link back to the theme.
+   - "SCAFFOLD": Child is stuck. Provide a hint to help them understand (see scaffold levels below).
+   - "COMPLETE": Success! Child demonstrated understanding.
+
+   NEVER abandon the theme. If child says "I don't know", use SCAFFOLD to HELP them,
+   not retreat to unrelated topics. Always stay focused on the object and key concept.
+
+4. If SCAFFOLD, determine the appropriate scaffold level:
+   - Level 1: Provide ONE piece of the "because" (NOT a simpler question!)
+   - Level 2: Use an analogy connecting the object to something familiar
+   - Level 3: Give most of the answer with a confirming question
+   - Level 4: Give the full answer and celebrate learning together
+
+   ANTI-RETREAT RULE: If Bridge Question was WHY, ALL scaffold levels must provide
+   causal information. NEVER replace WHY with WHAT.
+
+   Choose the level based on how stuck the child seems and how many times they've been stuck.
+
+5. STRICT SUCCESS CRITERIA for "COMPLETED":
+   - Child articulated something showing understanding or curiosity about the Key Concept
+   - Child made a connection between object and theme/concept
+   - Examples: "Because wheels roll!", "So the car can move!", "It helps us go places!"
+   - NOT just "yes", "ok", "uh huh" (parroting)
+   - NOT "I don't know" (this is STUCK, needs SCAFFOLD)
+   - NOT polite deflection or changing subject
+
+6. Generate Instruction (for the Chatbot):
+   - Write a SPECIFIC instruction for what to say next.
+   - ALWAYS reference the object and key concept.
+   - If SCAFFOLD Level 1: Specify EXACTLY what piece of the "because" to give.
+   - If SCAFFOLD Level 2: Specify EXACTLY what analogy to use.
+   - If SCAFFOLD Level 3: Specify the main explanation to provide.
+   - Ask ONE question only at the end.
+   - If ADVANCE: Guide toward the Key Concept.
+   - If PIVOT: Acknowledge, then link back to the object and key concept.
+   - If COMPLETE: Celebrate their discovery!
+
+OUTPUT JSON ONLY:
+{
+  "status": "ON_TRACK" | "DRIFTING" | "STUCK" | "COMPLETED",
+  "strategy": "ADVANCE" | "PIVOT" | "SCAFFOLD" | "COMPLETE",
+  "scaffold_level": 1 | 2 | 3 | 4,
+  "reasoning": "Brief explanation of your logic",
+  "instruction": "Specific instruction for the Driver"
+}
+"""
+
+# ============================================================================
+# 6. GUIDANCE MAPPINGS
 # ============================================================================
 
 CHARACTER_PROMPTS = {
@@ -305,6 +415,8 @@ def get_prompts():
         'classification_prompt': CLASSIFICATION_PROMPT,
         'fun_fact_grounding_prompt': FUN_FACT_GROUNDING_PROMPT,
         'fun_fact_structuring_prompt': FUN_FACT_STRUCTURING_PROMPT,
+        'input_analyzer_rules': INPUT_ANALYZER_RULES,
+        'theme_navigator_rules': THEME_NAVIGATOR_RULES,
     }
 
     # Merge approved optimizations at call time (no restart required)

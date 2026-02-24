@@ -1585,21 +1585,32 @@ def manual_critique():
             except Exception as trace_err:
                 logger.warning(f"[MANUAL-CRITIQUE] Failed to assemble trace for exchange {idx}: {trace_err}")
 
+        # Build one item per distinct (trace_id, culprit_name) pair so the UI
+        # renders one optimization button per culprit, not per exchange.
+        from trace_schema import effective_culprits as _effective_culprits
+        seen = set()
+        trace_items = []
+        for t in saved_traces:
+            for c in _effective_culprits(t):
+                if not c.culprit_name or c.culprit_name == "unknown":
+                    continue
+                key = (t.trace_id, c.culprit_name)
+                if key not in seen:
+                    seen.add(key)
+                    trace_items.append({
+                        "exchange_index": t.exchange_index,
+                        "trace_id": t.trace_id,
+                        "culprit_name": c.culprit_name,
+                        "prompt_template_name": c.prompt_template_name,
+                    })
+
         return jsonify({
             "success": True,
             "report_path": str(report_path),
             "exchanges_critiqued": len(exchange_critiques),
             "trace_paths": trace_paths,
             "traces_assembled": len(trace_paths),
-            "traces": [
-                {
-                    "exchange_index": t.exchange_index,
-                    "trace_id": t.trace_id,
-                    "culprit_name": t.culprit.culprit_name,
-                    "prompt_template_name": t.culprit.prompt_template_name,
-                }
-                for t in saved_traces
-            ],
+            "traces": trace_items,
         })
 
     except Exception as e:
@@ -1624,8 +1635,13 @@ def optimize_prompt():
     Request body:
         {
             "culprit_name": "generate_fun_fact",
-            "prompt_name": null   # optional explicit override
+            "prompt_name": null,   # optional explicit override
+            "trace_id": null       # optional; if provided, only that trace is used
         }
+
+    When trace_id is provided the optimizer runs in single-trace mode, which
+    prevents stale historical traces from diluting or reverting recent fixes.
+    Omit trace_id (or pass null) to use all historical traces for the culprit.
 
     Response: full OptimizationResult JSON (optimization_id, failure_pattern,
               rationale, original_prompt, optimized_prompt, preview_response, ...)
@@ -1635,6 +1651,7 @@ def optimize_prompt():
     data = request.get_json() or {}
     culprit_name = data.get("culprit_name")
     prompt_name = data.get("prompt_name")  # optional
+    trace_id = data.get("trace_id")        # optional; enables single-trace mode
 
     if not culprit_name:
         return jsonify({"success": False, "error": "culprit_name is required"}), 400
@@ -1645,6 +1662,7 @@ def optimize_prompt():
             config=_load_config(),
             culprit_name=culprit_name,
             prompt_name=prompt_name or None,
+            trace_id=trace_id or None,
         )
         return jsonify(result.model_dump())
     except ValueError as e:
