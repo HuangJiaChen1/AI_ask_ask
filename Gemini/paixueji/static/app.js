@@ -682,6 +682,12 @@ function handleStreamChunk(chunk) {
     // INFINITE MODE: No conversation completion logic
     // Conversation continues indefinitely
 
+    // Display TTFT as soon as any chunk carries a duration (first content chunk)
+    if (chunk.duration > 0) {
+        thinkingTimeDisplay.textContent = `${chunk.duration.toFixed(1)}s`;
+        thinkingTimeDisplay.style.opacity = 1;
+    }
+
     // Handle text chunks (non-finish chunks with response text)
     if (!chunk.finish && chunk.response) {
         if (!currentMessageDiv) {
@@ -725,12 +731,6 @@ function handleStreamChunk(chunk) {
                 });
             }
             // If equal length, keep what we have (no action needed)
-        }
-
-        // Display duration if available
-        if (chunk.duration > 0) {
-            thinkingTimeDisplay.textContent = `${chunk.duration.toFixed(1)}s`;
-            thinkingTimeDisplay.style.opacity = 1;
         }
     }
 

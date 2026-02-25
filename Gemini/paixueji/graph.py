@@ -442,9 +442,11 @@ async def stream_generator_to_callback(generator, state: PaixuejiState, response
     start_time = time.time()
     first_token_received = False
     
+    first_text_chunk_sent = False
+
     async for item in generator:
         if not first_token_received:
-            ttft = time.time() - start_time
+            ttft = time.time() - state["start_time"]
             logger.info(f"[{state['session_id']}] Time to First Token (TTFT): {ttft:.3f}s for {response_type_override or state.get('response_type', 'unknown')}")
             first_token_received = True
             if "ttft" not in state:
@@ -470,10 +472,15 @@ async def stream_generator_to_callback(generator, state: PaixuejiState, response
         
         if text_chunk:
             sequence += 1
+            if not first_text_chunk_sent:
+                chunk_duration = state.get("ttft", 0.0)
+                first_text_chunk_sent = True
+            else:
+                chunk_duration = 0.0
             chunk = StreamChunk(
                 response=text_chunk,
                 session_finished=(state["status"] == "over"),
-                duration=0.0,
+                duration=chunk_duration,
                 token_usage=None,
                 finish=False,
                 sequence_number=sequence,
@@ -653,8 +660,9 @@ async def node_generate_response(state: PaixuejiState) -> dict:
     
     logger.info(f"[{state['session_id']}] Node: Generate Response finished in {time.time() - start_time:.3f}s")
     return {
-        "full_response_text": full_text, 
-        "sequence_number": new_seq
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
     }
 
 
