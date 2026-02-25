@@ -1117,7 +1117,7 @@ def run_critique_background(task_id: str, session_id: str, transcript: list,
                 transcript[i + 1].get("role") == "child" and
                 transcript[i + 2].get("role") == "model"):
 
-                mode = transcript[i + 2].get("mode", "chat")
+                mode = transcript[i].get("mode", "chat")
                 triplet = [transcript[i], transcript[i + 1], transcript[i + 2]]
                 if mode == "guide":
                     guide_transcript.extend(triplet)
@@ -1428,7 +1428,7 @@ def get_exchanges(session_id):
                 "child_response": transcript[i + 1]["content"],
                 "model_response": transcript[i + 2]["content"],
                 "nodes_executed": transcript[i + 2].get("nodes_executed", []),
-                "mode": transcript[i + 2].get("mode", "chat"),
+                "mode": transcript[i].get("mode", "chat"),
             })
             i += 2  # Move past child response, next iteration checks from model response
         else:
@@ -1533,7 +1533,7 @@ def manual_critique():
                 "model_response": transcript[i + 2]["content"],
                 "question_nodes_executed": transcript[i].get("nodes_executed", []),
                 "nodes_executed": transcript[i + 2].get("nodes_executed", []),
-                "mode": transcript[i + 2].get("mode", "chat"),
+                "mode": transcript[i].get("mode", "chat"),
             })
             i += 2
         else:

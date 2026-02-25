@@ -422,3 +422,477 @@
 2026-02-25 11:55:22.256 | INFO     | graph:node_generate_question:712 | [bcf01e21-2435-44bb-a8fe-d472e5fcf8fc] Node: Generate Question finished in 1.184s
 2026-02-25 11:55:22.258 | INFO     | graph:node_finalize:1058 | [bcf01e21-2435-44bb-a8fe-d472e5fcf8fc] Node: Finalize
 2026-02-25 11:55:22.258 | INFO     | graph:node_finalize:1125 | [bcf01e21-2435-44bb-a8fe-d472e5fcf8fc] Node: Finalize finished in 0.000s
+2026-02-25 14:05:48.714 | INFO     | graph:node_analyze_input:246 | [bcf01e21-2435-44bb-a8fe-d472e5fcf8fc] Node: Analyze Input
+2026-02-25 14:05:48.714 | INFO     | stream.validation:decide_topic_switch_with_validation:48 | [VALIDATE] CONTINUE | engaged=False (heuristic, no LLM call)
+2026-02-25 14:05:48.714 | INFO     | graph:node_analyze_input:297 | [bcf01e21-2435-44bb-a8fe-d472e5fcf8fc] Node: Analyze Input finished in 0.001s
+2026-02-25 14:05:48.715 | INFO     | graph:node_route_logic:338 | [bcf01e21-2435-44bb-a8fe-d472e5fcf8fc] Node: Route Logic
+2026-02-25 14:05:48.715 | INFO     | graph:node_route_logic:423 | [bcf01e21-2435-44bb-a8fe-d472e5fcf8fc] Node: Route Logic finished in 0.000s
+2026-02-25 14:05:48.716 | INFO     | graph:node_generate_response:524 | [bcf01e21-2435-44bb-a8fe-d472e5fcf8fc] Node: Generate Response (explanation)
+2026-02-25 14:05:48.716 | INFO     | stream.response_generators:generate_explanation_response_stream:147 | generate_explanation_response_stream started | object=apple, age=6
+2026-02-25 14:05:52.209 | INFO     | graph:stream_generator_to_callback:447 | [bcf01e21-2435-44bb-a8fe-d472e5fcf8fc] Time to First Token (TTFT): 3.493s for explanation
+2026-02-25 14:05:52.292 | INFO     | stream.response_generators:generate_explanation_response_stream:203 | generate_explanation_response_stream completed | duration=3.576s, length=62
+2026-02-25 14:05:52.293 | INFO     | graph:stream_generator_to_callback:514 | [bcf01e21-2435-44bb-a8fe-d472e5fcf8fc] Stream finished in 3.576s for explanation
+2026-02-25 14:05:52.293 | INFO     | graph:node_generate_response:651 | [bcf01e21-2435-44bb-a8fe-d472e5fcf8fc] Node: Generate Response finished in 3.577s
+2026-02-25 14:05:52.293 | INFO     | graph:route_after_response:1230 | [bcf01e21-2435-44bb-a8fe-d472e5fcf8fc] Triggering Theme Guide (Count: 3+1)
+2026-02-25 14:05:52.295 | INFO     | graph:node_start_guide:725 | [bcf01e21-2435-44bb-a8fe-d472e5fcf8fc] Node: Start Guide
+2026-02-25 14:05:52.295 | INFO     | graph:node_finalize:1058 | [bcf01e21-2435-44bb-a8fe-d472e5fcf8fc] Node: Finalize
+2026-02-25 14:05:52.296 | INFO     | graph:node_finalize:1125 | [bcf01e21-2435-44bb-a8fe-d472e5fcf8fc] Node: Finalize finished in 0.000s
+2026-02-25 14:20:01.069 | INFO     | graph:node_generate_fun_fact:308 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Generate Fun Fact for 'apple'
+2026-02-25 14:20:01.077 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'apple' (model=gemini-2.0-flash-lite)
+2026-02-25 14:20:01.077 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-02-25 14:20:02.775 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: apple -> Category_Nature_And_Physics | Concept: Change | Question: Why do you think the apple's skin changes color as it gets older? | Thinking: Apple -> Natural object with skin, flesh, seeds -> How the World Works -> Change -> Focus on the apple's transformation.
+2026-02-25 14:20:06.759 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 5.681s | text_length=854
+2026-02-25 14:20:06.759 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'apple'
+2026-02-25 14:20:09.619 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 2.860s
+2026-02-25 14:20:09.619 | INFO     | stream.fun_fact:cache_fun_fact:78 | [FUN_FACT] Cached 4 fun facts for 'apple'
+2026-02-25 14:20:09.619 | INFO     | stream.fun_fact:generate_fun_fact:206 | [FUN_FACT] Success for 'apple' | facts_count=4, selected='Did you know apples float in water? That's because they have...'
+2026-02-25 14:20:09.619 | INFO     | graph:node_generate_fun_fact:323 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Generate Fun Fact finished in 8.550s
+2026-02-25 14:20:09.620 | INFO     | graph:node_generate_response:524 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Generate Response (introduction)
+2026-02-25 14:20:09.620 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=True
+2026-02-25 14:20:09.620 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-25 14:20:09.620 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-25 14:20:09.620 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: async_generator
+2026-02-25 14:20:10.222 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=5, total_length=5
+2026-02-25 14:20:10.222 | INFO     | graph:stream_generator_to_callback:447 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Time to First Token (TTFT): 0.603s for introduction
+2026-02-25 14:20:10.243 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=7, total_length=12
+2026-02-25 14:20:10.390 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=75, total_length=87
+2026-02-25 14:20:10.449 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=68, total_length=155
+2026-02-25 14:20:10.649 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=114, total_length=269
+2026-02-25 14:20:10.649 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-25 14:20:10.649 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-25 14:20:10.650 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=1.030s, response_length=269
+2026-02-25 14:20:10.650 | INFO     | graph:stream_generator_to_callback:514 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Stream finished in 1.030s for introduction
+2026-02-25 14:20:10.650 | INFO     | graph:node_generate_response:651 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Generate Response finished in 1.030s
+2026-02-25 14:20:10.651 | INFO     | graph:node_generate_question:664 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Generate Question
+2026-02-25 14:20:10.652 | INFO     | graph:node_finalize:1058 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Finalize
+2026-02-25 14:20:10.652 | INFO     | graph:node_finalize:1125 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Finalize finished in 0.000s
+2026-02-25 14:20:16.791 | INFO     | graph:node_analyze_input:246 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Analyze Input
+2026-02-25 14:20:16.792 | INFO     | stream.validation:decide_topic_switch_with_validation:48 | [VALIDATE] CONTINUE | engaged=False (heuristic, no LLM call)
+2026-02-25 14:20:16.792 | INFO     | graph:node_analyze_input:297 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Analyze Input finished in 0.000s
+2026-02-25 14:20:16.792 | INFO     | graph:node_route_logic:338 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Route Logic
+2026-02-25 14:20:16.793 | INFO     | graph:node_route_logic:423 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Route Logic finished in 0.001s
+2026-02-25 14:20:16.795 | INFO     | graph:node_generate_response:524 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Generate Response (explanation)
+2026-02-25 14:20:16.795 | INFO     | stream.response_generators:generate_explanation_response_stream:147 | generate_explanation_response_stream started | object=apple, age=6
+2026-02-25 14:20:19.326 | INFO     | graph:stream_generator_to_callback:447 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Time to First Token (TTFT): 2.531s for explanation
+2026-02-25 14:20:19.862 | INFO     | stream.response_generators:generate_explanation_response_stream:203 | generate_explanation_response_stream completed | duration=3.067s, length=92
+2026-02-25 14:20:19.863 | INFO     | graph:stream_generator_to_callback:514 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Stream finished in 3.068s for explanation
+2026-02-25 14:20:19.863 | INFO     | graph:node_generate_response:651 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Generate Response finished in 3.068s
+2026-02-25 14:20:19.866 | INFO     | graph:node_generate_question:664 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Generate Question
+2026-02-25 14:20:19.866 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=apple, age=6, is_switch=False
+2026-02-25 14:20:20.582 | INFO     | graph:stream_generator_to_callback:447 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Time to First Token (TTFT): 0.716s for followup_question
+2026-02-25 14:20:20.675 | INFO     | stream.question_generators:generate_followup_question_stream:280 | generate_followup_question_stream completed | duration=0.809s, length=80
+2026-02-25 14:20:20.675 | INFO     | graph:stream_generator_to_callback:514 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Stream finished in 0.809s for followup_question
+2026-02-25 14:20:20.675 | INFO     | graph:node_generate_question:712 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Generate Question finished in 0.809s
+2026-02-25 14:20:20.676 | INFO     | graph:node_finalize:1058 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Finalize
+2026-02-25 14:20:20.676 | INFO     | graph:node_finalize:1125 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Finalize finished in 0.000s
+2026-02-25 14:20:29.475 | INFO     | graph:node_analyze_input:246 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Analyze Input
+2026-02-25 14:20:32.250 | INFO     | stream.validation:decide_topic_switch_with_validation:124 | [VALIDATE] LLM Call Duration: 2.774s (using gemini-2.0-flash-lite async)
+2026-02-25 14:20:32.252 | INFO     | stream.validation:decide_topic_switch_with_validation:152 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question., correctness_reasoning=The answer "red" is a correct description of an apple's color.
+2026-02-25 14:20:32.252 | INFO     | graph:node_analyze_input:297 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Analyze Input finished in 2.777s
+2026-02-25 14:20:32.254 | INFO     | graph:node_route_logic:338 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Route Logic
+2026-02-25 14:20:32.254 | INFO     | graph:node_route_logic:423 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Route Logic finished in 0.000s
+2026-02-25 14:20:32.256 | INFO     | graph:node_generate_response:524 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Generate Response (feedback)
+2026-02-25 14:20:32.256 | INFO     | stream.response_generators:generate_feedback_response_stream:54 | generate_feedback_response_stream started | object=apple, age=6
+2026-02-25 14:20:32.789 | INFO     | graph:stream_generator_to_callback:447 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Time to First Token (TTFT): 0.533s for feedback
+2026-02-25 14:20:32.945 | INFO     | stream.response_generators:generate_feedback_response_stream:109 | generate_feedback_response_stream completed | duration=0.689s, length=89
+2026-02-25 14:20:32.945 | INFO     | graph:stream_generator_to_callback:514 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Stream finished in 0.689s for feedback
+2026-02-25 14:20:32.945 | INFO     | graph:node_generate_response:651 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Generate Response finished in 0.689s
+2026-02-25 14:20:32.947 | INFO     | graph:node_generate_question:664 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Generate Question
+2026-02-25 14:20:32.947 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=apple, age=6, is_switch=False
+2026-02-25 14:20:33.709 | INFO     | graph:stream_generator_to_callback:447 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Time to First Token (TTFT): 0.762s for followup_question
+2026-02-25 14:20:33.930 | INFO     | stream.question_generators:generate_followup_question_stream:280 | generate_followup_question_stream completed | duration=0.983s, length=118
+2026-02-25 14:20:33.930 | INFO     | graph:stream_generator_to_callback:514 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Stream finished in 0.983s for followup_question
+2026-02-25 14:20:33.930 | INFO     | graph:node_generate_question:712 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Generate Question finished in 0.984s
+2026-02-25 14:20:33.935 | INFO     | graph:node_finalize:1058 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Finalize
+2026-02-25 14:20:33.935 | INFO     | graph:node_finalize:1125 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Finalize finished in 0.000s
+2026-02-25 14:20:40.252 | INFO     | graph:node_analyze_input:246 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Analyze Input
+2026-02-25 14:20:42.084 | INFO     | stream.validation:decide_topic_switch_with_validation:124 | [VALIDATE] LLM Call Duration: 1.831s (using gemini-2.0-flash-lite async)
+2026-02-25 14:20:42.084 | INFO     | stream.validation:decide_topic_switch_with_validation:152 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The answer "seeds" is a part of the apple, not a new object., correctness_reasoning=Apples do have seeds inside.
+2026-02-25 14:20:42.085 | INFO     | graph:node_analyze_input:297 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Analyze Input finished in 1.833s
+2026-02-25 14:20:42.087 | INFO     | graph:node_route_logic:338 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Route Logic
+2026-02-25 14:20:42.087 | INFO     | graph:node_route_logic:423 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Route Logic finished in 0.000s
+2026-02-25 14:20:42.090 | INFO     | graph:node_generate_response:524 | [06afa3b1-df43-44d3-9f99-88f4e16642ed] Node: Generate Response (feedback)
+2026-02-25 14:20:42.091 | INFO     | stream.response_generators:generate_feedback_response_stream:54 | generate_feedback_response_stream started | object=apple, age=6
+2026-02-25 14:21:08.316 | INFO     | graph:node_generate_fun_fact:308 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Generate Fun Fact for 'apple'
+2026-02-25 14:21:08.317 | INFO     | stream.fun_fact:get_cached_fun_fact:63 | [FUN_FACT] Cache hit for 'apple' | fun_fact='Did you know apples float in water? That's because they have...'
+2026-02-25 14:21:08.317 | INFO     | graph:node_generate_fun_fact:323 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Generate Fun Fact finished in 0.001s
+2026-02-25 14:21:08.319 | INFO     | graph:node_generate_response:524 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Generate Response (introduction)
+2026-02-25 14:21:08.320 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-02-25 14:21:08.320 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=True
+2026-02-25 14:21:08.323 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-25 14:21:08.323 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-25 14:21:08.323 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: async_generator
+2026-02-25 14:21:09.757 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=5, total_length=5
+2026-02-25 14:21:09.758 | INFO     | graph:stream_generator_to_callback:447 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Time to First Token (TTFT): 1.438s for introduction
+2026-02-25 14:21:09.766 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=7, total_length=12
+2026-02-25 14:21:09.901 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=75, total_length=87
+2026-02-25 14:21:09.948 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: apple -> Category_Nature_And_Physics | Concept: Change | Question: Why do you think the apple's skin changes color as it gets older? | Thinking: Apple -> Nature & Physics (because it's a fruit) -> Change (because apples change over time)
+2026-02-25 14:21:09.991 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=68, total_length=155
+2026-02-25 14:21:10.220 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=114, total_length=269
+2026-02-25 14:21:10.222 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-25 14:21:10.223 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-25 14:21:10.223 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=1.903s, response_length=269
+2026-02-25 14:21:10.223 | INFO     | graph:stream_generator_to_callback:514 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Stream finished in 1.903s for introduction
+2026-02-25 14:21:10.223 | INFO     | graph:node_generate_response:651 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Generate Response finished in 1.903s
+2026-02-25 14:21:10.225 | INFO     | graph:node_generate_question:664 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Generate Question
+2026-02-25 14:21:10.226 | INFO     | graph:node_finalize:1058 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Finalize
+2026-02-25 14:21:10.226 | INFO     | graph:node_finalize:1125 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Finalize finished in 0.000s
+2026-02-25 14:21:19.156 | INFO     | graph:node_analyze_input:246 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Analyze Input
+2026-02-25 14:21:21.028 | INFO     | stream.validation:decide_topic_switch_with_validation:124 | [VALIDATE] LLM Call Duration: 1.871s (using gemini-2.0-flash-lite async)
+2026-02-25 14:21:21.029 | INFO     | stream.validation:decide_topic_switch_with_validation:152 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The answer is about the apple, not a new object., correctness_reasoning=Eating is what happens when you bite an apple.
+2026-02-25 14:21:21.029 | INFO     | graph:node_analyze_input:297 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Analyze Input finished in 1.873s
+2026-02-25 14:21:21.031 | INFO     | graph:node_route_logic:338 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Route Logic
+2026-02-25 14:21:21.031 | INFO     | graph:node_route_logic:423 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Route Logic finished in 0.000s
+2026-02-25 14:21:21.034 | INFO     | graph:node_generate_response:524 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Generate Response (feedback)
+2026-02-25 14:21:21.035 | INFO     | stream.response_generators:generate_feedback_response_stream:54 | generate_feedback_response_stream started | object=apple, age=6
+2026-02-25 14:21:21.612 | INFO     | graph:stream_generator_to_callback:447 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Time to First Token (TTFT): 0.577s for feedback
+2026-02-25 14:21:21.823 | INFO     | stream.response_generators:generate_feedback_response_stream:109 | generate_feedback_response_stream completed | duration=0.789s, length=105
+2026-02-25 14:21:21.824 | INFO     | graph:stream_generator_to_callback:514 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Stream finished in 0.789s for feedback
+2026-02-25 14:21:21.824 | INFO     | graph:node_generate_response:651 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Generate Response finished in 0.789s
+2026-02-25 14:21:21.826 | INFO     | graph:node_generate_question:664 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Generate Question
+2026-02-25 14:21:21.826 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=apple, age=6, is_switch=False
+2026-02-25 14:21:22.534 | INFO     | graph:stream_generator_to_callback:447 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Time to First Token (TTFT): 0.708s for followup_question
+2026-02-25 14:21:22.542 | INFO     | stream.question_generators:generate_followup_question_stream:280 | generate_followup_question_stream completed | duration=0.716s, length=43
+2026-02-25 14:21:22.543 | INFO     | graph:stream_generator_to_callback:514 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Stream finished in 0.716s for followup_question
+2026-02-25 14:21:22.543 | INFO     | graph:node_generate_question:712 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Generate Question finished in 0.717s
+2026-02-25 14:21:22.543 | INFO     | graph:node_finalize:1058 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Finalize
+2026-02-25 14:21:22.544 | INFO     | graph:node_finalize:1125 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Finalize finished in 0.000s
+2026-02-25 14:21:28.745 | INFO     | graph:node_analyze_input:246 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Analyze Input
+2026-02-25 14:21:30.725 | INFO     | stream.validation:decide_topic_switch_with_validation:124 | [VALIDATE] LLM Call Duration: 1.979s (using gemini-2.0-flash-lite async)
+2026-02-25 14:21:30.725 | INFO     | stream.validation:decide_topic_switch_with_validation:152 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question., correctness_reasoning=Apples do come from trees.
+2026-02-25 14:21:30.726 | INFO     | graph:node_analyze_input:297 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Analyze Input finished in 1.981s
+2026-02-25 14:21:30.728 | INFO     | graph:node_route_logic:338 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Route Logic
+2026-02-25 14:21:30.728 | INFO     | graph:node_route_logic:423 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Route Logic finished in 0.000s
+2026-02-25 14:21:30.731 | INFO     | graph:node_generate_response:524 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Generate Response (feedback)
+2026-02-25 14:21:30.732 | INFO     | stream.response_generators:generate_feedback_response_stream:54 | generate_feedback_response_stream started | object=apple, age=6
+2026-02-25 14:21:31.340 | INFO     | graph:stream_generator_to_callback:447 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Time to First Token (TTFT): 0.609s for feedback
+2026-02-25 14:21:31.460 | INFO     | stream.response_generators:generate_feedback_response_stream:109 | generate_feedback_response_stream completed | duration=0.729s, length=85
+2026-02-25 14:21:31.461 | INFO     | graph:stream_generator_to_callback:514 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Stream finished in 0.729s for feedback
+2026-02-25 14:21:31.461 | INFO     | graph:node_generate_response:651 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Generate Response finished in 0.730s
+2026-02-25 14:21:31.465 | INFO     | graph:node_generate_question:664 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Generate Question
+2026-02-25 14:21:31.466 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=apple, age=6, is_switch=False
+2026-02-25 14:21:32.160 | INFO     | graph:stream_generator_to_callback:447 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Time to First Token (TTFT): 0.694s for followup_question
+2026-02-25 14:21:32.174 | INFO     | stream.question_generators:generate_followup_question_stream:280 | generate_followup_question_stream completed | duration=0.708s, length=45
+2026-02-25 14:21:32.174 | INFO     | graph:stream_generator_to_callback:514 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Stream finished in 0.708s for followup_question
+2026-02-25 14:21:32.174 | INFO     | graph:node_generate_question:712 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Generate Question finished in 0.709s
+2026-02-25 14:21:32.175 | INFO     | graph:node_finalize:1058 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Finalize
+2026-02-25 14:21:32.175 | INFO     | graph:node_finalize:1125 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Finalize finished in 0.000s
+2026-02-25 14:21:35.512 | INFO     | graph:node_analyze_input:246 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Analyze Input
+2026-02-25 14:21:35.512 | INFO     | stream.validation:decide_topic_switch_with_validation:48 | [VALIDATE] CONTINUE | engaged=False (heuristic, no LLM call)
+2026-02-25 14:21:35.512 | INFO     | graph:node_analyze_input:297 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Analyze Input finished in 0.000s
+2026-02-25 14:21:35.513 | INFO     | graph:node_route_logic:338 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Route Logic
+2026-02-25 14:21:35.513 | INFO     | graph:node_route_logic:423 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Route Logic finished in 0.000s
+2026-02-25 14:21:35.514 | INFO     | graph:node_generate_response:524 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Generate Response (explanation)
+2026-02-25 14:21:35.514 | INFO     | stream.response_generators:generate_explanation_response_stream:147 | generate_explanation_response_stream started | object=apple, age=6
+2026-02-25 14:21:35.520 | ERROR    | stream.response_generators:generate_explanation_response_stream:191 | generate_explanation_response_stream error | error=<asyncio.locks.Event object at 0x10b1ac110 [unset]> is bound to a different event loop, duration=0.005s
+2026-02-25 14:21:35.520 | INFO     | graph:stream_generator_to_callback:514 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Stream finished in 0.006s for explanation
+2026-02-25 14:21:35.520 | INFO     | graph:node_generate_response:651 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Generate Response finished in 0.006s
+2026-02-25 14:21:35.522 | INFO     | graph:node_generate_question:664 | [6a9f6324-1bb5-4921-b711-ccc2b4ca5025] Node: Generate Question
+2026-02-25 14:21:35.522 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=apple, age=6, is_switch=False
+2026-02-25 14:23:04.235 | INFO     | __main__:manual_critique:1568 | [MANUAL-CRITIQUE] Report saved: /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/reports/HF/apple_20260225_142304.md | exchanges critiqued: 1
+2026-02-25 14:23:18.556 | INFO     | trace_assembler:save_trace_object:405 | [TRACE] Saved trace object: /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/traces/apple_6a9f6324_ex1_20260225_142318.json
+2026-02-25 14:23:25.676 | INFO     | prompt_optimizer:run_optimization:1000 | [Optimizer] Single-trace mode — trace_id=6b73c379-30ff-4acc-b4e5-25c71cf5eee3
+2026-02-25 14:23:25.676 | INFO     | prompt_optimizer:run_optimization:1029 | [Optimizer] Starting optimization | culprit=analyze_input prompt=input_analyzer_rules traces=1
+2026-02-25 14:23:25.676 | INFO     | prompt_optimizer:optimize_prompt_llm:245 | [Optimizer] Calling gemini-2.5-pro to optimize 'input_analyzer_rules' (router=True)
+2026-02-25 14:24:09.552 | INFO     | prompt_optimizer:save_optimization:916 | [Optimizer] Saved pending optimization: /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/optimizations/pending/53613741-a1e4-478e-80bf-232695f6a812.json
+2026-02-25 14:28:34.413 | INFO     | prompt_optimizer:save_optimization:930 | [Optimizer] Merged 'input_analyzer_rules' into prompt_overrides.json
+2026-02-25 14:28:34.414 | INFO     | prompt_optimizer:save_optimization:969 | [Optimizer] Archived approved optimization: /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/optimizations/53613741-a1e4-478e-80bf-232695f6a812.json
+2026-02-25 14:28:34.414 | INFO     | __main__:approve_optimization:1699 | [OPTIMIZE] Approved optimization 53613741-a1e4-478e-80bf-232695f6a812 for 'input_analyzer_rules'
+2026-02-25 16:10:28.333 | INFO     | graph:node_generate_fun_fact:308 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Generate Fun Fact for 'apple'
+2026-02-25 16:10:28.336 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'apple' (model=gemini-2.0-flash-lite)
+2026-02-25 16:10:28.339 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-02-25 16:10:30.931 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: apple -> Category_Nature_And_Physics | Concept: Change | Question: Why do you think the apple's skin changes color as it gets older? | Thinking: Apple -> Nature & Physics (because it's a fruit) -> Change (because it grows and changes)
+2026-02-25 16:10:31.774 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 3.438s | text_length=122
+2026-02-25 16:10:31.774 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'apple'
+2026-02-25 16:10:34.055 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 2.281s
+2026-02-25 16:10:34.056 | INFO     | stream.fun_fact:cache_fun_fact:78 | [FUN_FACT] Cached 4 fun facts for 'apple'
+2026-02-25 16:10:34.056 | INFO     | stream.fun_fact:generate_fun_fact:206 | [FUN_FACT] Success for 'apple' | facts_count=4, selected='Did you know that apples float in water?...'
+2026-02-25 16:10:34.057 | INFO     | graph:node_generate_fun_fact:323 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Generate Fun Fact finished in 5.723s
+2026-02-25 16:10:34.058 | INFO     | graph:node_generate_response:524 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Generate Response (introduction)
+2026-02-25 16:10:34.059 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=True
+2026-02-25 16:10:34.060 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-25 16:10:34.060 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-25 16:10:34.060 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: async_generator
+2026-02-25 16:10:34.593 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=5, total_length=5
+2026-02-25 16:10:34.593 | INFO     | graph:stream_generator_to_callback:447 | [092298c9-72cc-456c-95b3-ebb00263dd01] Time to First Token (TTFT): 0.535s for introduction
+2026-02-25 16:10:34.596 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=7, total_length=12
+2026-02-25 16:10:34.722 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=75, total_length=87
+2026-02-25 16:10:34.806 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=62, total_length=149
+2026-02-25 16:10:34.920 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=39, total_length=188
+2026-02-25 16:10:34.920 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-25 16:10:34.921 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-25 16:10:34.921 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=0.862s, response_length=188
+2026-02-25 16:10:34.921 | INFO     | graph:stream_generator_to_callback:514 | [092298c9-72cc-456c-95b3-ebb00263dd01] Stream finished in 0.862s for introduction
+2026-02-25 16:10:34.921 | INFO     | graph:node_generate_response:651 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Generate Response finished in 0.862s
+2026-02-25 16:10:34.923 | INFO     | graph:node_generate_question:664 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Generate Question
+2026-02-25 16:10:34.923 | INFO     | graph:node_finalize:1058 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Finalize
+2026-02-25 16:10:34.924 | INFO     | graph:node_finalize:1125 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Finalize finished in 0.000s
+2026-02-25 16:10:42.468 | INFO     | graph:node_analyze_input:246 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Analyze Input
+2026-02-25 16:10:44.475 | INFO     | stream.validation:decide_topic_switch_with_validation:124 | [VALIDATE] LLM Call Duration: 2.006s (using gemini-2.0-flash-lite async)
+2026-02-25 16:10:44.476 | INFO     | stream.validation:decide_topic_switch_with_validation:152 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The answer is about apples., correctness_reasoning=Eating apples is a use for them.
+2026-02-25 16:10:44.477 | INFO     | graph:node_analyze_input:297 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Analyze Input finished in 2.009s
+2026-02-25 16:10:44.478 | INFO     | graph:node_route_logic:338 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Route Logic
+2026-02-25 16:10:44.478 | INFO     | graph:node_route_logic:423 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Route Logic finished in 0.000s
+2026-02-25 16:10:44.480 | INFO     | graph:node_generate_response:524 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Generate Response (feedback)
+2026-02-25 16:10:44.480 | INFO     | stream.response_generators:generate_feedback_response_stream:54 | generate_feedback_response_stream started | object=apple, age=6
+2026-02-25 16:10:45.119 | INFO     | graph:stream_generator_to_callback:447 | [092298c9-72cc-456c-95b3-ebb00263dd01] Time to First Token (TTFT): 0.639s for feedback
+2026-02-25 16:10:45.289 | INFO     | stream.response_generators:generate_feedback_response_stream:109 | generate_feedback_response_stream completed | duration=0.808s, length=106
+2026-02-25 16:10:45.289 | INFO     | graph:stream_generator_to_callback:514 | [092298c9-72cc-456c-95b3-ebb00263dd01] Stream finished in 0.809s for feedback
+2026-02-25 16:10:45.289 | INFO     | graph:node_generate_response:651 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Generate Response finished in 0.809s
+2026-02-25 16:10:45.293 | INFO     | graph:node_generate_question:664 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Generate Question
+2026-02-25 16:10:45.293 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=apple, age=6, is_switch=False
+2026-02-25 16:10:45.834 | INFO     | graph:stream_generator_to_callback:447 | [092298c9-72cc-456c-95b3-ebb00263dd01] Time to First Token (TTFT): 0.541s for followup_question
+2026-02-25 16:10:46.019 | INFO     | stream.question_generators:generate_followup_question_stream:280 | generate_followup_question_stream completed | duration=0.726s, length=82
+2026-02-25 16:10:46.019 | INFO     | graph:stream_generator_to_callback:514 | [092298c9-72cc-456c-95b3-ebb00263dd01] Stream finished in 0.726s for followup_question
+2026-02-25 16:10:46.019 | INFO     | graph:node_generate_question:712 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Generate Question finished in 0.727s
+2026-02-25 16:10:46.021 | INFO     | graph:node_finalize:1058 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Finalize
+2026-02-25 16:10:46.021 | INFO     | graph:node_finalize:1125 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Finalize finished in 0.000s
+2026-02-25 16:10:56.288 | INFO     | graph:node_analyze_input:246 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Analyze Input
+2026-02-25 16:10:58.190 | INFO     | stream.validation:decide_topic_switch_with_validation:124 | [VALIDATE] LLM Call Duration: 1.901s (using gemini-2.0-flash-lite async)
+2026-02-25 16:10:58.190 | INFO     | stream.validation:decide_topic_switch_with_validation:152 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The answer is about the apple, not a new object., correctness_reasoning=The answer is factually correct and addresses the question.
+2026-02-25 16:10:58.191 | INFO     | graph:node_analyze_input:297 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Analyze Input finished in 1.903s
+2026-02-25 16:10:58.192 | INFO     | graph:node_route_logic:338 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Route Logic
+2026-02-25 16:10:58.192 | INFO     | graph:node_route_logic:423 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Route Logic finished in 0.000s
+2026-02-25 16:10:58.194 | INFO     | graph:node_generate_response:524 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Generate Response (feedback)
+2026-02-25 16:10:58.194 | INFO     | stream.response_generators:generate_feedback_response_stream:54 | generate_feedback_response_stream started | object=apple, age=6
+2026-02-25 16:10:58.740 | INFO     | graph:stream_generator_to_callback:447 | [092298c9-72cc-456c-95b3-ebb00263dd01] Time to First Token (TTFT): 0.546s for feedback
+2026-02-25 16:10:58.931 | INFO     | stream.response_generators:generate_feedback_response_stream:109 | generate_feedback_response_stream completed | duration=0.738s, length=86
+2026-02-25 16:10:58.932 | INFO     | graph:stream_generator_to_callback:514 | [092298c9-72cc-456c-95b3-ebb00263dd01] Stream finished in 0.738s for feedback
+2026-02-25 16:10:58.932 | INFO     | graph:node_generate_response:651 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Generate Response finished in 0.738s
+2026-02-25 16:10:58.933 | INFO     | graph:node_generate_question:664 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Generate Question
+2026-02-25 16:10:58.933 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=apple, age=6, is_switch=False
+2026-02-25 16:10:59.473 | INFO     | graph:stream_generator_to_callback:447 | [092298c9-72cc-456c-95b3-ebb00263dd01] Time to First Token (TTFT): 0.539s for followup_question
+2026-02-25 16:10:59.640 | INFO     | stream.question_generators:generate_followup_question_stream:280 | generate_followup_question_stream completed | duration=0.707s, length=103
+2026-02-25 16:10:59.640 | INFO     | graph:stream_generator_to_callback:514 | [092298c9-72cc-456c-95b3-ebb00263dd01] Stream finished in 0.707s for followup_question
+2026-02-25 16:10:59.640 | INFO     | graph:node_generate_question:712 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Generate Question finished in 0.707s
+2026-02-25 16:10:59.641 | INFO     | graph:node_finalize:1058 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Finalize
+2026-02-25 16:10:59.641 | INFO     | graph:node_finalize:1125 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Finalize finished in 0.000s
+2026-02-25 16:11:12.203 | INFO     | graph:node_analyze_input:246 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Analyze Input
+2026-02-25 16:11:15.436 | INFO     | stream.validation:decide_topic_switch_with_validation:124 | [VALIDATE] LLM Call Duration: 3.229s (using gemini-2.0-flash-lite async)
+2026-02-25 16:11:15.436 | INFO     | stream.validation:decide_topic_switch_with_validation:152 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The answer is about the apple, not a new object., correctness_reasoning=The answer "on a tree" is factually correct and answers the question.
+2026-02-25 16:11:15.436 | INFO     | graph:node_analyze_input:297 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Analyze Input finished in 3.233s
+2026-02-25 16:11:15.438 | INFO     | graph:node_route_logic:338 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Route Logic
+2026-02-25 16:11:15.438 | INFO     | graph:node_route_logic:423 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Route Logic finished in 0.000s
+2026-02-25 16:11:15.440 | INFO     | graph:node_generate_response:524 | [092298c9-72cc-456c-95b3-ebb00263dd01] Node: Generate Response (feedback)
+2026-02-25 16:11:15.440 | INFO     | stream.response_generators:generate_feedback_response_stream:54 | generate_feedback_response_stream started | object=apple, age=6
+2026-02-25 16:14:28.723 | INFO     | graph:node_generate_fun_fact:308 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Fun Fact for 'apple'
+2026-02-25 16:14:28.724 | INFO     | stream.fun_fact:get_cached_fun_fact:63 | [FUN_FACT] Cache hit for 'apple' | fun_fact='Did you know that apples are part of the rose family?...'
+2026-02-25 16:14:28.724 | INFO     | graph:node_generate_fun_fact:323 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Fun Fact finished in 0.001s
+2026-02-25 16:14:28.725 | INFO     | graph:node_generate_response:524 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Response (introduction)
+2026-02-25 16:14:28.725 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-02-25 16:14:28.725 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=True
+2026-02-25 16:14:28.728 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-25 16:14:28.729 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-25 16:14:28.729 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: async_generator
+2026-02-25 16:14:30.264 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=5, total_length=5
+2026-02-25 16:14:30.265 | INFO     | graph:stream_generator_to_callback:447 | [f65e7344-476a-41a7-9815-346557dfed1e] Time to First Token (TTFT): 1.539s for introduction
+2026-02-25 16:14:30.267 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=7, total_length=12
+2026-02-25 16:14:30.379 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=71, total_length=83
+2026-02-25 16:14:30.473 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=72, total_length=155
+2026-02-25 16:14:30.681 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=102, total_length=257
+2026-02-25 16:14:30.684 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-25 16:14:30.685 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-25 16:14:30.685 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=1.960s, response_length=257
+2026-02-25 16:14:30.685 | INFO     | graph:stream_generator_to_callback:514 | [f65e7344-476a-41a7-9815-346557dfed1e] Stream finished in 1.960s for introduction
+2026-02-25 16:14:30.685 | INFO     | graph:node_generate_response:651 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Response finished in 1.960s
+2026-02-25 16:14:30.688 | INFO     | graph:node_generate_question:664 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Question
+2026-02-25 16:14:30.690 | INFO     | graph:node_finalize:1058 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize
+2026-02-25 16:14:30.691 | INFO     | graph:node_finalize:1125 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize finished in 0.001s
+2026-02-25 16:14:31.264 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: apple -> Category_Nature_And_Physics | Concept: Change | Question: Why do you think the apple's skin changes color as it gets older? | Thinking: Apple -> Nature & Physics (because it's a natural object) -> Change (because it changes over time)
+2026-02-25 16:14:36.042 | INFO     | graph:node_analyze_input:246 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Analyze Input
+2026-02-25 16:14:36.043 | INFO     | stream.validation:decide_topic_switch_with_validation:48 | [VALIDATE] CONTINUE | engaged=False (heuristic, no LLM call)
+2026-02-25 16:14:36.043 | INFO     | graph:node_analyze_input:297 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Analyze Input finished in 0.000s
+2026-02-25 16:14:36.043 | INFO     | graph:node_route_logic:338 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Route Logic
+2026-02-25 16:14:36.044 | INFO     | graph:node_route_logic:423 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Route Logic finished in 0.000s
+2026-02-25 16:14:36.045 | INFO     | graph:node_generate_response:524 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Response (explanation)
+2026-02-25 16:14:36.045 | INFO     | stream.response_generators:generate_explanation_response_stream:147 | generate_explanation_response_stream started | object=apple, age=6
+2026-02-25 16:14:37.564 | INFO     | graph:stream_generator_to_callback:447 | [f65e7344-476a-41a7-9815-346557dfed1e] Time to First Token (TTFT): 1.519s for explanation
+2026-02-25 16:14:37.746 | INFO     | stream.response_generators:generate_explanation_response_stream:203 | generate_explanation_response_stream completed | duration=1.702s, length=90
+2026-02-25 16:14:37.747 | INFO     | graph:stream_generator_to_callback:514 | [f65e7344-476a-41a7-9815-346557dfed1e] Stream finished in 1.702s for explanation
+2026-02-25 16:14:37.747 | INFO     | graph:node_generate_response:651 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Response finished in 1.703s
+2026-02-25 16:14:37.750 | INFO     | graph:node_generate_question:664 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Question
+2026-02-25 16:14:37.751 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=apple, age=6, is_switch=False
+2026-02-25 16:14:38.283 | INFO     | graph:stream_generator_to_callback:447 | [f65e7344-476a-41a7-9815-346557dfed1e] Time to First Token (TTFT): 0.532s for followup_question
+2026-02-25 16:14:38.484 | INFO     | stream.question_generators:generate_followup_question_stream:280 | generate_followup_question_stream completed | duration=0.734s, length=118
+2026-02-25 16:14:38.485 | INFO     | graph:stream_generator_to_callback:514 | [f65e7344-476a-41a7-9815-346557dfed1e] Stream finished in 0.734s for followup_question
+2026-02-25 16:14:38.485 | INFO     | graph:node_generate_question:712 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Question finished in 0.735s
+2026-02-25 16:14:38.488 | INFO     | graph:node_finalize:1058 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize
+2026-02-25 16:14:38.488 | INFO     | graph:node_finalize:1125 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize finished in 0.000s
+2026-02-25 16:14:50.066 | INFO     | graph:node_analyze_input:246 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Analyze Input
+2026-02-25 16:14:52.212 | INFO     | stream.validation:decide_topic_switch_with_validation:124 | [VALIDATE] LLM Call Duration: 2.145s (using gemini-2.0-flash-lite async)
+2026-02-25 16:14:52.213 | INFO     | stream.validation:decide_topic_switch_with_validation:152 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The child answered the question about the apple's texture., correctness_reasoning=The answer "smooth" accurately describes the texture of an apple.
+2026-02-25 16:14:52.213 | INFO     | graph:node_analyze_input:297 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Analyze Input finished in 2.147s
+2026-02-25 16:14:52.215 | INFO     | graph:node_route_logic:338 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Route Logic
+2026-02-25 16:14:52.215 | INFO     | graph:node_route_logic:423 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Route Logic finished in 0.000s
+2026-02-25 16:14:52.218 | INFO     | graph:node_generate_response:524 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Response (feedback)
+2026-02-25 16:14:52.219 | INFO     | stream.response_generators:generate_feedback_response_stream:54 | generate_feedback_response_stream started | object=apple, age=6
+2026-02-25 16:14:52.928 | INFO     | graph:stream_generator_to_callback:447 | [f65e7344-476a-41a7-9815-346557dfed1e] Time to First Token (TTFT): 0.709s for feedback
+2026-02-25 16:14:53.132 | INFO     | stream.response_generators:generate_feedback_response_stream:109 | generate_feedback_response_stream completed | duration=0.914s, length=84
+2026-02-25 16:14:53.133 | INFO     | graph:stream_generator_to_callback:514 | [f65e7344-476a-41a7-9815-346557dfed1e] Stream finished in 0.914s for feedback
+2026-02-25 16:14:53.133 | INFO     | graph:node_generate_response:651 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Response finished in 0.914s
+2026-02-25 16:14:53.135 | INFO     | graph:node_generate_question:664 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Question
+2026-02-25 16:14:53.135 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=apple, age=6, is_switch=False
+2026-02-25 16:14:54.020 | INFO     | graph:stream_generator_to_callback:447 | [f65e7344-476a-41a7-9815-346557dfed1e] Time to First Token (TTFT): 0.885s for followup_question
+2026-02-25 16:14:54.770 | INFO     | stream.question_generators:generate_followup_question_stream:280 | generate_followup_question_stream completed | duration=1.635s, length=138
+2026-02-25 16:14:54.770 | INFO     | graph:stream_generator_to_callback:514 | [f65e7344-476a-41a7-9815-346557dfed1e] Stream finished in 1.636s for followup_question
+2026-02-25 16:14:54.771 | INFO     | graph:node_generate_question:712 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Question finished in 1.636s
+2026-02-25 16:14:54.773 | INFO     | graph:node_finalize:1058 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize
+2026-02-25 16:14:54.773 | INFO     | graph:node_finalize:1125 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize finished in 0.000s
+2026-02-25 16:15:00.821 | INFO     | graph:node_analyze_input:246 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Analyze Input
+2026-02-25 16:15:02.761 | INFO     | stream.validation:decide_topic_switch_with_validation:124 | [VALIDATE] LLM Call Duration: 1.939s (using gemini-2.0-flash-lite async)
+2026-02-25 16:15:02.761 | INFO     | stream.validation:decide_topic_switch_with_validation:152 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The answer is about the apple., correctness_reasoning=The answer "seeds" is factually correct and answers the question about what is inside the apple.
+2026-02-25 16:15:02.762 | INFO     | graph:node_analyze_input:297 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Analyze Input finished in 1.941s
+2026-02-25 16:15:02.764 | INFO     | graph:node_route_logic:338 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Route Logic
+2026-02-25 16:15:02.765 | INFO     | graph:node_route_logic:423 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Route Logic finished in 0.000s
+2026-02-25 16:15:02.767 | INFO     | graph:node_generate_response:524 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Response (feedback)
+2026-02-25 16:15:02.768 | INFO     | stream.response_generators:generate_feedback_response_stream:54 | generate_feedback_response_stream started | object=apple, age=6
+2026-02-25 16:15:03.375 | INFO     | graph:stream_generator_to_callback:447 | [f65e7344-476a-41a7-9815-346557dfed1e] Time to First Token (TTFT): 0.607s for feedback
+2026-02-25 16:15:03.558 | INFO     | stream.response_generators:generate_feedback_response_stream:109 | generate_feedback_response_stream completed | duration=0.790s, length=126
+2026-02-25 16:15:03.559 | INFO     | graph:stream_generator_to_callback:514 | [f65e7344-476a-41a7-9815-346557dfed1e] Stream finished in 0.791s for feedback
+2026-02-25 16:15:03.559 | INFO     | graph:node_generate_response:651 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Response finished in 0.791s
+2026-02-25 16:15:03.561 | INFO     | graph:node_generate_question:664 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Question
+2026-02-25 16:15:03.561 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=apple, age=6, is_switch=False
+2026-02-25 16:15:04.284 | INFO     | graph:stream_generator_to_callback:447 | [f65e7344-476a-41a7-9815-346557dfed1e] Time to First Token (TTFT): 0.723s for followup_question
+2026-02-25 16:15:04.684 | INFO     | stream.question_generators:generate_followup_question_stream:280 | generate_followup_question_stream completed | duration=1.123s, length=142
+2026-02-25 16:15:04.685 | INFO     | graph:stream_generator_to_callback:514 | [f65e7344-476a-41a7-9815-346557dfed1e] Stream finished in 1.124s for followup_question
+2026-02-25 16:15:04.685 | INFO     | graph:node_generate_question:712 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Question finished in 1.124s
+2026-02-25 16:15:04.688 | INFO     | graph:node_finalize:1058 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize
+2026-02-25 16:15:04.688 | INFO     | graph:node_finalize:1125 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize finished in 0.000s
+2026-02-25 16:16:23.026 | INFO     | graph:node_analyze_input:246 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Analyze Input
+2026-02-25 16:16:24.974 | INFO     | stream.validation:decide_topic_switch_with_validation:124 | [VALIDATE] LLM Call Duration: 1.948s (using gemini-2.0-flash-lite async)
+2026-02-25 16:16:24.975 | INFO     | stream.validation:decide_topic_switch_with_validation:152 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The answer is about apples., correctness_reasoning=The answer "on trees" is factually correct.
+2026-02-25 16:16:24.975 | INFO     | graph:node_analyze_input:297 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Analyze Input finished in 1.949s
+2026-02-25 16:16:24.976 | INFO     | graph:node_route_logic:338 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Route Logic
+2026-02-25 16:16:24.976 | INFO     | graph:node_route_logic:423 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Route Logic finished in 0.000s
+2026-02-25 16:16:24.977 | INFO     | graph:node_generate_response:524 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Response (feedback)
+2026-02-25 16:16:24.977 | INFO     | stream.response_generators:generate_feedback_response_stream:54 | generate_feedback_response_stream started | object=apple, age=6
+2026-02-25 16:16:25.573 | INFO     | graph:stream_generator_to_callback:447 | [f65e7344-476a-41a7-9815-346557dfed1e] Time to First Token (TTFT): 0.596s for feedback
+2026-02-25 16:16:25.684 | INFO     | stream.response_generators:generate_feedback_response_stream:109 | generate_feedback_response_stream completed | duration=0.707s, length=58
+2026-02-25 16:16:25.685 | INFO     | graph:stream_generator_to_callback:514 | [f65e7344-476a-41a7-9815-346557dfed1e] Stream finished in 0.708s for feedback
+2026-02-25 16:16:25.685 | INFO     | graph:node_generate_response:651 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Response finished in 0.708s
+2026-02-25 16:16:25.688 | INFO     | graph:node_generate_question:664 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Question
+2026-02-25 16:16:25.688 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=apple, age=6, is_switch=False
+2026-02-25 16:16:26.324 | INFO     | graph:stream_generator_to_callback:447 | [f65e7344-476a-41a7-9815-346557dfed1e] Time to First Token (TTFT): 0.636s for followup_question
+2026-02-25 16:16:26.638 | INFO     | stream.question_generators:generate_followup_question_stream:280 | generate_followup_question_stream completed | duration=0.950s, length=168
+2026-02-25 16:16:26.638 | INFO     | graph:stream_generator_to_callback:514 | [f65e7344-476a-41a7-9815-346557dfed1e] Stream finished in 0.950s for followup_question
+2026-02-25 16:16:26.639 | INFO     | graph:node_generate_question:712 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Generate Question finished in 0.951s
+2026-02-25 16:16:26.640 | INFO     | graph:node_finalize:1058 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize
+2026-02-25 16:16:26.640 | INFO     | graph:node_finalize:1125 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize finished in 0.000s
+2026-02-25 16:16:41.867 | INFO     | graph:node_analyze_input:246 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Analyze Input
+2026-02-25 16:16:43.832 | INFO     | stream.validation:decide_topic_switch_with_validation:124 | [VALIDATE] LLM Call Duration: 1.964s (using gemini-2.0-flash-lite async)
+2026-02-25 16:16:43.833 | INFO     | stream.validation:decide_topic_switch_with_validation:152 | [VALIDATE] CONTINUE | new_object=None, engaged=True, correct=True, switch_reasoning=The answer is about the apple., correctness_reasoning=The answer is factually correct and addresses the question about how an apple changes over time.
+2026-02-25 16:16:43.833 | INFO     | graph:node_analyze_input:297 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Analyze Input finished in 1.966s
+2026-02-25 16:16:43.834 | INFO     | graph:node_route_logic:338 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Route Logic
+2026-02-25 16:16:43.834 | INFO     | graph:node_route_logic:423 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Route Logic finished in 0.000s
+2026-02-25 16:16:43.835 | INFO     | graph:route_to_guide_or_chat:1202 | [f65e7344-476a-41a7-9815-346557dfed1e] Pre-router: Guide trigger (count=3, type=feedback) → start_guide
+2026-02-25 16:16:43.836 | INFO     | graph:node_start_guide:725 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Start Guide
+2026-02-25 16:16:43.837 | INFO     | graph:node_finalize:1058 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize
+2026-02-25 16:16:43.837 | INFO     | graph:node_finalize:1125 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize finished in 0.000s
+2026-02-25 16:17:07.886 | INFO     | graph:node_guide_navigator:783 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Guide Navigator
+2026-02-25 16:17:10.336 | INFO     | graph:node_guide_navigator:815 | [f65e7344-476a-41a7-9815-346557dfed1e] Navigator result: status=STUCK, strategy=SCAFFOLD, turn=1
+2026-02-25 16:17:10.342 | INFO     | graph:node_guide_driver:835 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Guide Driver
+2026-02-25 16:17:11.108 | INFO     | graph:node_finalize:1058 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize
+2026-02-25 16:17:11.108 | INFO     | graph:node_finalize:1125 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize finished in 0.000s
+2026-02-25 16:17:26.011 | INFO     | graph:node_guide_navigator:783 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Guide Navigator
+2026-02-25 16:17:28.441 | INFO     | graph:node_guide_navigator:815 | [f65e7344-476a-41a7-9815-346557dfed1e] Navigator result: status=STUCK, strategy=SCAFFOLD, turn=2
+2026-02-25 16:17:28.446 | INFO     | graph:node_guide_driver:835 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Guide Driver
+2026-02-25 16:17:29.406 | INFO     | graph:node_finalize:1058 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize
+2026-02-25 16:17:29.407 | INFO     | graph:node_finalize:1125 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize finished in 0.000s
+2026-02-25 16:18:10.342 | INFO     | graph:node_guide_navigator:783 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Guide Navigator
+2026-02-25 16:18:15.654 | INFO     | graph:node_guide_navigator:815 | [f65e7344-476a-41a7-9815-346557dfed1e] Navigator result: status=ON_TRACK, strategy=ADVANCE, turn=3
+2026-02-25 16:18:15.659 | INFO     | graph:node_guide_driver:835 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Guide Driver
+2026-02-25 16:18:16.591 | INFO     | graph:node_finalize:1058 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize
+2026-02-25 16:18:16.592 | INFO     | graph:node_finalize:1125 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize finished in 0.001s
+2026-02-25 16:18:34.216 | INFO     | graph:node_guide_navigator:783 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Guide Navigator
+2026-02-25 16:18:37.643 | INFO     | graph:node_guide_navigator:815 | [f65e7344-476a-41a7-9815-346557dfed1e] Navigator result: status=STUCK, strategy=SCAFFOLD, turn=4
+2026-02-25 16:18:37.650 | INFO     | graph:node_guide_driver:835 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Guide Driver
+2026-02-25 16:18:38.668 | INFO     | graph:node_finalize:1058 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize
+2026-02-25 16:18:38.669 | INFO     | graph:node_finalize:1125 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize finished in 0.000s
+2026-02-25 16:19:16.907 | INFO     | graph:node_guide_navigator:783 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Guide Navigator
+2026-02-25 16:19:21.862 | INFO     | graph:node_guide_navigator:815 | [f65e7344-476a-41a7-9815-346557dfed1e] Navigator result: status=ON_TRACK, strategy=ADVANCE, turn=5
+2026-02-25 16:19:21.865 | INFO     | graph:node_guide_driver:835 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Guide Driver
+2026-02-25 16:19:22.655 | INFO     | graph:node_finalize:1058 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize
+2026-02-25 16:19:22.655 | INFO     | graph:node_finalize:1125 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize finished in 0.000s
+2026-02-25 16:19:28.845 | INFO     | graph:node_guide_navigator:783 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Guide Navigator
+2026-02-25 16:19:33.458 | INFO     | graph:node_guide_navigator:815 | [f65e7344-476a-41a7-9815-346557dfed1e] Navigator result: status=STUCK, strategy=SCAFFOLD, turn=6
+2026-02-25 16:19:33.460 | INFO     | graph:route_after_navigator:1276 | [f65e7344-476a-41a7-9815-346557dfed1e] Guide: Max turns reached, giving hint.
+2026-02-25 16:19:33.462 | INFO     | graph:node_guide_hint:912 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Guide Hint
+2026-02-25 16:19:33.462 | INFO     | stream.guide_hint:generate_guide_hint:96 | [GUIDE_HINT] Generating LLM hint for 'apple' | concept='Change'
+2026-02-25 16:19:34.635 | INFO     | stream.guide_hint:generate_guide_hint:111 | [GUIDE_HINT] Generated hint in 1.172s | length=194
+2026-02-25 16:19:34.638 | INFO     | graph:node_finalize:1058 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize
+2026-02-25 16:19:34.638 | INFO     | graph:node_finalize:1125 | [f65e7344-476a-41a7-9815-346557dfed1e] Node: Finalize finished in 0.001s
+2026-02-25 16:28:19.140 | INFO     | graph:node_generate_fun_fact:308 | [97675b00-91e9-4171-b301-19dd3dad316a] Node: Generate Fun Fact for 'apple'
+2026-02-25 16:28:19.146 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'apple' (model=gemini-2.0-flash-lite)
+2026-02-25 16:28:19.150 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-02-25 16:28:22.734 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: apple -> Category_Nature_And_Physics | Concept: Change | Question: Why do you think the apple's skin changes color as it gets older? | Thinking: Apple -> Nature -> Change
+2026-02-25 16:28:25.119 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 5.972s | text_length=878
+2026-02-25 16:28:25.119 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'apple'
+2026-02-25 16:28:27.478 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 2.359s
+2026-02-25 16:28:27.479 | INFO     | stream.fun_fact:cache_fun_fact:78 | [FUN_FACT] Cached 4 fun facts for 'apple'
+2026-02-25 16:28:27.479 | INFO     | stream.fun_fact:generate_fun_fact:206 | [FUN_FACT] Success for 'apple' | facts_count=4, selected='Did you know apples are part of the rose family?...'
+2026-02-25 16:28:27.479 | INFO     | graph:node_generate_fun_fact:323 | [97675b00-91e9-4171-b301-19dd3dad316a] Node: Generate Fun Fact finished in 8.340s
+2026-02-25 16:28:27.481 | INFO     | graph:node_generate_response:526 | [97675b00-91e9-4171-b301-19dd3dad316a] Node: Generate Response (introduction)
+2026-02-25 16:28:27.481 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=True
+2026-02-25 16:28:27.482 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-25 16:28:27.482 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-25 16:28:27.482 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: async_generator
+2026-02-25 16:28:28.106 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=5, total_length=5
+2026-02-25 16:28:28.106 | INFO     | graph:stream_generator_to_callback:447 | [97675b00-91e9-4171-b301-19dd3dad316a] Time to First Token (TTFT): 0.625s for introduction
+2026-02-25 16:28:28.115 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=7, total_length=12
+2026-02-25 16:28:28.277 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=82, total_length=94
+2026-02-25 16:28:28.456 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=68, total_length=162
+2026-02-25 16:28:29.139 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=84, total_length=246
+2026-02-25 16:28:29.140 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-25 16:28:29.140 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-25 16:28:29.140 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=1.659s, response_length=246
+2026-02-25 16:28:29.141 | INFO     | graph:stream_generator_to_callback:516 | [97675b00-91e9-4171-b301-19dd3dad316a] Stream finished in 1.659s for introduction
+2026-02-25 16:28:29.141 | INFO     | graph:node_generate_response:653 | [97675b00-91e9-4171-b301-19dd3dad316a] Node: Generate Response finished in 1.660s
+2026-02-25 16:28:29.143 | INFO     | graph:node_generate_question:666 | [97675b00-91e9-4171-b301-19dd3dad316a] Node: Generate Question
+2026-02-25 16:28:29.143 | INFO     | graph:node_finalize:1060 | [97675b00-91e9-4171-b301-19dd3dad316a] Node: Finalize
+2026-02-25 16:28:29.143 | INFO     | graph:node_finalize:1127 | [97675b00-91e9-4171-b301-19dd3dad316a] Node: Finalize finished in 0.000s
+2026-02-25 16:28:48.782 | INFO     | graph:node_analyze_input:246 | [97675b00-91e9-4171-b301-19dd3dad316a] Node: Analyze Input
+2026-02-25 16:28:51.459 | INFO     | stream.validation:decide_topic_switch_with_validation:124 | [VALIDATE] LLM Call Duration: 2.676s (using gemini-2.0-flash-lite async)
+2026-02-25 16:28:51.460 | INFO     | stream.validation:decide_topic_switch_with_validation:152 | [VALIDATE] SWITCH | new_object=roses, engaged=True, correct=False, switch_reasoning=The child named a new object (roses) instead of describing what happens when you bite an apple., correctness_reasoning=The answer is factually incorrect and doesn't address the question about biting an apple.
+2026-02-25 16:28:51.460 | INFO     | graph:node_analyze_input:297 | [97675b00-91e9-4171-b301-19dd3dad316a] Node: Analyze Input finished in 2.678s
+2026-02-25 16:28:51.461 | INFO     | graph:node_route_logic:338 | [97675b00-91e9-4171-b301-19dd3dad316a] Node: Route Logic
+2026-02-25 16:28:51.468 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: roses
+2026-02-25 16:28:53.095 | INFO     | graph:node_route_logic:423 | [97675b00-91e9-4171-b301-19dd3dad316a] Node: Route Logic finished in 1.633s
+2026-02-25 16:28:53.097 | INFO     | graph:node_generate_response:526 | [97675b00-91e9-4171-b301-19dd3dad316a] Node: Generate Response (topic_switch)
+2026-02-25 16:28:53.097 | INFO     | stream.response_generators:generate_topic_switch_response_stream:327 | generate_topic_switch_response_stream started | the previous object -> roses, age=6
+2026-02-25 16:28:53.654 | INFO     | graph:stream_generator_to_callback:447 | [97675b00-91e9-4171-b301-19dd3dad316a] Time to First Token (TTFT): 0.557s for topic_switch
+2026-02-25 16:28:54.078 | INFO     | stream.response_generators:generate_topic_switch_response_stream:382 | generate_topic_switch_response_stream completed | duration=0.981s, length=180
+2026-02-25 16:28:54.078 | INFO     | graph:stream_generator_to_callback:516 | [97675b00-91e9-4171-b301-19dd3dad316a] Stream finished in 0.981s for topic_switch
+2026-02-25 16:28:54.078 | INFO     | graph:node_generate_response:653 | [97675b00-91e9-4171-b301-19dd3dad316a] Node: Generate Response finished in 0.982s
+2026-02-25 16:28:54.081 | INFO     | graph:node_generate_question:666 | [97675b00-91e9-4171-b301-19dd3dad316a] Node: Generate Question
+2026-02-25 16:28:54.081 | INFO     | stream.question_generators:generate_followup_question_stream:222 | generate_followup_question_stream started | object=roses, age=6, is_switch=True
+2026-02-25 16:28:54.298 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: roses -> Category_Nature_And_Physics | Concept: Change | Question: Why do you think the petals of a rose open up? | Thinking: Roses -> How the World Works (because they are a natural object) -> Change (because of the visible changes in the rose's life cycle)
+2026-02-25 16:28:54.756 | INFO     | graph:stream_generator_to_callback:447 | [97675b00-91e9-4171-b301-19dd3dad316a] Time to First Token (TTFT): 0.675s for followup_question
+2026-02-25 16:28:55.062 | INFO     | stream.question_generators:generate_followup_question_stream:280 | generate_followup_question_stream completed | duration=0.981s, length=121
+2026-02-25 16:28:55.062 | INFO     | graph:stream_generator_to_callback:516 | [97675b00-91e9-4171-b301-19dd3dad316a] Stream finished in 0.981s for followup_question
+2026-02-25 16:28:55.062 | INFO     | graph:node_generate_question:714 | [97675b00-91e9-4171-b301-19dd3dad316a] Node: Generate Question finished in 0.982s
+2026-02-25 16:28:55.063 | INFO     | graph:node_finalize:1060 | [97675b00-91e9-4171-b301-19dd3dad316a] Node: Finalize
+2026-02-25 16:28:55.063 | INFO     | graph:node_finalize:1127 | [97675b00-91e9-4171-b301-19dd3dad316a] Node: Finalize finished in 0.000s
+2026-02-25 16:30:12.108 | INFO     | graph:node_generate_fun_fact:308 | [44899b0d-a02f-492a-97e3-e52ace5d05ef] Node: Generate Fun Fact for 'apple'
+2026-02-25 16:30:12.109 | INFO     | stream.fun_fact:get_cached_fun_fact:63 | [FUN_FACT] Cache hit for 'apple' | fun_fact='Did you know apples float in water because they have air ins...'
+2026-02-25 16:30:12.110 | INFO     | graph:node_generate_fun_fact:323 | [44899b0d-a02f-492a-97e3-e52ace5d05ef] Node: Generate Fun Fact finished in 0.002s
+2026-02-25 16:30:12.111 | INFO     | graph:node_generate_response:526 | [44899b0d-a02f-492a-97e3-e52ace5d05ef] Node: Generate Response (introduction)
+2026-02-25 16:30:12.111 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-02-25 16:30:12.111 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=True
+2026-02-25 16:30:12.114 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-25 16:30:12.114 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-25 16:30:12.114 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: async_generator
+2026-02-25 16:30:13.849 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=5, total_length=5
+2026-02-25 16:30:13.851 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: apple -> Category_Nature_And_Physics | Concept: Change | Question: Why do you think the apple's skin changes color as it gets older? | Thinking: Apple -> Natural object with observable features -> How the World Works -> Change (because of the apple's life cycle)
+2026-02-25 16:30:13.851 | INFO     | graph:stream_generator_to_callback:447 | [44899b0d-a02f-492a-97e3-e52ace5d05ef] Time to First Token (TTFT): 1.740s for introduction
+2026-02-25 16:30:13.852 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=7, total_length=12
+2026-02-25 16:30:13.931 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=75, total_length=87
+2026-02-25 16:30:14.031 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=76, total_length=163
+2026-02-25 16:30:14.145 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=53, total_length=216
+2026-02-25 16:30:14.145 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-25 16:30:14.145 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-25 16:30:14.146 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=2.035s, response_length=216
+2026-02-25 16:30:14.146 | INFO     | graph:stream_generator_to_callback:516 | [44899b0d-a02f-492a-97e3-e52ace5d05ef] Stream finished in 2.035s for introduction
+2026-02-25 16:30:14.146 | INFO     | graph:node_generate_response:653 | [44899b0d-a02f-492a-97e3-e52ace5d05ef] Node: Generate Response finished in 2.035s
+2026-02-25 16:30:14.147 | INFO     | graph:node_generate_question:666 | [44899b0d-a02f-492a-97e3-e52ace5d05ef] Node: Generate Question
+2026-02-25 16:30:14.147 | INFO     | graph:node_finalize:1060 | [44899b0d-a02f-492a-97e3-e52ace5d05ef] Node: Finalize
+2026-02-25 16:30:14.147 | INFO     | graph:node_finalize:1127 | [44899b0d-a02f-492a-97e3-e52ace5d05ef] Node: Finalize finished in 0.000s

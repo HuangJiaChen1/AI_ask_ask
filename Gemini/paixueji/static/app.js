@@ -1459,6 +1459,12 @@ function toggleExchangeCritique(index) {
     const form = document.getElementById('exchange_form_' + index);
     if (cb && form) {
         form.style.display = cb.checked ? 'block' : 'none';
+        if (!cb.checked) {
+            ['mq_exp_', 'mq_prob_', 'mr_exp_', 'mr_prob_', 'ec_concl_'].forEach(prefix => {
+                const el = document.getElementById(prefix + index);
+                if (el) el.value = '';
+            });
+        }
     }
 }
 

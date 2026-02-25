@@ -104,6 +104,7 @@ class PaixuejiState(TypedDict):
     # --- Internal ---
     stream_callback: Any  # Async callback function(chunk: StreamChunk) -> None
     start_time: float
+    ttft: Optional[float]  # Time to First Token (seconds)
 
     # --- Execution Tracing ---
     nodes_executed: List[dict]  # [{"node": str, "time_ms": float, "changes": dict}]
@@ -446,6 +447,8 @@ async def stream_generator_to_callback(generator, state: PaixuejiState, response
             ttft = time.time() - start_time
             logger.info(f"[{state['session_id']}] Time to First Token (TTFT): {ttft:.3f}s for {response_type_override or state.get('response_type', 'unknown')}")
             first_token_received = True
+            if "ttft" not in state:
+                state["ttft"] = ttft
 
         # Normalize item format
         # Intro: (text, usage, full, info)
@@ -1074,7 +1077,7 @@ async def node_finalize(state: PaixuejiState) -> dict:
     final_chunk = StreamChunk(
         response=full_response,
         session_finished=(state["status"] == "over"),
-        duration=time.time() - state["start_time"],
+        duration=state.get("ttft", 0.0),
         token_usage=None,
         finish=True,
         sequence_number=state["sequence_number"] + 1,
@@ -1213,11 +1216,11 @@ def build_paixueji_graph():
     )
 
     # Check if we should guide instead of asking normal question
-    @trace_router(["correct_answer_count", "is_factually_correct"])
+    @trace_router(["correct_answer_count", "response_type"])
     def route_after_response(state):
         try:
             current_count = state["correct_answer_count"]
-            is_correct = state.get("is_factually_correct", False)
+            is_correct = (state.get("response_type") == "feedback")
 
             # Trigger if we hit 4 correct answers (current 3 + 1 correct)
             should_trigger = (current_count >= 3 and is_correct) or current_count >= 4

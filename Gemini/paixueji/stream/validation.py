@@ -51,7 +51,7 @@ async def decide_topic_switch_with_validation(
             "new_object": None,
             "switching_reasoning": "Child not engaged",
             "is_engaged": False,
-            "is_factually_correct": True,
+            "is_factually_correct": False,
             "correctness_reasoning": "N/A — disengaged"
         }
 

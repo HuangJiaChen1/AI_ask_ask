@@ -13,6 +13,7 @@ must extract a general principle, not a case-specific prohibition.
 """
 
 import json
+import re
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -342,11 +343,16 @@ def _build_navigator_context(trace: TraceObject) -> dict:
         "bridge_question": bridge_question,
         "user_input": trace.exchange.child_response,
         "context_section": context_section,
+        "conversation_history": trace.conversation_history,   # mirror production context
     }
 
 
 def _call_input_analyzer(client, config: dict, ctx: dict, rules_block: str) -> dict:
-    """Re-run the Input Analyzer (sync) with the given rules block."""
+    """Re-run the Input Analyzer (sync) with the given rules block.
+
+    Mirrors production exactly: gemini-2.0-flash-lite, no JSON MIME constraint,
+    regex parsing of KEY: VALUE plain-text output.
+    """
     prompt = (
         f"You are an educational AI helping a {ctx['age']}-year-old child learn.\n\n"
         f"CONTEXT:\n"
@@ -355,25 +361,49 @@ def _call_input_analyzer(client, config: dict, ctx: dict, rules_block: str) -> d
         f"- Answer: \"{ctx['child_answer']}\"\n\n"
         f"{rules_block}"
     )
-    model_name = config.get("model_name", "gemini-2.5-flash-lite")
     response = client.models.generate_content(
-        model=model_name,
+        model="gemini-2.0-flash-lite",
         contents=prompt,
         config=GenerateContentConfig(
-            response_mime_type="application/json",
             temperature=0.1,
-            max_output_tokens=200,
+            max_output_tokens=120,
         ),
     )
-    return json.loads(response.text.strip())
+    text = response.text
+
+    def _get(pattern, default):
+        m = re.search(pattern, text, re.IGNORECASE)
+        return m.group(1).strip() if m else default
+
+    new_object_raw = _get(r"NEW_OBJECT:\s*(.+)", "null")
+    engaged_raw    = _get(r"ENGAGED:\s*(true|false)", "true")
+    correct_raw    = _get(r"CORRECT:\s*(true|false)", "true")
+
+    return {
+        "decision":              _get(r"DECISION:\s*(SWITCH|CONTINUE)", "CONTINUE"),
+        "new_object":            None if new_object_raw.lower() in ("null", "none", "") else new_object_raw,
+        "switching_reasoning":   _get(r"SWITCHING_REASONING:\s*(.+)", "N/A"),
+        "is_engaged":            engaged_raw.lower() == "true",
+        "is_factually_correct":  correct_raw.lower() == "true",
+        "correctness_reasoning": _get(r"CORRECTNESS_REASONING:\s*(.+)", "N/A"),
+    }
 
 
 def _call_navigator(client, config: dict, ctx: dict, rules_block: str) -> dict:
     """Re-run the Theme Navigator (sync) with the given rules block."""
+    recent_history = ""
+    for msg in ctx.get("conversation_history", [])[-6:]:   # mirror production: last 3 exchanges
+        role = msg.get("role", "unknown")
+        content = msg.get("content", "")
+        if role != "system":
+            recent_history += f"{role.upper()}: {content}\n"
+    if not recent_history:
+        recent_history = "(no prior conversation available)"
+
     prompt = (
         f"You are the Strategy Navigator for a guided conversation with a {ctx['age']}-year-old child.\n\n"
         f"{ctx['context_section']}\n\n"
-        f"[RECENT CONVERSATION]\n(trace context not available for preview)\n\n"
+        f"[RECENT CONVERSATION]\n{recent_history}\n"
         f"User's Latest Input: \"{ctx['user_input']}\"\n\n"
         f"{rules_block}"
     )
