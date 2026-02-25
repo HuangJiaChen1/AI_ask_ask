@@ -797,8 +797,7 @@ async def node_guide_navigator(state: PaixuejiState):
         config=state["config"]
     )
 
-    nav_result = await asyncio.to_thread(
-        navigator.analyze_turn,
+    nav_result = await navigator.analyze_turn(
         history=state["messages"],
         user_input=child_input,
         current_topic=state["object_name"],

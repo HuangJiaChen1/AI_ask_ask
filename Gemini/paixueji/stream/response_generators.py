@@ -80,14 +80,14 @@ async def generate_feedback_response_stream(
             system_instruction=system_instruction if system_instruction else None
         )
 
-        stream = client.models.generate_content_stream(
+        stream = await client.aio.models.generate_content_stream(
             model=config["model_name"],
             contents=contents,
             config=gen_config
         )
 
         # Yield chunks
-        for chunk in stream:
+        async for chunk in stream:
             if chunk.text:
                 full_response += chunk.text
                 yield (chunk.text, None, full_response)
@@ -174,14 +174,14 @@ async def generate_explanation_response_stream(
             system_instruction=system_instruction if system_instruction else None
         )
 
-        stream = client.models.generate_content_stream(
+        stream = await client.aio.models.generate_content_stream(
             model=config["model_name"],
             contents=contents,
             config=gen_config
         )
 
         # Yield chunks
-        for chunk in stream:
+        async for chunk in stream:
             if chunk.text:
                 full_response += chunk.text
                 yield (chunk.text, None, full_response)
@@ -266,14 +266,14 @@ async def generate_correction_response_stream(
             system_instruction=system_instruction if system_instruction else None
         )
 
-        stream = client.models.generate_content_stream(
+        stream = await client.aio.models.generate_content_stream(
             model=config["model_name"],
             contents=contents,
             config=gen_config
         )
 
         # Yield chunks
-        for chunk in stream:
+        async for chunk in stream:
             if chunk.text:
                 full_response += chunk.text
                 yield (chunk.text, None, full_response)
@@ -353,14 +353,14 @@ async def generate_topic_switch_response_stream(
             system_instruction=system_instruction if system_instruction else None
         )
 
-        stream = client.models.generate_content_stream(
+        stream = await client.aio.models.generate_content_stream(
             model=config["model_name"],
             contents=contents,
             config=gen_config
         )
 
         # Yield chunks
-        for chunk in stream:
+        async for chunk in stream:
             if chunk.text:
                 full_response += chunk.text
                 yield (chunk.text, None, full_response)
@@ -444,14 +444,14 @@ YOUR TASK:
             system_instruction=system_instruction if system_instruction else None
         )
 
-        stream = client.models.generate_content_stream(
+        stream = await client.aio.models.generate_content_stream(
             model=config["model_name"],
             contents=contents,
             config=gen_config
         )
 
         # Yield chunks
-        for chunk in stream:
+        async for chunk in stream:
             if chunk.text:
                 full_response += chunk.text
                 yield (chunk.text, None, full_response)
@@ -539,14 +539,14 @@ YOUR TASK:
             system_instruction=system_instruction if system_instruction else None
         )
 
-        stream = client.models.generate_content_stream(
+        stream = await client.aio.models.generate_content_stream(
             model=config["model_name"],
             contents=contents,
             config=gen_config
         )
 
         # Yield chunks
-        for chunk in stream:
+        async for chunk in stream:
             if chunk.text:
                 full_response += chunk.text
                 yield (chunk.text, None, full_response)

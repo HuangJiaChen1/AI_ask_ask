@@ -115,7 +115,7 @@ async def ask_introduction_question_stream(
         )
 
         # Call streaming API
-        stream = client.models.generate_content_stream(
+        stream = await client.aio.models.generate_content_stream(
             model=config["model_name"],
             contents=contents,
             config=gen_config
@@ -133,7 +133,7 @@ async def ask_introduction_question_stream(
 
         # Yield chunks as they arrive
         chunk_count = 0
-        for chunk in stream:
+        async for chunk in stream:
             if chunk.text:
                 chunk_count += 1
                 full_response += chunk.text
@@ -251,14 +251,14 @@ async def generate_followup_question_stream(
             system_instruction=system_instruction if system_instruction else None
         )
 
-        stream = client.models.generate_content_stream(
+        stream = await client.aio.models.generate_content_stream(
             model=config["model_name"],
             contents=contents,
             config=gen_config
         )
 
         # Yield chunks
-        for chunk in stream:
+        async for chunk in stream:
             if chunk.text:
                 full_response += chunk.text
                 yield (chunk.text, None, full_response)
@@ -337,7 +337,7 @@ async def generate_completion_message_stream(
         )
 
         # Call streaming API
-        stream = client.models.generate_content_stream(
+        stream = await client.aio.models.generate_content_stream(
             model=config["model_name"],
             contents=contents,
             config=gen_config
@@ -348,7 +348,7 @@ async def generate_completion_message_stream(
 
         # Yield chunks as they arrive
         chunk_count = 0
-        for chunk in stream:
+        async for chunk in stream:
             if chunk.text:
                 chunk_count += 1
                 full_response += chunk.text

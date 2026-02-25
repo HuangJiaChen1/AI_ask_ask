@@ -28,6 +28,7 @@ CORS(app)
 # In-memory session storage
 # NOTE: Sessions will be lost on server restart
 # For production, consider using Redis or database storage
+
 sessions = {}
 
 # Background critique task tracking

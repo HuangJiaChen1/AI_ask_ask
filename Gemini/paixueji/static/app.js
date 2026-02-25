@@ -727,7 +727,11 @@ function handleStreamChunk(chunk) {
             // If equal length, keep what we have (no action needed)
         }
 
-        // Display duration and token usage if available
+        // Display duration if available
+        if (chunk.duration > 0) {
+            thinkingTimeDisplay.textContent = `${chunk.duration.toFixed(1)}s`;
+            thinkingTimeDisplay.style.opacity = 1;
+        }
     }
 
     // Object selection uses natural language instead of UI buttons

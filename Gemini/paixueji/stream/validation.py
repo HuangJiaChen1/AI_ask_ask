@@ -8,7 +8,7 @@ Functions:
     - decide_topic_switch_with_validation: Unified AI validation
     - is_answer_reasonable: Simple heuristic for engagement check
 """
-import json
+import re
 import time
 from loguru import logger
 import paixueji_prompts
@@ -42,6 +42,19 @@ async def decide_topic_switch_with_validation(
             - is_factually_correct: True or False
             - correctness_reasoning: Brief reason
     """
+    # Fast heuristic gate: skip LLM for clearly disengaged answers.
+    # Bypass during topic-selection state, where "don't know" should trigger a SWITCH.
+    if not is_awaiting_topic_selection and not is_answer_reasonable(child_answer):
+        logger.info("[VALIDATE] CONTINUE | engaged=False (heuristic, no LLM call)")
+        return {
+            "decision": "CONTINUE",
+            "new_object": None,
+            "switching_reasoning": "Child not engaged",
+            "is_engaged": False,
+            "is_factually_correct": True,
+            "correctness_reasoning": "N/A — disengaged"
+        }
+
     # Extract the last question the model asked from conversation history
     conversation_history = assistant.conversation_history
     last_model_question = None
@@ -54,6 +67,14 @@ async def decide_topic_switch_with_validation(
 
     if not last_model_question:
         last_model_question = "Unknown (first interaction)"
+    else:
+        # Extract just the question sentence (last fragment ending in '?').
+        # Assistant messages are feedback + question concatenated; only the question matters for validation.
+        sentences = last_model_question.split('?')
+        if len(sentences) >= 2:
+            last_model_question = sentences[-2].split('.')[-1].strip() + '?'
+        # Hard cap to bound prompt size regardless of extraction result
+        last_model_question = last_model_question[-300:]
 
     # Add specific instructions for topic selection state
     topic_selection_instructions = ""
@@ -90,23 +111,43 @@ CONTEXT:
 {rules}"""
 
     try:
-        # Call Gemini with JSON mode via async client
         t0 = time.time()
-        # Use gemini-1.5-flash for stable and fast validation
         response = await assistant.client.aio.models.generate_content(
-            model="gemini-2.5-flash-lite",
+            model="gemini-2.0-flash-lite",
             contents=decision_prompt,
             config={
-                "response_mime_type": "application/json",
                 "temperature": 0.1,
-                "max_output_tokens": 200
+                "max_output_tokens": 120
             }
         )
         t1 = time.time()
-        logger.info(f"[VALIDATE] LLM Call Duration: {t1 - t0:.3f}s (using gemini-2.5-flash-lite async)")
+        logger.info(f"[VALIDATE] LLM Call Duration: {t1 - t0:.3f}s (using gemini-2.0-flash-lite async)")
 
-        # Parse JSON response
-        decision_data = json.loads(response.text)
+        # Parse plain-text response with regex (no constrained decoding overhead)
+        text = response.text
+
+        def _get(pattern, default):
+            m = re.search(pattern, text, re.IGNORECASE)
+            return m.group(1).strip() if m else default
+
+        decision = _get(r"DECISION:\s*(SWITCH|CONTINUE)", "CONTINUE")
+        new_object_raw = _get(r"NEW_OBJECT:\s*(.+)", "null")
+        new_object = None if new_object_raw.lower() in ("null", "none", "") else new_object_raw
+        switching_reasoning = _get(r"SWITCHING_REASONING:\s*(.+)", "N/A")
+        engaged_raw = _get(r"ENGAGED:\s*(true|false)", "true")
+        is_engaged = engaged_raw.lower() == "true"
+        correct_raw = _get(r"CORRECT:\s*(true|false)", "true")
+        is_factually_correct = correct_raw.lower() == "true"
+        correctness_reasoning = _get(r"CORRECTNESS_REASONING:\s*(.+)", "N/A")
+
+        decision_data = {
+            "decision": decision,
+            "new_object": new_object,
+            "switching_reasoning": switching_reasoning,
+            "is_engaged": is_engaged,
+            "is_factually_correct": is_factually_correct,
+            "correctness_reasoning": correctness_reasoning
+        }
 
         logger.info(
             f"[VALIDATE] {decision_data['decision']} | "
@@ -129,20 +170,6 @@ CONTEXT:
             'switching_reasoning': f'Error in validation: {str(e)}',
             'is_engaged': True,
             'is_factually_correct': True,
-            'correctness_reasoning': 'Could not evaluate due to error'
-        }
-
-
-    except Exception as e:
-        logger.error(f"[VALIDATE] Error: {e}, defaulting to safe state")
-        import traceback
-        traceback.print_exc()
-        return {
-            'decision': 'CONTINUE',
-            'new_object': None,
-            'switching_reasoning': f'Error in validation: {str(e)}',
-            'is_engaged': True,  # Safe default - continue conversation
-            'is_factually_correct': True,  # Safe default - don't incorrectly penalize
             'correctness_reasoning': 'Could not evaluate due to error'
         }
 

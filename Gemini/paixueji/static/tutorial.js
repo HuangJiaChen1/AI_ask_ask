@@ -342,22 +342,31 @@ function _removeTooltip() {
 
 function _tutorialNext() {
   var nextIndex = _step + 1;
-  // Crossing a phase boundary: pause (hide UI) but keep _active = true so that
-  // tutorialAdvanceToChat() / tutorialAdvanceToReport() can resume programmatically.
-  if (nextIndex < TUTORIAL_STEPS.length &&
-      TUTORIAL_STEPS[nextIndex].phase !== TUTORIAL_STEPS[_step].phase) {
-    _clearSpotlight();
-    _removeTooltip();
-    // If the next phase's primary target is already visible in the DOM (e.g.,
-    // #debugPanel appeared mid-chat before the user clicked "Finish ✓"), advance
-    // immediately rather than waiting for an external hook that will never fire.
-    var nextStep = TUTORIAL_STEPS[nextIndex];
-    var nextTarget = _resolveTarget(nextStep);
-    if (nextTarget && _isVisible(nextTarget)) {
-      _showStep(nextIndex);
+
+  if (nextIndex < TUTORIAL_STEPS.length) {
+    var nextStep    = TUTORIAL_STEPS[nextIndex];
+    var nextTarget  = _resolveTarget(nextStep);
+    var nextVisible = nextTarget && _isVisible(nextTarget);
+
+    var crossesPhase  = nextStep.phase !== TUTORIAL_STEPS[_step].phase;
+    // Also pause when the next step declares a selector whose element isn't
+    // visible yet — an external hook (e.g. tutorialAdvanceToManualCritique)
+    // resumes the tutorial once the user triggers the relevant UI action.
+    var awaitsTrigger = nextStep.selector && !nextVisible;
+
+    if (crossesPhase || awaitsTrigger) {
+      _clearSpotlight();
+      _removeTooltip();
+      // If the target is already visible (e.g. #debugPanel appeared before
+      // the user clicked "Finish ✓"), advance immediately rather than waiting
+      // for a hook that will never fire.
+      if (nextVisible) {
+        _showStep(nextIndex);
+      }
+      return;         // _active stays true; localStorage NOT marked done
     }
-    return;           // _active stays true; localStorage NOT marked done
   }
+
   _showStep(nextIndex);
 }
 

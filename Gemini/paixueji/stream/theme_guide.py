@@ -33,7 +33,7 @@ class ThemeNavigator:
         # Allow using a faster model (e.g. gemini-2.5-flash-lite) for logic steps
         self.model_name = model_override or config.get("navigator_model") or config["model_name"]
 
-    def analyze_turn(
+    async def analyze_turn(
         self,
         history: List[Dict[str, Any]],
         user_input: str,
@@ -94,8 +94,7 @@ User's Latest Input: "{user_input}"
 
 {rules}"""
         try:
-            # Note: Using sync call as per existing patterns in this project
-            response = self.client.models.generate_content(
+            response = await self.client.aio.models.generate_content(
                 model=self.model_name,
                 contents=prompt,
                 config=GenerateContentConfig(
@@ -234,7 +233,7 @@ CRITICAL RULES:
         full_system_instruction = f"{hist_system_instruction}\n\n{driver_instruction}".strip()
 
         try:
-            stream = self.client.models.generate_content_stream(
+            stream = await self.client.aio.models.generate_content_stream(
                 model=self.config["model_name"],
                 contents=gemini_contents, # Pass the LIST, not the tuple
                 config=GenerateContentConfig(
@@ -244,7 +243,7 @@ CRITICAL RULES:
             )
 
             full_response = ""
-            for chunk in stream:
+            async for chunk in stream:
                 if chunk.text:
                     full_response += chunk.text
                     yield (chunk.text, None, full_response)

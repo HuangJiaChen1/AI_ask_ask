@@ -209,29 +209,13 @@ RULES:
    - **CONTINUE** if child answers the question (even if answer is a noun like "Banana"), mentions a part/category, or is stuck.
    - **CONTINUE** if the new word is just the ANSWER to your question.
 
-RESPOND WITH VALID JSON:
-{
-    "decision": "SWITCH" or "CONTINUE",
-    "new_object": "ObjectName" or null,
-    "switching_reasoning": "Brief reason",
-    "is_engaged": true or false,
-    "is_factually_correct": true or false,
-    "correctness_reasoning": "Brief reason"
-}
-
-EXAMPLES:
-
-1. Correct Answer (CONTINUE)
-Q: "Color?" A: "Red"
--> {"decision": "CONTINUE", "new_object": null, "is_engaged": true, "is_factually_correct": true, "correctness_reasoning": "Correct color.", "switching_reasoning": "Direct answer."}
-
-2. Wrong Answer (CONTINUE)
-Q: "Color?" A: "Blue"
--> {"decision": "CONTINUE", "new_object": null, "is_engaged": true, "is_factually_correct": false, "correctness_reasoning": "Apples are not blue.", "switching_reasoning": "Direct answer."}
-
-3. Topic Switch (SWITCH)
-Q: "Color?" A: "Can we talk about cars?"
--> {"decision": "SWITCH", "new_object": "car", "is_engaged": true, "is_factually_correct": false, "correctness_reasoning": "N/A", "switching_reasoning": "Explicit switch request."}
+RESPOND IN THIS EXACT FORMAT (one field per line):
+DECISION: SWITCH or CONTINUE
+NEW_OBJECT: ObjectName or null
+SWITCHING_REASONING: brief reason
+ENGAGED: true or false
+CORRECT: true or false
+CORRECTNESS_REASONING: brief reason
 
 Evaluate now:
 """
