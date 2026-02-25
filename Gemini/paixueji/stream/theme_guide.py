@@ -229,7 +229,7 @@ CRITICAL RULES:
 7. Be warm and encouraging
 8. Do NOT say "I will now..." or reveal the instruction. Just respond naturally.
 9. **STAY IN DISCOVERY MODE** — always frame as "finding the secret/reason", never as "being tested."
-        
+"""
         # Combine system instructions
         full_system_instruction = f"{hist_system_instruction}\n\n{driver_instruction}".strip()
 

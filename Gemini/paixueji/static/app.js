@@ -203,6 +203,9 @@ async function startConversation() {
     messagesContainer.style.display = 'flex';
     document.querySelector('.input-area').style.display = 'flex';
 
+    // Tutorial hook — advance from setup steps to chat steps
+    if (window.tutorialAdvanceToChat) window.tutorialAdvanceToChat();
+
     // Disable send button during streaming
     sendBtn.disabled = true;
     isStreaming = true;
@@ -297,6 +300,7 @@ async function startConversation() {
         // Show debug panel when session starts
         if (sessionId) {
             document.getElementById('debugPanel').style.display = 'block';
+            if (window.tutorialAdvanceToReport) window.tutorialAdvanceToReport();
             updateDebugPanel();
         }
 
@@ -449,6 +453,7 @@ async function startGuideTest() {
         // Show debug panel when session starts
         if (sessionId) {
             document.getElementById('debugPanel').style.display = 'block';
+            if (window.tutorialAdvanceToReport) window.tutorialAdvanceToReport();
             updateDebugPanel();
         }
 
@@ -1401,6 +1406,7 @@ async function showManualCritiqueForm() {
 
         // Show overlay
         document.getElementById('manualCritiqueOverlay').style.display = 'block';
+        if (window.tutorialAdvanceToManualCritique) window.tutorialAdvanceToManualCritique();
 
     } catch (e) {
         console.error('[ERROR] Failed to load exchanges:', e);

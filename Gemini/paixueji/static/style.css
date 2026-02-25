@@ -483,3 +483,147 @@ body {
 /* ============================================================================
  * Critique Modal Styles
  * ============================================================================ */
+
+/* ============================================================================
+ * Tutorial Walkthrough Styles
+ * ============================================================================ */
+
+/* Spotlight ring — applied to the focused element each step */
+.tutorial-active-el {
+  position: relative !important;
+  z-index: 9000 !important;
+  box-shadow: 0 0 0 4px #10b981 !important;
+  border-radius: 4px;
+  outline: none;
+}
+
+/* Full-screen dim overlay — sits behind the spotlit element */
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 8999;
+  pointer-events: none;
+}
+
+/* Tooltip card */
+#tutorial-tooltip {
+  position: fixed;
+  z-index: 9100;
+  background: #1e293b;
+  color: #f1f5f9;
+  border-radius: 10px;
+  padding: 18px 20px 14px;
+  width: 320px;
+  max-width: calc(100vw - 32px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  font-size: 14px;
+  line-height: 1.6;
+  pointer-events: auto;
+}
+
+#tutorial-tooltip .tutorial-step-title {
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 8px;
+  color: #10b981;
+}
+
+#tutorial-tooltip .tutorial-step-body {
+  color: #cbd5e1;
+}
+
+#tutorial-tooltip .tutorial-step-body strong {
+  color: #f1f5f9;
+}
+
+#tutorial-tooltip .tutorial-step-body em {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+#tutorial-tooltip .tutorial-nav {
+  margin-top: 14px;
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+#tutorial-tooltip .tut-btn {
+  border: none;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+#tutorial-tooltip .tut-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+#tutorial-tooltip .tut-btn-back {
+  background: #334155;
+  color: #94a3b8;
+}
+
+#tutorial-tooltip .tut-btn-back:hover:not(:disabled) {
+  background: #475569;
+}
+
+#tutorial-tooltip .tut-btn-skip {
+  background: transparent;
+  color: #64748b;
+  flex: 1;
+  text-align: center;
+}
+
+#tutorial-tooltip .tut-btn-skip:hover {
+  color: #94a3b8;
+}
+
+#tutorial-tooltip .tut-btn-next {
+  background: #10b981;
+  color: white;
+}
+
+#tutorial-tooltip .tut-btn-next:hover {
+  background: #059669;
+}
+
+#tutorial-tooltip .tutorial-progress {
+  font-size: 11px;
+  color: #475569;
+  margin-top: 10px;
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+/* Help button in header */
+#tutorialHelpBtn {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  background: transparent;
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+#tutorialHelpBtn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: white;
+}

@@ -8,9 +8,10 @@
 </head>
 <body>
     <div class="container">
-        <div class="header">
+        <div class="header" style="position: relative;">
             <h1>Paixueji Assistant</h1>
             <p>Answer questions about objects!</p>
+            <button id="tutorialHelpBtn" onclick="startTutorial('setup')" title="Show walkthrough tutorial">?</button>
         </div>
 
         <div class="start-form" id="startForm">
@@ -348,5 +349,6 @@
     </div>
 
     <script src="/static/app.js"></script>
+    <script src="/static/tutorial.js"></script>
 </body>
 </html>
