@@ -142,15 +142,9 @@ class StreamChunk(BaseModel):
     is_stuck: bool = False
     correct_answer_count: int = 0
     conversation_complete: bool = False
-    focus_mode: str | None = None
 
-    # DEPRECATED: Old engagement check (keep for backward compatibility)
-    is_correct: bool | None = None
-
-    # NEW unified AI validation fields:
-    is_engaged: bool | None = None  # Is child trying to answer? (replaces is_correct)
-    is_factually_correct: bool | None = None  # Is answer semantically correct? (only if engaged)
-    correctness_reasoning: str | None = None  # Why answer is right/wrong
+    # Intent classification (9-node architecture)
+    intent_type: str | None = None
 
     # Fun fact state
     fun_fact: Optional[str] = None
@@ -179,13 +173,10 @@ class StreamChunk(BaseModel):
     # Topic switching fields:
     new_object_name: str | None = None
     detected_object_name: str | None = None  # Object AI detected but didn't switch to
-    switch_decision_reasoning: str | None = None  # AI's reasoning for switch/continue decision
 
-    # System-managed focus mode fields:
+    # Object selection mode:
     object_selection_mode: bool = False  # True if presenting object choices
     suggested_objects: list[str] | None = None  # Objects to choose from
-    system_focus_mode: str | None = None  # Current system-managed focus mode
-    depth_progress: str | None = None  # e.g., "3/5" depth questions completed
 
     # Node execution tracing (for critique reports)
     nodes_executed: list[dict] | None = None  # Passed through final chunk

@@ -32,6 +32,7 @@ let guidePhase = null;  // Guide phase (active, success, hint, exit)
 let guideTurnCount = 0;  // Current turn in guide mode
 let currentThemeName = null;  // IB PYP theme name
 let currentKeyConcept = null;  // Key concept for theme
+let currentIntentType = null;       // Last classified intent (9-node architecture)
 
 // DOM elements
 const messagesContainer = document.getElementById('messages');
@@ -777,6 +778,12 @@ function handleStreamChunk(chunk) {
     if (chunk.guide_phase || chunk.guide_turn_count) {
         updateDebugPanel();
     }
+
+    // Update intent type (9-node architecture)
+    if (chunk.intent_type) {
+        currentIntentType = chunk.intent_type;
+        updateDebugPanel();
+    }
 }
 
 /**
@@ -1060,6 +1067,26 @@ function updateDebugPanel() {
     const guideTurnElement = document.getElementById('debugGuideTurn');
     if (guideTurnElement) {
         guideTurnElement.textContent = guideTurnCount > 0 ? `${guideTurnCount}/6` : '-';
+    }
+
+    // Update last intent type
+    const intentElement = document.getElementById('debugIntentType');
+    if (intentElement) {
+        intentElement.textContent = currentIntentType || '-';
+        const intentColors = {
+            'curiosity':   '#8b5cf6',   // Purple  — exploratory question
+            'clarifying':  '#f59e0b',   // Amber   — uncertain/wrong guess
+            'informative': '#3b82f6',   // Blue    — sharing knowledge
+            'play':        '#ec4899',   // Pink    — silly/imaginative
+            'emotional':   '#14b8a6',   // Teal    — expressing feeling
+            'avoidance':   '#6b7280',   // Gray    — refusing/exiting
+            'boundary':    '#ef4444',   // Red     — risky action
+            'action':      '#10b981',   // Green   — issuing command
+            'social':      '#f97316',   // Orange  — asking about AI
+        };
+        intentElement.style.color = currentIntentType
+            ? (intentColors[currentIntentType.toLowerCase()] || '#374151')
+            : '#6b7280';
     }
 }
 

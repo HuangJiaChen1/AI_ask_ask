@@ -21,17 +21,25 @@ from trace_schema import (
 
 
 _NODE_GLOSSARY = """Graph node roles:
-- router:route_from_start: Decides whether to go to guide_navigator (guide mode), generate_fun_fact (introduction), or analyze_input (normal turn)
-- analyze_input: Validates the child's answer (factual correctness, engagement, topic switch detection); uses prompt 'input_analyzer_rules'
-- route_logic: Determines response type (explanation, correction, feedback, etc.)
-- generate_response: Produces the substantive response text based on response_type
-- router:route_after_response: Decides whether to trigger the Theme Guide (4+ correct answers) or ask next question
-- generate_question: Generates the follow-up question
-- start_guide: Initiates the IB PYP theme guide phase, presents bridge question
-- guide_navigator: Analyzes child's guide response (ON_TRACK/DRIFTING/STUCK/COMPLETED) and picks strategy; uses prompt 'theme_navigator_rules'
-- router:route_after_navigator: Routes to guide_driver/guide_hint/guide_success/guide_exit based on navigator
-- guide_driver: Generates the guide response following navigator's strategy instruction
-- guide_hint: Gives a direct hint when max turns reached
+- router:route_from_start: Decides guide_navigator (guide active/hint), generate_fun_fact (intro), or analyze_input (chat)
+- analyze_input: Classifies child's utterance into 1 of 9 intents; uses prompt 'user_intent_prompt'
+- router:route_from_analyze_input: Routes to one of 9 intent nodes based on intent_type
+- generate_fun_fact: Generates grounded fun facts for introduction turn (Google Search grounding)
+- generate_intro: Streams the introduction response using ask_introduction_question_stream
+- curiosity: Child asks why/what/how — expand gently + suggest action; uses 'curiosity_intent_prompt'
+- clarifying: Child uncertain or wrong — affirm effort + gently correct; uses 'clarifying_intent_prompt'
+- informative: Child shares knowledge — give space + social reaction; uses 'informative_intent_prompt'
+- play: Child being silly/imaginative — play along + gamify; uses 'play_intent_prompt'
+- emotional: Child expresses feeling — empathize first + redirect; uses 'emotional_intent_prompt'
+- avoidance: Child refuses/exits — acknowledge + re-hook or topic switch; uses 'avoidance_intent_prompt'
+- boundary: Child asks risky action — empathize + deny danger + safe alt; uses 'boundary_intent_prompt'
+- action: Child issues command — execute or redirect; uses 'action_intent_prompt'
+- social: Child asks about AI — warm direct answer; uses 'social_intent_prompt'
+- start_guide: Initiates IB PYP theme guide phase, presents bridge question
+- guide_navigator: Analyzes guide response (ON_TRACK/DRIFTING/STUCK/COMPLETED); uses 'theme_navigator_rules'
+- router:route_after_navigator: Routes to guide_driver/guide_hint/guide_success/guide_exit
+- guide_driver: Generates guide response following navigator strategy instruction
+- guide_hint: Gives direct hint when max turns reached
 - guide_success: Celebrates child's successful conceptual connection
 - guide_exit: Gracefully exits guide mode after resistance/timeout
 - finalize: Sends final StreamChunk and closes the turn"""
@@ -145,7 +153,7 @@ Output a single JSON object with EXACTLY these fields:
   "culprit_name": "<exact node or component name from the glossary above>",
   "confidence_level": "LOW" | "MODERATE" | "CONFIDENT" | "VERY_CONFIDENT",
   "reasoning": "<2-4 sentences referencing the actual exchange content and why this component is responsible>",
-  "prompt_template_name": "<exact key from this list that this node uses as its primary prompt: fun_fact_structuring_prompt, fun_fact_grounding_prompt, introduction_prompt, followup_question_prompt, feedback_response_prompt, explanation_response_prompt, correction_response_prompt, topic_switch_response_prompt, input_analyzer_rules (for analyze_input / decide_topic_switch_with_validation), theme_navigator_rules (for guide_navigator / ThemeNavigator). Use null ONLY for pure routers (route_from_start, route_logic, route_after_response, route_after_navigator) and the finalize node.>",
+  "prompt_template_name": "<exact key from this list that this node uses as its primary prompt: fun_fact_structuring_prompt, fun_fact_grounding_prompt, introduction_prompt, user_intent_prompt (for analyze_input), curiosity_intent_prompt, clarifying_intent_prompt, informative_intent_prompt, play_intent_prompt, emotional_intent_prompt, avoidance_intent_prompt, boundary_intent_prompt, action_intent_prompt, social_intent_prompt, theme_navigator_rules (for guide_navigator / ThemeNavigator). Use null ONLY for pure routers and the finalize/generate_intro nodes.>",
   "culprit_phase": "question" | "response" | null
 }}
 """

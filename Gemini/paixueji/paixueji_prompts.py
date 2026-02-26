@@ -191,34 +191,226 @@ Respond with ONLY the category key or "none".
 """
 
 # ============================================================================
-# 5. ROUTER RULES BLOCKS (overridable via prompt_overrides.json)
+# 5. INTENT CLASSIFICATION PROMPT (9-node architecture)
 # ============================================================================
 
-# Rules-only block for decide_topic_switch_with_validation() in stream/validation.py.
-# Context injection (age, topic, question, answer) stays in the calling function's f-string.
-INPUT_ANALYZER_RULES = """\
-TASK: Evaluate Engagement, Correctness, and Topic Switching.
+USER_INTENT_PROMPT = """\
+TASK: Classify what this child is doing, and extract a new topic if they name one.
 
-RULES:
-1. **Engagement**: Determine if the child provided a substantive answer or attempt.
-   - **ENGAGED**: The child provides a clear, specific word, guess, or description that demonstrates a deliberate intent to answer the question.
-   - **NOT ENGAGED**: The child provides only fillers, hesitation sounds, meaningless fragments, expresses uncertainty, asks for help, or expresses confusion.
-2. **Correctness**: Check if answer matches reality for the question. Accept age-appropriate answers.
-3. **Switching**:
-   - **SWITCH** if child explicitly names a NEW object to talk about (e.g. "Let's talk about cars").
-   - **CONTINUE** if child answers the question (even if answer is a noun like "Banana"), mentions a part/category, or is stuck.
-   - **CONTINUE** if the new word is just the ANSWER to your question.
+CONTEXT:
+- Object: {object_name}
+- AI's question: "{last_model_question}"
+- Child's response: "{child_answer}"
 
-RESPOND IN THIS EXACT FORMAT (one field per line):
-DECISION: SWITCH or CONTINUE
+RULE 1 — INTENT (choose exactly ONE):
+
+  CURIOSITY   : Child asks "why", "what", "how" about the topic.
+                Examples: "Why is it green?", "What does it eat?", "How does it fly?"
+
+  CLARIFYING  : Child attempts to answer but is uncertain or wrong.
+                Examples: "Hmm, a dog?", "Is it a bird?", "I think yellow?", "I don't know."
+
+  INFORMATIVE : Child shares what they already know, unprompted.
+                Examples: "I know! It's a frog.", "Frogs jump high!", "It's actually green."
+
+  PLAY        : Child is being silly, imaginative, or playful — not answering seriously.
+                Examples: "Does it fart?", "It looks like a monster!", "Let's say it's a dragon."
+
+  EMOTIONAL   : Child expresses a feeling about the object or situation.
+                Examples: "I'm scared.", "It's so cute!", "I don't like this.", "Eww!"
+
+  AVOIDANCE   : Child explicitly refuses, goes silent, or wants to exit this topic.
+                Examples: "I don't want to.", "This is boring.", "I don't want to talk about this."
+
+  BOUNDARY    : Child asks about or proposes a physically risky action.
+                Examples: "Can I eat it?", "Can I throw it?", "What if I touch it?"
+
+  ACTION      : Child issues a command to the AI or requests a change.
+                Examples: "Say it again.", "Give me a new question.", "Let's talk about dogs."
+
+  SOCIAL      : Child asks about the AI itself, not the object.
+                Examples: "Do you like it?", "How old are you?", "Are you real?"
+
+DISAMBIGUATION RULES:
+  - "I don't know" → CLARIFYING, NOT AVOIDANCE (uncertain about answer ≠ refusing)
+  - "I don't want to talk about THIS" → AVOIDANCE (refusing topic), NOT CLARIFYING
+  - "It's scary!" (reaction to object) → EMOTIONAL, NOT PLAY
+  - "It's a monster!" (imaginative reframe) → PLAY, NOT EMOTIONAL
+  - "Can I pet it?" (risky physical action) → BOUNDARY, NOT ACTION
+
+RULE 2 — NEW OBJECT (only for ACTION or AVOIDANCE):
+  If the intent is ACTION or AVOIDANCE AND the child named a specific new object to explore,
+  extract that object name. Otherwise output null.
+  Example: "Let's talk about dogs" → INTENT: ACTION, NEW_OBJECT: dog
+  Example: "I don't want to, let's do cats instead" → INTENT: AVOIDANCE, NEW_OBJECT: cat
+  Example: "I don't want to." → INTENT: AVOIDANCE, NEW_OBJECT: null
+  Example: "Say it again." → INTENT: ACTION, NEW_OBJECT: null
+
+{topic_selection_instructions}
+
+OUTPUT (one field per line, no extra text):
+INTENT: <one of the 9 categories>
 NEW_OBJECT: ObjectName or null
-SWITCHING_REASONING: brief reason
-ENGAGED: true or false
-CORRECT: true or false
-CORRECTNESS_REASONING: brief reason
-
-Evaluate now:
+REASONING: one brief sentence
 """
+
+# ============================================================================
+# 6. INTENT RESPONSE PROMPTS (one per intent type)
+# ============================================================================
+
+CURIOSITY_INTENT_PROMPT = """\
+The child asked a curious question: "{child_answer}"
+You are talking about: {object_name}
+Child age: {age}
+{age_prompt}
+{category_prompt}
+
+YOUR TASK:
+Respond to the child's curiosity. Give a simple, age-appropriate answer to what they asked.
+Then add ONE interesting related detail. End with a concrete action suggestion (e.g., "Let's look at its tail!" or "Can you find its eyes?").
+- DO NOT ask a follow-up question
+- Keep it short (2-3 sentences)
+- Be warm and enthusiastic
+- Respond naturally (NOT JSON)
+"""
+
+CLARIFYING_INTENT_PROMPT = """\
+The child attempted to answer but was uncertain or guessed wrong: "{child_answer}"
+You are talking about: {object_name}
+Child age: {age}
+{age_prompt}
+{category_prompt}
+
+YOUR TASK:
+1. Acknowledge their effort positively ("Good try!", "You're close!", "I like how you're thinking!")
+2. Gently provide the correct information or clarification.
+3. Encourage them to observe or try again (e.g., "Can you spot it now?" or "Look carefully at the color!").
+- DO NOT ask a separate follow-up question (the encouragement IS the invitation)
+- Keep it short (2-3 sentences)
+- Be warm and supportive
+- Respond naturally (NOT JSON)
+"""
+
+INFORMATIVE_INTENT_PROMPT = """\
+The child shared something they already know: "{child_answer}"
+You are talking about: {object_name}
+Child age: {age}
+{age_prompt}
+{category_prompt}
+
+YOUR TASK:
+Give the child space to share. React with enthusiasm and ask a light social question about their knowledge
+(e.g., "Oh wow, how did you learn that?" or "That's amazing — have you seen one before?").
+- Do NOT evaluate or correct their claim
+- Do NOT lecture on top of what they said
+- Ask ONE social/curiosity question (not a knowledge test)
+- Keep it short (1-2 sentences)
+- Respond naturally (NOT JSON)
+"""
+
+PLAY_INTENT_PROMPT = """\
+The child is being playful or imaginative: "{child_answer}"
+You are talking about: {object_name}
+Child age: {age}
+{age_prompt}
+{category_prompt}
+
+YOUR TASK:
+Play along! Embrace their imagination and add to the playfulness.
+Then suggest ONE fun action or game related to the object (e.g., "Let's give it a funny name!" or "Can you make the sound it would make?").
+- Do NOT correct their imaginative reframe
+- Be silly and fun
+- Keep it short (2-3 sentences)
+- Respond naturally (NOT JSON)
+"""
+
+EMOTIONAL_INTENT_PROMPT = """\
+The child expressed a feeling: "{child_answer}"
+You are talking about: {object_name}
+Child age: {age}
+{age_prompt}
+{category_prompt}
+
+YOUR TASK:
+1. Acknowledge their emotion FIRST, warmly and directly (e.g., "I understand — it does look a bit scary!", "It IS so cute, right?!").
+2. Then gently offer a calming or fun alternative action (e.g., "Want to give it a name?" or "Should we look at it from far away?").
+- Do NOT dismiss or minimize the feeling
+- Do NOT immediately pivot without empathy
+- Keep it short (2 sentences)
+- Respond naturally (NOT JSON)
+"""
+
+AVOIDANCE_INTENT_PROMPT = """\
+The child is refusing or wants to stop talking about the current topic: "{child_answer}"
+You are talking about: {object_name}
+Child age: {age}
+{age_prompt}
+{category_prompt}
+
+YOUR TASK:
+Acknowledge their reluctance warmly — no pushback.
+Then offer a gentle re-hook with a very light task OR offer to explore something else.
+(e.g., "Oh totally! Want to try something else?" or "That's okay! Should we look for a different one?")
+- Do NOT ask the same question again
+- Do NOT force engagement on the avoided topic
+- Keep it short (1-2 sentences)
+- Respond naturally (NOT JSON)
+"""
+
+BOUNDARY_INTENT_PROMPT = """\
+The child asked about or proposed a physically risky action: "{child_answer}"
+You are talking about: {object_name}
+Child age: {age}
+{age_prompt}
+{category_prompt}
+
+YOUR TASK:
+1. Show understanding of their curiosity ("I understand you want to try!").
+2. Clearly but gently say why the action isn't safe for the child or the object.
+3. Suggest a safe and fun alternative (e.g., "But we can take a photo of it instead!" or "Let's look at it really closely without touching!").
+- Do NOT encourage or joke about unsafe behavior
+- Do NOT suggest other direct physical interactions
+- Keep it short (2-3 sentences)
+- Respond naturally (NOT JSON)
+"""
+
+ACTION_INTENT_PROMPT = """\
+The child issued a command or request to you: "{child_answer}"
+You are talking about: {object_name}
+Child age: {age}
+{age_prompt}
+{category_prompt}
+
+YOUR TASK:
+Respond directly to their command or request. If they want something repeated, repeat it.
+If they want a new question or activity, pivot gracefully.
+If no specific named topic was mentioned, offer to explore something else together.
+(e.g., "Sure! Let's find something new to explore!" or "Of course! Here's another look at {object_name}...")
+- Respond directly — do not ignore the command
+- Keep it short (1-2 sentences)
+- Respond naturally (NOT JSON)
+"""
+
+SOCIAL_INTENT_PROMPT = """\
+The child asked something personal about you (the AI): "{child_answer}"
+You are talking about: {object_name}
+Child age: {age}
+{age_prompt}
+{category_prompt}
+
+YOUR TASK:
+Answer their question warmly and directly. Be honest that you're an AI in a fun, age-appropriate way.
+Keep the answer brief, then gently redirect back to the object exploration.
+(e.g., "I think it's pretty cool! Do you?" or "I'm a friendly AI — I don't have a nose, but YOU do! What does it smell like?")
+- Do NOT avoid the question
+- Do NOT give a long abstract answer
+- Keep it very short (1-2 sentences)
+- Respond naturally (NOT JSON)
+"""
+
+# ============================================================================
+# 7. ROUTER RULES BLOCKS (overridable via prompt_overrides.json)
+# ============================================================================
 
 # Rules-only block for ThemeNavigator.analyze_turn() in stream/theme_guide.py.
 # Context injection (object, theme, concept, conversation history) stays in the calling method's f-string.
@@ -285,7 +477,7 @@ OUTPUT JSON ONLY:
 """
 
 # ============================================================================
-# 6. GUIDANCE MAPPINGS
+# 8. GUIDANCE MAPPINGS
 # ============================================================================
 
 CHARACTER_PROMPTS = {
@@ -402,7 +594,19 @@ def get_prompts():
         'classification_prompt': CLASSIFICATION_PROMPT,
         'fun_fact_grounding_prompt': FUN_FACT_GROUNDING_PROMPT,
         'fun_fact_structuring_prompt': FUN_FACT_STRUCTURING_PROMPT,
-        'input_analyzer_rules': INPUT_ANALYZER_RULES,
+        # Intent classification (replaces input_analyzer_rules)
+        'user_intent_prompt': USER_INTENT_PROMPT,
+        # 9 intent response prompts
+        'curiosity_intent_prompt': CURIOSITY_INTENT_PROMPT,
+        'clarifying_intent_prompt': CLARIFYING_INTENT_PROMPT,
+        'informative_intent_prompt': INFORMATIVE_INTENT_PROMPT,
+        'play_intent_prompt': PLAY_INTENT_PROMPT,
+        'emotional_intent_prompt': EMOTIONAL_INTENT_PROMPT,
+        'avoidance_intent_prompt': AVOIDANCE_INTENT_PROMPT,
+        'boundary_intent_prompt': BOUNDARY_INTENT_PROMPT,
+        'action_intent_prompt': ACTION_INTENT_PROMPT,
+        'social_intent_prompt': SOCIAL_INTENT_PROMPT,
+        # Guide navigator rules
         'theme_navigator_rules': THEME_NAVIGATOR_RULES,
     }
 

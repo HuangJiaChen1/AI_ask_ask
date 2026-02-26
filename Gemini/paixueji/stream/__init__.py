@@ -5,11 +5,13 @@ This module provides streaming functionality for the Paixueji assistant.
 It is organized into several sub-modules:
 
 - utils: Utility functions for message preparation and format conversion
-- response_generators: Response-only stream generators (Part 1 of dual-parallel)
-- question_generators: Question-only stream generators (Part 2 of dual-parallel)
-- validation: Validation and decision logic
-- focus_mode: Focus mode state machine logic
-- main: Main entry point (call_paixueji_stream)
+- response_generators: Intent-based response generators (9-node architecture)
+- question_generators: Question-only stream generators (intro path)
+- validation: Intent classification logic
+- focus_mode: Object suggestions helper (kept for topic switching)
+- fun_fact: Grounded fun fact generation
+- guide_hint: LLM-based scaffold hints for guide mode
+- theme_guide: ThemeNavigator + ThemeDriver (guide mode)
 
 All public functions are re-exported from this module for backward compatibility.
 """
@@ -24,32 +26,25 @@ from .utils import (
     SLOW_LLM_CALL_THRESHOLD
 )
 
-# Response generators (Part 1 of dual-parallel)
+# Response generators (intent-based, 9-node architecture)
 from .response_generators import (
-    generate_feedback_response_stream,
-    generate_explanation_response_stream,
-    generate_correction_response_stream,
+    generate_intent_response_stream,
     generate_topic_switch_response_stream,
-    generate_natural_topic_completion_stream,
-    generate_explicit_switch_response_stream
+    generate_explicit_switch_response_stream,
 )
 
-# Question generators (Part 2 of dual-parallel)
+# Question generators (intro path only)
 from .question_generators import (
     ask_introduction_question_stream,
-    generate_followup_question_stream,
-    generate_completion_message_stream
 )
 
-# Validation
+# Intent classification (replaces decide_topic_switch_with_validation)
 from .validation import (
-    decide_topic_switch_with_validation,
-    is_answer_reasonable
+    classify_intent,
 )
 
-# Focus mode (WIDTH mode removed, DEPTH only)
+# Object suggestions (used by avoidance/action when no named object)
 from .focus_mode import (
-    decide_next_focus_mode,
     generate_object_suggestions
 )
 
@@ -69,24 +64,17 @@ __all__ = [
     'SLOW_LLM_CALL_THRESHOLD',
 
     # Response generators
-    'generate_feedback_response_stream',
-    'generate_explanation_response_stream',
-    'generate_correction_response_stream',
+    'generate_intent_response_stream',
     'generate_topic_switch_response_stream',
-    'generate_natural_topic_completion_stream',
     'generate_explicit_switch_response_stream',
 
-    # Question generators
+    # Question generators (intro path)
     'ask_introduction_question_stream',
-    'generate_followup_question_stream',
-    'generate_completion_message_stream',
 
-    # Validation
-    'decide_topic_switch_with_validation',
-    'is_answer_reasonable',
+    # Intent classification
+    'classify_intent',
 
-    # Focus mode
-    'decide_next_focus_mode',
+    # Object suggestions
     'generate_object_suggestions',
 
     # Fun fact (grounded)

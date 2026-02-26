@@ -25,7 +25,7 @@ import paixueji_prompts
 from trace_schema import TraceObject, OptimizationResult, ConfidenceLevel, effective_culprits
 from stream.utils import clean_messages_for_api, convert_messages_to_gemini_format
 
-_ROUTER_PROMPT_NAMES = {"input_analyzer_rules", "theme_navigator_rules"}
+_ROUTER_PROMPT_NAMES = {"user_intent_prompt", "theme_navigator_rules"}
 
 
 # ============================================================================
@@ -190,7 +190,8 @@ CRITICAL RULES:
 5. If the failure suggests the output SCHEMA is too narrow (a new status/strategy value
    would fix the root cause), propose it in router_patch — but ONLY if the target graph
    node already exists: guide_driver, guide_success, guide_hint, guide_exit,
-   generate_response, generate_question, analyze_input.
+   generate_intro, curiosity, clarifying, informative, play, emotional, avoidance,
+   boundary, action, social.
    If a brand-new graph node would be required, set router_patch to null and explain why
    in the rationale (Mode C failure — needs engineer).
 
@@ -347,12 +348,55 @@ def _build_navigator_context(trace: TraceObject) -> dict:
     }
 
 
-def _call_input_analyzer(client, config: dict, ctx: dict, rules_block: str) -> dict:
-    """Re-run the Input Analyzer (sync) with the given rules block.
+def _call_intent_classifier(client, config: dict, ctx: dict, prompt_template: str) -> dict:
+    """Re-run the Intent Classifier (sync) with the given prompt template.
 
-    Mirrors production exactly: gemini-2.0-flash-lite, no JSON MIME constraint,
-    regex parsing of KEY: VALUE plain-text output.
+    Mirrors production classify_intent() exactly:
+    gemini-2.0-flash-lite, temp=0.1, max_output_tokens=60,
+    regex parsing of INTENT: / NEW_OBJECT: / REASONING: plain-text output.
     """
+    prompt = prompt_template.format(
+        object_name=ctx.get("object_name", ""),
+        last_model_question=ctx.get("last_model_question", ""),
+        child_answer=ctx.get("child_answer", ""),
+        topic_selection_instructions="",
+    )
+    response = client.models.generate_content(
+        model="gemini-2.0-flash-lite",
+        contents=prompt,
+        config=GenerateContentConfig(
+            temperature=0.1,
+            max_output_tokens=60,
+        ),
+    )
+    text = response.text or ""
+
+    def _get(pattern, default):
+        m = re.search(pattern, text, re.IGNORECASE)
+        return m.group(1).strip() if m else default
+
+    valid_intents = {
+        "CURIOSITY", "CLARIFYING", "INFORMATIVE", "PLAY", "EMOTIONAL",
+        "AVOIDANCE", "BOUNDARY", "ACTION", "SOCIAL"
+    }
+    raw_intent = _get(r"INTENT:\s*(\w+)", "CLARIFYING").upper()
+    intent_type = raw_intent if raw_intent in valid_intents else "CLARIFYING"
+
+    new_object_raw = _get(r"NEW_OBJECT:\s*(.+)", "null")
+    new_object = None if new_object_raw.lower() in ("null", "none", "") else new_object_raw
+    if intent_type not in ("ACTION", "AVOIDANCE"):
+        new_object = None
+
+    return {
+        "intent_type": intent_type,
+        "new_object": new_object,
+        "reasoning": _get(r"REASONING:\s*(.+)", "N/A"),
+    }
+
+
+# Keep legacy _call_input_analyzer for backward compatibility with old traces
+def _call_input_analyzer(client, config: dict, ctx: dict, rules_block: str) -> dict:
+    """Legacy: Re-run the old Input Analyzer (sync) for old traces on disk."""
     prompt = (
         f"You are an educational AI helping a {ctx['age']}-year-old child learn.\n\n"
         f"CONTEXT:\n"
@@ -422,8 +466,46 @@ def _call_navigator(client, config: dict, ctx: dict, rules_block: str) -> dict:
     return json.loads(text)
 
 
+def _infer_intent_prompt_name(intent_result: dict) -> str:
+    """Infer which intent response prompt to use from a classify_intent result dict."""
+    return f"{intent_result.get('intent_type', 'clarifying').lower()}_intent_prompt"
+
+
+def _call_intent_response(
+    client, config: dict, trace, intent_result: dict, prompt_name: str
+) -> str:
+    """Call an intent response prompt (sync) with trace context.
+
+    Mirrors generate_intent_response_stream() production call (non-streaming sync version).
+    """
+    import paixueji_prompts as _pp
+    state = trace.input_state
+    age = state.get("age") or trace.age or 6
+    object_name = state.get("object_name") or trace.object_name or ""
+    prompts = _pp.get_prompts()
+    prompt_template = prompts.get(prompt_name, "")
+    try:
+        formatted = prompt_template.format(
+            child_answer=trace.exchange.child_response,
+            object_name=object_name,
+            age=age,
+            age_prompt=_get_age_prompt(age),
+            category_prompt=state.get("level1_category", ""),
+        )
+    except KeyError:
+        formatted = prompt_template
+    model_name = config.get("model_name", "gemini-2.5-flash-lite")
+    response = client.models.generate_content(
+        model=model_name,
+        contents=formatted,
+        config=GenerateContentConfig(temperature=0.7, max_output_tokens=200),
+    )
+    return response.text.strip()
+
+
+# Keep legacy _infer_response_type for old trace handling
 def _infer_response_type(validation_result: dict) -> str:
-    """Infer which response prompt to use from a validation result dict."""
+    """Legacy: Infer which response prompt to use from old validation result dict."""
     if not validation_result.get("is_engaged", True):
         return "explanation_response_prompt"
     if validation_result.get("is_factually_correct", True):
@@ -628,8 +710,30 @@ def generate_preview_response(
             previous_question=exchange.model_question,
         )
 
+    elif prompt_name == "user_intent_prompt":
+        # Two-stage preview: re-run Intent Classifier with new prompt, then run downstream intent response
+        ctx = _build_input_analyzer_context(trace)
+        try:
+            new_intent_result = _call_intent_classifier(client, config, ctx, optimized_prompt)
+        except Exception as e:
+            return f"(Intent Classifier re-run failed: {e})"
+
+        old_intent = trace.input_state.get("intent_type", "(unknown)")
+        intent_prompt_name = _infer_intent_prompt_name(new_intent_result)
+        try:
+            downstream = _call_intent_response(client, config, trace, new_intent_result, intent_prompt_name)
+        except Exception as e:
+            downstream = f"(Downstream intent response failed: {e})"
+
+        return (
+            f"[Intent Classification]\n"
+            f"OLD: {old_intent}\n"
+            f"NEW: {json.dumps(new_intent_result, ensure_ascii=False)}\n\n"
+            f"[Child-facing response after the fix]\n{downstream}"
+        )
+
     elif prompt_name == "input_analyzer_rules":
-        # Two-stage preview: re-run Input Analyzer with new rules, then run downstream response
+        # Legacy: support old traces that reference input_analyzer_rules
         ctx = _build_input_analyzer_context(trace)
         try:
             new_validation = _call_input_analyzer(client, config, ctx, optimized_prompt)
@@ -651,6 +755,29 @@ def generate_preview_response(
             f"NEW: {json.dumps(new_validation, ensure_ascii=False)}\n\n"
             f"[What the child would see after the fix]\n{downstream}"
         )
+
+    elif prompt_name.endswith("_intent_prompt") and prompt_name != "user_intent_prompt":
+        # Generic handler for any {name}_intent_prompt (e.g., curiosity_intent_prompt)
+        state = trace.input_state
+        age = state.get("age") or trace.age or 6
+        object_name = state.get("object_name") or trace.object_name or ""
+        try:
+            formatted = optimized_prompt.format(
+                child_answer=trace.exchange.child_response,
+                object_name=object_name,
+                age=age,
+                age_prompt=_get_age_prompt(age),
+                category_prompt=state.get("level1_category", ""),
+            )
+        except KeyError:
+            formatted = optimized_prompt
+        model_name = config.get("model_name", "gemini-2.5-flash-lite")
+        response = client.models.generate_content(
+            model=model_name,
+            contents=formatted,
+            config=GenerateContentConfig(temperature=0.7, max_output_tokens=300),
+        )
+        return response.text.strip()
 
     elif prompt_name == "theme_navigator_rules":
         # Two-stage preview: re-run Navigator with new rules, then run ThemeDriver
@@ -679,7 +806,8 @@ def generate_preview_response(
             f"Supported prompts: fun_fact_structuring_prompt, introduction_prompt, "
             f"followup_question_prompt, feedback_response_prompt, "
             f"correction_response_prompt, explanation_response_prompt, "
-            f"input_analyzer_rules, theme_navigator_rules"
+            f"user_intent_prompt, <intent>_intent_prompt, "
+            f"input_analyzer_rules (legacy), theme_navigator_rules"
         )
 
     # Resolve phase: explicit override wins; fall back to trace-derived phase

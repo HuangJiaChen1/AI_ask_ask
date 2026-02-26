@@ -275,9 +275,6 @@ def start_conversation():
             if category_prompt:
                 system_prompt += f"\n\nCATEGORY GUIDANCE:\n{category_prompt}"
 
-            # Get focus prompt for first question
-            focus_prompt = assistant.get_focus_prompt(focus_mode)
-
             # Initialize conversation history with system prompt
             assistant.conversation_history = [
                 {"role": "system", "content": system_prompt}
@@ -310,8 +307,6 @@ def start_conversation():
                         "level3_category": level3_category,
                         "correct_answer_count": 0,
                         "category_prompt": category_prompt,
-                        "focus_prompt": focus_prompt,
-                        "focus_mode": focus_mode,
 
                         # Initialize outputs
                         "full_response_text": "",
@@ -319,16 +314,11 @@ def start_conversation():
                         "sequence_number": 0,
 
                         # Initialize flags
-                        "is_engaged": None,
-                        "is_factually_correct": None,
-                        "correctness_reasoning": None,
-                        "switch_decision_reasoning": None,
+                        "intent_type": None,
                         "new_object_name": None,
                         "detected_object_name": None,
                         "response_type": "introduction",
                         "suggested_objects": None,
-                        "natural_topic_completion": False,
-                        "validation_result": {},
 
                         # Fun fact (grounded)
                         "fun_fact": "",
@@ -350,7 +340,6 @@ def start_conversation():
                             "guide_turn_count": assistant.guide_turn_count,
                             "scaffold_level": assistant.scaffold_level,
                             "hint_given": assistant.hint_given,
-                            "focus_mode": focus_mode,
                             "depth_questions_count": assistant.depth_questions_count,
                             "depth_target": assistant.depth_target,
                             "ibpyp_theme_name": assistant.ibpyp_theme_name,
@@ -684,22 +673,15 @@ def continue_conversation():
                 assistant.level3_category
             )
             
-            # Get focus prompt
-            focus_prompt = assistant.get_focus_prompt(focus_mode)
-
-            # NOTE: Validation now happens inside graph logic using unified AI validation
-            # Increment logic moved to stream handler below based on chunk.is_factually_correct
-            # NOTE: User message is added to conversation_history inside call_paixueji_stream()
+            # NOTE: User message is added to conversation_history inside the graph after turn completes
 
             # Get new event loop for this request (avoids race conditions)
             loop = get_event_loop()
 
             try:
                 async def stream_response():
-                    should_increment = False
-                    
                     # Prepare messages (append current user input)
-                    # Note: We append here for the Graph execution context, but ONLY append to 
+                    # Note: We append here for the Graph execution context, but ONLY append to
                     # assistant.conversation_history after successful completion/streaming.
                     current_messages = assistant.conversation_history.copy()
                     current_messages.append({"role": "user", "content": child_input})
@@ -723,8 +705,6 @@ def continue_conversation():
                         "level3_category": assistant.level3_category,
                         "correct_answer_count": assistant.correct_answer_count,
                         "category_prompt": category_prompt,
-                        "focus_prompt": focus_prompt,
-                        "focus_mode": focus_mode,
 
                         # Initialize outputs
                         "full_response_text": "",
@@ -732,16 +712,11 @@ def continue_conversation():
                         "sequence_number": 0,
 
                         # Initialize flags
-                        "is_engaged": None,
-                        "is_factually_correct": None,
-                        "correctness_reasoning": None,
-                        "switch_decision_reasoning": None,
+                        "intent_type": None,
                         "new_object_name": None,
                         "detected_object_name": None,
                         "response_type": None,
                         "suggested_objects": None,
-                        "natural_topic_completion": False,
-                        "validation_result": {},
 
                         # Fun fact (not used in continue, but required by state schema)
                         "fun_fact": "",
@@ -763,7 +738,6 @@ def continue_conversation():
                             "guide_turn_count": assistant.guide_turn_count,
                             "scaffold_level": assistant.scaffold_level,
                             "hint_given": assistant.hint_given,
-                            "focus_mode": focus_mode,
                             "depth_questions_count": assistant.depth_questions_count,
                             "depth_target": assistant.depth_target,
                             "ibpyp_theme_name": assistant.ibpyp_theme_name,
@@ -775,27 +749,8 @@ def continue_conversation():
                     }
 
                     async for chunk in stream_graph_execution(initial_state):
-                        # NEW: Topic switching and classification now handled in graph nodes
-                        # The decision step happens BEFORE response generation
-                        # Object name and categories are already updated if switch occurred
-
-                        # Check if we should increment based on factual correctness
-                        if chunk.finish and chunk.is_factually_correct:
-                            should_increment = True
-
                         # Update conversation history with final response
                         if chunk.finish:
-                            # Also append the USER message to history now that turn is complete
-                            # (matches logic in original call_paixueji_stream which did it early,
-                            # but safer to do here or assuming app.py handles it?)
-                            # Original: "messages.append... assistant.conversation_history.append"
-                            # inside stream meant it was added early.
-                            # In `continue_conversation` (app.py), we only see:
-                            # "if chunk.finish: assistant.conversation_history.append(... response ...)"
-                            # WHERE is the user message added to assistant.conversation_history?
-                            # In original `call_paixueji_stream`:
-                            # "assistant.conversation_history.append({'role': 'user', 'content': content})"
-                            # So I MUST do it here too if the graph doesn't mutate assistant history.
                             assistant.conversation_history.append({"role": "user", "content": child_input})
 
                             assistant.conversation_history.append({
@@ -806,16 +761,7 @@ def continue_conversation():
                                 "_input_state_snapshot": initial_state.get("_input_state_snapshot", {}),
                             })
 
-                            # NEW: Increment only if factually correct
-                            if should_increment:
-                                assistant.increment_correct_answers()
-                                # Update chunk with new count so frontend sees it immediately
-                                chunk.correct_answer_count = assistant.correct_answer_count
-                                print(f"[INFO] Session {session_id[:8]}... factually correct answer | new count: {assistant.correct_answer_count}")
-                            elif chunk.is_factually_correct == False:
-                                print(f"[INFO] Session {session_id[:8]}... factually incorrect answer | count unchanged: {assistant.correct_answer_count}")
-                            elif not chunk.is_engaged:
-                                print(f"[INFO] Session {session_id[:8]}... child stuck (not engaged) | count unchanged: {assistant.correct_answer_count}")
+                            print(f"[INFO] Session {session_id[:8]}... intent={chunk.intent_type} | count={assistant.correct_answer_count}")
 
                             # Log completion if conversation complete (won't happen now but kept for safety)
                             if chunk.conversation_complete:
