@@ -491,6 +491,8 @@ def _call_intent_response(
             age=age,
             age_prompt=_get_age_prompt(age),
             category_prompt=state.get("level1_category", ""),
+            character_prompt=state.get("character_prompt", ""),
+            last_model_question=state.get("last_model_question", "the previous question"),
         )
     except KeyError:
         formatted = prompt_template

@@ -1,0 +1,43 @@
+2026-02-28 09:38:08.420 | INFO     | graph:node_generate_fun_fact:287 | [a81b72d1-b5a5-40cf-be98-8a043aacf54c] Node: Generate Fun Fact for 'dinosaur bone'
+2026-02-28 09:38:08.425 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'dinosaur bone' (model=gemini-2.0-flash-lite)
+2026-02-28 09:38:08.428 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: dinosaur bone
+2026-02-28 09:38:12.914 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: dinosaur bone -> Category_Time_And_Space | Concept: Change | Question: Why do you think the shape of the bone is different from what it was a long, long time ago? | Thinking: Dinosaur bone -> Time and Space (History) -> Change (Transformation over time)
+2026-02-28 09:38:17.187 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 8.762s | text_length=1256
+2026-02-28 09:38:17.187 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'dinosaur bone'
+2026-02-28 09:38:19.655 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 2.467s
+2026-02-28 09:38:19.656 | INFO     | stream.fun_fact:cache_fun_fact:78 | [FUN_FACT] Cached 4 fun facts for 'dinosaur bone'
+2026-02-28 09:38:19.656 | INFO     | stream.fun_fact:generate_fun_fact:206 | [FUN_FACT] Success for 'dinosaur bone' | facts_count=4, selected='Did you know some dinosaur bones had air inside, like tiny b...'
+2026-02-28 09:38:19.656 | INFO     | graph:node_generate_fun_fact:302 | [a81b72d1-b5a5-40cf-be98-8a043aacf54c] Node: Generate Fun Fact finished in 11.237s
+2026-02-28 09:38:19.659 | INFO     | graph:node_generate_intro:318 | [a81b72d1-b5a5-40cf-be98-8a043aacf54c] Node: Generate Intro for 'dinosaur bone'
+2026-02-28 09:38:19.659 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=dinosaur bone, age=6, has_fun_fact=True
+2026-02-28 09:38:19.660 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-28 09:38:19.660 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-28 09:38:19.660 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: async_generator
+2026-02-28 09:38:20.267 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=5, total_length=5
+2026-02-28 09:38:20.267 | INFO     | graph:stream_generator_to_callback:373 | [a81b72d1-b5a5-40cf-be98-8a043aacf54c] TTFT: 11.852s for introduction
+2026-02-28 09:38:20.269 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=7, total_length=12
+2026-02-28 09:38:20.273 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=73, total_length=85
+2026-02-28 09:38:20.373 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=76, total_length=161
+2026-02-28 09:38:20.538 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=141, total_length=302
+2026-02-28 09:38:20.540 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-28 09:38:20.540 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-28 09:38:20.540 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=0.881s, response_length=302
+2026-02-28 09:38:20.540 | INFO     | graph:stream_generator_to_callback:425 | [a81b72d1-b5a5-40cf-be98-8a043aacf54c] Stream finished in 0.881s for introduction
+2026-02-28 09:38:20.540 | INFO     | graph:node_generate_intro:347 | [a81b72d1-b5a5-40cf-be98-8a043aacf54c] Node: Generate Intro finished in 0.882s
+2026-02-28 09:38:20.543 | INFO     | graph:node_finalize:1121 | [a81b72d1-b5a5-40cf-be98-8a043aacf54c] Node: Finalize
+2026-02-28 09:38:20.544 | INFO     | graph:node_finalize:1173 | [a81b72d1-b5a5-40cf-be98-8a043aacf54c] Node: Finalize finished in 0.001s
+2026-02-28 09:41:09.433 | INFO     | graph:node_analyze_input:260 | [a81b72d1-b5a5-40cf-be98-8a043aacf54c] Node: Analyze Input
+2026-02-28 09:41:11.276 | INFO     | stream.validation:classify_intent:91 | [CLASSIFY] LLM call duration: 1.842s
+2026-02-28 09:41:11.278 | INFO     | stream.validation:classify_intent:120 | [CLASSIFY] intent=CLARIFYING | new_object=None | reasoning=The child is asking for clarification of the AI's question.
+2026-02-28 09:41:11.278 | INFO     | graph:node_analyze_input:273 | [a81b72d1-b5a5-40cf-be98-8a043aacf54c] Node: Analyze Input finished in 1.845s
+2026-02-28 09:41:11.281 | INFO     | graph:node_clarifying:465 | [a81b72d1-b5a5-40cf-be98-8a043aacf54c] Node: Clarifying
+2026-02-28 09:41:11.281 | INFO     | stream.response_generators:generate_intent_response_stream:59 | generate_intent_response_stream started | intent=clarifying, object=dinosaur bone, age=6
+2026-02-28 09:41:11.861 | INFO     | graph:stream_generator_to_callback:373 | [a81b72d1-b5a5-40cf-be98-8a043aacf54c] TTFT: 2.431s for None
+2026-02-28 09:41:12.757 | INFO     | stream.response_generators:generate_intent_response_stream:123 | generate_intent_response_stream completed | intent=clarifying, duration=1.475s, length=83
+2026-02-28 09:41:12.757 | INFO     | graph:stream_generator_to_callback:425 | [a81b72d1-b5a5-40cf-be98-8a043aacf54c] Stream finished in 1.476s for None
+2026-02-28 09:41:12.757 | INFO     | graph:node_clarifying:482 | [a81b72d1-b5a5-40cf-be98-8a043aacf54c] Node: Clarifying finished in 1.476s
+2026-02-28 09:41:12.760 | INFO     | graph:node_finalize:1121 | [a81b72d1-b5a5-40cf-be98-8a043aacf54c] Node: Finalize
+2026-02-28 09:41:12.760 | INFO     | graph:node_finalize:1173 | [a81b72d1-b5a5-40cf-be98-8a043aacf54c] Node: Finalize finished in 0.000s
+2026-02-28 09:42:00.522 | INFO     | __main__:manual_critique:1548 | [MANUAL-CRITIQUE] Report saved: /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/reports/HF/dinosaur_bone_20260228_094200.md | exchanges critiqued: 1
+2026-02-28 09:42:07.900 | ERROR    | trace_assembler:identify_culprit_llm:186 | [TraceAssembler] LLM culprit identification failed: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}
+2026-02-28 09:42:07.904 | INFO     | trace_assembler:save_trace_object:413 | [TRACE] Saved trace object: /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/traces/dinosaur_bone_a81b72d1_ex1_20260228_094207.json

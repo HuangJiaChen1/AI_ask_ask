@@ -21,7 +21,7 @@ async def classify_intent(
     is_awaiting_topic_selection: bool = False
 ) -> dict:
     """
-    Classify the child's utterance into one of 9 communicative intents.
+    Classify the child's utterance into one of 10 communicative intents.
 
     Args:
         assistant: PaixuejiAssistant instance (provides client + conversation_history)
@@ -32,8 +32,8 @@ async def classify_intent(
 
     Returns:
         dict with keys:
-            - intent_type: one of CURIOSITY, CLARIFYING, INFORMATIVE, PLAY, EMOTIONAL,
-                           AVOIDANCE, BOUNDARY, ACTION, SOCIAL
+            - intent_type: one of CURIOSITY, CLARIFYING, CORRECT_ANSWER, INFORMATIVE, PLAY,
+                           EMOTIONAL, AVOIDANCE, BOUNDARY, ACTION, SOCIAL
             - new_object: str | None  (only extracted for ACTION or AVOIDANCE)
             - reasoning: brief explanation string
     """
@@ -97,8 +97,8 @@ If the child refuses entirely → INTENT: AVOIDANCE"""
             return m.group(1).strip() if m else default
 
         valid_intents = {
-            "CURIOSITY", "CLARIFYING", "INFORMATIVE", "PLAY", "EMOTIONAL",
-            "AVOIDANCE", "BOUNDARY", "ACTION", "SOCIAL"
+            "CURIOSITY", "CLARIFYING", "CORRECT_ANSWER", "INFORMATIVE", "PLAY", "EMOTIONAL",
+            "AVOIDANCE", "BOUNDARY", "ACTION", "SOCIAL", "SOCIAL_ACKNOWLEDGMENT"
         }
         raw_intent = _get(r"INTENT:\s*(\w+)", "CLARIFYING").upper()
         intent_type = raw_intent if raw_intent in valid_intents else "CLARIFYING"

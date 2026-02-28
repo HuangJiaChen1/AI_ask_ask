@@ -71,23 +71,17 @@ def init_global_client():
 
 GLOBAL_GEMINI_CLIENT = init_global_client()
 
-
-def get_event_loop():
-    """
-    Create a new event loop for async operations.
-
-    Each request gets its own event loop to avoid race conditions when
-    multiple requests are processed concurrently (e.g., user sends new
-    message while previous one is still streaming).
-
-    Returns:
-        asyncio.AbstractEventLoop: A new event loop for this request
-    """
-    # Create a new event loop for each request to avoid:
-    # "RuntimeError: This event loop is already running"
-    # when concurrent requests try to use the same loop
-    loop = asyncio.new_event_loop()
-    return loop
+# Single persistent event loop running in a dedicated daemon thread.
+# All async work is submitted via asyncio.run_coroutine_threadsafe() so that
+# the httpx/anyio transport (used by client.aio) always sees the same loop
+# and never hits "Event is bound to a different event loop".
+_ASYNC_LOOP = asyncio.new_event_loop()
+_ASYNC_THREAD = threading.Thread(
+    target=_ASYNC_LOOP.run_forever,
+    daemon=True,
+    name="async-worker",
+)
+_ASYNC_THREAD.start()
 
 
 def sse_event(event_type, data):
@@ -283,8 +277,7 @@ def start_conversation():
             # Introduction content (trigger first question)
             introduction_content = f"Start conversation about {object_name}"
 
-            # Get new event loop for this request (avoids race conditions)
-            loop = get_event_loop()
+            loop = _ASYNC_LOOP
 
             try:
                 async def stream_introduction():
@@ -495,8 +488,7 @@ def start_guide_test():
                 {"role": "system", "content": system_prompt}
             ]
 
-            # Get new event loop for this request
-            loop = get_event_loop()
+            loop = _ASYNC_LOOP
 
             try:
                 async def stream_bridge():
@@ -675,8 +667,7 @@ def continue_conversation():
             
             # NOTE: User message is added to conversation_history inside the graph after turn completes
 
-            # Get new event loop for this request (avoids race conditions)
-            loop = get_event_loop()
+            loop = _ASYNC_LOOP
 
             try:
                 async def stream_response():
@@ -1028,18 +1019,21 @@ def force_switch():
 # ============================================================================
 
 def run_critique_background(task_id: str, session_id: str, transcript: list,
-                            object_name: str, key_concept: str, age: int,
-                            ibpyp_theme_name: str = None):
+                            all_exchanges: list, assistant, object_name: str,
+                            key_concept: str, age: int, ibpyp_theme_name: str = None):
     """
-    Background worker for critique generation.
+    Background worker for AI critique generation.
 
-    Splits the transcript by mode (chat vs guide), runs the critique pipeline
-    separately for each phase, then combines into a single 2-in-1 report.
+    Calls AICritiqueFormFiller once per exchange (in parallel) to fill in the
+    same 5-field form a human reviewer would complete. Only flawed exchanges
+    produce TraceObjects and Optimize buttons — identical to the manual path.
 
     Args:
         task_id: Unique identifier for this critique task
         session_id: Session ID being critiqued
         transcript: Conversation transcript [{role, content, mode?, nodes_executed?}, ...]
+        all_exchanges: Pre-extracted exchange triplets (list of dicts)
+        assistant: PaixuejiAssistant instance (held alive for trace assembly)
         object_name: Object being discussed
         key_concept: Key learning concept
         age: Child's age
@@ -1047,128 +1041,143 @@ def run_critique_background(task_id: str, session_id: str, transcript: list,
     """
     from datetime import datetime
     from pathlib import Path
-    from tests.quality.pipeline import PedagogicalCritiquePipeline
-    from tests.quality.critique_report import CritiqueReportGenerator
+    from tests.quality.ai_critique_form import AICritiqueFormFiller
+    from trace_assembler import assemble_trace_object, save_trace_object
+    from trace_schema import effective_culprits as _effective_culprits
 
     try:
         critique_tasks[task_id]["status"] = "running"
-        logger.info(f"[CRITIQUE] Task {task_id[:8]}... started for session {session_id[:8]}...")
+        logger.info(f"[CRITIQUE] Task {task_id[:8]}... started for session {session_id[:8]}... "
+                    f"({len(all_exchanges)} exchanges)")
 
-        # Split transcript into chat and guide sub-transcripts by mode
-        chat_transcript = []
-        guide_transcript = []
-        i = 0
-        while i < len(transcript) - 2:
-            if (transcript[i].get("role") == "model" and
-                transcript[i + 1].get("role") == "child" and
-                transcript[i + 2].get("role") == "model"):
+        # Run all exchange form-fills in parallel via asyncio.gather
+        filler = AICritiqueFormFiller(GLOBAL_GEMINI_CLIENT, _load_config())
 
-                mode = transcript[i].get("mode", "chat")
-                triplet = [transcript[i], transcript[i + 1], transcript[i + 2]]
-                if mode == "guide":
-                    guide_transcript.extend(triplet)
-                else:
-                    chat_transcript.extend(triplet)
-                i += 2
-            else:
-                i += 1
+        async def _gather_all():
+            semaphore = asyncio.Semaphore(2)  # max 2 concurrent Vertex AI calls
 
-        # Create event loop for this thread
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+            async def guarded(coro):
+                async with semaphore:
+                    return await coro
 
-        try:
-            pipeline = PedagogicalCritiquePipeline(GLOBAL_GEMINI_CLIENT)
-
-            # Run chat pipeline (if chat exchanges exist)
-            chat_critique = None
-            if chat_transcript:
-                logger.info(f"[CRITIQUE] Task {task_id[:8]}... running chat phase ({len(chat_transcript) // 3} exchanges)")
-                chat_critique = loop.run_until_complete(
-                    pipeline.critique_transcript(
-                        transcript=chat_transcript,
-                        object_name=object_name,
-                        key_concept=f"general knowledge about {object_name}",
-                        age=age,
-                        mode="chat",
-                    )
+            coros = [
+                filler.fill_exchange(
+                    exchange_index=idx + 1,
+                    model_question=ex["model_question"],
+                    child_response=ex["child_response"],
+                    model_response=ex["model_response"],
+                    object_name=object_name,
+                    age=age,
+                    mode=ex.get("mode", "chat"),
+                    key_concept=key_concept if ex.get("mode") == "guide" else None,
+                    ibpyp_theme_name=ibpyp_theme_name,
                 )
+                for idx, ex in enumerate(all_exchanges)
+            ]
+            return await asyncio.gather(*[guarded(c) for c in coros])
 
-            # Run guide pipeline (if guide exchanges exist)
-            guide_critique = None
-            if guide_transcript:
-                logger.info(f"[CRITIQUE] Task {task_id[:8]}... running guide phase ({len(guide_transcript) // 3} exchanges)")
-                guide_critique = loop.run_until_complete(
-                    pipeline.critique_transcript(
-                        transcript=guide_transcript,
-                        object_name=object_name,
-                        key_concept=key_concept,
-                        age=age,
-                        mode="guide",
-                    )
-                )
-        finally:
-            loop.close()
+        future = asyncio.run_coroutine_threadsafe(_gather_all(), _ASYNC_LOOP)
+        results = future.result()  # blocks this background thread until done
 
-        # Generate combined markdown report
-        report_md = CritiqueReportGenerator.to_combined_markdown(
-            chat_critique, guide_critique, key_concept=key_concept
+        # Keep only flawed exchanges (non-None HumanCritique objects)
+        flawed_critiques = [(hc, all_exchanges[hc.exchange_index - 1])
+                            for hc in results if hc is not None]
+
+        logger.info(f"[CRITIQUE] Task {task_id[:8]}... "
+                    f"{len(flawed_critiques)}/{len(all_exchanges)} exchanges flagged as flawed")
+
+        # Build exchange_critiques list (same format as manual_critique)
+        exchange_critiques = [
+            {
+                "exchange_index": hc.exchange_index,
+                "model_question_problem": hc.model_question_problem,
+                "model_question_expected": hc.model_question_expected,
+                "model_response_problem": hc.model_response_problem,
+                "model_response_expected": hc.model_response_expected,
+                "conclusion": hc.conclusion,
+            }
+            for hc, _ in flawed_critiques
+        ]
+
+        # Build report using the same function as manual critique
+        report_md = build_human_feedback_report(
+            object_name=object_name,
+            age=age,
+            session_id=session_id,
+            transcript=transcript,
+            all_exchanges=all_exchanges,
+            exchange_critiques=exchange_critiques,
+            global_conclusion="",
+            key_concept=key_concept,
         )
 
-        # Save to reports folder
+        # Patch feedback type label
+        report_md = report_md.replace(
+            "**Feedback Type:** Manual (Human)",
+            "**Feedback Type:** AI (Automated)",
+        )
+
+        # Save to reports/AIF/
         reports_dir = Path(__file__).parent / "reports" / "AIF"
         reports_dir.mkdir(parents=True, exist_ok=True)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        safe_object_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in (object_name or "unknown"))
+        safe_object_name = "".join(
+            c if c.isalnum() or c in "-_" else "_" for c in (object_name or "unknown")
+        )
         filename = f"{safe_object_name}_{timestamp}.md"
         report_path = reports_dir / filename
+        report_path.write_text(report_md, encoding="utf-8")
 
-        # Build full report with conversation transcript (with mode labels)
-        full_report = f"# Critique Report: {object_name}\n\n"
-        full_report += f"**Session:** {session_id}\n"
-        full_report += f"**Age:** {age}\n"
-        if ibpyp_theme_name:
-            full_report += f"**IB PYP Theme:** {ibpyp_theme_name}\n"
-        if key_concept:
-            full_report += f"**Key Concept:** {key_concept}\n"
-        full_report += f"**Date:** {datetime.now().isoformat()}\n\n"
-        full_report += "---\n\n"
-        full_report += "## Conversation Transcript\n\n"
-        for msg in transcript:
-            if msg["role"] == "model":
-                mode_label = msg.get("mode", "chat").upper()
-                nodes_executed = msg.get("nodes_executed", [])
-                if nodes_executed:
-                    node_names = [n["node"] for n in nodes_executed]
-                    total_time = sum(n.get("time_ms", 0) for n in nodes_executed)
-                    trace_summary = f"[{' → '.join(node_names)}] ({total_time:.0f}ms)"
-                    full_report += f"**Model** `[{mode_label}]`**:** {trace_summary}\n{msg['content']}\n\n"
-                else:
-                    full_report += f"**Model** `[{mode_label}]`**:** {msg['content']}\n\n"
-            else:
-                full_report += f"**Child:** {msg['content']}\n\n"
-        full_report += "---\n\n"
-        full_report += report_md
+        logger.info(f"[CRITIQUE] Task {task_id[:8]}... report saved: {report_path}")
 
-        report_path.write_text(full_report, encoding='utf-8')
+        # Assemble TraceObjects for each flagged exchange (sync — loop already closed)
+        saved_traces = []
+        for hc, ex_data in flawed_critiques:
+            idx = hc.exchange_index
+            try:
+                trace_obj = assemble_trace_object(
+                    session_id, assistant, idx, ex_data,
+                    {
+                        "exchange_index": hc.exchange_index,
+                        "model_question_problem": hc.model_question_problem,
+                        "model_question_expected": hc.model_question_expected,
+                        "model_response_problem": hc.model_response_problem,
+                        "model_response_expected": hc.model_response_expected,
+                        "conclusion": hc.conclusion,
+                    }
+                )
+                save_trace_object(trace_obj)
+                saved_traces.append(trace_obj)
+            except Exception as trace_err:
+                logger.warning(
+                    f"[CRITIQUE] Failed to assemble trace for exchange {idx}: {trace_err}"
+                )
 
-        # Calculate combined effectiveness (weighted average)
-        chat_eff = chat_critique.overall_effectiveness if chat_critique else 0
-        guide_eff = guide_critique.overall_effectiveness if guide_critique else 0
-        chat_n = chat_critique.total_exchanges if chat_critique else 0
-        guide_n = guide_critique.total_exchanges if guide_critique else 0
-        total_n = chat_n + guide_n
-        combined_effectiveness = ((chat_eff * chat_n + guide_eff * guide_n) / total_n) if total_n > 0 else 0
+        # Build trace_items list for the UI (one item per distinct trace_id × culprit)
+        seen = set()
+        trace_items = []
+        for t in saved_traces:
+            for c in _effective_culprits(t):
+                if not c.culprit_name or c.culprit_name == "unknown":
+                    continue
+                key = (t.trace_id, c.culprit_name)
+                if key not in seen:
+                    seen.add(key)
+                    trace_items.append({
+                        "exchange_index": t.exchange_index,
+                        "trace_id": t.trace_id,
+                        "culprit_name": c.culprit_name,
+                        "prompt_template_name": c.prompt_template_name,
+                    })
 
-        # Update task status
         critique_tasks[task_id]["status"] = "completed"
         critique_tasks[task_id]["report_path"] = str(report_path)
-        critique_tasks[task_id]["overall_effectiveness"] = combined_effectiveness
+        critique_tasks[task_id]["overall_effectiveness"] = None
+        critique_tasks[task_id]["traces"] = trace_items
 
-        logger.info(f"[CRITIQUE] Task {task_id[:8]}... completed | report: {report_path} | "
-                     f"chat: {chat_eff:.1f}% ({chat_n}ex) | guide: {guide_eff:.1f}% ({guide_n}ex) | "
-                     f"combined: {combined_effectiveness:.1f}%")
+        logger.info(f"[CRITIQUE] Task {task_id[:8]}... completed | "
+                    f"flawed: {len(flawed_critiques)} | traces: {len(trace_items)}")
 
     except Exception as e:
         critique_tasks[task_id]["status"] = "failed"
@@ -1253,6 +1262,7 @@ def critique_conversation():
         "report_path": None,
         "error": None,
         "overall_effectiveness": None,
+        "traces": [],
         "started_at": time.time()
     }
 
@@ -1262,10 +1272,33 @@ def critique_conversation():
     ibpyp_theme_name = assistant.ibpyp_theme_name
     age = assistant.age or 6
 
+    # Hold a reference so the GC won't collect assistant during the background thread run
+    assistant_ref = assistant
+
+    # Pre-extract all exchange triplets so the background worker doesn't need the transcript
+    all_exchanges = []
+    i = 0
+    while i < len(transcript) - 2:
+        if (transcript[i].get("role") == "model" and
+            transcript[i + 1].get("role") == "child" and
+            transcript[i + 2].get("role") == "model"):
+            all_exchanges.append({
+                "model_question": transcript[i]["content"],
+                "child_response": transcript[i + 1]["content"],
+                "model_response": transcript[i + 2]["content"],
+                "question_nodes_executed": transcript[i].get("nodes_executed", []),
+                "nodes_executed": transcript[i + 2].get("nodes_executed", []),
+                "mode": transcript[i].get("mode", "chat"),
+            })
+            i += 2
+        else:
+            i += 1
+
     # Spawn background worker
     thread = threading.Thread(
         target=run_critique_background,
-        args=(task_id, session_id, transcript, object_name, key_concept, age, ibpyp_theme_name),
+        args=(task_id, session_id, transcript, all_exchanges, assistant_ref,
+              object_name, key_concept, age, ibpyp_theme_name),
         daemon=True
     )
     thread.start()
@@ -1309,6 +1342,7 @@ def critique_status(task_id):
         "session_id": task["session_id"],
         "report_path": task["report_path"],
         "overall_effectiveness": task["overall_effectiveness"],
+        "traces": task.get("traces", []),
         "error": task["error"],
         "elapsed_seconds": round(time.time() - task["started_at"], 1)
     })
@@ -1937,41 +1971,35 @@ def async_gen_to_sync(async_gen, loop):
     """
     Bridge async generator to sync generator WITHOUT buffering.
 
-    This uses a queue and background thread to immediately yield chunks
-    as they arrive from the async generator, enabling real streaming.
+    Submits the async consumer coroutine to the persistent _ASYNC_LOOP via
+    run_coroutine_threadsafe() so that all requests share one event loop and
+    the httpx/anyio transport never sees a mismatched loop.
 
     Args:
         async_gen: Async generator to bridge
-        loop: Event loop to run async generator in
+        loop: The persistent event loop (_ASYNC_LOOP)
 
     Yields:
         Items from async generator in real-time
     """
     import queue
-    import threading
 
     chunk_queue = queue.Queue()
     exception_holder = [None]
 
-    def run_async():
-        """Runs in background thread to consume async generator."""
+    async def consume():
         try:
-            async def consume():
-                async for item in async_gen:
-                    chunk_queue.put(('chunk', item))
-                chunk_queue.put(('done', None))
-            loop.run_until_complete(consume())
+            async for item in async_gen:
+                chunk_queue.put(('chunk', item))
+            chunk_queue.put(('done', None))
         except Exception as e:
             exception_holder[0] = e
             chunk_queue.put(('error', e))
 
-    # Start background thread
-    thread = threading.Thread(target=run_async, daemon=True)
-    thread.start()
+    asyncio.run_coroutine_threadsafe(consume(), loop)  # non-blocking submit
 
-    # Yield chunks as they arrive
     while True:
-        msg_type, data = chunk_queue.get()  # Blocks until chunk available
+        msg_type, data = chunk_queue.get()  # blocks Flask thread until chunk ready
         if msg_type == 'chunk':
             yield data
         elif msg_type == 'done':

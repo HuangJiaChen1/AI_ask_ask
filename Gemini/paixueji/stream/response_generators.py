@@ -26,6 +26,8 @@ async def generate_intent_response_stream(
     age: int,
     age_prompt: str,
     category_prompt: str,
+    character_prompt: str,
+    last_model_question: str,
     config: dict,
     client: genai.Client,
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
@@ -44,6 +46,8 @@ async def generate_intent_response_stream(
         age: Child's age
         age_prompt: Age-specific guidance string
         category_prompt: Category-specific guidance string
+        character_prompt: Character/persona guidance string
+        last_model_question: The previous question asked by the model
         config: Configuration dict with model settings
         client: Gemini client instance
 
@@ -69,6 +73,8 @@ async def generate_intent_response_stream(
             age=age,
             age_prompt=age_prompt,
             category_prompt=category_prompt,
+            character_prompt=character_prompt,
+            last_model_question=last_model_question,
         )
     except KeyError as e:
         logger.warning(f"Prompt template formatting error for '{prompt_key}': {e}")

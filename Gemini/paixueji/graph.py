@@ -443,6 +443,8 @@ async def node_curiosity(state: PaixuejiState) -> dict:
         age=state["age"],
         age_prompt=state["age_prompt"],
         category_prompt=state["category_prompt"],
+        character_prompt=state["character_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
     )
@@ -471,6 +473,8 @@ async def node_clarifying(state: PaixuejiState) -> dict:
         age=state["age"],
         age_prompt=state["age_prompt"],
         category_prompt=state["category_prompt"],
+        character_prompt=state["character_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
     )
@@ -478,6 +482,36 @@ async def node_clarifying(state: PaixuejiState) -> dict:
     logger.info(f"[{state['session_id']}] Node: Clarifying finished in {time.time() - start_time:.3f}s")
     return {
         "response_type": "clarifying",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
+    }
+
+
+@trace_node
+async def node_correct_answer(state: PaixuejiState) -> dict:
+    """Child directly answered the model's question — confirm + extend with one wow fact."""
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Correct Answer")
+
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    generator = generate_intent_response_stream(
+        intent_type="correct_answer",
+        messages=messages,
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
+        age_prompt=state["age_prompt"],
+        category_prompt=state["category_prompt"],
+        character_prompt=state["character_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    logger.info(f"[{state['session_id']}] Node: Correct Answer finished in {time.time() - start_time:.3f}s")
+    return {
+        "response_type": "correct_answer",
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
@@ -499,6 +533,8 @@ async def node_informative(state: PaixuejiState) -> dict:
         age=state["age"],
         age_prompt=state["age_prompt"],
         category_prompt=state["category_prompt"],
+        character_prompt=state["character_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
     )
@@ -527,6 +563,8 @@ async def node_play(state: PaixuejiState) -> dict:
         age=state["age"],
         age_prompt=state["age_prompt"],
         category_prompt=state["category_prompt"],
+        character_prompt=state["character_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
     )
@@ -555,6 +593,8 @@ async def node_emotional(state: PaixuejiState) -> dict:
         age=state["age"],
         age_prompt=state["age_prompt"],
         category_prompt=state["category_prompt"],
+        character_prompt=state["character_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
     )
@@ -602,6 +642,8 @@ async def node_avoidance(state: PaixuejiState) -> dict:
             age=state["age"],
             age_prompt=state["age_prompt"],
             category_prompt=state["category_prompt"],
+            character_prompt=state["character_prompt"],
+            last_model_question=extract_previous_question(state["messages"]),
             config=state["config"],
             client=state["client"],
         )
@@ -632,6 +674,8 @@ async def node_boundary(state: PaixuejiState) -> dict:
         age=state["age"],
         age_prompt=state["age_prompt"],
         category_prompt=state["category_prompt"],
+        character_prompt=state["character_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
     )
@@ -679,6 +723,8 @@ async def node_action(state: PaixuejiState) -> dict:
             age=state["age"],
             age_prompt=state["age_prompt"],
             category_prompt=state["category_prompt"],
+            character_prompt=state["character_prompt"],
+            last_model_question=extract_previous_question(state["messages"]),
             config=state["config"],
             client=state["client"],
         )
@@ -709,6 +755,8 @@ async def node_social(state: PaixuejiState) -> dict:
         age=state["age"],
         age_prompt=state["age_prompt"],
         category_prompt=state["category_prompt"],
+        character_prompt=state["character_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
     )
@@ -716,6 +764,36 @@ async def node_social(state: PaixuejiState) -> dict:
     logger.info(f"[{state['session_id']}] Node: Social finished in {time.time() - start_time:.3f}s")
     return {
         "response_type": "social",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
+    }
+
+
+@trace_node
+async def node_social_acknowledgment(state: PaixuejiState) -> dict:
+    """Child reacts socially ("wow", "oh yeah", "i didn't know that") — brief reaction + pivot forward."""
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Social Acknowledgment")
+
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    generator = generate_intent_response_stream(
+        intent_type="social_acknowledgment",
+        messages=messages,
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
+        age_prompt=state["age_prompt"],
+        category_prompt=state["category_prompt"],
+        character_prompt=state["character_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    logger.info(f"[{state['session_id']}] Node: Social Acknowledgment finished in {time.time() - start_time:.3f}s")
+    return {
+        "response_type": "social_acknowledgment",
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
@@ -1108,9 +1186,10 @@ def build_paixueji_graph():
     workflow.add_node("generate_fun_fact", node_generate_fun_fact)
     workflow.add_node("generate_intro", node_generate_intro)
 
-    # --- 9 Intent nodes ---
+    # --- 11 Intent nodes ---
     workflow.add_node("curiosity", node_curiosity)
     workflow.add_node("clarifying", node_clarifying)
+    workflow.add_node("correct_answer", node_correct_answer)
     workflow.add_node("informative", node_informative)
     workflow.add_node("play", node_play)
     workflow.add_node("emotional", node_emotional)
@@ -1118,6 +1197,7 @@ def build_paixueji_graph():
     workflow.add_node("boundary", node_boundary)
     workflow.add_node("action", node_action)
     workflow.add_node("social", node_social)
+    workflow.add_node("social_acknowledgment", node_social_acknowledgment)
 
     # --- Guide nodes ---
     workflow.add_node("start_guide", node_start_guide)
@@ -1174,6 +1254,7 @@ def build_paixueji_graph():
         {
             "curiosity": "curiosity",
             "clarifying": "clarifying",
+            "correct_answer": "correct_answer",
             "informative": "informative",
             "play": "play",
             "emotional": "emotional",
@@ -1181,12 +1262,14 @@ def build_paixueji_graph():
             "boundary": "boundary",
             "action": "action",
             "social": "social",
+            "social_acknowledgment": "social_acknowledgment",
         }
     )
 
-    # All 9 intent nodes → finalize
-    for intent_node in ["curiosity", "clarifying", "informative", "play", "emotional",
-                        "avoidance", "boundary", "action", "social"]:
+    # All 11 intent nodes → finalize
+    for intent_node in ["curiosity", "clarifying", "correct_answer", "informative", "play",
+                        "emotional", "avoidance", "boundary", "action", "social",
+                        "social_acknowledgment"]:
         workflow.add_edge(intent_node, "finalize")
 
     # Guide edges

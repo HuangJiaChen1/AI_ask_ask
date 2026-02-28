@@ -1301,15 +1301,22 @@ function closeCritiqueChoice() {
 }
 
 /**
- * Send AI critique (existing automated flow).
+ * Send AI critique and poll for results.
  */
 async function sendAICritique() {
     closeCritiqueChoice();
 
     const btn = document.getElementById('sendReportBtn');
-    const originalText = btn.textContent;
     btn.disabled = true;
     btn.textContent = 'Analyzing...';
+
+    // Reset status section
+    const statusSection = document.getElementById('aiCritiqueStatus');
+    const statusText = document.getElementById('aiCritiqueStatusText');
+    document.getElementById('aiCritiqueOptimizeButtons').innerHTML = '';
+    statusSection.style.background = '#f1f5f9';
+    statusText.textContent = '⏳ AI critique in progress...';
+    statusSection.style.display = 'block';
 
     try {
         const response = await fetch(`${API_BASE}/critique`, {
@@ -1320,27 +1327,81 @@ async function sendAICritique() {
         const result = await response.json();
 
         if (result.success) {
-            btn.textContent = 'Report Saved!';
-            btn.style.background = '#10b981';
-            console.log('[INFO] AI report saved to:', result.report_path);
+            _pollAICritiqueStatus(result.task_id);
         } else {
-            btn.textContent = 'Error';
-            btn.style.background = '#ef4444';
-            console.error('[ERROR] Critique failed:', result.error);
-            alert('Failed to generate report: ' + result.error);
+            btn.disabled = false;
+            btn.textContent = '📝 Send Report for Review';
+            statusSection.style.background = '#fee2e2';
+            statusText.textContent = '✗ Failed: ' + result.error;
         }
     } catch (e) {
-        btn.textContent = 'Error';
-        btn.style.background = '#ef4444';
-        console.error('[ERROR] Critique request failed:', e);
-        alert('Failed to send report: ' + e.message);
-    }
-
-    setTimeout(() => {
         btn.disabled = false;
-        btn.textContent = originalText;
-        btn.style.background = '#f59e0b';
-    }, 2000);
+        btn.textContent = '📝 Send Report for Review';
+        statusSection.style.background = '#fee2e2';
+        statusText.textContent = '✗ Error: ' + e.message;
+    }
+}
+
+/**
+ * Poll /api/critique/status/<taskId> every 3s and render results when done.
+ */
+function _pollAICritiqueStatus(taskId) {
+    const btn = document.getElementById('sendReportBtn');
+    const statusSection = document.getElementById('aiCritiqueStatus');
+    const statusText = document.getElementById('aiCritiqueStatusText');
+    const optimizeButtons = document.getElementById('aiCritiqueOptimizeButtons');
+
+    const interval = setInterval(async () => {
+        try {
+            const response = await fetch(`${API_BASE}/critique/status/${taskId}`);
+            const data = await response.json();
+
+            if (data.status === 'completed') {
+                clearInterval(interval);
+                btn.disabled = false;
+                btn.textContent = '📝 Send Report for Review';
+
+                if (data.traces && data.traces.length > 0) {
+                    statusSection.style.background = '#fef3c7';
+                    statusText.textContent =
+                        `⚠ ${data.traces.length} exchange(s) flagged — optimize their prompts:`;
+                    data.traces.forEach(trace => {
+                        if (!trace.culprit_name || trace.culprit_name === 'unknown') return;
+                        const optBtn = document.createElement('button');
+                        optBtn.textContent = 'Optimize: ' + trace.culprit_name;
+                        optBtn.style.cssText =
+                            'width:100%; margin-top:8px; padding:8px; background:#3b82f6; ' +
+                            'color:white; border:none; border-radius:6px; cursor:pointer; ' +
+                            'font-weight:bold; font-size:0.85em;';
+                        optBtn.onclick = () => runOptimization(
+                            trace.culprit_name,
+                            trace.prompt_template_name,
+                            trace.trace_id
+                        );
+                        optimizeButtons.appendChild(optBtn);
+                    });
+                } else {
+                    statusSection.style.background = '#d1fae5';
+                    statusText.textContent = '✓ No issues found in this session.';
+                }
+
+            } else if (data.status === 'failed') {
+                clearInterval(interval);
+                btn.disabled = false;
+                btn.textContent = '📝 Send Report for Review';
+                statusSection.style.background = '#fee2e2';
+                statusText.textContent = '✗ Critique failed: ' + (data.error || 'unknown error');
+            }
+            // status === 'pending' | 'running' → keep polling
+
+        } catch (e) {
+            clearInterval(interval);
+            btn.disabled = false;
+            btn.textContent = '📝 Send Report for Review';
+            statusSection.style.background = '#fee2e2';
+            statusText.textContent = '✗ Polling error: ' + e.message;
+        }
+    }, 3000);
 }
 
 /**
