@@ -25,6 +25,9 @@ from stream import (
 from stream.theme_guide import ThemeNavigator, ThemeDriver
 from schema import StreamChunk, TokenUsage
 import paixueji_prompts
+from theme_classifier import classify_object_to_theme
+
+GUIDE_MODE_THRESHOLD = 4  # Correct answers required to enter guide mode
 
 
 def _load_router_overrides() -> dict:
@@ -509,12 +512,14 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
         client=state["client"],
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
+    state["assistant"].increment_correct_answers()
     logger.info(f"[{state['session_id']}] Node: Correct Answer finished in {time.time() - start_time:.3f}s")
     return {
         "response_type": "correct_answer",
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "correct_answer_count": state["assistant"].correct_answer_count,
     }
 
 
@@ -1174,6 +1179,42 @@ async def node_finalize(state: PaixuejiState) -> dict:
     return {}
 
 
+@trace_node
+async def node_classify_theme(state: PaixuejiState) -> dict:
+    """
+    4th correct answer threshold reached: classify object into IB PYP theme,
+    then hand off to node_start_guide to present the bridge question.
+    Runs in a thread pool to avoid blocking the async event loop (sync LLM call).
+    """
+    assistant = state["assistant"]
+    logger.info(f"[{state['session_id']}] Node: Classify Theme (guide mode entry)")
+
+    assistant.increment_correct_answers()
+
+    result = await asyncio.to_thread(
+        classify_object_to_theme, state["object_name"], state["client"], state["config"]
+    )
+
+    if result:
+        assistant.ibpyp_theme = result.theme_id
+        assistant.ibpyp_theme_name = result.theme_name
+        assistant.ibpyp_theme_reason = result.reason
+        assistant.key_concept = result.key_concept
+        assistant.bridge_question = result.bridge_question
+        logger.info(
+            f"[{state['session_id']}] Theme: {result.theme_name} | "
+            f"Concept: {result.key_concept}"
+        )
+    else:
+        # Fallback so guide mode can still proceed
+        logger.warning(f"[{state['session_id']}] Theme classification failed, using fallback")
+        assistant.ibpyp_theme_name = "How the World Works"
+        assistant.key_concept = "Function"
+        assistant.bridge_question = f"I wonder how {state['object_name']} works. What do you think?"
+
+    return {"correct_answer_count": assistant.correct_answer_count}
+
+
 # ============================================================================
 # GRAPH DEFINITION
 # ============================================================================
@@ -1200,6 +1241,7 @@ def build_paixueji_graph():
     workflow.add_node("social_acknowledgment", node_social_acknowledgment)
 
     # --- Guide nodes ---
+    workflow.add_node("classify_theme", node_classify_theme)
     workflow.add_node("start_guide", node_start_guide)
     workflow.add_node("guide_navigator", node_guide_navigator)
     workflow.add_node("guide_driver", node_guide_driver)
@@ -1245,8 +1287,12 @@ def build_paixueji_graph():
     # Chat path: analyze_input → route_from_analyze_input → one of 9 intent nodes
     @trace_router(["intent_type"])
     def route_from_analyze_input(state):
-        intent = state.get("intent_type", "clarifying")
-        return intent.lower()
+        intent = state.get("intent_type", "clarifying").lower()
+        # Intercept the Nth correct answer to run theme classification
+        if (intent == "correct_answer" and
+                state["assistant"].correct_answer_count + 1 >= GUIDE_MODE_THRESHOLD):
+            return "classify_theme"
+        return intent
 
     workflow.add_conditional_edges(
         "analyze_input",
@@ -1263,8 +1309,11 @@ def build_paixueji_graph():
             "action": "action",
             "social": "social",
             "social_acknowledgment": "social_acknowledgment",
+            "classify_theme": "classify_theme",
         }
     )
+
+    workflow.add_edge("classify_theme", "start_guide")
 
     # All 11 intent nodes → finalize
     for intent_node in ["curiosity", "clarifying", "correct_answer", "informative", "play",
