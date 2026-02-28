@@ -41,3 +41,479 @@
 2026-02-28 09:42:00.522 | INFO     | __main__:manual_critique:1548 | [MANUAL-CRITIQUE] Report saved: /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/reports/HF/dinosaur_bone_20260228_094200.md | exchanges critiqued: 1
 2026-02-28 09:42:07.900 | ERROR    | trace_assembler:identify_culprit_llm:186 | [TraceAssembler] LLM culprit identification failed: 429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}
 2026-02-28 09:42:07.904 | INFO     | trace_assembler:save_trace_object:413 | [TRACE] Saved trace object: /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/traces/dinosaur_bone_a81b72d1_ex1_20260228_094207.json
+2026-02-28 10:18:40.159 | INFO     | graph:node_generate_fun_fact:287 | [c746204a-a5e1-4e84-a9c7-9d4eef1ba6b5] Node: Generate Fun Fact for 'apple'
+2026-02-28 10:18:40.160 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'apple' (model=gemini-2.0-flash-lite)
+2026-02-28 10:18:40.161 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 0.000s | text_length=141
+2026-02-28 10:18:40.161 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'apple'
+2026-02-28 10:18:40.161 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 0.000s
+2026-02-28 10:18:40.161 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-02-28 10:18:40.161 | WARNING  | stream.fun_fact:generate_fun_fact:198 | [FUN_FACT] No fun facts in structured output for 'apple'
+2026-02-28 10:18:40.161 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: apple -> nature | Concept: Change | Question: How does it change? | Thinking: Test
+2026-02-28 10:18:40.161 | INFO     | graph:node_generate_fun_fact:302 | [c746204a-a5e1-4e84-a9c7-9d4eef1ba6b5] Node: Generate Fun Fact finished in 0.002s
+2026-02-28 10:18:40.161 | INFO     | graph:node_generate_intro:318 | [c746204a-a5e1-4e84-a9c7-9d4eef1ba6b5] Node: Generate Intro for 'apple'
+2026-02-28 10:18:40.161 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=False
+2026-02-28 10:18:40.161 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-28 10:18:40.161 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-28 10:18:40.162 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: MockStream
+2026-02-28 10:18:40.162 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=7, total_length=7
+2026-02-28 10:18:40.162 | INFO     | graph:stream_generator_to_callback:373 | [c746204a-a5e1-4e84-a9c7-9d4eef1ba6b5] TTFT: 0.004s for introduction
+2026-02-28 10:18:40.162 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=6, total_length=13
+2026-02-28 10:18:40.162 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=5, total_length=18
+2026-02-28 10:18:40.162 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=6, total_length=24
+2026-02-28 10:18:40.162 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=4, total_length=28
+2026-02-28 10:18:40.162 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 6 | length=8, total_length=36
+2026-02-28 10:18:40.162 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 7 | length=5, total_length=41
+2026-02-28 10:18:40.162 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 8 | length=6, total_length=47
+2026-02-28 10:18:40.162 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 9 | length=3, total_length=50
+2026-02-28 10:18:40.162 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 10 | length=4, total_length=54
+2026-02-28 10:18:40.162 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-28 10:18:40.162 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-28 10:18:40.162 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=0.001s, response_length=54
+2026-02-28 10:18:40.162 | INFO     | graph:stream_generator_to_callback:425 | [c746204a-a5e1-4e84-a9c7-9d4eef1ba6b5] Stream finished in 0.001s for introduction
+2026-02-28 10:18:40.162 | INFO     | graph:node_generate_intro:347 | [c746204a-a5e1-4e84-a9c7-9d4eef1ba6b5] Node: Generate Intro finished in 0.001s
+2026-02-28 10:18:40.162 | INFO     | graph:node_finalize:1121 | [c746204a-a5e1-4e84-a9c7-9d4eef1ba6b5] Node: Finalize
+2026-02-28 10:18:40.162 | INFO     | graph:node_finalize:1173 | [c746204a-a5e1-4e84-a9c7-9d4eef1ba6b5] Node: Finalize finished in 0.000s
+2026-02-28 10:18:40.164 | INFO     | graph:node_analyze_input:260 | [c746204a-a5e1-4e84-a9c7-9d4eef1ba6b5] Node: Analyze Input
+2026-02-28 10:18:40.164 | INFO     | stream.validation:classify_intent:91 | [CLASSIFY] LLM call duration: 0.000s
+2026-02-28 10:18:40.164 | INFO     | stream.validation:classify_intent:120 | [CLASSIFY] intent=CLARIFYING | new_object=None | reasoning=N/A
+2026-02-28 10:18:40.164 | INFO     | graph:node_analyze_input:273 | [c746204a-a5e1-4e84-a9c7-9d4eef1ba6b5] Node: Analyze Input finished in 0.000s
+2026-02-28 10:18:40.165 | INFO     | graph:node_clarifying:465 | [c746204a-a5e1-4e84-a9c7-9d4eef1ba6b5] Node: Clarifying
+2026-02-28 10:18:40.165 | INFO     | stream.response_generators:generate_intent_response_stream:59 | generate_intent_response_stream started | intent=clarifying, object=apple, age=6
+2026-02-28 10:18:40.165 | INFO     | graph:stream_generator_to_callback:373 | [c746204a-a5e1-4e84-a9c7-9d4eef1ba6b5] TTFT: 0.002s for None
+2026-02-28 10:18:40.165 | INFO     | stream.response_generators:generate_intent_response_stream:123 | generate_intent_response_stream completed | intent=clarifying, duration=0.000s, length=54
+2026-02-28 10:18:40.165 | INFO     | graph:stream_generator_to_callback:425 | [c746204a-a5e1-4e84-a9c7-9d4eef1ba6b5] Stream finished in 0.000s for None
+2026-02-28 10:18:40.165 | INFO     | graph:node_clarifying:482 | [c746204a-a5e1-4e84-a9c7-9d4eef1ba6b5] Node: Clarifying finished in 0.000s
+2026-02-28 10:18:40.166 | INFO     | graph:node_finalize:1121 | [c746204a-a5e1-4e84-a9c7-9d4eef1ba6b5] Node: Finalize
+2026-02-28 10:18:40.166 | INFO     | graph:node_finalize:1173 | [c746204a-a5e1-4e84-a9c7-9d4eef1ba6b5] Node: Finalize finished in 0.000s
+2026-02-28 10:18:40.169 | INFO     | graph:node_generate_fun_fact:287 | [f0441af6-de81-4a5a-81da-4b6602428df1] Node: Generate Fun Fact for 'banana'
+2026-02-28 10:18:40.169 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'banana' (model=gemini-2.0-flash-lite)
+2026-02-28 10:18:40.169 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: banana
+2026-02-28 10:18:40.169 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 0.000s | text_length=141
+2026-02-28 10:18:40.169 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: banana -> nature | Concept: Change | Question: How does it change? | Thinking: Test
+2026-02-28 10:18:40.169 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'banana'
+2026-02-28 10:18:40.170 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 0.000s
+2026-02-28 10:18:40.170 | WARNING  | stream.fun_fact:generate_fun_fact:198 | [FUN_FACT] No fun facts in structured output for 'banana'
+2026-02-28 10:18:40.170 | INFO     | graph:node_generate_fun_fact:302 | [f0441af6-de81-4a5a-81da-4b6602428df1] Node: Generate Fun Fact finished in 0.001s
+2026-02-28 10:18:40.170 | INFO     | graph:node_generate_intro:318 | [f0441af6-de81-4a5a-81da-4b6602428df1] Node: Generate Intro for 'banana'
+2026-02-28 10:18:40.170 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=banana, age=None, has_fun_fact=False
+2026-02-28 10:18:40.170 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-28 10:18:40.170 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-28 10:18:40.170 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: MockStream
+2026-02-28 10:18:40.170 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=7, total_length=7
+2026-02-28 10:18:40.170 | INFO     | graph:stream_generator_to_callback:373 | [f0441af6-de81-4a5a-81da-4b6602428df1] TTFT: 0.002s for introduction
+2026-02-28 10:18:40.170 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=6, total_length=13
+2026-02-28 10:18:40.170 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=5, total_length=18
+2026-02-28 10:18:40.170 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=6, total_length=24
+2026-02-28 10:18:40.170 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=4, total_length=28
+2026-02-28 10:18:40.170 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 6 | length=8, total_length=36
+2026-02-28 10:18:40.170 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 7 | length=5, total_length=41
+2026-02-28 10:18:40.170 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 8 | length=6, total_length=47
+2026-02-28 10:18:40.170 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 9 | length=3, total_length=50
+2026-02-28 10:18:40.170 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 10 | length=4, total_length=54
+2026-02-28 10:18:40.170 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-28 10:18:40.170 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-28 10:18:40.170 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=0.000s, response_length=54
+2026-02-28 10:18:40.170 | INFO     | graph:stream_generator_to_callback:425 | [f0441af6-de81-4a5a-81da-4b6602428df1] Stream finished in 0.000s for introduction
+2026-02-28 10:18:40.170 | INFO     | graph:node_generate_intro:347 | [f0441af6-de81-4a5a-81da-4b6602428df1] Node: Generate Intro finished in 0.001s
+2026-02-28 10:18:40.171 | INFO     | graph:node_finalize:1121 | [f0441af6-de81-4a5a-81da-4b6602428df1] Node: Finalize
+2026-02-28 10:18:40.171 | INFO     | graph:node_finalize:1173 | [f0441af6-de81-4a5a-81da-4b6602428df1] Node: Finalize finished in 0.000s
+2026-02-28 10:18:40.172 | INFO     | graph:node_analyze_input:260 | [f0441af6-de81-4a5a-81da-4b6602428df1] Node: Analyze Input
+2026-02-28 10:18:40.172 | INFO     | stream.validation:classify_intent:91 | [CLASSIFY] LLM call duration: 0.000s
+2026-02-28 10:18:40.172 | INFO     | stream.validation:classify_intent:120 | [CLASSIFY] intent=CLARIFYING | new_object=None | reasoning=N/A
+2026-02-28 10:18:40.172 | INFO     | graph:node_analyze_input:273 | [f0441af6-de81-4a5a-81da-4b6602428df1] Node: Analyze Input finished in 0.000s
+2026-02-28 10:18:40.173 | INFO     | graph:node_clarifying:465 | [f0441af6-de81-4a5a-81da-4b6602428df1] Node: Clarifying
+2026-02-28 10:18:40.173 | INFO     | stream.response_generators:generate_intent_response_stream:59 | generate_intent_response_stream started | intent=clarifying, object=banana, age=None
+2026-02-28 10:18:40.173 | INFO     | graph:stream_generator_to_callback:373 | [f0441af6-de81-4a5a-81da-4b6602428df1] TTFT: 0.001s for None
+2026-02-28 10:18:40.173 | INFO     | stream.response_generators:generate_intent_response_stream:123 | generate_intent_response_stream completed | intent=clarifying, duration=0.000s, length=54
+2026-02-28 10:18:40.173 | INFO     | graph:stream_generator_to_callback:425 | [f0441af6-de81-4a5a-81da-4b6602428df1] Stream finished in 0.000s for None
+2026-02-28 10:18:40.173 | INFO     | graph:node_clarifying:482 | [f0441af6-de81-4a5a-81da-4b6602428df1] Node: Clarifying finished in 0.000s
+2026-02-28 10:18:40.173 | INFO     | graph:node_finalize:1121 | [f0441af6-de81-4a5a-81da-4b6602428df1] Node: Finalize
+2026-02-28 10:18:40.173 | INFO     | graph:node_finalize:1173 | [f0441af6-de81-4a5a-81da-4b6602428df1] Node: Finalize finished in 0.000s
+2026-02-28 10:18:40.174 | INFO     | paixueji_app:manual_critique:1548 | [MANUAL-CRITIQUE] Report saved: /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/reports/HF/banana_20260228_101840.md | exchanges critiqued: 1
+2026-02-28 10:18:40.178 | ERROR    | trace_assembler:identify_culprit_llm:186 | [TraceAssembler] LLM culprit identification failed: 'culprit_type'
+2026-02-28 10:18:40.178 | ERROR    | trace_assembler:identify_culprit_llm:186 | [TraceAssembler] LLM culprit identification failed: 'culprit_type'
+2026-02-28 10:18:40.178 | INFO     | trace_assembler:save_trace_object:413 | [TRACE] Saved trace object: /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/traces/banana_f0441af6_ex1_20260228_101840.json
+2026-02-28 10:18:40.179 | INFO     | paixueji_app:critique_conversation:1306 | [CRITIQUE] Task 8fb253dd... spawned for session f0441af6...
+2026-02-28 10:18:40.185 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: banana
+2026-02-28 10:18:40.185 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: banana -> nature | Concept: Change | Question: How does it change? | Thinking: Test
+2026-02-28 10:18:40.190 | INFO     | graph:node_generate_fun_fact:287 | [a38584c5-a964-4ef6-8bb4-cd5d60096370] Node: Generate Fun Fact for 'apple'
+2026-02-28 10:18:40.191 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-02-28 10:18:40.191 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'apple' (model=gemini-2.0-flash-lite)
+2026-02-28 10:18:40.191 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: apple -> nature | Concept: Change | Question: How does it change? | Thinking: Test
+2026-02-28 10:18:40.191 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 0.000s | text_length=141
+2026-02-28 10:18:40.194 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'apple'
+2026-02-28 10:18:40.194 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 0.000s
+2026-02-28 10:18:40.194 | WARNING  | stream.fun_fact:generate_fun_fact:198 | [FUN_FACT] No fun facts in structured output for 'apple'
+2026-02-28 10:18:40.194 | INFO     | graph:node_generate_fun_fact:302 | [a38584c5-a964-4ef6-8bb4-cd5d60096370] Node: Generate Fun Fact finished in 0.004s
+2026-02-28 10:18:40.195 | INFO     | graph:node_generate_intro:318 | [a38584c5-a964-4ef6-8bb4-cd5d60096370] Node: Generate Intro for 'apple'
+2026-02-28 10:18:40.195 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=False
+2026-02-28 10:18:40.195 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-28 10:18:40.195 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-28 10:18:40.195 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: MockStream
+2026-02-28 10:18:40.195 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=7, total_length=7
+2026-02-28 10:18:40.195 | INFO     | graph:stream_generator_to_callback:373 | [a38584c5-a964-4ef6-8bb4-cd5d60096370] TTFT: 0.006s for introduction
+2026-02-28 10:18:40.195 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=6, total_length=13
+2026-02-28 10:18:40.196 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=5, total_length=18
+2026-02-28 10:18:40.196 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=6, total_length=24
+2026-02-28 10:18:40.196 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=4, total_length=28
+2026-02-28 10:18:40.197 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 6 | length=8, total_length=36
+2026-02-28 10:18:40.197 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 7 | length=5, total_length=41
+2026-02-28 10:18:40.197 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 8 | length=6, total_length=47
+2026-02-28 10:18:40.197 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 9 | length=3, total_length=50
+2026-02-28 10:18:40.197 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 10 | length=4, total_length=54
+2026-02-28 10:18:40.197 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-28 10:18:40.197 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-28 10:18:40.197 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=0.002s, response_length=54
+2026-02-28 10:18:40.197 | INFO     | graph:stream_generator_to_callback:425 | [a38584c5-a964-4ef6-8bb4-cd5d60096370] Stream finished in 0.002s for introduction
+2026-02-28 10:18:40.197 | INFO     | graph:node_generate_intro:347 | [a38584c5-a964-4ef6-8bb4-cd5d60096370] Node: Generate Intro finished in 0.003s
+2026-02-28 10:18:40.198 | INFO     | graph:node_finalize:1121 | [a38584c5-a964-4ef6-8bb4-cd5d60096370] Node: Finalize
+2026-02-28 10:18:40.198 | INFO     | graph:node_finalize:1173 | [a38584c5-a964-4ef6-8bb4-cd5d60096370] Node: Finalize finished in 0.000s
+2026-02-28 10:18:40.234 | INFO     | paixueji_app:run_critique_background:1050 | [CRITIQUE] Task 8fb253dd... started for session f0441af6... (1 exchanges)
+2026-02-28 10:18:40.234 | DEBUG    | tests.quality.ai_critique_form:fill_exchange:167 | [AICritiqueFormFiller] Exchange 1 raw: {"is_engaged": true, "is_factually_correct": true, "correctness_reasoning": "Correct", "decision": "CONTINUE", "switching_reasoning": "Stay"}
+2026-02-28 10:18:40.234 | INFO     | tests.quality.ai_critique_form:fill_exchange:191 | [AICritiqueFormFiller] Exchange 1: no issues found (raw: {"is_engaged": true, "is_factually_correct": true, "correctness_reasoning": "Correct", "decision": "CONTINUE", "switchin)
+2026-02-28 10:18:40.235 | INFO     | paixueji_app:run_critique_background:1086 | [CRITIQUE] Task 8fb253dd... 0/1 exchanges flagged as flawed
+2026-02-28 10:18:40.236 | INFO     | paixueji_app:run_critique_background:1132 | [CRITIQUE] Task 8fb253dd... report saved: /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/reports/AIF/banana_20260228_101840.md
+2026-02-28 10:18:40.236 | INFO     | paixueji_app:run_critique_background:1179 | [CRITIQUE] Task 8fb253dd... completed | flawed: 0 | traces: 0
+2026-02-28 10:18:40.237 | INFO     | graph:node_generate_fun_fact:287 | [884a87a8-ea79-45f6-9fb5-a84a3bcfde54] Node: Generate Fun Fact for 'apple'
+2026-02-28 10:18:40.237 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'apple' (model=gemini-2.0-flash-lite)
+2026-02-28 10:18:40.237 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-02-28 10:18:40.238 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 0.000s | text_length=141
+2026-02-28 10:18:40.238 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: apple -> nature | Concept: Change | Question: How does it change? | Thinking: Test
+2026-02-28 10:18:40.238 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'apple'
+2026-02-28 10:18:40.238 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 0.000s
+2026-02-28 10:18:40.238 | WARNING  | stream.fun_fact:generate_fun_fact:198 | [FUN_FACT] No fun facts in structured output for 'apple'
+2026-02-28 10:18:40.238 | INFO     | graph:node_generate_fun_fact:302 | [884a87a8-ea79-45f6-9fb5-a84a3bcfde54] Node: Generate Fun Fact finished in 0.001s
+2026-02-28 10:18:40.238 | INFO     | graph:node_generate_intro:318 | [884a87a8-ea79-45f6-9fb5-a84a3bcfde54] Node: Generate Intro for 'apple'
+2026-02-28 10:18:40.238 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=False
+2026-02-28 10:18:40.238 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-28 10:18:40.238 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-28 10:18:40.238 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: MockStream
+2026-02-28 10:18:40.238 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=7, total_length=7
+2026-02-28 10:18:40.238 | INFO     | graph:stream_generator_to_callback:373 | [884a87a8-ea79-45f6-9fb5-a84a3bcfde54] TTFT: 0.002s for introduction
+2026-02-28 10:18:40.238 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=6, total_length=13
+2026-02-28 10:18:40.238 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=5, total_length=18
+2026-02-28 10:18:40.238 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=6, total_length=24
+2026-02-28 10:18:40.238 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=4, total_length=28
+2026-02-28 10:18:40.238 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 6 | length=8, total_length=36
+2026-02-28 10:18:40.238 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 7 | length=5, total_length=41
+2026-02-28 10:18:40.239 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 8 | length=6, total_length=47
+2026-02-28 10:18:40.239 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 9 | length=3, total_length=50
+2026-02-28 10:18:40.239 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 10 | length=4, total_length=54
+2026-02-28 10:18:40.239 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-28 10:18:40.239 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-28 10:18:40.239 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=0.001s, response_length=54
+2026-02-28 10:18:40.239 | INFO     | graph:stream_generator_to_callback:425 | [884a87a8-ea79-45f6-9fb5-a84a3bcfde54] Stream finished in 0.001s for introduction
+2026-02-28 10:18:40.239 | INFO     | graph:node_generate_intro:347 | [884a87a8-ea79-45f6-9fb5-a84a3bcfde54] Node: Generate Intro finished in 0.001s
+2026-02-28 10:18:40.239 | INFO     | graph:node_finalize:1121 | [884a87a8-ea79-45f6-9fb5-a84a3bcfde54] Node: Finalize
+2026-02-28 10:18:40.239 | INFO     | graph:node_finalize:1173 | [884a87a8-ea79-45f6-9fb5-a84a3bcfde54] Node: Finalize finished in 0.000s
+2026-02-28 10:18:40.241 | INFO     | graph:node_analyze_input:260 | [884a87a8-ea79-45f6-9fb5-a84a3bcfde54] Node: Analyze Input
+2026-02-28 10:18:40.241 | INFO     | stream.validation:classify_intent:91 | [CLASSIFY] LLM call duration: 0.000s
+2026-02-28 10:18:40.241 | INFO     | stream.validation:classify_intent:120 | [CLASSIFY] intent=CLARIFYING | new_object=None | reasoning=N/A
+2026-02-28 10:18:40.241 | INFO     | graph:node_analyze_input:273 | [884a87a8-ea79-45f6-9fb5-a84a3bcfde54] Node: Analyze Input finished in 0.000s
+2026-02-28 10:18:40.241 | INFO     | graph:node_clarifying:465 | [884a87a8-ea79-45f6-9fb5-a84a3bcfde54] Node: Clarifying
+2026-02-28 10:18:40.241 | INFO     | stream.response_generators:generate_intent_response_stream:59 | generate_intent_response_stream started | intent=clarifying, object=apple, age=6
+2026-02-28 10:18:40.242 | INFO     | graph:stream_generator_to_callback:373 | [884a87a8-ea79-45f6-9fb5-a84a3bcfde54] TTFT: 0.002s for None
+2026-02-28 10:18:40.242 | INFO     | stream.response_generators:generate_intent_response_stream:123 | generate_intent_response_stream completed | intent=clarifying, duration=0.000s, length=54
+2026-02-28 10:18:40.242 | INFO     | graph:stream_generator_to_callback:425 | [884a87a8-ea79-45f6-9fb5-a84a3bcfde54] Stream finished in 0.000s for None
+2026-02-28 10:18:40.242 | INFO     | graph:node_clarifying:482 | [884a87a8-ea79-45f6-9fb5-a84a3bcfde54] Node: Clarifying finished in 0.000s
+2026-02-28 10:18:40.242 | INFO     | graph:node_finalize:1121 | [884a87a8-ea79-45f6-9fb5-a84a3bcfde54] Node: Finalize
+2026-02-28 10:18:40.242 | INFO     | graph:node_finalize:1173 | [884a87a8-ea79-45f6-9fb5-a84a3bcfde54] Node: Finalize finished in 0.000s
+2026-02-28 10:18:40.272 | INFO     | graph:node_analyze_input:260 | [test_session] Node: Analyze Input
+2026-02-28 10:18:45.426 | INFO     | stream.validation:classify_intent:91 | [CLASSIFY] LLM call duration: 5.154s
+2026-02-28 10:18:45.427 | INFO     | stream.validation:classify_intent:120 | [CLASSIFY] intent=CORRECT_ANSWER | new_object=None | reasoning=The child directly answers the AI's question with a meaningful description of the bike.
+2026-02-28 10:18:45.427 | INFO     | graph:node_analyze_input:273 | [test_session] Node: Analyze Input finished in 5.155s
+2026-02-28 10:18:45.429 | INFO     | graph:node_correct_answer:495 | [test_session] Node: Correct Answer
+2026-02-28 10:18:45.429 | INFO     | stream.response_generators:generate_intent_response_stream:59 | generate_intent_response_stream started | intent=correct_answer, object=Bike, age=6
+2026-02-28 10:18:45.429 | ERROR    | stream.response_generators:generate_intent_response_stream:111 | generate_intent_response_stream error | intent=correct_answer, error='MockClient' object has no attribute 'aio', duration=0.000s
+2026-02-28 10:18:45.430 | INFO     | graph:stream_generator_to_callback:425 | [test_session] Stream finished in 0.001s for unknown
+2026-02-28 10:18:45.430 | INFO     | graph:node_correct_answer:512 | [test_session] Node: Correct Answer finished in 0.001s
+2026-02-28 10:18:45.430 | INFO     | graph:node_finalize:1121 | [test_session] Node: Finalize
+2026-02-28 10:18:45.430 | INFO     | graph:node_finalize:1173 | [test_session] Node: Finalize finished in 0.000s
+2026-02-28 10:18:45.470 | INFO     | graph:node_guide_navigator:867 | [test_scaffold] Node: Guide Navigator
+2026-02-28 10:18:45.471 | ERROR    | stream.theme_guide:analyze_turn:114 | [Navigator] Planning failed: 'MockClient' object has no attribute 'aio'
+2026-02-28 10:18:45.472 | INFO     | graph:node_guide_driver:911 | [test_scaffold] Node: Guide Driver
+2026-02-28 10:18:45.472 | ERROR    | stream.theme_guide:generate_response_stream:252 | [Driver] Generation failed: 'MockClient' object has no attribute 'aio'
+2026-02-28 10:18:45.473 | INFO     | graph:node_finalize:1121 | [test_scaffold] Node: Finalize
+2026-02-28 10:18:45.473 | INFO     | graph:node_finalize:1173 | [test_scaffold] Node: Finalize finished in 0.000s
+2026-02-28 10:27:30.209 | INFO     | graph:node_generate_fun_fact:287 | [ba4e5f6b-b9f1-4e00-9a8b-7d11205310ba] Node: Generate Fun Fact for 'apple'
+2026-02-28 10:27:30.210 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'apple' (model=gemini-2.0-flash-lite)
+2026-02-28 10:27:30.210 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 0.000s | text_length=141
+2026-02-28 10:27:30.210 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'apple'
+2026-02-28 10:27:30.210 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 0.000s
+2026-02-28 10:27:30.210 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-02-28 10:27:30.210 | WARNING  | stream.fun_fact:generate_fun_fact:198 | [FUN_FACT] No fun facts in structured output for 'apple'
+2026-02-28 10:27:30.211 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: apple -> nature | Concept: Change | Question: How does it change? | Thinking: Test
+2026-02-28 10:27:30.211 | INFO     | graph:node_generate_fun_fact:302 | [ba4e5f6b-b9f1-4e00-9a8b-7d11205310ba] Node: Generate Fun Fact finished in 0.002s
+2026-02-28 10:27:30.211 | INFO     | graph:node_generate_intro:318 | [ba4e5f6b-b9f1-4e00-9a8b-7d11205310ba] Node: Generate Intro for 'apple'
+2026-02-28 10:27:30.211 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=False
+2026-02-28 10:27:30.211 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-28 10:27:30.211 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-28 10:27:30.211 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: MockStream
+2026-02-28 10:27:30.211 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=7, total_length=7
+2026-02-28 10:27:30.211 | INFO     | graph:stream_generator_to_callback:373 | [ba4e5f6b-b9f1-4e00-9a8b-7d11205310ba] TTFT: 0.004s for introduction
+2026-02-28 10:27:30.211 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=6, total_length=13
+2026-02-28 10:27:30.211 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=5, total_length=18
+2026-02-28 10:27:30.211 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=6, total_length=24
+2026-02-28 10:27:30.211 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=4, total_length=28
+2026-02-28 10:27:30.211 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 6 | length=8, total_length=36
+2026-02-28 10:27:30.211 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 7 | length=5, total_length=41
+2026-02-28 10:27:30.211 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 8 | length=6, total_length=47
+2026-02-28 10:27:30.211 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 9 | length=3, total_length=50
+2026-02-28 10:27:30.211 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 10 | length=4, total_length=54
+2026-02-28 10:27:30.211 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-28 10:27:30.211 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-28 10:27:30.212 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=0.001s, response_length=54
+2026-02-28 10:27:30.212 | INFO     | graph:stream_generator_to_callback:425 | [ba4e5f6b-b9f1-4e00-9a8b-7d11205310ba] Stream finished in 0.001s for introduction
+2026-02-28 10:27:30.212 | INFO     | graph:node_generate_intro:347 | [ba4e5f6b-b9f1-4e00-9a8b-7d11205310ba] Node: Generate Intro finished in 0.001s
+2026-02-28 10:27:30.212 | INFO     | graph:node_finalize:1121 | [ba4e5f6b-b9f1-4e00-9a8b-7d11205310ba] Node: Finalize
+2026-02-28 10:27:30.212 | INFO     | graph:node_finalize:1173 | [ba4e5f6b-b9f1-4e00-9a8b-7d11205310ba] Node: Finalize finished in 0.000s
+2026-02-28 10:27:30.214 | INFO     | graph:node_analyze_input:260 | [ba4e5f6b-b9f1-4e00-9a8b-7d11205310ba] Node: Analyze Input
+2026-02-28 10:27:30.214 | INFO     | stream.validation:classify_intent:91 | [CLASSIFY] LLM call duration: 0.000s
+2026-02-28 10:27:30.214 | INFO     | stream.validation:classify_intent:120 | [CLASSIFY] intent=CLARIFYING | new_object=None | reasoning=N/A
+2026-02-28 10:27:30.214 | INFO     | graph:node_analyze_input:273 | [ba4e5f6b-b9f1-4e00-9a8b-7d11205310ba] Node: Analyze Input finished in 0.000s
+2026-02-28 10:27:30.214 | INFO     | graph:node_clarifying:465 | [ba4e5f6b-b9f1-4e00-9a8b-7d11205310ba] Node: Clarifying
+2026-02-28 10:27:30.215 | INFO     | stream.response_generators:generate_intent_response_stream:59 | generate_intent_response_stream started | intent=clarifying, object=apple, age=6
+2026-02-28 10:27:30.215 | INFO     | graph:stream_generator_to_callback:373 | [ba4e5f6b-b9f1-4e00-9a8b-7d11205310ba] TTFT: 0.002s for None
+2026-02-28 10:27:30.215 | INFO     | stream.response_generators:generate_intent_response_stream:123 | generate_intent_response_stream completed | intent=clarifying, duration=0.000s, length=54
+2026-02-28 10:27:30.215 | INFO     | graph:stream_generator_to_callback:425 | [ba4e5f6b-b9f1-4e00-9a8b-7d11205310ba] Stream finished in 0.000s for None
+2026-02-28 10:27:30.215 | INFO     | graph:node_clarifying:482 | [ba4e5f6b-b9f1-4e00-9a8b-7d11205310ba] Node: Clarifying finished in 0.000s
+2026-02-28 10:27:30.215 | INFO     | graph:node_finalize:1121 | [ba4e5f6b-b9f1-4e00-9a8b-7d11205310ba] Node: Finalize
+2026-02-28 10:27:30.215 | INFO     | graph:node_finalize:1173 | [ba4e5f6b-b9f1-4e00-9a8b-7d11205310ba] Node: Finalize finished in 0.000s
+2026-02-28 10:27:30.218 | INFO     | graph:node_generate_fun_fact:287 | [90ac3860-8878-4bad-8b5a-921835f940df] Node: Generate Fun Fact for 'banana'
+2026-02-28 10:27:30.219 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'banana' (model=gemini-2.0-flash-lite)
+2026-02-28 10:27:30.219 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: banana
+2026-02-28 10:27:30.219 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 0.000s | text_length=141
+2026-02-28 10:27:30.219 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: banana -> nature | Concept: Change | Question: How does it change? | Thinking: Test
+2026-02-28 10:27:30.219 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'banana'
+2026-02-28 10:27:30.219 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 0.000s
+2026-02-28 10:27:30.219 | WARNING  | stream.fun_fact:generate_fun_fact:198 | [FUN_FACT] No fun facts in structured output for 'banana'
+2026-02-28 10:27:30.219 | INFO     | graph:node_generate_fun_fact:302 | [90ac3860-8878-4bad-8b5a-921835f940df] Node: Generate Fun Fact finished in 0.001s
+2026-02-28 10:27:30.219 | INFO     | graph:node_generate_intro:318 | [90ac3860-8878-4bad-8b5a-921835f940df] Node: Generate Intro for 'banana'
+2026-02-28 10:27:30.219 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=banana, age=None, has_fun_fact=False
+2026-02-28 10:27:30.219 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-28 10:27:30.219 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-28 10:27:30.219 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: MockStream
+2026-02-28 10:27:30.219 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=7, total_length=7
+2026-02-28 10:27:30.219 | INFO     | graph:stream_generator_to_callback:373 | [90ac3860-8878-4bad-8b5a-921835f940df] TTFT: 0.002s for introduction
+2026-02-28 10:27:30.219 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=6, total_length=13
+2026-02-28 10:27:30.219 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=5, total_length=18
+2026-02-28 10:27:30.219 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=6, total_length=24
+2026-02-28 10:27:30.219 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=4, total_length=28
+2026-02-28 10:27:30.219 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 6 | length=8, total_length=36
+2026-02-28 10:27:30.219 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 7 | length=5, total_length=41
+2026-02-28 10:27:30.219 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 8 | length=6, total_length=47
+2026-02-28 10:27:30.219 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 9 | length=3, total_length=50
+2026-02-28 10:27:30.219 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 10 | length=4, total_length=54
+2026-02-28 10:27:30.220 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-28 10:27:30.220 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-28 10:27:30.220 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=0.000s, response_length=54
+2026-02-28 10:27:30.220 | INFO     | graph:stream_generator_to_callback:425 | [90ac3860-8878-4bad-8b5a-921835f940df] Stream finished in 0.000s for introduction
+2026-02-28 10:27:30.220 | INFO     | graph:node_generate_intro:347 | [90ac3860-8878-4bad-8b5a-921835f940df] Node: Generate Intro finished in 0.001s
+2026-02-28 10:27:30.220 | INFO     | graph:node_finalize:1121 | [90ac3860-8878-4bad-8b5a-921835f940df] Node: Finalize
+2026-02-28 10:27:30.220 | INFO     | graph:node_finalize:1173 | [90ac3860-8878-4bad-8b5a-921835f940df] Node: Finalize finished in 0.000s
+2026-02-28 10:27:30.222 | INFO     | graph:node_analyze_input:260 | [90ac3860-8878-4bad-8b5a-921835f940df] Node: Analyze Input
+2026-02-28 10:27:30.222 | INFO     | stream.validation:classify_intent:91 | [CLASSIFY] LLM call duration: 0.000s
+2026-02-28 10:27:30.222 | INFO     | stream.validation:classify_intent:120 | [CLASSIFY] intent=CLARIFYING | new_object=None | reasoning=N/A
+2026-02-28 10:27:30.222 | INFO     | graph:node_analyze_input:273 | [90ac3860-8878-4bad-8b5a-921835f940df] Node: Analyze Input finished in 0.000s
+2026-02-28 10:27:30.222 | INFO     | graph:node_clarifying:465 | [90ac3860-8878-4bad-8b5a-921835f940df] Node: Clarifying
+2026-02-28 10:27:30.222 | INFO     | stream.response_generators:generate_intent_response_stream:59 | generate_intent_response_stream started | intent=clarifying, object=banana, age=None
+2026-02-28 10:27:30.223 | INFO     | graph:stream_generator_to_callback:373 | [90ac3860-8878-4bad-8b5a-921835f940df] TTFT: 0.002s for None
+2026-02-28 10:27:30.223 | INFO     | stream.response_generators:generate_intent_response_stream:123 | generate_intent_response_stream completed | intent=clarifying, duration=0.000s, length=54
+2026-02-28 10:27:30.223 | INFO     | graph:stream_generator_to_callback:425 | [90ac3860-8878-4bad-8b5a-921835f940df] Stream finished in 0.000s for None
+2026-02-28 10:27:30.223 | INFO     | graph:node_clarifying:482 | [90ac3860-8878-4bad-8b5a-921835f940df] Node: Clarifying finished in 0.000s
+2026-02-28 10:27:30.223 | INFO     | graph:node_finalize:1121 | [90ac3860-8878-4bad-8b5a-921835f940df] Node: Finalize
+2026-02-28 10:27:30.223 | INFO     | graph:node_finalize:1173 | [90ac3860-8878-4bad-8b5a-921835f940df] Node: Finalize finished in 0.000s
+2026-02-28 10:27:30.224 | INFO     | paixueji_app:manual_critique:1548 | [MANUAL-CRITIQUE] Report saved: /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/reports/HF/banana_20260228_102730.md | exchanges critiqued: 1
+2026-02-28 10:27:30.250 | ERROR    | trace_assembler:identify_culprit_llm:186 | [TraceAssembler] LLM culprit identification failed: 'culprit_type'
+2026-02-28 10:27:30.250 | ERROR    | trace_assembler:identify_culprit_llm:186 | [TraceAssembler] LLM culprit identification failed: 'culprit_type'
+2026-02-28 10:27:30.250 | INFO     | trace_assembler:save_trace_object:413 | [TRACE] Saved trace object: /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/traces/banana_90ac3860_ex1_20260228_102730.json
+2026-02-28 10:27:30.251 | INFO     | paixueji_app:critique_conversation:1306 | [CRITIQUE] Task 648bddfc... spawned for session 90ac3860...
+2026-02-28 10:27:30.258 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: banana
+2026-02-28 10:27:30.258 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: banana -> nature | Concept: Change | Question: How does it change? | Thinking: Test
+2026-02-28 10:27:30.266 | INFO     | graph:node_generate_fun_fact:287 | [dabbe779-1360-4b70-92f2-2fe12b2d27c8] Node: Generate Fun Fact for 'apple'
+2026-02-28 10:27:30.266 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-02-28 10:27:30.266 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'apple' (model=gemini-2.0-flash-lite)
+2026-02-28 10:27:30.266 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: apple -> nature | Concept: Change | Question: How does it change? | Thinking: Test
+2026-02-28 10:27:30.266 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 0.000s | text_length=141
+2026-02-28 10:27:30.267 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'apple'
+2026-02-28 10:27:30.267 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 0.000s
+2026-02-28 10:27:30.267 | WARNING  | stream.fun_fact:generate_fun_fact:198 | [FUN_FACT] No fun facts in structured output for 'apple'
+2026-02-28 10:27:30.267 | INFO     | graph:node_generate_fun_fact:302 | [dabbe779-1360-4b70-92f2-2fe12b2d27c8] Node: Generate Fun Fact finished in 0.002s
+2026-02-28 10:27:30.268 | INFO     | graph:node_generate_intro:318 | [dabbe779-1360-4b70-92f2-2fe12b2d27c8] Node: Generate Intro for 'apple'
+2026-02-28 10:27:30.269 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=False
+2026-02-28 10:27:30.269 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-28 10:27:30.269 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-28 10:27:30.269 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: MockStream
+2026-02-28 10:27:30.269 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=7, total_length=7
+2026-02-28 10:27:30.269 | INFO     | graph:stream_generator_to_callback:373 | [dabbe779-1360-4b70-92f2-2fe12b2d27c8] TTFT: 0.007s for introduction
+2026-02-28 10:27:30.269 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=6, total_length=13
+2026-02-28 10:27:30.269 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=5, total_length=18
+2026-02-28 10:27:30.269 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=6, total_length=24
+2026-02-28 10:27:30.269 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=4, total_length=28
+2026-02-28 10:27:30.269 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 6 | length=8, total_length=36
+2026-02-28 10:27:30.270 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 7 | length=5, total_length=41
+2026-02-28 10:27:30.270 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 8 | length=6, total_length=47
+2026-02-28 10:27:30.270 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 9 | length=3, total_length=50
+2026-02-28 10:27:30.270 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 10 | length=4, total_length=54
+2026-02-28 10:27:30.270 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-28 10:27:30.271 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-28 10:27:30.271 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=0.002s, response_length=54
+2026-02-28 10:27:30.271 | INFO     | graph:stream_generator_to_callback:425 | [dabbe779-1360-4b70-92f2-2fe12b2d27c8] Stream finished in 0.002s for introduction
+2026-02-28 10:27:30.271 | INFO     | graph:node_generate_intro:347 | [dabbe779-1360-4b70-92f2-2fe12b2d27c8] Node: Generate Intro finished in 0.002s
+2026-02-28 10:27:30.271 | INFO     | paixueji_app:run_critique_background:1050 | [CRITIQUE] Task 648bddfc... started for session 90ac3860... (1 exchanges)
+2026-02-28 10:27:30.271 | INFO     | graph:node_finalize:1121 | [dabbe779-1360-4b70-92f2-2fe12b2d27c8] Node: Finalize
+2026-02-28 10:27:30.271 | INFO     | graph:node_finalize:1173 | [dabbe779-1360-4b70-92f2-2fe12b2d27c8] Node: Finalize finished in 0.000s
+2026-02-28 10:27:30.272 | DEBUG    | tests.quality.ai_critique_form:fill_exchange:167 | [AICritiqueFormFiller] Exchange 1 raw: {"is_engaged": true, "is_factually_correct": true, "correctness_reasoning": "Correct", "decision": "CONTINUE", "switching_reasoning": "Stay"}
+2026-02-28 10:27:30.272 | INFO     | tests.quality.ai_critique_form:fill_exchange:191 | [AICritiqueFormFiller] Exchange 1: no issues found (raw: {"is_engaged": true, "is_factually_correct": true, "correctness_reasoning": "Correct", "decision": "CONTINUE", "switchin)
+2026-02-28 10:27:30.272 | INFO     | paixueji_app:run_critique_background:1086 | [CRITIQUE] Task 648bddfc... 0/1 exchanges flagged as flawed
+2026-02-28 10:27:30.272 | INFO     | paixueji_app:run_critique_background:1132 | [CRITIQUE] Task 648bddfc... report saved: /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/reports/AIF/banana_20260228_102730.md
+2026-02-28 10:27:30.272 | INFO     | paixueji_app:run_critique_background:1179 | [CRITIQUE] Task 648bddfc... completed | flawed: 0 | traces: 0
+2026-02-28 10:27:30.274 | INFO     | graph:node_generate_fun_fact:287 | [661fe5b6-268e-4425-a1fa-ca6cf18f691c] Node: Generate Fun Fact for 'apple'
+2026-02-28 10:27:30.275 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'apple' (model=gemini-2.0-flash-lite)
+2026-02-28 10:27:30.275 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 0.000s | text_length=141
+2026-02-28 10:27:30.275 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-02-28 10:27:30.275 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'apple'
+2026-02-28 10:27:30.275 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: apple -> nature | Concept: Change | Question: How does it change? | Thinking: Test
+2026-02-28 10:27:30.275 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 0.000s
+2026-02-28 10:27:30.275 | WARNING  | stream.fun_fact:generate_fun_fact:198 | [FUN_FACT] No fun facts in structured output for 'apple'
+2026-02-28 10:27:30.275 | INFO     | graph:node_generate_fun_fact:302 | [661fe5b6-268e-4425-a1fa-ca6cf18f691c] Node: Generate Fun Fact finished in 0.001s
+2026-02-28 10:27:30.275 | INFO     | graph:node_generate_intro:318 | [661fe5b6-268e-4425-a1fa-ca6cf18f691c] Node: Generate Intro for 'apple'
+2026-02-28 10:27:30.275 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=False
+2026-02-28 10:27:30.275 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-28 10:27:30.275 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-28 10:27:30.275 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: MockStream
+2026-02-28 10:27:30.275 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=7, total_length=7
+2026-02-28 10:27:30.275 | INFO     | graph:stream_generator_to_callback:373 | [661fe5b6-268e-4425-a1fa-ca6cf18f691c] TTFT: 0.002s for introduction
+2026-02-28 10:27:30.275 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=6, total_length=13
+2026-02-28 10:27:30.276 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=5, total_length=18
+2026-02-28 10:27:30.276 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=6, total_length=24
+2026-02-28 10:27:30.276 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=4, total_length=28
+2026-02-28 10:27:30.276 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 6 | length=8, total_length=36
+2026-02-28 10:27:30.276 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 7 | length=5, total_length=41
+2026-02-28 10:27:30.276 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 8 | length=6, total_length=47
+2026-02-28 10:27:30.276 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 9 | length=3, total_length=50
+2026-02-28 10:27:30.276 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 10 | length=4, total_length=54
+2026-02-28 10:27:30.276 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-28 10:27:30.276 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-28 10:27:30.276 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=0.000s, response_length=54
+2026-02-28 10:27:30.276 | INFO     | graph:stream_generator_to_callback:425 | [661fe5b6-268e-4425-a1fa-ca6cf18f691c] Stream finished in 0.000s for introduction
+2026-02-28 10:27:30.276 | INFO     | graph:node_generate_intro:347 | [661fe5b6-268e-4425-a1fa-ca6cf18f691c] Node: Generate Intro finished in 0.001s
+2026-02-28 10:27:30.276 | INFO     | graph:node_finalize:1121 | [661fe5b6-268e-4425-a1fa-ca6cf18f691c] Node: Finalize
+2026-02-28 10:27:30.276 | INFO     | graph:node_finalize:1173 | [661fe5b6-268e-4425-a1fa-ca6cf18f691c] Node: Finalize finished in 0.000s
+2026-02-28 10:27:30.277 | INFO     | graph:node_analyze_input:260 | [661fe5b6-268e-4425-a1fa-ca6cf18f691c] Node: Analyze Input
+2026-02-28 10:27:30.278 | INFO     | stream.validation:classify_intent:91 | [CLASSIFY] LLM call duration: 0.000s
+2026-02-28 10:27:30.278 | INFO     | stream.validation:classify_intent:120 | [CLASSIFY] intent=CLARIFYING | new_object=None | reasoning=N/A
+2026-02-28 10:27:30.278 | INFO     | graph:node_analyze_input:273 | [661fe5b6-268e-4425-a1fa-ca6cf18f691c] Node: Analyze Input finished in 0.000s
+2026-02-28 10:27:30.279 | INFO     | graph:node_clarifying:465 | [661fe5b6-268e-4425-a1fa-ca6cf18f691c] Node: Clarifying
+2026-02-28 10:27:30.279 | INFO     | stream.response_generators:generate_intent_response_stream:59 | generate_intent_response_stream started | intent=clarifying, object=apple, age=6
+2026-02-28 10:27:30.279 | INFO     | graph:stream_generator_to_callback:373 | [661fe5b6-268e-4425-a1fa-ca6cf18f691c] TTFT: 0.002s for None
+2026-02-28 10:27:30.279 | INFO     | stream.response_generators:generate_intent_response_stream:123 | generate_intent_response_stream completed | intent=clarifying, duration=0.000s, length=54
+2026-02-28 10:27:30.279 | INFO     | graph:stream_generator_to_callback:425 | [661fe5b6-268e-4425-a1fa-ca6cf18f691c] Stream finished in 0.000s for None
+2026-02-28 10:27:30.279 | INFO     | graph:node_clarifying:482 | [661fe5b6-268e-4425-a1fa-ca6cf18f691c] Node: Clarifying finished in 0.000s
+2026-02-28 10:27:30.279 | INFO     | graph:node_finalize:1121 | [661fe5b6-268e-4425-a1fa-ca6cf18f691c] Node: Finalize
+2026-02-28 10:27:30.279 | INFO     | graph:node_finalize:1173 | [661fe5b6-268e-4425-a1fa-ca6cf18f691c] Node: Finalize finished in 0.000s
+2026-02-28 10:27:30.307 | INFO     | graph:node_analyze_input:260 | [test_session] Node: Analyze Input
+2026-02-28 10:27:34.108 | INFO     | stream.validation:classify_intent:91 | [CLASSIFY] LLM call duration: 3.801s
+2026-02-28 10:27:34.109 | INFO     | stream.validation:classify_intent:120 | [CLASSIFY] intent=CORRECT_ANSWER | new_object=None | reasoning=The child directly answers the AI's implied question about the bike's features.
+2026-02-28 10:27:34.109 | INFO     | graph:node_analyze_input:273 | [test_session] Node: Analyze Input finished in 3.802s
+2026-02-28 10:27:34.111 | INFO     | graph:node_correct_answer:495 | [test_session] Node: Correct Answer
+2026-02-28 10:27:34.111 | INFO     | stream.response_generators:generate_intent_response_stream:59 | generate_intent_response_stream started | intent=correct_answer, object=Bike, age=6
+2026-02-28 10:27:34.112 | ERROR    | stream.response_generators:generate_intent_response_stream:111 | generate_intent_response_stream error | intent=correct_answer, error='MockClient' object has no attribute 'aio', duration=0.001s
+2026-02-28 10:27:34.112 | INFO     | graph:stream_generator_to_callback:425 | [test_session] Stream finished in 0.001s for unknown
+2026-02-28 10:27:34.112 | INFO     | graph:node_correct_answer:512 | [test_session] Node: Correct Answer finished in 0.001s
+2026-02-28 10:27:34.112 | INFO     | graph:node_finalize:1121 | [test_session] Node: Finalize
+2026-02-28 10:27:34.112 | INFO     | graph:node_finalize:1173 | [test_session] Node: Finalize finished in 0.000s
+2026-02-28 10:27:34.156 | INFO     | graph:node_guide_navigator:867 | [test_scaffold] Node: Guide Navigator
+2026-02-28 10:27:34.156 | ERROR    | stream.theme_guide:analyze_turn:114 | [Navigator] Planning failed: 'MockClient' object has no attribute 'aio'
+2026-02-28 10:27:34.158 | INFO     | graph:node_guide_driver:911 | [test_scaffold] Node: Guide Driver
+2026-02-28 10:27:34.158 | ERROR    | stream.theme_guide:generate_response_stream:252 | [Driver] Generation failed: 'MockClient' object has no attribute 'aio'
+2026-02-28 10:27:34.158 | INFO     | graph:node_finalize:1121 | [test_scaffold] Node: Finalize
+2026-02-28 10:27:34.158 | INFO     | graph:node_finalize:1173 | [test_scaffold] Node: Finalize finished in 0.000s
+2026-02-28 10:30:37.079 | INFO     | graph:node_generate_fun_fact:287 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Generate Fun Fact for 'dinosaur bone'
+2026-02-28 10:30:37.085 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'dinosaur bone' (model=gemini-2.0-flash-lite)
+2026-02-28 10:30:37.085 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: dinosaur bone
+2026-02-28 10:30:40.839 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: dinosaur bone -> Category_Time_And_Space | Concept: Change | Question: Why do you think the shape of the bone is different from what it was a long, long time ago? | Thinking: Dinosaur bone -> Time and Space (History) -> Change (Transformation over time)
+2026-02-28 10:30:45.397 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 8.312s | text_length=1548
+2026-02-28 10:30:45.397 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'dinosaur bone'
+2026-02-28 10:30:47.850 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 2.452s
+2026-02-28 10:30:47.850 | INFO     | stream.fun_fact:cache_fun_fact:78 | [FUN_FACT] Cached 4 fun facts for 'dinosaur bone'
+2026-02-28 10:30:47.851 | INFO     | stream.fun_fact:generate_fun_fact:206 | [FUN_FACT] Success for 'dinosaur bone' | facts_count=4, selected='Did you know dinosaur bones have been found all over the wor...'
+2026-02-28 10:30:47.851 | INFO     | graph:node_generate_fun_fact:302 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Generate Fun Fact finished in 10.772s
+2026-02-28 10:30:47.854 | INFO     | graph:node_generate_intro:318 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Generate Intro for 'dinosaur bone'
+2026-02-28 10:30:47.854 | INFO     | stream.question_generators:ask_introduction_question_stream:68 | ask_introduction_question_stream started | object=dinosaur bone, age=6, has_fun_fact=True
+2026-02-28 10:30:47.855 | DEBUG    | stream.question_generators:ask_introduction_question_stream:97 | Messages prepared for API | count=2
+2026-02-28 10:30:47.855 | DEBUG    | stream.question_generators:ask_introduction_question_stream:108 | Sending 1 messages to Gemini API
+2026-02-28 10:30:47.855 | DEBUG    | stream.question_generators:ask_introduction_question_stream:125 | Stream object type: async_generator
+2026-02-28 10:30:48.466 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 1 | length=5, total_length=5
+2026-02-28 10:30:48.467 | INFO     | graph:stream_generator_to_callback:373 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] TTFT: 11.393s for introduction
+2026-02-28 10:30:48.468 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 2 | length=7, total_length=12
+2026-02-28 10:30:48.541 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 3 | length=69, total_length=81
+2026-02-28 10:30:48.621 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 4 | length=83, total_length=164
+2026-02-28 10:30:48.800 | DEBUG    | stream.question_generators:ask_introduction_question_stream:140 | Chunk 5 | length=103, total_length=267
+2026-02-28 10:30:48.801 | DEBUG    | stream.question_generators:ask_introduction_question_stream:145 | Gemini streaming API does not provide token usage in stream mode
+2026-02-28 10:30:48.801 | DEBUG    | stream.question_generators:ask_introduction_question_stream:164 | Cleaned up stream via del in finally block
+2026-02-28 10:30:48.801 | INFO     | stream.question_generators:ask_introduction_question_stream:169 | ask_introduction_question_stream completed | duration=0.948s, response_length=267
+2026-02-28 10:30:48.802 | INFO     | graph:stream_generator_to_callback:425 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Stream finished in 0.948s for introduction
+2026-02-28 10:30:48.802 | INFO     | graph:node_generate_intro:347 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Generate Intro finished in 0.948s
+2026-02-28 10:30:48.804 | INFO     | graph:node_finalize:1121 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Finalize
+2026-02-28 10:30:48.804 | INFO     | graph:node_finalize:1173 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Finalize finished in 0.000s
+2026-02-28 10:31:07.037 | INFO     | graph:node_analyze_input:260 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Analyze Input
+2026-02-28 10:31:08.845 | INFO     | stream.validation:classify_intent:91 | [CLASSIFY] LLM call duration: 1.807s
+2026-02-28 10:31:08.847 | INFO     | stream.validation:classify_intent:120 | [CLASSIFY] intent=CURIOSITY | new_object=None | reasoning=The child is asking for clarification on the AI's statement.
+2026-02-28 10:31:08.847 | INFO     | graph:node_analyze_input:273 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Analyze Input finished in 1.810s
+2026-02-28 10:31:08.850 | INFO     | graph:node_curiosity:435 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Curiosity
+2026-02-28 10:31:08.850 | INFO     | stream.response_generators:generate_intent_response_stream:59 | generate_intent_response_stream started | intent=curiosity, object=dinosaur bone, age=6
+2026-02-28 10:31:09.551 | INFO     | graph:stream_generator_to_callback:373 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] TTFT: 2.518s for None
+2026-02-28 10:31:09.995 | INFO     | stream.response_generators:generate_intent_response_stream:123 | generate_intent_response_stream completed | intent=curiosity, duration=1.144s, length=264
+2026-02-28 10:31:09.996 | INFO     | graph:stream_generator_to_callback:425 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Stream finished in 1.145s for None
+2026-02-28 10:31:09.996 | INFO     | graph:node_curiosity:452 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Curiosity finished in 1.146s
+2026-02-28 10:31:09.998 | INFO     | graph:node_finalize:1121 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Finalize
+2026-02-28 10:31:09.998 | INFO     | graph:node_finalize:1173 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Finalize finished in 0.000s
+2026-02-28 10:31:27.044 | INFO     | graph:node_analyze_input:260 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Analyze Input
+2026-02-28 10:31:30.144 | INFO     | stream.validation:classify_intent:91 | [CLASSIFY] LLM call duration: 3.099s
+2026-02-28 10:31:30.145 | INFO     | stream.validation:classify_intent:120 | [CLASSIFY] intent=SOCIAL_ACKNOWLEDGMENT | new_object=None | reasoning=The child is acknowledging the model's statement with a brief social signal.
+2026-02-28 10:31:30.145 | INFO     | graph:node_analyze_input:273 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Analyze Input finished in 3.101s
+2026-02-28 10:31:30.148 | INFO     | graph:node_social_acknowledgment:777 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Social Acknowledgment
+2026-02-28 10:31:30.148 | INFO     | stream.response_generators:generate_intent_response_stream:59 | generate_intent_response_stream started | intent=social_acknowledgment, object=dinosaur bone, age=6
+2026-02-28 10:31:30.866 | INFO     | graph:stream_generator_to_callback:373 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] TTFT: 3.824s for None
+2026-02-28 10:31:31.008 | INFO     | stream.response_generators:generate_intent_response_stream:123 | generate_intent_response_stream completed | intent=social_acknowledgment, duration=0.860s, length=105
+2026-02-28 10:31:31.008 | INFO     | graph:stream_generator_to_callback:425 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Stream finished in 0.861s for None
+2026-02-28 10:31:31.008 | INFO     | graph:node_social_acknowledgment:794 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Social Acknowledgment finished in 0.861s
+2026-02-28 10:31:31.010 | INFO     | graph:node_finalize:1121 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Finalize
+2026-02-28 10:31:31.010 | INFO     | graph:node_finalize:1173 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Finalize finished in 0.000s
+2026-02-28 10:31:41.735 | INFO     | graph:node_analyze_input:260 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Analyze Input
+2026-02-28 10:31:43.533 | INFO     | stream.validation:classify_intent:91 | [CLASSIFY] LLM call duration: 1.796s
+2026-02-28 10:31:43.533 | INFO     | stream.validation:classify_intent:120 | [CLASSIFY] intent=CORRECT_ANSWER | new_object=None | reasoning=The child directly answers the AI's question about how dinosaur bones feel.
+2026-02-28 10:31:43.533 | INFO     | graph:node_analyze_input:273 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Analyze Input finished in 1.798s
+2026-02-28 10:31:43.537 | INFO     | graph:node_correct_answer:495 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Correct Answer
+2026-02-28 10:31:43.537 | INFO     | stream.response_generators:generate_intent_response_stream:59 | generate_intent_response_stream started | intent=correct_answer, object=dinosaur bone, age=6
+2026-02-28 10:31:44.173 | INFO     | graph:stream_generator_to_callback:373 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] TTFT: 2.440s for None
+2026-02-28 10:31:44.384 | INFO     | stream.response_generators:generate_intent_response_stream:123 | generate_intent_response_stream completed | intent=correct_answer, duration=0.847s, length=213
+2026-02-28 10:31:44.385 | INFO     | graph:stream_generator_to_callback:425 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Stream finished in 0.848s for None
+2026-02-28 10:31:44.385 | INFO     | graph:node_correct_answer:512 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Correct Answer finished in 0.848s
+2026-02-28 10:31:44.388 | INFO     | graph:node_finalize:1121 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Finalize
+2026-02-28 10:31:44.388 | INFO     | graph:node_finalize:1173 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Finalize finished in 0.001s
+2026-02-28 10:32:06.905 | INFO     | graph:node_analyze_input:260 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Analyze Input
+2026-02-28 10:32:09.534 | INFO     | stream.validation:classify_intent:91 | [CLASSIFY] LLM call duration: 2.628s
+2026-02-28 10:32:09.534 | INFO     | stream.validation:classify_intent:120 | [CLASSIFY] intent=CURIOSITY | new_object=None | reasoning=The child is asking "how" something happened, indicating curiosity about the topic.
+2026-02-28 10:32:09.534 | INFO     | graph:node_analyze_input:273 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Analyze Input finished in 2.630s
+2026-02-28 10:32:09.537 | INFO     | graph:node_curiosity:435 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Curiosity
+2026-02-28 10:32:09.538 | INFO     | stream.response_generators:generate_intent_response_stream:59 | generate_intent_response_stream started | intent=curiosity, object=dinosaur bone, age=6
+2026-02-28 10:32:10.490 | INFO     | graph:stream_generator_to_callback:373 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] TTFT: 3.587s for None
+2026-02-28 10:32:11.140 | INFO     | stream.response_generators:generate_intent_response_stream:123 | generate_intent_response_stream completed | intent=curiosity, duration=1.603s, length=333
+2026-02-28 10:32:11.141 | INFO     | graph:stream_generator_to_callback:425 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Stream finished in 1.603s for None
+2026-02-28 10:32:11.142 | INFO     | graph:node_curiosity:452 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Curiosity finished in 1.604s
+2026-02-28 10:32:11.143 | INFO     | graph:node_finalize:1121 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Finalize
+2026-02-28 10:32:11.143 | INFO     | graph:node_finalize:1173 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Finalize finished in 0.000s
+2026-02-28 10:32:29.832 | INFO     | graph:node_analyze_input:260 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Analyze Input
+2026-02-28 10:32:31.843 | INFO     | stream.validation:classify_intent:91 | [CLASSIFY] LLM call duration: 2.009s
+2026-02-28 10:32:31.843 | INFO     | stream.validation:classify_intent:120 | [CLASSIFY] intent=CURIOSITY | new_object=None | reasoning=The child is asking "why" about the topic.
+2026-02-28 10:32:31.844 | INFO     | graph:node_analyze_input:273 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Analyze Input finished in 2.011s
+2026-02-28 10:32:31.847 | INFO     | graph:node_curiosity:435 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Curiosity
+2026-02-28 10:32:31.847 | INFO     | stream.response_generators:generate_intent_response_stream:59 | generate_intent_response_stream started | intent=curiosity, object=dinosaur bone, age=6
+2026-02-28 10:32:32.409 | INFO     | graph:stream_generator_to_callback:373 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] TTFT: 2.579s for None
+2026-02-28 10:32:33.018 | INFO     | stream.response_generators:generate_intent_response_stream:123 | generate_intent_response_stream completed | intent=curiosity, duration=1.171s, length=321
+2026-02-28 10:32:33.019 | INFO     | graph:stream_generator_to_callback:425 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Stream finished in 1.172s for None
+2026-02-28 10:32:33.019 | INFO     | graph:node_curiosity:452 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Curiosity finished in 1.172s
+2026-02-28 10:32:33.021 | INFO     | graph:node_finalize:1121 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Finalize
+2026-02-28 10:32:33.022 | INFO     | graph:node_finalize:1173 | [f5d231a1-a84d-4628-bd56-2127dc3bdc07] Node: Finalize finished in 0.000s

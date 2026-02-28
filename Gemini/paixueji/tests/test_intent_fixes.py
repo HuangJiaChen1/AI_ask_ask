@@ -638,3 +638,52 @@ class TestClarifyingPromptCaseCProhibition:
         assert case_c_pos < prohibitions_pos, (
             "PROHIBITIONS section must come after CASE C in CLARIFYING_INTENT_PROMPT"
         )
+
+
+# ============================================================================
+# Fix 5 — "what do you mean?" misclassified as CLARIFYING instead of CURIOSITY
+# ============================================================================
+
+class TestCuriosityPromptCoversWhatDoYouMean:
+    """Validate USER_INTENT_PROMPT correctly classifies 'what do you mean?' as CURIOSITY."""
+
+    def _get_prompt(self) -> str:
+        return paixueji_prompts.USER_INTENT_PROMPT
+
+    def test_curiosity_examples_include_what_do_you_mean(self):
+        """CURIOSITY definition must include 'What do you mean' as an example."""
+        prompt = self._get_prompt()
+        curiosity_start = prompt.find("CURIOSITY")
+        assert curiosity_start != -1, "USER_INTENT_PROMPT must define CURIOSITY"
+        # Find next category after CURIOSITY
+        clarifying_start = prompt.find("CLARIFYING", curiosity_start)
+        curiosity_section = prompt[curiosity_start:clarifying_start]
+        assert "What do you mean" in curiosity_section, (
+            "CURIOSITY examples must include 'What do you mean' to cover re-explanation requests"
+        )
+
+    def test_disambiguation_rule_what_do_you_mean_is_curiosity_not_clarifying(self):
+        """Disambiguation rules must explicitly state 'what do you mean?' → CURIOSITY, NOT CLARIFYING."""
+        prompt = self._get_prompt()
+        disambiguation_start = prompt.find("DISAMBIGUATION RULES")
+        assert disambiguation_start != -1, "USER_INTENT_PROMPT must have DISAMBIGUATION RULES"
+        rule_2_start = prompt.find("RULE 2", disambiguation_start)
+        end = rule_2_start if rule_2_start != -1 else len(prompt)
+        disambiguation_section = prompt[disambiguation_start:end]
+        assert "re-explain something the model said" in disambiguation_section or \
+               "CLARIFYING is only for" in disambiguation_section, (
+            "DISAMBIGUATION RULES must clarify that 'what do you mean?' is CURIOSITY, "
+            "not CLARIFYING — CLARIFYING is only for answer attempts"
+        )
+
+    def test_curiosity_covers_model_statement_reexplanation(self):
+        """CURIOSITY definition must reference child asking model to re-explain its own statement."""
+        prompt = self._get_prompt()
+        curiosity_start = prompt.find("CURIOSITY")
+        assert curiosity_start != -1, "USER_INTENT_PROMPT must define CURIOSITY"
+        clarifying_start = prompt.find("CLARIFYING", curiosity_start)
+        curiosity_section = prompt[curiosity_start:clarifying_start]
+        assert "model's" in curiosity_section or "model said" in curiosity_section or \
+               "model's\n" in curiosity_section, (
+            "CURIOSITY definition must mention child asking about the model's own statement"
+        )

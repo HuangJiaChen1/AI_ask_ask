@@ -204,8 +204,10 @@ CONTEXT:
 
 RULE 1 — INTENT (choose exactly ONE):
 
-  CURIOSITY             : Child asks "why", "what", "how" about the topic.
-                          Examples: "Why is it green?", "What does it eat?", "How does it fly?"
+  CURIOSITY             : Child asks "why", "what", "how" about the topic, OR asks what the model's
+                          own statement means ("what do you mean...?", "what does that mean?").
+                          Examples: "Why is it green?", "What does it eat?", "How does it fly?",
+                                    "What do you mean it has air inside?", "What does hollow mean?"
 
   CLARIFYING            : Child attempts to answer but is uncertain or wrong, OR says "I don't know".
                           Examples: "Hmm, a dog?", "Is it a bird?", "I think yellow?", "I don't know.", "It's a lemon."
@@ -259,6 +261,9 @@ DISAMBIGUATION RULES:
   - "i didn't know that" (after model states a fact) → SOCIAL_ACKNOWLEDGMENT
   - "oh yeah" (acknowledging fact, not answering a question) → SOCIAL_ACKNOWLEDGMENT
   - Short single-word affirmations when no specific question was asked → SOCIAL_ACKNOWLEDGMENT
+  - "What do you mean [X]?" or "What does that mean?" where the child is asking the model to
+    re-explain something the model said → CURIOSITY, NOT CLARIFYING
+    (CLARIFYING is only for a child attempting/failing to answer the AI's question)
 
 RULE 2 — NEW OBJECT (only for ACTION or AVOIDANCE):
   If the intent is ACTION or AVOIDANCE AND the child named a specific new object to explore,
