@@ -209,8 +209,17 @@ RULE 1 — INTENT (choose exactly ONE):
                           Examples: "Why is it green?", "What does it eat?", "How does it fly?",
                                     "What do you mean it has air inside?", "What does hollow mean?"
 
-  CLARIFYING            : Child attempts to answer but is uncertain or wrong, OR says "I don't know".
-                          Examples: "Hmm, a dog?", "Is it a bird?", "I think yellow?", "I don't know.", "It's a lemon."
+  CLARIFYING_IDK        : Child said "I don't know", is silent/blank, or gave a single confused word.
+                          Examples: "I don't know.", "Um...", "Hmm", "I have no idea"
+
+  CLARIFYING_WRONG      : Child attempted to answer the AI's question but was incorrect or substantially
+                          incomplete. They tried — but the answer was wrong.
+                          Examples: "Hmm, a dog?", "Is it a bird?", "I think yellow?", "It's a lemon."
+
+  CLARIFYING_CONSTRAINT : Child describes a real-world situational constraint — still engaged but
+                          explaining they don't have access to the object or experience.
+                          Examples: "I don't have one", "I can't do that", "I've never seen one",
+                                    "I have never seen these colors"
 
   CORRECT_ANSWER        : Child directly answers the AI's question with meaningful content
                           (correct, complete, or substantially on-target response).
@@ -229,7 +238,7 @@ RULE 1 — INTENT (choose exactly ONE):
   AVOIDANCE             : Child explicitly refuses, goes silent, or wants to exit this topic —
                           expressing *emotional* disinterest or fatigue, NOT a factual constraint.
                           Examples: "I don't want to.", "This is boring.", "I don't want to talk about this."
-                          NOT avoidance: "I don't have one", "I can't do that" (those are situational constraints → CLARIFYING)
+                          NOT avoidance: "I don't have one", "I can't do that" (those are situational constraints → CLARIFYING_CONSTRAINT)
 
   BOUNDARY              : Child asks about or proposes a physically risky action.
                           Examples: "Can I eat it?", "Can I throw it?", "What if I touch it?"
@@ -238,7 +247,8 @@ RULE 1 — INTENT (choose exactly ONE):
                           Examples: "Say it again.", "Give me a new question.", "Let's talk about dogs."
 
   SOCIAL                : Child asks about the AI itself, not the object.
-                          Examples: "Do you like it?", "How old are you?", "Are you real?"
+                          Examples: "Do you have feelings?", "How old are you?", "Are you real?", "Are you a robot?"
+                          NOT social: "Is it yum?", "Is it tasty?" (taste/sensory question about the food → CURIOSITY)
 
   SOCIAL_ACKNOWLEDGMENT : Child reacts with a brief social signal — not contributing new content,
                           just acknowledging or reacting to what the model said.
@@ -249,9 +259,9 @@ DISAMBIGUATION RULES:
   - Child answers the AI's question with content → CORRECT_ANSWER, NOT INFORMATIVE
   - "I feel sweet" (answering "what do you taste?") → CORRECT_ANSWER
   - "I know! It has seeds." (unprompted) → INFORMATIVE
-  - "It's a dog!" (wrong answer to AI's question) → CLARIFYING
-  - "I don't know." → CLARIFYING
-  - "I don't have [object]", "I can't [do action]", "I've never seen one" → CLARIFYING
+  - "It's a dog!" (wrong answer to AI's question) → CLARIFYING_WRONG
+  - "I don't know." → CLARIFYING_IDK
+  - "I don't have [object]", "I can't [do action]", "I've never seen one" → CLARIFYING_CONSTRAINT
     (child is sharing a situational/real-world constraint while still engaged — NOT AVOIDANCE)
   - "I don't want to talk about THIS" → AVOIDANCE (refusing topic), NOT CLARIFYING
   - "It's scary!" (reaction to object) → EMOTIONAL, NOT PLAY
@@ -259,11 +269,21 @@ DISAMBIGUATION RULES:
   - "Can I pet it?" (risky physical action) → BOUNDARY, NOT ACTION
   - "yes" or "no" in response to "Did you know...?" → SOCIAL_ACKNOWLEDGMENT (not a learning answer)
   - "i didn't know that" (after model states a fact) → SOCIAL_ACKNOWLEDGMENT
+  - "I don't know" or "idk" when AI's last question starts with "Did you know" →
+      SOCIAL_ACKNOWLEDGMENT (child is reacting to a fun fact, NOT stuck on an answer question)
   - "oh yeah" (acknowledging fact, not answering a question) → SOCIAL_ACKNOWLEDGMENT
   - Short single-word affirmations when no specific question was asked → SOCIAL_ACKNOWLEDGMENT
   - "What do you mean [X]?" or "What does that mean?" where the child is asking the model to
     re-explain something the model said → CURIOSITY, NOT CLARIFYING
     (CLARIFYING is only for a child attempting/failing to answer the AI's question)
+  - "Is it yum?", "Is it tasty?", "Does it taste good?", "Is it delicious?" — asking about
+    the sensory/taste quality of the food or sub-topic just discussed → CURIOSITY, NOT SOCIAL
+    (even though the phrasing is ambiguous, a young child asking about a food's taste is
+    expressing curiosity about the object, not asking about the AI's personal experience)
+  - "i meant X", "no I was asking about X", "I was talking about Y", "I meant the [sub-topic]"
+    — child clarifying/correcting what their previous statement referred to (not answering a
+    factual question) → CURIOSITY (about X/Y), NOT CLARIFYING_WRONG
+    (CLARIFYING_WRONG is only for a child who attempted and failed to answer the AI's question)
 
 RULE 2 — NEW OBJECT (only for ACTION or AVOIDANCE):
   If the intent is ACTION or AVOIDANCE AND the child named a specific new object to explore,
@@ -276,7 +296,7 @@ RULE 2 — NEW OBJECT (only for ACTION or AVOIDANCE):
 {topic_selection_instructions}
 
 OUTPUT (one field per line, no extra text):
-INTENT: <one of the 11 categories>
+INTENT: <one of the 13 categories>
 NEW_OBJECT: ObjectName or null
 REASONING: one brief sentence
 """
@@ -327,7 +347,9 @@ PROHIBITIONS:
 Respond naturally (NOT JSON). 2-3 sentences max.
 """
 
-CLARIFYING_INTENT_PROMPT = """\
+# --- Decoupled sub-intent prompts (replace the in-prompt case selection of CLARIFYING) ---
+
+CLARIFYING_IDK_INTENT_PROMPT = """\
 CONTEXT:
 - Child (age {age}) responded: "{child_answer}"
 - You're exploring: {object_name}
@@ -343,71 +365,124 @@ CATEGORY GUIDANCE:
 {category_prompt}
 
 YOUR MISSION:
-Protect the child's confidence. Determine which case applies from {child_answer}:
+Child said "I don't know", is silent/blank, or gave a single confused word.
+They have no answer — scaffold with a clue that helps them discover it. Do NOT re-ask.
 
-━━━ CASE A — Child said "I don't know", is blank, or gave a single confused word ━━━
-They have no answer. SCAFFOLD — give a clue that helps them discover it. Do NOT re-ask.
+BEAT 1 — ACCEPTANCE (one short phrase):
+  "That's okay!" / "No worries!" / "That's a tricky one!"
 
-  BEAT 1 — ACCEPTANCE (one short phrase):
-    "That's okay!" / "No worries!" / "That's a tricky one!"
+BEAT 2 — SCAFFOLD CLUE: One concrete, sensory clue that opens the answer — NOT the question rephrased.
+  If last question was about taste/feel: point to the sense organ
+    "Think about what your tongue feels the moment something sweet touches it..."
+  If last question was about appearance: narrow to one visible detail
+    "Look at just the very center — what one color jumps out?"
+  If last question was about sound/movement: give a comparison
+    "Is it more like a drum or a whisper?"
+  ANTI-PATTERN: "When you bite into an apple, what do you feel?" ← same question, different words. NEVER.
 
-  BEAT 2 — SCAFFOLD CLUE: One concrete, sensory clue that opens the answer — NOT the question rephrased.
-    If last question was about taste/feel: point to the sense organ
-      "Think about what your tongue feels the moment something sweet touches it..."
-    If last question was about appearance: narrow to one visible detail
-      "Look at just the very center — what one color jumps out?"
-    If last question was about sound/movement: give a comparison
-      "Is it more like a drum or a whisper?"
-    ANTI-PATTERN: "When you bite into an apple, what do you feel?" ← same question, different words. NEVER.
+  CRITICAL CONSTRAINT: Your scaffold clue MUST stay within the SAME sensory dimension or
+  conceptual topic as {last_model_question}.
+    - If the question was about COLOR → scaffold about color (shade, comparison, visual cue)
+    - If the question was about TASTE → scaffold about taste
+    - If the question was about SOUND → scaffold about sound
+    NEVER pivot to an unrelated sense (e.g., switching from color to texture).
+    Changing dimension makes the child feel lost, not helped.
 
-    CRITICAL CONSTRAINT: Your scaffold clue MUST stay within the SAME sensory dimension or
-    conceptual topic as {last_model_question}.
-      - If the question was about COLOR → scaffold about color (shade, comparison, visual cue)
-      - If the question was about TASTE → scaffold about taste
-      - If the question was about SOUND → scaffold about sound
-      NEVER pivot to an unrelated sense (e.g., switching from color to texture).
-      Changing dimension makes the child feel lost, not helped.
-
-  BEAT 3 — SHORT INVITATION (3-5 words max, NOT a full question):
-    "Give it a try!" / "What do you think?" / "Take a guess!"
-
-━━━ CASE B — Child gave a wrong or incomplete answer ━━━
-They tried — affirm the effort, correct gently, invite re-observation.
-
-  BEAT 1 — WARM ACKNOWLEDGMENT (vary each time):
-    "Ooh, I like how you're thinking about that!"
-    "You are SO close — great guess!"
-    "That's interesting thinking!"
-
-  BEAT 2 — GENTLE CORRECTION: State the correct fact simply.
-    Ages 3-5: One concrete, sensory fact
-    Ages 6-8: One fact with a brief "why"
-
-  BEAT 3 — OBSERVATION INVITE: Physical action-based, brief (NOT a knowledge question):
-    "Take a close look!" / "See if you can spot it now!" / "Look right there!"
-
-━━━ CASE C — Child describes a real-world constraint ("I don't have X", "I can't do Y") ━━━
-They are still engaged — explaining their situation, not refusing. Acknowledge it and redirect.
-
-  BEAT 1 — VALIDATE THEIR REALITY (1 short phrase):
-    "You don't need one!" / "That's no problem!" / "That's totally okay!"
-
-  BEAT 2 — IMAGINATIVE OR RELATABLE REDIRECT (1 sentence):
-    Bridge from their constraint to something imaginative or observable:
-    "We can imagine we're walking through an apple orchard right now!"
-    "Next time you see apples at the store, you can picture how they grew!"
-    "We can pretend together — you're the farmer right now!"
-
-  BEAT 3 — ONE OPEN QUESTION: A single simple observation question to re-engage.
-    Keep it light and accessible — no requirement for them to have the object.
-    "What do you think the farmer's orchard would look like?"
-    "If you WERE a farmer, what would you do first?"
+BEAT 3 — SHORT INVITATION (3-5 words max, NOT a full question):
+  "Give it a try!" / "What do you think?" / "Take a guess!"
 
 PROHIBITIONS:
 - Do NOT rephrase "{last_model_question}" in any form — that's re-asking
-- Do NOT make corrections feel like scolding
+- Do NOT pivot to a different sensory dimension
+
+Respond naturally (NOT JSON). 2-3 sentences max.
+"""
+
+CLARIFYING_WRONG_INTENT_PROMPT = """\
+CONTEXT:
+- Child (age {age}) responded: "{child_answer}"
+- You're exploring: {object_name}
+- You last asked: "{last_model_question}"
+
+CHARACTER:
+{character_prompt}
+
+AGE GUIDANCE:
+{age_prompt}
+
+CATEGORY GUIDANCE:
+{category_prompt}
+
+YOUR MISSION:
+Child attempted to answer the AI's question but was incorrect or substantially incomplete.
+They tried — affirm the effort, correct gently, invite re-observation.
+
+BEAT 1 — WARM ACKNOWLEDGMENT (vary each time):
+  "Ooh, I like how you're thinking about that!"
+  "You are SO close — great guess!"
+  "That's interesting thinking!"
+
+BEAT 2 — GENTLE CORRECTION: State the correct fact simply.
+  Ages 3-5: One concrete, sensory fact
+  Ages 6-8: One fact with a brief "why"
+
+BEAT 3 — RE-ENGAGEMENT INVITE: Brief, action-based (NOT a knowledge question):
+  • If {last_model_question} was about an OBSERVABLE PROPERTY (color, shape, texture, size,
+    appearance, smell): use a visual/sensory invite:
+      "Take a close look!" / "See if you can spot it now!" / "Look right there!"
+  • If {last_model_question} was about a PROCESS, CONCEPT, or ACTION (how something works,
+    how it is made/harvested/used, why something happens, where something comes from):
+    use a thought/imagination invite:
+      "What do you think?" / "Can you imagine?" / "Think about it!"
+  NEVER use visual invites for process or concept questions — there is nothing to look at.
+
+PROHIBITIONS:
+- Do NOT scold or make corrections feel harsh
 - Do NOT end with a knowledge question
-- Do NOT treat a constraint statement as avoidance — never say "That's okay, we can talk about something else!"
+- Do NOT rephrase "{last_model_question}" in any form — that's re-asking
+
+Respond naturally (NOT JSON). 2-3 sentences max.
+"""
+
+CLARIFYING_CONSTRAINT_INTENT_PROMPT = """\
+CONTEXT:
+- Child (age {age}) responded: "{child_answer}"
+- You're exploring: {object_name}
+- You last asked: "{last_model_question}"
+
+CHARACTER:
+{character_prompt}
+
+AGE GUIDANCE:
+{age_prompt}
+
+CATEGORY GUIDANCE:
+{category_prompt}
+
+YOUR MISSION:
+Child described a real-world situational constraint — they are still engaged but explaining
+they don't have access to the object or experience.
+Validate their constraint, redirect imaginatively, and stay anchored to {object_name}.
+
+BEAT 1 — VALIDATE THEIR REALITY (1 short phrase):
+  "You don't need one!" / "That's no problem!" / "That's totally okay!"
+
+BEAT 2 — IMAGINATIVE REDIRECT:
+  CRITICAL: Redirect MUST stay anchored to {object_name}. Do NOT shift to other objects, categories, or topics.
+  BAD: "What other fruits are red?" (drifts from {object_name})
+  GOOD: "We can imagine we're somewhere that {object_name} like that actually grows!"
+  GOOD: "Next time you see {object_name} at the store, you can picture how it looks up close!"
+
+BEAT 3 — ONE OPEN QUESTION:
+  CRITICAL: Question MUST still be about {object_name}, not a tangential topic.
+  BAD: "What other fruits do you know that are red?" (not about {object_name})
+  GOOD: "What do you think a {object_name} like that would taste like?"
+  Keep it light and accessible — no requirement for them to have the object.
+
+PROHIBITIONS:
+- Do NOT treat the constraint as avoidance — never say "That's okay, we can talk about something else!"
+- Do NOT drift to other objects or topics — all beats must remain anchored to {object_name}
+- Do NOT rephrase "{last_model_question}" in any form — that's re-asking
 
 Respond naturally (NOT JSON). 2-3 sentences max.
 """
@@ -1004,9 +1079,11 @@ def get_prompts():
         'fun_fact_structuring_prompt': FUN_FACT_STRUCTURING_PROMPT,
         # Intent classification (replaces input_analyzer_rules)
         'user_intent_prompt': USER_INTENT_PROMPT,
-        # 10 intent response prompts
+        # Intent response prompts
         'curiosity_intent_prompt': CURIOSITY_INTENT_PROMPT,
-        'clarifying_intent_prompt': CLARIFYING_INTENT_PROMPT,
+        'clarifying_idk_intent_prompt': CLARIFYING_IDK_INTENT_PROMPT,
+        'clarifying_wrong_intent_prompt': CLARIFYING_WRONG_INTENT_PROMPT,
+        'clarifying_constraint_intent_prompt': CLARIFYING_CONSTRAINT_INTENT_PROMPT,
         'correct_answer_intent_prompt': CORRECT_ANSWER_INTENT_PROMPT,
         'informative_intent_prompt': INFORMATIVE_INTENT_PROMPT,
         'play_intent_prompt': PLAY_INTENT_PROMPT,

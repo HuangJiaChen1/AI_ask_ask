@@ -39,8 +39,8 @@ async def classify_intent(
     """
     # Fast-path: only for truly empty input (≤2 chars total)
     if len(child_answer.strip()) <= 2:
-        logger.info("[CLASSIFY] Fast-path CLARIFYING (empty/silent input)")
-        return {"intent_type": "CLARIFYING", "new_object": None, "reasoning": "Empty or silent input"}
+        logger.info("[CLASSIFY] Fast-path CLARIFYING_IDK (empty/silent input)")
+        return {"intent_type": "CLARIFYING_IDK", "new_object": None, "reasoning": "Empty or silent input"}
 
     # Extract the last question the model asked from conversation history
     conversation_history = assistant.conversation_history
@@ -97,11 +97,12 @@ If the child refuses entirely → INTENT: AVOIDANCE"""
             return m.group(1).strip() if m else default
 
         valid_intents = {
-            "CURIOSITY", "CLARIFYING", "CORRECT_ANSWER", "INFORMATIVE", "PLAY", "EMOTIONAL",
+            "CURIOSITY", "CLARIFYING", "CLARIFYING_IDK", "CLARIFYING_WRONG", "CLARIFYING_CONSTRAINT",
+            "CORRECT_ANSWER", "INFORMATIVE", "PLAY", "EMOTIONAL",
             "AVOIDANCE", "BOUNDARY", "ACTION", "SOCIAL", "SOCIAL_ACKNOWLEDGMENT"
         }
-        raw_intent = _get(r"INTENT:\s*(\w+)", "CLARIFYING").upper()
-        intent_type = raw_intent if raw_intent in valid_intents else "CLARIFYING"
+        raw_intent = _get(r"INTENT:\s*(\w+)", "CLARIFYING_IDK").upper()
+        intent_type = raw_intent if raw_intent in valid_intents else "CLARIFYING_IDK"
 
         new_object_raw = _get(r"NEW_OBJECT:\s*(.+)", "null")
         new_object = None if new_object_raw.lower() in ("null", "none", "") else new_object_raw
@@ -121,11 +122,11 @@ If the child refuses entirely → INTENT: AVOIDANCE"""
         return result
 
     except Exception as e:
-        logger.error(f"[CLASSIFY] Error: {e}, defaulting to CLARIFYING")
+        logger.error(f"[CLASSIFY] Error: {e}, defaulting to CLARIFYING_IDK")
         import traceback
         traceback.print_exc()
         return {
-            "intent_type": "CLARIFYING",
+            "intent_type": "CLARIFYING_IDK",
             "new_object": None,
             "reasoning": f"Classification error: {str(e)}"
         }

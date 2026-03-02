@@ -462,14 +462,14 @@ async def node_curiosity(state: PaixuejiState) -> dict:
 
 
 @trace_node
-async def node_clarifying(state: PaixuejiState) -> dict:
-    """Child uncertain or wrong — affirm effort + gently correct + encourage retry."""
+async def node_clarifying_idk(state: PaixuejiState) -> dict:
+    """Child said 'I don't know' or is blank — scaffold with a sensory clue."""
     start_time = time.time()
-    logger.info(f"[{state['session_id']}] Node: Clarifying")
+    logger.info(f"[{state['session_id']}] Node: Clarifying IDK")
 
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
     generator = generate_intent_response_stream(
-        intent_type="clarifying",
+        intent_type="clarifying_idk",
         messages=messages,
         child_answer=state["content"],
         object_name=state["object_name"],
@@ -482,9 +482,69 @@ async def node_clarifying(state: PaixuejiState) -> dict:
         client=state["client"],
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
-    logger.info(f"[{state['session_id']}] Node: Clarifying finished in {time.time() - start_time:.3f}s")
+    logger.info(f"[{state['session_id']}] Node: Clarifying IDK finished in {time.time() - start_time:.3f}s")
     return {
-        "response_type": "clarifying",
+        "response_type": "clarifying_idk",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
+    }
+
+
+@trace_node
+async def node_clarifying_wrong(state: PaixuejiState) -> dict:
+    """Child gave wrong/incomplete answer — affirm effort + gently correct."""
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Clarifying Wrong")
+
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    generator = generate_intent_response_stream(
+        intent_type="clarifying_wrong",
+        messages=messages,
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
+        age_prompt=state["age_prompt"],
+        category_prompt=state["category_prompt"],
+        character_prompt=state["character_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    logger.info(f"[{state['session_id']}] Node: Clarifying Wrong finished in {time.time() - start_time:.3f}s")
+    return {
+        "response_type": "clarifying_wrong",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
+    }
+
+
+@trace_node
+async def node_clarifying_constraint(state: PaixuejiState) -> dict:
+    """Child described a real-world constraint — validate + object-anchored redirect."""
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Clarifying Constraint")
+
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    generator = generate_intent_response_stream(
+        intent_type="clarifying_constraint",
+        messages=messages,
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
+        age_prompt=state["age_prompt"],
+        category_prompt=state["category_prompt"],
+        character_prompt=state["character_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    logger.info(f"[{state['session_id']}] Node: Clarifying Constraint finished in {time.time() - start_time:.3f}s")
+    return {
+        "response_type": "clarifying_constraint",
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
@@ -1229,7 +1289,9 @@ def build_paixueji_graph():
 
     # --- 11 Intent nodes ---
     workflow.add_node("curiosity", node_curiosity)
-    workflow.add_node("clarifying", node_clarifying)
+    workflow.add_node("clarifying_idk", node_clarifying_idk)
+    workflow.add_node("clarifying_wrong", node_clarifying_wrong)
+    workflow.add_node("clarifying_constraint", node_clarifying_constraint)
     workflow.add_node("correct_answer", node_correct_answer)
     workflow.add_node("informative", node_informative)
     workflow.add_node("play", node_play)
@@ -1299,7 +1361,10 @@ def build_paixueji_graph():
         route_from_analyze_input,
         {
             "curiosity": "curiosity",
-            "clarifying": "clarifying",
+            "clarifying": "clarifying_idk",  # graceful fallback for error paths
+            "clarifying_idk": "clarifying_idk",
+            "clarifying_wrong": "clarifying_wrong",
+            "clarifying_constraint": "clarifying_constraint",
             "correct_answer": "correct_answer",
             "informative": "informative",
             "play": "play",
@@ -1315,8 +1380,9 @@ def build_paixueji_graph():
 
     workflow.add_edge("classify_theme", "start_guide")
 
-    # All 11 intent nodes → finalize
-    for intent_node in ["curiosity", "clarifying", "correct_answer", "informative", "play",
+    # All 13 intent nodes → finalize
+    for intent_node in ["curiosity", "clarifying_idk", "clarifying_wrong",
+                        "clarifying_constraint", "correct_answer", "informative", "play",
                         "emotional", "avoidance", "boundary", "action", "social",
                         "social_acknowledgment"]:
         workflow.add_edge(intent_node, "finalize")
