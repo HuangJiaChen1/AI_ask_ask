@@ -38,18 +38,6 @@ const TUTORIAL_STEPS = [
   },
   {
     phase: 'setup',
-    selector: '#assistantCharacter',
-    title: 'Pick a Character',
-    body: '<strong>Teacher</strong> uses an educational tone. <strong>Buddy</strong> is warmer and more playful. Both ask equally good questions — just different personalities.',
-  },
-  {
-    phase: 'setup',
-    selector: '#nextQuestionFocus',
-    title: 'Choose a Focus Mode',
-    body: 'Controls how the AI structures questions: <strong>System Managed</strong> (auto), <strong>Depth</strong> (go deeper on one concept), or <strong>Width</strong> (explore shape, color, category). Start with System Managed if unsure.',
-  },
-  {
-    phase: 'setup',
     selector: '#level1Category',
     title: 'Categories (Optional)',
     body: 'These are auto-filled when you Classify. You can override them manually if the AI picked the wrong category for your object.',
@@ -81,12 +69,6 @@ const TUTORIAL_STEPS = [
     selector: '#stopBtn',
     title: 'Stop Button',
     body: 'This button appears while the AI is responding. Click it if the response runs too long or goes off-track. The message so far is preserved.',
-  },
-  {
-    phase: 'chat',
-    selector: '#activeFocusMode',
-    title: 'Switch Focus Mid-Chat',
-    body: 'This dropdown appears once the session starts. You can switch between Depth and Width strategies at any time to redirect the AI\'s questioning approach.',
   },
   // ── Phase C: Review ───────────────────────────────────────────────────────
   {

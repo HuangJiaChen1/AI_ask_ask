@@ -1020,12 +1020,6 @@ function resetConversation() {
     progressIndicator.style.display = 'none';
     messagesContainer.style.display = 'none';
 
-    // Hide active focus control
-    const activeFocusControl = document.getElementById('activeFocusControl');
-    if (activeFocusControl) {
-        activeFocusControl.style.display = 'none';
-    }
-
     // Re-enable input
     userInput.disabled = false;
     userInput.value = '';
@@ -1041,14 +1035,6 @@ function resetConversation() {
 }
 
 /**
- * Save focus preference to localStorage
- */
-function saveFocusPreference() {
-    const focusMode = document.getElementById('nextQuestionFocus').value;
-    localStorage.setItem('paixueji_focus', focusMode);
-}
-
-/**
  * Initialize the application
  */
 function init() {
@@ -1056,24 +1042,6 @@ function init() {
 
     // Load category data
     loadCategoryData();
-
-    // Load saved character preference
-    const savedCharacter = localStorage.getItem('paixueji_character');
-    if (savedCharacter) {
-        const characterSelect = document.getElementById('assistantCharacter');
-        if (characterSelect) {
-            characterSelect.value = savedCharacter;
-        }
-    }
-
-    // Load saved focus preference
-    const savedFocus = localStorage.getItem('paixueji_focus');
-    if (savedFocus) {
-        const focusSelect = document.getElementById('nextQuestionFocus');
-        if (focusSelect) {
-            focusSelect.value = savedFocus;
-        }
-    }
 
     // Show empty state
     if (messagesContainer.children.length === 0) {

@@ -27,7 +27,11 @@ _NODE_GLOSSARY = """Graph node roles:
 - generate_fun_fact: Generates grounded fun facts for introduction turn (Google Search grounding)
 - generate_intro: Streams the introduction response using ask_introduction_question_stream
 - curiosity: Child asks why/what/how — expand gently + suggest action; uses 'curiosity_intent_prompt'
-- clarifying: Child uncertain or wrong — affirm effort + gently correct; uses 'clarifying_intent_prompt'
+- clarifying_idk: Child says "I don't know" — affirm + give partial answer; uses 'clarifying_idk_intent_prompt'
+- clarifying_wrong: Child gives incorrect answer — affirm effort + gently correct; uses 'clarifying_wrong_intent_prompt'
+- clarifying_constraint: Child gives partial answer — add constraint/refine; uses 'clarifying_constraint_intent_prompt'
+- give_answer_idk: Child deeply confused — give full answer directly; uses 'give_answer_idk_intent_prompt'
+- correct_answer: Child answers correctly — celebrate + deepen; uses 'correct_answer_intent_prompt'
 - informative: Child shares knowledge — give space + social reaction; uses 'informative_intent_prompt'
 - play: Child being silly/imaginative — play along + gamify; uses 'play_intent_prompt'
 - emotional: Child expresses feeling — empathize first + redirect; uses 'emotional_intent_prompt'
@@ -35,6 +39,7 @@ _NODE_GLOSSARY = """Graph node roles:
 - boundary: Child asks risky action — empathize + deny danger + safe alt; uses 'boundary_intent_prompt'
 - action: Child issues command — execute or redirect; uses 'action_intent_prompt'
 - social: Child asks about AI — warm direct answer; uses 'social_intent_prompt'
+- social_acknowledgment: Child asks about AI/social — warm acknowledgment; uses 'social_acknowledgment_intent_prompt'
 - start_guide: Initiates IB PYP theme guide phase, presents bridge question
 - guide_navigator: Analyzes guide response (ON_TRACK/DRIFTING/STUCK/COMPLETED); uses 'theme_navigator_rules'
 - router:route_after_navigator: Routes to guide_driver/guide_hint/guide_success/guide_exit
@@ -153,7 +158,7 @@ Output a single JSON object with EXACTLY these fields:
   "culprit_name": "<exact node or component name from the glossary above>",
   "confidence_level": "LOW" | "MODERATE" | "CONFIDENT" | "VERY_CONFIDENT",
   "reasoning": "<2-4 sentences referencing the actual exchange content and why this component is responsible>",
-  "prompt_template_name": "<exact key from this list that this node uses as its primary prompt: fun_fact_structuring_prompt, fun_fact_grounding_prompt, introduction_prompt, user_intent_prompt (for analyze_input), curiosity_intent_prompt, clarifying_intent_prompt, informative_intent_prompt, play_intent_prompt, emotional_intent_prompt, avoidance_intent_prompt, boundary_intent_prompt, action_intent_prompt, social_intent_prompt, theme_navigator_rules (for guide_navigator / ThemeNavigator). Use null ONLY for pure routers and the finalize/generate_intro nodes.>",
+  "prompt_template_name": "<exact key — pick from: fun_fact_structuring_prompt, fun_fact_grounding_prompt, introduction_prompt, user_intent_prompt (analyze_input), curiosity_intent_prompt, clarifying_idk_intent_prompt, clarifying_wrong_intent_prompt, clarifying_constraint_intent_prompt, give_answer_idk_intent_prompt, correct_answer_intent_prompt, informative_intent_prompt, play_intent_prompt, emotional_intent_prompt, avoidance_intent_prompt, boundary_intent_prompt, action_intent_prompt, social_intent_prompt, social_acknowledgment_intent_prompt, topic_switch_response_prompt, followup_question_prompt, completion_prompt, classification_prompt, theme_navigator_rules (guide_navigator / ThemeNavigator). Use null ONLY for pure routers (router:*), finalize, generate_intro, guide_driver, guide_hint, guide_success, guide_exit.>",
   "culprit_phase": "question" | "response" | null
 }}
 """
