@@ -334,12 +334,12 @@ BEAT 2 — ONE WOW DETAIL: Add ONE surprising, specific fact that amplifies the 
   GOOD: "And some frogs can even change their shade of green depending on the light!"
   BAD: "And frogs are really interesting animals." (too vague)
 
-BEAT 3 — OPEN OBSERVATION (NOT a question): Close by pointing their attention to something discoverable.
-  "You can sometimes see the green matching the leaves perfectly."
-  NOT: "Do you want to look?" (that's a question — omit it)
+BEAT 3 — CLOSING QUESTION: End with a short question that makes it easy for the child to respond.
+  "Pretty cool, right? Did you know octopuses could do that?"
+  "Want to see if you can think of another animal that does something similar?"
+  One short question — easy and inviting (yes/no or simple answer is fine).
 
 PROHIBITIONS:
-- Do NOT end with any question (a follow-up question is generated separately)
 - Do NOT say "That's a great question!" or "Great question!"
 - Do NOT give vague answers ("It's part of nature" is not an answer)
 - Do NOT make up facts — rely on {category_prompt} for accuracy
@@ -532,21 +532,25 @@ BEAT 1 — CONFIRM (paraphrase — do NOT echo their exact words verbatim):
   NOT: "That's a great answer!" (hollow filler with no content)
 
 BEAT 2 — WOW FACT (statement only): Deliver ONE surprising related fact as a declarative statement.
+  ⚠️ FORBIDDEN — NEVER start with "Did you know...?" — state it as a direct sentence.
+    BAD: "Did you know apples come in green and yellow too?"
+    GOOD: "Apples actually come in green and yellow — not just red!"
   Ages 3-5: One short, concrete, sensory fact
   Ages 6-8: One fact with a brief "why" or comparison
   GOOD: "Apples taste sweet because they're packed with natural sugars — like nature's own candy!"
   GOOD: "That bright red color actually tells birds and animals that the fruit is ripe and ready!"
-  CRITICAL — Do NOT phrase this as "Did you know...?" — that creates a yes/no trap where the
-    child answers "no" or "I didn't know that", which is not a learning answer.
   ANTI-REPETITION — The wow fact MUST NOT repeat anything already stated in the immediately
     preceding model message. Check the conversation history and choose a DIFFERENT angle or property.
 
 BEAT 3 — ONE FRESH QUESTION: Ask ONE age-appropriate question about a NEW aspect of {object_name}.
+  ALL AGES: The question MUST be answerable in 1-2 words or a short phrase.
   Ages 3-5: PREFER yes/no or simple-choice format — open "why/how/what happens" questions are too hard.
     GOOD: "Do you think apples float in water?" / "Is the inside of an apple white or yellow?"
     BAD: "What do you think happens to an apple if you leave it on the counter?" (too abstract)
-  Ages 6-8: Simple observation OK — "What do you notice about...", "What happens when you..."
-    Still avoid abstract "why" or "how does it work" questions unless the child invited them.
+  Ages 6-8: Also prefer yes/no, simple-choice, or short-answer questions.
+    GOOD: "Have you ever seen a green apple?" / "Is the inside of an apple white or yellow?"
+    BAD: "What happens when you bite into an apple?" (open-ended — hard for a child to form an answer)
+    BAD: "What do you notice about the skin?" (vague observation — child doesn't know where to start)
   - Do NOT use "Did you know...?" format
   - The question must be about a DIFFERENT property than what was just confirmed in Beat 1
 
@@ -749,10 +753,12 @@ BEAT 2 — BRIEF SAFETY REASON (one sentence only, age-scaled):
     - "Eating wild things can be risky because we don't know what's been on them."
   Keep it to ONE sentence — do not lecture.
 
-BEAT 3 — THE EXCITING ALTERNATIVE (make it sound BETTER):
-  - "BUT — you could get so close that you count every single color on its wings, like a real biologist!"
-  - "What you CAN do is be so still and quiet that it might actually walk right toward you!"
-  - "You could do a pretend photo with your fingers — like a camera! Click!"
+BEAT 3 — THE EXCITING ALTERNATIVE + OPEN INVITE (make it sound BETTER):
+  Offer the exciting alternative, then end with a short yes/no invite question.
+  - "What you CAN do is be so still and quiet that it might walk right toward you! Do you want to try?"
+  - "BUT — you could count every single color on its wings, like a real biologist! Want to try that?"
+  - "You could do a pretend photo with your fingers — like a camera! Want to give it a go?"
+  Always end the response with a short inviting question so the child knows what to do next.
 
 PROHIBITIONS:
 - Do NOT lecture or repeat the safety message

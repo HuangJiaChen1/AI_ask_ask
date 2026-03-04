@@ -27,7 +27,7 @@ checklist. A phase is not done until its task is marked `completed`.
 | 6 | Phase 4 — Verification plan |
 | 7 | Phase 5 — Implement fix |
 | 8 | Phase 6 — Real-LLM integration test (MANDATORY) |
-| 9 | Phase 7 — Write structural tests |
+| 9 | Phase 7 — Write structural + real-LLM tests |
 
 After creating all 9 tasks, mark task 1 `in_progress`. Then begin Phase 0.
 
@@ -158,8 +158,14 @@ so the user sees every remaining phase before approving. Use this exact structur
   ```
   Verify every Phase 3.5 property against the live response.
 
-**Phase 7 — Structural tests:** Invoke `test-writer-verifier` agent →
-  append tests to `tests/test_intent_fixes.py`.
+**Phase 7 — Structural + real-LLM tests:** Invoke `test-writer-verifier` agent →
+  append structural + `@pytest.mark.integration` real-LLM tests to `tests/test_intent_fixes.py`.
+
+**TODO — remaining phases:**
+- [ ] Phase 4 — Verification plan
+- [ ] Phase 5 — Implement fix
+- [ ] Phase 6 — Real-LLM integration test
+- [ ] Phase 7 — Structural + real-LLM tests
 
 ---
 
@@ -236,10 +242,55 @@ until all steps below are done.
 
 ---
 
-## Phase 7 — Write Structural Tests
+## Phase 7 — Write Structural + Real-LLM Tests
 
-Invoke the `test-writer-verifier` agent to write structural tests for the new behaviour
-and append them to `tests/test_intent_fixes.py`
+Invoke the `test-writer-verifier` agent with the following prompt (fill in the bracketed
+placeholders from earlier phases before sending):
 
-After the test-writer-verifier agent returns, mark task 9 (`Phase 7`) `completed`.
+---
+**test-writer-verifier prompt template:**
+
+> Write tests for the fix just applied to paixueji and append them to
+> `tests/test_intent_fixes.py`. Write TWO blocks of tests:
+>
+> ### Block A — Structural tests (offline, no LLM)
+> - Assert that the changed prompt variable(s) contain the new text added in Phase 3.
+> - Assert that prohibited phrasing (if any was removed) is absent.
+> - Follow the same pattern as the existing structural test classes above.
+>
+> ### Block B — Real-LLM integration test class
+> - Name the class `Test<FixName>RealLLM` (e.g. `TestCorrectAnswerBeat2RealLLM`).
+> - Decorate the **class** with `@pytest.mark.integration`.
+> - Reuse the existing `_get_real_client()` helper (already defined in the file at line ~941).
+> - Write one `@pytest.mark.asyncio` test method per Phase 3.5 property that can be
+>   verified against a live response. Each method must:
+>     1. Call `generate_intent_response_stream(intent_type="<affected_intent>", ...)`
+>        with the exact triggering input from the flaw report.
+>     2. Accumulate the full streamed text.
+>     3. Assert the Phase 3.5 property against that text.
+>     4. Print the live response with `print(f"\n[PROPERTY] Response: {response}")`.
+> - Include a docstring on the class stating the run command:
+>   `pytest -m integration tests/test_intent_fixes.py::Test<FixName>RealLLM -v -s`
+> - Add at least one regression guard: an input that should NOT be affected by the fix,
+>   asserting the original correct behaviour still holds.
+>
+> **Context for the tests:**
+> - Fix name: [from Phase 3]
+> - Affected intent_type: [from Phase 3]
+> - Triggering input: [exact child utterance from flaw report]
+> - Phase 3.5 properties: [paste the full checklist]
+> - Prompt variable(s) changed: [from Phase 3]
+
+---
+
+After the test-writer-verifier agent returns:
+
+1. Run the new real-LLM test to verify it passes against the live model:
+   ```
+   GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/application_default_credentials.json \
+     pytest -m integration tests/test_intent_fixes.py::Test<FixName>RealLLM -v -s
+   ```
+2. If any real-LLM test fails: keep task 9 `in_progress`, report the failure to the user.
+3. If all pass: mark task 9 (`Phase 7`) `completed`.
+
 Run TaskList to confirm all 9 tasks show `completed`. Only then report the fix as done.

@@ -51,11 +51,11 @@ class TestCorrectAnswerPromptOverhaul:
         )
 
     def test_critical_prohibition_did_you_know(self):
-        """Prompt must explicitly prohibit 'Did you know...?' phrasing in Beat 2."""
+        """Prompt must explicitly prohibit 'Did you know...?' phrasing at the top of Beat 2."""
         prompt = self._get_prompt()
-        # The CRITICAL annotation must be present
-        assert "CRITICAL" in prompt, (
-            "CORRECT_ANSWER_INTENT_PROMPT must contain a CRITICAL prohibition marker"
+        # The FORBIDDEN annotation must be present (replaces old CRITICAL marker)
+        assert "FORBIDDEN" in prompt, (
+            "CORRECT_ANSWER_INTENT_PROMPT must contain a FORBIDDEN prohibition marker in Beat 2"
         )
         # The prohibition must reference the banned phrase
         assert "Did you know" in prompt, (
@@ -105,6 +105,52 @@ class TestCorrectAnswerPromptOverhaul:
         )
         # Ensure the value is the overhauled version (WOW FACT present)
         assert "WOW FACT" in prompts["correct_answer_intent_prompt"]
+
+    def test_beat_3_all_ages_one_to_two_word_answer_rule(self):
+        """Beat 3 must state a universal 1-2 word answer rule that applies to ALL AGES."""
+        prompt = self._get_prompt()
+        assert "ALL AGES: The question MUST be answerable in 1-2 words" in prompt, (
+            "CORRECT_ANSWER_INTENT_PROMPT Beat 3 must include the universal "
+            "'ALL AGES: The question MUST be answerable in 1-2 words' rule"
+        )
+
+    def test_beat_3_ages_6_to_8_bad_example_what_happens_when_you_bite(self):
+        """Beat 3 ages 6-8 section must list 'What happens when you bite into an apple?' as a BAD example."""
+        prompt = self._get_prompt()
+        beat3_start = prompt.find("BEAT 3")
+        assert beat3_start != -1, "CORRECT_ANSWER_INTENT_PROMPT must contain BEAT 3"
+        prohibitions_start = prompt.find("PROHIBITIONS", beat3_start)
+        beat3_text = prompt[beat3_start:prohibitions_start]
+        assert "What happens when you bite into an apple?" in beat3_text, (
+            "Beat 3 must include 'What happens when you bite into an apple?' as a BAD example"
+        )
+        # Confirm it appears in a BAD context, not a GOOD one
+        bad_idx = beat3_text.find("BAD: \"What happens when you bite into an apple?\"")
+        assert bad_idx != -1, (
+            "The phrase must appear explicitly after a BAD label, not as a GOOD example"
+        )
+
+    def test_beat_3_what_happens_when_you_not_a_good_example(self):
+        """'What happens when you...' must NOT appear as a GOOD example in Beat 3."""
+        prompt = self._get_prompt()
+        beat3_start = prompt.find("BEAT 3")
+        assert beat3_start != -1, "CORRECT_ANSWER_INTENT_PROMPT must contain BEAT 3"
+        prohibitions_start = prompt.find("PROHIBITIONS", beat3_start)
+        beat3_text = prompt[beat3_start:prohibitions_start]
+        # Locate every occurrence of the phrase and verify none is preceded by GOOD:
+        search_phrase = "What happens when you"
+        idx = 0
+        while True:
+            pos = beat3_text.find(search_phrase, idx)
+            if pos == -1:
+                break
+            # Look at the 10 chars before this occurrence for "GOOD"
+            preceding = beat3_text[max(0, pos - 10):pos]
+            assert "GOOD" not in preceding, (
+                f"'What happens when you' must NOT appear as a GOOD example in Beat 3 "
+                f"(found near position {pos} in beat3 section)"
+            )
+            idx = pos + 1
 
 
 # ============================================================================
@@ -1028,3 +1074,128 @@ class TestIdkAfterDidYouKnowDisambiguation:
         assert did_you_know_pos < len(section), (
             "The 'Did you know' disambiguation rule must be present in the section"
         )
+
+
+# ============================================================================
+# Fix 7 — CURIOSITY_INTENT_PROMPT and BOUNDARY_INTENT_PROMPT closing-question
+# ============================================================================
+
+class TestBoundaryCuriosityPromptStructure:
+    """Structural (offline) tests verifying that the closing-question fix
+    was correctly applied to CURIOSITY_INTENT_PROMPT and BOUNDARY_INTENT_PROMPT."""
+
+    def test_boundary_prompt_contains_inviting_question_instruction(self):
+        """BOUNDARY_INTENT_PROMPT BEAT 3 must instruct to end with an inviting question."""
+        prompt = paixueji_prompts.BOUNDARY_INTENT_PROMPT
+        assert "Always end the response with a short inviting question" in prompt, (
+            "BOUNDARY_INTENT_PROMPT must contain the instruction "
+            "'Always end the response with a short inviting question'"
+        )
+
+    def test_boundary_prompt_contains_do_you_want_to_try_example(self):
+        """BOUNDARY_INTENT_PROMPT BEAT 3 examples must include 'Do you want to try?'."""
+        prompt = paixueji_prompts.BOUNDARY_INTENT_PROMPT
+        assert "Do you want to try?" in prompt, (
+            "BOUNDARY_INTENT_PROMPT must include the example 'Do you want to try?'"
+        )
+
+    def test_curiosity_prompt_beat3_header_is_closing_question(self):
+        """CURIOSITY_INTENT_PROMPT BEAT 3 header must be 'CLOSING QUESTION'."""
+        prompt = paixueji_prompts.CURIOSITY_INTENT_PROMPT
+        assert "CLOSING QUESTION" in prompt, (
+            "CURIOSITY_INTENT_PROMPT BEAT 3 must be labelled 'CLOSING QUESTION'"
+        )
+
+    def test_curiosity_prompt_does_not_prohibit_questions(self):
+        """CURIOSITY_INTENT_PROMPT must NOT contain the old prohibition about
+        follow-up questions being generated separately."""
+        prompt = paixueji_prompts.CURIOSITY_INTENT_PROMPT
+        assert "a follow-up question is generated separately" not in prompt, (
+            "CURIOSITY_INTENT_PROMPT must not contain the old prohibition "
+            "'a follow-up question is generated separately'"
+        )
+
+    def test_curiosity_prompt_beat3_does_not_forbid_questions(self):
+        """CURIOSITY_INTENT_PROMPT must NOT contain 'NOT a question' anywhere
+        in its text (that phrasing belongs to a different prompt)."""
+        prompt = paixueji_prompts.CURIOSITY_INTENT_PROMPT
+        assert "NOT a question" not in prompt, (
+            "CURIOSITY_INTENT_PROMPT must not contain 'NOT a question'; "
+            "BEAT 3 should now invite a closing question, not forbid one."
+        )
+
+
+@pytest.mark.integration
+class TestBoundaryCuriosityClosingQuestionRealLLM:
+    """Integration tests (real Gemini API) verifying that BOUNDARY and CURIOSITY
+    responses now end with a question mark after the closing-question fix.
+
+    Run with:
+        pytest -m integration tests/test_intent_fixes.py::TestBoundaryCuriosityClosingQuestionRealLLM -v -s
+    """
+
+    async def _call_intent(
+        self,
+        intent_type: str,
+        messages: list[dict],
+        child_answer: str,
+        object_name: str,
+        age: int,
+    ) -> str:
+        """Call generate_intent_response_stream with the real LLM and return full text."""
+        from stream import generate_intent_response_stream
+        client, config = _get_real_client()
+        full = ""
+        async for _, _, acc in generate_intent_response_stream(
+            intent_type=intent_type,
+            messages=messages,
+            child_answer=child_answer,
+            object_name=object_name,
+            age=age,
+            age_prompt="Use simple words and short sentences.",
+            category_prompt=(
+                "Octopus: sea creature with eight arms, very intelligent, "
+                "can change color and texture, soft body with no bones."
+            ),
+            last_model_question=messages[0]["content"],
+            config=config,
+            client=client,
+        ):
+            full = acc
+        return full
+
+    @pytest.mark.asyncio
+    async def test_boundary_response_ends_with_question(self):
+        """BOUNDARY response must end with '?' after the closing-question fix."""
+        response = await self._call_intent(
+            intent_type="boundary",
+            messages=[
+                {"role": "model", "content": "What do you know about octopuses?"},
+                {"role": "user",  "content": "I don't know. Can I eat octopus?"},
+            ],
+            child_answer="I don't know. Can I eat octopus?",
+            object_name="octopus",
+            age=6,
+        )
+        assert response.strip().endswith("?"), (
+            f"BOUNDARY response must end with a question mark. Got: {response!r}"
+        )
+        print(f"\n[BOUNDARY] Response: {response}")
+
+    @pytest.mark.asyncio
+    async def test_curiosity_response_ends_with_question(self):
+        """CURIOSITY response must end with '?' after the closing-question fix."""
+        response = await self._call_intent(
+            intent_type="curiosity",
+            messages=[
+                {"role": "model", "content": "What do you know about octopuses?"},
+                {"role": "user",  "content": "I wonder how they taste"},
+            ],
+            child_answer="I wonder how they taste",
+            object_name="octopus",
+            age=6,
+        )
+        assert response.strip().endswith("?"), (
+            f"CURIOSITY response must end with a question mark. Got: {response!r}"
+        )
+        print(f"\n[CURIOSITY] Response: {response}")
