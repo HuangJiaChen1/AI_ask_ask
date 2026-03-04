@@ -25,22 +25,7 @@
                 <option value="8">8 years</option>
             </select>
 
-            <label for="assistantCharacter">Assistant Character:</label>
-            <select id="assistantCharacter">
-                <option value="teacher" selected>Teacher (Educational)</option>
-                <option value="buddy">Buddy (Playful Friend)</option>
-            </select>
-
-            <label for="nextQuestionFocus">Focus Mode:</label>
-            <select id="nextQuestionFocus" onchange="saveFocusPreference()">
-                <option value="system_managed" selected>System Managed (Auto)</option>
-                <option value="depth">Depth (Deep Dive)</option>
-                <option value="width_shape">Width - Same Shape</option>
-                <option value="width_color">Width - Same Color</option>
-                <option value="width_category">Width - Same Category</option>
-            </select>
-
-            <label for="objectName">What object are we learning about?</label>
+<label for="objectName">What object are we learning about?</label>
             <div class="object-input-row">
                 <input type="text" id="objectName" placeholder="e.g., apple, dog, tree" />
                 <button type="button" onclick="classifyObject()" id="classifyBtn" class="classify-btn">Classify</button>
@@ -115,19 +100,7 @@
         <div class="input-area" style="display: none;">
             <div id="thinking-time" class="thinking-time"></div>
 
-            <!-- Active Focus Control (Hidden by default, shown during chat) -->
-            <div id="activeFocusControl" class="focus-control" style="display: none; margin-bottom: 10px; justify-content: flex-end;">
-                <label for="activeFocusMode">Next Question Focus:</label>
-                <select id="activeFocusMode">
-                    <option value="system_managed">System Managed (Auto)</option>
-                    <option value="depth">Depth (Deep Dive)</option>
-                    <option value="width_shape">Width - Same Shape</option>
-                    <option value="width_color">Width - Same Color</option>
-                    <option value="width_category">Width - Same Category</option>
-                </select>
-            </div>
-
-            <div class="input-row">
+<div class="input-row">
                 <input
                     type="text"
                     id="userInput"
@@ -153,18 +126,6 @@
             <div style="margin-bottom: 8px;">
                 <strong>Current Object:</strong>
                 <div style="color: #0f172a;" id="debugCurrentObject">-</div>
-            </div>
-            <div style="margin-bottom: 8px;">
-                <strong>Character:</strong>
-                <div style="color: #0f172a;" id="debugCharacter">-</div>
-            </div>
-            <div style="margin-bottom: 8px;">
-                <strong>Focus Mode:</strong>
-                <div style="color: #0f172a;" id="debugFocusMode">-</div>
-            </div>
-            <div style="margin-bottom: 8px;">
-                <strong>System Managed:</strong>
-                <div style="color: #0f172a;" id="debugSystemManaged">-</div>
             </div>
             <div>
                 <strong>Correct Answers:</strong>

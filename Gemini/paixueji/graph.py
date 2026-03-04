@@ -15,7 +15,6 @@ from stream import (
     classify_intent,
     generate_intent_response_stream,
     generate_explicit_switch_response_stream,
-    generate_object_suggestions,
     generate_topic_switch_response_stream,
     extract_previous_question,
     prepare_messages_for_streaming,
@@ -62,7 +61,6 @@ class PaixuejiState(TypedDict):
 
     # --- Prompts ---
     age_prompt: str
-    character_prompt: str
     category_prompt: str
 
     # --- Flow Control & Computed State ---
@@ -226,10 +224,7 @@ def _apply_topic_switch(state: PaixuejiState, new_obj: str) -> dict:
 
     from paixueji_assistant import ConversationState
 
-    if assistant.system_managed_focus:
-        assistant.reset_object_state(new_obj)
-    else:
-        assistant.object_name = new_obj
+    assistant.object_name = new_obj
 
     assistant.state = ConversationState.ASKING_QUESTION
 
@@ -273,9 +268,15 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
         is_awaiting_topic_selection=is_awaiting_topic_selection
     )
 
+    intent_type = intent_result["intent_type"]
+
+    # Reset IDK streak when child gives any non-IDK response
+    if intent_type not in ("CLARIFYING_IDK", "CLARIFYING"):
+        state["assistant"].consecutive_idk_count = 0
+
     logger.info(f"[{state['session_id']}] Node: Analyze Input finished in {time.time() - start_time:.3f}s")
     return {
-        "intent_type": intent_result["intent_type"],
+        "intent_type": intent_type,
         "new_object_name": intent_result.get("new_object"),
     }
 
@@ -315,15 +316,9 @@ async def node_generate_fun_fact(state: PaixuejiState) -> dict:
 async def node_generate_intro(state: PaixuejiState) -> dict:
     """
     Stream the introduction response using ask_introduction_question_stream.
-    Computes focus_prompt inline from FOCUS_PROMPTS (no longer stored in state).
     """
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Generate Intro for '{state['object_name']}'")
-
-    # Compute focus_prompt inline (no longer read from state)
-    focus_prompt = paixueji_prompts.FOCUS_PROMPTS["depth"].format(
-        object_name=state["object_name"]
-    )
 
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
 
@@ -336,7 +331,6 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
         level3_category=state["level3_category"],
-        focus_prompt=focus_prompt,
         fun_fact=state.get("fun_fact", ""),
         fun_fact_hook=state.get("fun_fact_hook", ""),
         fun_fact_question=state.get("fun_fact_question", ""),
@@ -446,7 +440,6 @@ async def node_curiosity(state: PaixuejiState) -> dict:
         age=state["age"],
         age_prompt=state["age_prompt"],
         category_prompt=state["category_prompt"],
-        character_prompt=state["character_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -463,20 +456,30 @@ async def node_curiosity(state: PaixuejiState) -> dict:
 
 @trace_node
 async def node_clarifying_idk(state: PaixuejiState) -> dict:
-    """Child said 'I don't know' or is blank — scaffold with a sensory clue."""
+    """Child said IDK — scaffold hint on 1st, give direct answer on 2nd."""
     start_time = time.time()
-    logger.info(f"[{state['session_id']}] Node: Clarifying IDK")
+    idk_count = state["assistant"].consecutive_idk_count
+    logger.info(f"[{state['session_id']}] Node: Clarifying IDK (count={idk_count})")
 
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+
+    if idk_count == 0:
+        # First IDK: scaffold hint (existing behavior)
+        intent = "clarifying_idk"
+        state["assistant"].consecutive_idk_count += 1
+    else:
+        # Second+ IDK: give the answer directly and reset counter
+        intent = "give_answer_idk"
+        state["assistant"].consecutive_idk_count = 0
+
     generator = generate_intent_response_stream(
-        intent_type="clarifying_idk",
+        intent_type=intent,
         messages=messages,
         child_answer=state["content"],
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
         category_prompt=state["category_prompt"],
-        character_prompt=state["character_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -484,7 +487,7 @@ async def node_clarifying_idk(state: PaixuejiState) -> dict:
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     logger.info(f"[{state['session_id']}] Node: Clarifying IDK finished in {time.time() - start_time:.3f}s")
     return {
-        "response_type": "clarifying_idk",
+        "response_type": intent,
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
@@ -506,7 +509,6 @@ async def node_clarifying_wrong(state: PaixuejiState) -> dict:
         age=state["age"],
         age_prompt=state["age_prompt"],
         category_prompt=state["category_prompt"],
-        character_prompt=state["character_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -536,7 +538,6 @@ async def node_clarifying_constraint(state: PaixuejiState) -> dict:
         age=state["age"],
         age_prompt=state["age_prompt"],
         category_prompt=state["category_prompt"],
-        character_prompt=state["character_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -566,7 +567,6 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
         age=state["age"],
         age_prompt=state["age_prompt"],
         category_prompt=state["category_prompt"],
-        character_prompt=state["character_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -598,7 +598,6 @@ async def node_informative(state: PaixuejiState) -> dict:
         age=state["age"],
         age_prompt=state["age_prompt"],
         category_prompt=state["category_prompt"],
-        character_prompt=state["character_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -628,7 +627,6 @@ async def node_play(state: PaixuejiState) -> dict:
         age=state["age"],
         age_prompt=state["age_prompt"],
         category_prompt=state["category_prompt"],
-        character_prompt=state["character_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -658,7 +656,6 @@ async def node_emotional(state: PaixuejiState) -> dict:
         age=state["age"],
         age_prompt=state["age_prompt"],
         category_prompt=state["category_prompt"],
-        character_prompt=state["character_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -707,8 +704,7 @@ async def node_avoidance(state: PaixuejiState) -> dict:
             age=state["age"],
             age_prompt=state["age_prompt"],
             category_prompt=state["category_prompt"],
-            character_prompt=state["character_prompt"],
-            last_model_question=extract_previous_question(state["messages"]),
+                last_model_question=extract_previous_question(state["messages"]),
             config=state["config"],
             client=state["client"],
         )
@@ -739,7 +735,6 @@ async def node_boundary(state: PaixuejiState) -> dict:
         age=state["age"],
         age_prompt=state["age_prompt"],
         category_prompt=state["category_prompt"],
-        character_prompt=state["character_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -788,8 +783,7 @@ async def node_action(state: PaixuejiState) -> dict:
             age=state["age"],
             age_prompt=state["age_prompt"],
             category_prompt=state["category_prompt"],
-            character_prompt=state["character_prompt"],
-            last_model_question=extract_previous_question(state["messages"]),
+                last_model_question=extract_previous_question(state["messages"]),
             config=state["config"],
             client=state["client"],
         )
@@ -820,7 +814,6 @@ async def node_social(state: PaixuejiState) -> dict:
         age=state["age"],
         age_prompt=state["age_prompt"],
         category_prompt=state["category_prompt"],
-        character_prompt=state["character_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -850,7 +843,6 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
         age=state["age"],
         age_prompt=state["age_prompt"],
         category_prompt=state["category_prompt"],
-        character_prompt=state["character_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -989,7 +981,6 @@ async def node_guide_driver(state: PaixuejiState):
         config=state["config"]
     )
 
-    character_prompt = state.get("character_prompt", "")
     object_name = state["object_name"]
     key_concept = assistant.key_concept or ""
     theme_name = assistant.ibpyp_theme_name or ""
@@ -1000,7 +991,6 @@ async def node_guide_driver(state: PaixuejiState):
     async for text_chunk, usage, full_so_far in driver.generate_response_stream(
         history=state["messages"],
         nav_plan=nav_state,
-        character_prompt=character_prompt,
         age=state["age"],
         object_name=object_name,
         key_concept=key_concept,

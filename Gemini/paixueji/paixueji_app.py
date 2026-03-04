@@ -204,10 +204,6 @@ def start_conversation():
     level1_category = data.get('level1_category')
     level2_category = data.get('level2_category')
     level3_category = data.get('level3_category')
-    character = data.get('character')
-    focus_mode = data.get('focus_mode', 'depth')  # Default to depth if not provided
-    system_managed = data.get('system_managed', False)  # System-managed focus mode
-
     # Validate required fields
     if not object_name:
         return jsonify({
@@ -228,7 +224,7 @@ def start_conversation():
 
     # Create session
     session_id = str(uuid.uuid4())
-    assistant = PaixuejiAssistant(system_managed=system_managed, client=GLOBAL_GEMINI_CLIENT)
+    assistant = PaixuejiAssistant(client=GLOBAL_GEMINI_CLIENT)
     sessions[session_id] = assistant
 
     # Store session state
@@ -237,14 +233,13 @@ def start_conversation():
     assistant.level1_category = level1_category
     assistant.level2_category = level2_category
     assistant.level3_category = level3_category
-    assistant.character = character
     assistant.correct_answer_count = 0
 
     # Generate unique request ID for this stream
     request_id = str(uuid.uuid4())
 
     print(f"[INFO] Created Paixueji session {session_id[:8]}... | age={age}, object={object_name}, "
-          f"level1={level1_category}, level2={level2_category}, level3={level3_category}, character={character}, focus={focus_mode}, request_id={request_id[:8]}...")
+          f"level1={level1_category}, level2={level2_category}, level3={level3_category}, request_id={request_id[:8]}...")
 
     def generate():
         """Generator for SSE stream."""
@@ -258,11 +253,6 @@ def start_conversation():
                 age_prompt = assistant.get_age_prompt(age)
                 if age_prompt:
                     system_prompt += f"\n\nAGE-SPECIFIC GUIDANCE:\n{age_prompt}"
-
-            # Get character prompt
-            character_prompt = assistant.get_character_prompt(character)
-            if character_prompt:
-                system_prompt += f"\n\nCHARACTER GUIDANCE:\n{character_prompt}"
 
             # Get category prompt
             category_prompt = assistant.get_category_prompt(level1_category, level2_category, level3_category)
@@ -293,7 +283,6 @@ def start_conversation():
                         "client": assistant.client,
                         "assistant": assistant,
                         "age_prompt": age_prompt,
-                        "character_prompt": character_prompt,
                         "object_name": object_name,
                         "level1_category": level1_category,
                         "level2_category": level2_category,
@@ -333,8 +322,6 @@ def start_conversation():
                             "guide_turn_count": assistant.guide_turn_count,
                             "scaffold_level": assistant.scaffold_level,
                             "hint_given": assistant.hint_given,
-                            "depth_questions_count": assistant.depth_questions_count,
-                            "depth_target": assistant.depth_target,
                             "ibpyp_theme_name": assistant.ibpyp_theme_name,
                             "key_concept": assistant.key_concept,
                             "level1_category": assistant.level1_category,
@@ -409,7 +396,6 @@ def start_guide_test():
     data = request.get_json() or {}
     age = data.get('age')
     object_name = data.get('object_name')
-    character = data.get('character', 'teacher')
 
     # Validate required fields
     if not object_name:
@@ -439,13 +425,12 @@ def start_guide_test():
     # Store session state
     assistant.age = age
     assistant.object_name = object_name
-    assistant.character = character
     assistant.correct_answer_count = 4  # Simulate 4 correct answers
 
     # Generate unique request ID for this stream
     request_id = str(uuid.uuid4())
 
-    print(f"[INFO] Starting GUIDE TEST session {session_id[:8]}... | age={age}, object={object_name}, character={character}, request_id={request_id[:8]}...")
+    print(f"[INFO] Starting GUIDE TEST session {session_id[:8]}... | age={age}, object={object_name}, request_id={request_id[:8]}...")
 
     def generate():
         """Generator for SSE stream."""
@@ -478,10 +463,6 @@ def start_guide_test():
             age_prompt = assistant.get_age_prompt(age)
             if age_prompt:
                 system_prompt += f"\n\nAGE-SPECIFIC GUIDANCE:\n{age_prompt}"
-
-            character_prompt = assistant.get_character_prompt(character)
-            if character_prompt:
-                system_prompt += f"\n\nCHARACTER GUIDANCE:\n{character_prompt}"
 
             # Initialize conversation history with system prompt
             assistant.conversation_history = [
@@ -624,7 +605,6 @@ def continue_conversation():
 
     session_id = data.get('session_id')
     child_input = data.get('child_input')
-    focus_mode = data.get('focus_mode', 'depth')  # Default to depth
 
     if not session_id or not child_input:
         return jsonify({
@@ -644,7 +624,7 @@ def continue_conversation():
     request_id = str(uuid.uuid4())
 
     print(f"[INFO] Session {session_id[:8]}... continuing | answer: '{child_input[:50]}...', "
-          f"correct_count: {assistant.correct_answer_count}, focus={focus_mode}, request_id={request_id[:8]}...")
+          f"correct_count: {assistant.correct_answer_count}, request_id={request_id[:8]}...")
 
     def generate():
         """Generator for SSE stream."""
@@ -654,9 +634,6 @@ def continue_conversation():
             age_prompt = ""
             if assistant.age is not None:
                 age_prompt = assistant.get_age_prompt(assistant.age)
-
-            # Get character prompt
-            character_prompt = assistant.get_character_prompt(assistant.character)
 
             # Get category prompt
             category_prompt = assistant.get_category_prompt(
@@ -689,7 +666,6 @@ def continue_conversation():
                         "client": assistant.client,
                         "assistant": assistant,
                         "age_prompt": age_prompt,
-                        "character_prompt": character_prompt,
                         "object_name": assistant.object_name,
                         "level1_category": assistant.level1_category,
                         "level2_category": assistant.level2_category,
@@ -729,8 +705,6 @@ def continue_conversation():
                             "guide_turn_count": assistant.guide_turn_count,
                             "scaffold_level": assistant.scaffold_level,
                             "hint_given": assistant.hint_given,
-                            "depth_questions_count": assistant.depth_questions_count,
-                            "depth_target": assistant.depth_target,
                             "ibpyp_theme_name": assistant.ibpyp_theme_name,
                             "key_concept": assistant.key_concept,
                             "level1_category": assistant.level1_category,
@@ -1117,11 +1091,13 @@ def run_critique_background(task_id: str, session_id: str, transcript: list,
             "**Feedback Type:** AI (Automated)",
         )
 
-        # Save to reports/AIF/
-        reports_dir = Path(__file__).parent / "reports" / "AIF"
+        # Save to reports/AIF/YYYY-MM-DD/
+        now = datetime.now()
+        date_dir = now.strftime("%Y-%m-%d")
+        reports_dir = Path(__file__).parent / "reports" / "AIF" / date_dir
         reports_dir.mkdir(parents=True, exist_ok=True)
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = now.strftime("%Y%m%d_%H%M%S")
         safe_object_name = "".join(
             c if c.isalnum() or c in "-_" else "_" for c in (object_name or "unknown")
         )
@@ -1531,11 +1507,13 @@ def manual_critique():
             key_concept=assistant.key_concept,
         )
 
-        # Save to reports/HF/
-        reports_dir = Path(__file__).parent / "reports" / "HF"
+        # Save to reports/HF/YYYY-MM-DD/
+        now = datetime.now()
+        date_dir = now.strftime("%Y-%m-%d")
+        reports_dir = Path(__file__).parent / "reports" / "HF" / date_dir
         reports_dir.mkdir(parents=True, exist_ok=True)
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = now.strftime("%Y%m%d_%H%M%S")
         safe_object_name = "".join(
             c if c.isalnum() or c in "-_" else "_"
             for c in (assistant.object_name or "unknown")

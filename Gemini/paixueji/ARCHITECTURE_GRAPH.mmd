@@ -1,0 +1,97 @@
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#dbeafe', 'primaryTextColor': '#1e3a5f', 'primaryBorderColor': '#3b82f6', 'lineColor': '#6b7280', 'secondaryColor': '#f0fdf4', 'tertiaryColor': '#fef9c3'}}}%%
+flowchart TD
+    START([START])
+    FINISH([END])
+
+    START --> rfs
+
+    %% --- ENTRY ROUTER ----------------------------------------------------
+    rfs{"route_from_start"}
+
+    %% --- INTRODUCTION PATH -----------------------------------------------
+    subgraph INTRO ["Introduction Path"]
+        gff["generate_fun_fact<br>Google Search: grounded facts"]
+        gi["generate_intro<br>Warm opening message"]
+        gff --> gi
+    end
+
+    %% --- CHAT PATH -------------------------------------------------------
+    subgraph CHAT ["Chat Path"]
+        ai["analyze_input<br>LLM: 1 of 13 intents"]
+        rfa{"route_from_analyze_input"}
+        ai --> rfa
+    end
+
+    %% --- INTENT NODES ----------------------------------------------------
+    subgraph INTENTS ["Intent Response Nodes"]
+        curiosity["curiosity<br>Answer why/what/how with delight<br>ex: Why is grass green?"]
+        idk["clarifying_idk<br>Scaffold stuck child with sensory clue<br>ex: I don't know"]
+        wrong["clarifying_wrong<br>Affirm effort + gentle correction<br>ex: Fish breathe air!"]
+        constraint["clarifying_constraint<br>Validate reality + imaginative redirect<br>ex: We don't have one at home"]
+        correct["correct_answer<br>Confirm + wow fact, increment counter<br>ex: Because of chlorophyll!"]
+        informative["informative<br>Amplify knowledge + social follow-up<br>ex: My dad told me this"]
+        play["play<br>Meet imagination fully + sneak in real fact<br>ex: What if I was a dinosaur?"]
+        emotional["emotional<br>Validate feeling + gentle redirect<br>ex: This is boring"]
+        avoidance["avoidance<br>Honor exit, offer low-pressure option<br>ex: I want to stop"]
+        boundary["boundary<br>Validate + brief safety reason + exciting alt<br>ex: Can I touch fire?"]
+        action["action<br>Honor command or bridge to topic<br>ex: Tell me something else"]
+        social["social<br>Honest/playful answer about the AI<br>ex: Do you have a family?"]
+        social_ack["social_acknowledgment<br>Brief natural reaction + pivot to fresh question<br>ex: Wow, I didn't know that!"]
+    end
+
+    %% --- GUIDE MODE ------------------------------------------------------
+    subgraph GUIDE ["Guide Mode (IB PYP Theme Journey)"]
+        classify["classify_theme<br>Object → IB PYP Theme + Key Concept"]
+        sg["start_guide<br>Present Bridge Question"]
+        gn["guide_navigator<br>JSON: status / strategy / scaffold"]
+        ran{"route_after_navigator"}
+        gd["guide_driver<br>Natural language response"]
+        gh["guide_hint<br>LLM-generated hint"]
+        gs["guide_success<br>Celebrate + reset guide state"]
+        ge["guide_exit<br>Graceful exit from guide mode"]
+        classify --> sg
+        gn --> ran
+    end
+
+    fin["finalize<br>SSE StreamChunk + session history"]
+
+    %% --- ENTRY EDGES -----------------------------------------------------
+    rfs -->|"first turn"| gff
+    rfs -->|"guide_phase: active or hint"| gn
+    rfs -->|"normal chat turn"| ai
+
+    %% --- INTRODUCTION PATH EDGE ------------------------------------------
+    gi --> fin
+
+    %% --- INTENT ROUTING EDGES --------------------------------------------
+    rfa -->|curiosity| curiosity
+    rfa -->|clarifying_idk| idk
+    rfa -->|clarifying_wrong| wrong
+    rfa -->|clarifying_constraint| constraint
+    rfa -->|correct_answer| correct
+    rfa -->|informative| informative
+    rfa -->|play| play
+    rfa -->|emotional| emotional
+    rfa -->|avoidance| avoidance
+    rfa -->|boundary| boundary
+    rfa -->|action| action
+    rfa -->|social| social
+    rfa -->|social_acknowledgment| social_ack
+    rfa -->|"correct_answer x4 (threshold)"| classify
+
+    %% --- GUIDE ENTRY EDGE ------------------------------------------------
+    sg --> fin
+
+    %% --- GUIDE ROUTING EDGES ---------------------------------------------
+    ran -->|"COMPLETE / COMPLETED"| gs
+    ran -->|"max turns, no hint yet"| gh
+    ran -->|"2x RESISTANCE / post-hint"| ge
+    ran -->|"ON_TRACK / DRIFTING"| gd
+
+    %% --- ALL INTENT NODES -> FINALIZE ------------------------------------
+    curiosity & idk & wrong & constraint & correct & informative & play & emotional & avoidance & boundary & action & social & social_ack --> fin
+
+    %% --- GUIDE OUTCOME NODES -> FINALIZE ---------------------------------
+    gs & gh & ge & gd --> fin
+
+    fin --> FINISH

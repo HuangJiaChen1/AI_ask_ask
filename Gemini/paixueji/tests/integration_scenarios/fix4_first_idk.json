@@ -1,0 +1,20 @@
+{
+  "_comment": "Fix 4 — FIRST IDK: should get a scaffold HINT, not the direct answer",
+  "age": 4,
+  "object_name": "apple",
+  "history": [
+    {
+      "role": "assistant",
+      "content": "Oh, you found an apple! Apples are SO crunchy and sweet! Do you like eating apples?"
+    },
+    {
+      "role": "user",
+      "content": "yes"
+    },
+    {
+      "role": "assistant",
+      "content": "Apple trees need something special from the sky to grow big and juicy. What do you think apple trees need to grow?"
+    }
+  ],
+  "user_input": "I don't know"
+}

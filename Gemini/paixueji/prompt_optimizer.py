@@ -491,7 +491,6 @@ def _call_intent_response(
             age=age,
             age_prompt=_get_age_prompt(age),
             category_prompt=state.get("level1_category", ""),
-            character_prompt=state.get("character_prompt", ""),
             last_model_question=state.get("last_model_question", "the previous question"),
         )
     except KeyError:
@@ -679,7 +678,6 @@ def generate_preview_response(
             object_name=object_name,
             age_prompt=_get_age_prompt(age),
             category_prompt=state.get("level1_category", ""),
-            focus_prompt=prompts_base["focus_prompts"].get("depth", ""),
             grounded_facts_section="",
             fun_fact_instruction="Ask an opening question about this object.",
         )
@@ -690,8 +688,6 @@ def generate_preview_response(
             age=age,
             age_prompt=_get_age_prompt(age),
             category_prompt=state.get("level1_category", ""),
-            character_prompt=prompts_base["character_prompts"]["teacher"],
-            focus_prompt=prompts_base["focus_prompts"].get("depth", ""),
         )
 
     elif prompt_name in (
@@ -1171,7 +1167,7 @@ def run_optimization(
     if not resolved_name:
         available = [
             k for k, v in paixueji_prompts.get_prompts().items()
-            if isinstance(v, str)  # exclude nested dicts like character_prompts
+            if isinstance(v, str)  # exclude nested dicts
         ]
         raise ValueError(
             f"prompt_name not specified and trace has no prompt_template_name. "
@@ -1182,7 +1178,7 @@ def run_optimization(
     if not isinstance(current_prompt, str):
         raise ValueError(
             f"'{resolved_name}' is not a string prompt (got {type(current_prompt).__name__}). "
-            f"It may be a nested mapping (e.g. character_prompts). "
+            f"It may be a nested mapping. "
             f"Specify a leaf prompt key."
         )
 

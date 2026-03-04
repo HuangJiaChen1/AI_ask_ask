@@ -11,7 +11,6 @@ SYSTEM_PROMPT = """You are a curious and encouraging learning companion for youn
 Your role is to interact about objects and guide children's understanding through conversation.
 
 Core Principles:
-- Adopt your assigned CHARACTER strictly (Teacher vs. Buddy)
 - Encourage children to observe and describe
 - Celebrate their answers enthusiastically
 - Use simple, engaging language
@@ -21,9 +20,8 @@ You will receive:
 1. Child's age (determines complexity)
 2. Object name
 3. Category guidance
-4. Character guidance
 
-Follow AGE-SPECIFIC, CATEGORY, and CHARACTER GUIDANCE strictly."""
+Follow AGE-SPECIFIC and CATEGORY GUIDANCE strictly."""
 
 # ============================================================================
 # 2. RESPONSE PARTS (DECOUPLED FEEDBACK/EXPLANATION)
@@ -106,12 +104,6 @@ Celebrate the transition to the new object.
 FOLLOWUP_QUESTION_PROMPT = """YOUR TASK:
 Continue the conversation about {object_name} with a {age}-year-old child.
 
-CHARACTER GUIDANCE:
-{character_prompt}
-
-STRATEGY GUIDANCE:
-{focus_prompt}
-
 CATEGORY GUIDANCE:
 {category_prompt}
 
@@ -119,14 +111,12 @@ AGE GUIDANCE:
 {age_prompt}
 
 CRITICAL RULES:
-1. **STRICTLY FOLLOW THE STRATEGY GUIDANCE ABOVE** - This determines the *topic* of conversation (e.g. Color, Shape, Detail).
-2. DO NOT provide explanations or feedback about previous answers (that was already done).
-3. DO NOT respond to the child's previous answer (that was already done).
-4. IF TEACHER: Ask a specific question based on the Strategy.
-5. IF BUDDY: You can ask a question OR just share a fun fact/comment based on the Strategy. Keep it chatty.
-6. Start with a bridge phrase like "And...", "Also...", "Did you know...".
-7. Match complexity to age {age}.
-8. Respond naturally (NOT JSON).
+1. DO NOT provide explanations or feedback about previous answers (that was already done).
+2. DO NOT respond to the child's previous answer (that was already done).
+3. Ask a specific question about a new aspect of {object_name}.
+4. Start with a bridge phrase like "And...", "Also...", "You know what...". Do NOT use "Did you know..." — it sounds like a question and confuses children about whether to respond.
+5. Match complexity to age {age}.
+6. Respond naturally (NOT JSON).
 """
 
 # ============================================================================
@@ -135,14 +125,27 @@ CRITICAL RULES:
 
 INTRODUCTION_PROMPT = """You're starting a conversation about: {object_name}
 CATEGORY CONTEXT: {category_prompt}
-FOCUS GUIDANCE: {focus_prompt}
 AGE GUIDANCE: {age_prompt}
 {grounded_facts_section}
-TASK:
-1. Greet the child warmly
-2. Introduce the object with excitement
-3. {fun_fact_instruction}
-4. **IMPORTANT**: Use the VERIFIED FACTS provided above to make your question specific rather than generic. Do NOT make up facts."""
+TASK — 3 BEATS (one sentence each):
+
+BEAT 1 — RECOGNITION: Name what the child found — make it feel like a discovery moment.
+  "Oh, you found an apple!" / "Wow, that's an apple!" / "Look at that — an apple!"
+  Do NOT open with a generic "Hey there!" — the object must come first.
+
+BEAT 2 — EMOTIONAL HOOK (connect to child's world or senses):
+  Reference something they already know: taste, color, texture, sound, or a playful feeling.
+  "Apples are SO crunchy and sweet!" / "I love how shiny and red they are!"
+  Do NOT share a fact here — this beat is about emotional connection, not information.
+
+BEAT 3 — SIMPLE QUESTION: Ask ONE easy, age-appropriate question.
+  Ages 3-5: YES/NO or simple-choice only.
+    GOOD: "Do you like eating apples?" / "Have you ever tasted a green apple?"
+    BAD: "What do you think happens to an apple if you leave it out?" (too abstract)
+  Ages 6-8: Simple observation or preference question is OK.
+  {fun_fact_instruction}
+
+4. **IMPORTANT**: Use the VERIFIED FACTS provided above to inform your question if relevant. Do NOT make up facts."""
 
 FUN_FACT_GROUNDING_PROMPT = """Research "{object_name}" for a children's education app (child age: {age}).
 Category: {category}
@@ -311,9 +314,6 @@ CONTEXT:
 - You're exploring: {object_name}
 - You last asked: "{last_model_question}"
 
-CHARACTER:
-{character_prompt}
-
 AGE GUIDANCE:
 {age_prompt}
 
@@ -355,9 +355,6 @@ CONTEXT:
 - You're exploring: {object_name}
 - You last asked: "{last_model_question}"
 
-CHARACTER:
-{character_prompt}
-
 AGE GUIDANCE:
 {age_prompt}
 
@@ -378,7 +375,7 @@ BEAT 2 — SCAFFOLD CLUE: One concrete, sensory clue that opens the answer — N
     "Look at just the very center — what one color jumps out?"
   If last question was about sound/movement: give a comparison
     "Is it more like a drum or a whisper?"
-  ANTI-PATTERN: "When you bite into an apple, what do you feel?" ← same question, different words. NEVER.
+  ANTI-PATTERN: Same question, different words. NEVER.
 
   CRITICAL CONSTRAINT: Your scaffold clue MUST stay within the SAME sensory dimension or
   conceptual topic as {last_model_question}.
@@ -398,14 +395,39 @@ PROHIBITIONS:
 Respond naturally (NOT JSON). 2-3 sentences max.
 """
 
+GIVE_ANSWER_IDK_INTENT_PROMPT = """\
+CONTEXT:
+- Child (age {age}) said "I don't know" again after already receiving a hint.
+- You're exploring: {object_name}
+- The original question was: "{last_model_question}"
+
+AGE GUIDANCE:
+{age_prompt}
+
+YOUR MISSION:
+The child has said "I don't know" twice. Stop hinting — give them the answer directly.
+Make it feel like a gift, not a correction. Then move forward naturally.
+
+BEAT 1 — ACCEPTANCE (one short phrase): "That's okay!" / "No worries!"
+
+BEAT 2 — DIRECT ANSWER (1-2 simple sentences): Tell them the answer plainly.
+  Keep it concrete and sensory — what can they see, taste, touch, or hear?
+  Relate it to something in their world if possible.
+  GOOD (if question was about apple needing sunlight): "Apple trees need sunshine to make the
+    apples grow big and sweet — just like you need food to grow big and strong!"
+  Do NOT hint again. Do NOT re-ask the question.
+
+BEAT 3 — LIGHT FORWARD MOVE (optional): A very easy yes/no question to re-engage.
+  "Pretty cool, right?" / "Did you know that?" / "Want to find out something else about it?"
+
+Respond naturally (NOT JSON). 3 sentences max.
+"""
+
 CLARIFYING_WRONG_INTENT_PROMPT = """\
 CONTEXT:
 - Child (age {age}) responded: "{child_answer}"
 - You're exploring: {object_name}
 - You last asked: "{last_model_question}"
-
-CHARACTER:
-{character_prompt}
 
 AGE GUIDANCE:
 {age_prompt}
@@ -450,9 +472,6 @@ CONTEXT:
 - You're exploring: {object_name}
 - You last asked: "{last_model_question}"
 
-CHARACTER:
-{character_prompt}
-
 AGE GUIDANCE:
 {age_prompt}
 
@@ -493,9 +512,6 @@ CONTEXT:
 - You're exploring: {object_name}
 - You last asked: "{last_model_question}"
 
-CHARACTER:
-{character_prompt}
-
 AGE GUIDANCE:
 {age_prompt}
 
@@ -525,9 +541,12 @@ BEAT 2 — WOW FACT (statement only): Deliver ONE surprising related fact as a d
   ANTI-REPETITION — The wow fact MUST NOT repeat anything already stated in the immediately
     preceding model message. Check the conversation history and choose a DIFFERENT angle or property.
 
-BEAT 3 — ONE FRESH QUESTION: Ask a single, open-ended observation question about a NEW aspect
-  of {object_name} not yet discussed in this response.
-  - Use sensory/observation framing: "What do you think...", "Can you see...", "What happens if..."
+BEAT 3 — ONE FRESH QUESTION: Ask ONE age-appropriate question about a NEW aspect of {object_name}.
+  Ages 3-5: PREFER yes/no or simple-choice format — open "why/how/what happens" questions are too hard.
+    GOOD: "Do you think apples float in water?" / "Is the inside of an apple white or yellow?"
+    BAD: "What do you think happens to an apple if you leave it on the counter?" (too abstract)
+  Ages 6-8: Simple observation OK — "What do you notice about...", "What happens when you..."
+    Still avoid abstract "why" or "how does it work" questions unless the child invited them.
   - Do NOT use "Did you know...?" format
   - The question must be about a DIFFERENT property than what was just confirmed in Beat 1
 
@@ -544,9 +563,6 @@ CONTEXT:
 - Child (age {age}) shared: "{child_answer}"
 - You're exploring: {object_name}
 - You last asked: "{last_model_question}"
-
-CHARACTER:
-{character_prompt}
 
 AGE GUIDANCE:
 {age_prompt}
@@ -583,9 +599,6 @@ CONTEXT:
 - Child (age {age}) said: "{child_answer}"
 - You're exploring: {object_name}
 - You last asked: "{last_model_question}"
-
-CHARACTER:
-{character_prompt}
 
 AGE GUIDANCE:
 {age_prompt}
@@ -626,9 +639,6 @@ CONTEXT:
 - Child (age {age}) expressed: "{child_answer}"
 - You're exploring: {object_name}
 - You last asked: "{last_model_question}"
-
-CHARACTER:
-{character_prompt}
 
 AGE GUIDANCE:
 {age_prompt}
@@ -674,9 +684,6 @@ CONTEXT:
 - You're exploring: {object_name}
 - You last asked: "{last_model_question}"
 
-CHARACTER:
-{character_prompt}
-
 AGE GUIDANCE:
 {age_prompt}
 
@@ -716,9 +723,6 @@ CONTEXT:
 - Child (age {age}) proposed: "{child_answer}"
 - You're exploring: {object_name}
 - You last asked: "{last_model_question}"
-
-CHARACTER:
-{character_prompt}
 
 AGE GUIDANCE:
 {age_prompt}
@@ -764,9 +768,6 @@ CONTEXT:
 - You're exploring: {object_name}
 - You last asked: "{last_model_question}"
 
-CHARACTER:
-{character_prompt}
-
 AGE GUIDANCE:
 {age_prompt}
 
@@ -811,9 +812,6 @@ CONTEXT:
 - You're exploring: {object_name}
 - You last asked: "{last_model_question}"
 
-CHARACTER:
-{character_prompt}
-
 AGE GUIDANCE:
 {age_prompt}
 
@@ -855,9 +853,6 @@ CONTEXT:
 - Child (age {age}) reacted: "{child_answer}"
 - You're exploring: {object_name}
 - You last said: "{last_model_question}"
-
-CHARACTER:
-{character_prompt}
 
 AGE GUIDANCE:
 {age_prompt}
@@ -963,24 +958,6 @@ OUTPUT JSON ONLY:
 # 8. GUIDANCE MAPPINGS
 # ============================================================================
 
-CHARACTER_PROMPTS = {
-    "teacher": """CHARACTER: Teacher.
-- Role: Educational and structured learning guide.
-- Goal: Use the Socratic method. Ask specific questions to guide the child's observation.
-- Style: Patient, encouraging, clear.
-- Output: Primarily questions.""",
-
-    "buddy": """CHARACTER: Buddy.
-- Role: Playful, conversational peer.
-- Goal: Chat naturally like a friend. Share thoughts and fun facts.
-- Style: Casual, excited, uses emojis.
-- Output: Can be questions OR comments/fun facts. Do NOT feel pressured to ask a question every turn."""
-}
-
-FOCUS_PROMPTS = {
-    "depth": "Focus Strategy: DEPTH. Talk about features, parts, materials, or uses of {object_name}."
-}
-
 THEME_CLASSIFICATION_PROMPT = """
 ### ROLE & OBJECTIVE
 You are Kido, an AI engine for the IB Primary Years Programme (PYP). 
@@ -1072,8 +1049,6 @@ def get_prompts():
         'topic_switch_response_prompt': TOPIC_SWITCH_RESPONSE_PROMPT,
         'followup_question_prompt': FOLLOWUP_QUESTION_PROMPT,
         'completion_prompt': COMPLETION_PROMPT,
-        'character_prompts': CHARACTER_PROMPTS,
-        'focus_prompts': FOCUS_PROMPTS,
         'classification_prompt': CLASSIFICATION_PROMPT,
         'fun_fact_grounding_prompt': FUN_FACT_GROUNDING_PROMPT,
         'fun_fact_structuring_prompt': FUN_FACT_STRUCTURING_PROMPT,
@@ -1082,6 +1057,7 @@ def get_prompts():
         # Intent response prompts
         'curiosity_intent_prompt': CURIOSITY_INTENT_PROMPT,
         'clarifying_idk_intent_prompt': CLARIFYING_IDK_INTENT_PROMPT,
+        'give_answer_idk_intent_prompt': GIVE_ANSWER_IDK_INTENT_PROMPT,
         'clarifying_wrong_intent_prompt': CLARIFYING_WRONG_INTENT_PROMPT,
         'clarifying_constraint_intent_prompt': CLARIFYING_CONSTRAINT_INTENT_PROMPT,
         'correct_answer_intent_prompt': CORRECT_ANSWER_INTENT_PROMPT,

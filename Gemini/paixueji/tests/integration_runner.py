@@ -87,7 +87,6 @@ async def _stream_graph_execution(initial_state):
 async def _run_turn(assistant, user_input, session_id, request_id):
     """Drive one conversation turn through the graph; return the final response text."""
     age_prompt = assistant.get_age_prompt(assistant.age) if assistant.age else ""
-    character_prompt = assistant.get_character_prompt(assistant.character)
     category_prompt = assistant.get_category_prompt(
         assistant.level1_category,
         assistant.level2_category,
@@ -108,7 +107,6 @@ async def _run_turn(assistant, user_input, session_id, request_id):
         "client": assistant.client,
         "assistant": assistant,
         "age_prompt": age_prompt,
-        "character_prompt": character_prompt,
         "object_name": assistant.object_name,
         "level1_category": assistant.level1_category,
         "level2_category": assistant.level2_category,
@@ -139,8 +137,6 @@ async def _run_turn(assistant, user_input, session_id, request_id):
             "guide_turn_count": assistant.guide_turn_count,
             "scaffold_level": assistant.scaffold_level,
             "hint_given": assistant.hint_given,
-            "depth_questions_count": assistant.depth_questions_count,
-            "depth_target": assistant.depth_target,
             "ibpyp_theme_name": assistant.ibpyp_theme_name,
             "key_concept": assistant.key_concept,
             "level1_category": assistant.level1_category,

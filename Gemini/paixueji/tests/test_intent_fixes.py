@@ -927,7 +927,6 @@ class TestClarifyingWrongBeat3RealLLM:
             age=6,
             age_prompt="Use simple words and short sentences.",
             category_prompt="Banana: yellow fruit, grows in bunches, harvested by cutting with a knife.",
-            character_prompt="Friendly, encouraging teacher.",
             last_model_question=last_question,
             config=config,
             client=client,

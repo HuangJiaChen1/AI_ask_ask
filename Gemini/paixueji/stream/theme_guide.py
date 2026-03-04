@@ -136,7 +136,6 @@ class ThemeDriver:
         self,
         history: List[Dict[str, Any]],
         nav_plan: Dict[str, Any],
-        character_prompt: str,
         age: int,
         object_name: str = "",
         key_concept: str = "",
@@ -148,7 +147,6 @@ class ThemeDriver:
         Args:
             history: Conversation history
             nav_plan: Navigation plan from Navigator with strategy and instruction
-            character_prompt: Character persona prompt
             age: Child's age
             object_name: The object being discussed (e.g., "banana")
             key_concept: The key concept to discover (e.g., "why bananas change color")
@@ -197,8 +195,6 @@ ANTI-RETREAT RULE:
 
         driver_instruction = f"""You are guiding a {age}-year-old to discover: "{key_concept}"
 about "{object_name}" (Theme: {theme_name})
-
-{character_prompt}
 
 MISSION CONTEXT:
 The child has been invited on a "Discovery Mission" — they are looking for the secret REASON

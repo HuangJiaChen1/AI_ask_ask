@@ -21,13 +21,10 @@ let correctAnswerCount = 0;
 let conversationComplete = false;
 let categoryData = {};
 let detectedObject = null;  // For manual topic switch override
-let systemManagedMode = false;  // System-managed focus mode flag
 let awaitingObjectSelection = false;  // Waiting for object choice flag
 
 // UI state
 let currentObject = null;  // Current object being discussed
-let currentCharacter = null;  // Current character
-let currentFocusMode = null;  // Current focus mode
 let guidePhase = null;  // Guide phase (active, success, hint, exit)
 let guideTurnCount = 0;  // Current turn in guide mode
 let currentThemeName = null;  // IB PYP theme name
@@ -46,20 +43,12 @@ const thinkingTimeDisplay = document.getElementById('thinking-time');
  * Add a message to the chat interface
  * @param {string} role - 'assistant' or 'user'
  * @param {string} initialText - Initial text to display (optional)
- * @param {string} focus - Focus mode used (optional)
  * @param {boolean|null} isCorrect - Feedback status (true=correct, false=encouraging, null=none)
  * @returns {HTMLElement} The message bubble element
  */
-function addMessage(role, initialText = '', focus = null, isCorrect = null) {
+function addMessage(role, initialText = '', isCorrect = null) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
-
-    if (focus) {
-        const focusTag = document.createElement('span');
-        focusTag.className = 'focus-tag';
-        focusTag.textContent = formatFocusName(focus);
-        messageDiv.appendChild(focusTag);
-    }
 
     const bubble = document.createElement('div');
     bubble.className = 'message-bubble';
@@ -81,16 +70,6 @@ function addMessage(role, initialText = '', focus = null, isCorrect = null) {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
     return bubble;
-}
-
-/**
- * Format focus name for display (e.g., "width_color" -> "Width: Color")
- */
-function formatFocusName(focus) {
-    if (!focus) return '';
-    return focus.split('_')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(': ');
 }
 
 /**
@@ -130,51 +109,8 @@ async function startConversation() {
     const level1Category = document.getElementById('level1Category').value;
     const level2Category = document.getElementById('level2Category').value;
     const level3Category = document.getElementById('level3Category').value;
-    const character = document.getElementById('assistantCharacter').value;
-    const focusMode = document.getElementById('nextQuestionFocus').value;
-    systemManagedMode = (focusMode === 'system_managed');
-
     // Save state for debug panel
     currentObject = objectName;
-    currentCharacter = character;
-    currentFocusMode = focusMode;
-
-    // Save character preference
-    localStorage.setItem('paixueji_character', character);
-
-    // Set active focus mode dropdown to match start selection
-    const activeFocusSelect = document.getElementById('activeFocusMode');
-    if (activeFocusSelect) {
-        activeFocusSelect.value = focusMode;
-
-        // If in system_managed mode, disable the entire dropdown
-        if (systemManagedMode) {
-            activeFocusSelect.disabled = true;
-        } else {
-            // In manual mode, disable the "System Managed" option
-            const systemOption = activeFocusSelect.querySelector('option[value="system_managed"]');
-            if (systemOption) {
-                systemOption.disabled = true;
-            }
-
-            // Add event listener to disable system_managed if user switches away from it
-            activeFocusSelect.onchange = function() {
-                if (this.value !== 'system_managed') {
-                    const systemOption = this.querySelector('option[value="system_managed"]');
-                    if (systemOption) {
-                        systemOption.disabled = true;
-                    }
-                    console.log('[INFO] Switched to manual mode, system_managed disabled');
-                }
-            };
-        }
-
-        // Show the control
-        const controlDiv = document.getElementById('activeFocusControl');
-        if (controlDiv) {
-            controlDiv.style.display = 'flex';
-        }
-    }
 
     // Validation - only object name is required
     if (!objectName) {
@@ -229,10 +165,7 @@ async function startConversation() {
                 object_name: objectName,
                 level1_category: level1Value,
                 level2_category: level2Value,
-                level3_category: level3Value,
-                character: character,
-                focus_mode: focusMode,
-                system_managed: systemManagedMode
+                level3_category: level3Value
             }),
             signal: currentStreamController.signal
         });
@@ -319,12 +252,9 @@ async function startConversation() {
 async function startGuideTest() {
     const age = parseInt(document.getElementById('age').value);
     const objectName = document.getElementById('objectName').value.trim();
-    const character = document.getElementById('assistantCharacter').value;
 
     // Save state for debug panel
     currentObject = objectName;
-    currentCharacter = character;
-    currentFocusMode = 'depth';  // Guide mode always uses depth
 
     // Validation - only object name is required
     if (!objectName) {
@@ -341,7 +271,6 @@ async function startGuideTest() {
     // Set progress to 4 (simulating 4 correct answers)
     correctAnswerCount = 4;
     conversationComplete = false;
-    systemManagedMode = false;
     updateProgressIndicator();
 
     // Hide start form, show progress indicator and messages
@@ -349,12 +278,6 @@ async function startGuideTest() {
     progressIndicator.style.display = 'flex';
     messagesContainer.style.display = 'flex';
     document.querySelector('.input-area').style.display = 'flex';
-
-    // Hide active focus control in guide mode
-    const activeFocusControl = document.getElementById('activeFocusControl');
-    if (activeFocusControl) {
-        activeFocusControl.style.display = 'none';
-    }
 
     // Disable send button during streaming
     sendBtn.disabled = true;
@@ -369,7 +292,7 @@ async function startGuideTest() {
     messagesContainer.appendChild(statusDiv);
 
     try {
-        console.log('[INFO] Starting GUIDE TEST | age:', age, 'object:', objectName, 'character:', character);
+        console.log('[INFO] Starting GUIDE TEST | age:', age, 'object:', objectName);
 
         // Create AbortController for this stream
         currentStreamController = new AbortController();
@@ -381,8 +304,7 @@ async function startGuideTest() {
             },
             body: JSON.stringify({
                 age: age,
-                object_name: objectName,
-                character: character
+                object_name: objectName
             }),
             signal: currentStreamController.signal
         });
@@ -526,14 +448,6 @@ async function sendMessage() {
     isStreaming = true;
     updateStopButton();
 
-    // Get focus mode from active dropdown (allows mid-chat switching)
-    const activeFocusSelect = document.getElementById('activeFocusMode');
-    const focusMode = activeFocusSelect ? activeFocusSelect.value : document.getElementById('nextQuestionFocus').value;
-
-    // Update current focus mode for debug panel
-    currentFocusMode = focusMode;
-    updateDebugPanel();
-
     try {
         console.log('[INFO] Sending message:', text);
 
@@ -547,8 +461,7 @@ async function sendMessage() {
             },
             body: JSON.stringify({
                 session_id: sessionId,
-                child_input: text,
-                focus_mode: focusMode
+                child_input: text
             }),
             signal: currentStreamController.signal
         });
@@ -694,9 +607,7 @@ function handleStreamChunk(chunk) {
         if (!currentMessageDiv) {
             // Create message with feedback indicator on first chunk
             const isCorrect = chunk.is_correct !== undefined ? chunk.is_correct : null;
-            // Use system_focus_mode if in system-managed mode, otherwise use focus_mode
-            const displayFocus = chunk.system_focus_mode || chunk.focus_mode;
-            currentMessageDiv = addMessage('assistant', '', displayFocus, isCorrect);
+            currentMessageDiv = addMessage('assistant', '', isCorrect);
         }
         displayChunk(currentMessageDiv, chunk.response);
     }
@@ -1011,24 +922,6 @@ function updateDebugPanel() {
     const objectElement = document.getElementById('debugCurrentObject');
     if (objectElement) {
         objectElement.textContent = currentObject || '-';
-    }
-
-    // Update character
-    const characterElement = document.getElementById('debugCharacter');
-    if (characterElement) {
-        characterElement.textContent = currentCharacter ? formatCategoryName(currentCharacter) : '-';
-    }
-
-    // Update focus mode
-    const focusElement = document.getElementById('debugFocusMode');
-    if (focusElement) {
-        focusElement.textContent = currentFocusMode ? formatFocusName(currentFocusMode) : '-';
-    }
-
-    // Update system managed status
-    const systemManagedElement = document.getElementById('debugSystemManaged');
-    if (systemManagedElement) {
-        systemManagedElement.textContent = systemManagedMode ? 'Yes' : 'No';
     }
 
     // Update correct answers count

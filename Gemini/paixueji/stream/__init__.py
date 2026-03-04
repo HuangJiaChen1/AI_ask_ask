@@ -8,7 +8,6 @@ It is organized into several sub-modules:
 - response_generators: Intent-based response generators (9-node architecture)
 - question_generators: Question-only stream generators (intro path)
 - validation: Intent classification logic
-- focus_mode: Object suggestions helper (kept for topic switching)
 - fun_fact: Grounded fun fact generation
 - guide_hint: LLM-based scaffold hints for guide mode
 - theme_guide: ThemeNavigator + ThemeDriver (guide mode)
@@ -43,11 +42,6 @@ from .validation import (
     classify_intent,
 )
 
-# Object suggestions (used by avoidance/action when no named object)
-from .focus_mode import (
-    generate_object_suggestions
-)
-
 # Fun fact (grounded)
 from .fun_fact import generate_fun_fact
 
@@ -73,9 +67,6 @@ __all__ = [
 
     # Intent classification
     'classify_intent',
-
-    # Object suggestions
-    'generate_object_suggestions',
 
     # Fun fact (grounded)
     'generate_fun_fact',
