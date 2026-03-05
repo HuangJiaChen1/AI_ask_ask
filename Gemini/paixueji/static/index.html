@@ -203,6 +203,32 @@
                 <textarea id="globalConclusion" rows="4" placeholder="Overall observations about the conversation quality..." style="width:100%; box-sizing:border-box; padding:10px; border:1px solid #cbd5e1; border-radius:6px; font-family:inherit; resize:vertical;"></textarea>
             </div>
 
+            <!-- Button tutorial -->
+            <div style="display:flex; gap:12px; margin-bottom:14px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:200px; background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:12px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                        <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#0ea5e9;"></span>
+                        <strong style="color:#0369a1; font-size:0.88em;">Submit to Report Database</strong>
+                    </div>
+                    <p style="margin:0; font-size:0.82em; color:#475569; line-height:1.4;">
+                        <strong>Instant.</strong> Saves your critique as a markdown report and closes immediately.
+                        <em>No further analysis.</em>
+                        Use this when you want to archive observations without triggering prompt optimization.
+                    </p>
+                </div>
+                <div style="flex:1; min-width:200px; background:#faf5ff; border:1px solid #d8b4fe; border-radius:8px; padding:12px;">
+                    <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+                        <span style="display:inline-block; width:12px; height:12px; border-radius:3px; background:#7c3aed;"></span>
+                        <strong style="color:#6d28d9; font-size:0.88em;">Submit for Evolving Agent</strong>
+                    </div>
+                    <p style="margin:0; font-size:0.82em; color:#475569; line-height:1.4;">
+                        <strong>Takes longer</strong> — runs trace assembly + LLM culprit identification after saving.
+                        Worth the wait: you can <em>directly preview the before/after prompt diff</em> and apply the fix immediately.
+                        Use this when the critique reveals a systemic prompt flaw worth fixing now.
+                    </p>
+                </div>
+            </div>
+
             <div style="display:flex; gap:12px; justify-content:flex-end;">
                 <button onclick="closeManualCritique()" style="padding:10px 20px; background:#e2e8f0; color:#475569; border:none; border-radius:6px; cursor:pointer;">Cancel</button>
                 <button id="submitReportDbBtn" onclick="submitManualCritiqueToDatabase()" style="padding:10px 20px; background:#0ea5e9; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Submit to Report Database</button>
