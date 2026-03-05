@@ -21,7 +21,7 @@ async def classify_intent(
     is_awaiting_topic_selection: bool = False
 ) -> dict:
     """
-    Classify the child's utterance into one of 10 communicative intents.
+    Classify the child's utterance into one of 13 communicative intents.
 
     Args:
         assistant: PaixuejiAssistant instance (provides client + conversation_history)
@@ -32,8 +32,10 @@ async def classify_intent(
 
     Returns:
         dict with keys:
-            - intent_type: one of CURIOSITY, CLARIFYING, CORRECT_ANSWER, INFORMATIVE, PLAY,
-                           EMOTIONAL, AVOIDANCE, BOUNDARY, ACTION, SOCIAL
+            - intent_type: one of CURIOSITY, CLARIFYING_IDK, CLARIFYING_WRONG,
+                           CLARIFYING_CONSTRAINT, CORRECT_ANSWER, INFORMATIVE, PLAY,
+                           EMOTIONAL, AVOIDANCE, BOUNDARY, ACTION, SOCIAL,
+                           SOCIAL_ACKNOWLEDGMENT
             - new_object: str | None  (only extracted for ACTION or AVOIDANCE)
             - reasoning: brief explanation string
     """
@@ -80,7 +82,7 @@ If the child refuses entirely → INTENT: AVOIDANCE"""
     try:
         t0 = time.time()
         response = await assistant.client.aio.models.generate_content(
-            model="gemini-2.0-flash-lite",
+            model=assistant.config["model_name"],
             contents=prompt,
             config={
                 "temperature": 0.1,
@@ -97,7 +99,7 @@ If the child refuses entirely → INTENT: AVOIDANCE"""
             return m.group(1).strip() if m else default
 
         valid_intents = {
-            "CURIOSITY", "CLARIFYING", "CLARIFYING_IDK", "CLARIFYING_WRONG", "CLARIFYING_CONSTRAINT",
+            "CURIOSITY", "CLARIFYING_IDK", "CLARIFYING_WRONG", "CLARIFYING_CONSTRAINT",
             "CORRECT_ANSWER", "INFORMATIVE", "PLAY", "EMOTIONAL",
             "AVOIDANCE", "BOUNDARY", "ACTION", "SOCIAL", "SOCIAL_ACKNOWLEDGMENT"
         }

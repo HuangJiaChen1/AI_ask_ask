@@ -164,7 +164,7 @@ Output a single JSON object with EXACTLY these fields:
 """
 
     try:
-        model_name = config.get("high_reasoning_model", "gemini-2.5-pro")
+        model_name = config["high_reasoning_model"]
         response = client.models.generate_content(
             model=model_name,
             contents=prompt,

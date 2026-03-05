@@ -297,7 +297,7 @@ class PaixuejiAssistant:
             # Call Gemini to classify
             safe_print(f"[CLASSIFY] Calling Gemini for classification...")
             response = self.client.models.generate_content(
-                model=self.config.get("model_name", "gemini-2.5-flash-lite"),
+                model=self.config["model_name"],
                 contents=classification_prompt,
                 config={
                     "temperature": 0.1,  # Low temperature for consistent classification

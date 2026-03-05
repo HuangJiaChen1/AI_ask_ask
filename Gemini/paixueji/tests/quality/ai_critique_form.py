@@ -95,7 +95,7 @@ class AICritiqueFormFiller:
 
     def __init__(self, client: genai.Client, config: dict):
         self.client = client
-        self.model = config.get("high_reasoning_model", "gemini-2.5-pro")
+        self.model = config["high_reasoning_model"]
 
     async def fill_exchange(
         self,

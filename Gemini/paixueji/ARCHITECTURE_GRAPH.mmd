@@ -5,93 +5,102 @@ flowchart TD
 
     START --> rfs
 
-    %% --- ENTRY ROUTER ----------------------------------------------------
+    %% --- ROUTERS / GATES --------------------------------------------------
     rfs{"route_from_start"}
+    intent_router{"route_from_analyze_input"}
+    idk_gate{"idk_gate"}
+    correct_gate{"correct_threshold_gate"}
+    guide_route{"route_after_navigator"}
 
-    %% --- INTRODUCTION PATH -----------------------------------------------
-    subgraph INTRO ["Introduction Path"]
-        gff["generate_fun_fact<br>Google Search: grounded facts"]
-        gi["generate_intro<br>Warm opening message"]
+    %% --- ENTRY LANE -------------------------------------------------------
+    subgraph INTRO ["Entry"]
+        gff["generate_fun_fact"]
+        gi["generate_intro"]
         gff --> gi
     end
 
-    %% --- CHAT PATH -------------------------------------------------------
-    subgraph CHAT ["Chat Path"]
-        ai["analyze_input<br>LLM: 1 of 13 intents"]
-        rfa{"route_from_analyze_input"}
-        ai --> rfa
+    %% --- CHAT LANE --------------------------------------------------------
+    subgraph CHAT ["Chat"]
+        ai["analyze_input"]
+        ai --> intent_router
     end
 
-    %% --- INTENT NODES ----------------------------------------------------
-    subgraph INTENTS ["Intent Response Nodes"]
-        curiosity["curiosity<br>Answer why/what/how with delight<br>ex: Why is grass green?"]
-        idk["clarifying_idk<br>Scaffold stuck child with sensory clue<br>ex: I don't know"]
-        wrong["clarifying_wrong<br>Affirm effort + gentle correction<br>ex: Fish breathe air!"]
-        constraint["clarifying_constraint<br>Validate reality + imaginative redirect<br>ex: We don't have one at home"]
-        correct["correct_answer<br>Confirm + wow fact, increment counter<br>ex: Because of chlorophyll!"]
-        informative["informative<br>Amplify knowledge + social follow-up<br>ex: My dad told me this"]
-        play["play<br>Meet imagination fully + sneak in real fact<br>ex: What if I was a dinosaur?"]
-        emotional["emotional<br>Validate feeling + gentle redirect<br>ex: This is boring"]
-        avoidance["avoidance<br>Honor exit, offer low-pressure option<br>ex: I want to stop"]
-        boundary["boundary<br>Validate + brief safety reason + exciting alt<br>ex: Can I touch fire?"]
-        action["action<br>Honor command or bridge to topic<br>ex: Tell me something else"]
-        social["social<br>Honest/playful answer about the AI<br>ex: Do you have a family?"]
-        social_ack["social_acknowledgment<br>Brief natural reaction + pivot to fresh question<br>ex: Wow, I didn't know that!"]
+    %% --- INTENT HANDLERS LANE --------------------------------------------
+    subgraph INTENTS ["Intent Handlers"]
+        curiosity["curiosity"]
+        idk["clarifying_idk"]
+        give_answer["give_answer_idk"]
+        wrong["clarifying_wrong"]
+        constraint["clarifying_constraint"]
+        correct["correct_answer"]
+        informative["informative"]
+        play["play"]
+        emotional["emotional"]
+        avoidance["avoidance"]
+        boundary["boundary"]
+        action["action"]
+        social["social"]
+        social_ack["social_acknowledgment"]
     end
 
-    %% --- GUIDE MODE ------------------------------------------------------
-    subgraph GUIDE ["Guide Mode (IB PYP Theme Journey)"]
-        classify["classify_theme<br>Object → IB PYP Theme + Key Concept"]
-        sg["start_guide<br>Present Bridge Question"]
-        gn["guide_navigator<br>JSON: status / strategy / scaffold"]
-        ran{"route_after_navigator"}
-        gd["guide_driver<br>Natural language response"]
-        gh["guide_hint<br>LLM-generated hint"]
-        gs["guide_success<br>Celebrate + reset guide state"]
-        ge["guide_exit<br>Graceful exit from guide mode"]
+    %% --- GUIDE LANE -------------------------------------------------------
+    subgraph GUIDE ["Guide Mode"]
+        classify["classify_theme"]
+        sg["start_guide"]
+        gn["guide_navigator"]
+        gd["guide_driver"]
+        gh["guide_hint"]
+        gs["guide_success"]
+        ge["guide_exit"]
         classify --> sg
-        gn --> ran
+        gn --> guide_route
     end
 
-    fin["finalize<br>SSE StreamChunk + session history"]
+    fin["finalize"]
 
-    %% --- ENTRY EDGES -----------------------------------------------------
+    %% --- ENTRY ROUTING ----------------------------------------------------
     rfs -->|"first turn"| gff
-    rfs -->|"guide_phase: active or hint"| gn
-    rfs -->|"normal chat turn"| ai
+    rfs -->|"guide_phase in {active, hint}"| gn
+    rfs -->|"otherwise"| ai
 
-    %% --- INTRODUCTION PATH EDGE ------------------------------------------
+    %% --- INTRO FLOW -------------------------------------------------------
     gi --> fin
 
-    %% --- INTENT ROUTING EDGES --------------------------------------------
-    rfa -->|curiosity| curiosity
-    rfa -->|clarifying_idk| idk
-    rfa -->|clarifying_wrong| wrong
-    rfa -->|clarifying_constraint| constraint
-    rfa -->|correct_answer| correct
-    rfa -->|informative| informative
-    rfa -->|play| play
-    rfa -->|emotional| emotional
-    rfa -->|avoidance| avoidance
-    rfa -->|boundary| boundary
-    rfa -->|action| action
-    rfa -->|social| social
-    rfa -->|social_acknowledgment| social_ack
-    rfa -->|"correct_answer x4 (threshold)"| classify
+    %% --- INTENT ROUTING ---------------------------------------------------
+    intent_router -->|intent=clarifying_idk| idk_gate
+    idk_gate -->|"consecutive_idk_count == 0 (1st IDK after reset)"| idk
+    idk_gate -->|"consecutive_idk_count > 0 (2nd consecutive IDK)"| give_answer
 
-    %% --- GUIDE ENTRY EDGE ------------------------------------------------
+    intent_router -->|intent=correct_answer| correct_gate
+    correct_gate -->|"correct_answer_count + 1 >= GUIDE_MODE_THRESHOLD"| classify
+    correct_gate -->|otherwise| correct
+
+    intent_router -->|intent=curiosity| curiosity
+    intent_router -->|intent=clarifying_wrong| wrong
+    intent_router -->|intent=clarifying_constraint| constraint
+    intent_router -->|intent=informative| informative
+    intent_router -->|intent=play| play
+    intent_router -->|intent=emotional| emotional
+    intent_router -->|intent=avoidance| avoidance
+    intent_router -->|intent=boundary| boundary
+    intent_router -->|intent=action| action
+    intent_router -->|intent=social| social
+    intent_router -->|intent=social_acknowledgment| social_ack
+    %% --- GUIDE ENTRY ------------------------------------------------------
     sg --> fin
 
-    %% --- GUIDE ROUTING EDGES ---------------------------------------------
-    ran -->|"COMPLETE / COMPLETED"| gs
-    ran -->|"max turns, no hint yet"| gh
-    ran -->|"2x RESISTANCE / post-hint"| ge
-    ran -->|"ON_TRACK / DRIFTING"| gd
+    %% --- GUIDE ROUTING ----------------------------------------------------
+    guide_route -->|"guide_strategy=COMPLETE OR guide_status=COMPLETED"| gs
+    guide_route -->|"guide_turn_count >= guide_max_turns AND hint_given=false"| gh
+    guide_route -->|"(consecutive_stuck_count >= 2 AND scaffold_level >= 4) OR (guide_turn_count >= guide_max_turns AND hint_given=true)"| ge
+    guide_route -->|otherwise| gd
 
-    %% --- ALL INTENT NODES -> FINALIZE ------------------------------------
-    curiosity & idk & wrong & constraint & correct & informative & play & emotional & avoidance & boundary & action & social & social_ack --> fin
+    %% --- HANDLERS -> FINALIZE ---------------------------------------------
+    idk -->|"response=clarifying_idk; consecutive_idk_count += 1"| fin
+    give_answer -->|"response=give_answer_idk; consecutive_idk_count = 0 (cycle reset)"| fin
+    curiosity & wrong & constraint & correct & informative & play & emotional & avoidance & boundary & action & social & social_ack --> fin
 
-    %% --- GUIDE OUTCOME NODES -> FINALIZE ---------------------------------
+    %% --- GUIDE OUTCOMES -> FINALIZE ---------------------------------------
     gs & gh & ge & gd --> fin
 
     fin --> FINISH

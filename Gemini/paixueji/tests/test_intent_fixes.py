@@ -746,13 +746,13 @@ class TestDecoupledClarifyingSubIntents:
             "Conditional edges must map 'clarifying_constraint' to 'clarifying_constraint' node"
         )
 
-    def test_routing_keeps_clarifying_fallback_to_clarifying_idk(self):
-        """Old 'clarifying' route must fall back to 'clarifying_idk' for backward compat."""
+    def test_routing_removes_legacy_clarifying_fallback(self):
+        """Legacy 'clarifying' route should be removed after full sub-intent migration."""
         import inspect
         import graph as graph_module
         source = inspect.getsource(graph_module)
-        assert '"clarifying": "clarifying_idk"' in source, (
-            "Conditional edges must map old 'clarifying' fallback to 'clarifying_idk' node"
+        assert '"clarifying": "clarifying_idk"' not in source, (
+            "Legacy 'clarifying' fallback route should be removed from conditional edges"
         )
 
     def test_all_three_new_nodes_wired_to_finalize(self):

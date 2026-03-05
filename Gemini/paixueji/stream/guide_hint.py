@@ -55,7 +55,7 @@ async def generate_guide_hint(
     Returns:
         str: A child-friendly hint message
     """
-    model_name = config.get("model_name", "gemini-2.5-flash-preview-05-20")
+    model_name = config["model_name"]
 
     # Build age-appropriate language guidance
     if age <= 4:

@@ -243,7 +243,7 @@ def optimize_prompt_llm(
         failure_evidence=failure_evidence,
     )
 
-    model_name = config.get("high_reasoning_model", "gemini-2.5-pro")
+    model_name = config["high_reasoning_model"]
     logger.info(f"[Optimizer] Calling {model_name} to optimize '{prompt_name}' (router={is_router_prompt})")
 
     response = client.models.generate_content(
@@ -293,7 +293,7 @@ def _run_grounding(client, config: dict, object_name: str, age: int) -> str:
         age=age,
         category="general",
     )
-    model_name = config.get("model_name", "gemini-2.5-flash-lite")
+    model_name = config["model_name"]
     response = client.models.generate_content(
         model=model_name,
         contents=grounding_prompt,
@@ -362,7 +362,7 @@ def _call_intent_classifier(client, config: dict, ctx: dict, prompt_template: st
         topic_selection_instructions="",
     )
     response = client.models.generate_content(
-        model="gemini-2.0-flash-lite",
+        model=config["model_name"],
         contents=prompt,
         config=GenerateContentConfig(
             temperature=0.1,
@@ -406,7 +406,7 @@ def _call_input_analyzer(client, config: dict, ctx: dict, rules_block: str) -> d
         f"{rules_block}"
     )
     response = client.models.generate_content(
-        model="gemini-2.0-flash-lite",
+        model=config["model_name"],
         contents=prompt,
         config=GenerateContentConfig(
             temperature=0.1,
@@ -451,7 +451,7 @@ def _call_navigator(client, config: dict, ctx: dict, rules_block: str) -> dict:
         f"User's Latest Input: \"{ctx['user_input']}\"\n\n"
         f"{rules_block}"
     )
-    model_name = config.get("model_name", "gemini-2.5-flash-lite")
+    model_name = config["model_name"]
     response = client.models.generate_content(
         model=model_name,
         contents=prompt,
@@ -495,7 +495,7 @@ def _call_intent_response(
         )
     except KeyError:
         formatted = prompt_template
-    model_name = config.get("model_name", "gemini-2.5-flash-lite")
+    model_name = config["model_name"]
     response = client.models.generate_content(
         model=model_name,
         contents=formatted,
@@ -534,7 +534,7 @@ def _call_downstream_response(
         )
     except KeyError:
         formatted = prompt_template
-    model_name = config.get("model_name", "gemini-2.5-flash-lite")
+    model_name = config["model_name"]
     response = client.models.generate_content(
         model=model_name,
         contents=formatted,
@@ -569,7 +569,7 @@ def _call_theme_driver(client, config: dict, trace: TraceObject, nav_result: dic
         f"{scaffold_guidance}\n\n"
         f"RULES: Keep response to 1-2 sentences. Ask ONE question only. Be warm and encouraging."
     )
-    model_name = config.get("model_name", "gemini-2.5-flash-lite")
+    model_name = config["model_name"]
     response = client.models.generate_content(
         model=model_name,
         contents=driver_instruction,
@@ -769,7 +769,7 @@ def generate_preview_response(
             )
         except KeyError:
             formatted = optimized_prompt
-        model_name = config.get("model_name", "gemini-2.5-flash-lite")
+        model_name = config["model_name"]
         response = client.models.generate_content(
             model=model_name,
             contents=formatted,
@@ -820,7 +820,7 @@ def generate_preview_response(
     system_instruction, contents = _build_preview_messages(
         trace.conversation_history, formatted, is_question_prompt=is_q
     )
-    model_name = config.get("model_name", "gemini-2.5-flash-lite")
+    model_name = config["model_name"]
     response = client.models.generate_content(
         model=model_name,
         contents=contents,
@@ -958,7 +958,7 @@ def optimize_prompt_llm_refine(
         rejection_reason=rejection_reason,
     )
 
-    model_name = config.get("high_reasoning_model", "gemini-2.5-pro")
+    model_name = config["high_reasoning_model"]
     logger.info(f"[Optimizer] Calling {model_name} to REFINE '{prompt_name}'")
 
     response = client.models.generate_content(

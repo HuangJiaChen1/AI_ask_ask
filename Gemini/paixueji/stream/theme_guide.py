@@ -27,11 +27,10 @@ class ThemeNavigator:
     Note: RETREAT strategy was removed - we never abandon the theme.
     When child says "I don't know", use SCAFFOLD to help them, not retreat.
     """
-    def __init__(self, client: genai.Client, config: Dict[str, Any], model_override: Optional[str] = None):
+    def __init__(self, client: genai.Client, config: Dict[str, Any]):
         self.client = client
         self.config = config
-        # Allow using a faster model (e.g. gemini-2.5-flash-lite) for logic steps
-        self.model_name = model_override or config.get("navigator_model") or config["model_name"]
+        self.model_name = config["model_name"]
 
     async def analyze_turn(
         self,

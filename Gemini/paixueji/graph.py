@@ -271,7 +271,7 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
     intent_type = intent_result["intent_type"]
 
     # Reset IDK streak when child gives any non-IDK response
-    if intent_type not in ("CLARIFYING_IDK", "CLARIFYING"):
+    if intent_type != "CLARIFYING_IDK":
         state["assistant"].consecutive_idk_count = 0
 
     logger.info(f"[{state['session_id']}] Node: Analyze Input finished in {time.time() - start_time:.3f}s")
@@ -456,24 +456,14 @@ async def node_curiosity(state: PaixuejiState) -> dict:
 
 @trace_node
 async def node_clarifying_idk(state: PaixuejiState) -> dict:
-    """Child said IDK — scaffold hint on 1st, give direct answer on 2nd."""
+    """Child said IDK (1st time) — scaffold hint and increment counter."""
     start_time = time.time()
-    idk_count = state["assistant"].consecutive_idk_count
-    logger.info(f"[{state['session_id']}] Node: Clarifying IDK (count={idk_count})")
+    logger.info(f"[{state['session_id']}] Node: Clarifying IDK")
 
+    state["assistant"].consecutive_idk_count += 1
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
-
-    if idk_count == 0:
-        # First IDK: scaffold hint (existing behavior)
-        intent = "clarifying_idk"
-        state["assistant"].consecutive_idk_count += 1
-    else:
-        # Second+ IDK: give the answer directly and reset counter
-        intent = "give_answer_idk"
-        state["assistant"].consecutive_idk_count = 0
-
     generator = generate_intent_response_stream(
-        intent_type=intent,
+        intent_type="clarifying_idk",
         messages=messages,
         child_answer=state["content"],
         object_name=state["object_name"],
@@ -487,7 +477,37 @@ async def node_clarifying_idk(state: PaixuejiState) -> dict:
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     logger.info(f"[{state['session_id']}] Node: Clarifying IDK finished in {time.time() - start_time:.3f}s")
     return {
-        "response_type": intent,
+        "response_type": "clarifying_idk",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
+    }
+
+
+@trace_node
+async def node_give_answer_idk(state: PaixuejiState) -> dict:
+    """Child said IDK twice — reveal the answer directly and reset the IDK counter."""
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Give Answer IDK")
+
+    state["assistant"].consecutive_idk_count = 0
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    generator = generate_intent_response_stream(
+        intent_type="give_answer_idk",
+        messages=messages,
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
+        age_prompt=state["age_prompt"],
+        category_prompt=state["category_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    logger.info(f"[{state['session_id']}] Node: Give Answer IDK finished in {time.time() - start_time:.3f}s")
+    return {
+        "response_type": "give_answer_idk",
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
@@ -1277,9 +1297,10 @@ def build_paixueji_graph():
     workflow.add_node("generate_fun_fact", node_generate_fun_fact)
     workflow.add_node("generate_intro", node_generate_intro)
 
-    # --- 11 Intent nodes ---
+    # --- 12 Intent nodes ---
     workflow.add_node("curiosity", node_curiosity)
     workflow.add_node("clarifying_idk", node_clarifying_idk)
+    workflow.add_node("give_answer_idk", node_give_answer_idk)
     workflow.add_node("clarifying_wrong", node_clarifying_wrong)
     workflow.add_node("clarifying_constraint", node_clarifying_constraint)
     workflow.add_node("correct_answer", node_correct_answer)
@@ -1339,11 +1360,14 @@ def build_paixueji_graph():
     # Chat path: analyze_input → route_from_analyze_input → one of 9 intent nodes
     @trace_router(["intent_type"])
     def route_from_analyze_input(state):
-        intent = state.get("intent_type", "clarifying").lower()
+        intent = state.get("intent_type", "clarifying_idk").lower()
         # Intercept the Nth correct answer to run theme classification
         if (intent == "correct_answer" and
                 state["assistant"].correct_answer_count + 1 >= GUIDE_MODE_THRESHOLD):
             return "classify_theme"
+        # Intercept repeated IDK — route to dedicated answer-reveal node
+        if intent == "clarifying_idk" and state["assistant"].consecutive_idk_count > 0:
+            return "give_answer_idk"
         return intent
 
     workflow.add_conditional_edges(
@@ -1351,8 +1375,8 @@ def build_paixueji_graph():
         route_from_analyze_input,
         {
             "curiosity": "curiosity",
-            "clarifying": "clarifying_idk",  # graceful fallback for error paths
             "clarifying_idk": "clarifying_idk",
+            "give_answer_idk": "give_answer_idk",
             "clarifying_wrong": "clarifying_wrong",
             "clarifying_constraint": "clarifying_constraint",
             "correct_answer": "correct_answer",
@@ -1370,8 +1394,8 @@ def build_paixueji_graph():
 
     workflow.add_edge("classify_theme", "start_guide")
 
-    # All 13 intent nodes → finalize
-    for intent_node in ["curiosity", "clarifying_idk", "clarifying_wrong",
+    # All 14 intent nodes → finalize
+    for intent_node in ["curiosity", "clarifying_idk", "give_answer_idk", "clarifying_wrong",
                         "clarifying_constraint", "correct_answer", "informative", "play",
                         "emotional", "avoidance", "boundary", "action", "social",
                         "social_acknowledgment"]:

@@ -30,6 +30,7 @@ let guideTurnCount = 0;  // Current turn in guide mode
 let currentThemeName = null;  // IB PYP theme name
 let currentKeyConcept = null;  // Key concept for theme
 let currentIntentType = null;       // Last classified intent (9-node architecture)
+let currentResponseType = null;     // Last response node that actually ran
 
 // DOM elements
 const messagesContainer = document.getElementById('messages');
@@ -695,6 +696,12 @@ function handleStreamChunk(chunk) {
         currentIntentType = chunk.intent_type;
         updateDebugPanel();
     }
+
+    // Update response type (which node actually ran — may differ from intent_type via routing intercept)
+    if (chunk.response_type) {
+        currentResponseType = chunk.response_type;
+        updateDebugPanel();
+    }
 }
 
 /**
@@ -980,6 +987,12 @@ function updateDebugPanel() {
         intentElement.style.color = currentIntentType
             ? (intentColors[currentIntentType.toLowerCase()] || '#374151')
             : '#6b7280';
+    }
+
+    // Update response type display
+    const responseTypeEl = document.getElementById('debugResponseType');
+    if (responseTypeEl) {
+        responseTypeEl.textContent = currentResponseType || '-';
     }
 }
 
