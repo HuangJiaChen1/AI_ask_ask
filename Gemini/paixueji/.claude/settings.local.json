@@ -16,7 +16,8 @@
       "Bash(grep:*)",
       "Skill(fix-flaw)",
       "Bash(gcloud:*)",
-      "Bash(GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/application_default_credentials.json python:*)"
+      "Bash(GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/application_default_credentials.json python:*)",
+      "Bash(git stash:*)"
     ]
   },
   "outputStyle": "Explanatory"

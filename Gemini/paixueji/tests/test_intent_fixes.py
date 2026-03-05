@@ -1199,3 +1199,54 @@ class TestBoundaryCuriosityClosingQuestionRealLLM:
             f"CURIOSITY response must end with a question mark. Got: {response!r}"
         )
         print(f"\n[CURIOSITY] Response: {response}")
+
+
+# ============================================================================
+# Fix 5 — Elliptical affirmative "I have" must not map to CLARIFYING_IDK
+# ============================================================================
+
+class TestEllipticalAffirmativeDisambiguation:
+    """Structural tests: verify USER_INTENT_PROMPT contains the new disambiguation rules
+    that protect elliptical affirmatives like 'I have' from being misclassified as IDK.
+    No LLM call — pure prompt content inspection."""
+
+    def _get_prompt(self) -> str:
+        return paixueji_prompts.USER_INTENT_PROMPT
+
+    def test_elliptical_affirmative_rule_present(self):
+        """USER_INTENT_PROMPT must contain the elliptical affirmative → SOCIAL_ACKNOWLEDGMENT rule."""
+        prompt = self._get_prompt()
+        assert '"I have", "I did", "I do", "I am"' in prompt, (
+            "USER_INTENT_PROMPT must list elliptical affirmatives ('I have', 'I did', 'I do', 'I am') "
+            "as SOCIAL_ACKNOWLEDGMENT examples"
+        )
+
+    def test_elliptical_affirmative_routes_to_social_acknowledgment(self):
+        """The rule must explicitly map elliptical affirmatives to SOCIAL_ACKNOWLEDGMENT."""
+        prompt = self._get_prompt()
+        # Find the block that contains "I have" and confirm SOCIAL_ACKNOWLEDGMENT is nearby
+        idx = prompt.find('"I have", "I did"')
+        assert idx != -1, "Elliptical affirmative rule not found in USER_INTENT_PROMPT"
+        surrounding = prompt[idx: idx + 300]
+        assert "SOCIAL_ACKNOWLEDGMENT" in surrounding, (
+            "The elliptical affirmative rule must route to SOCIAL_ACKNOWLEDGMENT"
+        )
+
+    def test_i_have_never_maps_to_clarifying_idk_rule_present(self):
+        """USER_INTENT_PROMPT must contain an explicit rule stating 'I have' alone ≠ CLARIFYING_IDK."""
+        prompt = self._get_prompt()
+        assert "I have" in prompt and "CLARIFYING_IDK" in prompt, (
+            "USER_INTENT_PROMPT must mention both 'I have' and 'CLARIFYING_IDK' in context"
+        )
+        # Confirm the rule says "I have" alone NEVER maps to CLARIFYING_IDK
+        assert "NEVER maps to CLARIFYING_IDK" in prompt or "alone NEVER maps to CLARIFYING_IDK" in prompt, (
+            "USER_INTENT_PROMPT must contain an explicit NEVER rule for 'I have' → CLARIFYING_IDK"
+        )
+
+    def test_idk_qualifier_listed_as_required(self):
+        """The rule must require a qualifier ('no idea', 'no clue') for CLARIFYING_IDK — not bare 'I have'."""
+        prompt = self._get_prompt()
+        assert "no idea" in prompt and "no clue" in prompt, (
+            "USER_INTENT_PROMPT must list 'no idea' and 'no clue' as the qualifiers required "
+            "for CLARIFYING_IDK, distinguishing them from bare 'I have'"
+        )

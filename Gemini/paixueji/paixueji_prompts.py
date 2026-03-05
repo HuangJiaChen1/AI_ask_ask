@@ -276,6 +276,12 @@ DISAMBIGUATION RULES:
       SOCIAL_ACKNOWLEDGMENT (child is reacting to a fun fact, NOT stuck on an answer question)
   - "oh yeah" (acknowledging fact, not answering a question) → SOCIAL_ACKNOWLEDGMENT
   - Short single-word affirmations when no specific question was asked → SOCIAL_ACKNOWLEDGMENT
+  - "I have", "I did", "I do", "I am" as a complete standalone response (≤4 words, NOT followed
+    by "no idea", "no clue", "nothing", "any") in reply to "have you ever...?" / "did you...?"
+    / "do you...?" experience questions → SOCIAL_ACKNOWLEDGMENT
+    (child is giving an elliptical affirmative confirming an experience — NOT saying they don't know)
+  - "I have" alone NEVER maps to CLARIFYING_IDK — only "I have no idea", "I have no clue",
+    or similar full IDK phrases qualify as CLARIFYING_IDK
   - "What do you mean [X]?" or "What does that mean?" where the child is asking the model to
     re-explain something the model said → CURIOSITY, NOT CLARIFYING
     (CLARIFYING is only for a child attempting/failing to answer the AI's question)

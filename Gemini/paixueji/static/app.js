@@ -124,6 +124,10 @@ async function startConversation() {
     const level2Value = (level2Category && level2Category !== 'none') ? level2Category : null;
     const level3Value = (level3Category && level3Category !== 'none') ? level3Category : null;
 
+    // Read backbone model overrides
+    const conversationModel = document.querySelector('input[name="conversationModel"]:checked')?.value || 'gemini-3.1-flash-lite-preview';
+    const groundingModel = document.querySelector('input[name="groundingModel"]:checked')?.value || 'gemini-3.1-flash-lite-preview';
+
     // Clear previous messages
     messagesContainer.innerHTML = '';
     sessionId = null;
@@ -166,7 +170,9 @@ async function startConversation() {
                 object_name: objectName,
                 level1_category: level1Value,
                 level2_category: level2Value,
-                level3_category: level3Value
+                level3_category: level3Value,
+                model_name_override: conversationModel,
+                grounding_model_override: groundingModel
             }),
             signal: currentStreamController.signal
         });
@@ -254,6 +260,10 @@ async function startGuideTest() {
     const age = parseInt(document.getElementById('age').value);
     const objectName = document.getElementById('objectName').value.trim();
 
+    // Read backbone model overrides
+    const conversationModel = document.querySelector('input[name="conversationModel"]:checked')?.value || 'gemini-3.1-flash-lite-preview';
+    const groundingModel = document.querySelector('input[name="groundingModel"]:checked')?.value || 'gemini-3.1-flash-lite-preview';
+
     // Save state for debug panel
     currentObject = objectName;
 
@@ -305,7 +315,9 @@ async function startGuideTest() {
             },
             body: JSON.stringify({
                 age: age,
-                object_name: objectName
+                object_name: objectName,
+                model_name_override: conversationModel,
+                grounding_model_override: groundingModel
             }),
             signal: currentStreamController.signal
         });

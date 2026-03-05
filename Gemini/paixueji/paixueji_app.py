@@ -31,6 +31,8 @@ CORS(app)
 
 sessions = {}
 
+ALLOWED_MODELS = {"gemini-3.1-flash-lite-preview", "gemini-2.0-flash-lite"}
+
 # Background critique task tracking
 # {task_id: {"status": "pending"|"running"|"completed"|"failed",
 #            "session_id": str, "report_path": str|None,
@@ -204,6 +206,8 @@ def start_conversation():
     level1_category = data.get('level1_category')
     level2_category = data.get('level2_category')
     level3_category = data.get('level3_category')
+    model_name_override = data.get('model_name_override')
+    grounding_model_override = data.get('grounding_model_override')
     # Validate required fields
     if not object_name:
         return jsonify({
@@ -234,6 +238,14 @@ def start_conversation():
     assistant.level2_category = level2_category
     assistant.level3_category = level3_category
     assistant.correct_answer_count = 0
+
+    # Apply backbone model overrides (validated against whitelist)
+    if model_name_override and model_name_override in ALLOWED_MODELS:
+        assistant.config["model_name"] = model_name_override
+        print(f"[INFO] conversation model overridden to: {model_name_override}")
+    if grounding_model_override and grounding_model_override in ALLOWED_MODELS:
+        assistant.config["grounding_model"] = grounding_model_override
+        print(f"[INFO] grounding model overridden to: {grounding_model_override}")
 
     # Generate unique request ID for this stream
     request_id = str(uuid.uuid4())
@@ -396,6 +408,8 @@ def start_guide_test():
     data = request.get_json() or {}
     age = data.get('age')
     object_name = data.get('object_name')
+    model_name_override = data.get('model_name_override')
+    grounding_model_override = data.get('grounding_model_override')
 
     # Validate required fields
     if not object_name:
@@ -426,6 +440,14 @@ def start_guide_test():
     assistant.age = age
     assistant.object_name = object_name
     assistant.correct_answer_count = 4  # Simulate 4 correct answers
+
+    # Apply backbone model overrides (validated against whitelist)
+    if model_name_override and model_name_override in ALLOWED_MODELS:
+        assistant.config["model_name"] = model_name_override
+        print(f"[INFO] conversation model overridden to: {model_name_override}")
+    if grounding_model_override and grounding_model_override in ALLOWED_MODELS:
+        assistant.config["grounding_model"] = grounding_model_override
+        print(f"[INFO] grounding model overridden to: {grounding_model_override}")
 
     # Generate unique request ID for this stream
     request_id = str(uuid.uuid4())

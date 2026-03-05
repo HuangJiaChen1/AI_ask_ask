@@ -58,6 +58,49 @@
                 <option value="">Select...</option>
             </select>
 
+            <!-- Backbone Model Override Panel -->
+            <div style="margin: 4px 0; padding: 12px 14px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px;">
+                <div style="font-size: 0.78em; font-weight: 600; color: #475569; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 10px;">
+                    Backbone Models
+                </div>
+
+                <!-- Conversation Model -->
+                <div style="margin-bottom: 10px;">
+                    <div style="font-size: 0.85em; font-weight: 600; color: #334155; margin-bottom: 2px;">Conversation Model</div>
+                    <div style="font-size: 0.78em; color: #64748b; margin-bottom: 6px;">
+                        Handles all Q&amp;A, feedback, corrections, and follow-up questions
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em; color: #334155;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; font-weight: normal;">
+                            <input type="radio" name="conversationModel" value="gemini-3.1-flash-lite-preview" checked style="accent-color: #10b981; cursor: pointer;">
+                            <span>gemini-3.1-flash-lite-preview <span style="color: #94a3b8; font-size: 0.82em;">(default · preview)</span></span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; font-weight: normal;">
+                            <input type="radio" name="conversationModel" value="gemini-2.0-flash-lite" style="accent-color: #10b981; cursor: pointer;">
+                            <span>gemini-2.0-flash-lite <span style="color: #94a3b8; font-size: 0.82em;">(stable)</span></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Fun Fact Model -->
+                <div>
+                    <div style="font-size: 0.85em; font-weight: 600; color: #334155; margin-bottom: 2px;">Fun Fact Model</div>
+                    <div style="font-size: 0.78em; color: #64748b; margin-bottom: 6px;">
+                        Used when generating fun facts with Google Search grounding
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px; font-size: 0.85em; color: #334155;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; font-weight: normal;">
+                            <input type="radio" name="groundingModel" value="gemini-3.1-flash-lite-preview" checked style="accent-color: #10b981; cursor: pointer;">
+                            <span>gemini-3.1-flash-lite-preview <span style="color: #94a3b8; font-size: 0.82em;">(default · preview)</span></span>
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 0; font-weight: normal;">
+                            <input type="radio" name="groundingModel" value="gemini-2.0-flash-lite" style="accent-color: #10b981; cursor: pointer;">
+                            <span>gemini-2.0-flash-lite <span style="color: #94a3b8; font-size: 0.82em;">(stable)</span></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             <button onclick="startConversation()">Start Learning!</button>
         </div>
 
