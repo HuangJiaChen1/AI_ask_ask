@@ -1442,6 +1442,7 @@ def manual_critique():
     session_id = data.get('session_id')
     exchange_critiques = data.get('exchange_critiques', [])
     global_conclusion = data.get('global_conclusion', '')
+    skip_traces = data.get('skip_traces', False)
 
     if not session_id:
         return jsonify({
@@ -1525,6 +1526,14 @@ def manual_critique():
 
         logger.info(f"[MANUAL-CRITIQUE] Report saved: {report_path} | "
                      f"exchanges critiqued: {len(exchange_critiques)}")
+
+        if skip_traces:
+            return jsonify({
+                "success": True,
+                "report_path": str(report_path),
+                "exchanges_critiqued": len(exchange_critiques),
+                "traces": [],
+            })
 
         # Assemble TraceObjects for each critiqued exchange
         from trace_assembler import assemble_trace_object, save_trace_object

@@ -1425,10 +1425,10 @@ function closeManualCritique() {
 }
 
 /**
- * Collect all checked exchanges and submit manual critique.
+ * Collect all checked exchanges from the critique form.
+ * Returns null (and shows an alert) if none are checked.
  */
-async function submitManualCritique() {
-    // Collect checked exchanges
+function collectExchangeCritiques() {
     const exchangeCritiques = [];
     const checkboxes = document.querySelectorAll('[id^="exchange_cb_"]');
 
@@ -1448,11 +1448,70 @@ async function submitManualCritique() {
 
     if (exchangeCritiques.length === 0) {
         alert('Please select at least one exchange to critique.');
-        return;
+        return null;
     }
+    return exchangeCritiques;
+}
+
+/**
+ * Save the critique report only — returns immediately without trace/culprit analysis.
+ */
+async function submitManualCritiqueToDatabase() {
+    const exchangeCritiques = collectExchangeCritiques();
+    if (!exchangeCritiques) return;
 
     const globalConclusion = document.getElementById('globalConclusion').value;
-    const submitBtn = document.getElementById('submitManualCritiqueBtn');
+    const submitBtn = document.getElementById('submitReportDbBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving...';
+
+    try {
+        const response = await fetch(`${API_BASE}/manual-critique`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                session_id: sessionId,
+                exchange_critiques: exchangeCritiques,
+                global_conclusion: globalConclusion,
+                skip_traces: true
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            console.log('[INFO] Manual critique saved to:', result.report_path);
+            console.log('[INFO] Exchanges critiqued:', result.exchanges_critiqued);
+            const btn = document.getElementById('sendReportBtn');
+            btn.textContent = 'Report Saved!';
+            btn.style.background = '#10b981';
+            setTimeout(() => {
+                btn.textContent = '\uD83D\uDCDD Send Report for Review';
+                btn.style.background = '#f59e0b';
+            }, 4000);
+            closeManualCritique();
+        } else {
+            alert('Failed to save critique: ' + result.error);
+        }
+    } catch (e) {
+        console.error('[ERROR] Manual critique (DB only) failed:', e);
+        alert('Failed to submit critique: ' + e.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit to Report Database';
+    }
+}
+
+/**
+ * Save the critique report AND run trace assembly + LLM culprit identification
+ * for the evolving-agent optimization flow.
+ */
+async function submitManualCritiqueWithEvolution() {
+    const exchangeCritiques = collectExchangeCritiques();
+    if (!exchangeCritiques) return;
+
+    const globalConclusion = document.getElementById('globalConclusion').value;
+    const submitBtn = document.getElementById('submitEvolvingAgentBtn');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting...';
 
@@ -1494,7 +1553,7 @@ async function submitManualCritique() {
         alert('Failed to submit critique: ' + e.message);
     } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit Critique';
+        submitBtn.textContent = 'Submit for Evolving Agent';
     }
 }
 
