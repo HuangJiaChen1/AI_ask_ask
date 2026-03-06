@@ -4658,3 +4658,159 @@
 2026-03-05 18:29:13.285 | INFO     | graph:node_clarifying_idk:478 | [21600b32-8224-4cd7-9c49-9d7fce3d2161] Node: Clarifying IDK finished in 1.072s
 2026-03-05 18:29:13.286 | INFO     | graph:node_finalize:1196 | [21600b32-8224-4cd7-9c49-9d7fce3d2161] Node: Finalize
 2026-03-05 18:29:13.286 | INFO     | graph:node_finalize:1248 | [21600b32-8224-4cd7-9c49-9d7fce3d2161] Node: Finalize finished in 0.000s
+2026-03-05 18:31:07.650 | INFO     | graph:node_generate_fun_fact:291 | [0fe609a1-a135-426a-82c5-fe45364db60d] Node: Generate Fun Fact for 'apple'
+2026-03-05 18:31:07.652 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'apple' (model=gemini-3.1-flash-lite-preview)
+2026-03-05 18:31:07.655 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-03-05 18:31:09.274 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: apple -> Category_Nature_And_Physics | Concept: Change | Question: How do you think the apple changes from the tiny seeds hidden inside its core into the big, crunchy fruit we eat? | Thinking: The apple is a natural object. While it relates to health, the 'How the World Works' theme offers a deeper inquiry into its life cycle. 'Change' is the most engaging lens for a child to understand the growth process of a fruit over time.
+2026-03-05 18:31:12.245 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 4.592s | text_length=1854
+2026-03-05 18:31:12.245 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'apple'
+2026-03-05 18:31:14.208 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 1.963s
+2026-03-05 18:31:14.208 | INFO     | stream.fun_fact:cache_fun_fact:78 | [FUN_FACT] Cached 4 fun facts for 'apple'
+2026-03-05 18:31:14.212 | INFO     | stream.fun_fact:generate_fun_fact:206 | [FUN_FACT] Success for 'apple' | facts_count=4, selected='Did you know that apple trees need a cold winter to rest so ...'
+2026-03-05 18:31:14.212 | INFO     | graph:node_generate_fun_fact:306 | [0fe609a1-a135-426a-82c5-fe45364db60d] Node: Generate Fun Fact finished in 6.562s
+2026-03-05 18:31:14.215 | INFO     | graph:node_generate_intro:321 | [0fe609a1-a135-426a-82c5-fe45364db60d] Node: Generate Intro for 'apple'
+2026-03-05 18:31:14.215 | INFO     | stream.question_generators:ask_introduction_question_stream:66 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=True
+2026-03-05 18:31:14.216 | DEBUG    | stream.question_generators:ask_introduction_question_stream:94 | Messages prepared for API | count=2
+2026-03-05 18:31:14.216 | DEBUG    | stream.question_generators:ask_introduction_question_stream:105 | Sending 1 messages to Gemini API
+2026-03-05 18:31:14.217 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Stream object type: async_generator
+2026-03-05 18:31:15.104 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 1 | length=4, total_length=4
+2026-03-05 18:31:15.105 | INFO     | graph:stream_generator_to_callback:370 | [0fe609a1-a135-426a-82c5-fe45364db60d] TTFT: 7.461s for introduction
+2026-03-05 18:31:15.132 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 2 | length=14, total_length=18
+2026-03-05 18:31:15.173 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 3 | length=33, total_length=51
+2026-03-05 18:31:15.211 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 4 | length=35, total_length=86
+2026-03-05 18:31:15.259 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 5 | length=35, total_length=121
+2026-03-05 18:31:15.295 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 6 | length=57, total_length=178
+2026-03-05 18:31:15.337 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 7 | length=35, total_length=213
+2026-03-05 18:31:15.375 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 8 | length=35, total_length=248
+2026-03-05 18:31:15.389 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 9 | length=18, total_length=266
+2026-03-05 18:31:15.392 | DEBUG    | stream.question_generators:ask_introduction_question_stream:142 | Gemini streaming API does not provide token usage in stream mode
+2026-03-05 18:31:15.392 | DEBUG    | stream.question_generators:ask_introduction_question_stream:161 | Cleaned up stream via del in finally block
+2026-03-05 18:31:15.393 | INFO     | stream.question_generators:ask_introduction_question_stream:166 | ask_introduction_question_stream completed | duration=1.178s, response_length=266
+2026-03-05 18:31:15.393 | INFO     | graph:stream_generator_to_callback:422 | [0fe609a1-a135-426a-82c5-fe45364db60d] Stream finished in 1.178s for introduction
+2026-03-05 18:31:15.393 | INFO     | graph:node_generate_intro:344 | [0fe609a1-a135-426a-82c5-fe45364db60d] Node: Generate Intro finished in 1.178s
+2026-03-05 18:31:15.395 | INFO     | graph:node_finalize:1196 | [0fe609a1-a135-426a-82c5-fe45364db60d] Node: Finalize
+2026-03-05 18:31:15.395 | INFO     | graph:node_finalize:1248 | [0fe609a1-a135-426a-82c5-fe45364db60d] Node: Finalize finished in 0.000s
+2026-03-05 18:31:17.774 | INFO     | graph:node_analyze_input:258 | [0fe609a1-a135-426a-82c5-fe45364db60d] Node: Analyze Input
+2026-03-05 18:31:18.781 | INFO     | stream.validation:classify_intent:93 | [CLASSIFY] LLM call duration: 1.006s
+2026-03-05 18:31:18.783 | INFO     | stream.validation:classify_intent:123 | [CLASSIFY] intent=SOCIAL_ACKNOWLEDGMENT | new_object=None | reasoning=The child provided a short, elliptical affirmative in response to an experience-based question ("have you ever...?"), which falls under the social acknowledgment rule.
+2026-03-05 18:31:18.783 | INFO     | graph:node_analyze_input:277 | [0fe609a1-a135-426a-82c5-fe45364db60d] Node: Analyze Input finished in 1.009s
+2026-03-05 18:31:18.787 | INFO     | graph:node_social_acknowledgment:855 | [0fe609a1-a135-426a-82c5-fe45364db60d] Node: Social Acknowledgment
+2026-03-05 18:31:18.787 | INFO     | stream.response_generators:generate_intent_response_stream:57 | generate_intent_response_stream started | intent=social_acknowledgment, object=apple, age=6
+2026-03-05 18:31:20.023 | INFO     | graph:stream_generator_to_callback:370 | [0fe609a1-a135-426a-82c5-fe45364db60d] TTFT: 2.253s for None
+2026-03-05 18:31:20.181 | INFO     | stream.response_generators:generate_intent_response_stream:120 | generate_intent_response_stream completed | intent=social_acknowledgment, duration=1.394s, length=175
+2026-03-05 18:31:20.182 | INFO     | graph:stream_generator_to_callback:422 | [0fe609a1-a135-426a-82c5-fe45364db60d] Stream finished in 1.395s for None
+2026-03-05 18:31:20.182 | INFO     | graph:node_social_acknowledgment:871 | [0fe609a1-a135-426a-82c5-fe45364db60d] Node: Social Acknowledgment finished in 1.395s
+2026-03-05 18:31:20.184 | INFO     | graph:node_finalize:1196 | [0fe609a1-a135-426a-82c5-fe45364db60d] Node: Finalize
+2026-03-05 18:31:20.184 | INFO     | graph:node_finalize:1248 | [0fe609a1-a135-426a-82c5-fe45364db60d] Node: Finalize finished in 0.000s
+2026-03-05 18:31:28.022 | INFO     | graph:node_generate_fun_fact:291 | [6fa9f3f2-b97b-4d1c-9247-4c1d9dc81045] Node: Generate Fun Fact for 'apple'
+2026-03-05 18:31:28.023 | INFO     | stream.fun_fact:get_cached_fun_fact:63 | [FUN_FACT] Cache hit for 'apple' | fun_fact='Did you know that apple trees need a cold winter to rest so ...'
+2026-03-05 18:31:28.023 | INFO     | graph:node_generate_fun_fact:306 | [6fa9f3f2-b97b-4d1c-9247-4c1d9dc81045] Node: Generate Fun Fact finished in 0.001s
+2026-03-05 18:31:28.024 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-03-05 18:31:28.028 | INFO     | graph:node_generate_intro:321 | [6fa9f3f2-b97b-4d1c-9247-4c1d9dc81045] Node: Generate Intro for 'apple'
+2026-03-05 18:31:28.029 | INFO     | stream.question_generators:ask_introduction_question_stream:66 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=True
+2026-03-05 18:31:28.030 | DEBUG    | stream.question_generators:ask_introduction_question_stream:94 | Messages prepared for API | count=2
+2026-03-05 18:31:28.030 | DEBUG    | stream.question_generators:ask_introduction_question_stream:105 | Sending 1 messages to Gemini API
+2026-03-05 18:31:28.030 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Stream object type: async_generator
+2026-03-05 18:31:29.970 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 1 | length=4, total_length=4
+2026-03-05 18:31:29.971 | INFO     | graph:stream_generator_to_callback:370 | [6fa9f3f2-b97b-4d1c-9247-4c1d9dc81045] TTFT: 1.951s for introduction
+2026-03-05 18:31:30.006 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 2 | length=14, total_length=18
+2026-03-05 18:31:30.031 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 3 | length=33, total_length=51
+2026-03-05 18:31:30.069 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 4 | length=45, total_length=96
+2026-03-05 18:31:30.112 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 5 | length=44, total_length=140
+2026-03-05 18:31:30.155 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 6 | length=41, total_length=181
+2026-03-05 18:31:30.196 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 7 | length=57, total_length=238
+2026-03-05 18:31:30.239 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 8 | length=35, total_length=273
+2026-03-05 18:31:30.280 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 9 | length=38, total_length=311
+2026-03-05 18:31:30.290 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 10 | length=17, total_length=328
+2026-03-05 18:31:30.297 | DEBUG    | stream.question_generators:ask_introduction_question_stream:142 | Gemini streaming API does not provide token usage in stream mode
+2026-03-05 18:31:30.298 | DEBUG    | stream.question_generators:ask_introduction_question_stream:161 | Cleaned up stream via del in finally block
+2026-03-05 18:31:30.298 | INFO     | stream.question_generators:ask_introduction_question_stream:166 | ask_introduction_question_stream completed | duration=2.269s, response_length=328
+2026-03-05 18:31:30.298 | INFO     | graph:stream_generator_to_callback:422 | [6fa9f3f2-b97b-4d1c-9247-4c1d9dc81045] Stream finished in 2.269s for introduction
+2026-03-05 18:31:30.298 | INFO     | graph:node_generate_intro:344 | [6fa9f3f2-b97b-4d1c-9247-4c1d9dc81045] Node: Generate Intro finished in 2.270s
+2026-03-05 18:31:30.299 | INFO     | graph:node_finalize:1196 | [6fa9f3f2-b97b-4d1c-9247-4c1d9dc81045] Node: Finalize
+2026-03-05 18:31:30.299 | INFO     | graph:node_finalize:1248 | [6fa9f3f2-b97b-4d1c-9247-4c1d9dc81045] Node: Finalize finished in 0.000s
+2026-03-05 18:31:31.552 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: apple -> Category_Nature_And_Physics | Concept: Change | Question: How do you think the inside of the apple changes if we leave it out on the counter for a few days? | Thinking: The apple is a biological entity. 'How the World Works' is the best theme for natural phenomena. 'Change' allows for a dynamic inquiry into growth and decay, which is more developmentally appropriate and curious than static 'Form'.
+2026-03-05 18:31:34.874 | INFO     | graph:node_analyze_input:258 | [6fa9f3f2-b97b-4d1c-9247-4c1d9dc81045] Node: Analyze Input
+2026-03-05 18:31:35.901 | INFO     | stream.validation:classify_intent:93 | [CLASSIFY] LLM call duration: 1.026s
+2026-03-05 18:31:35.902 | INFO     | stream.validation:classify_intent:123 | [CLASSIFY] intent=CORRECT_ANSWER | new_object=None | reasoning=The child directly answered the AI's question about the color of the apple.
+2026-03-05 18:31:35.902 | INFO     | graph:node_analyze_input:277 | [6fa9f3f2-b97b-4d1c-9247-4c1d9dc81045] Node: Analyze Input finished in 1.029s
+2026-03-05 18:31:35.905 | INFO     | graph:node_correct_answer:579 | [6fa9f3f2-b97b-4d1c-9247-4c1d9dc81045] Node: Correct Answer
+2026-03-05 18:31:35.906 | INFO     | stream.response_generators:generate_intent_response_stream:57 | generate_intent_response_stream started | intent=correct_answer, object=apple, age=6
+2026-03-05 18:31:36.817 | INFO     | graph:stream_generator_to_callback:370 | [6fa9f3f2-b97b-4d1c-9247-4c1d9dc81045] TTFT: 1.945s for None
+2026-03-05 18:31:36.954 | INFO     | stream.response_generators:generate_intent_response_stream:120 | generate_intent_response_stream completed | intent=correct_answer, duration=1.048s, length=202
+2026-03-05 18:31:36.954 | INFO     | graph:stream_generator_to_callback:422 | [6fa9f3f2-b97b-4d1c-9247-4c1d9dc81045] Stream finished in 1.049s for None
+2026-03-05 18:31:36.954 | INFO     | graph:node_correct_answer:596 | [6fa9f3f2-b97b-4d1c-9247-4c1d9dc81045] Node: Correct Answer finished in 1.049s
+2026-03-05 18:31:36.956 | INFO     | graph:node_finalize:1196 | [6fa9f3f2-b97b-4d1c-9247-4c1d9dc81045] Node: Finalize
+2026-03-05 18:31:36.957 | INFO     | graph:node_finalize:1248 | [6fa9f3f2-b97b-4d1c-9247-4c1d9dc81045] Node: Finalize finished in 0.000s
+2026-03-05 18:31:43.954 | INFO     | graph:node_generate_fun_fact:291 | [7ed3c036-33fe-4adf-898e-ae410823ab6e] Node: Generate Fun Fact for 'apple'
+2026-03-05 18:31:43.955 | INFO     | stream.fun_fact:get_cached_fun_fact:63 | [FUN_FACT] Cache hit for 'apple' | fun_fact='Did you know that eating an apple is a great way to get vita...'
+2026-03-05 18:31:43.956 | INFO     | graph:node_generate_fun_fact:306 | [7ed3c036-33fe-4adf-898e-ae410823ab6e] Node: Generate Fun Fact finished in 0.001s
+2026-03-05 18:31:43.957 | INFO     | graph:node_generate_intro:321 | [7ed3c036-33fe-4adf-898e-ae410823ab6e] Node: Generate Intro for 'apple'
+2026-03-05 18:31:43.957 | INFO     | stream.question_generators:ask_introduction_question_stream:66 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=True
+2026-03-05 18:31:43.957 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-03-05 18:31:43.959 | DEBUG    | stream.question_generators:ask_introduction_question_stream:94 | Messages prepared for API | count=2
+2026-03-05 18:31:43.959 | DEBUG    | stream.question_generators:ask_introduction_question_stream:105 | Sending 1 messages to Gemini API
+2026-03-05 18:31:43.960 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Stream object type: async_generator
+2026-03-05 18:31:45.521 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: apple -> Category_Nature_And_Physics | Concept: Change | Question: How do you think the tiny seeds hidden inside the apple help a new tree begin to grow? | Thinking: Object: Apple. Features: Skin, seeds, flesh, growth cycle. Theme: Nature/Science (How the World Works). Concept: Change (Growth/Transformation). Question: Focus on the transition from seed to fruit to decay.
+2026-03-05 18:31:45.932 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 1 | length=4, total_length=4
+2026-03-05 18:31:45.933 | INFO     | graph:stream_generator_to_callback:370 | [7ed3c036-33fe-4adf-898e-ae410823ab6e] TTFT: 1.981s for introduction
+2026-03-05 18:31:45.939 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 2 | length=15, total_length=19
+2026-03-05 18:31:45.977 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 3 | length=34, total_length=53
+2026-03-05 18:31:46.016 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 4 | length=35, total_length=88
+2026-03-05 18:31:46.064 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 5 | length=26, total_length=114
+2026-03-05 18:31:46.105 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 6 | length=41, total_length=155
+2026-03-05 18:31:46.159 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 7 | length=56, total_length=211
+2026-03-05 18:31:46.182 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 8 | length=54, total_length=265
+2026-03-05 18:31:46.197 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 9 | length=1, total_length=266
+2026-03-05 18:31:46.201 | DEBUG    | stream.question_generators:ask_introduction_question_stream:142 | Gemini streaming API does not provide token usage in stream mode
+2026-03-05 18:31:46.201 | DEBUG    | stream.question_generators:ask_introduction_question_stream:161 | Cleaned up stream via del in finally block
+2026-03-05 18:31:46.201 | INFO     | stream.question_generators:ask_introduction_question_stream:166 | ask_introduction_question_stream completed | duration=2.244s, response_length=266
+2026-03-05 18:31:46.202 | INFO     | graph:stream_generator_to_callback:422 | [7ed3c036-33fe-4adf-898e-ae410823ab6e] Stream finished in 2.245s for introduction
+2026-03-05 18:31:46.202 | INFO     | graph:node_generate_intro:344 | [7ed3c036-33fe-4adf-898e-ae410823ab6e] Node: Generate Intro finished in 2.245s
+2026-03-05 18:31:46.203 | INFO     | graph:node_finalize:1196 | [7ed3c036-33fe-4adf-898e-ae410823ab6e] Node: Finalize
+2026-03-05 18:31:46.204 | INFO     | graph:node_finalize:1248 | [7ed3c036-33fe-4adf-898e-ae410823ab6e] Node: Finalize finished in 0.000s
+2026-03-05 18:31:49.167 | INFO     | graph:node_analyze_input:258 | [7ed3c036-33fe-4adf-898e-ae410823ab6e] Node: Analyze Input
+2026-03-05 18:31:50.436 | INFO     | stream.validation:classify_intent:93 | [CLASSIFY] LLM call duration: 1.267s
+2026-03-05 18:31:50.437 | INFO     | stream.validation:classify_intent:123 | [CLASSIFY] intent=CORRECT_ANSWER | new_object=None | reasoning=The child is providing an elliptical affirmative response to the AI's question about whether they like apples.
+2026-03-05 18:31:50.437 | INFO     | graph:node_analyze_input:277 | [7ed3c036-33fe-4adf-898e-ae410823ab6e] Node: Analyze Input finished in 1.270s
+2026-03-05 18:31:50.440 | INFO     | graph:node_correct_answer:579 | [7ed3c036-33fe-4adf-898e-ae410823ab6e] Node: Correct Answer
+2026-03-05 18:31:50.441 | INFO     | stream.response_generators:generate_intent_response_stream:57 | generate_intent_response_stream started | intent=correct_answer, object=apple, age=6
+2026-03-05 18:32:24.051 | INFO     | graph:node_generate_fun_fact:291 | [4b8fcea6-ec30-4c45-915f-ccc646f20dee] Node: Generate Fun Fact for 'apple'
+2026-03-05 18:32:24.052 | INFO     | stream.fun_fact:get_cached_fun_fact:63 | [FUN_FACT] Cache hit for 'apple' | fun_fact='Did you know that apples can float in water because they are...'
+2026-03-05 18:32:24.052 | INFO     | graph:node_generate_fun_fact:306 | [4b8fcea6-ec30-4c45-915f-ccc646f20dee] Node: Generate Fun Fact finished in 0.001s
+2026-03-05 18:32:24.053 | INFO     | graph:node_generate_intro:321 | [4b8fcea6-ec30-4c45-915f-ccc646f20dee] Node: Generate Intro for 'apple'
+2026-03-05 18:32:24.053 | INFO     | stream.question_generators:ask_introduction_question_stream:66 | ask_introduction_question_stream started | object=apple, age=6, has_fun_fact=True
+2026-03-05 18:32:24.053 | DEBUG    | stream.question_generators:ask_introduction_question_stream:94 | Messages prepared for API | count=2
+2026-03-05 18:32:24.053 | DEBUG    | stream.question_generators:ask_introduction_question_stream:105 | Sending 1 messages to Gemini API
+2026-03-05 18:32:24.054 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Stream object type: async_generator
+2026-03-05 18:32:24.056 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: apple
+2026-03-05 18:32:25.849 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: apple -> Category_Nature_And_Physics | Concept: Change | Question: How do you think the apple's skin and inside change from the time it is a tiny flower on a tree until it is ready for us to eat? | Thinking: The apple is a natural object. While it relates to health, 'How the World Works' provides a deeper inquiry into its life cycle. 'Change' is chosen over 'Form' because it invites the child to think about the apple's growth and transformation over time, which is more engaging for a young learner.
+2026-03-05 18:32:26.179 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 1 | length=4, total_length=4
+2026-03-05 18:32:26.180 | INFO     | graph:stream_generator_to_callback:370 | [4b8fcea6-ec30-4c45-915f-ccc646f20dee] TTFT: 2.131s for introduction
+2026-03-05 18:32:26.182 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 2 | length=21, total_length=25
+2026-03-05 18:32:26.211 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 3 | length=34, total_length=59
+2026-03-05 18:32:26.234 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 4 | length=35, total_length=94
+2026-03-05 18:32:26.267 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 5 | length=26, total_length=120
+2026-03-05 18:32:26.319 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 6 | length=57, total_length=177
+2026-03-05 18:32:26.356 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 7 | length=29, total_length=206
+2026-03-05 18:32:26.387 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 8 | length=37, total_length=243
+2026-03-05 18:32:26.405 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 9 | length=1, total_length=244
+2026-03-05 18:32:26.408 | DEBUG    | stream.question_generators:ask_introduction_question_stream:142 | Gemini streaming API does not provide token usage in stream mode
+2026-03-05 18:32:26.408 | DEBUG    | stream.question_generators:ask_introduction_question_stream:161 | Cleaned up stream via del in finally block
+2026-03-05 18:32:26.408 | INFO     | stream.question_generators:ask_introduction_question_stream:166 | ask_introduction_question_stream completed | duration=2.355s, response_length=244
+2026-03-05 18:32:26.408 | INFO     | graph:stream_generator_to_callback:422 | [4b8fcea6-ec30-4c45-915f-ccc646f20dee] Stream finished in 2.355s for introduction
+2026-03-05 18:32:26.408 | INFO     | graph:node_generate_intro:344 | [4b8fcea6-ec30-4c45-915f-ccc646f20dee] Node: Generate Intro finished in 2.356s
+2026-03-05 18:32:26.410 | INFO     | graph:node_finalize:1196 | [4b8fcea6-ec30-4c45-915f-ccc646f20dee] Node: Finalize
+2026-03-05 18:32:26.410 | INFO     | graph:node_finalize:1248 | [4b8fcea6-ec30-4c45-915f-ccc646f20dee] Node: Finalize finished in 0.000s
+2026-03-05 18:32:27.808 | INFO     | graph:node_analyze_input:258 | [4b8fcea6-ec30-4c45-915f-ccc646f20dee] Node: Analyze Input
+2026-03-05 18:32:28.884 | INFO     | stream.validation:classify_intent:93 | [CLASSIFY] LLM call duration: 1.076s
+2026-03-05 18:32:28.885 | INFO     | stream.validation:classify_intent:123 | [CLASSIFY] intent=SOCIAL_ACKNOWLEDGMENT | new_object=None | reasoning=The child is providing an elliptical affirmative ("I like") in response to the AI's question about their preference, which functions as a social acknowledgment of the topic.
+2026-03-05 18:32:28.886 | INFO     | graph:node_analyze_input:277 | [4b8fcea6-ec30-4c45-915f-ccc646f20dee] Node: Analyze Input finished in 1.078s
+2026-03-05 18:32:28.889 | INFO     | graph:node_social_acknowledgment:855 | [4b8fcea6-ec30-4c45-915f-ccc646f20dee] Node: Social Acknowledgment
+2026-03-05 18:32:28.889 | INFO     | stream.response_generators:generate_intent_response_stream:57 | generate_intent_response_stream started | intent=social_acknowledgment, object=apple, age=6
+2026-03-05 18:32:30.067 | INFO     | graph:stream_generator_to_callback:370 | [4b8fcea6-ec30-4c45-915f-ccc646f20dee] TTFT: 2.263s for None
+2026-03-05 18:32:30.133 | INFO     | stream.response_generators:generate_intent_response_stream:120 | generate_intent_response_stream completed | intent=social_acknowledgment, duration=1.244s, length=152
+2026-03-05 18:32:30.133 | INFO     | graph:stream_generator_to_callback:422 | [4b8fcea6-ec30-4c45-915f-ccc646f20dee] Stream finished in 1.244s for None
+2026-03-05 18:32:30.133 | INFO     | graph:node_social_acknowledgment:871 | [4b8fcea6-ec30-4c45-915f-ccc646f20dee] Node: Social Acknowledgment finished in 1.245s
+2026-03-05 18:32:30.134 | INFO     | graph:node_finalize:1196 | [4b8fcea6-ec30-4c45-915f-ccc646f20dee] Node: Finalize
+2026-03-05 18:32:30.135 | INFO     | graph:node_finalize:1248 | [4b8fcea6-ec30-4c45-915f-ccc646f20dee] Node: Finalize finished in 0.000s

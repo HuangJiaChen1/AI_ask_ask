@@ -276,12 +276,106 @@ DISAMBIGUATION RULES:
       SOCIAL_ACKNOWLEDGMENT (child is reacting to a fun fact, NOT stuck on an answer question)
   - "oh yeah" (acknowledging fact, not answering a question) → SOCIAL_ACKNOWLEDGMENT
   - Short single-word affirmations when no specific question was asked → SOCIAL_ACKNOWLEDGMENT
-  - "I have", "I did", "I do", "I am" as a complete standalone response (≤4 words, NOT followed
-    by "no idea", "no clue", "nothing", "any") in reply to "have you ever...?" / "did you...?"
-    / "do you...?" experience questions → SOCIAL_ACKNOWLEDGMENT
-    (child is giving an elliptical affirmative confirming an experience — NOT saying they don't know)
-  - "I have" alone NEVER maps to CLARIFYING_IDK — only "I have no idea", "I have no clue",
-    or similar full IDK phrases qualify as CLARIFYING_IDK
+  - "What do you mean [X]?" or "What does that mean?" where the child is asking the model to
+    re-explain something the model said → CURIOSITY, NOT CLARIFYING
+    (CLARIFYING is only for a child attempting/failing to answer the AI's question)
+  - "Is it yum?", "Is it tasty?", "Does it taste good?", "Is it delicious?" — asking about
+    the sensory/taste quality of the food or sub-topic just discussed → CURIOSITY, NOT SOCIAL
+    (even though the phrasing is ambiguous, a young child asking about a food's taste is
+    expressing curiosity about the object, not asking about the AI's personal experience)
+  - "i meant X", "no I was asking about X", "I was talking about Y", "I meant the [sub-topic]"
+    — child clarifying/correcting what their previous statement referred to (not answering a
+    factual question) → CURIOSITY (about X/Y), NOT CLARIFYING_WRONG
+    (CLARIFYING_WRONG is only for a child who attempted and failed to answer the AI's question)
+
+RULE 2 — NEW OBJECT (only for ACTION or AVOIDANCE):
+  If the intent is ACTION or AVOIDANCE AND the child named a specific new object to explore,
+  extract that object name. Otherwise output null.
+  Example: "Let's talk about dogs" → INTENT: ACTION, NEW_OBJECT: dog
+  Example: "I don't want to, let's do cats instead" → INTENT: AVOIDANCE, NEW_OBJECT: cat
+  Example: "I don't want to." → INTENT: AVOIDANCE, NEW_OBJECT: null
+  Example: "Say it again." → INTENT: ACTION, NEW_OBJECT: null
+
+{topic_selection_instructions}
+
+TASK: Classify what this child is doing, and extract a new topic if they name one.
+
+CONTEXT:
+- Object: {object_name}
+- AI's question: "{last_model_question}"
+- Child's response: "{child_answer}"
+
+RULE 1 — INTENT (choose exactly ONE):
+
+  CURIOSITY             : Child asks "why", "what", "how" about the topic, OR asks what the model's
+                          own statement means ("what do you mean...?", "what does that mean?").
+                          Examples: "Why is it green?", "What does it eat?", "How does it fly?",
+                                    "What do you mean it has air inside?", "What does hollow mean?"
+
+  CLARIFYING_IDK        : Child said "I don't know", is silent/blank, or gave a single confused word.
+                          Examples: "I don't know.", "Um...", "Hmm", "I have no idea"
+
+  CLARIFYING_WRONG      : Child attempted to answer the AI's question but was incorrect or substantially
+                          incomplete. They tried — but the answer was wrong.
+                          Examples: "Hmm, a dog?", "Is it a bird?", "I think yellow?", "It's a lemon."
+
+  CLARIFYING_CONSTRAINT : Child describes a real-world situational constraint — still engaged but
+                          explaining they don't have access to the object or experience.
+                          Examples: "I don't have one", "I can't do that", "I've never seen one",
+                                    "I have never seen these colors"
+
+  CORRECT_ANSWER        : Child directly answers the AI's question with meaningful content
+                          (correct, complete, or substantially on-target response).
+                          Examples: "It's red!", "I feel sweet.", "It has six legs.",
+                                    "It crunches!", "Because it has sugar in it."
+
+  INFORMATIVE           : Child shares what they already know, unprompted — NOT in response to a question.
+                          Examples: "I know! It's a frog.", "Frogs jump high!", "It's actually green."
+
+  PLAY                  : Child is being silly, imaginative, or playful — not answering seriously.
+                          Examples: "Does it fart?", "It looks like a monster!", "Let's say it's a dragon."
+
+  EMOTIONAL             : Child expresses a feeling about the object or situation.
+                          Examples: "I'm scared.", "It's so cute!", "I don't like this.", "Eww!"
+
+  AVOIDANCE             : Child explicitly refuses, goes silent, or wants to exit this topic —
+                          expressing *emotional* disinterest or fatigue, NOT a factual constraint.
+                          Examples: "I don't want to.", "This is boring.", "I don't want to talk about this."
+                          NOT avoidance: "I don't have one", "I can't do that" (those are situational constraints → CLARIFYING_CONSTRAINT)
+
+  BOUNDARY              : Child asks about or proposes a physically risky action.
+                          Examples: "Can I eat it?", "Can I throw it?", "What if I touch it?"
+
+  ACTION                : Child issues a command to the AI or requests a change.
+                          Examples: "Say it again.", "Give me a new question.", "Let's talk about dogs."
+
+  SOCIAL                : Child asks about the AI itself, not the object.
+                          Examples: "Do you have feelings?", "How old are you?", "Are you real?", "Are you a robot?"
+                          NOT social: "Is it yum?", "Is it tasty?" (taste/sensory question about the food → CURIOSITY)
+
+  SOCIAL_ACKNOWLEDGMENT : Child reacts with a brief social signal — not contributing new content,
+                          just acknowledging or reacting to what the model said.
+                          Examples: "oh yeah", "wow", "cool", "i didn't know that", "ok", "huh",
+                                    "really?", "yes" or "no" in response to a "Did you know?" question.
+
+DISAMBIGUATION RULES:
+  - Child answers the AI's question with content → CORRECT_ANSWER, NOT INFORMATIVE
+  - "I feel sweet" (answering "what do you taste?") → CORRECT_ANSWER
+  - "I know! It has seeds." (unprompted) → INFORMATIVE
+  - "It's a dog!" (wrong answer to AI's question) → CLARIFYING_WRONG
+  - "I don't know." → CLARIFYING_IDK
+  - "I don't have [object]", "I can't [do action]", "I've never seen one" → CLARIFYING_CONSTRAINT
+    (child is sharing a situational/real-world constraint while still engaged — NOT AVOIDANCE)
+  - "I don't want to talk about THIS" → AVOIDANCE (refusing topic), NOT CLARIFYING
+  - "It's scary!" (reaction to object) → EMOTIONAL, NOT PLAY
+  - "It's a monster!" (imaginative reframe) → PLAY, NOT EMOTIONAL
+  - "Can I pet it?" (risky physical action) → BOUNDARY, NOT ACTION
+  - "yes" or "no" in response to "Did you know...?" → SOCIAL_ACKNOWLEDGMENT (not a learning answer)
+  - "i didn't know that" (after model states a fact) → SOCIAL_ACKNOWLEDGMENT
+  - "I don't know" or "idk" when AI's last question starts with "Did you know" →
+      SOCIAL_ACKNOWLEDGMENT (child is reacting to a fun fact, NOT stuck on an answer question)
+  - "oh yeah" (acknowledging fact, not answering a question) → SOCIAL_ACKNOWLEDGMENT
+  - Short single-word affirmations when no specific question was asked → SOCIAL_ACKNOWLEDGMENT
   - "What do you mean [X]?" or "What does that mean?" where the child is asking the model to
     re-explain something the model said → CURIOSITY, NOT CLARIFYING
     (CLARIFYING is only for a child attempting/failing to answer the AI's question)
