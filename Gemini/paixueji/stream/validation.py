@@ -44,22 +44,19 @@ async def classify_intent(
         logger.info("[CLASSIFY] Fast-path CLARIFYING_IDK (empty/silent input)")
         return {"intent_type": "CLARIFYING_IDK", "new_object": None, "reasoning": "Empty or silent input"}
 
-    # Extract the last question the model asked from conversation history
+    # Extract the model's last full response from conversation history
     conversation_history = assistant.conversation_history
-    last_model_question = None
+    last_model_response = None
     for msg in reversed(conversation_history):
         if msg.get('role') == 'assistant':
-            last_model_question = msg.get('content')
+            last_model_response = msg.get('content')
             break
 
-    if not last_model_question:
-        last_model_question = "Unknown (first interaction)"
+    if not last_model_response:
+        last_model_response = "Unknown (first interaction)"
     else:
-        # Extract just the question sentence (last fragment ending in '?')
-        sentences = last_model_question.split('?')
-        if len(sentences) >= 2:
-            last_model_question = sentences[-2].split('.')[-1].strip() + '?'
-        last_model_question = last_model_question[-300:]
+        # Keep full response for better intent disambiguation; cap context size.
+        last_model_response = last_model_response[-500:]
 
     # Special instructions when awaiting topic selection
     topic_selection_instructions = ""
@@ -74,7 +71,7 @@ If the child refuses entirely → INTENT: AVOIDANCE"""
     prompt_template = paixueji_prompts.get_prompts()["user_intent_prompt"]
     prompt = prompt_template.format(
         object_name=object_name,
-        last_model_question=last_model_question,
+        last_model_response=last_model_response,
         child_answer=child_answer,
         topic_selection_instructions=topic_selection_instructions,
     )

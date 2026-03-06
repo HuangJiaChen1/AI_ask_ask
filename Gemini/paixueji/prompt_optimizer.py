@@ -309,10 +309,12 @@ def _run_grounding(client, config: dict, object_name: str, age: int) -> str:
 def _build_input_analyzer_context(trace: TraceObject) -> dict:
     """Extract the context fields needed to re-run the Input Analyzer on the failing trace."""
     state = trace.input_state
+    last_model_response = trace.exchange.model_question
     return {
         "age": state.get("age") or trace.age or 6,
         "object_name": state.get("object_name") or trace.object_name or "",
-        "last_model_question": trace.exchange.model_question,
+        "last_model_question": last_model_response,
+        "last_model_response": last_model_response,
         "child_answer": trace.exchange.child_response,
     }
 
@@ -358,6 +360,7 @@ def _call_intent_classifier(client, config: dict, ctx: dict, prompt_template: st
     prompt = prompt_template.format(
         object_name=ctx.get("object_name", ""),
         last_model_question=ctx.get("last_model_question", ""),
+        last_model_response=ctx.get("last_model_response", ctx.get("last_model_question", "")),
         child_answer=ctx.get("child_answer", ""),
         topic_selection_instructions="",
     )

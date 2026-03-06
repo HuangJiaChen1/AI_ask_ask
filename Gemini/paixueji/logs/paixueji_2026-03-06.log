@@ -171,3 +171,114 @@
 2026-03-06 09:48:53.147 | INFO     | graph:node_clarifying_idk:478 | [c346245d-70cd-44e4-97d6-77d1e7e2397d] Node: Clarifying IDK finished in 1.262s
 2026-03-06 09:48:53.148 | INFO     | graph:node_finalize:1196 | [c346245d-70cd-44e4-97d6-77d1e7e2397d] Node: Finalize
 2026-03-06 09:48:53.148 | INFO     | graph:node_finalize:1248 | [c346245d-70cd-44e4-97d6-77d1e7e2397d] Node: Finalize finished in 0.000s
+2026-03-06 10:17:08.288 | INFO     | graph:node_generate_fun_fact:291 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Node: Generate Fun Fact for 'octopus'
+2026-03-06 10:17:08.290 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'octopus' (model=gemini-3.1-flash-lite-preview)
+2026-03-06 10:17:08.296 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: octopus
+2026-03-06 10:17:11.605 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: octopus -> Category_Nature_And_Physics | Concept: Function | Question: How do you think the octopus uses all those little sticky circles on its arms to move around and hold onto things underwater? | Thinking: The octopus is a complex marine animal. I matched it to 'How the World Works' because it represents a natural system. I chose 'Function' as the lens because the physical parts of an octopus—specifically its tentacles and suckers—are highly functional and easy for a child to wonder about in terms of 'how it works'.
+2026-03-06 10:17:15.172 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 6.882s | text_length=1652
+2026-03-06 10:17:15.173 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'octopus'
+2026-03-06 10:17:17.605 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 2.432s
+2026-03-06 10:17:17.607 | INFO     | stream.fun_fact:cache_fun_fact:78 | [FUN_FACT] Cached 4 fun facts for 'octopus'
+2026-03-06 10:17:17.607 | INFO     | stream.fun_fact:generate_fun_fact:206 | [FUN_FACT] Success for 'octopus' | facts_count=4, selected='Did you know that an octopus has blue blood instead of red b...'
+2026-03-06 10:17:17.607 | INFO     | graph:node_generate_fun_fact:306 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Node: Generate Fun Fact finished in 9.320s
+2026-03-06 10:17:17.609 | INFO     | graph:node_generate_intro:321 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Node: Generate Intro for 'octopus'
+2026-03-06 10:17:17.609 | INFO     | stream.question_generators:ask_introduction_question_stream:66 | ask_introduction_question_stream started | object=octopus, age=6, has_fun_fact=True
+2026-03-06 10:17:17.610 | DEBUG    | stream.question_generators:ask_introduction_question_stream:94 | Messages prepared for API | count=2
+2026-03-06 10:17:17.611 | DEBUG    | stream.question_generators:ask_introduction_question_stream:105 | Sending 1 messages to Gemini API
+2026-03-06 10:17:17.611 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Stream object type: async_generator
+2026-03-06 10:17:18.383 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 1 | length=4, total_length=4
+2026-03-06 10:17:18.384 | INFO     | graph:stream_generator_to_callback:370 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] TTFT: 10.103s for introduction
+2026-03-06 10:17:18.430 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 2 | length=14, total_length=18
+2026-03-06 10:17:18.478 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 3 | length=26, total_length=44
+2026-03-06 10:17:18.520 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 4 | length=28, total_length=72
+2026-03-06 10:17:18.559 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 5 | length=42, total_length=114
+2026-03-06 10:17:18.607 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 6 | length=55, total_length=169
+2026-03-06 10:17:18.636 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 7 | length=42, total_length=211
+2026-03-06 10:17:18.679 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 8 | length=35, total_length=246
+2026-03-06 10:17:18.692 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 9 | length=31, total_length=277
+2026-03-06 10:17:18.698 | DEBUG    | stream.question_generators:ask_introduction_question_stream:142 | Gemini streaming API does not provide token usage in stream mode
+2026-03-06 10:17:18.698 | DEBUG    | stream.question_generators:ask_introduction_question_stream:161 | Cleaned up stream via del in finally block
+2026-03-06 10:17:18.698 | INFO     | stream.question_generators:ask_introduction_question_stream:166 | ask_introduction_question_stream completed | duration=1.089s, response_length=277
+2026-03-06 10:17:18.699 | INFO     | graph:stream_generator_to_callback:422 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Stream finished in 1.089s for introduction
+2026-03-06 10:17:18.699 | INFO     | graph:node_generate_intro:344 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Node: Generate Intro finished in 1.089s
+2026-03-06 10:17:18.700 | INFO     | graph:node_finalize:1196 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Node: Finalize
+2026-03-06 10:17:18.700 | INFO     | graph:node_finalize:1248 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Node: Finalize finished in 0.000s
+2026-03-06 10:17:36.764 | INFO     | graph:node_analyze_input:258 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Node: Analyze Input
+2026-03-06 10:17:39.508 | INFO     | stream.validation:classify_intent:93 | [CLASSIFY] LLM call duration: 2.743s
+2026-03-06 10:17:39.508 | INFO     | stream.validation:classify_intent:123 | [CLASSIFY] intent=CORRECT_ANSWER | new_object=None | reasoning=The child correctly explains the mechanism by which an octopus fits into small spaces in response to the AI's question.
+2026-03-06 10:17:39.510 | INFO     | graph:node_analyze_input:277 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Node: Analyze Input finished in 2.746s
+2026-03-06 10:17:39.513 | INFO     | graph:node_correct_answer:579 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Node: Correct Answer
+2026-03-06 10:17:39.513 | INFO     | stream.response_generators:generate_intent_response_stream:57 | generate_intent_response_stream started | intent=correct_answer, object=octopus, age=6
+2026-03-06 10:17:40.431 | INFO     | graph:stream_generator_to_callback:370 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] TTFT: 3.669s for None
+2026-03-06 10:17:40.597 | INFO     | stream.response_generators:generate_intent_response_stream:120 | generate_intent_response_stream completed | intent=correct_answer, duration=1.084s, length=266
+2026-03-06 10:17:40.597 | INFO     | graph:stream_generator_to_callback:422 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Stream finished in 1.084s for None
+2026-03-06 10:17:40.597 | INFO     | graph:node_correct_answer:596 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Node: Correct Answer finished in 1.085s
+2026-03-06 10:17:40.598 | INFO     | graph:node_finalize:1196 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Node: Finalize
+2026-03-06 10:17:40.598 | INFO     | graph:node_finalize:1248 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Node: Finalize finished in 0.000s
+2026-03-06 10:17:52.230 | INFO     | graph:node_analyze_input:258 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Node: Analyze Input
+2026-03-06 10:17:54.672 | INFO     | stream.validation:classify_intent:93 | [CLASSIFY] LLM call duration: 2.441s
+2026-03-06 10:17:54.673 | INFO     | stream.validation:classify_intent:123 | [CLASSIFY] intent=CLARIFYING_WRONG | new_object=None | reasoning=The child attempted to answer the question about the number of arms but provided an incorrect answer related to hearts instead.
+2026-03-06 10:17:54.674 | INFO     | graph:node_analyze_input:277 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Node: Analyze Input finished in 2.444s
+2026-03-06 10:17:54.677 | INFO     | graph:node_clarifying_wrong:521 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Node: Clarifying Wrong
+2026-03-06 10:17:54.677 | INFO     | stream.response_generators:generate_intent_response_stream:57 | generate_intent_response_stream started | intent=clarifying_wrong, object=octopus, age=6
+2026-03-06 10:17:55.557 | INFO     | graph:stream_generator_to_callback:370 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] TTFT: 3.330s for None
+2026-03-06 10:17:55.770 | INFO     | stream.response_generators:generate_intent_response_stream:120 | generate_intent_response_stream completed | intent=clarifying_wrong, duration=1.093s, length=186
+2026-03-06 10:17:55.771 | INFO     | graph:stream_generator_to_callback:422 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Stream finished in 1.093s for None
+2026-03-06 10:17:55.771 | INFO     | graph:node_clarifying_wrong:537 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Node: Clarifying Wrong finished in 1.094s
+2026-03-06 10:17:55.773 | INFO     | graph:node_finalize:1196 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Node: Finalize
+2026-03-06 10:17:55.773 | INFO     | graph:node_finalize:1248 | [4244917b-97ac-462f-ab1f-c52b950d2f5b] Node: Finalize finished in 0.000s
+2026-03-06 10:24:11.665 | INFO     | graph:node_generate_fun_fact:291 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Node: Generate Fun Fact for 'octopus'
+2026-03-06 10:24:11.670 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'octopus' (model=gemini-3.1-flash-lite-preview)
+2026-03-06 10:24:11.674 | INFO     | theme_classifier:classify_object_to_theme:56 | [THEME_CLASSIFY] Classifying object: octopus
+2026-03-06 10:24:15.218 | INFO     | theme_classifier:classify_object_to_theme:74 | [THEME_CLASSIFY] SUCCESS: octopus -> Category_Nature_And_Physics | Concept: Function | Question: How do you think the octopus uses its eight long arms and sticky suckers to move around and hold onto things underwater? | Thinking: The octopus is a complex marine animal. I matched it to 'How the World Works' because it represents a natural system. I selected 'Function' because the physical parts of an octopus—specifically its tentacles and suckers—are highly mechanical and functional, providing a clear entry point for a child to wonder about how it moves and interacts with its environment.
+2026-03-06 10:24:18.872 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 7.202s | text_length=1864
+2026-03-06 10:24:18.872 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'octopus'
+2026-03-06 10:24:20.788 | INFO     | stream.fun_fact:generate_fun_fact:183 | [FUN_FACT] Step 2 completed in 1.916s
+2026-03-06 10:24:20.789 | INFO     | stream.fun_fact:cache_fun_fact:78 | [FUN_FACT] Cached 4 fun facts for 'octopus'
+2026-03-06 10:24:20.789 | INFO     | stream.fun_fact:generate_fun_fact:206 | [FUN_FACT] Success for 'octopus' | facts_count=4, selected='Did you know that if an octopus loses an arm, it can grow a ...'
+2026-03-06 10:24:20.789 | INFO     | graph:node_generate_fun_fact:306 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Node: Generate Fun Fact finished in 9.124s
+2026-03-06 10:24:20.790 | INFO     | graph:node_generate_intro:321 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Node: Generate Intro for 'octopus'
+2026-03-06 10:24:20.790 | INFO     | stream.question_generators:ask_introduction_question_stream:66 | ask_introduction_question_stream started | object=octopus, age=6, has_fun_fact=True
+2026-03-06 10:24:20.791 | DEBUG    | stream.question_generators:ask_introduction_question_stream:94 | Messages prepared for API | count=2
+2026-03-06 10:24:20.791 | DEBUG    | stream.question_generators:ask_introduction_question_stream:105 | Sending 1 messages to Gemini API
+2026-03-06 10:24:20.791 | DEBUG    | stream.question_generators:ask_introduction_question_stream:122 | Stream object type: async_generator
+2026-03-06 10:24:21.601 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 1 | length=4, total_length=4
+2026-03-06 10:24:21.602 | INFO     | graph:stream_generator_to_callback:370 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] TTFT: 9.943s for introduction
+2026-03-06 10:24:21.625 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 2 | length=21, total_length=25
+2026-03-06 10:24:21.673 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 3 | length=36, total_length=61
+2026-03-06 10:24:21.717 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 4 | length=45, total_length=106
+2026-03-06 10:24:21.756 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 5 | length=34, total_length=140
+2026-03-06 10:24:21.787 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 6 | length=36, total_length=176
+2026-03-06 10:24:21.832 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 7 | length=42, total_length=218
+2026-03-06 10:24:21.849 | DEBUG    | stream.question_generators:ask_introduction_question_stream:137 | Chunk 8 | length=38, total_length=256
+2026-03-06 10:24:21.854 | DEBUG    | stream.question_generators:ask_introduction_question_stream:142 | Gemini streaming API does not provide token usage in stream mode
+2026-03-06 10:24:21.854 | DEBUG    | stream.question_generators:ask_introduction_question_stream:161 | Cleaned up stream via del in finally block
+2026-03-06 10:24:21.854 | INFO     | stream.question_generators:ask_introduction_question_stream:166 | ask_introduction_question_stream completed | duration=1.064s, response_length=256
+2026-03-06 10:24:21.854 | INFO     | graph:stream_generator_to_callback:422 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Stream finished in 1.064s for introduction
+2026-03-06 10:24:21.854 | INFO     | graph:node_generate_intro:344 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Node: Generate Intro finished in 1.064s
+2026-03-06 10:24:21.855 | INFO     | graph:node_finalize:1196 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Node: Finalize
+2026-03-06 10:24:21.856 | INFO     | graph:node_finalize:1248 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Node: Finalize finished in 0.000s
+2026-03-06 10:24:30.952 | INFO     | graph:node_analyze_input:258 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Node: Analyze Input
+2026-03-06 10:24:33.411 | INFO     | stream.validation:classify_intent:90 | [CLASSIFY] LLM call duration: 2.458s
+2026-03-06 10:24:33.413 | INFO     | stream.validation:classify_intent:120 | [CLASSIFY] intent=CURIOSITY | new_object=None | reasoning=The child is asking for clarification about the specific fact the AI just shared regarding the octopus's ability to grow a new arm.
+2026-03-06 10:24:33.414 | INFO     | graph:node_analyze_input:277 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Node: Analyze Input finished in 2.462s
+2026-03-06 10:24:33.417 | INFO     | graph:node_curiosity:432 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Node: Curiosity
+2026-03-06 10:24:33.417 | INFO     | stream.response_generators:generate_intent_response_stream:57 | generate_intent_response_stream started | intent=curiosity, object=octopus, age=6
+2026-03-06 10:24:34.434 | INFO     | graph:stream_generator_to_callback:370 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] TTFT: 3.484s for None
+2026-03-06 10:24:34.755 | INFO     | stream.response_generators:generate_intent_response_stream:120 | generate_intent_response_stream completed | intent=curiosity, duration=1.338s, length=332
+2026-03-06 10:24:34.756 | INFO     | graph:stream_generator_to_callback:422 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Stream finished in 1.338s for None
+2026-03-06 10:24:34.756 | INFO     | graph:node_curiosity:448 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Node: Curiosity finished in 1.339s
+2026-03-06 10:24:34.757 | INFO     | graph:node_finalize:1196 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Node: Finalize
+2026-03-06 10:24:34.757 | INFO     | graph:node_finalize:1248 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Node: Finalize finished in 0.000s
+2026-03-06 10:25:04.859 | INFO     | graph:node_analyze_input:258 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Node: Analyze Input
+2026-03-06 10:25:07.625 | INFO     | stream.validation:classify_intent:90 | [CLASSIFY] LLM call duration: 2.765s
+2026-03-06 10:25:07.626 | INFO     | stream.validation:classify_intent:120 | [CLASSIFY] intent=CURIOSITY | new_object=None | reasoning=The child is asking for clarification about a specific term ("cups") mentioned by the AI in its previous explanation.
+2026-03-06 10:25:07.626 | INFO     | graph:node_analyze_input:277 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Node: Analyze Input finished in 2.767s
+2026-03-06 10:25:07.632 | INFO     | graph:node_curiosity:432 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Node: Curiosity
+2026-03-06 10:25:07.637 | INFO     | stream.response_generators:generate_intent_response_stream:57 | generate_intent_response_stream started | intent=curiosity, object=octopus, age=6
+2026-03-06 10:25:08.744 | INFO     | graph:stream_generator_to_callback:370 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] TTFT: 3.888s for None
+2026-03-06 10:25:09.432 | INFO     | stream.response_generators:generate_intent_response_stream:120 | generate_intent_response_stream completed | intent=curiosity, duration=1.795s, length=350
+2026-03-06 10:25:09.434 | INFO     | graph:stream_generator_to_callback:422 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Stream finished in 1.797s for None
+2026-03-06 10:25:09.434 | INFO     | graph:node_curiosity:448 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Node: Curiosity finished in 1.802s
+2026-03-06 10:25:09.436 | INFO     | graph:node_finalize:1196 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Node: Finalize
+2026-03-06 10:25:09.436 | INFO     | graph:node_finalize:1248 | [d52fe962-fbb9-4218-92ad-7f59d44bb8b0] Node: Finalize finished in 0.001s

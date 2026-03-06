@@ -202,7 +202,7 @@ TASK: Classify what this child is doing, and extract a new topic if they name on
 
 CONTEXT:
 - Object: {object_name}
-- AI's question: "{last_model_question}"
+- AI's last response: "{last_model_response}"
 - Child's response: "{child_answer}"
 
 RULE 1 — INTENT (choose exactly ONE):
@@ -215,7 +215,7 @@ RULE 1 — INTENT (choose exactly ONE):
   CLARIFYING_IDK        : Child said "I don't know", is silent/blank, or gave a single confused word.
                           Examples: "I don't know.", "Um...", "Hmm", "I have no idea"
 
-  CLARIFYING_WRONG      : Child attempted to answer the AI's question but was incorrect or substantially
+  CLARIFYING_WRONG      : Child attempted to respond to the AI's last response (usually a question) but was incorrect or substantially
                           incomplete. They tried — but the answer was wrong.
                           Examples: "Hmm, a dog?", "Is it a bird?", "I think yellow?", "It's a lemon."
 
@@ -224,7 +224,7 @@ RULE 1 — INTENT (choose exactly ONE):
                           Examples: "I don't have one", "I can't do that", "I've never seen one",
                                     "I have never seen these colors"
 
-  CORRECT_ANSWER        : Child directly answers the AI's question with meaningful content
+  CORRECT_ANSWER        : Child directly responds to the AI's last response with meaningful content
                           (correct, complete, or substantially on-target response).
                           Examples: "It's red!", "I feel sweet.", "It has six legs.",
                                     "It crunches!", "Because it has sugar in it."
@@ -259,10 +259,10 @@ RULE 1 — INTENT (choose exactly ONE):
                                     "really?", "yes" or "no" in response to a "Did you know?" question.
 
 DISAMBIGUATION RULES:
-  - Child answers the AI's question with content → CORRECT_ANSWER, NOT INFORMATIVE
-  - "I feel sweet" (answering "what do you taste?") → CORRECT_ANSWER
+  - Child responds to the AI's last response with content → CORRECT_ANSWER, NOT INFORMATIVE
+  - "I feel sweet" (responding to "what do you taste?") → CORRECT_ANSWER
   - "I know! It has seeds." (unprompted) → INFORMATIVE
-  - "It's a dog!" (wrong answer to AI's question) → CLARIFYING_WRONG
+  - "It's a dog!" (wrong response to AI's last response) → CLARIFYING_WRONG
   - "I don't know." → CLARIFYING_IDK
   - "I don't have [object]", "I can't [do action]", "I've never seen one" → CLARIFYING_CONSTRAINT
     (child is sharing a situational/real-world constraint while still engaged — NOT AVOIDANCE)
@@ -272,13 +272,13 @@ DISAMBIGUATION RULES:
   - "Can I pet it?" (risky physical action) → BOUNDARY, NOT ACTION
   - "yes" or "no" in response to "Did you know...?" → SOCIAL_ACKNOWLEDGMENT (not a learning answer)
   - "i didn't know that" (after model states a fact) → SOCIAL_ACKNOWLEDGMENT
-  - "I don't know" or "idk" when AI's last question starts with "Did you know" →
+  - "I don't know" or "idk" when AI's last response starts with "Did you know" →
       SOCIAL_ACKNOWLEDGMENT (child is reacting to a fun fact, NOT stuck on an answer question)
   - "oh yeah" (acknowledging fact, not answering a question) → SOCIAL_ACKNOWLEDGMENT
   - Short single-word affirmations when no specific question was asked → SOCIAL_ACKNOWLEDGMENT
   - "What do you mean [X]?" or "What does that mean?" where the child is asking the model to
     re-explain something the model said → CURIOSITY, NOT CLARIFYING
-    (CLARIFYING is only for a child attempting/failing to answer the AI's question)
+    (CLARIFYING is only for a child attempting/failing to respond to the AI's last response)
   - "Is it yum?", "Is it tasty?", "Does it taste good?", "Is it delicious?" — asking about
     the sensory/taste quality of the food or sub-topic just discussed → CURIOSITY, NOT SOCIAL
     (even though the phrasing is ambiguous, a young child asking about a food's taste is
@@ -286,7 +286,7 @@ DISAMBIGUATION RULES:
   - "i meant X", "no I was asking about X", "I was talking about Y", "I meant the [sub-topic]"
     — child clarifying/correcting what their previous statement referred to (not answering a
     factual question) → CURIOSITY (about X/Y), NOT CLARIFYING_WRONG
-    (CLARIFYING_WRONG is only for a child who attempted and failed to answer the AI's question)
+    (CLARIFYING_WRONG is only for a child who attempted and failed to respond to the AI's last response)
 
 RULE 2 — NEW OBJECT (only for ACTION or AVOIDANCE):
   If the intent is ACTION or AVOIDANCE AND the child named a specific new object to explore,
@@ -302,7 +302,7 @@ TASK: Classify what this child is doing, and extract a new topic if they name on
 
 CONTEXT:
 - Object: {object_name}
-- AI's question: "{last_model_question}"
+- AI's last response: "{last_model_response}"
 - Child's response: "{child_answer}"
 
 RULE 1 — INTENT (choose exactly ONE):
@@ -315,7 +315,7 @@ RULE 1 — INTENT (choose exactly ONE):
   CLARIFYING_IDK        : Child said "I don't know", is silent/blank, or gave a single confused word.
                           Examples: "I don't know.", "Um...", "Hmm", "I have no idea"
 
-  CLARIFYING_WRONG      : Child attempted to answer the AI's question but was incorrect or substantially
+  CLARIFYING_WRONG      : Child attempted to respond to the AI's last response (usually a question) but was incorrect or substantially
                           incomplete. They tried — but the answer was wrong.
                           Examples: "Hmm, a dog?", "Is it a bird?", "I think yellow?", "It's a lemon."
 
@@ -324,7 +324,7 @@ RULE 1 — INTENT (choose exactly ONE):
                           Examples: "I don't have one", "I can't do that", "I've never seen one",
                                     "I have never seen these colors"
 
-  CORRECT_ANSWER        : Child directly answers the AI's question with meaningful content
+  CORRECT_ANSWER        : Child directly responds to the AI's last response with meaningful content
                           (correct, complete, or substantially on-target response).
                           Examples: "It's red!", "I feel sweet.", "It has six legs.",
                                     "It crunches!", "Because it has sugar in it."
@@ -359,10 +359,10 @@ RULE 1 — INTENT (choose exactly ONE):
                                     "really?", "yes" or "no" in response to a "Did you know?" question.
 
 DISAMBIGUATION RULES:
-  - Child answers the AI's question with content → CORRECT_ANSWER, NOT INFORMATIVE
-  - "I feel sweet" (answering "what do you taste?") → CORRECT_ANSWER
+  - Child responds to the AI's last response with content → CORRECT_ANSWER, NOT INFORMATIVE
+  - "I feel sweet" (responding to "what do you taste?") → CORRECT_ANSWER
   - "I know! It has seeds." (unprompted) → INFORMATIVE
-  - "It's a dog!" (wrong answer to AI's question) → CLARIFYING_WRONG
+  - "It's a dog!" (wrong response to AI's last response) → CLARIFYING_WRONG
   - "I don't know." → CLARIFYING_IDK
   - "I don't have [object]", "I can't [do action]", "I've never seen one" → CLARIFYING_CONSTRAINT
     (child is sharing a situational/real-world constraint while still engaged — NOT AVOIDANCE)
@@ -372,13 +372,13 @@ DISAMBIGUATION RULES:
   - "Can I pet it?" (risky physical action) → BOUNDARY, NOT ACTION
   - "yes" or "no" in response to "Did you know...?" → SOCIAL_ACKNOWLEDGMENT (not a learning answer)
   - "i didn't know that" (after model states a fact) → SOCIAL_ACKNOWLEDGMENT
-  - "I don't know" or "idk" when AI's last question starts with "Did you know" →
+  - "I don't know" or "idk" when AI's last response starts with "Did you know" →
       SOCIAL_ACKNOWLEDGMENT (child is reacting to a fun fact, NOT stuck on an answer question)
   - "oh yeah" (acknowledging fact, not answering a question) → SOCIAL_ACKNOWLEDGMENT
   - Short single-word affirmations when no specific question was asked → SOCIAL_ACKNOWLEDGMENT
   - "What do you mean [X]?" or "What does that mean?" where the child is asking the model to
     re-explain something the model said → CURIOSITY, NOT CLARIFYING
-    (CLARIFYING is only for a child attempting/failing to answer the AI's question)
+    (CLARIFYING is only for a child attempting/failing to respond to the AI's last response)
   - "Is it yum?", "Is it tasty?", "Does it taste good?", "Is it delicious?" — asking about
     the sensory/taste quality of the food or sub-topic just discussed → CURIOSITY, NOT SOCIAL
     (even though the phrasing is ambiguous, a young child asking about a food's taste is
@@ -386,7 +386,7 @@ DISAMBIGUATION RULES:
   - "i meant X", "no I was asking about X", "I was talking about Y", "I meant the [sub-topic]"
     — child clarifying/correcting what their previous statement referred to (not answering a
     factual question) → CURIOSITY (about X/Y), NOT CLARIFYING_WRONG
-    (CLARIFYING_WRONG is only for a child who attempted and failed to answer the AI's question)
+    (CLARIFYING_WRONG is only for a child who attempted and failed to respond to the AI's last response)
 
 RULE 2 — NEW OBJECT (only for ACTION or AVOIDANCE):
   If the intent is ACTION or AVOIDANCE AND the child named a specific new object to explore,
