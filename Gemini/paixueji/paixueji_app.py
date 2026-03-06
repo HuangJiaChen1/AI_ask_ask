@@ -1400,13 +1400,27 @@ def get_exchanges(session_id):
             transcript[i + 2].get("role") == "model"):
 
             exchange_index += 1
+            nodes = transcript[i + 2].get("nodes_executed", [])
+
+            # Extract intent_type: first node whose 'changes' dict sets intent_type
+            intent_type = None
+            for node_entry in nodes:
+                if "intent_type" in node_entry.get("changes", {}):
+                    intent_type = node_entry["changes"]["intent_type"]
+                    break
+
+            # Total response time in ms (sum of all node times)
+            response_time_ms = round(sum(n.get("time_ms", 0) for n in nodes), 1)
+
             exchanges.append({
                 "index": exchange_index,
                 "model_question": transcript[i]["content"],
                 "child_response": transcript[i + 1]["content"],
                 "model_response": transcript[i + 2]["content"],
-                "nodes_executed": transcript[i + 2].get("nodes_executed", []),
+                "nodes_executed": nodes,
                 "mode": transcript[i].get("mode", "chat"),
+                "intent_type": intent_type,
+                "response_time_ms": response_time_ms,
             })
             i += 2  # Move past child response, next iteration checks from model response
         else:
@@ -1418,7 +1432,10 @@ def get_exchanges(session_id):
         "object_name": assistant.object_name,
         "age": assistant.age,
         "key_concept": assistant.key_concept,
-        "ibpyp_theme_name": assistant.ibpyp_theme_name
+        "ibpyp_theme_name": assistant.ibpyp_theme_name,
+        "level1_category": assistant.level1_category,
+        "level2_category": assistant.level2_category,
+        "level3_category": assistant.level3_category,
     })
 
 

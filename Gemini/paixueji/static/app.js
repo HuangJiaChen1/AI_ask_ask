@@ -144,6 +144,7 @@ async function startConversation() {
     progressIndicator.style.display = 'flex';
     messagesContainer.style.display = 'flex';
     document.querySelector('.input-area').style.display = 'flex';
+    document.getElementById('backBtn').style.display = 'inline-block';
 
     // Tutorial hook — advance from setup steps to chat steps
     if (window.tutorialAdvanceToChat) window.tutorialAdvanceToChat();
@@ -289,6 +290,7 @@ async function startGuideTest() {
     progressIndicator.style.display = 'flex';
     messagesContainer.style.display = 'flex';
     document.querySelector('.input-area').style.display = 'flex';
+    document.getElementById('backBtn').style.display = 'inline-block';
 
     // Disable send button during streaming
     sendBtn.disabled = true;
@@ -1029,6 +1031,17 @@ function showCompletionUI() {
 }
 
 /**
+ * Navigate back to setup form, with a guard if AI is mid-stream
+ */
+function goBack() {
+    if (isStreaming) {
+        if (!confirm('The AI is still responding. Go back anyway?')) return;
+        currentStreamController?.abort();
+    }
+    resetConversation();
+}
+
+/**
  * Reset conversation
  */
 function resetConversation() {
@@ -1044,6 +1057,7 @@ function resetConversation() {
     startForm.style.display = 'block';
     progressIndicator.style.display = 'none';
     messagesContainer.style.display = 'none';
+    document.getElementById('backBtn').style.display = 'none';
 
     // Re-enable input
     userInput.disabled = false;
@@ -1314,6 +1328,33 @@ async function showManualCritiqueForm() {
         const exchangeList = document.getElementById('exchangeList');
         exchangeList.innerHTML = '';
 
+        // Session info banner
+        function buildCategoryLabel(r) {
+            const parts = [r.level1_category, r.level2_category, r.level3_category].filter(Boolean);
+            return parts.length ? parts.join(' › ') : null;
+        }
+
+        const sessionBanner = document.createElement('div');
+        sessionBanner.style.cssText = 'background:#f1f5f9; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px; margin-bottom:18px; display:flex; flex-wrap:wrap; gap:10px; align-items:center;';
+
+        const bannerFields = [
+            { label: 'Object', value: result.object_name },
+            { label: 'Category', value: buildCategoryLabel(result) },
+            { label: 'Theme', value: result.ibpyp_theme_name },
+            { label: 'Key Concept', value: result.key_concept },
+            { label: 'Age', value: result.age ? `${result.age} y/o` : null },
+        ];
+
+        bannerFields.forEach(({ label, value }) => {
+            if (!value) return;
+            const chip = document.createElement('span');
+            chip.style.cssText = 'background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:4px 10px; font-size:0.8em; color:#334155; white-space:nowrap;';
+            chip.innerHTML = `<span style="color:#94a3b8; font-weight:600; margin-right:4px;">${label}:</span>${escapeHtml(value)}`;
+            sessionBanner.appendChild(chip);
+        });
+
+        exchangeList.appendChild(sessionBanner);
+
         // Split exchanges into chat and guide groups
         const chatExchanges = result.exchanges.filter(e => (e.mode || 'chat') !== 'guide');
         const guideExchanges = result.exchanges.filter(e => (e.mode || 'chat') === 'guide');
@@ -1328,13 +1369,32 @@ async function showManualCritiqueForm() {
             const badgeColor = mode === 'guide' ? '#7c3aed' : '#0891b2';
             const badgeLabel = mode.toUpperCase();
 
+            // Intent badge color groups
+            const intentColors = {
+                CORRECT_ANSWER: '#16a34a',
+                CURIOSITY: '#0891b2', INFORMATIVE: '#0891b2',
+                CLARIFYING_IDK: '#d97706', CLARIFYING_WRONG: '#d97706', CLARIFYING_CONSTRAINT: '#d97706',
+                PLAY: '#7c3aed', EMOTIONAL: '#7c3aed',
+                SOCIAL: '#64748b', SOCIAL_ACKNOWLEDGMENT: '#64748b',
+                AVOIDANCE: '#dc2626', BOUNDARY: '#dc2626', ACTION: '#dc2626',
+            };
+            const intentColor = intentColors[exchange.intent_type] || '#94a3b8';
+            const intentBadge = exchange.intent_type
+                ? `<span style="display:inline-block; background:${intentColor}; color:#fff; font-size:0.65em; font-weight:600; padding:1px 7px; border-radius:9px; margin-left:5px; vertical-align:middle;">${exchange.intent_type}</span>`
+                : '';
+
+            // Response time label
+            const timeLabel = exchange.response_time_ms
+                ? `<span style="font-size:0.75em; color:#94a3b8; margin-left:8px; vertical-align:middle;">${(exchange.response_time_ms / 1000).toFixed(1)}s</span>`
+                : '';
+
             const header = document.createElement('div');
             header.style.cssText = 'padding:12px; background:#f8fafc; display:flex; align-items:flex-start; gap:10px; cursor:pointer;';
             header.innerHTML = `
                 <input type="checkbox" id="exchange_cb_${exchange.index}" data-index="${exchange.index}" style="margin-top:3px; cursor:pointer;" onchange="toggleExchangeCritique(${exchange.index})">
                 <div style="flex:1; min-width:0;">
                     <strong style="color:#1e293b;">Exchange ${exchange.index}</strong>
-                    <span style="display:inline-block; background:${badgeColor}; color:#fff; font-size:0.7em; font-weight:600; padding:1px 7px; border-radius:9px; margin-left:6px; vertical-align:middle;">${badgeLabel}</span>
+                    <span style="display:inline-block; background:${badgeColor}; color:#fff; font-size:0.7em; font-weight:600; padding:1px 7px; border-radius:9px; margin-left:6px; vertical-align:middle;">${badgeLabel}</span>${intentBadge}${timeLabel}
                     <div style="font-size:0.85em; color:#64748b; margin-top:4px;">
                         <div><b>Q:</b> ${escapeHtml(truncate(exchange.model_question, 80))}</div>
                         <div><b>A:</b> ${escapeHtml(truncate(exchange.child_response, 80))}</div>
@@ -1408,7 +1468,11 @@ function buildExchangeCritiqueFormHTML(exchange) {
         </div>
         <div style="margin-bottom:16px;">
             <div style="font-weight:bold; color:#475569; margin-bottom:6px;">Child Response</div>
-            <div style="background:#fefce8; padding:8px; border-radius:4px; font-size:0.9em; margin-bottom:8px; white-space:pre-wrap;">${escapeHtml(exchange.child_response)}</div>
+            <div style="background:#fefce8; padding:8px; border-radius:4px; font-size:0.9em; margin-bottom:4px; white-space:pre-wrap;">${escapeHtml(exchange.child_response)}</div>
+            <div style="font-size:0.78em; color:#64748b; margin-bottom:8px; display:flex; gap:12px;">
+                ${exchange.intent_type ? `<span>Intent: <strong>${exchange.intent_type}</strong></span>` : ''}
+                ${exchange.response_time_ms ? `<span>Response time: <strong>${(exchange.response_time_ms/1000).toFixed(1)}s</strong></span>` : ''}
+            </div>
         </div>
         <div style="margin-bottom:16px;">
             <div style="font-weight:bold; color:#475569; margin-bottom:6px;">Model Response</div>
