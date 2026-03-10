@@ -931,20 +931,60 @@ async function lookupConcepts() {
             throw new Error(result.error || 'Concept lookup failed');
         }
 
-        const concepts = result.concepts;
+        const data = result.data;
+        const entity = data.entity || {};
+        const themes = data.themes || {};
+        const concepts = data.available_concepts || [];
 
         if (!concepts || concepts.length === 0) {
             conceptsOutput.innerHTML = '<span style="color: #6b7280;">No concepts found for this object and age.</span>';
             return;
         }
 
-        // Format concepts for display with nice JSON formatting
+        // Format output with Entity info, Themes, and Concepts
         let html = '';
+
+        // Entity info
+        html += '<div style="margin-bottom: 15px; padding: 10px; background: #dbeafe; border: 1px solid #93c5fd; border-radius: 6px;">';
+        html += '<h4 style="margin: 0 0 8px 0; color: #1e40af; font-size: 0.9em;">📋 Entity Info</h4>';
+        html += `<div style="font-size: 0.85em;"><strong>ID:</strong> ${entity.entity_id || 'N/A'}</div>`;
+        html += `<div style="font-size: 0.85em;"><strong>Name:</strong> ${entity.entity_name || 'N/A'}</div>`;
+        html += `<div style="font-size: 0.85em;"><strong>中文名:</strong> ${entity.entity_name_cn || 'N/A'}</div>`;
+        html += '</div>';
+
+        // Themes
+        const themeIds = Object.keys(themes);
+        if (themeIds.length > 0) {
+            html += '<div style="margin-bottom: 15px; padding: 10px; background: #f0fdf4; border: 1px solid #86efac; border-radius: 6px;">';
+            html += `<h4 style="margin: 0 0 8px 0; color: #166534; font-size: 0.9em;">🎨 Themes (${themeIds.length})</h4>`;
+            themeIds.forEach(themeId => {
+                const theme = themes[themeId];
+                html += `<div style="margin-bottom: 8px; padding: 8px; background: white; border-radius: 4px; font-size: 0.85em;">`;
+                html += `<strong>${theme.type === 'primary' ? '⭐ Primary' : 'Secondary'}: ${themeId}</strong>`;
+                html += `<div style="margin-top: 4px;"><strong>Weight:</strong> ${theme.weight || 'N/A'}</div>`;
+                html += `<div style="margin-top: 4px;"><strong>Reasoning:</strong> ${theme.reasoning || 'N/A'}</div>`;
+                if (theme.context_trigger) {
+                    html += `<div style="margin-top: 4px;"><strong>Context Trigger:</strong> ${theme.context_trigger}</div>`;
+                }
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+
+        // Concepts
+        html += '<div style="padding: 10px; background: #fff7ed; border: 1px solid #fdba74; border-radius: 6px;">';
+        html += `<h4 style="margin: 0 0 8px 0; color: #c2410c; font-size: 0.9em;">💡 Available Concepts (${concepts.length})</h4>`;
         concepts.forEach((concept, index) => {
-            html += `<div style="margin-bottom: ${index < concepts.length - 1 ? '12px' : '0'}; padding-bottom: ${index < concepts.length - 1 ? '12px' : '0'}; border-bottom: ${index < concepts.length - 1 ? '1px dashed #93c5fd' : 'none'};">`;
-            html += `<pre style="margin: 0; white-space: pre-wrap; word-break: break-all;">${JSON.stringify(concept, null, 2)}</pre>`;
+            html += `<div style="margin-bottom: ${index < concepts.length - 1 ? '10px' : '0'}; padding: 8px; background: white; border-radius: 4px; font-size: 0.85em;">`;
+            html += `<strong>Concept ${index + 1}: ${concept.concept_id || 'N/A'}</strong>`;
+            html += `<div style="margin-top: 4px;"><strong>Relevance:</strong> ${concept.relevance || 0}</div>`;
+            if (concept.topic_anchors) {
+                html += `<div style="margin-top: 4px;"><strong>Topic Anchors:</strong></div>`;
+                html += `<pre style="margin: 4px 0 0 0; font-size: 0.8em; white-space: pre-wrap; word-break: break-all; background: #f3f4f6; padding: 4px; border-radius: 3px;">${JSON.stringify(concept.topic_anchors, null, 2)}</pre>`;
+            }
             html += '</div>';
         });
+        html += '</div>';
 
         conceptsOutput.innerHTML = html;
 

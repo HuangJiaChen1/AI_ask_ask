@@ -1002,7 +1002,11 @@ def lookup_concepts():
     Response:
         {
             "success": true,
-            "concepts": [...]
+            "data": {
+                "entity": { ... },
+                "themes": { ... },
+                "available_concepts": [...]
+            }
         }
         OR
         {
@@ -1051,12 +1055,18 @@ def lookup_concepts():
 
         print(f"[INFO] Looking up concepts for '{object_name}' with age_tier={age_tier}")
 
-        concepts = lookup_top_available_concepts(object_name, age_tier)
+        result = lookup_top_available_concepts(object_name, age_tier)
         
-        #  可改返回 entity_id 与 entity_name
+        if not result.get("success"):
+            return jsonify(result)
+        
         return jsonify({
             "success": True,
-            "concepts": concepts
+            "data": {
+                "entity": result.get("entity", {}),
+                "themes": result.get("themes", {}),
+                "available_concepts": result.get("available_concepts", [])
+            }
         })
 
     except ValueError as e:

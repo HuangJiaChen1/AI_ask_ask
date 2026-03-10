@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import random
 from functools import lru_cache
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Tuple
@@ -196,28 +197,77 @@ def _cached_entities(base_dir: str) -> List[Dict[str, Any]]:
     return _load_entities_from_mappings_folder(base_dir)
 
 
-def lookup_top_available_concepts(query: str, age_tier: str) -> List[Dict[str, Any]]:
+def lookup_top_available_concepts(query: str, age_tier: str) -> Dict[str, Any]:
     """
     输入：
     - query：entity_id / 英文名 / 中文名（子串匹配，不区分大小写）
     - age_tier：T0/T1/T2/T3 或 0/1/2/3（或 tier_0..tier_3）
 
     输出：
-    - 一个或多个“全局最大 rel”的 tier_concept_id 对应的 Available Concepts（原始 dict 列表）
-    - 未检索到则返回 []
+    - 包含以下内容的 dict：
+        {
+            "success": true/false,
+            "entity": {
+                "entity_id": "...",
+                "entity_name": "...",
+                "entity_name_cn": "..."
+            },
+            "themes": {
+                "theme_id1": {...},
+                "theme_id2": {...}
+            },
+            "available_concepts": [...]
+        }
+    - 未检索到则返回 {"success": false, "error": "..."}
     """
     tier_key = _normalize_age_tier_to_key(age_tier)
     if tier_key is None:
-        raise ValueError("Age Tier 无效：请使用 T0/T1/T2/T3 或 0/1/2/3（或 tier_0..tier_3）")
+        return {
+            "success": False,
+            "error": "Age Tier 无效：请使用 T0/T1/T2/T3 或 0/1/2/3（或 tier_0..tier_3）"
+        }
 
     entities = _cached_entities(DEFAULT_MAPPINGS_DIR)
     if not entities:
-        return []
+        return {"success": False, "error": "未找到实体数据"}
 
     # 先得到“每个命中 Entity 在指定 Tier 下的最大 rel”（可能多个概念并列最大）
     results = _search_best_matches_from_entities(entities, query, tier_key)
     if not results:
-        return []
+        return {"success": False, "error": "未找到匹配的概念"}
+
+    # 获取匹配到的实体
+    matched_entity_ids = list({r.entity_id for r in results})
+    matched_entity = None
+    for e in entities:
+        if e.get("entity_id") in matched_entity_ids:
+            matched_entity = e
+            break
+
+    if not matched_entity:
+        return {"success": False, "error": "未找到匹配的实体"}
+
+    # 整理 themes（按 theme_id）
+    themes: Dict[str, Any] = {}
+    primary_theme = matched_entity.get("primary_theme")
+    if primary_theme and isinstance(primary_theme, dict):
+        theme_id = primary_theme.get("theme_id")
+        if theme_id:
+            themes[theme_id] = {
+                "type": "primary",
+                **primary_theme
+            }
+    
+    secondary_themes = matched_entity.get("secondary_themes", [])
+    if isinstance(secondary_themes, list):
+        for theme in secondary_themes:
+            if isinstance(theme, dict):
+                theme_id = theme.get("theme_id")
+                if theme_id:
+                    themes[theme_id] = {
+                        "type": "secondary",
+                        **theme
+                    }
 
     # 再取这些结果中的“全局最大 rel”，返回对应 Available Concepts（可能多个）
     max_rel = max(r.relevance for r in results)
@@ -225,17 +275,141 @@ def lookup_top_available_concepts(query: str, age_tier: str) -> List[Dict[str, A
 
     # 去重（按 concept_id）并保持稳定顺序
     seen = set()
-    deduped: List[Dict[str, Any]] = []
+    deduped_concepts: List[Dict[str, Any]] = []
     for obj in top_objects:
         cid = obj.get("concept_id")
         key = str(cid) if cid is not None else repr(obj)
         if key in seen:
             continue
         seen.add(key)
-        deduped.append(obj)
+        deduped_concepts.append(obj)
 
-    return deduped
+    return {
+        "success": True,
+        "entity": {
+            "entity_id": matched_entity.get("entity_id", ""),
+            "entity_name": matched_entity.get("entity_name", ""),
+            "entity_name_cn": matched_entity.get("entity_name_cn", "")
+        },
+        "themes": themes,
+        "available_concepts": deduped_concepts
+    }
 
 
-__all__ = ["lookup_top_available_concepts"]
+# def format_concepts_output(result: Dict[str, Any]) -> str:
+#     """
+#     将 lookup_top_available_concepts 返回的结果格式化为便于阅读的键值对输出
+    
+#     输入：
+#     - result: lookup_top_available_concepts 函数返回的结果
+    
+#     输出：
+#     - 格式化后的字符串，便于阅读的键值对格式
+#     """
+#     if not result.get("success"):
+#         return f"错误: {result.get('error', '未知错误')}"
+    
+#     output_lines = []
+    
+#     # 添加实体信息
+#     output_lines.append("=" * 80)
+#     output_lines.append("实体信息 (Entity Info)")
+#     output_lines.append("=" * 80)
+#     entity = result.get("entity", {})
+#     output_lines.append(f"entity_id: {entity.get('entity_id', '')}")
+#     output_lines.append(f"entity_name: {entity.get('entity_name', '')}")
+#     output_lines.append(f"entity_name_cn: {entity.get('entity_name_cn', '')}")
+#     output_lines.append("")
+    
+#     # 添加主题信息（所有主题）
+#     output_lines.append("=" * 80)
+#     output_lines.append("主题信息 (Themes Info)")
+#     output_lines.append("=" * 80)
+#     themes = result.get("themes", {})
+#     for theme_id, theme_data in themes.items():
+#         output_lines.append(f"\n[Theme: {theme_id}]")
+#         for key, value in sorted(theme_data.items()):
+#             if key == "theme_id":
+#                 continue
+#             output_lines.append(f"  {key}: {value}")
+#     output_lines.append("")
+    
+#     # 添加概念信息
+#     output_lines.append("=" * 80)
+#     output_lines.append("可用概念 (Available Concepts)")
+#     output_lines.append("=" * 80)
+#     concepts = result.get("available_concepts", [])
+#     for i, concept in enumerate(concepts, 1):
+#         output_lines.append(f"\n[Concept {i}]")
+#         for key, value in sorted(concept.items()):
+#             output_lines.append(f"  {key}: {value}")
+    
+#     return "\n".join(output_lines)
+
+
+# def random_theme_and_concepts_output(result: Dict[str, Any]) -> str:
+#     """
+#     1. 提取并排列输出一个或多个全局最大 rel 的 Available Concepts
+#     2. 随机选择一个 theme_id 并输出该 theme 的全部内容
+#     3. 输出格式为便于阅读的键值对
+    
+#     输入：
+#     - result: lookup_top_available_concepts 函数返回的结果
+    
+#     输出：
+#     - 格式化后的字符串
+#     """
+#     if not result.get("success"):
+#         return f"错误: {result.get('error', '未知错误')}"
+    
+#     output_lines = []
+    
+#     # 第1部分：提取并排列输出 Available Concepts
+#     output_lines.append("=" * 80)
+#     output_lines.append("📊 可用概念 (Available Concepts)")
+#     output_lines.append("=" * 80)
+#     concepts = result.get("available_concepts", [])
+#     for i, concept in enumerate(concepts, 1):
+#         output_lines.append(f"\n[概念 {i}]")
+#         output_lines.append(f"  concept_id: {concept.get('concept_id', '')}")
+#         output_lines.append(f"  relevance: {concept.get('relevance', 0)}")
+#         topic_anchors = concept.get('topic_anchors', {})
+#         if topic_anchors:
+#             output_lines.append("  topic_anchors:")
+#             for anchor_type, anchors in sorted(topic_anchors.items()):
+#                 output_lines.append(f"    {anchor_type}:")
+#                 if isinstance(anchors, list):
+#                     for anchor in anchors:
+#                         if isinstance(anchor, dict):
+#                             for attr, val in sorted(anchor.items()):
+#                                 output_lines.append(f"      {attr}: {val}")
+#                 elif isinstance(anchors, dict):
+#                     for attr, val in sorted(anchors.items()):
+#                         output_lines.append(f"      {attr}: {val}")
+    
+#     # 第2部分：随机选择一个 theme 并输出
+#     output_lines.append("\n" + "=" * 80)
+#     output_lines.append("🎲 随机选择的主题 (Random Theme)")
+#     output_lines.append("=" * 80)
+#     themes = result.get("themes", {})
+#     theme_ids = list(themes.keys())
+    
+#     if theme_ids:
+#         random_theme_id = random.choice(theme_ids)
+#         theme_data = themes[random_theme_id]
+        
+#         output_lines.append(f"\n[主题: {random_theme_id}]")
+#         for key, value in sorted(theme_data.items()):
+#             output_lines.append(f"  {key}: {value}")
+#     else:
+#         output_lines.append("\n  (无主题信息)")
+    
+#     return "\n".join(output_lines)
+
+
+__all__ = [
+    "lookup_top_available_concepts",
+    # "format_concepts_output",
+    # "random_theme_and_concepts_output"
+]
 
