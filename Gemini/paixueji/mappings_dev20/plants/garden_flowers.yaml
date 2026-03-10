@@ -1,0 +1,260 @@
+- entity_id: plants_sunflower
+  entity_name: Sunflower
+  entity_name_cn: 向日葵
+  domain: plants
+  parent_category: flowers
+  subcategory: garden flowers
+  primary_theme:
+    theme_id: how_world_works
+    weight: 0.46
+    reasoning: Sunflowers help children notice how plants use sunlight, water, and soil to grow, and how the flower head can
+      turn to follow the sun in the sky.
+  secondary_themes:
+  - theme_id: sharing_planet
+    weight: 0.25
+    reasoning: Children can explore how sunflowers support bees and birds with nectar and seeds, and how growing flowers can
+      help a garden ecosystem stay healthy.
+    context_trigger: when the child points to a bee or bird near the sunflower and asks what it is eating or doing
+  - theme_id: how_we_express
+    weight: 0.21
+    reasoning: Sunflowers are often drawn, painted, and used in stories, letting children express feelings about bright colors,
+      tall plants, and sunny days through art and words.
+    context_trigger: when the child wants to draw the big yellow petals or says the flower looks like the sun
+  - theme_id: where_place_time
+    weight: 0.08
+    reasoning: A sunflower’s daily facing direction and seasonal growth help children talk about time, day versus night, and
+      how plants change across weeks in one place.
+    context_trigger: when the child notices the flower facing a different direction later and says "it moved"
+  primary_key_concepts:
+  - concept_id: change
+    relevance: 1.1
+    reasoning: A sunflower changes from seed to sprout to tall stem and flower, and children can watch the head and leaves
+      change over days and weeks.
+  - concept_id: form
+    relevance: 0.7
+    reasoning: Children can observe the sunflower’s round center, many petals, tall stalk, and rough leaves, describing shapes,
+      sizes, and patterns they can see.
+  - concept_id: function
+    relevance: 0.9
+    reasoning: The petals attract pollinators, the stem holds the flower up to the light, and the seeds feed animals, helping
+      children connect parts to jobs.
+  secondary_key_concepts:
+  - concept_id: causation
+    relevance: 0.9
+    reasoning: Children can link causes and effects, like how sunlight and watering make the plant grow, and how lack of water
+      makes it droop.
+  - concept_id: connection
+    relevance: 0.6
+    reasoning: Sunflowers connect to the sun, soil, insects, and people, helping children see relationships between living
+      things and their environment.
+  candidate_related_concepts:
+  - concept_id: interdependence
+    discipline: Science
+    reasoning: Bees help the sunflower make seeds, and the sunflower provides food, showing children how living things need
+      each other.
+  - concept_id: growth
+    discipline: Science
+    reasoning: Children can measure the sunflower getting taller and growing new leaves, making growth visible and easy to
+      track.
+  - concept_id: cycles
+    discipline: Science
+    reasoning: The sunflower life cycle repeats from seed to flower to new seeds, which children can plant again to restart
+      the cycle.
+  - concept_id: sustainability
+    discipline: Social Studies
+    reasoning: Growing sunflowers can encourage saving seeds, feeding wildlife, and caring for soil and water, which supports
+      responsible garden habits.
+  tier_guidance:
+    tier_0:
+      available_concepts:
+      - concept_id: form
+        relevance: 0.85
+        topic_anchors:
+          visual:
+          - attribute: petal color
+            value: bright yellow petals
+          - attribute: middle shape
+            value: big round center
+          - attribute: plant size
+            value: tall green stalk
+      - concept_id: connection
+        relevance: 0.55
+        topic_anchors:
+          visual:
+          - attribute: bugs visit the flower
+            value: bees crawl on it
+          - attribute: birds use the seeds
+            value: birds peck the seeds
+          tactile:
+          - attribute: grows in dirt
+            value: roots in brown soil
+      primary_topic_focus: form
+    tier_1:
+      available_concepts:
+      - concept_id: change
+        relevance: 0.92
+        topic_anchors:
+          kinesthetic:
+          - attribute: sprout_to_tall
+            value: Small sprout grows taller each week.
+          visual:
+          - attribute: bud_to_bloom
+            value: Green bud opens into a big face.
+          - attribute: head_dries
+            value: Flower head dries and turns brown later.
+      - concept_id: function
+        relevance: 0.84
+        topic_anchors:
+          structural:
+          - attribute: rough_stem_job
+            value: Thick stem holds the heavy head up.
+          kinesthetic:
+          - attribute: faces_light
+            value: Turns its face toward bright sunlight.
+          relational:
+          - attribute: seeds_food
+            value: Seeds become snacks for birds and people.
+      - concept_id: form
+        relevance: 0.7
+        topic_anchors:
+          tactile:
+          - attribute: leaf_texture
+            value: Leaves feel rough and a little scratchy.
+          visual:
+          - attribute: petal_ring
+            value: Petals make a sunny ring around the center.
+          structural:
+          - attribute: seed_pattern
+            value: Center is packed with many tiny seeds.
+      - concept_id: connection
+        relevance: 0.6
+        topic_anchors:
+          spatial:
+          - attribute: garden_place
+            value: Grows in gardens and sunny open spots.
+          relational:
+          - attribute: bee_helper
+            value: Bees drink nectar while helping flowers.
+          emotional:
+          - attribute: sunny_feeling
+            value: Bright flower can feel happy and warm.
+      primary_topic_focus: change
+    tier_2:
+      available_concepts:
+      - concept_id: change
+        relevance: 0.95
+        topic_anchors:
+          temporal:
+          - attribute: daily_open_close_rhythm
+            value: Some flowers open more in daylight and rest at night, changing how they look across a day.
+          - attribute: stem_thickens_as_it_gets_taller
+            value: As the sunflower grows, the stem gets thicker so it can hold up the heavy flower head.
+          structural:
+          - attribute: seed_head_fills_after_pollination
+            value: After pollinators visit, the center keeps changing as many seeds grow and pack in.
+      - concept_id: causation
+        relevance: 0.86
+        topic_anchors:
+          structural:
+          - attribute: roots_anchor_and_drink
+            value: Roots hold the plant in place and soak up water and minerals that help it stay strong.
+      - concept_id: function
+        relevance: 0.9
+        topic_anchors:
+          structural:
+          - attribute: leaf_job_is_food_making
+            value: Leaves make sugar for the plant using sunlight, air, and water, which helps the sunflower grow tall.
+          - attribute: flower_head_is_many_tiny_flowers
+            value: The middle is made of lots of tiny flowers, and each one can turn into a seed after pollinators visit.
+          relational:
+          - attribute: nectar_trade_with_pollinators
+            value: Bees and other insects get nectar and pollen for food, and they move pollen around so seeds can form.
+      - concept_id: form
+        relevance: 0.68
+        topic_anchors:
+          structural:
+          - attribute: disc_florets_make_many_seeds
+            value: The round middle is made of lots of tiny flowers that can each turn into a seed.
+          - attribute: leaf_veins_like_tubes
+            value: Lines in the leaves act like little tubes that move water and plant food around.
+          visual:
+          - attribute: head_can_tilt_and_face_direction
+            value: The big flower head can tilt, making it look like it is pointing toward a side of the sky.
+      - concept_id: connection
+        relevance: 0.62
+        topic_anchors:
+          relational:
+          - attribute: nectar_and_pollen_feed_pollinators
+            value: Bees and other insects take nectar and pollen, and they help the sunflower make seeds.
+          - attribute: humans_use_seeds_and_oil
+            value: People can eat sunflower seeds and use sunflower oil, so the plant becomes food for families.
+          spatial:
+          - attribute: needs_space_and_light_in_garden
+            value: Sunflowers grow best where they have room and lots of light, so they don’t get shaded by other plants.
+      primary_topic_focus: change
+    tier_3:
+      available_concepts:
+      - concept_id: change
+        relevance: 0.9
+        topic_anchors:
+          temporal:
+          - attribute: flower_to_seed_cycle_restart
+            value: After flowering, the sunflower can make new seeds that can be saved and planted, showing how one plant
+              can start many future plants.
+          - attribute: seasonal_life_span
+            value: In many places sunflowers grow during warm months and die back when it gets cold, showing how seasons shape
+              living things.
+          structural:
+          - attribute: stem_strength_increases_with_growth
+            value: As the plant grows taller, its stem develops stronger support tissues so it can hold up the heavy head.
+      - concept_id: causation
+        relevance: 0.78
+        topic_anchors:
+          relational:
+          - attribute: competition_changes_height
+            value: If sunflowers are crowded, they may grow taller and thinner to reach light, showing how neighbors can change
+              how a plant develops.
+      - concept_id: function
+        relevance: 0.78
+        topic_anchors:
+          structural:
+          - attribute: flower_disk_improves_pollination_efficiency
+            value: The many tiny flowers packed into the center can help pollinators move from one floret to the next quickly,
+              making pollination more efficient like a well-designed ‘marketplace’ for pollen.
+          relational:
+          - attribute: deep_roots_support_drought_resilience
+            value: Sunflowers can grow roots that reach deeper water, which helps the plant keep functioning during dry times
+              and shows how plant structures support survival in different environments.
+          evaluative:
+          - attribute: human_uses_change_ecosystem_roles
+            value: When people grow sunflowers for oil, snacks, or decoration, the plant’s function becomes part of human
+              food systems—raising questions about saving some seeds for wildlife versus harvesting everything.
+      - concept_id: form
+        relevance: 0.55
+        topic_anchors:
+          structural:
+          - attribute: head_is_a_flower_cluster
+            value: The “big flower” is actually a cluster of many tiny flowers packed together, which is why one head can
+              make many seeds.
+          - attribute: leaf_arrangement_supports_light_capture
+            value: Leaves often spread out along the stem so they don’t block each other too much, helping the plant collect
+              more sunlight.
+          visual:
+          - attribute: spiral_math_in_seed_rows
+            value: The seed rows form spirals that can be counted in two directions, connecting plant patterns to math ideas
+              about repeated shapes.
+      - concept_id: connection
+        relevance: 0.6
+        topic_anchors:
+          relational:
+          - attribute: food_web_role_in_fields_and_gardens
+            value: 'Sunflowers connect to a food web: insects use nectar, birds and small animals eat seeds, and those animals
+              may feed other wildlife.'
+          - attribute: people_use_in_culture_and_art
+            value: Sunflowers appear in art and celebrations in different places, showing how a plant can become a cultural
+              symbol as well as a living thing.
+          evaluative:
+          - attribute: gardening_choices_affect_biodiversity
+            value: Planting sunflowers can support pollinators, while using harsh chemicals can harm them, linking gardening
+              decisions to caring for shared habitats.
+      primary_topic_focus: change

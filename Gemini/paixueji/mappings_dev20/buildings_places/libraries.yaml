@@ -1,0 +1,256 @@
+- entity_id: buildings_places_city_library
+  entity_name: City Library
+  entity_name_cn: 市图书馆
+  domain: buildings_places
+  parent_category: public_buildings
+  subcategory: libraries
+  primary_theme:
+    theme_id: how_we_organize
+    weight: 0.41
+    reasoning: A city library shows how people organize learning with book shelves, borrowing systems, quiet spaces, and helpers
+      so everyone can share resources.
+  secondary_themes:
+  - theme_id: where_place_time
+    weight: 0.33
+    reasoning: Children experience the library as a specific place in their city with sections and regular visiting times,
+      like story time or after-school reading.
+    context_trigger: when the child looks for a section, points to shelves, or says “we come here for story time” or “where
+      do the picture books live?”
+  - theme_id: how_world_works
+    weight: 0.26
+    reasoning: A library includes working systems like library cards, check-out scanners, return slots, and sorting carts
+      that children can watch and copy in play.
+    context_trigger: when the child scans a card, drops a book in the return box, or asks “how do they know it’s my book?”
+  primary_key_concepts:
+  - concept_id: function
+    relevance: 1.1
+    reasoning: The library’s function is to lend books and provide a reading space, which children can explore by choosing,
+      borrowing, and returning items.
+  - concept_id: connection
+    relevance: 0.9
+    reasoning: Children see connections between readers, librarians, books, and rules, noticing how sharing and organizing
+      helps many people use the same stories.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: Borrowing books teaches responsibility, like taking care of pages, returning on time, and using quiet voices
+      so others can read.
+  secondary_key_concepts:
+  - concept_id: form
+    relevance: 0.7
+    reasoning: Children can describe the library’s form by noticing shelves, labels, reading corners, computers, and the building
+      layout that guides where books go.
+  - concept_id: causation
+    relevance: 0.3
+    reasoning: Children can explore causation, such as returning a book makes it available for another child, or misplacing
+      it causes someone else not to find it.
+  candidate_related_concepts:
+  - concept_id: community
+    discipline: Social Studies
+    reasoning: A city library is a shared community resource where many families can access books, learning programs, and
+      safe public spaces together.
+  - concept_id: rules
+    discipline: Social Studies
+    reasoning: Library rules like whispering, handling books gently, and checking out items help children understand how shared
+      places work for everyone.
+  - concept_id: collaboration
+    discipline: Social Studies
+    reasoning: Children can notice collaboration when librarians, volunteers, and visitors work together to keep books organized
+      and programs running.
+  - concept_id: roles
+    discipline: Social Studies
+    reasoning: The library shows roles such as librarian, borrower, and storyteller, helping children see how different people
+      support learning.
+  tier_guidance:
+    tier_0:
+      available_concepts:
+      - concept_id: connection
+        relevance: 0.9
+        topic_anchors:
+          visual:
+          - attribute: people_there
+            value: librarian at desk
+          - attribute: shared_items
+            value: many books to share
+          kinesthetic:
+          - attribute: quiet_action
+            value: walk and talk softly
+      - concept_id: form
+        relevance: 0.75
+        topic_anchors:
+          visual:
+          - attribute: shelves
+            value: tall shelves of books
+          - attribute: signs
+            value: labels on shelves
+          - attribute: cozy_spot
+            value: reading corner with chairs
+      primary_topic_focus: connection
+    tier_1:
+      available_concepts:
+      - concept_id: function
+        relevance: 0.92
+        topic_anchors:
+          kinesthetic:
+          - attribute: check_out_return
+            value: Borrow books, then bring them back for others.
+          - attribute: story_time
+            value: Listen to stories in a group and sing songs.
+          structural:
+          - attribute: library_card_system
+            value: A library card helps track your borrowed books.
+      - concept_id: connection
+        relevance: 0.8
+        topic_anchors:
+          relational:
+          - attribute: librarian_helper
+            value: Librarians help you find the right shelf.
+          - attribute: rules_help_everyone
+            value: Rules like gentle hands keep books safe.
+          spatial:
+          - attribute: books_go_home_then_back
+            value: Books travel from library to home and back.
+      - concept_id: form
+        relevance: 0.66
+        topic_anchors:
+          spatial:
+          - attribute: sections
+            value: 'Different areas: picture books, computers, story room.'
+          structural:
+          - attribute: checkout_desk
+            value: Front desk where books get scanned and stamped.
+          visual:
+          - attribute: return_slot
+            value: A slot or bin where books drop in safely.
+      primary_topic_focus: function
+    tier_2:
+      available_concepts:
+      - concept_id: function
+        relevance: 0.9
+        topic_anchors:
+          structural:
+          - attribute: catalog_system_matches_books_to_places
+            value: Numbers or letters on the spine and in the computer help each book have a ‘home spot’ so people can find
+              it again.
+          - attribute: return_slot_and_sorting_flow_move_books_back_to_shelves
+            value: Dropped-off books go into bins and carts so workers can sort them and send them back to the right section.
+          relational:
+          - attribute: lending_system_shares_one_copy_with_many_families
+            value: The library lets many people take turns with the same book by tracking who has it and when it comes back.
+      - concept_id: connection
+        relevance: 0.9
+        topic_anchors:
+          relational:
+          - attribute: library_card_links_person_to_account
+            value: A library card connects a borrower to their account so the library knows which books are checked out.
+          temporal:
+          - attribute: due_dates_connect_time_to_sharing
+            value: Due dates connect time to fairness so everyone gets a turn with popular books.
+      - concept_id: responsibility
+        relevance: 0.84
+        topic_anchors:
+          tactile:
+          - attribute: gentle_page_turning_prevents_tears_and_bent_corners
+            value: Careful hands keep pages from ripping or folding, so the next reader can enjoy the book too.
+          temporal:
+          - attribute: returning_on_time_keeps_the_sharing_fair
+            value: Bringing books back by the due date helps other children get a turn instead of waiting a long time.
+          auditory:
+          - attribute: quiet_voices_help_others_concentrate
+            value: Using a whisper-level voice makes it easier for people nearby to read, think, or listen to a story.
+      - concept_id: form
+        relevance: 0.7
+        topic_anchors:
+          spatial:
+          - attribute: separate_areas_for_noise_levels
+            value: Libraries often have quieter reading zones and busier activity zones, with spaces arranged to help everyone
+              focus.
+          structural:
+          - attribute: sorting_cart_and_drop_box_design
+            value: Return bins and rolling carts are built to hold many books safely while they are moved and sorted.
+          visual:
+          - attribute: call_number_stickers_on_spines
+            value: Tiny number/letter stickers on book spines are visual clues that match the library’s organizing system.
+      - concept_id: causation
+        relevance: 0.35
+        topic_anchors:
+          relational:
+          - attribute: late_returns_reduce_choices_for_others
+            value: If a book is kept past its due date, other readers may not get to borrow it when they want it.
+          temporal:
+          - attribute: reshelving_time_delays_findability
+            value: After a return, the book may take time to be sorted and shelved, which causes it to be hard to find for
+              a little while.
+      primary_topic_focus: function
+    tier_3:
+      available_concepts:
+      - concept_id: function
+        relevance: 0.78
+        topic_anchors:
+          relational:
+          - attribute: library_functions_as_an_access_point_for_digital_information
+            value: Many libraries do more than lend books—they provide computers, internet, and online resources, which helps
+              communities learn even if families do not have those tools at home.
+          - attribute: library_functions_as_a_civic_space_for_shared_learning
+            value: Programs like clubs, homework help, and community events show the library working like a “learning meeting
+              place,” similar to how parks work for play.
+          structural:
+          - attribute: classification_system_functions_like_a_map_for_finding_ideas
+            value: Call numbers and subject labels act like coordinates, turning the building into an organized map so people
+              can locate information quickly and return it to the right place.
+      - concept_id: connection
+        relevance: 0.84
+        topic_anchors:
+          relational:
+          - attribute: library_links_tax_money_to_shared_services
+            value: A city library connects community funding to shared learning tools, showing how people pool resources so
+              everyone can benefit, not just book owners.
+          - attribute: authors_publishers_librarians_readers_network
+            value: Each book in a library connects many roles—writer, illustrator, publisher, librarian, and reader—like a
+              chain of teamwork that makes stories travel.
+          evaluative:
+          - attribute: access_and_equity_in_information
+            value: Libraries connect to fairness because free books, computers, and programs can help more children learn,
+              raising the question of what communities owe each other.
+      - concept_id: responsibility
+        relevance: 0.74
+        topic_anchors:
+          evaluative:
+          - attribute: fair_sharing_requires_thinking_about_people_you_will_never_meet
+            value: Returning items on time is an ethical choice because it supports strangers who are waiting, showing how
+              responsibility includes caring about unseen community members.
+          - attribute: information_responsibility_includes_choosing_safe_and_kind_content
+            value: Using library computers or books responsibly means picking age-appropriate materials and treating others
+              respectfully online and in person, connecting learning to digital citizenship.
+          relational:
+          - attribute: asking_for_help_is_part_of_responsible_library_use
+            value: Knowing when to ask a librarian for guidance—rather than guessing or giving up—shows responsibility for
+              your own learning and helps keep resources organized for everyone.
+      - concept_id: form
+        relevance: 0.66
+        topic_anchors:
+          spatial:
+          - attribute: layout_guides_behavior_zones
+            value: The building’s layout often separates quiet reading areas from louder activity rooms, showing how space
+              design can shape how people act.
+          structural:
+          - attribute: barcode_and_tag_system_as_hidden_structure
+            value: Many books have barcodes or security tags, an invisible layer of the library’s structure that helps track
+              items and prevent loss.
+          - attribute: accessible_design_features
+            value: Ramps, wide aisles, and clear signs are part of the library’s form so more bodies and abilities can move
+              safely, connecting design to inclusion.
+      - concept_id: causation
+        relevance: 0.38
+        topic_anchors:
+          relational:
+          - attribute: lost_or_damaged_books_reduce_system_capacity
+            value: When books are lost or heavily damaged, the library has fewer copies to share, which can cause longer waits
+              and fewer choices for everyone.
+          - attribute: quiet_spaces_increase_concentration
+            value: When people use quiet voices, it causes fewer distractions, helping others focus, showing how small actions
+              change the learning environment.
+          temporal:
+          - attribute: high_demand_causes_holds_and_waitlists
+            value: When many readers want the same new book at once, it causes a waiting list, showing how time and sharing
+              rules help manage limited resources.
+      primary_topic_focus: function

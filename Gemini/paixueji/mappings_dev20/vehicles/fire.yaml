@@ -1,0 +1,245 @@
+- entity_id: vehicles_fire_truck
+  entity_name: Fire Truck
+  entity_name_cn: 消防车
+  domain: vehicles
+  parent_category: emergency vehicles
+  subcategory: fire
+  primary_theme:
+    theme_id: how_we_organize
+    weight: 0.55
+    reasoning: A fire truck shows children how communities organize emergency help, with firefighters, stations, special equipment,
+      and clear routines to respond quickly and protect people.
+  secondary_themes:
+  - theme_id: who_we_are
+    weight: 0.25
+    reasoning: Children often admire firefighters and explore bravery, helping others, and feelings during emergencies, building
+      empathy and identity as helpers.
+    context_trigger: when the child pretends to be a firefighter, puts on a helmet, or says they want to help people
+  - theme_id: how_world_works
+    weight: 0.2
+    reasoning: Kids investigate how water hoses, ladders, sirens, and pumps work to put out fires, rescue people, and move
+      safely through streets.
+    context_trigger: when the child asks what the hose does, why the siren is loud, or how the ladder goes up
+  primary_key_concepts:
+  - concept_id: function
+    relevance: 1.1
+    reasoning: 'Children can explain the fire truck’s function: carrying firefighters and tools to put out fires and help
+      in emergencies.'
+  - concept_id: connection
+    relevance: 0.9
+    reasoning: Kids connect the fire truck to the fire station, emergency number, firefighters, and neighborhoods, noticing
+      how help reaches homes.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: A fire truck supports responsibility ideas like making safe choices, listening to adults, and moving aside
+      so emergency vehicles can pass.
+  secondary_key_concepts:
+  - concept_id: form
+    relevance: 0.7
+    reasoning: Children notice the truck’s big body, ladder, hose reels, and flashing lights and link each part to a job.
+  - concept_id: causation
+    relevance: 0.3
+    reasoning: Kids can discuss that smoke and fire cause danger, so firefighters need water, protective gear, and fast vehicles
+      to respond.
+  candidate_related_concepts:
+  - concept_id: community
+    discipline: Social Studies
+    reasoning: Fire trucks represent a community service where helpers protect everyone, including families, schools, and
+      neighborhoods.
+  - concept_id: rules
+    discipline: Social Studies
+    reasoning: Children learn rules like stopping for sirens, following evacuation directions, and not touching equipment
+      without permission.
+  - concept_id: collaboration
+    discipline: Social Studies
+    reasoning: Firefighters collaborate by driving, holding hoses, climbing ladders, and communicating, showing teamwork under
+      pressure.
+  - concept_id: safety
+    discipline: PSPE
+    reasoning: A fire truck naturally leads to safety learning such as smoke alarms, fire drills, and safe behavior around
+      roads and emergencies.
+  tier_guidance:
+    tier_0:
+      available_concepts:
+      - concept_id: connection
+        relevance: 0.8
+        topic_anchors:
+          auditory:
+          - attribute: siren sound
+            value: loud wee-oo siren
+          visual:
+          - attribute: goes with firefighters
+            value: helpers ride inside
+          kinesthetic:
+          - attribute: brings water hose
+            value: hose rolls out to spray
+      - concept_id: form
+        relevance: 0.9
+        topic_anchors:
+          visual:
+          - attribute: truck color
+            value: big red truck
+          - attribute: ladder look
+            value: long ladder on top
+          - attribute: light look
+            value: flashy blinking lights
+      primary_topic_focus: connection
+    tier_1:
+      available_concepts:
+      - concept_id: function
+        relevance: 0.93
+        topic_anchors:
+          structural:
+          - attribute: pump_pushes_water
+            value: Pump pushes water fast through hoses.
+          kinesthetic:
+          - attribute: ladder_reaches
+            value: Ladder stretches up to reach high places.
+          relational:
+          - attribute: tool_carrier
+            value: Carries tools for rescue and safety jobs.
+      - concept_id: connection
+        relevance: 0.8
+        topic_anchors:
+          spatial:
+          - attribute: station_to_streets
+            value: Leaves the station and drives to neighborhoods.
+          relational:
+          - attribute: community_helper
+            value: Comes when someone calls for help.
+          emotional:
+          - attribute: loud_but_helping
+            value: Loud truck can feel scary and helpful.
+      - concept_id: form
+        relevance: 0.68
+        topic_anchors:
+          structural:
+          - attribute: hose_reels
+            value: Hoses roll up on big round reels.
+          - attribute: big_tires
+            value: Huge tires look strong and chunky.
+          visual:
+          - attribute: many_compartments
+            value: Side doors hide lots of gear inside.
+      primary_topic_focus: function
+    tier_2:
+      available_concepts:
+      - concept_id: function
+        relevance: 1.0
+        topic_anchors:
+          structural:
+          - attribute: stores_many_tools_for_different_emergencies
+            value: Compartments hold tools like axes, hoses, and medical kits so firefighters can handle different problems.
+          - attribute: lights_and_sirens_send_a_moving_warning
+            value: The truck uses bright lights and a loud siren to tell others an emergency is happening and to make room.
+          temporal:
+          - attribute: planned_routes_help_arrive_fast
+            value: The truck often follows the quickest route to reach the right address, because time matters in emergencies.
+      - concept_id: connection
+        relevance: 0.87
+        topic_anchors:
+          relational:
+          - attribute: radio_links_truck_to_station
+            value: The truck uses radio messages so the crew can get updates and directions while driving.
+          - attribute: hydrant_connects_to_city_water
+            value: A fire truck can connect a hose to a hydrant to use the city’s water supply.
+          spatial:
+          - attribute: drives_to_specific_address
+            value: The truck goes to an exact place, so knowing street names and numbers helps helpers arrive fast.
+      - concept_id: responsibility
+        relevance: 0.9
+        topic_anchors:
+          relational:
+          - attribute: other_road_users_make_space
+            value: Drivers and cyclists act responsibly by pulling over or stopping safely so the fire truck can pass.
+          - attribute: firefighters_secure_the_scene
+            value: They place cones, block unsafe areas, and guide people because keeping the area organized prevents new
+              injuries.
+          temporal:
+          - attribute: equipment_must_be_reset_after_use
+            value: After a call, hoses are rolled, tanks refilled, and tools checked so the truck is ready for the next emergency.
+      - concept_id: form
+        relevance: 0.68
+        topic_anchors:
+          structural:
+          - attribute: outriggers_stabilize_for_ladder_work
+            value: Some trucks have side supports that spread out to keep the truck steady when the ladder goes up.
+          - attribute: tank_and_pump_system_inside
+            value: Inside the truck are systems that store water and move it through hoses with strong pressure.
+          visual:
+          - attribute: warning_lights_pattern
+            value: Flashing lights are arranged to be seen from many angles so others notice the emergency vehicle.
+      - concept_id: causation
+        relevance: 0.36
+        topic_anchors:
+          temporal:
+          - attribute: fast_response_limits_spread
+            value: The sooner the truck arrives, the less time a fire has to spread to more rooms or buildings.
+      primary_topic_focus: function
+    tier_3:
+      available_concepts:
+      - concept_id: function
+        relevance: 0.73
+        topic_anchors:
+          structural:
+          - attribute: mobile_workshop_for_many_emergency_types
+            value: A fire truck functions like a moving workshop, carrying different tools so crews can handle varied problems
+              (fire, rescue, medical support), not just one kind of emergency.
+          relational:
+          - attribute: depends_on_road_and_water_systems
+            value: Its function relies on other systems—roads for fast travel and water supplies like hydrants—showing how
+              community infrastructure helps emergency help work.
+          temporal:
+          - attribute: rapid_setup_creates_safe_work_zone_quickly
+            value: A key function is to arrive and quickly set up a safe work area (blocking lanes, lighting the scene), which
+              changes what can happen next for both rescuers and the public.
+      - concept_id: connection
+        relevance: 0.83
+        topic_anchors:
+          relational:
+          - attribute: dispatch_to_scene_workflow
+            value: A fire truck is part of a chain from an emergency call to dispatch to arrival, showing how information
+              moves to send the right help.
+          - attribute: infrastructure_dependency
+            value: Fire trucks connect to city systems like roads, hydrants, and address signs, so community planning affects
+              emergency help.
+          evaluative:
+          - attribute: public_cost_for_public_good
+            value: Communities pay for fire trucks through shared resources, raising questions about how we choose to fund
+              safety for everyone.
+      - concept_id: responsibility
+        relevance: 0.76
+        topic_anchors:
+          evaluative:
+          - attribute: sirens_balance_help_and_noise_stress
+            value: Using loud sirens is responsible when it prevents crashes and speeds help, but crews also balance it with
+              community stress and use it only as needed.
+          relational:
+          - attribute: public_makes_space_to_support_emergency_right_of_way
+            value: Drivers, cyclists, and walkers share responsibility by moving aside and staying predictable, because the
+              community’s safety system only works when everyone cooperates.
+          temporal:
+          - attribute: post_incident_reset_readies_next_response
+            value: Cleaning, refilling, and checking equipment after a call is a responsibility because it prepares the truck
+              for the next emergency, even if that next call happens immediately.
+      - concept_id: form
+        relevance: 0.55
+        topic_anchors:
+          structural:
+          - attribute: pump_and_hose_couplings_standardized
+            value: Many connectors are standardized so hoses and water sources can fit together quickly, linking design to
+              teamwork and speed.
+          - attribute: compartment_layout_supports_fast_access
+            value: Tools are stored in labeled compartments so firefighters can grab the right equipment without wasting time.
+          evaluative:
+          - attribute: warning_design_prioritizes_visibility
+            value: The truck’s visual warning design is meant to be noticed first, because being seen can prevent road accidents
+              during emergencies.
+      - concept_id: causation
+        relevance: 0.36
+        topic_anchors:
+          temporal:
+          - attribute: maintenance_prevents_breakdowns
+            value: Regular checks and repairs cause fewer failures during emergencies, showing how small actions before a
+              problem can change later outcomes.
+      primary_topic_focus: function

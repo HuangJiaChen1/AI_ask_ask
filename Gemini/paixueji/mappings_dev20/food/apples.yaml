@@ -1,0 +1,266 @@
+- entity_id: food_green_apple
+  entity_name: Green Apple
+  entity_name_cn: 青苹果
+  domain: food
+  parent_category: fruits
+  subcategory: apples
+  primary_theme:
+    theme_id: who_we_are
+    weight: 0.39
+    reasoning: Green apples fit who we are because children explore their senses, preferences, and healthy habits by tasting
+      crunchy, sour fruit.
+  secondary_themes:
+  - theme_id: how_world_works
+    weight: 0.27
+    reasoning: Children investigate how apples have skin, flesh, seeds, and juice, and what happens when an apple is cut,
+      bitten, or turns brown.
+    context_trigger: when the child notices browning and says “Why is it turning brown?” or “What are these seeds for?”
+  - theme_id: sharing_planet
+    weight: 0.19
+    reasoning: Green apples invite discussion about growing on trees, seasonal harvests, and what to do with cores to reduce
+      waste.
+    context_trigger: when the child finishes an apple and asks “Can we put the core in compost?” or “Does this grow a tree?”
+  - theme_id: how_we_organize
+    weight: 0.15
+    reasoning: Children notice how apples are sorted, washed, packed for lunch, and cut for safety, showing routines and rules
+      around food.
+    context_trigger: when the child lines up apples to choose one or says “We have to wash it before eating.”
+  primary_key_concepts:
+  - concept_id: connection
+    relevance: 0.9
+    reasoning: Green apples connect children to nature and daily routines, linking the tree, the farmer, the store, and the
+      snack in their hand.
+  - concept_id: perspective
+    relevance: 0.9
+    reasoning: Children practice perspective by comparing sour green apples with sweet ones and respecting that friends may
+      like different tastes.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: Children show responsibility by washing the apple, eating safely, and disposing of the core properly without
+      littering.
+  secondary_key_concepts:
+  - concept_id: form
+    relevance: 0.7
+    reasoning: Children explore form by observing the apple’s round shape, green color, smooth skin, and the star shape around
+      the seeds.
+  - concept_id: function
+    relevance: 0.7
+    reasoning: Children explore function as apples provide crunch, hydration, and nutrients, helping them have energy for
+      play and learning.
+  candidate_related_concepts:
+  - concept_id: nutrition
+    discipline: Health
+    reasoning: Green apples support nutrition learning by discussing fruit as a healthy snack and how it helps bodies with
+      fiber and vitamins.
+  - concept_id: relationships
+    discipline: Social Studies
+    reasoning: Eating apples together supports relationships through sharing slices, offering the last piece, and listening
+      to others’ preferences.
+  - concept_id: wellbeing
+    discipline: PSPE
+    reasoning: Children connect apples to wellbeing by noticing how crunchy foods feel, practicing mindful biting, and choosing
+      snacks that help them feel good.
+  - concept_id: resources
+    discipline: Science
+    reasoning: Green apples help children consider resources like orchards, water, and transport, and how reducing waste with
+      cores saves resources.
+  tier_guidance:
+    tier_0:
+      available_concepts:
+      - concept_id: connection
+        relevance: 0.9
+        topic_anchors:
+          visual:
+          - attribute: on_tree
+            value: hangs on tree
+          - attribute: in_store
+            value: in fruit bin
+          kinesthetic:
+          - attribute: held_in_hand
+            value: fits in hand
+      - concept_id: form
+        relevance: 0.8
+        topic_anchors:
+          visual:
+          - attribute: color
+            value: bright green skin
+          - attribute: shape
+            value: round like ball
+          tactile:
+          - attribute: texture
+            value: smooth shiny skin
+      primary_topic_focus: connection
+    tier_1:
+      available_concepts:
+      - concept_id: connection
+        relevance: 0.86
+        topic_anchors:
+          spatial:
+          - attribute: lunchbox_friend
+            value: Packed for snack time at school or home.
+          relational:
+          - attribute: grows_from_seed
+            value: Seeds can grow into a new apple tree.
+          emotional:
+          - attribute: healthy_choice_feeling
+            value: Crunchy snack makes me feel strong.
+      - concept_id: form
+        relevance: 0.7
+        topic_anchors:
+          structural:
+          - attribute: stem_top
+            value: Little brown stem sticks out on top.
+          - attribute: core_and_seeds
+            value: Hard core hides small shiny seeds.
+          visual:
+          - attribute: cut_star_center
+            value: Cut crosswise shows a star shape inside.
+      - concept_id: function
+        relevance: 0.72
+        topic_anchors:
+          kinesthetic:
+          - attribute: bite_and_crunch
+            value: Biting makes a loud, crunchy snap.
+          tactile:
+          - attribute: juicy_sip
+            value: Juice comes out when you chew.
+          - attribute: tangy_taste
+            value: Tastes sour-sweet and wakes up mouth.
+      primary_topic_focus: connection
+    tier_2:
+      available_concepts:
+      - concept_id: connection
+        relevance: 0.86
+        topic_anchors:
+          relational:
+          - attribute: orchard_to_table_path
+            value: A green apple travels from an orchard tree to a picker, then to washing and packing, then to trucks, stores,
+              and finally home.
+          - attribute: pollinators_help_make_apples
+            value: Bees and other pollinators help apple flowers turn into apples, so gardens and insects are connected to
+              the snack.
+      - concept_id: perspective
+        relevance: 0.9
+        topic_anchors:
+          tactile:
+          - attribute: taste_preference_differs
+            value: Some people enjoy the sour tang of a green apple, while others prefer sweeter apples, and both choices
+              are okay.
+          relational:
+          - attribute: sharing_slices_supports_fairness
+            value: Cutting a green apple into slices helps friends share fairly and try a little before choosing more.
+          emotional:
+          - attribute: face_reactions_send_messages
+            value: A sour bite can make a surprised face, and noticing others’ faces helps you understand what they like without
+              teasing.
+      - concept_id: responsibility
+        relevance: 0.9
+        topic_anchors:
+          kinesthetic:
+          - attribute: wash_before_eating_removes_dirt
+            value: Rinsing and rubbing the skin helps remove dirt and germs that can get on apples during growing and travel.
+          - attribute: safe_bites_reduce_choking_risk
+            value: Taking small bites or eating slices helps keep mouths safe, especially when the apple is very crunchy.
+          relational:
+          - attribute: core_disposal_reduces_litter
+            value: Putting the core in compost or a bin keeps parks and classrooms clean and helps reduce waste.
+      - concept_id: form
+        relevance: 0.68
+        topic_anchors:
+          structural:
+          - attribute: waxy_coating
+            value: Many apples have a thin waxy layer that helps stop them from drying out and keeps germs off while traveling.
+          - attribute: skin_as_protective_layer
+            value: The skin works like a jacket that helps hold in the juice and protects the softer fruit inside from bumps.
+          visual:
+          - attribute: small_lenticel_dots
+            value: Tiny light dots on the skin are little air spots that help the apple 'breathe' while it grows.
+      - concept_id: function
+        relevance: 0.7
+        topic_anchors:
+          structural:
+          - attribute: fiber_supports_digestion
+            value: The apple’s fiber helps food move through the tummy so the body can use it and feel comfortable.
+          tactile:
+          - attribute: juice_adds_hydration
+            value: The watery juice in the apple helps the body stay hydrated, especially after running and playing.
+          relational:
+          - attribute: nutrients_help_body_and_brain
+            value: Vitamins and natural sugars in a green apple give quick energy and support learning and active play.
+      primary_topic_focus: connection
+    tier_3:
+      available_concepts:
+      - concept_id: connection
+        relevance: 0.82
+        topic_anchors:
+          relational:
+          - attribute: season_and_place_affect_taste
+            value: A green apple’s sourness and crunch can change depending on where it was grown and when it was harvested,
+              connecting geography and seasons to flavor.
+          temporal:
+          - attribute: browning_links_food_to_air
+            value: When a cut apple turns brown, it shows a connection between food and the invisible air, helping children
+              link everyday snacks to simple chemistry.
+          evaluative:
+          - attribute: sharing_rules_shape_social_time
+            value: How a class shares apple slices (who goes first, equal pieces, asking before taking) connects food to fairness,
+              friendships, and community routines.
+      - concept_id: perspective
+        relevance: 0.82
+        topic_anchors:
+          evaluative:
+          - attribute: taste_words_depend_on_experience
+            value: A green apple can be described as “too sour” or “refreshing,” and both can be true because people’s taste
+              memories and cultures shape the words they use.
+          - attribute: food_rules_vary_by_place
+            value: Some families peel apples, some eat the skin, and some add salt or chili, showing that “the right way”
+              to eat an apple can depend on home traditions.
+          relational:
+          - attribute: fairness_is_not_always_equal
+            value: When sharing a green apple, fairness can mean matching slice sizes or matching people’s needs, like giving
+              a smaller piece to someone who finds the sour taste too strong.
+      - concept_id: responsibility
+        relevance: 0.86
+        topic_anchors:
+          temporal:
+          - attribute: cut_surfaces_need_planning
+            value: After an apple is cut, it browns over time, so being responsible can mean covering it, chilling it, or
+              eating it soon to reduce food waste.
+          relational:
+          - attribute: choices_affect_resource_use
+            value: Choosing local or in-season apples can reduce transport energy, connecting snack choices to how communities
+              use fuel and packaging.
+          evaluative:
+          - attribute: composting_turns_waste_into_help
+            value: Putting the core in compost can be a responsible action because it helps make soil for new plants instead
+              of adding to landfill.
+      - concept_id: form
+        relevance: 0.6
+        topic_anchors:
+          structural:
+          - attribute: flesh_cells_hold_water_pressure
+            value: The crisp bite comes from tightly packed cells in the flesh that hold water like tiny balloons, linking
+              structure to the sensation of crunch.
+          - attribute: seed_coat_is_hard_for_protection
+            value: Each seed has a tough outer coat that protects the baby plant inside, showing how small parts can be built
+              for survival.
+          visual:
+          - attribute: surface_shine_varies_by_handling
+            value: Some green apples look shinier because of how they were cleaned, stored, or lightly coated, connecting
+              appearance to human sorting and transport.
+      - concept_id: function
+        relevance: 0.68
+        topic_anchors:
+          structural:
+          - attribute: acid_in_flesh_changes_flavor_system
+            value: Green apples often taste sharper because they have more acid, showing how tiny chemicals in food can change
+              what our tongues and brains notice.
+          kinesthetic:
+          - attribute: crunchy_food_trains_jaw_control
+            value: Biting a crisp green apple can strengthen chewing muscles and help children practice controlled bites,
+              which supports safer eating and clearer speech habits.
+          relational:
+          - attribute: seed_function_in_plant_life_cycle
+            value: The seeds’ job is to help make a new apple tree, linking a snack to the bigger plant life cycle and to
+              farming in communities.
+      primary_topic_focus: connection

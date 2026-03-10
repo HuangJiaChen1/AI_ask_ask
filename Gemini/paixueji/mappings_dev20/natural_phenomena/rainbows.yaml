@@ -1,0 +1,267 @@
+- entity_id: natural_phenomena_double_rainbow
+  entity_name: Double Rainbow
+  entity_name_cn: 双彩虹
+  domain: natural_phenomena
+  parent_category: optical_phenomena
+  subcategory: rainbows
+  primary_theme:
+    theme_id: how_world_works
+    weight: 0.57
+    reasoning: A double rainbow helps children explore how the world works by noticing sunlight and rain together create two
+      arcs of colors in the sky.
+  secondary_themes:
+  - theme_id: sharing_planet
+    weight: 0.26
+    reasoning: Seeing a double rainbow can prompt children to talk about protecting skies and appreciating nature with others,
+      sharing observations and stories about weather after rain.
+    context_trigger: when the child calls others to look, wants to take photos together, or talks about how the rainbow appeared
+      after the rain stopped
+  - theme_id: where_place_time
+    weight: 0.17
+    reasoning: Double rainbows appear only at certain times and viewing positions, so children can explore where to stand
+      and when to look after a shower.
+    context_trigger: when the child asks 'where should I stand to see it?' or notices it shows up only after rain with the
+      sun behind them
+  primary_key_concepts:
+  - concept_id: causation
+    relevance: 1.1
+    reasoning: Children wonder what makes two rainbows, leading to cause-and-effect ideas about sun, raindrops, and light
+      making colors appear.
+  - concept_id: form
+    relevance: 0.6
+    reasoning: They can compare the form of two arcs, noticing one is fainter and sometimes has reversed color order compared
+      with the brighter one.
+  - concept_id: change
+    relevance: 1.0
+    reasoning: A double rainbow changes quickly, fading as clouds move or the sun shifts, letting children observe how weather
+      scenes transform in minutes.
+  secondary_key_concepts:
+  - concept_id: function
+    relevance: 0.9
+    reasoning: Children can explore that raindrops act like tiny prisms or mirrors for light, helping explain what the rainbow
+      is doing in the air.
+  - concept_id: connection
+    relevance: 0.6
+    reasoning: They can connect rain ending, sun coming out, and the rainbow appearing, linking sky conditions with what they
+      see and feel outdoors.
+  candidate_related_concepts:
+  - concept_id: force
+    discipline: Science
+    reasoning: Gravity pulls raindrops downward while wind moves them sideways, affecting where rain falls and where children
+      might spot the rainbow.
+  - concept_id: energy
+    discipline: Science
+    reasoning: Light is energy from the sun, and children can learn that this light energy spreads into different colors when
+      it passes through raindrops.
+  - concept_id: cycles
+    discipline: Science
+    reasoning: Rainbows often appear in repeating weather patterns—rain then sun—helping children recognize cycles of showers
+      and clearing skies.
+  - concept_id: properties
+    discipline: Science
+    reasoning: Children can explore properties like bright versus faint colors, arc size, and the order of colors, building
+      careful observation skills.
+  tier_guidance:
+    tier_0:
+      available_concepts:
+      - concept_id: connection
+        relevance: 0.6
+        topic_anchors:
+          visual:
+          - attribute: after_rain
+            value: rain just stopped
+          - attribute: sun_out
+            value: sun shining bright
+          tactile:
+          - attribute: wet_air
+            value: cool wet air
+      - concept_id: form
+        relevance: 0.6
+        topic_anchors:
+          visual:
+          - attribute: two_arcs
+            value: two curved rainbows
+          - attribute: color_bands
+            value: many bright colors
+          - attribute: faint_second
+            value: one looks lighter
+      primary_topic_focus: connection
+    tier_1:
+      available_concepts:
+      - concept_id: change
+        relevance: 0.95
+        topic_anchors:
+          visual:
+          - attribute: fades_fast
+            value: Colors get lighter, then disappear quickly.
+          - attribute: moves_with_clouds
+            value: Arcs shift as clouds slide by.
+          spatial:
+          - attribute: appears_in_one_sky_spot
+            value: Shows up in one direction, not everywhere.
+      - concept_id: function
+        relevance: 0.88
+        topic_anchors:
+          structural:
+          - attribute: raindrops_bend_light
+            value: Tiny drops bend sunlight into colors.
+          - attribute: light_bounces_twice
+            value: Second rainbow happens when light bounces again.
+          visual:
+          - attribute: colors_show_order
+            value: Colors line up like stripes in the air.
+      - concept_id: connection
+        relevance: 0.62
+        topic_anchors:
+          relational:
+          - attribute: sun_behind_you
+            value: Rainbow shows best with sun at your back.
+          emotional:
+          - attribute: share_the_look
+            value: Makes you want to call others to see.
+          spatial:
+          - attribute: seen_after_showers
+            value: Often shows when rain is leaving.
+      - concept_id: form
+        relevance: 0.6
+        topic_anchors:
+          visual:
+          - attribute: second_arc_wider
+            value: Outer rainbow looks bigger and wider.
+          - attribute: reversed_colors
+            value: Outer rainbow colors can flip order.
+          - attribute: gap_between_arcs
+            value: A little space sits between the two bows.
+      primary_topic_focus: change
+    tier_2:
+      available_concepts:
+      - concept_id: causation
+        relevance: 0.93
+        topic_anchors:
+          structural:
+          - attribute: sunlight_splits_in_drops
+            value: Sunlight entering round raindrops can spread into many colors because different colors bend in different
+              ways.
+          - attribute: second_bounce_makes_second_arc
+            value: A second rainbow can appear when light bounces around inside raindrops one extra time before leaving.
+          spatial:
+          - attribute: needs_right_positions
+            value: You often see a double rainbow when the sun is behind you and rain is in front, so where you stand matters.
+      - concept_id: change
+        relevance: 0.9
+        topic_anchors:
+          temporal:
+          - attribute: brighter_with_stronger_sun
+            value: When the sun gets brighter after a shower, the colors can look stronger, and when the sun hides, they weaken.
+          - attribute: rain_amount_changes_visibility
+            value: If rain gets heavier or lighter, the rainbow can look clearer or blurrier because the drops in the air
+              change.
+          - attribute: angle_shifts_as_you_move
+            value: Walking or turning can make the rainbow seem to slide across the sky because the viewing angle changes.
+      - concept_id: function
+        relevance: 0.9
+        topic_anchors:
+          structural:
+          - attribute: raindrops_act_like_tiny_prisms
+            value: Each raindrop bends sunlight and spreads it into different colors, like a tiny prism in the air.
+          - attribute: second_arc_from_extra_bounce
+            value: A double rainbow happens when some light bounces one more time inside raindrops, making a second, fainter
+              arc.
+          spatial:
+          - attribute: sun_behind_viewer_makes_arcs_visible
+            value: You usually see the rainbow when the sun is behind you and the rain is in front, so the light can reflect
+              toward your eyes.
+      - concept_id: connection
+        relevance: 0.62
+        topic_anchors:
+          relational:
+          - attribute: links_weather_parts
+            value: A double rainbow connects rain clouds, sun breaks, and wet air into one weather moment children can notice.
+          - attribute: shared_observation
+            value: People often call others to look because the rainbow is brief, connecting friends and family through noticing
+              together.
+          emotional:
+          - attribute: surprise_after_storm
+            value: Seeing it after rain can feel like a calm surprise, connecting stormy weather to a peaceful view.
+      - concept_id: form
+        relevance: 0.6
+        topic_anchors:
+          visual:
+          - attribute: inner_arc_brighter
+            value: The inside rainbow usually looks brighter and clearer than the outer one.
+          - attribute: outer_arc_thinner_look
+            value: The second rainbow can look thinner or harder to see because its colors are faint.
+          - attribute: dark_band_between_arcs
+            value: Sometimes the sky between the two arcs looks a bit darker, making the two shapes stand out.
+      primary_topic_focus: causation
+    tier_3:
+      available_concepts:
+      - concept_id: causation
+        relevance: 0.92
+        topic_anchors:
+          structural:
+          - attribute: different_light_paths_make_two_arcs
+            value: Light can take different paths inside raindrops, causing one bright arc and a second, dimmer arc when more
+              light is lost along the way.
+          spatial:
+          - attribute: sun_height_causes_arc_height_change
+            value: As the sun gets lower or higher, the rainbow’s arc seems to move in the sky, showing how position causes
+              what you see.
+      - concept_id: change
+        relevance: 0.84
+        topic_anchors:
+          temporal:
+          - attribute: short_lived_weather_window
+            value: A double rainbow often appears only during the brief change from rain to sun, showing how timing matters
+              in nature.
+          - attribute: colors_shift_as_rain_thins
+            value: When the rain becomes lighter, the second arc may fade first and the colors can look less strong, linking
+              changing rain to changing visibility.
+          evaluative:
+          - attribute: photos_freeze_a_moment_nature_changes
+            value: Taking a picture can keep the memory even after the arcs disappear, connecting fast-changing weather to
+              how people record science observations.
+      - concept_id: function
+        relevance: 0.86
+        topic_anchors:
+          structural:
+          - attribute: secondary_arc_has_reversed_color_order
+            value: The outer rainbow’s colors flip order compared with the inner one, showing that the second arc comes from
+              a different path light takes inside drops.
+          spatial:
+          - attribute: rainbow_is_a_viewing_effect_not_a_place
+            value: A double rainbow functions like a “light picture” that depends on where you stand, so it cannot be walked
+              to like a physical object.
+          relational:
+          - attribute: weather_signal_after_showers
+            value: Seeing a double rainbow can function as a clue that sunlight and lingering raindrops are both present,
+              helping children connect observations to weather patterns.
+      - concept_id: connection
+        relevance: 0.56
+        topic_anchors:
+          relational:
+          - attribute: weather_system_links_clouds_wind_sun
+            value: A double rainbow connects many parts of a weather system—moving clouds, wind pushing rain, and sunlight
+              breaking through—into one event.
+          - attribute: shared_noticing_builds_community_science
+            value: 'When people point it out to others, they practice community science: observing together, comparing what
+              each person sees, and using location words.'
+          emotional:
+          - attribute: awe_can_lead_to_care_for_nature
+            value: Feeling amazed can connect to wanting to protect clean air and water, because the rainbow depends on sunlight
+              and raindrops in the sky.
+      - concept_id: form
+        relevance: 0.52
+        topic_anchors:
+          visual:
+          - attribute: secondary_arc_has_softer_edges
+            value: The second rainbow often looks blurrier at the edges, showing how the same shape can appear with different
+              sharpness.
+          - attribute: color_spacing_can_look_wider_outside
+            value: The outer arc can seem to spread its colors differently than the inner arc, helping children compare patterns
+              within similar forms.
+          spatial:
+          - attribute: arcs_center_on_opposite_sun_point
+            value: Both arcs are shaped around an imaginary point opposite the sun, connecting the rainbow’s form to where
+              the viewer stands.
+      primary_topic_focus: causation

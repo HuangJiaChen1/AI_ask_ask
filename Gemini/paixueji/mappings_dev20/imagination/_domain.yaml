@@ -1,0 +1,57 @@
+domain: imagination
+entity_count: 57
+subcategories:
+  armored_dinosaurs: 1
+  books: 1
+  brewing: 1
+  castle_parts: 1
+  castles: 1
+  ceratopsians: 1
+  crystals: 1
+  dragons: 1
+  elves: 1
+  fairies: 1
+  fortune_telling: 1
+  genies: 1
+  gnomes: 1
+  goblins: 1
+  hats: 2
+  heroes: 1
+  hybrid_creatures: 3
+  jewelry: 2
+  lamps: 1
+  legendary_beasts: 2
+  leprechauns: 1
+  magical_bridges: 1
+  magical_gardens: 1
+  magical_landscapes: 1
+  maps: 1
+  marine_reptiles: 2
+  mythical_birds: 1
+  portals: 1
+  potions: 1
+  pterosaurs: 1
+  royal_court: 1
+  royalty: 2
+  sauropods: 1
+  sea_folk: 1
+  serpents: 2
+  ships: 1
+  sky_lands: 1
+  stegosaurs: 1
+  theropods: 3
+  transport: 1
+  treasure: 1
+  trolls: 1
+  unicorns: 1
+  wands: 1
+  winged_horses: 1
+  witches: 1
+  wizards: 1
+default_themes:
+- theme_id: how_we_express
+  weight: 0.4
+- theme_id: how_world_works
+  weight: 0.3
+- theme_id: where_place_time
+  weight: 0.3

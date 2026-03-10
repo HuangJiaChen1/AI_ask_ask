@@ -138,6 +138,9 @@ async function startConversation() {
     currentCharacter = character;
     currentFocusMode = focusMode;
 
+    // Lookup concepts before starting conversation
+    await lookupConcepts();
+
     // Save character preference
     localStorage.setItem('paixueji_character', character);
 
@@ -895,6 +898,63 @@ function onLevel2Change() {
 }
 
 /**
+ * Lookup available concepts for an object and age
+ */
+//添加新的一栏用于显示检索到的JSOn格式结果
+async function lookupConcepts() {
+    const objectName = document.getElementById('objectName').value.trim();
+    const age = parseInt(document.getElementById('age').value);
+    const conceptsOutput = document.getElementById('conceptsOutput');
+
+    if (!objectName) {
+        conceptsOutput.innerHTML = '<span style="color: #dc2626;">Please enter an object name first</span>';
+        return;
+    }
+
+    conceptsOutput.innerHTML = '<span style="color: #6b7280;">Looking up concepts...</span>';
+
+    try {
+        const response = await fetch(`${API_BASE}/lookup-concepts`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                object_name: objectName,
+                age: age
+            })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+            throw new Error(result.error || 'Concept lookup failed');
+        }
+
+        const concepts = result.concepts;
+
+        if (!concepts || concepts.length === 0) {
+            conceptsOutput.innerHTML = '<span style="color: #6b7280;">No concepts found for this object and age.</span>';
+            return;
+        }
+
+        // Format concepts for display with nice JSON formatting
+        let html = '';
+        concepts.forEach((concept, index) => {
+            html += `<div style="margin-bottom: ${index < concepts.length - 1 ? '12px' : '0'}; padding-bottom: ${index < concepts.length - 1 ? '12px' : '0'}; border-bottom: ${index < concepts.length - 1 ? '1px dashed #93c5fd' : 'none'};">`;
+            html += `<pre style="margin: 0; white-space: pre-wrap; word-break: break-all;">${JSON.stringify(concept, null, 2)}</pre>`;
+            html += '</div>';
+        });
+
+        conceptsOutput.innerHTML = html;
+
+    } catch (error) {
+        console.error('Concept lookup error:', error);
+        conceptsOutput.innerHTML = `<span style="color: #dc2626;">Error: ${error.message}</span>`;
+    }
+}
+
+/**
  * Classify an object and auto-populate category dropdowns
  */
 async function classifyObject() {
@@ -914,6 +974,9 @@ async function classifyObject() {
     classifyStatus.textContent = 'Classifying...';
 
     try {
+        // Lookup concepts first
+        await lookupConcepts();
+
         const response = await fetch(`${API_BASE}/classify`, {
             method: 'POST',
             headers: {
@@ -1173,6 +1236,17 @@ function init() {
         objectNameInput.addEventListener('input', () => {
             classifyStatus.className = 'classify-status';
             classifyStatus.textContent = '';
+        });
+    }
+
+    // Update concepts when age changes
+    const ageSelect = document.getElementById('age');
+    if (ageSelect) {
+        ageSelect.addEventListener('change', async () => {
+            const objectName = document.getElementById('objectName').value.trim();
+            if (objectName) {
+                await lookupConcepts();
+            }
         });
     }
 
