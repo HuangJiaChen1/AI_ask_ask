@@ -7,6 +7,74 @@ from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 
+_THEME_ID_TO_NAME: dict = {
+    "how_world_works":  "How the World Works",
+    "sharing_planet":   "Sharing the Planet",
+    "who_we_are":       "Who We Are",
+    "how_we_express":   "How We Express Ourselves",
+    "how_we_organize":  "How We Organize Ourselves",
+    "where_place_time": "Where We Are in Place and Time",
+}
+
+_MODALITY_DISPLAY: dict = {
+    "visual":       "Visual",
+    "tactile":      "Touch",
+    "kinesthetic":  "Movement",
+    "auditory":     "Sound",
+    "structural":   "Structure",
+    "spatial":      "Space",
+    "relational":   "Relational",
+    "temporal":     "Time",
+    "emotional":    "Feeling",
+    "evaluative":   "Values",
+}
+
+
+def _age_to_tier(age: int) -> str:
+    """Convert child age (3-8) to YAML tier key T0-T3."""
+    if age <= 3:
+        return "T0"
+    if age == 4:
+        return "T1"
+    if age <= 6:
+        return "T2"
+    return "T3"
+
+
+def _format_concept_anchors(concept: Dict[str, Any], object_name: str) -> str:
+    """
+    Format a YAML concept's topic_anchors into a structured prompt block.
+
+    Input concept dict shape:
+        {concept_id: str, topic_anchors: {modality: [{attribute, value}, ...]}}
+
+    Output example:
+        CONCEPT FOCUS: change
+        OBSERVATION ANCHORS FOR SUNFLOWER:
+        - Visual: Green bud opens into a big face.; Flower head dries and turns brown.
+        - Movement: Small sprout grows taller each week.
+    """
+    concept_id = concept.get("concept_id", "")
+    anchors = concept.get("topic_anchors") or {}
+    lines = [
+        f"CONCEPT FOCUS: {concept_id}",
+        f"OBSERVATION ANCHORS FOR {object_name.upper()}:",
+    ]
+    for modality, entries in anchors.items():
+        if not entries:
+            continue
+        display = _MODALITY_DISPLAY.get(modality, modality.capitalize())
+        values = "; ".join(
+            e.get("value", "") for e in entries if isinstance(e, dict) and e.get("value")
+        )
+        if values:
+            lines.append(f"- {display}: {values}")
+    if len(lines) == 2:
+        # No anchors at all — add a generic fallback line
+        lines.append(f"- Explore what {object_name} does and how it works.")
+    return "\n".join(lines)
+
+
 # 相对于当前文件定位 mappings_dev20，
 DEFAULT_MAPPINGS_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
@@ -407,9 +475,76 @@ def lookup_top_available_concepts(query: str, age_tier: str) -> Dict[str, Any]:
 #     return "\n".join(output_lines)
 
 
+def classify_object_yaml(object_name: str, age: int) -> Dict[str, Any]:
+    """
+    Unified YAML-based object classifier. Replaces both:
+    - classify_object_to_theme  (LLM theme classifier)
+    - classify_object_sync + get_category_prompt  (LLM category classifier)
+
+    Returns a dict with all downstream-needed fields:
+        theme_id, theme_name, theme_reasoning,
+        key_concept, bridge_question, category_prompt, success
+    When success=False, all fields are present with fallback values.
+    """
+    _fallback: Dict[str, Any] = {
+        "success": False,
+        "error": f"No YAML mapping found for '{object_name}'",
+        "theme_id": "how_world_works",
+        "theme_name": "How the World Works",
+        "theme_reasoning": "",
+        "key_concept": "function",
+        "bridge_question": f"I wonder how {object_name} works. What do you think?",
+        "category_prompt": (
+            f"CONCEPT FOCUS: function\n"
+            f"OBSERVATION ANCHORS FOR {object_name.upper()}:\n"
+            f"- Explore what {object_name} does and how it works."
+        ),
+    }
+
+    age_tier = _age_to_tier(age)
+    lookup = lookup_top_available_concepts(object_name, age_tier)
+
+    if not lookup.get("success"):
+        return _fallback
+
+    # --- Theme ---
+    themes = lookup.get("themes") or {}
+    primary_theme_id = next(
+        (tid for tid, td in themes.items() if td.get("type") == "primary"), None
+    )
+    if not primary_theme_id:
+        return _fallback
+
+    theme_name = _THEME_ID_TO_NAME.get(primary_theme_id, primary_theme_id)
+    theme_data = themes.get(primary_theme_id, {})
+    theme_reasoning = str(theme_data.get("reasoning", "") or "")
+
+    # --- Concept: first item = highest relevance (tiebreak = list order) ---
+    concepts = lookup.get("available_concepts") or []
+    if not concepts:
+        return _fallback
+    concept = concepts[0]
+    key_concept = str(concept.get("concept_id", "function"))
+
+    # --- Derived fields ---
+    bridge_question = (
+        f"I wonder about the {key_concept} of {object_name}. What do you think?"
+    )
+    category_prompt = _format_concept_anchors(concept, object_name)
+
+    return {
+        "success": True,
+        "theme_id": primary_theme_id,
+        "theme_name": theme_name,
+        "theme_reasoning": theme_reasoning,
+        "key_concept": key_concept,
+        "bridge_question": bridge_question,
+        "category_prompt": category_prompt,
+    }
+
+
 __all__ = [
     "lookup_top_available_concepts",
-    # "format_concepts_output",
-    # "random_theme_and_concepts_output"
+    "classify_object_yaml",
 ]
 
