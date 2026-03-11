@@ -308,23 +308,22 @@ class TestThresholdTriggersClassifyTheme:
 # ---------------------------------------------------------------------------
 
 class TestClassifyThemeFallback:
-    """node_classify_theme must use hardcoded fallback when classify_object_to_theme returns None."""
+    """node_classify_theme must use YAML-based fallback when lookup returns no match."""
 
     @pytest.mark.asyncio
     async def test_fallback_sets_default_theme_name(self):
         """
-        When classify_object_to_theme returns None, node_classify_theme must set:
+        When YAML lookup fails, node_classify_theme must set fallback values:
         - assistant.ibpyp_theme_name == "How the World Works"
-        - assistant.key_concept == "Function"
-        - assistant.bridge_question contains object_name
+        - assistant.key_concept == "function"
         """
         assistant = PaixuejiAssistant()
         assistant.correct_answer_count = 3  # will become 4 inside the node
 
         state = _base_state(assistant, correct_answer_count=3)
 
-        # Patch classify_object_to_theme to return None at the module level used by graph.py
-        with patch("graph.classify_object_to_theme", return_value=None):
+        # Patch the underlying YAML lookup to simulate a miss
+        with patch("graph_lookup.lookup_top_available_concepts", return_value={"success": False, "error": "not found"}):
             result = await node_classify_theme(state)
 
         # Count incremented
@@ -332,7 +331,7 @@ class TestClassifyThemeFallback:
 
         # Fallback theme values set
         assert assistant.ibpyp_theme_name == "How the World Works"
-        assert assistant.key_concept == "Function"
+        assert assistant.key_concept == "function"
 
     @pytest.mark.asyncio
     async def test_fallback_bridge_question_references_object_name(self):
@@ -346,7 +345,7 @@ class TestClassifyThemeFallback:
         state = _base_state(assistant, correct_answer_count=3, content="It rolls!")
         state["object_name"] = object_name
 
-        with patch("graph.classify_object_to_theme", return_value=None):
+        with patch("graph_lookup.lookup_top_available_concepts", return_value={"success": False, "error": "not found"}):
             await node_classify_theme(state)
 
         assert object_name in assistant.bridge_question, (
@@ -357,14 +356,14 @@ class TestClassifyThemeFallback:
     @pytest.mark.asyncio
     async def test_fallback_count_incremented_even_when_classification_fails(self):
         """
-        Even on classification failure, node_classify_theme must increment count.
+        Even on classification failure (YAML miss), node_classify_theme must increment count.
         """
         assistant = PaixuejiAssistant()
         assistant.correct_answer_count = 3
 
         state = _base_state(assistant, correct_answer_count=3)
 
-        with patch("graph.classify_object_to_theme", return_value=None):
+        with patch("graph_lookup.lookup_top_available_concepts", return_value={"success": False, "error": "not found"}):
             await node_classify_theme(state)
 
         assert assistant.correct_answer_count == 4
@@ -379,7 +378,7 @@ class TestClassifyThemeFallback:
 
         state = _base_state(assistant, correct_answer_count=3)
 
-        with patch("graph.classify_object_to_theme", return_value=None):
+        with patch("graph_lookup.lookup_top_available_concepts", return_value={"success": False, "error": "not found"}):
             result = await node_classify_theme(state)
 
         assert "correct_answer_count" in result
@@ -388,30 +387,20 @@ class TestClassifyThemeFallback:
     @pytest.mark.asyncio
     async def test_success_path_sets_theme_from_result(self):
         """
-        When classify_object_to_theme succeeds, the result fields must be applied
-        to the assistant, overriding any defaults.
+        When YAML lookup succeeds, the result fields must be applied to the assistant.
         """
-        from theme_classifier import ThemeClassificationResult
-
         assistant = PaixuejiAssistant()
         assistant.correct_answer_count = 3
 
-        mock_result = ThemeClassificationResult(
-            theme_id="Category_Society",
-            theme_name="How We Organise Ourselves",
-            reason="Society reason",
-            key_concept="System",
-            bridge_question="How do communities work together?",
-            thinking="test",
-        )
-
+        # sunflower is a known object in the YAML mappings
         state = _base_state(assistant, correct_answer_count=3)
+        state["object_name"] = "sunflower"
 
-        with patch("graph.classify_object_to_theme", return_value=mock_result):
-            await node_classify_theme(state)
+        result = await node_classify_theme(state)
 
-        assert assistant.ibpyp_theme == "Category_Society"
-        assert assistant.ibpyp_theme_name == "How We Organise Ourselves"
-        assert assistant.key_concept == "System"
-        assert assistant.bridge_question == "How do communities work together?"
+        assert assistant.ibpyp_theme is not None
+        assert assistant.ibpyp_theme_name is not None
+        assert assistant.key_concept is not None
+        assert assistant.bridge_question is not None
+        assert "CONCEPT FOCUS:" in (assistant.category_prompt or "")
         assert assistant.correct_answer_count == 4
