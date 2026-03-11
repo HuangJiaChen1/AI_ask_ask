@@ -21,6 +21,7 @@ from graph import paixueji_graph
 from schema import StreamChunk
 import paixueji_prompts
 import time
+from graph_lookup import lookup_top_available_concepts
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
@@ -906,6 +907,109 @@ def classify_object():
 
     except Exception as e:
         print(f"[ERROR] Classification error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+#graph_lookup 此处添加改动：年龄对应，搜索概念，返回JSON格式的结果
+@app.route('/api/lookup-concepts', methods=['POST'])
+def lookup_concepts():
+    """
+    Lookup top available concepts for a given object and age.
+
+    Request body:
+        {
+            "object_name": "apple",
+            "age": 6
+        }
+
+    Age to Tier mapping:
+        - 3 years → T0
+        - 4 years → T1
+        - 5/6 years → T2
+        - 7/8 years → T3
+
+    Response:
+        {
+            "success": true,
+            "data": {
+                "entity": { ... },
+                "themes": { ... },
+                "available_concepts": [...]
+            }
+        }
+        OR
+        {
+            "success": false,
+            "error": "..."
+        }
+    """
+    data = request.get_json()
+
+    if not data:
+        return jsonify({
+            "success": False,
+            "error": "Request body must be JSON"
+        }), 400
+
+    object_name = data.get('object_name')
+    age = data.get('age')
+
+    if not object_name:
+        return jsonify({
+            "success": False,
+            "error": "Missing object_name"
+        }), 400
+
+    if age is None:
+        return jsonify({
+            "success": False,
+            "error": "Missing age"
+        }), 400
+
+    try:
+        age_int = int(age)
+        if age_int == 3:
+            age_tier = "T0"
+        elif age_int == 4:
+            age_tier = "T1"
+        elif age_int in {5, 6}:
+            age_tier = "T2"
+        elif age_int in {7, 8}:
+            age_tier = "T3"
+        else:
+            return jsonify({
+                "success": False,
+                "error": f"Age must be between 3-8, got {age_int}"
+            }), 400
+
+        print(f"[INFO] Looking up concepts for '{object_name}' with age_tier={age_tier}")
+
+        result = lookup_top_available_concepts(object_name, age_tier)
+        
+        if not result.get("success"):
+            return jsonify(result)
+        
+        return jsonify({
+            "success": True,
+            "data": {
+                "entity": result.get("entity", {}),
+                "themes": result.get("themes", {}),
+                "available_concepts": result.get("available_concepts", [])
+            }
+        })
+
+    except ValueError as e:
+        print(f"[ERROR] Lookup error: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 400
+    except Exception as e:
+        print(f"[ERROR] Lookup error: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({

@@ -1,0 +1,275 @@
+- entity_id: clothing_accessories_raincoat
+  entity_name: Raincoat
+  entity_name_cn: 雨衣
+  domain: clothing_accessories
+  parent_category: clothing
+  subcategory: outerwear
+  primary_theme:
+    theme_id: who_we_are
+    weight: 0.35
+    reasoning: A raincoat helps children stay dry and healthy in rainy weather, supporting self-care decisions and independence
+      while going outside.
+  secondary_themes:
+  - theme_id: how_we_express
+    weight: 0.31
+    reasoning: Children select raincoats by color or character designs, using clothing to show their preferences and how they
+      want to look.
+    context_trigger: when the child says, "I want my yellow raincoat" or talks about the pictures on it while putting it on
+  - theme_id: how_we_organize
+    weight: 0.24
+    reasoning: Using a raincoat involves planning for weather, hanging it to dry, and following routines for muddy or wet
+      clothing.
+    context_trigger: when the child checks outside for rain, asks to hang the coat up, or brings it to the designated drying
+      area
+  - theme_id: how_world_works
+    weight: 0.1
+    reasoning: Children can investigate water-repellent materials, hoods, and seams to see how rain rolls off and keeps clothing
+      underneath dry.
+    context_trigger: when the child pours or shakes water off the coat, watches droplets bead, or asks, "Why doesn’t it get
+      wet inside?"
+  primary_key_concepts:
+  - concept_id: connection
+    relevance: 0.9
+    reasoning: The raincoat connects changing weather to choices about clothing, enabling outdoor play and travel without
+      getting soaked.
+  - concept_id: perspective
+    relevance: 0.9
+    reasoning: Children notice that some people like wearing hoods and others don’t, and they learn different comfort preferences
+      in rain.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: A child shows responsibility by putting the coat on before going out, zipping it up, and hanging it to dry
+      afterward.
+  secondary_key_concepts:
+  - concept_id: form
+    relevance: 0.8
+    reasoning: Children explore features like the hood, sleeves, fasteners, and smooth surface, noticing how a coat is shaped
+      to cover the body.
+  - concept_id: function
+    relevance: 0.7
+    reasoning: Its function is to block rain; children test it by touching the inside, checking for wet spots, and seeing
+      if clothes stay dry.
+  candidate_related_concepts:
+  - concept_id: culture
+    discipline: Social Studies
+    reasoning: Rain gear is more common in some places; children can compare what people wear in rainy climates versus dry
+      ones.
+  - concept_id: expression
+    discipline: Arts
+    reasoning: Bright raincoats and fun prints help children express style, and they often talk about looking like a firefighter
+      or explorer.
+  - concept_id: identity
+    discipline: PSHE
+    reasoning: Wearing a personal raincoat supports independence and belonging, as children recognize their own item and feel
+      prepared.
+  - concept_id: creativity
+    discipline: Arts
+    reasoning: Raincoats become costumes in imaginative play, letting children pretend to be adventurers, sailors, or storm
+      chasers.
+  tier_guidance:
+    tier_0:
+      available_concepts:
+      - concept_id: connection
+        relevance: 0.75
+        topic_anchors:
+          tactile:
+          - attribute: water on coat
+            value: drops roll off
+          visual:
+          - attribute: worn outside
+            value: on top of clothes
+          kinesthetic:
+          - attribute: fastening it
+            value: zip or snap shut
+      - concept_id: form
+        relevance: 0.9
+        topic_anchors:
+          visual:
+          - attribute: has a hood
+            value: hood covers head
+          - attribute: long sleeves
+            value: sleeves cover arms
+          tactile:
+          - attribute: coat surface
+            value: smooth and slick
+      primary_topic_focus: connection
+    tier_1:
+      available_concepts:
+      - concept_id: connection
+        relevance: 0.88
+        topic_anchors:
+          relational:
+          - attribute: matches_rainy_weather
+            value: Rain outside means coat time before play.
+          spatial:
+          - attribute: hangs_on_hook_to_dry
+            value: Coat belongs on a hook after wet walks.
+          emotional:
+          - attribute: staying_dry_feels_good
+            value: Dry clothes can feel cozy and brave.
+      - concept_id: form
+        relevance: 0.78
+        topic_anchors:
+          structural:
+          - attribute: buttons_or_zipper_front
+            value: Front fastener opens wide, then closes tight.
+          - attribute: elastic_or_cuff_ends
+            value: Sleeve ends hug wrists to stop drips.
+          visual:
+          - attribute: bright_colors_and_pictures
+            value: Shiny colors or characters stand out in rain.
+      - concept_id: function
+        relevance: 0.74
+        topic_anchors:
+          tactile:
+          - attribute: water_beads_up
+            value: Drops sit like tiny balls and roll off.
+          kinesthetic:
+          - attribute: shake_off_water
+            value: A quick shake makes droplets fly away.
+          structural:
+          - attribute: seams_keep_water_out
+            value: Stitched lines help keep rain from sneaking in.
+      primary_topic_focus: connection
+    tier_2:
+      available_concepts:
+      - concept_id: connection
+        relevance: 0.9
+        topic_anchors:
+          temporal:
+          - attribute: weather changes lead to clothing changes
+            value: When clouds bring rain, people choose a raincoat so they can keep playing or walking outside without getting
+              soaked.
+          relational:
+          - attribute: raincoats link outdoor plans to staying healthy
+            value: Staying drier can help children feel warm and comfortable, so families use raincoats to keep outdoor time
+              fun.
+          - attribute: shared routines keep wet gear from making a mess
+            value: Many places have a spot to put wet coats so floors don’t get slippery and everyone can find their things
+              later.
+      - concept_id: perspective
+        relevance: 0.9
+        topic_anchors:
+          tactile:
+          - attribute: comfort_preferences_vary
+            value: Some children like the hood close around their face, while others feel too warm or closed-in and prefer
+              it down.
+          emotional:
+          - attribute: rain_weather_feelings_differ
+            value: Rain can feel cozy and fun for puddle-jumping, or it can feel bothersome when wind and drops hit your face.
+          - attribute: style_choices_show_identity
+            value: One child may feel proud in a bright coat that stands out, while another prefers a quieter color that feels
+              calmer.
+      - concept_id: responsibility
+        relevance: 0.9
+        topic_anchors:
+          kinesthetic:
+          - attribute: closing_fasteners_blocks_water_paths
+            value: Zipping or snapping the front shut stops rain from sneaking in through the opening.
+          - attribute: hang_to_dry_prevents_moldy_smells
+            value: Hanging the coat open lets air move so it dries instead of staying damp and getting smelly.
+          relational:
+          - attribute: keeping_shared_spaces_dry
+            value: Shaking off rain and putting the coat in the right spot helps keep classroom or home floors safer and less
+              slippery for everyone.
+      - concept_id: form
+        relevance: 0.8
+        topic_anchors:
+          structural:
+          - attribute: overlapping flaps block water at openings
+            value: Some coats have a flap over the zipper or buttons so rain has a harder time sneaking through the front.
+          - attribute: smooth outer layer makes droplets slide away
+            value: The outside is made to be slick so water rolls off instead of soaking in quickly.
+          spatial:
+          - attribute: extra length covers more of the body
+            value: A longer coat can cover the top of pants and legs better, which helps keep clothes underneath drier.
+      - concept_id: function
+        relevance: 0.7
+        topic_anchors:
+          structural:
+          - attribute: water_repellent_layer_makes_droplets_roll
+            value: The outside material is made so water sits in drops and slides off instead of soaking through.
+          - attribute: hood_channels_water_away_from_head
+            value: The hood covers hair and ears so rain lands on the coat and runs down the outside.
+          temporal:
+          - attribute: wet_to_dry_change_with_air_time
+            value: After getting wet, the coat slowly dries as water turns into vapor, so it works best again when it’s dry.
+      primary_topic_focus: connection
+    tier_3:
+      available_concepts:
+      - concept_id: connection
+        relevance: 0.88
+        topic_anchors:
+          temporal:
+          - attribute: weather_forecast_links_to_planning
+            value: A raincoat connects weather predictions to planning—bringing it can change whether a trip or recess happens
+              comfortably.
+          relational:
+          - attribute: shared_spaces_need_drying_systems
+            value: Raincoats connect to classroom or home systems like mats and drying racks so everyone’s wet gear doesn’t
+              spread water and germs.
+          evaluative:
+          - attribute: climate_and_culture_influence_gear_choices
+            value: In very rainy places, raincoats are everyday clothing, while in drier places they might be rare—showing
+              how culture and climate shape routines.
+      - concept_id: perspective
+        relevance: 0.9
+        topic_anchors:
+          evaluative:
+          - attribute: comfort_tradeoffs
+            value: Some people feel safer and warmer with a hood up, while others feel bothered by the sound and tightness,
+              showing that comfort can depend on senses and preferences.
+          relational:
+          - attribute: climate_and_culture_choices
+            value: In rainy places, raincoats can feel like everyday clothing, but in drier places they can feel unusual,
+              helping children compare how environments shape habits.
+          temporal:
+          - attribute: changing_needs_through_the_day
+            value: A raincoat can feel perfect in a cold morning shower but too warm later, teaching that the “best” choice
+              can change as weather and body temperature change.
+      - concept_id: responsibility
+        relevance: 0.9
+        topic_anchors:
+          temporal:
+          - attribute: after_rain_care_routine
+            value: Drying and airing a raincoat after use is responsible because it prevents lingering dampness and smells
+              that build up over time.
+          relational:
+          - attribute: shared_space_mess_prevention
+            value: Keeping wet rain gear off shared floors and furniture protects other people’s comfort and safety, like
+              preventing slippery puddles in hallways.
+          evaluative:
+          - attribute: preparedness_as_self_care
+            value: Remembering a raincoat when rain is likely is a responsible planning choice that supports health, participation
+              in outdoor play, and independence.
+      - concept_id: form
+        relevance: 0.75
+        topic_anchors:
+          structural:
+          - attribute: seams_and_taping_affect_leaks
+            value: Stitch holes and seams are weak spots, so some raincoats use taped seams or special stitching to block
+              water paths.
+          tactile:
+          - attribute: lining_changes_comfort_and_temperature
+            value: Some raincoats have a lining that feels warmer and less sticky on skin, which changes how comfortable they
+              are during active play.
+          visual:
+          - attribute: reflective_strips_support_visibility
+            value: Bright colors and reflective strips are design features that make a child easier to see in gray, rainy
+              light near roads or parking lots.
+      - concept_id: function
+        relevance: 0.7
+        topic_anchors:
+          structural:
+          - attribute: fasteners_and_flaps_reduce_leak_paths
+            value: Zippers, snaps, and storm flaps function to block the places where water would otherwise sneak through
+              openings.
+          spatial:
+          - attribute: coverage_area_matters
+            value: A longer coat and a well-fitting hood function to protect more body space, which can be important for staying
+              warm and dry during heavy rain.
+          evaluative:
+          - attribute: visibility_in_bad_weather
+            value: Bright colors and reflective parts function as safety features because they help drivers and adults spot
+              a child more easily in dark, rainy conditions.
+      primary_topic_focus: connection

@@ -1,0 +1,254 @@
+- entity_id: nature_landscapes_sandy_beach
+  entity_name: Sandy Beach
+  entity_name_cn: 沙滩
+  domain: nature_landscapes
+  parent_category: coastal_features
+  subcategory: beaches
+  primary_theme:
+    theme_id: sharing_planet
+    weight: 0.42
+    reasoning: A sandy beach is a shared place where people and wildlife coexist, and children can explore caring choices
+      like cleaning litter and respecting animals living in the sand.
+  secondary_themes:
+  - theme_id: where_place_time
+    weight: 0.33
+    reasoning: Beaches are found along coasts worldwide, and children can compare different beaches and notice how tides and
+      seasons change what they see.
+    context_trigger: when the child asks where this beach is, compares two beach photos, or notices the sea is farther away
+      at different times
+  - theme_id: how_world_works
+    weight: 0.25
+    reasoning: Waves, wind, and tides move sand and shells, helping children understand natural processes that shape the beach
+      and make patterns.
+    context_trigger: when the child watches waves wash in and out, draws lines in sand, or asks why the sand is wet near the
+      water
+  primary_key_concepts:
+  - concept_id: connection
+    relevance: 1.0
+    reasoning: Children can see connections between ocean, sand, shells, and animals, noticing how seaweed and driftwood arrive
+      from the water.
+  - concept_id: causation
+    relevance: 0.9
+    reasoning: Waves cause shells to be sorted and sand to pile up; children can observe that stronger waves change the shoreline
+      faster.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: Kids can act responsibly by taking rubbish home, not breaking shells, and avoiding trampling areas where animals
+      hide.
+  secondary_key_concepts:
+  - concept_id: change
+    relevance: 0.6
+    reasoning: The beach changes with footprints, tides, and weather, and children can notice morning sand looks different
+      from afternoon sand.
+  - concept_id: form
+    relevance: 0.5
+    reasoning: Children can describe forms like grains, dunes, and shell shapes, using their senses to compare rough, smooth,
+      big, and tiny.
+  candidate_related_concepts:
+  - concept_id: diversity
+    discipline: Science
+    reasoning: Children can look for different beach animals and plants, noticing variety in shells, seaweed types, and small
+      moving creatures.
+  - concept_id: conservation
+    discipline: Social Studies
+    reasoning: Kids can talk about beach clean-ups and protected nesting areas, understanding that rules help keep the beach
+      healthy.
+  - concept_id: sustainability
+    discipline: Science
+    reasoning: Children can explore sustainable habits like using refillable water bottles and not leaving toys or plastics
+      that can harm the ocean.
+  - concept_id: habitat
+    discipline: Science
+    reasoning: A sandy beach is a habitat where crabs, birds, and tiny sand animals live, and children can search for tracks
+      and burrows.
+  tier_guidance:
+    tier_0:
+      available_concepts:
+      - concept_id: connection
+        relevance: 1.0
+        topic_anchors:
+          visual:
+          - attribute: ocean_next_to_sand
+            value: water by the sand
+          - attribute: shells_on_shore
+            value: shells on ground
+          auditory:
+          - attribute: wave_sound
+            value: whoosh splash waves
+      - concept_id: form
+        relevance: 0.7
+        topic_anchors:
+          tactile:
+          - attribute: sand_texture
+            value: grainy tiny bits
+          - attribute: sand_temperature
+            value: warm under feet
+          visual:
+          - attribute: shell_shapes
+            value: curvy shell shapes
+      primary_topic_focus: connection
+    tier_1:
+      available_concepts:
+      - concept_id: connection
+        relevance: 0.95
+        topic_anchors:
+          relational:
+          - attribute: crabs_and_birds
+            value: Little animals look for food in sand.
+          - attribute: seaweed_drifts_in
+            value: Seaweed washes up from the ocean.
+          emotional:
+          - attribute: play_place
+            value: Feels like a fun place to explore.
+      - concept_id: change
+        relevance: 0.62
+        topic_anchors:
+          visual:
+          - attribute: footprints_disappear
+            value: Waves can erase footprints and lines.
+          tactile:
+          - attribute: wet_sand_drips
+            value: Wet sand sticks and slowly dries out.
+          spatial:
+          - attribute: tide_moves_waterline
+            value: Ocean comes closer, then goes far away.
+      - concept_id: form
+        relevance: 0.52
+        topic_anchors:
+          visual:
+          - attribute: dunes_hills
+            value: Sand piles into little hills and ridges.
+          - attribute: sparkly_grains
+            value: Tiny grains can sparkle in sunlight.
+          structural:
+          - attribute: sand_made_of_tiny_rocks
+            value: Sand is many tiny pieces of rock.
+      primary_topic_focus: connection
+    tier_2:
+      available_concepts:
+      - concept_id: connection
+        relevance: 0.95
+        topic_anchors:
+          relational:
+          - attribute: beach_food_web_links
+            value: Tiny animals in sand can be food for birds and crabs, connecting the beach into a living food chain.
+          - attribute: people_and_wildlife_share_space
+            value: Swimmers, walkers, birds, and nesting animals use the same shore, so actions by one group affect the others.
+      - concept_id: causation
+        relevance: 0.86
+        topic_anchors:
+          temporal:
+          - attribute: tides_caused_by_moon_pull
+            value: Tides happen because the moon’s pull helps move ocean water, making the waterline rise and fall each day.
+          kinesthetic:
+          - attribute: waves_sort_by_size
+            value: Waves can roll and tumble bits of rock, often leaving heavier shells and pebbles in different spots than
+              fine sand.
+          spatial:
+          - attribute: wind_builds_dunes
+            value: Wind pushes dry sand inland until it piles up, causing dunes to grow where plants or rocks slow the sand
+              down.
+      - concept_id: responsibility
+        relevance: 0.9
+        topic_anchors:
+          kinesthetic:
+          - attribute: pack_out_trash_protects_animals
+            value: Taking rubbish home keeps animals from swallowing plastic or getting tangled in it.
+          - attribute: walk_around_dunes_and_nests
+            value: Stepping carefully and avoiding dune plants or nesting areas helps keep animal homes and sand-holding plants
+              safe.
+          relational:
+          - attribute: gentle_shell_handling_respects_life
+            value: Leaving living shells and small creatures where they are helps them stay in their habitat and keeps the
+              beach healthy for everyone.
+      - concept_id: change
+        relevance: 0.66
+        topic_anchors:
+          temporal:
+          - attribute: storms_reshape_shoreline
+            value: Big storms can pull sand away or pile it up, changing the shape of the beach quickly.
+          - attribute: seasons_change_debris
+            value: Different seasons can bring different seaweed, driftwood, and shells because ocean currents and storms
+              change.
+          structural:
+          - attribute: salt_drives_rust_and_wear
+            value: Salty sea air can make metal rust faster and can wear down objects left outside, so beach things change
+              over time.
+      - concept_id: form
+        relevance: 0.52
+        topic_anchors:
+          visual:
+          - attribute: wave_line_ridges
+            value: Repeating ridges and lines on wet sand show where waves and water flowed back toward the sea.
+          - attribute: shell_spirals_and_fans
+            value: Shells can have spiral or fan shapes, and their shapes often match how the animal grew inside.
+          structural:
+          - attribute: layers_in_sand_bank
+            value: A cut in a sand bank can show layers, like stripes, made when different waves dropped sand at different
+              times.
+      primary_topic_focus: connection
+    tier_3:
+      available_concepts:
+      - concept_id: connection
+        relevance: 0.9
+        topic_anchors:
+          relational:
+          - attribute: beach_links_land_and_sea_habitats
+            value: A sandy beach connects ocean life and land life, so birds, crabs, and plants depend on both water and shore
+              conditions.
+          - attribute: human_choices_connect_to_ocean_health
+            value: What people leave behind—food scraps, plastic, or safe trash—connects directly to what animals can eat
+              or get tangled in.
+          spatial:
+          - attribute: rivers_connect_inland_to_beaches
+            value: Sand and mud can travel from inland rivers to the coast, connecting faraway places to what ends up on the
+              shoreline.
+      - concept_id: causation
+        relevance: 0.78
+        topic_anchors:
+          relational:
+          - attribute: animal_tracks_caused_by_night_activity
+            value: Tracks and little holes in the morning are caused by animals moving at night, connecting signs in sand
+              to hidden behaviors.
+      - concept_id: responsibility
+        relevance: 0.9
+        topic_anchors:
+          evaluative:
+          - attribute: shared_space_needs_shared_rules
+            value: Because beaches belong to many people and animals, responsible behavior includes following signs, respecting
+              protected areas, and thinking about the rights of wildlife.
+          - attribute: taking_natural_items_can_harm_habitats
+            value: Collecting lots of shells or moving rocks can remove shelter for small animals, so responsibility can mean
+              “look and leave” instead of “take home.”
+          temporal:
+          - attribute: one_day_actions_create_long_term_effects
+            value: Leaving plastic behind can last for years and break into tiny pieces, so responsible choices today protect
+              ocean life in the future.
+      - concept_id: change
+        relevance: 0.62
+        topic_anchors:
+          temporal:
+          - attribute: tide_cycle_changes_safe_play_zones
+            value: As tides rise and fall through the day, the safe dry area changes, linking time, planning, and safety decisions.
+          - attribute: long_term_change_from_sea_level_rise
+            value: Over many years, higher sea levels can change where the shoreline sits, connecting beaches to climate patterns
+              and community planning.
+          evaluative:
+          - attribute: rules_change_when_nesting_season_starts
+            value: During nesting seasons, signs and ropes may appear and people must change behavior, showing how protecting
+              wildlife changes how humans use a place.
+      - concept_id: form
+        relevance: 0.5
+        topic_anchors:
+          visual:
+          - attribute: ripple_patterns_show_flow_direction
+            value: Ripples and tiny ridges in sand form patterns that can hint at which way water or wind moved, linking shape
+              to natural forces.
+          - attribute: shell_colors_reflect_animal_and_age
+            value: Shells can look bright, faded, or worn depending on the animal and how long the shell has been tumbled,
+              connecting form to time.
+          structural:
+          - attribute: sand_is_mixed_particles_not_one_kind
+            value: Beach sand is a mix of minerals, rock bits, and sometimes tiny shell pieces, showing that one surface can
+              be made from many materials.
+      primary_topic_focus: connection

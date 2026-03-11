@@ -1,0 +1,267 @@
+- entity_id: daily_objects_teddy_bear
+  entity_name: Teddy Bear
+  entity_name_cn: 泰迪熊
+  domain: daily_objects
+  parent_category: toys
+  subcategory: plush_toys
+  primary_theme:
+    theme_id: how_we_organize
+    weight: 0.38
+    reasoning: A teddy bear becomes part of organized daily life through routines like bedtime, travel, and classroom quiet
+      time, and children manage where it stays, when it is used, and how it is shared or stored.
+  secondary_themes:
+  - theme_id: who_we_are
+    weight: 0.31
+    reasoning: Children use a teddy bear to explore emotions and relationships by comforting it, telling it secrets, and practicing
+      caring behaviors that mirror how they want to be treated.
+    context_trigger: when the child uses the bear to talk about feelings, says it needs a hug, or uses it as a “brave buddy”
+  - theme_id: how_world_works
+    weight: 0.31
+    reasoning: Kids investigate what the teddy is made of and how it changes with use—softness, stitching, cleaning, and wear—helping
+      them distinguish living needs from how man-made materials behave.
+    context_trigger: when the child asks what the bear is made of, notices a tear, or wonders why it doesn’t eat or move
+  primary_key_concepts:
+  - concept_id: function
+    relevance: 1.1
+    reasoning: 'For young children, the teddy’s function is clear and meaningful: comfort, companionship, pretend caregiving,
+      and a familiar object that supports calm and security.'
+  - concept_id: connection
+    relevance: 0.9
+    reasoning: The teddy bear connects home and school experiences, connects children to memories and relationships, and connects
+      play stories to real caring actions like helping and soothing.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: Children show responsibility by keeping the bear safe, clean, and in its place, repairing it with adult help,
+      and respecting others’ comfort objects during group time.
+  secondary_key_concepts:
+  - concept_id: form
+    relevance: 0.7
+    reasoning: Children notice form features—paws, ears, fur texture, and face—and these details shape how they hold it, dress
+      it up, or pretend it can wave or walk.
+  - concept_id: causation
+    relevance: 0.3
+    reasoning: Children explore causation by noticing that pulling too hard can rip seams, washing can change texture, and
+      gentle care keeps the bear looking nice over time.
+  candidate_related_concepts:
+  - concept_id: rules
+    discipline: Social Studies
+    reasoning: Shared spaces need rules for teddy bears such as keeping them off the floor during meals, not throwing, and
+      returning them after borrowing to respect everyone’s belongings.
+  - concept_id: community
+    discipline: Social Studies
+    reasoning: A teddy bear can be part of classroom community traditions like show-and-tell or a class mascot, helping children
+      feel included and learn about each other’s lives.
+  - concept_id: roles
+    discipline: Social Studies
+    reasoning: The teddy bear encourages role-play like parent, doctor, teacher, or friend, letting children rehearse caring
+      roles and practice helpful language with others.
+  - concept_id: safety
+    discipline: PSPE
+    reasoning: Safety includes checking for loose parts like buttons, keeping bears away from faces of very young children,
+      and using gentle play so no one gets hurt during active games.
+  tier_guidance:
+    tier_0:
+      available_concepts:
+      - concept_id: connection
+        relevance: 0.8
+        topic_anchors:
+          kinesthetic:
+          - attribute: hugging action
+            value: squeeze it close
+          - attribute: carrying around
+            value: hold in arms
+          auditory:
+          - attribute: quiet play voice
+            value: soft whisper talk
+      - concept_id: form
+        relevance: 0.9
+        topic_anchors:
+          tactile:
+          - attribute: fur feel
+            value: soft fuzzy fur
+          visual:
+          - attribute: bear face
+            value: button eyes nose
+          - attribute: bear body parts
+            value: round ears paws
+      primary_topic_focus: connection
+    tier_1:
+      available_concepts:
+      - concept_id: function
+        relevance: 0.93
+        topic_anchors:
+          emotional:
+          - attribute: comfort_helper
+            value: Cuddles can help big feelings feel smaller.
+          kinesthetic:
+          - attribute: pretend_care_actions
+            value: You can rock it, tuck it, and pat it.
+          relational:
+          - attribute: brave_buddy
+            value: It can be your buddy for new places.
+      - concept_id: connection
+        relevance: 0.84
+        topic_anchors:
+          spatial:
+          - attribute: home_and_school_friend
+            value: Same bear can travel from bed to classroom.
+          relational:
+          - attribute: sharing_and_turns
+            value: Friends can take turns holding it gently.
+          emotional:
+          - attribute: memory_link
+            value: It can remind you of family and love.
+      - concept_id: form
+        relevance: 0.66
+        topic_anchors:
+          structural:
+          - attribute: stitching_lines
+            value: Thread lines hold the bear together.
+          - attribute: stuffing_inside
+            value: Fluffy stuffing makes it squishy to hug.
+          visual:
+          - attribute: button_or_bead_eyes
+            value: Small eyes look shiny and watchful.
+      primary_topic_focus: function
+    tier_2:
+      available_concepts:
+      - concept_id: function
+        relevance: 1.0
+        topic_anchors:
+          emotional:
+          - attribute: calming_tool_for_big_feelings
+            value: Holding the bear can help a child’s body feel safer and calmer during worry, sadness, or new situations.
+          - attribute: practice_empathy_through_pretend
+            value: When children pretend the bear is tired or hurt, they practice caring words and gentle actions.
+          relational:
+          - attribute: bridge_for_talking
+            value: Children may talk through the bear to share thoughts with adults or friends, making hard feelings easier
+              to say.
+      - concept_id: connection
+        relevance: 0.85
+        topic_anchors:
+          temporal:
+          - attribute: routines make the teddy feel like a steady helper
+            value: Using the bear at bedtime, on trips, or during quiet time connects it to calm moments and helps children
+              settle.
+          relational:
+          - attribute: role-play connects caring words to real-life kindness
+            value: When children pretend to feed, doctor, or teach the bear, they practice gentle language and helpful actions
+              they can use with people.
+          - attribute: classroom sharing connects belongings to rules
+            value: In shared spaces, putting the teddy in a safe place and asking before borrowing connects the toy to respect
+              for others.
+      - concept_id: responsibility
+        relevance: 0.9
+        topic_anchors:
+          temporal:
+          - attribute: regular_cleaning_keeps_it_safe
+            value: Washing and drying the bear sometimes removes dirt and germs that build up over many cuddles and floor
+              time.
+          structural:
+          - attribute: checking_for_loose_parts
+            value: Noticing loose eyes, torn seams, or poking stuffing helps adults fix it before it becomes unsafe.
+          relational:
+          - attribute: respecting_others_comfort_items
+            value: Asking before touching someone else’s bear and returning it gently shows care for what helps them feel
+              secure.
+      - concept_id: form
+        relevance: 0.7
+        topic_anchors:
+          structural:
+          - attribute: wide body shape makes it easy to cuddle and prop
+            value: A round tummy and soft arms help it sit on a bed or lap, so children can ‘set it up’ for stories or tea
+              parties.
+          - attribute: joint seams limit and guide movement in pretend play
+            value: Where the arms and legs are sewn on helps children bend and pose the bear in certain ways during play.
+          visual:
+          - attribute: face details guide feelings and storytelling
+            value: Eyebrows, mouth shape, and eye size can make the bear look sleepy, happy, or worried, which changes the
+              story children tell.
+      - concept_id: causation
+        relevance: 0.35
+        topic_anchors:
+          tactile:
+          - attribute: rough play can loosen parts
+            value: Twisting an arm hard or pulling on an ear can make stitches open, because the thread can only hold so much.
+          - attribute: washing changes softness depending on drying
+            value: Hot water or a hot dryer can make fur feel less fluffy, while gentle washing and air-drying can keep it
+              softer.
+          temporal:
+          - attribute: frequent hugging slowly flattens stuffing
+            value: Over time, squeezing pushes the filling into new shapes, so the bear can feel thinner in the middle.
+      primary_topic_focus: function
+    tier_3:
+      available_concepts:
+      - concept_id: function
+        relevance: 1.0
+        topic_anchors:
+          emotional:
+          - attribute: emotion_naming_practice
+            value: A teddy bear can function as a safe “practice partner” for naming feelings, because children may say what
+              the bear feels when talking about their own emotions.
+          relational:
+          - attribute: social_bridge_in_groups
+            value: In classrooms, a teddy can function as a social bridge, helping shy children join conversations during
+              sharing time by talking through or about the bear.
+          evaluative:
+          - attribute: symbol_of_security_in_transitions
+            value: The teddy functions as a symbol that connects home and school, which can make transitions feel more manageable
+              and reduce stress.
+      - concept_id: connection
+        relevance: 0.86
+        topic_anchors:
+          temporal:
+          - attribute: object_links_past_and_present
+            value: A teddy bear can connect memories from earlier years to today, helping a child feel continuous even when
+              places or routines change.
+          relational:
+          - attribute: bridge_for_social_language
+            value: Using the bear in pretend play connects emotions to words like “Are you okay?” and “I can help,” which
+              can transfer into real friendships.
+          evaluative:
+          - attribute: belonging_and_respect_for_property
+            value: In a group, a teddy bear connects to rules about respecting belongings, because caring for someone’s comfort
+              item shows kindness and trust.
+      - concept_id: responsibility
+        relevance: 0.9
+        topic_anchors:
+          temporal:
+          - attribute: wear_management_over_time
+            value: Handling the teddy gently is responsible because careful use slows tears and flattening, helping it last
+              longer and reducing the need for replacement.
+          relational:
+          - attribute: borrowing_and_returning_norms
+            value: If someone borrows a teddy, responsibility includes asking permission, returning it to its owner, and respecting
+              that comfort items can be very personal.
+          evaluative:
+          - attribute: repair_vs_replace_decision
+            value: Deciding to repair a teddy with adult help instead of throwing it away can be a responsible choice about
+              reducing waste and valuing meaningful belongings.
+      - concept_id: form
+        relevance: 0.6
+        topic_anchors:
+          structural:
+          - attribute: stuffing_type_changes_weight_and_squish
+            value: Different fillings (polyfill, foam beads, or cotton) change how heavy the bear feels and how it holds its
+              shape when hugged.
+          visual:
+          - attribute: proportions_signal_character_traits
+            value: Big eyes, a small nose, or long arms are design choices that signal ‘cute,’ ‘sleepy,’ or ‘brave,’ influencing
+              the stories children invent.
+          evaluative:
+          - attribute: handmade_or_gifted_items_gain_special_value
+            value: A bear that is a gift or handmade can feel more important than a new toy, showing how meaning comes from
+              relationships, not just materials.
+      - concept_id: causation
+        relevance: 0.35
+        topic_anchors:
+          structural:
+          - attribute: weak_points_at_seams_and_joints
+            value: Arms, ears, and zipper areas pull in different directions, so stress gathers there and can cause stitches
+              to open if tugged.
+          evaluative:
+          - attribute: repair_vs_replace_decisions
+            value: Choosing to sew a small tear instead of throwing the bear away shows how fixing things can reduce waste
+              and keep meaningful items longer.
+      primary_topic_focus: function

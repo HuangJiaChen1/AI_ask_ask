@@ -1,0 +1,274 @@
+- entity_id: animals_lion
+  entity_name: Lion
+  entity_name_cn: 狮子
+  domain: animals
+  parent_category: mammals
+  subcategory: big cats
+  primary_theme:
+    theme_id: how_world_works
+    weight: 0.5
+    reasoning: Lions help children explore how the world works through body features, hunting and resting behaviors, and loud
+      roars that communicate across wide spaces.
+  secondary_themes:
+  - theme_id: sharing_planet
+    weight: 0.3
+    reasoning: Lions depend on grassland habitats and other animals for food, so children can discuss protecting wild places
+      and balancing needs of predators and prey.
+    context_trigger: when the child asks what happens if there are no zebras, talks about drought, or wonders why lions need
+      big open land
+  - theme_id: who_we_are
+    weight: 0.2
+    reasoning: Because lions live in groups and use sounds like roaring, children can compare lion families and teamwork with
+      human families, rules, and communication.
+    context_trigger: when the child pretends to roar to call others, asks who is in the lion family, or assigns roles like
+      'leader' and 'babies' in play
+  primary_key_concepts:
+  - concept_id: function
+    relevance: 0.9
+    reasoning: Children can see functions like roaring to communicate, using teeth and claws to eat, and working together
+      in a pride to get food.
+  - concept_id: form
+    relevance: 0.8
+    reasoning: The mane, strong paws, sharp claws, and big teeth are clear forms children notice and connect to protection,
+      fighting, and hunting.
+  - concept_id: causation
+    relevance: 0.9
+    reasoning: Kids can explore cause and effect, such as how roaring warns others away, or how working together can lead
+      to catching prey.
+  secondary_key_concepts:
+  - concept_id: change
+    relevance: 0.9
+    reasoning: Lions change as cubs grow, manes develop on males, and behavior changes from playful practice to real hunting
+      and parenting.
+  - concept_id: connection
+    relevance: 0.7
+    reasoning: Children can connect lions to prey animals, water, grasslands, and pride members, noticing how survival depends
+      on many living and nonliving things.
+  candidate_related_concepts:
+  - concept_id: habitat
+    discipline: Science
+    reasoning: Savanna habitat features like tall grass and watering holes help children see what lions need and why they
+      live in particular environments.
+  - concept_id: growth
+    discipline: Science
+    reasoning: Watching how cubs grow into strong adults supports understanding of growth stages and how young animals learn
+      skills over time.
+  - concept_id: adaptation
+    discipline: Science
+    reasoning: Sharp claws, strong jaws, and camouflage coloring are adaptations that help lions hunt, eat, and survive in
+      open grasslands.
+  - concept_id: cycles
+    discipline: Science
+    reasoning: Children can notice repeating cycles like resting during hot times, being active at cooler times, and the ongoing
+      cycle of hunting and feeding.
+  tier_guidance:
+    tier_0:
+      available_concepts:
+      - concept_id: form
+        relevance: 0.9
+        topic_anchors:
+          visual:
+          - attribute: body_size
+            value: big, strong cat
+          - attribute: mane_look
+            value: fluffy hair mane
+          tactile:
+          - attribute: paw_parts
+            value: big paws, sharp claws
+      - concept_id: connection
+        relevance: 0.7
+        topic_anchors:
+          visual:
+          - attribute: where_it_lives
+            value: dry grassy land
+          - attribute: who_it_is_with
+            value: lion family group
+          auditory:
+          - attribute: big_sound
+            value: loud roaring sound
+      primary_topic_focus: form
+    tier_1:
+      available_concepts:
+      - concept_id: change
+        relevance: 0.85
+        topic_anchors:
+          visual:
+          - attribute: cubs_to_adults
+            value: Cubs grow into big lions with strong bodies.
+          - attribute: mane_grows
+            value: Some lions grow fluffy manes as they get older.
+          kinesthetic:
+          - attribute: play_to_hunt_practice
+            value: Play-fighting turns into hunting practice as they grow.
+      - concept_id: function
+        relevance: 0.86
+        topic_anchors:
+          auditory:
+          - attribute: roar_message
+            value: Roars tell others, “I’m here—this is mine!”
+          structural:
+          - attribute: teeth_for_eating
+            value: Big teeth tear meat into bite-size pieces.
+          - attribute: claws_for_grabbing
+            value: Sharp claws help grab and hold wiggly prey.
+      - concept_id: form
+        relevance: 0.74
+        topic_anchors:
+          tactile:
+          - attribute: fur_texture
+            value: Fur looks soft and fuzzy like a warm coat.
+          visual:
+          - attribute: tail_tip
+            value: Long tail with a tuft at the end.
+          structural:
+          - attribute: whiskers
+            value: Face whiskers help feel what’s close by.
+      - concept_id: connection
+        relevance: 0.66
+        topic_anchors:
+          relational:
+          - attribute: prey_link
+            value: Lions need other animals for food to live.
+          - attribute: water_need
+            value: They must find water, especially on hot days.
+          spatial:
+          - attribute: resting_spots
+            value: Often rests in shade to stay cool.
+      primary_topic_focus: change
+    tier_2:
+      available_concepts:
+      - concept_id: causation
+        relevance: 0.9
+        topic_anchors:
+          kinesthetic:
+          - attribute: hunt_more_at_cooler_times
+            value: Lions often hunt more at night or early morning because cooler air helps them save energy and sneak better.
+          relational:
+          - attribute: roar_changes_other_animals_actions
+            value: A roar can make other lions keep away and can make some animals run because the sound is a warning that
+              a big predator is near.
+          structural:
+          - attribute: sandpaper_tongue_scrapes_meat
+            value: A lion’s rough tongue helps scrape meat from bones, which makes eating faster and helps them get more food
+              from a kill.
+      - concept_id: change
+        relevance: 0.9
+        topic_anchors:
+          temporal:
+          - attribute: seasonal_food_and_movement_changes
+            value: When rains bring more grass, prey animals gather and lions may find food more easily; in dry times they
+              may travel farther for water and prey.
+          visual:
+          - attribute: coat_can_look_dusty_or_clean_after_weather
+            value: After rolling in dust the fur looks duller, and after rain or grooming it can look cleaner and smoother.
+          relational:
+          - attribute: pride_roles_shift_with_new_cubs
+            value: When cubs are born, adults change their jobs—some guard, some hunt more, and mothers spend extra time nursing
+              and protecting.
+      - concept_id: function
+        relevance: 0.86
+        topic_anchors:
+          structural:
+          - attribute: whiskers_help_feel_nearby_things
+            value: Sensitive whiskers help a lion notice what is close by, especially in tall grass or dim light, so it can
+              move without bumping.
+          - attribute: paw_pads_and_claws_support_quiet_stalking
+            value: Soft paw pads help it step more quietly, and claws can grip the ground or hold onto prey when it catches
+              up.
+          kinesthetic:
+          - attribute: strong_leg_muscles_power_short_sprints
+            value: Lions use powerful legs for quick bursts of speed to pounce, because they cannot run fast for a long time
+              like some animals.
+      - concept_id: form
+        relevance: 0.8
+        topic_anchors:
+          structural:
+          - attribute: camouflage_tan_coat_in_grass
+            value: The yellow-brown coat blends with dry grass, making the lion harder to spot while stalking.
+          visual:
+          - attribute: forward_facing_eyes_for_depth
+            value: Eyes face forward, helping a lion judge distance when it pounces.
+      - concept_id: connection
+        relevance: 0.7
+        topic_anchors:
+          relational:
+          - attribute: predator_prey_balance
+            value: Lions help keep some prey animals from growing too many, which affects how much grass is eaten in the savanna.
+          spatial:
+          - attribute: needs_large_territory_paths
+            value: A pride uses big areas with travel paths to find prey and water, so land space connects to whether lions
+              can survive.
+      primary_topic_focus: causation
+    tier_3:
+      available_concepts:
+      - concept_id: causation
+        relevance: 0.86
+        topic_anchors:
+          relational:
+          - attribute: cooperative_hunting_increases_success
+            value: When lionesses coordinate positions, prey has fewer escape paths, showing how teamwork can cause a better
+              outcome than hunting alone.
+          - attribute: injury_or_age_reduces_hunting_success
+            value: If a lion is hurt or older, it may fail to catch prey more often, which can cause the pride to change how
+              it shares food and effort.
+          temporal:
+          - attribute: drought_causes_longer_travel_and_conflict
+            value: When rains fail, animals gather at fewer watering places, which can cause lions to travel farther and meet
+              more rivals, increasing conflict.
+      - concept_id: change
+        relevance: 0.84
+        topic_anchors:
+          temporal:
+          - attribute: teeth_and_claws_wear_over_years
+            value: Over years, teeth can chip and claws can wear, changing how easily a lion can eat or fight, linking aging
+              to survival challenges.
+          - attribute: population_changes_when_prey_numbers_shift
+            value: If prey animals become fewer for a long time, lion numbers can drop later, showing delayed cause-and-effect
+              in ecosystems.
+          relational:
+          - attribute: territory_borders_shift_after_pride_takeover
+            value: When a new group takes control, the pride may patrol different edges, showing how social change can reshape
+              the map of a habitat.
+      - concept_id: function
+        relevance: 0.66
+        topic_anchors:
+          relational:
+          - attribute: scavenging_function_recycles_nutrients_in_ecosystem
+            value: Lions sometimes eat leftovers from other animals’ kills, and that scavenging helps recycle nutrients, showing
+              that “eating” can be part of a bigger system, not just hunting.
+          - attribute: pride_structure_functions_as_childcare_and_learning_system
+            value: Living in a pride helps cubs survive because adults can guard, teach, and share space, like a safety-and-learning
+              team that makes the group stronger than one lion alone.
+          spatial:
+          - attribute: territory_patrolling_functions_as_resource_management
+            value: Walking and marking a territory helps lions manage where they can find prey and water, similar to how people
+              use boundaries and maps to share space and avoid conflict.
+      - concept_id: form
+        relevance: 0.72
+        topic_anchors:
+          structural:
+          - attribute: retractable_claw_structure
+            value: A lion’s claws can pull back into the paw, a body design that helps keep claws sharp for gripping, like
+              storing a tool safely until needed.
+          - attribute: rough_tongue_papillae_texture
+            value: The tongue has tiny backward hooks that act like a built-in brush, connecting body structure to feeding
+              and grooming.
+          visual:
+          - attribute: dark_tail_tuft_as_signal_marker
+            value: The tail ends in a darker tuft that can be easier to spot in tall grass, a visible feature that may help
+              group members track movement.
+      - concept_id: connection
+        relevance: 0.78
+        topic_anchors:
+          relational:
+          - attribute: keystone_predator_role
+            value: Lions connect to the whole savanna by influencing prey behavior and numbers, which can change plants, soil,
+              and even where other animals feed.
+          - attribute: human_land_use_affects_lion_range
+            value: Farms, roads, and fences connect human decisions to lion survival by shrinking or splitting habitats, which
+              can increase risky lion-human meetings.
+          evaluative:
+          - attribute: ethics_of_protection_and_safety
+            value: 'Protecting lions connects to fairness questions: how can people keep communities safe while also preventing
+              a species from disappearing?'
+      primary_topic_focus: causation

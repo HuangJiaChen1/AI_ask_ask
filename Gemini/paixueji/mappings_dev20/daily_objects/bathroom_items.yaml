@@ -1,0 +1,267 @@
+- entity_id: daily_objects_toothbrush_holder
+  entity_name: Toothbrush Holder
+  entity_name_cn: 牙刷架
+  domain: daily_objects
+  parent_category: daily_objects
+  subcategory: bathroom_items
+  primary_theme:
+    theme_id: how_we_organize
+    weight: 0.4
+    reasoning: A toothbrush holder organizes toothbrushes in one spot so children can find their own brush, keep the sink
+      area neat, and follow daily routines for brushing teeth.
+  secondary_themes:
+  - theme_id: who_we_are
+    weight: 0.24
+    reasoning: It supports self-care and identity because children often have a specific brush, color, or cup, helping them
+      feel ownership of hygiene habits and personal space.
+    context_trigger: when the child points to a specific toothbrush and says ‘that one is mine’ or talks about brushing routine
+  - theme_id: how_world_works
+    weight: 0.2
+    reasoning: Children can notice how holes or compartments keep brushes upright so they can dry, and how water drips down,
+      showing basic ideas about materials and cleanliness.
+    context_trigger: when the child shakes water off a brush, notices drips, or asks why the brush must stand up
+  - theme_id: how_we_express
+    weight: 0.16
+    reasoning: If the holder is artistic or decorative, children may talk about colors, patterns, and choosing designs they
+      like, using the object to express taste and creativity.
+    context_trigger: when the child comments on the holder’s colors or design, or wants to decorate and pick a special one
+  primary_key_concepts:
+  - concept_id: function
+    relevance: 1.1
+    reasoning: A toothbrush holder keeps toothbrushes separated, upright, and easy to reach, helping children store tools
+      for brushing without losing them.
+  - concept_id: connection
+    relevance: 0.9
+    reasoning: It connects to toothbrushing, bedtime and morning routines, and shared bathroom spaces, showing how one organizer
+      supports many daily habits.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: Children can be responsible by putting their toothbrush back after use, keeping it clean, and not mixing it
+      up with someone else’s brush.
+  secondary_key_concepts:
+  - concept_id: form
+    relevance: 0.7
+    reasoning: The holder’s cups or slots are shaped to fit toothbrush handles, and the base helps it stand steady on the
+      sink so it does not tip over.
+  - concept_id: causation
+    relevance: 0.3
+    reasoning: If a wet toothbrush is laid flat, it can make puddles and stay wet longer, so children see how storage choices
+      cause cleaner or messier spaces.
+  candidate_related_concepts:
+  - concept_id: rules
+    discipline: Social Studies
+    reasoning: Families may have rules like ‘don’t share toothbrushes’ and ‘put it back in the holder,’ teaching children
+      health-focused routines.
+  - concept_id: community
+    discipline: Social Studies
+    reasoning: In a shared bathroom, organizing toothbrushes helps everyone find their items and reduces mess, supporting
+      a cooperative living space.
+  - concept_id: roles
+    discipline: Social Studies
+    reasoning: Children can take on the role of being in charge of their own toothbrush area, while adults might clean the
+      holder, showing shared responsibilities.
+  - concept_id: safety
+    discipline: Health
+    reasoning: Keeping brushes separate and clean helps prevent germ spreading, and a stable holder reduces the chance of
+      toothbrushes falling onto dirty surfaces.
+  tier_guidance:
+    tier_0:
+      available_concepts:
+      - concept_id: connection
+        relevance: 0.75
+        topic_anchors:
+          visual:
+          - attribute: brushes in one spot
+            value: toothbrushes stand here
+          kinesthetic:
+          - attribute: putting brush away
+            value: drop brush in
+          tactile:
+          - attribute: wet drip
+            value: water drips down
+      - concept_id: form
+        relevance: 0.85
+        topic_anchors:
+          visual:
+          - attribute: holder openings
+            value: little holes slots
+          - attribute: base shape
+            value: flat bottom stands
+          tactile:
+          - attribute: material feel
+            value: hard smooth plastic
+      primary_topic_focus: connection
+    tier_1:
+      available_concepts:
+      - concept_id: function
+        relevance: 0.92
+        topic_anchors:
+          spatial:
+          - attribute: keeps_brush_upright
+            value: Brush stands tall so it doesn’t touch sink.
+          structural:
+          - attribute: separates_multiple_brushes
+            value: Different spots keep brushes from bumping.
+          kinesthetic:
+          - attribute: easy_grab_and_return
+            value: Pick up, brush, then put it back in.
+      - concept_id: connection
+        relevance: 0.82
+        topic_anchors:
+          relational:
+          - attribute: morning_and_bedtime_routine
+            value: Holder helps remember brush time every day.
+          - attribute: family_sharing_rules
+            value: Everyone has their own spot, not swapping.
+          emotional:
+          - attribute: my_own_brush_pride
+            value: Having your own place can feel grown-up.
+      - concept_id: form
+        relevance: 0.64
+        topic_anchors:
+          visual:
+          - attribute: cute_shapes_or_patterns
+            value: Stars, animals, or stripes make it fun.
+          structural:
+          - attribute: drain_gaps_or_holes
+            value: Little gaps let water drip away.
+          - attribute: tall_sides_or_rim
+            value: A rim helps the brush stay inside.
+      primary_topic_focus: function
+    tier_2:
+      available_concepts:
+      - concept_id: function
+        relevance: 1.0
+        topic_anchors:
+          structural:
+          - attribute: compartments_prevent_cross_touching
+            value: Separate slots keep toothbrush heads from touching each other, which helps keep germs from spreading.
+          - attribute: open_top_allows_airflow
+            value: An open holder lets air reach the bristles so they can dry instead of staying wet.
+          spatial:
+          - attribute: stable_home_spot_supports_routine
+            value: Keeping the holder in the same place by the sink makes it easier to find the brush and remember brushing
+              steps.
+      - concept_id: connection
+        relevance: 0.9
+        topic_anchors:
+          temporal:
+          - attribute: a single ‘home spot’ supports brushing habits
+            value: When the holder stays in the same place, children find their brush quickly, which helps the morning and
+              bedtime routine happen smoothly.
+          relational:
+          - attribute: separate spaces reduce mix-ups between people
+            value: When each person has their own section, it’s easier to keep toothbrushes from getting swapped.
+          - attribute: a tidy sink area helps everyone share the bathroom
+            value: Keeping brushes standing in the holder leaves more space on the sink and makes it easier for others to
+              wash hands or face.
+      - concept_id: responsibility
+        relevance: 0.9
+        topic_anchors:
+          kinesthetic:
+          - attribute: rinse_and_place_correctly
+            value: Rinsing toothpaste off and standing the brush bristles-up keeps the holder cleaner and the brush ready
+              next time.
+          - attribute: gentle_setting_prevents_tipping
+            value: Putting the brush in softly helps stop the holder from knocking over and making a mess.
+          relational:
+          - attribute: not_sharing_prevents_germ_spread
+            value: Using only your own toothbrush in the holder protects other people’s health in a shared bathroom.
+      - concept_id: form
+        relevance: 0.7
+        topic_anchors:
+          structural:
+          - attribute: divider walls keep handles from touching
+            value: Slots or separate cups act like little fences so brushes don’t lean together too much.
+          - attribute: weighted or wide bottoms resist tipping
+            value: A broader base helps it stay steady when someone bumps the sink or grabs a brush quickly.
+          spatial:
+          - attribute: upright height keeps bristles off the counter
+            value: The holder lifts the brush head up so it doesn’t rest on the sink where water and dirt can collect.
+      - concept_id: causation
+        relevance: 0.35
+        topic_anchors:
+          temporal:
+          - attribute: standing up helps bristles dry faster
+            value: Water drips down and air can reach the bristles, so they don’t stay wet as long.
+          - attribute: leftover water can cause slippery puddles
+            value: If water collects under the holder or around it, the sink area can get messy and slippery until someone
+              wipes it.
+          structural:
+          - attribute: closed containers can trap moisture and smells
+            value: If the holder has no airflow, wet brushes can stay damp, which can make the holder smell musty.
+      primary_topic_focus: function
+    tier_3:
+      available_concepts:
+      - concept_id: function
+        relevance: 1.0
+        topic_anchors:
+          structural:
+          - attribute: airflow_supports_drying
+            value: Open spaces and drainage features function to let air move around bristles so they dry faster, which supports
+              cleanliness.
+          relational:
+          - attribute: ownership_and_labeling_system
+            value: Separate slots or marked cups function as an organizing system so each person can quickly identify their
+              brush and avoid mix-ups.
+          spatial:
+          - attribute: countertop_order
+            value: Keeping brushes vertical in one place functions to reduce clutter on the sink area, making shared bathrooms
+              easier to use for everyone.
+      - concept_id: connection
+        relevance: 0.87
+        topic_anchors:
+          temporal:
+          - attribute: routine_anchor_for_habit_building
+            value: Keeping the toothbrush in the same holder connects to habit-building, because a stable “home spot” makes
+              brushing more automatic over weeks.
+          relational:
+          - attribute: shared_bathroom_needs_coordination
+            value: In a shared bathroom, a holder connects family members through coordination—everyone’s choices affect clutter,
+              time, and hygiene for others.
+          evaluative:
+          - attribute: ownership_markers_reduce_mixups
+            value: Colors, labels, or separate slots connect to identity and health, because knowing “which one is mine” supports
+              safety and independence.
+      - concept_id: responsibility
+        relevance: 0.9
+        topic_anchors:
+          evaluative:
+          - attribute: health_rule_reasoning
+            value: Not sharing toothbrushes is a responsibility rooted in health because germs can travel through saliva,
+              so the rule protects the whole household.
+          temporal:
+          - attribute: regular_holder_cleaning
+            value: Cleaning the holder on a schedule is responsible because buildup happens slowly, and a clean container
+              supports long-term family wellbeing.
+          relational:
+          - attribute: respecting_shared_bathroom_routines
+            value: Putting items back correctly is responsible in a shared space because it helps other people follow their
+              routines without confusion or extra mess.
+      - concept_id: form
+        relevance: 0.62
+        topic_anchors:
+          structural:
+          - attribute: open_design_supports_air_exchange
+            value: Holders with open tops and vented sides are shaped to let air move around bristles, which supports drying
+              and freshness.
+          visual:
+          - attribute: slot_size_matches_handle_types
+            value: Wider slots fit thick kid handles or electric heads, while narrow slots fit slim brushes, showing how form
+              must match the tool it stores.
+          tactile:
+          - attribute: grippy_base_reduces_sliding_on_wet_surfaces
+            value: Rubberized bottoms feel tacky and help the holder stay put on a damp sink, which changes how stable it
+              is during hurried mornings.
+      - concept_id: causation
+        relevance: 0.38
+        topic_anchors:
+          temporal:
+          - attribute: standing_water_in_base_can_grow_germs
+            value: If water collects and stays in the bottom, it can lead to more germs or mold over time, which can make
+              the bathroom smell musty.
+          evaluative:
+          - attribute: cleaning_schedule_affects_family_health
+            value: Regularly rinsing and cleaning the holder can lower germ buildup, showing how small household choices can
+              affect everyone’s health.
+      primary_topic_focus: function

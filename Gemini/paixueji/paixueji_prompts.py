@@ -213,7 +213,7 @@ RULE 1 — INTENT (choose exactly ONE):
                                     "What do you mean it has air inside?", "What does hollow mean?"
 
   CLARIFYING_IDK        : Child said "I don't know", is silent/blank, or gave a single confused word.
-                          Examples: "I don't know.", "Um...", "Hmm", "I have no idea"
+                          Examples: "I don't know.", "Um...", "Hmm", "I have no idea", "I have no clue"
 
   CLARIFYING_WRONG      : Child attempted to respond to the AI's last response (usually a question) but was incorrect or substantially
                           incomplete. They tried — but the answer was wrong.
@@ -287,6 +287,8 @@ DISAMBIGUATION RULES:
     — child clarifying/correcting what their previous statement referred to (not answering a
     factual question) → CURIOSITY (about X/Y), NOT CLARIFYING_WRONG
     (CLARIFYING_WRONG is only for a child who attempted and failed to respond to the AI's last response)
+  - "I have", "I did", "I do", "I am" as bare elliptical affirmatives → SOCIAL_ACKNOWLEDGMENT
+    (bare "I have" alone NEVER maps to CLARIFYING_IDK; only "I have no idea" or "I have no clue" does)
 
 RULE 2 — NEW OBJECT (only for ACTION or AVOIDANCE):
   If the intent is ACTION or AVOIDANCE AND the child named a specific new object to explore,
@@ -313,7 +315,7 @@ RULE 1 — INTENT (choose exactly ONE):
                                     "What do you mean it has air inside?", "What does hollow mean?"
 
   CLARIFYING_IDK        : Child said "I don't know", is silent/blank, or gave a single confused word.
-                          Examples: "I don't know.", "Um...", "Hmm", "I have no idea"
+                          Examples: "I don't know.", "Um...", "Hmm", "I have no idea", "I have no clue"
 
   CLARIFYING_WRONG      : Child attempted to respond to the AI's last response (usually a question) but was incorrect or substantially
                           incomplete. They tried — but the answer was wrong.
@@ -387,6 +389,8 @@ DISAMBIGUATION RULES:
     — child clarifying/correcting what their previous statement referred to (not answering a
     factual question) → CURIOSITY (about X/Y), NOT CLARIFYING_WRONG
     (CLARIFYING_WRONG is only for a child who attempted and failed to respond to the AI's last response)
+  - "I have", "I did", "I do", "I am" as bare elliptical affirmatives → SOCIAL_ACKNOWLEDGMENT
+    (bare "I have" alone NEVER maps to CLARIFYING_IDK; only "I have no idea" or "I have no clue" does)
 
 RULE 2 — NEW OBJECT (only for ACTION or AVOIDANCE):
   If the intent is ACTION or AVOIDANCE AND the child named a specific new object to explore,

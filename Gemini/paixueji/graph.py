@@ -456,14 +456,22 @@ async def node_curiosity(state: PaixuejiState) -> dict:
 
 @trace_node
 async def node_clarifying_idk(state: PaixuejiState) -> dict:
-    """Child said IDK (1st time) — scaffold hint and increment counter."""
+    """Child said IDK. On 1st IDK increment counter; on 2nd+ IDK reveal the answer and reset."""
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Clarifying IDK")
 
-    state["assistant"].consecutive_idk_count += 1
+    if state["assistant"].consecutive_idk_count >= 1:
+        # Second IDK — give the answer directly and reset the counter
+        state["assistant"].consecutive_idk_count = 0
+        intent_type = "give_answer_idk"
+    else:
+        # First IDK — scaffold hint and increment counter
+        state["assistant"].consecutive_idk_count += 1
+        intent_type = "clarifying_idk"
+
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
     generator = generate_intent_response_stream(
-        intent_type="clarifying_idk",
+        intent_type=intent_type,
         messages=messages,
         child_answer=state["content"],
         object_name=state["object_name"],
@@ -477,7 +485,7 @@ async def node_clarifying_idk(state: PaixuejiState) -> dict:
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     logger.info(f"[{state['session_id']}] Node: Clarifying IDK finished in {time.time() - start_time:.3f}s")
     return {
-        "response_type": "clarifying_idk",
+        "response_type": intent_type,
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),

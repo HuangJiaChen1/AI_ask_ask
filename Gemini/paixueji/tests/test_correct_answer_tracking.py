@@ -95,6 +95,7 @@ def _base_state(assistant, *, correct_answer_count=0, guide_phase=None,
         received_chunks.append(chunk)
 
     client = _make_mock_client()
+    assistant.client = client  # classify_intent() uses assistant.client, not state["client"]
 
     return {
         "messages": [],
