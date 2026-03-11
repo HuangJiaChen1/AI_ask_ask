@@ -37,7 +37,7 @@ class PaixuejiAssistant:
     All streaming logic has been moved to paixueji_stream.py.
     """
 
-    def __init__(self, config_path="config.json", age_prompts_path="age_prompts.json", object_prompts_path="object_prompts.json", client=None):
+    def __init__(self, config_path="config.json", age_prompts_path="age_prompts.json", client=None):
         """Initialize the assistant with configuration and Gemini client."""
         # Resolve paths relative to this file
         base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -45,8 +45,6 @@ class PaixuejiAssistant:
             config_path = os.path.join(base_dir, config_path)
         if not os.path.isabs(age_prompts_path):
             age_prompts_path = os.path.join(base_dir, age_prompts_path)
-        if not os.path.isabs(object_prompts_path):
-            object_prompts_path = os.path.join(base_dir, object_prompts_path)
 
         self.config = self._load_config(config_path)
         self.conversation_history = []
@@ -55,9 +53,6 @@ class PaixuejiAssistant:
 
         # Paixueji-specific fields
         self.object_name = None
-        self.level1_category = None
-        self.level2_category = None
-        self.level3_category = None
         self.correct_answer_count = 0
 
         # Theme Guide fields
@@ -73,6 +68,7 @@ class PaixuejiAssistant:
         self.ibpyp_theme_reason = None  # Classification reasoning
         self.key_concept = None
         self.bridge_question = None
+        self.category_prompt = None  # Formatted YAML anchor block for {category_prompt} slot
         self.guide_phase = None  # "active", "success", "exit", etc.
 
         # Multi-turn guide state (new Navigator/Driver integration)
@@ -98,9 +94,6 @@ class PaixuejiAssistant:
         # Load age prompts
         self.age_prompts = self._load_age_prompts(age_prompts_path)
 
-        # Load object/category prompts
-        self.object_prompts = self._load_object_prompts(object_prompts_path)
-
         # Load prompts
         import paixueji_prompts
         self.prompts = paixueji_prompts.get_prompts()
@@ -124,29 +117,26 @@ class PaixuejiAssistant:
 
     def classify_theme_background(self, object_name: str):
         """
-        Trigger background IB PYP theme classification for an object.
-        Updates self.ibpyp_theme, ibpyp_theme_name, ibpyp_theme_reason when complete.
+        Background YAML classification for an object.
+        Updates ibpyp_theme*, key_concept, bridge_question, and category_prompt.
+        Fire-and-forget: spawns a daemon thread and returns immediately.
         """
         import threading
-        from theme_classifier import classify_object_to_theme
+        from graph_lookup import classify_object_yaml
 
         def _classify():
-            # Create a localized client copy or usage might be tricky if client isn't thread-safe?
-            # Gemini client should be thread-safe for generation.
-            result = classify_object_to_theme(
-                object_name=object_name,
-                client=self.client,
-                config=self.config
+            result = classify_object_yaml(object_name, self.age or 6)
+            self.ibpyp_theme = result["theme_id"]
+            self.ibpyp_theme_name = result["theme_name"]
+            self.ibpyp_theme_reason = result["theme_reasoning"]
+            self.key_concept = result["key_concept"]
+            self.bridge_question = result["bridge_question"]
+            self.category_prompt = result["category_prompt"]
+            safe_print(
+                f"[CLASSIFY] YAML complete: {result['theme_name']} | "
+                f"Concept: {result['key_concept']}"
             )
-            if result:
-                self.ibpyp_theme = result.theme_id
-                self.ibpyp_theme_name = result.theme_name
-                self.ibpyp_theme_reason = result.reason
-                self.key_concept = result.key_concept
-                self.bridge_question = result.bridge_question
-                safe_print(f"[THEME_CLASSIFY] Background classification complete: {result.theme_id} | Concept: {result.key_concept}")
 
-        # Fire and forget thread
         thread = threading.Thread(target=_classify, daemon=True)
         thread.start()
 
@@ -187,15 +177,6 @@ class PaixuejiAssistant:
         with open(age_prompts_path, 'r', encoding='utf-8') as f:
             return json.load(f)
 
-    def _load_object_prompts(self, object_prompts_path):
-        """Load object/category prompts from JSON file."""
-        if not os.path.exists(object_prompts_path):
-            safe_print(f"[WARNING] Object prompts file not found: {object_prompts_path}")
-            return None
-
-        with open(object_prompts_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-
     def get_age_prompt(self, age):
         """Get the appropriate age-based prompt."""
         if not self.age_prompts:
@@ -212,38 +193,6 @@ class PaixuejiAssistant:
         else:
             return age_groups.get('5-6', {}).get('prompt', '')
 
-    def get_category_prompt(self, level1, level2, level3):
-        """
-        Get the appropriate category-based prompt with fallback logic.
-
-        Uses the most specific category available (level3 → level2 → level1 → default).
-        """
-        DEFAULT_FALLBACK = "Ask questions about this object's appearance, properties, uses, and context. Encourage observation and description."
-
-        if not self.object_prompts:
-            return DEFAULT_FALLBACK
-
-        # Try level3 first (most specific)
-        if level3:
-            level3_data = self.object_prompts.get('level3_categories', {}).get(level3)
-            if level3_data:
-                return level3_data.get('prompt', '')
-
-        # Fall back to level2
-        if level2:
-            level2_data = self.object_prompts.get('level2_categories', {}).get(level2)
-            if level2_data:
-                return level2_data.get('prompt', '')
-
-        # Fall back to level1
-        if level1:
-            level1_data = self.object_prompts.get('level1_categories', {}).get(level1)
-            if level1_data:
-                return level1_data.get('prompt', '')
-
-        # Final fallback
-        return DEFAULT_FALLBACK
-
     def increment_correct_answers(self):
         """
         Increment the correct answer count.
@@ -257,85 +206,6 @@ class PaixuejiAssistant:
     def get_conversation_history(self):
         """Get the full conversation history."""
         return self.conversation_history
-
-    def classify_object_sync(self, object_name):
-        """
-        Classify an object into level2_category and derive level1_category.
-
-        This method is designed to be called in a background thread to avoid
-        blocking the main response stream. It updates the assistant's category
-        state for subsequent conversation turns.
-
-        Args:
-            object_name (str): Name of the object to classify
-        """
-        try:
-            safe_print(f"[CLASSIFY] Starting classification for: {object_name}")
-
-            # Get available level2 categories from object_prompts
-            if not self.object_prompts or 'level2_categories' not in self.object_prompts:
-                safe_print(f"[CLASSIFY] No object_prompts available, setting categories to None")
-                self.level1_category = None
-                self.level2_category = None
-                self.level3_category = None
-                return
-
-            level2_categories = self.object_prompts['level2_categories']
-
-            # Build categories list for prompt
-            categories_list = "\n".join([
-                f"- {key}: {data.get('prompt', '')[:100]}..."
-                for key, data in level2_categories.items()
-            ])
-
-            # Get classification prompt template
-            classification_prompt = self.prompts['classification_prompt'].format(
-                object_name=object_name,
-                categories_list=categories_list
-            )
-
-            # Call Gemini to classify
-            safe_print(f"[CLASSIFY] Calling Gemini for classification...")
-            response = self.client.models.generate_content(
-                model=self.config["model_name"],
-                contents=classification_prompt,
-                config={
-                    "temperature": 0.1,  # Low temperature for consistent classification
-                    "max_output_tokens": 50  # Short response expected
-                }
-            )
-
-            # Extract classification result
-            classified_category = response.text.strip().lower()
-            safe_print(f"[CLASSIFY] Raw response: {classified_category}")
-
-            # Check if it's a valid level2 category
-            if classified_category in level2_categories:
-                # Update level2_category
-                self.level2_category = classified_category
-
-                # Derive level1_category from parent relationship
-                self.level1_category = level2_categories[classified_category].get('parent')
-
-                # Reset level3_category
-                self.level3_category = None
-
-                safe_print(f"[CLASSIFY] SUCCESS: {object_name} -> level2={self.level2_category}, level1={self.level1_category}")
-            else:
-                # No match or "none" response - set to None (fallback)
-                safe_print(f"[CLASSIFY] No match found for {object_name}, setting categories to None")
-                self.level1_category = None
-                self.level2_category = None
-                self.level3_category = None
-
-        except Exception as e:
-            safe_print(f"[CLASSIFY] ERROR during classification: {e}")
-            import traceback
-            traceback.print_exc()
-            # On error, set categories to None (fallback)
-            self.level1_category = None
-            self.level2_category = None
-            self.level3_category = None
 
     def reset_object_state(self, new_object_name: str):
         """
@@ -356,10 +226,8 @@ class PaixuejiAssistant:
 
         # Reset Paixueji-specific fields
         self.object_name = None
-        self.level1_category = None
-        self.level2_category = None
-        self.level3_category = None
         self.correct_answer_count = 0
+        self.category_prompt = None
 
         # Reset guide state
         self.exit_guide_mode()
