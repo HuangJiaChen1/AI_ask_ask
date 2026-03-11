@@ -1,5 +1,4 @@
 import asyncio
-import concurrent.futures
 import functools
 import json
 from pathlib import Path
@@ -213,7 +212,7 @@ def trace_router(capture_fields):
 # TOPIC SWITCH HELPER
 # ============================================================================
 
-def _apply_topic_switch(state: PaixuejiState, new_obj: str) -> dict:
+async def _apply_topic_switch(state: PaixuejiState, new_obj: str) -> dict:
     """
     Update assistant state for a named-object topic switch and return state updates.
 
@@ -228,9 +227,10 @@ def _apply_topic_switch(state: PaixuejiState, new_obj: str) -> dict:
 
     assistant.state = ConversationState.ASKING_QUESTION
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.submit(assistant.classify_object_sync, new_obj)
-        executor.submit(assistant.classify_theme_background, new_obj)
+    await asyncio.gather(
+        asyncio.to_thread(assistant.classify_object_sync, new_obj),
+        asyncio.to_thread(assistant.classify_theme_background, new_obj),
+    )
 
     return {
         "object_name": new_obj,
@@ -705,7 +705,7 @@ async def node_avoidance(state: PaixuejiState) -> dict:
     extra_updates = {}
 
     if new_obj:
-        switch_updates = _apply_topic_switch(state, new_obj)
+        switch_updates = await _apply_topic_switch(state, new_obj)
         extra_updates.update(switch_updates)
         generator = generate_topic_switch_response_stream(
             messages=messages,
@@ -784,7 +784,7 @@ async def node_action(state: PaixuejiState) -> dict:
     extra_updates = {}
 
     if new_obj:
-        switch_updates = _apply_topic_switch(state, new_obj)
+        switch_updates = await _apply_topic_switch(state, new_obj)
         extra_updates.update(switch_updates)
         generator = generate_topic_switch_response_stream(
             messages=messages,

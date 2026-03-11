@@ -82,14 +82,12 @@ async def test_guide_flow():
 
         # Critical state for triggering
         "correct_answer_count": 3,  # Will become 4
-        "is_factually_correct": True,  # Current answer is correct
 
         # Required fields
         "age": 6,
         "request_id": "req_1",
         "config": {"model_name": "mock-model"},
         "client": mock_client,
-        "validation_result": {"is_factually_correct": True},
 
         # Mock other fields
         "age_prompt": "",
@@ -103,17 +101,13 @@ async def test_guide_flow():
         "full_response_text": "",
         "full_question_text": "",
         "stream_callback": mock_callback,
-        "is_engaged": True,
         "new_object_name": None,
         "detected_object_name": None,
-        "switch_decision_reasoning": None,
         "suggested_objects": None,
-        "natural_topic_completion": False,
         "fun_fact": None,
         "fun_fact_hook": None,
         "fun_fact_question": None,
         "real_facts": None,
-        "correctness_reasoning": None,
         "guide_phase": None,
         "guide_status": None,
         "guide_strategy": None,
@@ -233,12 +227,10 @@ async def test_scaffold_flow():
         "assistant": assistant,
         "object_name": "banana",
         "correct_answer_count": 4,
-        "is_factually_correct": None,
         "age": 6,
         "request_id": "req_scaffold",
         "config": {"model_name": "mock-model"},
         "client": mock_client,
-        "validation_result": {},
         "age_prompt": "",
         "category_prompt": "",
         "level1_category": "food",
@@ -250,17 +242,13 @@ async def test_scaffold_flow():
         "full_response_text": "",
         "full_question_text": "",
         "stream_callback": mock_callback,
-        "is_engaged": False,
         "new_object_name": None,
         "detected_object_name": None,
-        "switch_decision_reasoning": None,
         "suggested_objects": None,
-        "natural_topic_completion": False,
         "fun_fact": None,
         "fun_fact_hook": None,
         "fun_fact_question": None,
         "real_facts": None,
-        "correctness_reasoning": None,
         "guide_phase": "active",
         "guide_status": None,
         "guide_strategy": None,

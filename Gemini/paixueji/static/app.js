@@ -666,13 +666,13 @@ function handleStreamChunk(chunk) {
     // (Removed showObjectSelection call - no longer using UI panel)
 
     // Handle detected object (AI decided to CONTINUE but detected a new object)
-    if (chunk.detected_object_name && chunk.switch_decision_reasoning) {
+    if (chunk.detected_object_name) {
         detectedObject = chunk.detected_object_name;
         document.getElementById('detectedObjectName').textContent = detectedObject;
         document.getElementById('switchToObjectName').textContent = detectedObject;
-        document.getElementById('switchReasoning').textContent = chunk.switch_decision_reasoning;
+        document.getElementById('switchReasoning').textContent = '';
         document.getElementById('manualSwitchPanel').style.display = 'block';
-        console.log('[INFO] Object detected but not switching:', detectedObject, '| Reasoning:', chunk.switch_decision_reasoning);
+        console.log('[INFO] Object detected but not switching:', detectedObject);
     }
 
     // Update current object if it changed (from switching)

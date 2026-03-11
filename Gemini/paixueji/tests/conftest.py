@@ -59,14 +59,8 @@ def mock_gemini_client(monkeypatch):
 
     # --- Async Mock Configuration (aio) ---
     mock_response_async = MagicMock()
-    # Validation logic expects specific JSON structure
-    mock_response_async.text = json.dumps({
-        "is_engaged": True,
-        "is_factually_correct": True,
-        "correctness_reasoning": "Correct",
-        "decision": "CONTINUE",
-        "switching_reasoning": "Stay"
-    })
+    # classify_intent() parses plain-text with INTENT:/NEW_OBJECT:/REASONING: regex
+    mock_response_async.text = "INTENT: CLARIFYING_IDK\nNEW_OBJECT: null\nREASONING: Mock classification"
     client.aio.models.generate_content.return_value = mock_response_async
 
     def side_effect_stream(model, contents, config=None):
