@@ -1,0 +1,20 @@
+{
+  "_comment": "Fix 2 + Fix 3 — correct answer path: verifies BEAT3 question is yes/no for age 4, and followup bridge is not Did-you-know",
+  "age": 4,
+  "object_name": "apple",
+  "history": [
+    {
+      "role": "assistant",
+      "content": "Oh, you found an apple! Apples are SO crunchy and sweet — I love how shiny they look! Do you like eating apples?"
+    },
+    {
+      "role": "user",
+      "content": "yes"
+    },
+    {
+      "role": "assistant",
+      "content": "When you cut an apple right in half, there is something really cool hiding in the very middle. What do you think you would see in there?"
+    }
+  ],
+  "user_input": "I will see the seeds"
+}

@@ -37,7 +37,7 @@ class PaixuejiAssistant:
     All streaming logic has been moved to paixueji_stream.py.
     """
 
-    def __init__(self, config_path="config.json", age_prompts_path="age_prompts.json", object_prompts_path="object_prompts.json", system_managed=False, client=None):
+    def __init__(self, config_path="config.json", age_prompts_path="age_prompts.json", object_prompts_path="object_prompts.json", client=None):
         """Initialize the assistant with configuration and Gemini client."""
         # Resolve paths relative to this file
         base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -52,7 +52,6 @@ class PaixuejiAssistant:
         self.conversation_history = []
         self.state = ConversationState.INTRODUCTION
         self.age = None
-        self.character = None
 
         # Paixueji-specific fields
         self.object_name = None
@@ -60,12 +59,6 @@ class PaixuejiAssistant:
         self.level2_category = None
         self.level3_category = None
         self.correct_answer_count = 0
-
-        # System-managed focus mode tracking (DEPTH only, WIDTH removed)
-        self.system_managed_focus = False
-        self.current_focus_mode = 'depth'
-        self.depth_questions_count = 0
-        self.depth_target = 0  # 4 or 5, randomly chosen per object
 
         # Theme Guide fields
         self.guide_mode = False
@@ -88,6 +81,7 @@ class PaixuejiAssistant:
         self.hint_given = False  # Track if hint was given at timeout
         self.last_navigation_state = None  # Last Navigator analysis result
         self.consecutive_stuck_count = 0  # Track consecutive STUCK statuses (renamed from resistance)
+        self.consecutive_idk_count = 0  # Resets when child gives any non-IDK response
         self.scaffold_level = 0  # 0=original question, 1-4=progressive hint levels
 
         # Initialize Google Gemini client
@@ -110,14 +104,6 @@ class PaixuejiAssistant:
         # Load prompts
         import paixueji_prompts
         self.prompts = paixueji_prompts.get_prompts()
-
-        # Initialize system-managed focus mode (DEPTH only)
-        import random
-        self.system_managed_focus = system_managed
-        if system_managed:
-            self.current_focus_mode = 'depth'
-            self.depth_target = random.randint(4, 5)
-            self.depth_questions_count = 0
 
     def _load_themes(self):
         """Load themes from themes.json."""
@@ -226,28 +212,6 @@ class PaixuejiAssistant:
         else:
             return age_groups.get('5-6', {}).get('prompt', '')
 
-    def get_character_prompt(self, character_key):
-        """Get the appropriate character-based prompt."""
-        if not character_key:
-            return ""
-        
-        character_prompts = self.prompts.get('character_prompts', {})
-        return character_prompts.get(character_key, "")
-
-    def get_focus_prompt(self, focus_mode):
-        """Get the appropriate focus strategy prompt."""
-        if not focus_mode:
-            return ""
-        
-        focus_prompts = self.prompts.get('focus_prompts', {})
-        prompt = focus_prompts.get(focus_mode, "")
-        
-        # Format object name into prompt if available
-        if self.object_name and "{object_name}" in prompt:
-            prompt = prompt.format(object_name=self.object_name)
-            
-        return prompt
-
     def get_category_prompt(self, level1, level2, level3):
         """
         Get the appropriate category-based prompt with fallback logic.
@@ -333,7 +297,7 @@ class PaixuejiAssistant:
             # Call Gemini to classify
             safe_print(f"[CLASSIFY] Calling Gemini for classification...")
             response = self.client.models.generate_content(
-                model=self.config.get("model_name", "gemini-2.5-flash-lite"),
+                model=self.config["model_name"],
                 contents=classification_prompt,
                 config={
                     "temperature": 0.1,  # Low temperature for consistent classification
@@ -375,16 +339,12 @@ class PaixuejiAssistant:
 
     def reset_object_state(self, new_object_name: str):
         """
-        Reset state when switching to a new object in system-managed mode.
+        Reset state when switching to a new object.
 
         Args:
             new_object_name: Name of the new object to switch to
         """
-        import random
         self.object_name = new_object_name
-        self.depth_questions_count = 0
-        self.current_focus_mode = 'depth'
-        self.depth_target = random.randint(4, 5)
         # Reset guide state for new object
         self.exit_guide_mode()
 

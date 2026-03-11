@@ -29,6 +29,57 @@ from .expert_critic import ExpertCritic
 from .critique_report import compile_conversation_critique
 
 
+INTENT_EVALUATION_CRITERIA = {
+    "curiosity": ScenarioEvaluation(
+        must_do=["Give a simple, age-appropriate answer", "Expand with 1 interesting detail",
+                 "Suggest one concrete action or observation"],
+        must_not_do=["Lecture or summarize", "Ask a question that ignores their curiosity"]
+    ),
+    "clarifying": ScenarioEvaluation(
+        must_do=["Acknowledge the child's effort positively",
+                 "Gently provide the correct answer", "Encourage the child to try or observe"],
+        must_not_do=["Ignore the wrong guess", "Simply repeat the question without help"]
+    ),
+    "informative": ScenarioEvaluation(
+        must_do=["Affirm and give space to the child's sharing",
+                 "React with a social/non-knowledge question (e.g. 'How did you learn that?')"],
+        must_not_do=["Lecture on top of what the child shared", "Evaluate correctness of their claim"]
+    ),
+    "play": ScenarioEvaluation(
+        must_do=["Play along with the child's imagination",
+                 "Add one playful question or action suggestion"],
+        must_not_do=["Correct the child's imaginative reframe", "Ignore the playfulness"]
+    ),
+    "emotional": ScenarioEvaluation(
+        must_do=["Acknowledge the child's emotion first (before anything else)",
+                 "Offer a gentle alternative action or topic"],
+        must_not_do=["Dismiss or minimize the feeling", "Immediately pivot without empathy"]
+    ),
+    "avoidance": ScenarioEvaluation(
+        must_do=["Acknowledge the child's reluctance without pushback",
+                 "Offer a re-hook or change of topic gently"],
+        must_not_do=["Ask the same question again", "Force engagement on the avoided topic"]
+    ),
+    "boundary": ScenarioEvaluation(
+        must_do=["Show understanding of the child's curiosity",
+                 "Clearly but gently deny the risky action",
+                 "Suggest a safe alternative (e.g., take a photo)"],
+        must_not_do=["Encourage or joke about unsafe behavior",
+                     "Suggest other direct physical interaction"]
+    ),
+    "action": ScenarioEvaluation(
+        must_do=["Respond directly to the command or request",
+                 "Pivot gracefully if the command is a topic change"],
+        must_not_do=["Ignore the child's command", "Go into deep conversation about the command itself"]
+    ),
+    "social": ScenarioEvaluation(
+        must_do=["Respond warmly and directly to the personal question",
+                 "Keep the answer brief and age-appropriate"],
+        must_not_do=["Avoid the question", "Give a long or abstract answer"]
+    ),
+}
+
+
 class PedagogicalCritiquePipeline:
     """
     Main pipeline for critiquing pedagogical effectiveness.
@@ -131,6 +182,18 @@ class PedagogicalCritiquePipeline:
                 model_actual = transcript[i + 2]["content"]
                 # Extract node execution trace from the model's response
                 nodes_executed = transcript[i + 2].get("nodes_executed", [])
+
+                # Detect intent node from nodes_executed for per-intent evaluation criteria
+                _intent_node_names = {
+                    "curiosity", "clarifying", "informative", "play", "emotional",
+                    "avoidance", "boundary", "action", "social"
+                }
+                detected_intent = next(
+                    (n.get("node") for n in nodes_executed if n.get("node") in _intent_node_names),
+                    None
+                )
+                if mode == "chat" and detected_intent:
+                    evaluation = INTENT_EVALUATION_CRITERIA.get(detected_intent, evaluation)
 
                 # Extract context
                 context = await self.analyzer.analyze(

@@ -31,6 +31,8 @@ CORS(app)
 
 sessions = {}
 
+ALLOWED_MODELS = {"gemini-3.1-flash-lite-preview", "gemini-2.0-flash-lite"}
+
 # Background critique task tracking
 # {task_id: {"status": "pending"|"running"|"completed"|"failed",
 #            "session_id": str, "report_path": str|None,
@@ -71,23 +73,17 @@ def init_global_client():
 
 GLOBAL_GEMINI_CLIENT = init_global_client()
 
-
-def get_event_loop():
-    """
-    Create a new event loop for async operations.
-
-    Each request gets its own event loop to avoid race conditions when
-    multiple requests are processed concurrently (e.g., user sends new
-    message while previous one is still streaming).
-
-    Returns:
-        asyncio.AbstractEventLoop: A new event loop for this request
-    """
-    # Create a new event loop for each request to avoid:
-    # "RuntimeError: This event loop is already running"
-    # when concurrent requests try to use the same loop
-    loop = asyncio.new_event_loop()
-    return loop
+# Single persistent event loop running in a dedicated daemon thread.
+# All async work is submitted via asyncio.run_coroutine_threadsafe() so that
+# the httpx/anyio transport (used by client.aio) always sees the same loop
+# and never hits "Event is bound to a different event loop".
+_ASYNC_LOOP = asyncio.new_event_loop()
+_ASYNC_THREAD = threading.Thread(
+    target=_ASYNC_LOOP.run_forever,
+    daemon=True,
+    name="async-worker",
+)
+_ASYNC_THREAD.start()
 
 
 def sse_event(event_type, data):
@@ -210,10 +206,8 @@ def start_conversation():
     level1_category = data.get('level1_category')
     level2_category = data.get('level2_category')
     level3_category = data.get('level3_category')
-    character = data.get('character')
-    focus_mode = data.get('focus_mode', 'depth')  # Default to depth if not provided
-    system_managed = data.get('system_managed', False)  # System-managed focus mode
-
+    model_name_override = data.get('model_name_override')
+    grounding_model_override = data.get('grounding_model_override')
     # Validate required fields
     if not object_name:
         return jsonify({
@@ -234,7 +228,7 @@ def start_conversation():
 
     # Create session
     session_id = str(uuid.uuid4())
-    assistant = PaixuejiAssistant(system_managed=system_managed, client=GLOBAL_GEMINI_CLIENT)
+    assistant = PaixuejiAssistant(client=GLOBAL_GEMINI_CLIENT)
     sessions[session_id] = assistant
 
     # Store session state
@@ -243,14 +237,21 @@ def start_conversation():
     assistant.level1_category = level1_category
     assistant.level2_category = level2_category
     assistant.level3_category = level3_category
-    assistant.character = character
     assistant.correct_answer_count = 0
+
+    # Apply backbone model overrides (validated against whitelist)
+    if model_name_override and model_name_override in ALLOWED_MODELS:
+        assistant.config["model_name"] = model_name_override
+        print(f"[INFO] conversation model overridden to: {model_name_override}")
+    if grounding_model_override and grounding_model_override in ALLOWED_MODELS:
+        assistant.config["grounding_model"] = grounding_model_override
+        print(f"[INFO] grounding model overridden to: {grounding_model_override}")
 
     # Generate unique request ID for this stream
     request_id = str(uuid.uuid4())
 
     print(f"[INFO] Created Paixueji session {session_id[:8]}... | age={age}, object={object_name}, "
-          f"level1={level1_category}, level2={level2_category}, level3={level3_category}, character={character}, focus={focus_mode}, request_id={request_id[:8]}...")
+          f"level1={level1_category}, level2={level2_category}, level3={level3_category}, request_id={request_id[:8]}...")
 
     def generate():
         """Generator for SSE stream."""
@@ -265,18 +266,10 @@ def start_conversation():
                 if age_prompt:
                     system_prompt += f"\n\nAGE-SPECIFIC GUIDANCE:\n{age_prompt}"
 
-            # Get character prompt
-            character_prompt = assistant.get_character_prompt(character)
-            if character_prompt:
-                system_prompt += f"\n\nCHARACTER GUIDANCE:\n{character_prompt}"
-
             # Get category prompt
             category_prompt = assistant.get_category_prompt(level1_category, level2_category, level3_category)
             if category_prompt:
                 system_prompt += f"\n\nCATEGORY GUIDANCE:\n{category_prompt}"
-
-            # Get focus prompt for first question
-            focus_prompt = assistant.get_focus_prompt(focus_mode)
 
             # Initialize conversation history with system prompt
             assistant.conversation_history = [
@@ -286,8 +279,7 @@ def start_conversation():
             # Introduction content (trigger first question)
             introduction_content = f"Start conversation about {object_name}"
 
-            # Get new event loop for this request (avoids race conditions)
-            loop = get_event_loop()
+            loop = _ASYNC_LOOP
 
             try:
                 async def stream_introduction():
@@ -303,15 +295,12 @@ def start_conversation():
                         "client": assistant.client,
                         "assistant": assistant,
                         "age_prompt": age_prompt,
-                        "character_prompt": character_prompt,
                         "object_name": object_name,
                         "level1_category": level1_category,
                         "level2_category": level2_category,
                         "level3_category": level3_category,
                         "correct_answer_count": 0,
                         "category_prompt": category_prompt,
-                        "focus_prompt": focus_prompt,
-                        "focus_mode": focus_mode,
 
                         # Initialize outputs
                         "full_response_text": "",
@@ -319,16 +308,11 @@ def start_conversation():
                         "sequence_number": 0,
 
                         # Initialize flags
-                        "is_engaged": None,
-                        "is_factually_correct": None,
-                        "correctness_reasoning": None,
-                        "switch_decision_reasoning": None,
+                        "intent_type": None,
                         "new_object_name": None,
                         "detected_object_name": None,
                         "response_type": "introduction",
                         "suggested_objects": None,
-                        "natural_topic_completion": False,
-                        "validation_result": {},
 
                         # Fun fact (grounded)
                         "fun_fact": "",
@@ -350,9 +334,6 @@ def start_conversation():
                             "guide_turn_count": assistant.guide_turn_count,
                             "scaffold_level": assistant.scaffold_level,
                             "hint_given": assistant.hint_given,
-                            "focus_mode": focus_mode,
-                            "depth_questions_count": assistant.depth_questions_count,
-                            "depth_target": assistant.depth_target,
                             "ibpyp_theme_name": assistant.ibpyp_theme_name,
                             "key_concept": assistant.key_concept,
                             "level1_category": assistant.level1_category,
@@ -427,7 +408,8 @@ def start_guide_test():
     data = request.get_json() or {}
     age = data.get('age')
     object_name = data.get('object_name')
-    character = data.get('character', 'teacher')
+    model_name_override = data.get('model_name_override')
+    grounding_model_override = data.get('grounding_model_override')
 
     # Validate required fields
     if not object_name:
@@ -457,13 +439,20 @@ def start_guide_test():
     # Store session state
     assistant.age = age
     assistant.object_name = object_name
-    assistant.character = character
     assistant.correct_answer_count = 4  # Simulate 4 correct answers
+
+    # Apply backbone model overrides (validated against whitelist)
+    if model_name_override and model_name_override in ALLOWED_MODELS:
+        assistant.config["model_name"] = model_name_override
+        print(f"[INFO] conversation model overridden to: {model_name_override}")
+    if grounding_model_override and grounding_model_override in ALLOWED_MODELS:
+        assistant.config["grounding_model"] = grounding_model_override
+        print(f"[INFO] grounding model overridden to: {grounding_model_override}")
 
     # Generate unique request ID for this stream
     request_id = str(uuid.uuid4())
 
-    print(f"[INFO] Starting GUIDE TEST session {session_id[:8]}... | age={age}, object={object_name}, character={character}, request_id={request_id[:8]}...")
+    print(f"[INFO] Starting GUIDE TEST session {session_id[:8]}... | age={age}, object={object_name}, request_id={request_id[:8]}...")
 
     def generate():
         """Generator for SSE stream."""
@@ -497,17 +486,12 @@ def start_guide_test():
             if age_prompt:
                 system_prompt += f"\n\nAGE-SPECIFIC GUIDANCE:\n{age_prompt}"
 
-            character_prompt = assistant.get_character_prompt(character)
-            if character_prompt:
-                system_prompt += f"\n\nCHARACTER GUIDANCE:\n{character_prompt}"
-
             # Initialize conversation history with system prompt
             assistant.conversation_history = [
                 {"role": "system", "content": system_prompt}
             ]
 
-            # Get new event loop for this request
-            loop = get_event_loop()
+            loop = _ASYNC_LOOP
 
             try:
                 async def stream_bridge():
@@ -643,7 +627,6 @@ def continue_conversation():
 
     session_id = data.get('session_id')
     child_input = data.get('child_input')
-    focus_mode = data.get('focus_mode', 'depth')  # Default to depth
 
     if not session_id or not child_input:
         return jsonify({
@@ -663,7 +646,7 @@ def continue_conversation():
     request_id = str(uuid.uuid4())
 
     print(f"[INFO] Session {session_id[:8]}... continuing | answer: '{child_input[:50]}...', "
-          f"correct_count: {assistant.correct_answer_count}, focus={focus_mode}, request_id={request_id[:8]}...")
+          f"correct_count: {assistant.correct_answer_count}, request_id={request_id[:8]}...")
 
     def generate():
         """Generator for SSE stream."""
@@ -674,9 +657,6 @@ def continue_conversation():
             if assistant.age is not None:
                 age_prompt = assistant.get_age_prompt(assistant.age)
 
-            # Get character prompt
-            character_prompt = assistant.get_character_prompt(assistant.character)
-
             # Get category prompt
             category_prompt = assistant.get_category_prompt(
                 assistant.level1_category,
@@ -684,22 +664,14 @@ def continue_conversation():
                 assistant.level3_category
             )
             
-            # Get focus prompt
-            focus_prompt = assistant.get_focus_prompt(focus_mode)
+            # NOTE: User message is added to conversation_history inside the graph after turn completes
 
-            # NOTE: Validation now happens inside graph logic using unified AI validation
-            # Increment logic moved to stream handler below based on chunk.is_factually_correct
-            # NOTE: User message is added to conversation_history inside call_paixueji_stream()
-
-            # Get new event loop for this request (avoids race conditions)
-            loop = get_event_loop()
+            loop = _ASYNC_LOOP
 
             try:
                 async def stream_response():
-                    should_increment = False
-                    
                     # Prepare messages (append current user input)
-                    # Note: We append here for the Graph execution context, but ONLY append to 
+                    # Note: We append here for the Graph execution context, but ONLY append to
                     # assistant.conversation_history after successful completion/streaming.
                     current_messages = assistant.conversation_history.copy()
                     current_messages.append({"role": "user", "content": child_input})
@@ -716,15 +688,12 @@ def continue_conversation():
                         "client": assistant.client,
                         "assistant": assistant,
                         "age_prompt": age_prompt,
-                        "character_prompt": character_prompt,
                         "object_name": assistant.object_name,
                         "level1_category": assistant.level1_category,
                         "level2_category": assistant.level2_category,
                         "level3_category": assistant.level3_category,
                         "correct_answer_count": assistant.correct_answer_count,
                         "category_prompt": category_prompt,
-                        "focus_prompt": focus_prompt,
-                        "focus_mode": focus_mode,
 
                         # Initialize outputs
                         "full_response_text": "",
@@ -732,16 +701,11 @@ def continue_conversation():
                         "sequence_number": 0,
 
                         # Initialize flags
-                        "is_engaged": None,
-                        "is_factually_correct": None,
-                        "correctness_reasoning": None,
-                        "switch_decision_reasoning": None,
+                        "intent_type": None,
                         "new_object_name": None,
                         "detected_object_name": None,
                         "response_type": None,
                         "suggested_objects": None,
-                        "natural_topic_completion": False,
-                        "validation_result": {},
 
                         # Fun fact (not used in continue, but required by state schema)
                         "fun_fact": "",
@@ -763,9 +727,6 @@ def continue_conversation():
                             "guide_turn_count": assistant.guide_turn_count,
                             "scaffold_level": assistant.scaffold_level,
                             "hint_given": assistant.hint_given,
-                            "focus_mode": focus_mode,
-                            "depth_questions_count": assistant.depth_questions_count,
-                            "depth_target": assistant.depth_target,
                             "ibpyp_theme_name": assistant.ibpyp_theme_name,
                             "key_concept": assistant.key_concept,
                             "level1_category": assistant.level1_category,
@@ -775,27 +736,8 @@ def continue_conversation():
                     }
 
                     async for chunk in stream_graph_execution(initial_state):
-                        # NEW: Topic switching and classification now handled in graph nodes
-                        # The decision step happens BEFORE response generation
-                        # Object name and categories are already updated if switch occurred
-
-                        # Check if we should increment based on factual correctness
-                        if chunk.finish and chunk.is_factually_correct:
-                            should_increment = True
-
                         # Update conversation history with final response
                         if chunk.finish:
-                            # Also append the USER message to history now that turn is complete
-                            # (matches logic in original call_paixueji_stream which did it early,
-                            # but safer to do here or assuming app.py handles it?)
-                            # Original: "messages.append... assistant.conversation_history.append"
-                            # inside stream meant it was added early.
-                            # In `continue_conversation` (app.py), we only see:
-                            # "if chunk.finish: assistant.conversation_history.append(... response ...)"
-                            # WHERE is the user message added to assistant.conversation_history?
-                            # In original `call_paixueji_stream`:
-                            # "assistant.conversation_history.append({'role': 'user', 'content': content})"
-                            # So I MUST do it here too if the graph doesn't mutate assistant history.
                             assistant.conversation_history.append({"role": "user", "content": child_input})
 
                             assistant.conversation_history.append({
@@ -806,16 +748,7 @@ def continue_conversation():
                                 "_input_state_snapshot": initial_state.get("_input_state_snapshot", {}),
                             })
 
-                            # NEW: Increment only if factually correct
-                            if should_increment:
-                                assistant.increment_correct_answers()
-                                # Update chunk with new count so frontend sees it immediately
-                                chunk.correct_answer_count = assistant.correct_answer_count
-                                print(f"[INFO] Session {session_id[:8]}... factually correct answer | new count: {assistant.correct_answer_count}")
-                            elif chunk.is_factually_correct == False:
-                                print(f"[INFO] Session {session_id[:8]}... factually incorrect answer | count unchanged: {assistant.correct_answer_count}")
-                            elif not chunk.is_engaged:
-                                print(f"[INFO] Session {session_id[:8]}... child stuck (not engaged) | count unchanged: {assistant.correct_answer_count}")
+                            print(f"[INFO] Session {session_id[:8]}... intent={chunk.intent_type} | count={assistant.correct_answer_count}")
 
                             # Log completion if conversation complete (won't happen now but kept for safety)
                             if chunk.conversation_complete:
@@ -1082,18 +1015,21 @@ def force_switch():
 # ============================================================================
 
 def run_critique_background(task_id: str, session_id: str, transcript: list,
-                            object_name: str, key_concept: str, age: int,
-                            ibpyp_theme_name: str = None):
+                            all_exchanges: list, assistant, object_name: str,
+                            key_concept: str, age: int, ibpyp_theme_name: str = None):
     """
-    Background worker for critique generation.
+    Background worker for AI critique generation.
 
-    Splits the transcript by mode (chat vs guide), runs the critique pipeline
-    separately for each phase, then combines into a single 2-in-1 report.
+    Calls AICritiqueFormFiller once per exchange (in parallel) to fill in the
+    same 5-field form a human reviewer would complete. Only flawed exchanges
+    produce TraceObjects and Optimize buttons — identical to the manual path.
 
     Args:
         task_id: Unique identifier for this critique task
         session_id: Session ID being critiqued
         transcript: Conversation transcript [{role, content, mode?, nodes_executed?}, ...]
+        all_exchanges: Pre-extracted exchange triplets (list of dicts)
+        assistant: PaixuejiAssistant instance (held alive for trace assembly)
         object_name: Object being discussed
         key_concept: Key learning concept
         age: Child's age
@@ -1101,128 +1037,145 @@ def run_critique_background(task_id: str, session_id: str, transcript: list,
     """
     from datetime import datetime
     from pathlib import Path
-    from tests.quality.pipeline import PedagogicalCritiquePipeline
-    from tests.quality.critique_report import CritiqueReportGenerator
+    from tests.quality.ai_critique_form import AICritiqueFormFiller
+    from trace_assembler import assemble_trace_object, save_trace_object
+    from trace_schema import effective_culprits as _effective_culprits
 
     try:
         critique_tasks[task_id]["status"] = "running"
-        logger.info(f"[CRITIQUE] Task {task_id[:8]}... started for session {session_id[:8]}...")
+        logger.info(f"[CRITIQUE] Task {task_id[:8]}... started for session {session_id[:8]}... "
+                    f"({len(all_exchanges)} exchanges)")
 
-        # Split transcript into chat and guide sub-transcripts by mode
-        chat_transcript = []
-        guide_transcript = []
-        i = 0
-        while i < len(transcript) - 2:
-            if (transcript[i].get("role") == "model" and
-                transcript[i + 1].get("role") == "child" and
-                transcript[i + 2].get("role") == "model"):
+        # Run all exchange form-fills in parallel via asyncio.gather
+        filler = AICritiqueFormFiller(GLOBAL_GEMINI_CLIENT, _load_config())
 
-                mode = transcript[i].get("mode", "chat")
-                triplet = [transcript[i], transcript[i + 1], transcript[i + 2]]
-                if mode == "guide":
-                    guide_transcript.extend(triplet)
-                else:
-                    chat_transcript.extend(triplet)
-                i += 2
-            else:
-                i += 1
+        async def _gather_all():
+            semaphore = asyncio.Semaphore(2)  # max 2 concurrent Vertex AI calls
 
-        # Create event loop for this thread
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
+            async def guarded(coro):
+                async with semaphore:
+                    return await coro
 
-        try:
-            pipeline = PedagogicalCritiquePipeline(GLOBAL_GEMINI_CLIENT)
-
-            # Run chat pipeline (if chat exchanges exist)
-            chat_critique = None
-            if chat_transcript:
-                logger.info(f"[CRITIQUE] Task {task_id[:8]}... running chat phase ({len(chat_transcript) // 3} exchanges)")
-                chat_critique = loop.run_until_complete(
-                    pipeline.critique_transcript(
-                        transcript=chat_transcript,
-                        object_name=object_name,
-                        key_concept=f"general knowledge about {object_name}",
-                        age=age,
-                        mode="chat",
-                    )
+            coros = [
+                filler.fill_exchange(
+                    exchange_index=idx + 1,
+                    model_question=ex["model_question"],
+                    child_response=ex["child_response"],
+                    model_response=ex["model_response"],
+                    object_name=object_name,
+                    age=age,
+                    mode=ex.get("mode", "chat"),
+                    key_concept=key_concept if ex.get("mode") == "guide" else None,
+                    ibpyp_theme_name=ibpyp_theme_name,
                 )
+                for idx, ex in enumerate(all_exchanges)
+            ]
+            return await asyncio.gather(*[guarded(c) for c in coros])
 
-            # Run guide pipeline (if guide exchanges exist)
-            guide_critique = None
-            if guide_transcript:
-                logger.info(f"[CRITIQUE] Task {task_id[:8]}... running guide phase ({len(guide_transcript) // 3} exchanges)")
-                guide_critique = loop.run_until_complete(
-                    pipeline.critique_transcript(
-                        transcript=guide_transcript,
-                        object_name=object_name,
-                        key_concept=key_concept,
-                        age=age,
-                        mode="guide",
-                    )
-                )
-        finally:
-            loop.close()
+        future = asyncio.run_coroutine_threadsafe(_gather_all(), _ASYNC_LOOP)
+        results = future.result()  # blocks this background thread until done
 
-        # Generate combined markdown report
-        report_md = CritiqueReportGenerator.to_combined_markdown(
-            chat_critique, guide_critique, key_concept=key_concept
+        # Keep only flawed exchanges (non-None HumanCritique objects)
+        flawed_critiques = [(hc, all_exchanges[hc.exchange_index - 1])
+                            for hc in results if hc is not None]
+
+        logger.info(f"[CRITIQUE] Task {task_id[:8]}... "
+                    f"{len(flawed_critiques)}/{len(all_exchanges)} exchanges flagged as flawed")
+
+        # Build exchange_critiques list (same format as manual_critique)
+        exchange_critiques = [
+            {
+                "exchange_index": hc.exchange_index,
+                "model_question_problem": hc.model_question_problem,
+                "model_question_expected": hc.model_question_expected,
+                "model_response_problem": hc.model_response_problem,
+                "model_response_expected": hc.model_response_expected,
+                "conclusion": hc.conclusion,
+            }
+            for hc, _ in flawed_critiques
+        ]
+
+        # Build report using the same function as manual critique
+        report_md = build_human_feedback_report(
+            object_name=object_name,
+            age=age,
+            session_id=session_id,
+            transcript=transcript,
+            all_exchanges=all_exchanges,
+            exchange_critiques=exchange_critiques,
+            global_conclusion="",
+            key_concept=key_concept,
         )
 
-        # Save to reports folder
-        reports_dir = Path(__file__).parent / "reports" / "AIF"
+        # Patch feedback type label
+        report_md = report_md.replace(
+            "**Feedback Type:** Manual (Human)",
+            "**Feedback Type:** AI (Automated)",
+        )
+
+        # Save to reports/AIF/YYYY-MM-DD/
+        now = datetime.now()
+        date_dir = now.strftime("%Y-%m-%d")
+        reports_dir = Path(__file__).parent / "reports" / "AIF" / date_dir
         reports_dir.mkdir(parents=True, exist_ok=True)
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        safe_object_name = "".join(c if c.isalnum() or c in "-_" else "_" for c in (object_name or "unknown"))
+        timestamp = now.strftime("%Y%m%d_%H%M%S")
+        safe_object_name = "".join(
+            c if c.isalnum() or c in "-_" else "_" for c in (object_name or "unknown")
+        )
         filename = f"{safe_object_name}_{timestamp}.md"
         report_path = reports_dir / filename
+        report_path.write_text(report_md, encoding="utf-8")
 
-        # Build full report with conversation transcript (with mode labels)
-        full_report = f"# Critique Report: {object_name}\n\n"
-        full_report += f"**Session:** {session_id}\n"
-        full_report += f"**Age:** {age}\n"
-        if ibpyp_theme_name:
-            full_report += f"**IB PYP Theme:** {ibpyp_theme_name}\n"
-        if key_concept:
-            full_report += f"**Key Concept:** {key_concept}\n"
-        full_report += f"**Date:** {datetime.now().isoformat()}\n\n"
-        full_report += "---\n\n"
-        full_report += "## Conversation Transcript\n\n"
-        for msg in transcript:
-            if msg["role"] == "model":
-                mode_label = msg.get("mode", "chat").upper()
-                nodes_executed = msg.get("nodes_executed", [])
-                if nodes_executed:
-                    node_names = [n["node"] for n in nodes_executed]
-                    total_time = sum(n.get("time_ms", 0) for n in nodes_executed)
-                    trace_summary = f"[{' → '.join(node_names)}] ({total_time:.0f}ms)"
-                    full_report += f"**Model** `[{mode_label}]`**:** {trace_summary}\n{msg['content']}\n\n"
-                else:
-                    full_report += f"**Model** `[{mode_label}]`**:** {msg['content']}\n\n"
-            else:
-                full_report += f"**Child:** {msg['content']}\n\n"
-        full_report += "---\n\n"
-        full_report += report_md
+        logger.info(f"[CRITIQUE] Task {task_id[:8]}... report saved: {report_path}")
 
-        report_path.write_text(full_report, encoding='utf-8')
+        # Assemble TraceObjects for each flagged exchange (sync — loop already closed)
+        saved_traces = []
+        for hc, ex_data in flawed_critiques:
+            idx = hc.exchange_index
+            try:
+                trace_obj = assemble_trace_object(
+                    session_id, assistant, idx, ex_data,
+                    {
+                        "exchange_index": hc.exchange_index,
+                        "model_question_problem": hc.model_question_problem,
+                        "model_question_expected": hc.model_question_expected,
+                        "model_response_problem": hc.model_response_problem,
+                        "model_response_expected": hc.model_response_expected,
+                        "conclusion": hc.conclusion,
+                    }
+                )
+                save_trace_object(trace_obj)
+                saved_traces.append(trace_obj)
+            except Exception as trace_err:
+                logger.warning(
+                    f"[CRITIQUE] Failed to assemble trace for exchange {idx}: {trace_err}"
+                )
 
-        # Calculate combined effectiveness (weighted average)
-        chat_eff = chat_critique.overall_effectiveness if chat_critique else 0
-        guide_eff = guide_critique.overall_effectiveness if guide_critique else 0
-        chat_n = chat_critique.total_exchanges if chat_critique else 0
-        guide_n = guide_critique.total_exchanges if guide_critique else 0
-        total_n = chat_n + guide_n
-        combined_effectiveness = ((chat_eff * chat_n + guide_eff * guide_n) / total_n) if total_n > 0 else 0
+        # Build trace_items list for the UI (one item per distinct trace_id × culprit)
+        seen = set()
+        trace_items = []
+        for t in saved_traces:
+            for c in _effective_culprits(t):
+                if not c.culprit_name or c.culprit_name == "unknown":
+                    continue
+                key = (t.trace_id, c.culprit_name)
+                if key not in seen:
+                    seen.add(key)
+                    trace_items.append({
+                        "exchange_index": t.exchange_index,
+                        "trace_id": t.trace_id,
+                        "culprit_name": c.culprit_name,
+                        "prompt_template_name": c.prompt_template_name,
+                    })
 
-        # Update task status
         critique_tasks[task_id]["status"] = "completed"
         critique_tasks[task_id]["report_path"] = str(report_path)
-        critique_tasks[task_id]["overall_effectiveness"] = combined_effectiveness
+        critique_tasks[task_id]["overall_effectiveness"] = None
+        critique_tasks[task_id]["traces"] = trace_items
 
-        logger.info(f"[CRITIQUE] Task {task_id[:8]}... completed | report: {report_path} | "
-                     f"chat: {chat_eff:.1f}% ({chat_n}ex) | guide: {guide_eff:.1f}% ({guide_n}ex) | "
-                     f"combined: {combined_effectiveness:.1f}%")
+        logger.info(f"[CRITIQUE] Task {task_id[:8]}... completed | "
+                    f"flawed: {len(flawed_critiques)} | traces: {len(trace_items)}")
 
     except Exception as e:
         critique_tasks[task_id]["status"] = "failed"
@@ -1307,6 +1260,7 @@ def critique_conversation():
         "report_path": None,
         "error": None,
         "overall_effectiveness": None,
+        "traces": [],
         "started_at": time.time()
     }
 
@@ -1316,10 +1270,33 @@ def critique_conversation():
     ibpyp_theme_name = assistant.ibpyp_theme_name
     age = assistant.age or 6
 
+    # Hold a reference so the GC won't collect assistant during the background thread run
+    assistant_ref = assistant
+
+    # Pre-extract all exchange triplets so the background worker doesn't need the transcript
+    all_exchanges = []
+    i = 0
+    while i < len(transcript) - 2:
+        if (transcript[i].get("role") == "model" and
+            transcript[i + 1].get("role") == "child" and
+            transcript[i + 2].get("role") == "model"):
+            all_exchanges.append({
+                "model_question": transcript[i]["content"],
+                "child_response": transcript[i + 1]["content"],
+                "model_response": transcript[i + 2]["content"],
+                "question_nodes_executed": transcript[i].get("nodes_executed", []),
+                "nodes_executed": transcript[i + 2].get("nodes_executed", []),
+                "mode": transcript[i].get("mode", "chat"),
+            })
+            i += 2
+        else:
+            i += 1
+
     # Spawn background worker
     thread = threading.Thread(
         target=run_critique_background,
-        args=(task_id, session_id, transcript, object_name, key_concept, age, ibpyp_theme_name),
+        args=(task_id, session_id, transcript, all_exchanges, assistant_ref,
+              object_name, key_concept, age, ibpyp_theme_name),
         daemon=True
     )
     thread.start()
@@ -1363,6 +1340,7 @@ def critique_status(task_id):
         "session_id": task["session_id"],
         "report_path": task["report_path"],
         "overall_effectiveness": task["overall_effectiveness"],
+        "traces": task.get("traces", []),
         "error": task["error"],
         "elapsed_seconds": round(time.time() - task["started_at"], 1)
     })
@@ -1422,13 +1400,27 @@ def get_exchanges(session_id):
             transcript[i + 2].get("role") == "model"):
 
             exchange_index += 1
+            nodes = transcript[i + 2].get("nodes_executed", [])
+
+            # Extract intent_type: first node whose 'changes' dict sets intent_type
+            intent_type = None
+            for node_entry in nodes:
+                if "intent_type" in node_entry.get("changes", {}):
+                    intent_type = node_entry["changes"]["intent_type"]
+                    break
+
+            # Total response time in ms (sum of all node times)
+            response_time_ms = round(sum(n.get("time_ms", 0) for n in nodes), 1)
+
             exchanges.append({
                 "index": exchange_index,
                 "model_question": transcript[i]["content"],
                 "child_response": transcript[i + 1]["content"],
                 "model_response": transcript[i + 2]["content"],
-                "nodes_executed": transcript[i + 2].get("nodes_executed", []),
+                "nodes_executed": nodes,
                 "mode": transcript[i].get("mode", "chat"),
+                "intent_type": intent_type,
+                "response_time_ms": response_time_ms,
             })
             i += 2  # Move past child response, next iteration checks from model response
         else:
@@ -1440,7 +1432,10 @@ def get_exchanges(session_id):
         "object_name": assistant.object_name,
         "age": assistant.age,
         "key_concept": assistant.key_concept,
-        "ibpyp_theme_name": assistant.ibpyp_theme_name
+        "ibpyp_theme_name": assistant.ibpyp_theme_name,
+        "level1_category": assistant.level1_category,
+        "level2_category": assistant.level2_category,
+        "level3_category": assistant.level3_category,
     })
 
 
@@ -1486,6 +1481,7 @@ def manual_critique():
     session_id = data.get('session_id')
     exchange_critiques = data.get('exchange_critiques', [])
     global_conclusion = data.get('global_conclusion', '')
+    skip_traces = data.get('skip_traces', False)
 
     if not session_id:
         return jsonify({
@@ -1551,11 +1547,13 @@ def manual_critique():
             key_concept=assistant.key_concept,
         )
 
-        # Save to reports/HF/
-        reports_dir = Path(__file__).parent / "reports" / "HF"
+        # Save to reports/HF/YYYY-MM-DD/
+        now = datetime.now()
+        date_dir = now.strftime("%Y-%m-%d")
+        reports_dir = Path(__file__).parent / "reports" / "HF" / date_dir
         reports_dir.mkdir(parents=True, exist_ok=True)
 
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = now.strftime("%Y%m%d_%H%M%S")
         safe_object_name = "".join(
             c if c.isalnum() or c in "-_" else "_"
             for c in (assistant.object_name or "unknown")
@@ -1567,6 +1565,14 @@ def manual_critique():
 
         logger.info(f"[MANUAL-CRITIQUE] Report saved: {report_path} | "
                      f"exchanges critiqued: {len(exchange_critiques)}")
+
+        if skip_traces:
+            return jsonify({
+                "success": True,
+                "report_path": str(report_path),
+                "exchanges_critiqued": len(exchange_critiques),
+                "traces": [],
+            })
 
         # Assemble TraceObjects for each critiqued exchange
         from trace_assembler import assemble_trace_object, save_trace_object
@@ -1991,41 +1997,35 @@ def async_gen_to_sync(async_gen, loop):
     """
     Bridge async generator to sync generator WITHOUT buffering.
 
-    This uses a queue and background thread to immediately yield chunks
-    as they arrive from the async generator, enabling real streaming.
+    Submits the async consumer coroutine to the persistent _ASYNC_LOOP via
+    run_coroutine_threadsafe() so that all requests share one event loop and
+    the httpx/anyio transport never sees a mismatched loop.
 
     Args:
         async_gen: Async generator to bridge
-        loop: Event loop to run async generator in
+        loop: The persistent event loop (_ASYNC_LOOP)
 
     Yields:
         Items from async generator in real-time
     """
     import queue
-    import threading
 
     chunk_queue = queue.Queue()
     exception_holder = [None]
 
-    def run_async():
-        """Runs in background thread to consume async generator."""
+    async def consume():
         try:
-            async def consume():
-                async for item in async_gen:
-                    chunk_queue.put(('chunk', item))
-                chunk_queue.put(('done', None))
-            loop.run_until_complete(consume())
+            async for item in async_gen:
+                chunk_queue.put(('chunk', item))
+            chunk_queue.put(('done', None))
         except Exception as e:
             exception_holder[0] = e
             chunk_queue.put(('error', e))
 
-    # Start background thread
-    thread = threading.Thread(target=run_async, daemon=True)
-    thread.start()
+    asyncio.run_coroutine_threadsafe(consume(), loop)  # non-blocking submit
 
-    # Yield chunks as they arrive
     while True:
-        msg_type, data = chunk_queue.get()  # Blocks until chunk available
+        msg_type, data = chunk_queue.get()  # blocks Flask thread until chunk ready
         if msg_type == 'chunk':
             yield data
         elif msg_type == 'done':

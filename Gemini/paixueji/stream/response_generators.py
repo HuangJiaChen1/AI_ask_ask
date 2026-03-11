@@ -1,17 +1,10 @@
 """
 Response stream generators for Paixueji assistant.
 
-This module contains the "Part 1" functions of the dual-parallel architecture:
-response-only stream generators that produce feedback, explanations, corrections,
-and topic switch celebrations WITHOUT follow-up questions.
-
 Functions:
-    - generate_feedback_response_stream: Celebratory feedback for correct answers
-    - generate_explanation_response_stream: Explanation when child says "I don't know"
-    - generate_correction_response_stream: Gentle correction for wrong answers
-    - generate_topic_switch_response_stream: Celebration for topic transitions
-    - generate_natural_topic_completion_stream: Natural topic completion
-    - generate_explicit_switch_response_stream: Response for explicit switch requests
+    - generate_intent_response_stream: Universal intent response generator (9-node architecture)
+    - generate_topic_switch_response_stream: Celebration for named-object topic transitions
+    - generate_explicit_switch_response_stream: Response for explicit switch requests (no named object)
 """
 import time
 from typing import AsyncGenerator
@@ -25,118 +18,34 @@ import paixueji_prompts
 from .utils import clean_messages_for_api, convert_messages_to_gemini_format
 
 
-async def generate_feedback_response_stream(
+async def generate_intent_response_stream(
+    intent_type: str,
     messages: list[dict],
     child_answer: str,
     object_name: str,
     age: int,
-    config: dict,
-    client: genai.Client
-) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
-    """
-    Generate ONLY celebratory feedback for correct answers. NO follow-up questions.
-
-    This function is part of the dual-parallel architecture where response generation
-    is decoupled from question generation.
-
-    Args:
-        messages: Conversation history
-        child_answer: The child's correct answer
-        object_name: Name of object being discussed
-        age: Child's age
-        config: Configuration dict with model settings
-        client: Gemini client instance
-
-    Yields:
-        Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
-    """
-    start_time = time.time()
-    logger.info(f"generate_feedback_response_stream started | object={object_name}, age={age}")
-
-    # Build feedback-only prompt
-    prompts = paixueji_prompts.get_prompts()
-    prompt = prompts['feedback_response_prompt'].format(
-        child_answer=child_answer,
-        object_name=object_name,
-        age=age
-    )
-
-    # Prepare messages
-    messages_to_send = messages + [{"role": "user", "content": prompt}]
-    clean_messages = clean_messages_for_api(messages_to_send)
-
-    # Convert to Gemini format
-    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
-
-    # Stream from LLM
-    full_response = ""
-    token_usage = None
-    stream = None
-
-    try:
-        gen_config = GenerateContentConfig(
-            temperature=config.get("temperature", 0.3),
-            max_output_tokens=config.get("max_tokens", 500),  # Shorter for feedback only
-            system_instruction=system_instruction if system_instruction else None
-        )
-
-        stream = await client.aio.models.generate_content_stream(
-            model=config["model_name"],
-            contents=contents,
-            config=gen_config
-        )
-
-        # Yield chunks
-        async for chunk in stream:
-            if chunk.text:
-                full_response += chunk.text
-                yield (chunk.text, None, full_response)
-
-    except Exception as e:
-        duration = time.time() - start_time
-        logger.error(f"generate_feedback_response_stream error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
-        if full_response:
-            yield ("", token_usage, full_response)
-        return
-    finally:
-        if stream is not None:
-            try:
-                del stream
-            except:
-                pass
-
-    duration = time.time() - start_time
-    logger.info(f"generate_feedback_response_stream completed | duration={duration:.3f}s, length={len(full_response)}")
-
-    # Final yield
-    yield ("", token_usage, full_response)
-
-
-async def generate_explanation_response_stream(
-    messages: list[dict],
-    child_answer: str,
-    object_name: str,
-    previous_question: str,
-    age: int,
-    category_prompt: str,
     age_prompt: str,
+    category_prompt: str,
+    last_model_question: str,
     config: dict,
-    client: genai.Client
+    client: genai.Client,
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
-    Generate ONLY explanation when child says "I don't know". NO follow-up questions.
+    Universal intent response generator for the 9-node architecture.
 
-    This function is part of the dual-parallel architecture where response generation
-    is decoupled from question generation.
+    Selects the prompt template using `{intent_type}_intent_prompt` from get_prompts(),
+    formats it with conversation context, and streams the LLM response.
 
     Args:
+        intent_type: One of curiosity, clarifying, informative, play, emotional,
+                     avoidance, boundary, action, social (case-insensitive)
         messages: Conversation history
-        child_answer: The child's unclear/stuck answer
-        object_name: Name of object being discussed
-        previous_question: The question that was asked
+        child_answer: The child's input text
+        object_name: Current object being discussed
         age: Child's age
-        category_prompt: Category-specific guidance
-        age_prompt: Age-specific guidance
+        age_prompt: Age-specific guidance string
+        category_prompt: Category-specific guidance string
+        last_model_question: The previous question asked by the model
         config: Configuration dict with model settings
         client: Gemini client instance
 
@@ -144,33 +53,42 @@ async def generate_explanation_response_stream(
         Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
     """
     start_time = time.time()
-    logger.info(f"generate_explanation_response_stream started | object={object_name}, age={age}")
+    intent_lower = intent_type.lower()
+    logger.info(f"generate_intent_response_stream started | intent={intent_lower}, object={object_name}, age={age}")
 
-    # Build explanation-only prompt
+    prompt_key = f"{intent_lower}_intent_prompt"
     prompts = paixueji_prompts.get_prompts()
-    prompt = prompts['explanation_response_prompt'].format(
-        child_answer=child_answer,
-        previous_question=previous_question,
-        object_name=object_name,
-        age=age
-    )
+    prompt_template = prompts.get(prompt_key, "")
 
-    # Prepare messages
+    if not prompt_template:
+        logger.warning(f"No prompt template found for key '{prompt_key}', using fallback")
+        prompt_template = "Respond warmly and helpfully to the child's input: \"{child_answer}\""
+
+    try:
+        prompt = prompt_template.format(
+            child_answer=child_answer,
+            object_name=object_name,
+            age=age,
+            age_prompt=age_prompt,
+            category_prompt=category_prompt,
+            last_model_question=last_model_question,
+        )
+    except KeyError as e:
+        logger.warning(f"Prompt template formatting error for '{prompt_key}': {e}")
+        prompt = prompt_template
+
     messages_to_send = messages + [{"role": "user", "content": prompt}]
     clean_messages = clean_messages_for_api(messages_to_send)
-
-    # Convert to Gemini format
     system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
 
-    # Stream from LLM
     full_response = ""
     token_usage = None
     stream = None
 
     try:
         gen_config = GenerateContentConfig(
-            temperature=config.get("temperature", 0.3),
-            max_output_tokens=config.get("max_tokens", 800),
+            temperature=config.get("temperature", 0.7),
+            max_output_tokens=config.get("max_tokens", 500),
             system_instruction=system_instruction if system_instruction else None
         )
 
@@ -180,7 +98,6 @@ async def generate_explanation_response_stream(
             config=gen_config
         )
 
-        # Yield chunks
         async for chunk in stream:
             if chunk.text:
                 full_response += chunk.text
@@ -188,7 +105,7 @@ async def generate_explanation_response_stream(
 
     except Exception as e:
         duration = time.time() - start_time
-        logger.error(f"generate_explanation_response_stream error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        logger.error(f"generate_intent_response_stream error | intent={intent_lower}, error={str(e)}, duration={duration:.3f}s", exc_info=True)
         if full_response:
             yield ("", token_usage, full_response)
         return
@@ -196,105 +113,12 @@ async def generate_explanation_response_stream(
         if stream is not None:
             try:
                 del stream
-            except:
+            except Exception:
                 pass
 
     duration = time.time() - start_time
-    logger.info(f"generate_explanation_response_stream completed | duration={duration:.3f}s, length={len(full_response)}")
+    logger.info(f"generate_intent_response_stream completed | intent={intent_lower}, duration={duration:.3f}s, length={len(full_response)}")
 
-    # Final yield
-    yield ("", token_usage, full_response)
-
-
-async def generate_correction_response_stream(
-    messages: list[dict],
-    child_answer: str,
-    object_name: str,
-    previous_question: str,
-    correctness_reasoning: str,
-    age: int,
-    config: dict,
-    client: genai.Client
-) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
-    """
-    Generate ONLY gentle correction for wrong answers. NO follow-up questions.
-
-    This function is part of the dual-parallel architecture where response generation
-    is decoupled from question generation.
-
-    Args:
-        messages: Conversation history
-        child_answer: The child's incorrect answer
-        object_name: Name of object being discussed
-        previous_question: The question that was asked
-        correctness_reasoning: AI's reasoning for why answer is wrong
-        age: Child's age
-        config: Configuration dict with model settings
-        client: Gemini client instance
-
-    Yields:
-        Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
-    """
-    start_time = time.time()
-    logger.info(f"generate_correction_response_stream started | object={object_name}, age={age}")
-
-    # Build correction-only prompt
-    prompts = paixueji_prompts.get_prompts()
-    prompt = prompts['correction_response_prompt'].format(
-        child_answer=child_answer,
-        object_name=object_name,
-        correctness_reasoning=correctness_reasoning,
-        age=age
-    )
-
-    # Prepare messages
-    messages_to_send = messages + [{"role": "user", "content": prompt}]
-    clean_messages = clean_messages_for_api(messages_to_send)
-
-    # Convert to Gemini format
-    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
-
-    # Stream from LLM
-    full_response = ""
-    token_usage = None
-    stream = None
-
-    try:
-        gen_config = GenerateContentConfig(
-            temperature=config.get("temperature", 0.3),
-            max_output_tokens=config.get("max_tokens", 600),
-            system_instruction=system_instruction if system_instruction else None
-        )
-
-        stream = await client.aio.models.generate_content_stream(
-            model=config["model_name"],
-            contents=contents,
-            config=gen_config
-        )
-
-        # Yield chunks
-        async for chunk in stream:
-            if chunk.text:
-                full_response += chunk.text
-                yield (chunk.text, None, full_response)
-
-    except Exception as e:
-        duration = time.time() - start_time
-        logger.error(f"generate_correction_response_stream error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
-        if full_response:
-            yield ("", token_usage, full_response)
-        return
-    finally:
-        if stream is not None:
-            try:
-                del stream
-            except:
-                pass
-
-    duration = time.time() - start_time
-    logger.info(f"generate_correction_response_stream completed | duration={duration:.3f}s, length={len(full_response)}")
-
-    # Final yield
     yield ("", token_usage, full_response)
 
 
@@ -307,10 +131,9 @@ async def generate_topic_switch_response_stream(
     client: genai.Client
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
-    Generate ONLY celebration for topic transitions. NO follow-up questions.
+    Generate celebration for named-object topic transitions.
 
-    This function is part of the dual-parallel architecture where response generation
-    is decoupled from question generation.
+    Used by node_avoidance and node_action when new_object_name is set.
 
     Args:
         messages: Conversation history
@@ -326,7 +149,6 @@ async def generate_topic_switch_response_stream(
     start_time = time.time()
     logger.info(f"generate_topic_switch_response_stream started | {previous_object} -> {new_object}, age={age}")
 
-    # Build topic switch celebration prompt
     prompts = paixueji_prompts.get_prompts()
     prompt = prompts['topic_switch_response_prompt'].format(
         previous_object=previous_object,
@@ -334,14 +156,10 @@ async def generate_topic_switch_response_stream(
         age=age
     )
 
-    # Prepare messages
     messages_to_send = messages + [{"role": "user", "content": prompt}]
     clean_messages = clean_messages_for_api(messages_to_send)
-
-    # Convert to Gemini format
     system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
 
-    # Stream from LLM
     full_response = ""
     token_usage = None
     stream = None
@@ -359,7 +177,6 @@ async def generate_topic_switch_response_stream(
             config=gen_config
         )
 
-        # Yield chunks
         async for chunk in stream:
             if chunk.text:
                 full_response += chunk.text
@@ -375,104 +192,12 @@ async def generate_topic_switch_response_stream(
         if stream is not None:
             try:
                 del stream
-            except:
+            except Exception:
                 pass
 
     duration = time.time() - start_time
     logger.info(f"generate_topic_switch_response_stream completed | duration={duration:.3f}s, length={len(full_response)}")
 
-    # Final yield
-    yield ("", token_usage, full_response)
-
-
-async def generate_natural_topic_completion_stream(
-    messages: list[dict],
-    current_object: str,
-    age: int,
-    config: dict,
-    client: genai.Client
-) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
-    """
-    Generate response for natural topic completion (after exploring an object deeply).
-
-    This function congratulates the child on exploring the current object and asks
-    what they'd like to explore next. Does NOT provide a list of options - lets them
-    use natural language to choose.
-
-    Args:
-        messages: Conversation history
-        current_object: Current object being discussed
-        age: Child's age
-        config: Configuration dict
-        client: Gemini client instance
-
-    Yields:
-        Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
-    """
-    start_time = time.time()
-    logger.info(f"generate_natural_topic_completion_stream started | object={current_object}, age={age}")
-
-    prompt = f"""The child has done an excellent job exploring {current_object}!
-
-YOUR TASK:
-1. Warmly congratulate them on their exploration of {current_object}
-2. Express excitement about what they've learned
-3. Ask them what they'd like to explore next (let them choose naturally)
-4. Provide a list of options
-5. Match vocabulary to age {age}
-6. Respond naturally (NOT JSON)
-7. Keep it brief and enthusiastic
-
-"""
-
-    # Prepare messages
-    messages_to_send = messages + [{"role": "user", "content": prompt}]
-    clean_messages = clean_messages_for_api(messages_to_send)
-
-    # Convert to Gemini format
-    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
-
-    # Stream from LLM
-    full_response = ""
-    token_usage = None
-    stream = None
-
-    try:
-        gen_config = GenerateContentConfig(
-            temperature=config.get("temperature", 0.3),
-            max_output_tokens=300,
-            system_instruction=system_instruction if system_instruction else None
-        )
-
-        stream = await client.aio.models.generate_content_stream(
-            model=config["model_name"],
-            contents=contents,
-            config=gen_config
-        )
-
-        # Yield chunks
-        async for chunk in stream:
-            if chunk.text:
-                full_response += chunk.text
-                yield (chunk.text, None, full_response)
-
-    except Exception as e:
-        duration = time.time() - start_time
-        logger.error(f"generate_natural_topic_completion_stream error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
-        if full_response:
-            yield ("", token_usage, full_response)
-        return
-    finally:
-        if stream is not None:
-            try:
-                del stream
-            except:
-                pass
-
-    duration = time.time() - start_time
-    logger.info(f"generate_natural_topic_completion_stream completed | duration={duration:.3f}s, length={len(full_response)}")
-
-    # Final yield
     yield ("", token_usage, full_response)
 
 
@@ -484,15 +209,14 @@ async def generate_explicit_switch_response_stream(
     client: genai.Client
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
-    Generate response for explicit switch requests (e.g., "talk about something else").
+    Generate response for explicit switch requests where no specific object was named.
 
-    This function is specifically for when the child explicitly asks to switch topics.
-    Unlike generate_object_selection_response_stream, it does NOT congratulate them
-    on exploring the previous object (since they might not have explored it much).
+    Used by node_avoidance and node_action when the child wants a new topic but
+    didn't name one — presents a list of options and sets awaiting_topic_selection.
 
     Args:
         messages: Conversation history
-        suggested_objects: List of objects to present
+        suggested_objects: List of objects to present as choices
         age: Child's age
         config: Configuration dict
         client: Gemini client instance
@@ -503,7 +227,6 @@ async def generate_explicit_switch_response_stream(
     start_time = time.time()
     logger.info(f"generate_explicit_switch_response_stream started | objects={suggested_objects}, age={age}")
 
-    # Build object selection prompt for explicit switches
     objects_list = ", ".join(suggested_objects[:-1]) + f", or {suggested_objects[-1]}"
 
     prompt = f"""The child has explicitly requested to switch topics and explore something new.
@@ -520,14 +243,10 @@ YOUR TASK:
 
 """
 
-    # Prepare messages
     messages_to_send = messages + [{"role": "user", "content": prompt}]
     clean_messages = clean_messages_for_api(messages_to_send)
-
-    # Convert to Gemini format
     system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
 
-    # Stream from LLM
     full_response = ""
     token_usage = None
     stream = None
@@ -545,7 +264,6 @@ YOUR TASK:
             config=gen_config
         )
 
-        # Yield chunks
         async for chunk in stream:
             if chunk.text:
                 full_response += chunk.text
@@ -561,11 +279,10 @@ YOUR TASK:
         if stream is not None:
             try:
                 del stream
-            except:
+            except Exception:
                 pass
 
     duration = time.time() - start_time
     logger.info(f"generate_explicit_switch_response_stream completed | duration={duration:.3f}s, length={len(full_response)}")
 
-    # Final yield
     yield ("", token_usage, full_response)

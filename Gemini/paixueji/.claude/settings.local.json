@@ -10,7 +10,14 @@
       "WebSearch",
       "WebFetch(domain:github.com)",
       "Bash(node --check:*)",
-      "Bash(grep -r \"thinkingTime\\\\|thinking_time\\\\|latency\\\\|response_time\" /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji --include=\"*.py\" --include=\"*.js\" 2>/dev/null | head -20)"
+      "Bash(grep -r \"thinkingTime\\\\|thinking_time\\\\|latency\\\\|response_time\" /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji --include=\"*.py\" --include=\"*.js\" 2>/dev/null | head -20)",
+      "Bash(pytest:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Skill(fix-flaw)",
+      "Bash(gcloud:*)",
+      "Bash(GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/application_default_credentials.json python:*)",
+      "Bash(git stash:*)"
     ]
   },
   "outputStyle": "Explanatory"

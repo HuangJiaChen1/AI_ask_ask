@@ -11,16 +11,10 @@ import time
 
 from stream import (
     ask_introduction_question_stream,
-    decide_topic_switch_with_validation,
+    classify_intent,
+    generate_intent_response_stream,
     generate_explicit_switch_response_stream,
-    generate_object_suggestions,
     generate_topic_switch_response_stream,
-    generate_explanation_response_stream,
-    generate_feedback_response_stream,
-    generate_correction_response_stream,
-    generate_followup_question_stream,
-    generate_natural_topic_completion_stream,
-    decide_next_focus_mode,
     extract_previous_question,
     prepare_messages_for_streaming,
     clean_messages_for_api,
@@ -28,6 +22,10 @@ from stream import (
 )
 from stream.theme_guide import ThemeNavigator, ThemeDriver
 from schema import StreamChunk, TokenUsage
+import paixueji_prompts
+from theme_classifier import classify_object_to_theme
+
+GUIDE_MODE_THRESHOLD = 4  # Correct answers required to enter guide mode
 
 
 def _load_router_overrides() -> dict:
@@ -62,34 +60,25 @@ class PaixuejiState(TypedDict):
 
     # --- Prompts ---
     age_prompt: str
-    character_prompt: str
     category_prompt: str
-    focus_prompt: str
 
     # --- Flow Control & Computed State ---
-    focus_mode: Optional[str]
-    validation_result: Optional[dict]
-
-    is_engaged: Optional[bool]
-    is_factually_correct: Optional[bool]
-    correctness_reasoning: Optional[str]
-    switch_decision_reasoning: Optional[str]
+    intent_type: Optional[str]   # one of 9 intent categories (chat mode)
 
     new_object_name: Optional[str]
     detected_object_name: Optional[str]
 
     response_type: Optional[str]
     suggested_objects: Optional[List[str]]
-    natural_topic_completion: bool
 
     # --- Guide State (Multi-turn Navigator/Driver) ---
-    guide_phase: Optional[str]  # "active", "hint", "success", "exit"
+    guide_phase: Optional[str]   # "active", "hint", "success", "exit"
     guide_status: Optional[str]  # ON_TRACK, DRIFTING, STUCK, COMPLETED
     guide_strategy: Optional[str]  # ADVANCE, PIVOT, SCAFFOLD, COMPLETE
     guide_turn_count: Optional[int]
     scaffold_level: Optional[int]  # 1-4, progressive hint levels (only if SCAFFOLD)
     last_navigation_state: Optional[dict]  # Full Navigator result
-    
+
     # --- Fun Fact (Grounded) ---
     fun_fact: Optional[str]
     fun_fact_hook: Optional[str]
@@ -100,9 +89,9 @@ class PaixuejiState(TypedDict):
     full_response_text: str
     full_question_text: str
     sequence_number: int
-    
+
     # --- Internal ---
-    stream_callback: Any  # Async callback function(chunk: StreamChunk) -> None
+    stream_callback: Any   # Async callback function(chunk: StreamChunk) -> None
     start_time: float
     ttft: Optional[float]  # Time to First Token (seconds)
 
@@ -114,13 +103,10 @@ class PaixuejiState(TypedDict):
 # NODE EXECUTION TRACING
 # ============================================================================
 
-# Key state fields to track for changes
 KEY_STATE_FIELDS = [
-    "response_type", "is_engaged", "is_factually_correct",
+    "intent_type", "response_type",
     "guide_phase", "guide_status", "guide_strategy",
-    "new_object_name", "natural_topic_completion",
-    "correctness_reasoning", "switch_decision_reasoning",
-    "focus_mode", "scaffold_level", "guide_turn_count"
+    "new_object_name", "scaffold_level", "guide_turn_count"
 ]
 
 
@@ -133,11 +119,7 @@ def trace_node(func):
     - Execution time in milliseconds
     - Key state changes (before vs after)
     - state_before: key fields snapshot before the node ran
-    - validation_result: if returned by the node (e.g. node_analyze_input)
     - navigation_result: if returned by the node (e.g. node_guide_navigator)
-
-    The trace is appended to state["nodes_executed"] for later inclusion
-    in critique reports and TraceObject assembly.
     """
     @functools.wraps(func)
     async def wrapper(state: PaixuejiState) -> dict:
@@ -166,10 +148,6 @@ def trace_node(func):
             "state_before": state_before,
         }
 
-        # Capture validation_result if present (from node_analyze_input)
-        if "validation_result" in result and result["validation_result"]:
-            trace_entry["validation_result"] = result["validation_result"]
-
         # Capture navigation_result if present (from node_guide_navigator)
         if "last_navigation_state" in result and result["last_navigation_state"]:
             trace_entry["navigation_result"] = result["last_navigation_state"]
@@ -190,9 +168,6 @@ def trace_router(capture_fields):
     Since routers are not graph nodes, they can't append to state["nodes_executed"]
     directly. Instead, traces are stored on the assistant object (passed by reference)
     and merged into nodes_executed by node_finalize.
-
-    Args:
-        capture_fields: list of state keys to capture for debugging context
     """
     def decorator(func):
         @functools.wraps(func)
@@ -234,81 +209,88 @@ def trace_router(capture_fields):
 
 
 # ============================================================================
+# TOPIC SWITCH HELPER
+# ============================================================================
+
+async def _apply_topic_switch(state: PaixuejiState, new_obj: str) -> dict:
+    """
+    Update assistant state for a named-object topic switch and return state updates.
+
+    Used by node_avoidance and node_action when the child names a new object.
+    Mirrors the logic that was previously in node_route_logic's SWITCH branch.
+    """
+    assistant = state["assistant"]
+
+    from paixueji_assistant import ConversationState
+
+    assistant.object_name = new_obj
+
+    assistant.state = ConversationState.ASKING_QUESTION
+
+    await asyncio.gather(
+        asyncio.to_thread(assistant.classify_object_sync, new_obj),
+        asyncio.to_thread(assistant.classify_theme_background, new_obj),
+    )
+
+    return {
+        "object_name": new_obj,
+        "new_object_name": new_obj,
+        "response_type": "topic_switch",
+        "category_prompt": assistant.get_category_prompt(
+            assistant.level1_category,
+            assistant.level2_category,
+            assistant.level3_category
+        )
+    }
+
+
+# ============================================================================
 # NODES
 # ============================================================================
 
 @trace_node
 async def node_analyze_input(state: PaixuejiState) -> dict:
     """
-    First node: Check if it's the first turn (Intro) or requires validation.
-    Also handles system-managed focus mode logic.
+    Classify child utterance into one of 9 communicative intents.
+    Routes to a dedicated intent node for response generation.
     """
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Analyze Input")
-    
-    # Check if introduction (no assistant messages yet and correct count 0)
-    # The 'messages' list already has the current user input appended in app.py before calling graph?
-    # No, we'll append it here if needed or assume it's passed in.
-    # In `call_paixueji_stream`, it appended the user input.
-    
-    # IMPORTANT: Logic from original `call_paixueji_stream` about appending user input
-    # "messages.append({'role': 'user', 'content': content})"
-    # We'll assume the caller (app.py) handles the `conversation_history` persistence,
-    # but `state['messages']` is what we send to LLM.
-    
-    # Logic for Intro detection
-    has_asked_questions = any(msg.get("role") == "assistant" for msg in state["messages"])
-    is_intro = (state["correct_answer_count"] == 0 and not has_asked_questions)
-    
-    if is_intro:
-        # Trigger background IB PYP theme classification on introduction
-        state["assistant"].classify_theme_background(state["object_name"])
-        logger.info(f"[{state['session_id']}] Node: Analyze Input finished in {time.time() - start_time:.3f}s")
-        return {"response_type": "introduction"}
-    
-    # --- Validation Logic ---
+
     assistant = state["assistant"]
     is_awaiting_topic_selection = (assistant.state.value == "awaiting_topic_selection")
-    
-    validation_result = await decide_topic_switch_with_validation(
+
+    intent_result = await classify_intent(
         assistant=assistant,
         child_answer=state["content"],
         object_name=state["object_name"],
         age=state["age"],
-        focus_mode=state["focus_mode"],
         is_awaiting_topic_selection=is_awaiting_topic_selection
     )
-    
-    updates = {
-        "validation_result": validation_result,
-        "is_engaged": validation_result.get("is_engaged"),
-        "is_factually_correct": validation_result.get("is_factually_correct"),
-        "correctness_reasoning": validation_result.get("correctness_reasoning"),
-        "switch_decision_reasoning": validation_result.get("switching_reasoning"),
-        "new_object_name": validation_result.get("new_object"),
-        "detected_object_name": validation_result.get("detected_object") if not validation_result.get("new_object") else None
-    }
-    
-    # --- System Managed Focus Logic (Pre-Routing) ---
-    if assistant.system_managed_focus:
-        # Track depth questions
-        if updates["is_engaged"] and assistant.current_focus_mode == 'depth':
-            assistant.depth_questions_count += 1
+
+    intent_type = intent_result["intent_type"]
+
+    # Reset IDK streak when child gives any non-IDK response
+    if intent_type != "CLARIFYING_IDK":
+        state["assistant"].consecutive_idk_count = 0
 
     logger.info(f"[{state['session_id']}] Node: Analyze Input finished in {time.time() - start_time:.3f}s")
-    return updates
+    return {
+        "intent_type": intent_type,
+        "new_object_name": intent_result.get("new_object"),
+    }
 
 
 @trace_node
 async def node_generate_fun_fact(state: PaixuejiState) -> dict:
     """
     Generate grounded fun facts for the introduction using Google Search.
-    Only called on the introduction path (skips analyze_input).
+    Only called on the introduction path.
     """
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Generate Fun Fact for '{state['object_name']}'")
 
-    # Trigger background IB PYP theme classification on introduction (since analyze_input is skipped)
+    # Trigger background IB PYP theme classification on introduction
     state["assistant"].classify_theme_background(state["object_name"])
 
     from stream.fun_fact import generate_fun_fact
@@ -331,101 +313,44 @@ async def node_generate_fun_fact(state: PaixuejiState) -> dict:
 
 
 @trace_node
-async def node_route_logic(state: PaixuejiState) -> dict:
+async def node_generate_intro(state: PaixuejiState) -> dict:
     """
-    Determine the response type and next steps based on validation results.
+    Stream the introduction response using ask_introduction_question_stream.
     """
     start_time = time.time()
-    logger.info(f"[{state['session_id']}] Node: Route Logic")
-    
-    val_result = state["validation_result"]
-    should_switch = val_result.get("decision") == "SWITCH"
-    
-    updates = {}
-    
-    if should_switch and not val_result.get("new_object"):
-        # Explicit Switch (Offering choices)
-        from paixueji_assistant import ConversationState
-        state["assistant"].state = ConversationState.AWAITING_TOPIC_SELECTION
-        
-        suggested = generate_object_suggestions(state["assistant"], state["config"], state["client"], state["age"])
-        updates["suggested_objects"] = suggested
-        updates["response_type"] = "explicit_switch"
-        
-    elif should_switch and val_result.get("new_object"):
-        # Topic Switch
-        new_obj = val_result["new_object"]
-        
-        # Update assistant state
-        if state["assistant"].system_managed_focus:
-            state["assistant"].reset_object_state(new_obj)
-        else:
-            state["assistant"].object_name = new_obj
-            
-        from paixueji_assistant import ConversationState
-        state["assistant"].state = ConversationState.ASKING_QUESTION
-        
-        # Trigger background classification (simplification: running sync here or assume async helper)
-        # We'll just let the assistant handle it, but for the graph flow, we update context.
-        # Ideally, we should update level categories here.
-        # Since we can't easily do async background tasks that outlive the request in this strict node structure without blocking,
-        # we will skip the background thread part or do it blocking if fast. 
-        # The original code did it in a thread pool. We'll leave it as side-effect on assistant.
-        import concurrent.futures
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            executor.submit(state["assistant"].classify_object_sync, new_obj)
-            # Also trigger IB PYP theme classification in background
-            executor.submit(state["assistant"].classify_theme_background, new_obj)
-            
-        # Update state context for next steps
-        updates["object_name"] = new_obj
-        updates["new_object_name"] = new_obj
-        updates["response_type"] = "topic_switch"
-        
-        # Re-fetch category prompt (since object changed)
-        # assistant.level* categories are updated by classify_object_sync... 
-        # if it's background, they might not be ready yet. 
-        # Original code re-fetched prompt immediately using OLD categories or wait?
-        # Original code: "Rebuild category prompts... level1_category = assistant.level1_category"
-        # Since classification is background, it uses old or None until finished. 
-        # We will follow original logic.
-        updates["category_prompt"] = state["assistant"].get_category_prompt(
-            state["assistant"].level1_category,
-            state["assistant"].level2_category,
-            state["assistant"].level3_category
-        )
+    logger.info(f"[{state['session_id']}] Node: Generate Intro for '{state['object_name']}'")
 
-    elif not state["is_engaged"]:
-        updates["response_type"] = "explanation"
-        from paixueji_assistant import ConversationState
-        state["assistant"].state = ConversationState.ASKING_QUESTION
-        
-    elif state["is_factually_correct"]:
-        updates["response_type"] = "feedback"
-        from paixueji_assistant import ConversationState
-        state["assistant"].state = ConversationState.ASKING_QUESTION
-        
-    else:
-        updates["response_type"] = "gentle_correction"
-        from paixueji_assistant import ConversationState
-        state["assistant"].state = ConversationState.ASKING_QUESTION
-        
-    # --- System Managed Focus Logic (Post-Routing Decision) ---
-    assistant = state["assistant"]
-    if assistant.system_managed_focus and updates.get("response_type") != "explicit_switch":
-        focus_decision = decide_next_focus_mode(assistant)
-        if focus_decision['focus_mode'] == 'object_selection':
-            updates["natural_topic_completion"] = True
-            updates["response_type"] = "natural_topic_completion"
-        else:
-            updates["focus_mode"] = focus_decision['focus_mode']
-            updates["focus_prompt"] = assistant.get_focus_prompt(updates["focus_mode"])
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
 
-    logger.info(f"[{state['session_id']}] Node: Route Logic finished in {time.time() - start_time:.3f}s")
-    return updates
+    generator = ask_introduction_question_stream(
+        messages=messages,
+        object_name=state["object_name"],
+        category_prompt=state["category_prompt"],
+        age_prompt=state["age_prompt"],
+        age=state["age"],
+        config=state["config"],
+        client=state["client"],
+        level3_category=state["level3_category"],
+        fun_fact=state.get("fun_fact", ""),
+        fun_fact_hook=state.get("fun_fact_hook", ""),
+        fun_fact_question=state.get("fun_fact_question", ""),
+        real_facts=state.get("real_facts", "")
+    )
+
+    full_text, new_seq = await stream_generator_to_callback(
+        generator, state, response_type_override="introduction"
+    )
+
+    logger.info(f"[{state['session_id']}] Node: Generate Intro finished in {time.time() - start_time:.3f}s")
+    return {
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "response_type": "introduction",
+        "ttft": state.get("ttft"),
+    }
 
 
-# --- Streaming Helpers ---
+# --- Streaming Helper ---
 
 async def stream_generator_to_callback(generator, state: PaixuejiState, response_type_override=None):
     """
@@ -433,47 +358,34 @@ async def stream_generator_to_callback(generator, state: PaixuejiState, response
     """
     full_text = ""
     token_usage = None
-    
-    # We need to know if we are in the "response" phase or "question" phase for the chunk
-    # But StreamChunk validation logic in `call_paixueji_stream` combined everything.
-    # The `stream_callback` expects a StreamChunk.
-    
+
     sequence = state["sequence_number"]
     start_time = time.time()
     first_token_received = False
-    
     first_text_chunk_sent = False
 
     async for item in generator:
         if not first_token_received:
             ttft = time.time() - state["start_time"]
-            logger.info(f"[{state['session_id']}] Time to First Token (TTFT): {ttft:.3f}s for {response_type_override or state.get('response_type', 'unknown')}")
+            logger.info(f"[{state['session_id']}] TTFT: {ttft:.3f}s for {response_type_override or state.get('response_type', 'unknown')}")
             first_token_received = True
             if "ttft" not in state:
                 state["ttft"] = ttft
 
         # Normalize item format
-        # Intro: (text, usage, full, info)
-        # Others: (text, usage, full) or (text, usage, full, info)
-        
         text_chunk = item[0]
         usage = item[1]
         full_so_far = item[2]
-        info = item[3] if len(item) > 3 else {}
-        
+
         if usage:
             token_usage = usage
-            
-        # Capture decision info if present (mostly for Intro or Switch)
-        # In original code, these updated local vars `new_object_name`, `detected_object_name`.
-        # We'll rely on what's in `state` mostly, but if generator provides new info, use it.
-        
+
         full_text = full_so_far
-        
+
         if text_chunk:
             sequence += 1
             if not first_text_chunk_sent:
-                chunk_duration = state.get("ttft", 0.0)
+                chunk_duration = state.get("ttft") or 0.0
                 first_text_chunk_sent = True
             else:
                 chunk_duration = 0.0
@@ -490,176 +402,52 @@ async def stream_generator_to_callback(generator, state: PaixuejiState, response
                 is_stuck=False,
                 correct_answer_count=state["correct_answer_count"],
                 conversation_complete=False,
-                focus_mode=state["focus_mode"],
-                
-                is_engaged=state["is_engaged"],
-                is_factually_correct=state["is_factually_correct"],
-                correctness_reasoning=state["correctness_reasoning"] if state["is_factually_correct"] is False else None,
-                
+
+                intent_type=state.get("intent_type"),
                 new_object_name=state["new_object_name"],
                 detected_object_name=state["detected_object_name"],
-                switch_decision_reasoning=state["switch_decision_reasoning"],
-                
+
                 response_type=response_type_override or state["response_type"],
                 suggested_objects=state["suggested_objects"],
                 object_selection_mode=bool(state["suggested_objects"]),
-                
-                system_focus_mode=state["assistant"].current_focus_mode if state["assistant"].system_managed_focus else None,
-                depth_progress=f"{state['assistant'].depth_questions_count}/{state['assistant'].depth_target}" if state["assistant"].system_managed_focus else None
             )
             await state["stream_callback"](chunk)
-            
-            # Clear one-time flags after first chunk sent?
-            # Original code: "if new_object_name: new_object_name = None"
-            # We can update state? No, passing state to callback is complex.
-            # We will just let them persist for the stream, frontend handles dedupe if needed, 
-            # or we modify the state copy we are reading from? 
-            # Actually, `state` is dict, mutable.
+
+            # Clear one-time fields after first chunk sent
             if state["new_object_name"]:
                 state["new_object_name"] = None
             if state["detected_object_name"]:
                 state["detected_object_name"] = None
-                state["switch_decision_reasoning"] = None
 
     logger.info(f"[{state['session_id']}] Stream finished in {time.time() - start_time:.3f}s for {response_type_override or state.get('response_type', 'unknown')}")
     return full_text, sequence
 
 
-@trace_node
-async def node_generate_response(state: PaixuejiState) -> dict:
-    """
-    Generate the first part of the response (Feedback, Explanation, Correction, Switch).
-    """
-    start_time = time.time()
-    logger.info(f"[{state['session_id']}] Node: Generate Response ({state['response_type']})")
-    
-    response_type = state["response_type"]
-    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
-    previous_question = extract_previous_question(messages)
-    
-    generator = None
-    
-    if response_type == "introduction":
-        generator = ask_introduction_question_stream(
-            messages=messages,
-            object_name=state["object_name"],
-            category_prompt=state["category_prompt"],
-            age_prompt=state["age_prompt"],
-            age=state["age"],
-            config=state["config"],
-            client=state["client"],
-            level3_category=state["level3_category"],
-            focus_prompt=state["focus_prompt"],
-            fun_fact=state.get("fun_fact", ""),
-            fun_fact_hook=state.get("fun_fact_hook", ""),
-            fun_fact_question=state.get("fun_fact_question", ""),
-            real_facts=state.get("real_facts", "")
-        )
-    elif response_type == "explicit_switch":
-        generator = generate_explicit_switch_response_stream(
-            messages=messages,
-            suggested_objects=state["suggested_objects"],
-            age=state["age"],
-            config=state["config"],
-            client=state["client"]
-        )
-    elif response_type == "topic_switch":
-        # We need previous object name. It's not in state explicitly?
-        # Original code used `previous_object = object_name` (before update).
-        # We updated object_name in route_logic. 
-        # We can assume the message history implies the old object, 
-        # but the prompt needs `previous_object`.
-        # Simplification: Use "the previous object" or try to find it. 
-        # Or better: `node_route_logic` should have saved `previous_object_name` to state.
-        # Let's hack: The prompt only needs it for context "You were talking about...".
-        # We'll use state["object_name"] as new, and assume standard phrasing.
-        # Actually, let's fix logic: If switched, state['object_name'] is NEW.
-        # But we don't have OLD stored.
-        # We will assume generic transition if missing.
-        generator = generate_topic_switch_response_stream(
-            messages=messages,
-            previous_object="the previous object", # Minor regression potential
-            new_object=state["object_name"],
-            age=state["age"],
-            config=state["config"],
-            client=state["client"]
-        )
-    elif response_type == "explanation":
-        generator = generate_explanation_response_stream(
-            messages=messages,
-            child_answer=state["content"],
-            object_name=state["object_name"],
-            previous_question=previous_question,
-            age=state["age"],
-            category_prompt=state["category_prompt"],
-            age_prompt=state["age_prompt"],
-            config=state["config"],
-            client=state["client"]
-        )
-    elif response_type == "feedback":
-        generator = generate_feedback_response_stream(
-            messages=messages,
-            child_answer=state["content"],
-            object_name=state["object_name"],
-            age=state["age"],
-            config=state["config"],
-            client=state["client"]
-        )
-    elif response_type == "gentle_correction":
-        generator = generate_correction_response_stream(
-            messages=messages,
-            child_answer=state["content"],
-            object_name=state["object_name"],
-            previous_question=previous_question,
-            correctness_reasoning=state["correctness_reasoning"],
-            age=state["age"],
-            config=state["config"],
-            client=state["client"]
-        )
-    elif response_type == "natural_topic_completion":
-         # This is handled in follow-up usually? No, it replaces response?
-         # In original code: `if natural_topic_completion: response_type="natural_topic_completion"`
-         # But the GENERATOR used was `generate_natural_topic_completion_stream` as QUESTION generator.
-         # The Response generator was skipped/fallback?
-         # "Stream response generator ... yield chunk"
-         # Then "Check if natural_topic_completion ... question_generator = generate_natural_topic_completion_stream"
-         # So we still need a response (feedback) BEFORE the completion question?
-         # Original code: 
-         #   1. focus_decision (sets natural_topic_completion=True)
-         #   2. Stream response (Feedback/Correction based on valid result)
-         #   3. Stream question (Natural Completion)
-         # So we should run Feedback/Correction HERE, and set flag for next node.
-         
-         # Revert response_type to what validation said (Feedback/Correction)
-         # But `node_route_logic` set it to `natural_topic_completion`.
-         # Let's fix: We should check `is_engaged` etc. to pick feedback/correction generator.
-         if state["is_factually_correct"]:
-             generator = generate_feedback_response_stream(
-                messages=messages,
-                child_answer=state["content"],
-                object_name=state["object_name"],
-                age=state["age"],
-                config=state["config"],
-                client=state["client"]
-            )
-         else:
-             # Fallback if completion triggered on wrong answer? Unlikely but possible.
-             generator = generate_explanation_response_stream(
-                messages=messages,
-                child_answer=state["content"],
-                object_name=state["object_name"],
-                previous_question=previous_question,
-                age=state["age"],
-                category_prompt=state["category_prompt"],
-                age_prompt=state["age_prompt"],
-                config=state["config"],
-                client=state["client"]
-            )
+# --- Intent Nodes (9 total) ---
 
+@trace_node
+async def node_curiosity(state: PaixuejiState) -> dict:
+    """Child asks why/what/how — expand gently + suggest one concrete action."""
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Curiosity")
+
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    generator = generate_intent_response_stream(
+        intent_type="curiosity",
+        messages=messages,
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
+        age_prompt=state["age_prompt"],
+        category_prompt=state["category_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
+        config=state["config"],
+        client=state["client"],
+    )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
-    
-    logger.info(f"[{state['session_id']}] Node: Generate Response finished in {time.time() - start_time:.3f}s")
+    logger.info(f"[{state['session_id']}] Node: Curiosity finished in {time.time() - start_time:.3f}s")
     return {
+        "response_type": "curiosity",
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
@@ -667,65 +455,429 @@ async def node_generate_response(state: PaixuejiState) -> dict:
 
 
 @trace_node
-async def node_generate_question(state: PaixuejiState) -> dict:
-    """
-    Generate the follow-up question (Part 2).
-    """
+async def node_clarifying_idk(state: PaixuejiState) -> dict:
+    """Child said IDK (1st time) — scaffold hint and increment counter."""
     start_time = time.time()
-    logger.info(f"[{state['session_id']}] Node: Generate Question")
-    
-    # If explicit switch, we don't ask a follow-up question
-    if state["response_type"] == "explicit_switch":
-        logger.info(f"[{state['session_id']}] Node: Generate Question finished in {time.time() - start_time:.3f}s (Skipped)")
-        return {}
-        
-    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
-    
-    # Append the response we just generated so the question is coherent
-    if state["full_response_text"]:
-        messages.append({"role": "assistant", "content": state["full_response_text"]})
-        
-    generator = None
-    
-    if state.get("natural_topic_completion"):
-        generator = generate_natural_topic_completion_stream(
-            messages=messages,
-            current_object=state["object_name"],
-            age=state["age"],
-            config=state["config"],
-            client=state["client"]
-        )
-    elif state["response_type"] == "introduction":
-        # Introduction ALREADY included the question in `ask_introduction_question_stream`
-        # It yields the full text "Hi! This is apple. What color is it?"
-        # So we skip this node?
-        # Yes.
-        return {}
-    else:
-        # Standard follow-up
-        is_topic_switch = (state["response_type"] == "topic_switch")
-        generator = generate_followup_question_stream(
-            messages=messages,
-            object_name=state["object_name"],
-            correct_count=state["correct_answer_count"],
-            category_prompt=state["category_prompt"],
-            age_prompt=state["age_prompt"],
-            age=state["age"],
-            focus_prompt=state["focus_prompt"],
-            config=state["config"],
-            client=state["client"],
-            character_prompt=state["character_prompt"],
-            is_topic_switch=is_topic_switch
-        )
+    logger.info(f"[{state['session_id']}] Node: Clarifying IDK")
 
-    full_text, new_seq = await stream_generator_to_callback(generator, state, response_type_override="followup_question")
-    
-    logger.info(f"[{state['session_id']}] Node: Generate Question finished in {time.time() - start_time:.3f}s")
+    state["assistant"].consecutive_idk_count += 1
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    generator = generate_intent_response_stream(
+        intent_type="clarifying_idk",
+        messages=messages,
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
+        age_prompt=state["age_prompt"],
+        category_prompt=state["category_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    logger.info(f"[{state['session_id']}] Node: Clarifying IDK finished in {time.time() - start_time:.3f}s")
     return {
-        "full_question_text": full_text,
-        "sequence_number": new_seq
+        "response_type": "clarifying_idk",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
     }
 
+
+@trace_node
+async def node_give_answer_idk(state: PaixuejiState) -> dict:
+    """Child said IDK twice — reveal the answer directly and reset the IDK counter."""
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Give Answer IDK")
+
+    state["assistant"].consecutive_idk_count = 0
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    generator = generate_intent_response_stream(
+        intent_type="give_answer_idk",
+        messages=messages,
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
+        age_prompt=state["age_prompt"],
+        category_prompt=state["category_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    logger.info(f"[{state['session_id']}] Node: Give Answer IDK finished in {time.time() - start_time:.3f}s")
+    return {
+        "response_type": "give_answer_idk",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
+    }
+
+
+@trace_node
+async def node_clarifying_wrong(state: PaixuejiState) -> dict:
+    """Child gave wrong/incomplete answer — affirm effort + gently correct."""
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Clarifying Wrong")
+
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    generator = generate_intent_response_stream(
+        intent_type="clarifying_wrong",
+        messages=messages,
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
+        age_prompt=state["age_prompt"],
+        category_prompt=state["category_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    logger.info(f"[{state['session_id']}] Node: Clarifying Wrong finished in {time.time() - start_time:.3f}s")
+    return {
+        "response_type": "clarifying_wrong",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
+    }
+
+
+@trace_node
+async def node_clarifying_constraint(state: PaixuejiState) -> dict:
+    """Child described a real-world constraint — validate + object-anchored redirect."""
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Clarifying Constraint")
+
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    generator = generate_intent_response_stream(
+        intent_type="clarifying_constraint",
+        messages=messages,
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
+        age_prompt=state["age_prompt"],
+        category_prompt=state["category_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    logger.info(f"[{state['session_id']}] Node: Clarifying Constraint finished in {time.time() - start_time:.3f}s")
+    return {
+        "response_type": "clarifying_constraint",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
+    }
+
+
+@trace_node
+async def node_correct_answer(state: PaixuejiState) -> dict:
+    """Child directly answered the model's question — confirm + extend with one wow fact."""
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Correct Answer")
+
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    generator = generate_intent_response_stream(
+        intent_type="correct_answer",
+        messages=messages,
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
+        age_prompt=state["age_prompt"],
+        category_prompt=state["category_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    state["assistant"].increment_correct_answers()
+    logger.info(f"[{state['session_id']}] Node: Correct Answer finished in {time.time() - start_time:.3f}s")
+    return {
+        "response_type": "correct_answer",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
+        "correct_answer_count": state["assistant"].correct_answer_count,
+    }
+
+
+@trace_node
+async def node_informative(state: PaixuejiState) -> dict:
+    """Child shares knowledge — give space + social reaction."""
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Informative")
+
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    generator = generate_intent_response_stream(
+        intent_type="informative",
+        messages=messages,
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
+        age_prompt=state["age_prompt"],
+        category_prompt=state["category_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    logger.info(f"[{state['session_id']}] Node: Informative finished in {time.time() - start_time:.3f}s")
+    return {
+        "response_type": "informative",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
+    }
+
+
+@trace_node
+async def node_play(state: PaixuejiState) -> dict:
+    """Child being silly/imaginative — play along + gamify + suggest one action."""
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Play")
+
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    generator = generate_intent_response_stream(
+        intent_type="play",
+        messages=messages,
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
+        age_prompt=state["age_prompt"],
+        category_prompt=state["category_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    logger.info(f"[{state['session_id']}] Node: Play finished in {time.time() - start_time:.3f}s")
+    return {
+        "response_type": "play",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
+    }
+
+
+@trace_node
+async def node_emotional(state: PaixuejiState) -> dict:
+    """Child expresses feeling — empathize first + gently redirect."""
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Emotional")
+
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    generator = generate_intent_response_stream(
+        intent_type="emotional",
+        messages=messages,
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
+        age_prompt=state["age_prompt"],
+        category_prompt=state["category_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    logger.info(f"[{state['session_id']}] Node: Emotional finished in {time.time() - start_time:.3f}s")
+    return {
+        "response_type": "emotional",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
+    }
+
+
+@trace_node
+async def node_avoidance(state: PaixuejiState) -> dict:
+    """
+    Child refuses or wants to stop.
+    - If new_object named → topic switch via generate_topic_switch_response_stream
+    - If no new_object → intent response offering to explore something else
+    """
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Avoidance")
+
+    new_obj = state.get("new_object_name")
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    extra_updates = {}
+
+    if new_obj:
+        switch_updates = await _apply_topic_switch(state, new_obj)
+        extra_updates.update(switch_updates)
+        generator = generate_topic_switch_response_stream(
+            messages=messages,
+            previous_object=state["object_name"],
+            new_object=new_obj,
+            age=state["age"],
+            config=state["config"],
+            client=state["client"],
+        )
+    else:
+        generator = generate_intent_response_stream(
+            intent_type="avoidance",
+            messages=messages,
+            child_answer=state["content"],
+            object_name=state["object_name"],
+            age=state["age"],
+            age_prompt=state["age_prompt"],
+            category_prompt=state["category_prompt"],
+                last_model_question=extract_previous_question(state["messages"]),
+            config=state["config"],
+            client=state["client"],
+        )
+
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    logger.info(f"[{state['session_id']}] Node: Avoidance finished in {time.time() - start_time:.3f}s")
+    return {
+        "response_type": "avoidance",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
+        **extra_updates,
+    }
+
+
+@trace_node
+async def node_boundary(state: PaixuejiState) -> dict:
+    """Child asks risky action — empathize + deny danger + safe alternative."""
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Boundary")
+
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    generator = generate_intent_response_stream(
+        intent_type="boundary",
+        messages=messages,
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
+        age_prompt=state["age_prompt"],
+        category_prompt=state["category_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    logger.info(f"[{state['session_id']}] Node: Boundary finished in {time.time() - start_time:.3f}s")
+    return {
+        "response_type": "boundary",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
+    }
+
+
+@trace_node
+async def node_action(state: PaixuejiState) -> dict:
+    """
+    Child issues a command or requests a change.
+    - If new_object named → topic switch via generate_topic_switch_response_stream
+    - If no new_object → intent response executing or redirecting the command
+    """
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Action")
+
+    new_obj = state.get("new_object_name")
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    extra_updates = {}
+
+    if new_obj:
+        switch_updates = await _apply_topic_switch(state, new_obj)
+        extra_updates.update(switch_updates)
+        generator = generate_topic_switch_response_stream(
+            messages=messages,
+            previous_object=state["object_name"],
+            new_object=new_obj,
+            age=state["age"],
+            config=state["config"],
+            client=state["client"],
+        )
+    else:
+        generator = generate_intent_response_stream(
+            intent_type="action",
+            messages=messages,
+            child_answer=state["content"],
+            object_name=state["object_name"],
+            age=state["age"],
+            age_prompt=state["age_prompt"],
+            category_prompt=state["category_prompt"],
+                last_model_question=extract_previous_question(state["messages"]),
+            config=state["config"],
+            client=state["client"],
+        )
+
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    logger.info(f"[{state['session_id']}] Node: Action finished in {time.time() - start_time:.3f}s")
+    return {
+        "response_type": "action",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
+        **extra_updates,
+    }
+
+
+@trace_node
+async def node_social(state: PaixuejiState) -> dict:
+    """Child asks about the AI — warm direct answer."""
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Social")
+
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    generator = generate_intent_response_stream(
+        intent_type="social",
+        messages=messages,
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
+        age_prompt=state["age_prompt"],
+        category_prompt=state["category_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    logger.info(f"[{state['session_id']}] Node: Social finished in {time.time() - start_time:.3f}s")
+    return {
+        "response_type": "social",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
+    }
+
+
+@trace_node
+async def node_social_acknowledgment(state: PaixuejiState) -> dict:
+    """Child reacts socially ("wow", "oh yeah", "i didn't know that") — brief reaction + pivot forward."""
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Social Acknowledgment")
+
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    generator = generate_intent_response_stream(
+        intent_type="social_acknowledgment",
+        messages=messages,
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
+        age_prompt=state["age_prompt"],
+        category_prompt=state["category_prompt"],
+        last_model_question=extract_previous_question(state["messages"]),
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    logger.info(f"[{state['session_id']}] Node: Social Acknowledgment finished in {time.time() - start_time:.3f}s")
+    return {
+        "response_type": "social_acknowledgment",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
+    }
+
+
+# --- Guide Nodes (unchanged) ---
 
 @trace_node
 async def node_start_guide(state: PaixuejiState):
@@ -746,14 +898,11 @@ async def node_start_guide(state: PaixuejiState):
     object_name = state["object_name"]
 
     # 3-part combined response (zero extra LLM call — template only for TTFT-optimal delivery)
-    # Part 1: Confirm the child's correct answer
     confirmation = "Yes, that's right! Great job! 🌟 "
-    # Part 2: Mode-shift invitation — signals transition from "naming things" to "discovering secrets"
     inquiry_invitation = (
         f"Ooh wait — I just thought of a mystery! "
         f"Let's be explorers together and find out a secret about {object_name}... "
     )
-    # Part 3: The causal bridge question
     full_response = confirmation + inquiry_invitation + bridge_question
 
     # Stream it
@@ -785,6 +934,7 @@ async def node_start_guide(state: PaixuejiState):
         "sequence_number": new_seq
     }
 
+
 @trace_node
 async def node_guide_navigator(state: PaixuejiState):
     """
@@ -796,13 +946,11 @@ async def node_guide_navigator(state: PaixuejiState):
     assistant = state["assistant"]
     child_input = state["content"]
 
-    # Build target theme dict
     target_theme = {
         "name": assistant.ibpyp_theme_name or "Unknown Theme",
         "description": assistant.ibpyp_theme_reason or ""
     }
 
-    # Create Navigator and analyze
     navigator = ThemeNavigator(
         client=state["client"],
         config=state["config"]
@@ -814,17 +962,14 @@ async def node_guide_navigator(state: PaixuejiState):
         current_topic=state["object_name"],
         target_theme=target_theme,
         age=state["age"],
-        key_concept=assistant.key_concept,
-        bridge_question=assistant.bridge_question,
+        key_concept=assistant.key_concept or "",
+        bridge_question=assistant.bridge_question or "",
         turn_count=assistant.guide_turn_count,
-        max_turns=assistant.guide_max_turns
+        max_turns=assistant.guide_max_turns,
     )
 
-    # Update assistant state
+    # Update assistant state (handles turn count, scaffold level, last_navigation_state)
     assistant.update_navigation_state(nav_result)
-
-    logger.info(f"[{state['session_id']}] Navigator result: status={nav_result.get('status')}, "
-                f"strategy={nav_result.get('strategy')}, turn={assistant.guide_turn_count}")
 
     return {
         "guide_status": nav_result.get("status"),
@@ -839,9 +984,6 @@ async def node_guide_driver(state: PaixuejiState):
     """
     Driver node: Generate response following the Navigator's instruction.
     Streams the natural language response to the child.
-
-    Now passes full theme context (object_name, key_concept, theme_name) to Driver
-    so it can generate coherent, on-theme responses.
     """
     logger.info(f"[{state['session_id']}] Node: Guide Driver")
 
@@ -849,32 +991,26 @@ async def node_guide_driver(state: PaixuejiState):
     nav_state = assistant.last_navigation_state
 
     if not nav_state:
-        # Fallback if no navigation state
         return {
             "full_response_text": "That's interesting! Tell me more about what you're thinking.",
             "sequence_number": state["sequence_number"] + 1
         }
 
-    # Create Driver and generate response
     driver = ThemeDriver(
         client=state["client"],
         config=state["config"]
     )
 
-    # Get character prompt and theme context
-    character_prompt = state.get("character_prompt", "")
     object_name = state["object_name"]
     key_concept = assistant.key_concept or ""
     theme_name = assistant.ibpyp_theme_name or ""
 
-    # Stream the response
     full_text = ""
     new_seq = state["sequence_number"]
 
     async for text_chunk, usage, full_so_far in driver.generate_response_stream(
         history=state["messages"],
         nav_plan=nav_state,
-        character_prompt=character_prompt,
         age=state["age"],
         object_name=object_name,
         key_concept=key_concept,
@@ -917,17 +1053,13 @@ async def node_guide_driver(state: PaixuejiState):
 async def node_guide_hint(state: PaixuejiState):
     """
     Give the child a helpful hint when max turns are reached.
-    Uses LLM to generate a concrete, age-appropriate explanation
-    instead of abstract IB PYP terminology.
+    Uses LLM to generate a concrete, age-appropriate explanation.
     """
     logger.info(f"[{state['session_id']}] Node: Guide Hint")
 
     assistant = state["assistant"]
-
-    # Mark that hint was given
     assistant.give_hint()
 
-    # Generate hint using LLM (replaces hardcoded template)
     hint_message = await generate_guide_hint(
         object_name=state["object_name"],
         key_concept=assistant.key_concept or "something special",
@@ -978,8 +1110,6 @@ async def node_guide_exit(state: PaixuejiState):
     logger.info(f"[{state['session_id']}] Node: Guide Exit")
 
     assistant = state["assistant"]
-
-    # Exit guide mode
     assistant.exit_guide_mode()
 
     exit_message = "That's okay! Let's explore something else. What would you like to learn about next?"
@@ -1008,6 +1138,7 @@ async def node_guide_exit(state: PaixuejiState):
         "guide_phase": "exit"
     }
 
+
 @trace_node
 async def node_guide_success(state: PaixuejiState):
     """
@@ -1018,16 +1149,13 @@ async def node_guide_success(state: PaixuejiState):
 
     assistant = state["assistant"]
     key_concept = assistant.key_concept or "this idea"
-    theme_name = assistant.ibpyp_theme_name or "this theme"
     object_name = state["object_name"]
 
-    # Celebrate the discovery
     msg = (
         f"That's wonderful! You discovered that {object_name} is connected to {key_concept}! "
         f"You're thinking like a real explorer now!"
     )
 
-    # Reset guide state after success
     assistant.guide_phase = "success"
 
     callback = state.get("stream_callback")
@@ -1059,7 +1187,6 @@ async def node_guide_success(state: PaixuejiState):
     }
 
 
-
 @trace_node
 async def node_finalize(state: PaixuejiState) -> dict:
     """
@@ -1067,7 +1194,7 @@ async def node_finalize(state: PaixuejiState) -> dict:
     """
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Finalize")
-    
+
     full_response = state.get("full_response_text", "")
     if state.get("full_question_text"):
         full_response += " " + state["full_question_text"]
@@ -1076,7 +1203,6 @@ async def node_finalize(state: PaixuejiState) -> dict:
     assistant = state["assistant"]
     if hasattr(assistant, '_router_traces') and assistant._router_traces:
         node_traces = state.get("nodes_executed", []) or []
-        # Router traces go at the beginning (they ran before nodes in each step)
         merged = assistant._router_traces + node_traces
         state["nodes_executed"] = merged
         assistant._router_traces = []
@@ -1085,7 +1211,7 @@ async def node_finalize(state: PaixuejiState) -> dict:
     final_chunk = StreamChunk(
         response=full_response,
         session_finished=(state["status"] == "over"),
-        duration=state.get("ttft", 0.0),
+        duration=state.get("ttft") or 0.0,
         token_usage=None,
         finish=True,
         sequence_number=state["sequence_number"] + 1,
@@ -1095,23 +1221,16 @@ async def node_finalize(state: PaixuejiState) -> dict:
         is_stuck=False,
         correct_answer_count=state.get("correct_answer_count", 0),
         conversation_complete=False,
-        focus_mode=state.get("focus_mode"),
 
-        is_engaged=state.get("is_engaged"),
-        is_factually_correct=state.get("is_factually_correct"),
-        correctness_reasoning=state.get("correctness_reasoning") if state.get("is_factually_correct") is False else None,
-        
-        new_object_name=state.get("new_object_name"),  # Should be None mostly
+        intent_type=state.get("intent_type"),
+        new_object_name=state.get("new_object_name"),
         detected_object_name=state.get("detected_object_name"),
 
         response_type=state.get("response_type"),
         suggested_objects=state.get("suggested_objects"),
         object_selection_mode=bool(state.get("suggested_objects")),
-        
-        system_focus_mode=state["assistant"].current_focus_mode if state["assistant"].system_managed_focus else None,
-        depth_progress=f"{state['assistant'].depth_questions_count}/{state['assistant'].depth_target}" if state["assistant"].system_managed_focus else None,
-        
-        # Theme classification fields (always sent for debug visibility)
+
+        # Theme classification fields
         key_concept=state["assistant"].key_concept or None,
         ibpyp_theme_name=state["assistant"].ibpyp_theme_name or None,
         theme_classification_reason=state["assistant"].ibpyp_theme_reason or None,
@@ -1125,16 +1244,45 @@ async def node_finalize(state: PaixuejiState) -> dict:
         nodes_executed=state.get("nodes_executed", [])
     )
     await state["stream_callback"](final_chunk)
-    
-    # We return the full response to be added to history in app.py?
-    # Or we can update the assistant here.
-    # The original code appended to `conversation_history` in app.py AFTER the stream finished?
-    # No, `call_paixueji_stream` didn't update history. `app.py` did:
-    # "if chunk.finish: assistant.conversation_history.append(...)"
-    # We'll stick to that contract. The app loop handles history update based on chunks.
-    
+
     logger.info(f"[{state['session_id']}] Node: Finalize finished in {time.time() - start_time:.3f}s")
     return {}
+
+
+@trace_node
+async def node_classify_theme(state: PaixuejiState) -> dict:
+    """
+    4th correct answer threshold reached: classify object into IB PYP theme,
+    then hand off to node_start_guide to present the bridge question.
+    Runs in a thread pool to avoid blocking the async event loop (sync LLM call).
+    """
+    assistant = state["assistant"]
+    logger.info(f"[{state['session_id']}] Node: Classify Theme (guide mode entry)")
+
+    assistant.increment_correct_answers()
+
+    result = await asyncio.to_thread(
+        classify_object_to_theme, state["object_name"], state["client"], state["config"]
+    )
+
+    if result:
+        assistant.ibpyp_theme = result.theme_id
+        assistant.ibpyp_theme_name = result.theme_name
+        assistant.ibpyp_theme_reason = result.reason
+        assistant.key_concept = result.key_concept
+        assistant.bridge_question = result.bridge_question
+        logger.info(
+            f"[{state['session_id']}] Theme: {result.theme_name} | "
+            f"Concept: {result.key_concept}"
+        )
+    else:
+        # Fallback so guide mode can still proceed
+        logger.warning(f"[{state['session_id']}] Theme classification failed, using fallback")
+        assistant.ibpyp_theme_name = "How the World Works"
+        assistant.key_concept = "Function"
+        assistant.bridge_question = f"I wonder how {state['object_name']} works. What do you think?"
+
+    return {"correct_answer_count": assistant.correct_answer_count}
 
 
 # ============================================================================
@@ -1144,15 +1292,29 @@ async def node_finalize(state: PaixuejiState) -> dict:
 def build_paixueji_graph():
     workflow = StateGraph(PaixuejiState)
 
-    # Add nodes
-    workflow.add_node("start", lambda s: s)  # Entry point
+    # --- Core nodes ---
     workflow.add_node("analyze_input", node_analyze_input)
-    workflow.add_node("route_logic", node_route_logic)
-    workflow.add_node("generate_response", node_generate_response)
-    workflow.add_node("generate_question", node_generate_question)
     workflow.add_node("generate_fun_fact", node_generate_fun_fact)
+    workflow.add_node("generate_intro", node_generate_intro)
 
-    # Guide Nodes (Multi-turn Navigator/Driver pattern)
+    # --- 12 Intent nodes ---
+    workflow.add_node("curiosity", node_curiosity)
+    workflow.add_node("clarifying_idk", node_clarifying_idk)
+    workflow.add_node("give_answer_idk", node_give_answer_idk)
+    workflow.add_node("clarifying_wrong", node_clarifying_wrong)
+    workflow.add_node("clarifying_constraint", node_clarifying_constraint)
+    workflow.add_node("correct_answer", node_correct_answer)
+    workflow.add_node("informative", node_informative)
+    workflow.add_node("play", node_play)
+    workflow.add_node("emotional", node_emotional)
+    workflow.add_node("avoidance", node_avoidance)
+    workflow.add_node("boundary", node_boundary)
+    workflow.add_node("action", node_action)
+    workflow.add_node("social", node_social)
+    workflow.add_node("social_acknowledgment", node_social_acknowledgment)
+
+    # --- Guide nodes ---
+    workflow.add_node("classify_theme", node_classify_theme)
     workflow.add_node("start_guide", node_start_guide)
     workflow.add_node("guide_navigator", node_guide_navigator)
     workflow.add_node("guide_driver", node_guide_driver)
@@ -1162,19 +1324,18 @@ def build_paixueji_graph():
 
     workflow.add_node("finalize", node_finalize)
 
-    # Route from START: introductions go to fun fact generation,
-    # guide phase goes to navigator, everything else to analyze_input
+    # --- START router ---
+    # Guide phase active/hint → guide_navigator
+    # Introduction (response_type == "introduction") → generate_fun_fact
+    # Everything else → analyze_input
     @trace_router(["guide_phase", "response_type"])
     def route_from_start(state):
-        # Check for Guide Phase routing (multi-turn conversation)
         guide_phase = state.get("guide_phase") or state["assistant"].guide_phase
 
         if guide_phase == "active":
-            # Continue multi-turn guide - analyze child's response
             return "guide_navigator"
 
         if guide_phase == "hint":
-            # Child responded after hint - check again
             return "guide_navigator"
 
         if state.get("response_type") == "introduction":
@@ -1182,7 +1343,6 @@ def build_paixueji_graph():
 
         return "analyze_input"
 
-    # Define edges
     workflow.add_conditional_edges(
         START,
         route_from_start,
@@ -1193,76 +1353,58 @@ def build_paixueji_graph():
         }
     )
 
-    workflow.add_edge("analyze_input", "route_logic")
+    # Introduction path: fun fact → intro → finalize
+    workflow.add_edge("generate_fun_fact", "generate_intro")
+    workflow.add_edge("generate_intro", "finalize")
 
-    # Pre-router: check guide trigger BEFORE generate_response streams anything.
-    # Uses response_type (set by route_logic) instead of is_factually_correct to avoid None bug.
-    @trace_router(["response_type", "correct_answer_count", "guide_phase"])
-    def route_to_guide_or_chat(state):
-        """Pre-route to guide phase before generate_response if the trigger condition is met."""
-        response_type = state.get("response_type", "")
-        current_count = state["correct_answer_count"]
-        # response_type == "feedback" is set exactly when is_factually_correct is True
-        is_correct = (response_type == "feedback")
-        should_trigger = (current_count >= 3 and is_correct) or current_count >= 4
-
-        assistant = state["assistant"]
-        has_guide_info = bool(assistant.ibpyp_theme and assistant.key_concept and assistant.bridge_question)
-
-        if should_trigger and has_guide_info:
-            logger.info(f"[{state['session_id']}] Pre-router: Guide trigger (count={current_count}, type={response_type}) → start_guide")
-            return "start_guide"
-        return "generate_response"
+    # Chat path: analyze_input → route_from_analyze_input → one of 9 intent nodes
+    @trace_router(["intent_type"])
+    def route_from_analyze_input(state):
+        intent = state.get("intent_type", "clarifying_idk").lower()
+        # Intercept the Nth correct answer to run theme classification
+        if (intent == "correct_answer" and
+                state["assistant"].correct_answer_count + 1 >= GUIDE_MODE_THRESHOLD):
+            return "classify_theme"
+        # Intercept repeated IDK — route to dedicated answer-reveal node
+        if intent == "clarifying_idk" and state["assistant"].consecutive_idk_count > 0:
+            return "give_answer_idk"
+        return intent
 
     workflow.add_conditional_edges(
-        "route_logic",
-        route_to_guide_or_chat,
+        "analyze_input",
+        route_from_analyze_input,
         {
-            "generate_response": "generate_response",
-            "start_guide": "start_guide",
+            "curiosity": "curiosity",
+            "clarifying_idk": "clarifying_idk",
+            "give_answer_idk": "give_answer_idk",
+            "clarifying_wrong": "clarifying_wrong",
+            "clarifying_constraint": "clarifying_constraint",
+            "correct_answer": "correct_answer",
+            "informative": "informative",
+            "play": "play",
+            "emotional": "emotional",
+            "avoidance": "avoidance",
+            "boundary": "boundary",
+            "action": "action",
+            "social": "social",
+            "social_acknowledgment": "social_acknowledgment",
+            "classify_theme": "classify_theme",
         }
     )
 
-    # Check if we should guide instead of asking normal question
-    @trace_router(["correct_answer_count", "response_type"])
-    def route_after_response(state):
-        try:
-            current_count = state["correct_answer_count"]
-            is_correct = (state.get("response_type") == "feedback")
+    workflow.add_edge("classify_theme", "start_guide")
 
-            # Trigger if we hit 4 correct answers (current 3 + 1 correct)
-            should_trigger = (current_count >= 3 and is_correct) or current_count >= 4
+    # All 14 intent nodes → finalize
+    for intent_node in ["curiosity", "clarifying_idk", "give_answer_idk", "clarifying_wrong",
+                        "clarifying_constraint", "correct_answer", "informative", "play",
+                        "emotional", "avoidance", "boundary", "action", "social",
+                        "social_acknowledgment"]:
+        workflow.add_edge(intent_node, "finalize")
 
-            # Check if we have necessary guide info
-            assistant = state["assistant"]
-            has_guide_info = assistant.ibpyp_theme and assistant.key_concept and assistant.bridge_question
+    # Guide edges
+    workflow.add_edge("start_guide", "finalize")  # First turn — present bridge question
 
-            if should_trigger and has_guide_info:
-                logger.info(f"[{state['session_id']}] Triggering Theme Guide (Count: {current_count}+1)")
-                return "start_guide"
-
-            return "generate_question"
-        except Exception as e:
-            logger.error(f"Route error: {e}")
-            return "generate_question"
-
-    workflow.add_conditional_edges(
-        "generate_response",
-        route_after_response,
-        {
-            "generate_question": "generate_question",
-            "start_guide": "start_guide"
-        }
-    )
-
-    workflow.add_edge("generate_question", "finalize")
-    workflow.add_edge("generate_fun_fact", "generate_response")
-
-    # Guide Edges
-    workflow.add_edge("start_guide", "finalize")  # First turn - present bridge question
-
-    # Route after Navigator analysis
-    @trace_router(["guide_strategy", "guide_status", "hint_given", "consecutive_stuck_count"])
+    @trace_router(["guide_strategy", "guide_status"])
     def route_after_navigator(state):
         """
         Route based on Navigator's analysis result.
@@ -1271,23 +1413,20 @@ def build_paixueji_graph():
         - guide_success: Child articulated understanding (COMPLETED)
         - guide_hint: Max turns reached, no hint given yet
         - guide_exit: 2 consecutive RESISTANCE or hint already given at max turns
-        - guide_driver: Continue conversation (ON_TRACK, DRIFTING, or first RESISTANCE)
+        - guide_driver: Continue conversation (default)
         """
         assistant = state["assistant"]
         guide_strategy = state.get("guide_strategy")
         guide_status = state.get("guide_status")
 
-        # Check for COMPLETED status
         if guide_strategy == "COMPLETE" or guide_status == "COMPLETED":
             logger.info(f"[{state['session_id']}] Guide: Child completed! Routing to success.")
             return "guide_success"
 
-        # Check if should give hint (max turns, no hint yet)
         if assistant.should_give_hint():
             logger.info(f"[{state['session_id']}] Guide: Max turns reached, giving hint.")
             return "guide_hint"
 
-        # Check if should exit (2 consecutive resistance OR hint already given at max)
         if assistant.should_exit_guide():
             logger.info(f"[{state['session_id']}] Guide: Exiting (resistance or post-hint timeout).")
             return "guide_exit"
@@ -1300,7 +1439,6 @@ def build_paixueji_graph():
             logger.info(f"[{state['session_id']}] Guide: Routing '{guide_strategy}' → '{target}' (from router_overrides.json).")
             return target
 
-        # Continue conversation with Driver (default)
         return "guide_driver"
 
     workflow.add_conditional_edges(
@@ -1316,11 +1454,12 @@ def build_paixueji_graph():
 
     workflow.add_edge("guide_driver", "finalize")
     workflow.add_edge("guide_success", "finalize")
-    workflow.add_edge("guide_hint", "finalize")  # After hint, await child response
+    workflow.add_edge("guide_hint", "finalize")
     workflow.add_edge("guide_exit", "finalize")
     workflow.add_edge("finalize", END)
 
     return workflow.compile()
+
 
 # Global graph instance
 paixueji_graph = build_paixueji_graph()

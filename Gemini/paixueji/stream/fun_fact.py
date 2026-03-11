@@ -112,7 +112,7 @@ async def generate_fun_fact(
     if cached_result is not None:
         return cached_result
 
-    grounding_model = config.get("grounding_model", config.get("model_name", "gemini-2.5-flash-lite"))
+    grounding_model = config.get("grounding_model", config["model_name"])
 
     # Safety settings: strict for children's content
     safety_settings = [

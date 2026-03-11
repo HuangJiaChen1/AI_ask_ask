@@ -36,7 +36,6 @@ async def ask_introduction_question_stream(
     config: dict,
     client: genai.Client,
     level3_category: str = "",
-    focus_prompt: str = "",
     fun_fact: str = "",
     fun_fact_hook: str = "",
     fun_fact_question: str = "",
@@ -54,7 +53,6 @@ async def ask_introduction_question_stream(
         config: Configuration dict with model settings
         client: Gemini client instance
         level3_category: Level 3 category
-        focus_prompt: Focus strategy guidance
         fun_fact: Grounded fun fact to share (empty string if unavailable)
         fun_fact_hook: Excited greeting hook (empty string if unavailable)
         fun_fact_question: Follow-up question from fun fact (empty string if unavailable)
@@ -84,7 +82,6 @@ async def ask_introduction_question_stream(
         category_prompt=category_prompt,
         age_prompt=age_prompt,
         age=age,
-        focus_prompt=focus_prompt,
         grounded_facts_section=grounded_facts_section,
         fun_fact_instruction=fun_fact_instruction
     )
@@ -190,14 +187,12 @@ async def generate_followup_question_stream(
     category_prompt: str,
     age_prompt: str,
     age: int,
-    focus_prompt: str,
     config: dict,
     client: genai.Client,
-    character_prompt: str = "",
     is_topic_switch: bool = False
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
-    Generate ONLY follow-up question based on focus strategy. NO responses or explanations.
+    Generate ONLY follow-up question. NO responses or explanations.
 
     This function is part of the dual-parallel architecture where question generation
     is decoupled from response generation.
@@ -209,10 +204,8 @@ async def generate_followup_question_stream(
         category_prompt: Category-specific guidance
         age_prompt: Age-specific guidance
         age: Child's age
-        focus_prompt: Focus strategy guidance
         config: Configuration dict with model settings
         client: Gemini client instance
-        character_prompt: Character-specific guidance (Teacher vs Buddy)
         is_topic_switch: Whether this follows a topic switch
 
     Yields:
@@ -226,10 +219,8 @@ async def generate_followup_question_stream(
     prompt = prompts['followup_question_prompt'].format(
         object_name=object_name,
         age=age,
-        focus_prompt=focus_prompt,
         category_prompt=category_prompt,
         age_prompt=age_prompt,
-        character_prompt=character_prompt
     )
 
     # Prepare messages

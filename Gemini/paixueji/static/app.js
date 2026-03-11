@@ -21,17 +21,16 @@ let correctAnswerCount = 0;
 let conversationComplete = false;
 let categoryData = {};
 let detectedObject = null;  // For manual topic switch override
-let systemManagedMode = false;  // System-managed focus mode flag
 let awaitingObjectSelection = false;  // Waiting for object choice flag
 
 // UI state
 let currentObject = null;  // Current object being discussed
-let currentCharacter = null;  // Current character
-let currentFocusMode = null;  // Current focus mode
 let guidePhase = null;  // Guide phase (active, success, hint, exit)
 let guideTurnCount = 0;  // Current turn in guide mode
 let currentThemeName = null;  // IB PYP theme name
 let currentKeyConcept = null;  // Key concept for theme
+let currentIntentType = null;       // Last classified intent (9-node architecture)
+let currentResponseType = null;     // Last response node that actually ran
 
 // DOM elements
 const messagesContainer = document.getElementById('messages');
@@ -45,20 +44,12 @@ const thinkingTimeDisplay = document.getElementById('thinking-time');
  * Add a message to the chat interface
  * @param {string} role - 'assistant' or 'user'
  * @param {string} initialText - Initial text to display (optional)
- * @param {string} focus - Focus mode used (optional)
  * @param {boolean|null} isCorrect - Feedback status (true=correct, false=encouraging, null=none)
  * @returns {HTMLElement} The message bubble element
  */
-function addMessage(role, initialText = '', focus = null, isCorrect = null) {
+function addMessage(role, initialText = '', isCorrect = null) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
-
-    if (focus) {
-        const focusTag = document.createElement('span');
-        focusTag.className = 'focus-tag';
-        focusTag.textContent = formatFocusName(focus);
-        messageDiv.appendChild(focusTag);
-    }
 
     const bubble = document.createElement('div');
     bubble.className = 'message-bubble';
@@ -80,16 +71,6 @@ function addMessage(role, initialText = '', focus = null, isCorrect = null) {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
     return bubble;
-}
-
-/**
- * Format focus name for display (e.g., "width_color" -> "Width: Color")
- */
-function formatFocusName(focus) {
-    if (!focus) return '';
-    return focus.split('_')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(': ');
 }
 
 /**
@@ -129,51 +110,8 @@ async function startConversation() {
     const level1Category = document.getElementById('level1Category').value;
     const level2Category = document.getElementById('level2Category').value;
     const level3Category = document.getElementById('level3Category').value;
-    const character = document.getElementById('assistantCharacter').value;
-    const focusMode = document.getElementById('nextQuestionFocus').value;
-    systemManagedMode = (focusMode === 'system_managed');
-
     // Save state for debug panel
     currentObject = objectName;
-    currentCharacter = character;
-    currentFocusMode = focusMode;
-
-    // Save character preference
-    localStorage.setItem('paixueji_character', character);
-
-    // Set active focus mode dropdown to match start selection
-    const activeFocusSelect = document.getElementById('activeFocusMode');
-    if (activeFocusSelect) {
-        activeFocusSelect.value = focusMode;
-
-        // If in system_managed mode, disable the entire dropdown
-        if (systemManagedMode) {
-            activeFocusSelect.disabled = true;
-        } else {
-            // In manual mode, disable the "System Managed" option
-            const systemOption = activeFocusSelect.querySelector('option[value="system_managed"]');
-            if (systemOption) {
-                systemOption.disabled = true;
-            }
-
-            // Add event listener to disable system_managed if user switches away from it
-            activeFocusSelect.onchange = function() {
-                if (this.value !== 'system_managed') {
-                    const systemOption = this.querySelector('option[value="system_managed"]');
-                    if (systemOption) {
-                        systemOption.disabled = true;
-                    }
-                    console.log('[INFO] Switched to manual mode, system_managed disabled');
-                }
-            };
-        }
-
-        // Show the control
-        const controlDiv = document.getElementById('activeFocusControl');
-        if (controlDiv) {
-            controlDiv.style.display = 'flex';
-        }
-    }
 
     // Validation - only object name is required
     if (!objectName) {
@@ -185,6 +123,10 @@ async function startConversation() {
     const level1Value = (level1Category && level1Category !== 'none') ? level1Category : null;
     const level2Value = (level2Category && level2Category !== 'none') ? level2Category : null;
     const level3Value = (level3Category && level3Category !== 'none') ? level3Category : null;
+
+    // Read backbone model overrides
+    const conversationModel = document.querySelector('input[name="conversationModel"]:checked')?.value || 'gemini-3.1-flash-lite-preview';
+    const groundingModel = document.querySelector('input[name="groundingModel"]:checked')?.value || 'gemini-3.1-flash-lite-preview';
 
     // Clear previous messages
     messagesContainer.innerHTML = '';
@@ -202,6 +144,7 @@ async function startConversation() {
     progressIndicator.style.display = 'flex';
     messagesContainer.style.display = 'flex';
     document.querySelector('.input-area').style.display = 'flex';
+    document.getElementById('backBtn').style.display = 'inline-block';
 
     // Tutorial hook — advance from setup steps to chat steps
     if (window.tutorialAdvanceToChat) window.tutorialAdvanceToChat();
@@ -229,9 +172,8 @@ async function startConversation() {
                 level1_category: level1Value,
                 level2_category: level2Value,
                 level3_category: level3Value,
-                character: character,
-                focus_mode: focusMode,
-                system_managed: systemManagedMode
+                model_name_override: conversationModel,
+                grounding_model_override: groundingModel
             }),
             signal: currentStreamController.signal
         });
@@ -318,12 +260,13 @@ async function startConversation() {
 async function startGuideTest() {
     const age = parseInt(document.getElementById('age').value);
     const objectName = document.getElementById('objectName').value.trim();
-    const character = document.getElementById('assistantCharacter').value;
+
+    // Read backbone model overrides
+    const conversationModel = document.querySelector('input[name="conversationModel"]:checked')?.value || 'gemini-3.1-flash-lite-preview';
+    const groundingModel = document.querySelector('input[name="groundingModel"]:checked')?.value || 'gemini-3.1-flash-lite-preview';
 
     // Save state for debug panel
     currentObject = objectName;
-    currentCharacter = character;
-    currentFocusMode = 'depth';  // Guide mode always uses depth
 
     // Validation - only object name is required
     if (!objectName) {
@@ -340,7 +283,6 @@ async function startGuideTest() {
     // Set progress to 4 (simulating 4 correct answers)
     correctAnswerCount = 4;
     conversationComplete = false;
-    systemManagedMode = false;
     updateProgressIndicator();
 
     // Hide start form, show progress indicator and messages
@@ -348,12 +290,7 @@ async function startGuideTest() {
     progressIndicator.style.display = 'flex';
     messagesContainer.style.display = 'flex';
     document.querySelector('.input-area').style.display = 'flex';
-
-    // Hide active focus control in guide mode
-    const activeFocusControl = document.getElementById('activeFocusControl');
-    if (activeFocusControl) {
-        activeFocusControl.style.display = 'none';
-    }
+    document.getElementById('backBtn').style.display = 'inline-block';
 
     // Disable send button during streaming
     sendBtn.disabled = true;
@@ -368,7 +305,7 @@ async function startGuideTest() {
     messagesContainer.appendChild(statusDiv);
 
     try {
-        console.log('[INFO] Starting GUIDE TEST | age:', age, 'object:', objectName, 'character:', character);
+        console.log('[INFO] Starting GUIDE TEST | age:', age, 'object:', objectName);
 
         // Create AbortController for this stream
         currentStreamController = new AbortController();
@@ -381,7 +318,8 @@ async function startGuideTest() {
             body: JSON.stringify({
                 age: age,
                 object_name: objectName,
-                character: character
+                model_name_override: conversationModel,
+                grounding_model_override: groundingModel
             }),
             signal: currentStreamController.signal
         });
@@ -525,14 +463,6 @@ async function sendMessage() {
     isStreaming = true;
     updateStopButton();
 
-    // Get focus mode from active dropdown (allows mid-chat switching)
-    const activeFocusSelect = document.getElementById('activeFocusMode');
-    const focusMode = activeFocusSelect ? activeFocusSelect.value : document.getElementById('nextQuestionFocus').value;
-
-    // Update current focus mode for debug panel
-    currentFocusMode = focusMode;
-    updateDebugPanel();
-
     try {
         console.log('[INFO] Sending message:', text);
 
@@ -546,8 +476,7 @@ async function sendMessage() {
             },
             body: JSON.stringify({
                 session_id: sessionId,
-                child_input: text,
-                focus_mode: focusMode
+                child_input: text
             }),
             signal: currentStreamController.signal
         });
@@ -693,9 +622,7 @@ function handleStreamChunk(chunk) {
         if (!currentMessageDiv) {
             // Create message with feedback indicator on first chunk
             const isCorrect = chunk.is_correct !== undefined ? chunk.is_correct : null;
-            // Use system_focus_mode if in system-managed mode, otherwise use focus_mode
-            const displayFocus = chunk.system_focus_mode || chunk.focus_mode;
-            currentMessageDiv = addMessage('assistant', '', displayFocus, isCorrect);
+            currentMessageDiv = addMessage('assistant', '', isCorrect);
         }
         displayChunk(currentMessageDiv, chunk.response);
     }
@@ -739,13 +666,13 @@ function handleStreamChunk(chunk) {
     // (Removed showObjectSelection call - no longer using UI panel)
 
     // Handle detected object (AI decided to CONTINUE but detected a new object)
-    if (chunk.detected_object_name && chunk.switch_decision_reasoning) {
+    if (chunk.detected_object_name) {
         detectedObject = chunk.detected_object_name;
         document.getElementById('detectedObjectName').textContent = detectedObject;
         document.getElementById('switchToObjectName').textContent = detectedObject;
-        document.getElementById('switchReasoning').textContent = chunk.switch_decision_reasoning;
+        document.getElementById('switchReasoning').textContent = '';
         document.getElementById('manualSwitchPanel').style.display = 'block';
-        console.log('[INFO] Object detected but not switching:', detectedObject, '| Reasoning:', chunk.switch_decision_reasoning);
+        console.log('[INFO] Object detected but not switching:', detectedObject);
     }
 
     // Update current object if it changed (from switching)
@@ -775,6 +702,18 @@ function handleStreamChunk(chunk) {
     }
     // Update debug panel when guide state changes
     if (chunk.guide_phase || chunk.guide_turn_count) {
+        updateDebugPanel();
+    }
+
+    // Update intent type (9-node architecture)
+    if (chunk.intent_type) {
+        currentIntentType = chunk.intent_type;
+        updateDebugPanel();
+    }
+
+    // Update response type (which node actually ran — may differ from intent_type via routing intercept)
+    if (chunk.response_type) {
+        currentResponseType = chunk.response_type;
         updateDebugPanel();
     }
 }
@@ -1006,24 +945,6 @@ function updateDebugPanel() {
         objectElement.textContent = currentObject || '-';
     }
 
-    // Update character
-    const characterElement = document.getElementById('debugCharacter');
-    if (characterElement) {
-        characterElement.textContent = currentCharacter ? formatCategoryName(currentCharacter) : '-';
-    }
-
-    // Update focus mode
-    const focusElement = document.getElementById('debugFocusMode');
-    if (focusElement) {
-        focusElement.textContent = currentFocusMode ? formatFocusName(currentFocusMode) : '-';
-    }
-
-    // Update system managed status
-    const systemManagedElement = document.getElementById('debugSystemManaged');
-    if (systemManagedElement) {
-        systemManagedElement.textContent = systemManagedMode ? 'Yes' : 'No';
-    }
-
     // Update correct answers count
     const correctCountElement = document.getElementById('debugCorrectCount');
     if (correctCountElement) {
@@ -1061,6 +982,32 @@ function updateDebugPanel() {
     if (guideTurnElement) {
         guideTurnElement.textContent = guideTurnCount > 0 ? `${guideTurnCount}/6` : '-';
     }
+
+    // Update last intent type
+    const intentElement = document.getElementById('debugIntentType');
+    if (intentElement) {
+        intentElement.textContent = currentIntentType || '-';
+        const intentColors = {
+            'curiosity':   '#8b5cf6',   // Purple  — exploratory question
+            'clarifying':  '#f59e0b',   // Amber   — uncertain/wrong guess
+            'informative': '#3b82f6',   // Blue    — sharing knowledge
+            'play':        '#ec4899',   // Pink    — silly/imaginative
+            'emotional':   '#14b8a6',   // Teal    — expressing feeling
+            'avoidance':   '#6b7280',   // Gray    — refusing/exiting
+            'boundary':    '#ef4444',   // Red     — risky action
+            'action':      '#10b981',   // Green   — issuing command
+            'social':      '#f97316',   // Orange  — asking about AI
+        };
+        intentElement.style.color = currentIntentType
+            ? (intentColors[currentIntentType.toLowerCase()] || '#374151')
+            : '#6b7280';
+    }
+
+    // Update response type display
+    const responseTypeEl = document.getElementById('debugResponseType');
+    if (responseTypeEl) {
+        responseTypeEl.textContent = currentResponseType || '-';
+    }
 }
 
 /**
@@ -1084,6 +1031,17 @@ function showCompletionUI() {
 }
 
 /**
+ * Navigate back to setup form, with a guard if AI is mid-stream
+ */
+function goBack() {
+    if (isStreaming) {
+        if (!confirm('The AI is still responding. Go back anyway?')) return;
+        currentStreamController?.abort();
+    }
+    resetConversation();
+}
+
+/**
  * Reset conversation
  */
 function resetConversation() {
@@ -1099,12 +1057,7 @@ function resetConversation() {
     startForm.style.display = 'block';
     progressIndicator.style.display = 'none';
     messagesContainer.style.display = 'none';
-
-    // Hide active focus control
-    const activeFocusControl = document.getElementById('activeFocusControl');
-    if (activeFocusControl) {
-        activeFocusControl.style.display = 'none';
-    }
+    document.getElementById('backBtn').style.display = 'none';
 
     // Re-enable input
     userInput.disabled = false;
@@ -1121,14 +1074,6 @@ function resetConversation() {
 }
 
 /**
- * Save focus preference to localStorage
- */
-function saveFocusPreference() {
-    const focusMode = document.getElementById('nextQuestionFocus').value;
-    localStorage.setItem('paixueji_focus', focusMode);
-}
-
-/**
  * Initialize the application
  */
 function init() {
@@ -1136,24 +1081,6 @@ function init() {
 
     // Load category data
     loadCategoryData();
-
-    // Load saved character preference
-    const savedCharacter = localStorage.getItem('paixueji_character');
-    if (savedCharacter) {
-        const characterSelect = document.getElementById('assistantCharacter');
-        if (characterSelect) {
-            characterSelect.value = savedCharacter;
-        }
-    }
-
-    // Load saved focus preference
-    const savedFocus = localStorage.getItem('paixueji_focus');
-    if (savedFocus) {
-        const focusSelect = document.getElementById('nextQuestionFocus');
-        if (focusSelect) {
-            focusSelect.value = savedFocus;
-        }
-    }
 
     // Show empty state
     if (messagesContainer.children.length === 0) {
@@ -1274,15 +1201,22 @@ function closeCritiqueChoice() {
 }
 
 /**
- * Send AI critique (existing automated flow).
+ * Send AI critique and poll for results.
  */
 async function sendAICritique() {
     closeCritiqueChoice();
 
     const btn = document.getElementById('sendReportBtn');
-    const originalText = btn.textContent;
     btn.disabled = true;
     btn.textContent = 'Analyzing...';
+
+    // Reset status section
+    const statusSection = document.getElementById('aiCritiqueStatus');
+    const statusText = document.getElementById('aiCritiqueStatusText');
+    document.getElementById('aiCritiqueOptimizeButtons').innerHTML = '';
+    statusSection.style.background = '#f1f5f9';
+    statusText.textContent = '⏳ AI critique in progress...';
+    statusSection.style.display = 'block';
 
     try {
         const response = await fetch(`${API_BASE}/critique`, {
@@ -1293,27 +1227,81 @@ async function sendAICritique() {
         const result = await response.json();
 
         if (result.success) {
-            btn.textContent = 'Report Saved!';
-            btn.style.background = '#10b981';
-            console.log('[INFO] AI report saved to:', result.report_path);
+            _pollAICritiqueStatus(result.task_id);
         } else {
-            btn.textContent = 'Error';
-            btn.style.background = '#ef4444';
-            console.error('[ERROR] Critique failed:', result.error);
-            alert('Failed to generate report: ' + result.error);
+            btn.disabled = false;
+            btn.textContent = '📝 Send Report for Review';
+            statusSection.style.background = '#fee2e2';
+            statusText.textContent = '✗ Failed: ' + result.error;
         }
     } catch (e) {
-        btn.textContent = 'Error';
-        btn.style.background = '#ef4444';
-        console.error('[ERROR] Critique request failed:', e);
-        alert('Failed to send report: ' + e.message);
-    }
-
-    setTimeout(() => {
         btn.disabled = false;
-        btn.textContent = originalText;
-        btn.style.background = '#f59e0b';
-    }, 2000);
+        btn.textContent = '📝 Send Report for Review';
+        statusSection.style.background = '#fee2e2';
+        statusText.textContent = '✗ Error: ' + e.message;
+    }
+}
+
+/**
+ * Poll /api/critique/status/<taskId> every 3s and render results when done.
+ */
+function _pollAICritiqueStatus(taskId) {
+    const btn = document.getElementById('sendReportBtn');
+    const statusSection = document.getElementById('aiCritiqueStatus');
+    const statusText = document.getElementById('aiCritiqueStatusText');
+    const optimizeButtons = document.getElementById('aiCritiqueOptimizeButtons');
+
+    const interval = setInterval(async () => {
+        try {
+            const response = await fetch(`${API_BASE}/critique/status/${taskId}`);
+            const data = await response.json();
+
+            if (data.status === 'completed') {
+                clearInterval(interval);
+                btn.disabled = false;
+                btn.textContent = '📝 Send Report for Review';
+
+                if (data.traces && data.traces.length > 0) {
+                    statusSection.style.background = '#fef3c7';
+                    statusText.textContent =
+                        `⚠ ${data.traces.length} exchange(s) flagged — optimize their prompts:`;
+                    data.traces.forEach(trace => {
+                        if (!trace.culprit_name || trace.culprit_name === 'unknown') return;
+                        const optBtn = document.createElement('button');
+                        optBtn.textContent = 'Optimize: ' + trace.culprit_name;
+                        optBtn.style.cssText =
+                            'width:100%; margin-top:8px; padding:8px; background:#3b82f6; ' +
+                            'color:white; border:none; border-radius:6px; cursor:pointer; ' +
+                            'font-weight:bold; font-size:0.85em;';
+                        optBtn.onclick = () => runOptimization(
+                            trace.culprit_name,
+                            trace.prompt_template_name,
+                            trace.trace_id
+                        );
+                        optimizeButtons.appendChild(optBtn);
+                    });
+                } else {
+                    statusSection.style.background = '#d1fae5';
+                    statusText.textContent = '✓ No issues found in this session.';
+                }
+
+            } else if (data.status === 'failed') {
+                clearInterval(interval);
+                btn.disabled = false;
+                btn.textContent = '📝 Send Report for Review';
+                statusSection.style.background = '#fee2e2';
+                statusText.textContent = '✗ Critique failed: ' + (data.error || 'unknown error');
+            }
+            // status === 'pending' | 'running' → keep polling
+
+        } catch (e) {
+            clearInterval(interval);
+            btn.disabled = false;
+            btn.textContent = '📝 Send Report for Review';
+            statusSection.style.background = '#fee2e2';
+            statusText.textContent = '✗ Polling error: ' + e.message;
+        }
+    }, 3000);
 }
 
 /**
@@ -1340,6 +1328,33 @@ async function showManualCritiqueForm() {
         const exchangeList = document.getElementById('exchangeList');
         exchangeList.innerHTML = '';
 
+        // Session info banner
+        function buildCategoryLabel(r) {
+            const parts = [r.level1_category, r.level2_category, r.level3_category].filter(Boolean);
+            return parts.length ? parts.join(' › ') : null;
+        }
+
+        const sessionBanner = document.createElement('div');
+        sessionBanner.style.cssText = 'background:#f1f5f9; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px; margin-bottom:18px; display:flex; flex-wrap:wrap; gap:10px; align-items:center;';
+
+        const bannerFields = [
+            { label: 'Object', value: result.object_name },
+            { label: 'Category', value: buildCategoryLabel(result) },
+            { label: 'Theme', value: result.ibpyp_theme_name },
+            { label: 'Key Concept', value: result.key_concept },
+            { label: 'Age', value: result.age ? `${result.age} y/o` : null },
+        ];
+
+        bannerFields.forEach(({ label, value }) => {
+            if (!value) return;
+            const chip = document.createElement('span');
+            chip.style.cssText = 'background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:4px 10px; font-size:0.8em; color:#334155; white-space:nowrap;';
+            chip.innerHTML = `<span style="color:#94a3b8; font-weight:600; margin-right:4px;">${label}:</span>${escapeHtml(value)}`;
+            sessionBanner.appendChild(chip);
+        });
+
+        exchangeList.appendChild(sessionBanner);
+
         // Split exchanges into chat and guide groups
         const chatExchanges = result.exchanges.filter(e => (e.mode || 'chat') !== 'guide');
         const guideExchanges = result.exchanges.filter(e => (e.mode || 'chat') === 'guide');
@@ -1354,13 +1369,32 @@ async function showManualCritiqueForm() {
             const badgeColor = mode === 'guide' ? '#7c3aed' : '#0891b2';
             const badgeLabel = mode.toUpperCase();
 
+            // Intent badge color groups
+            const intentColors = {
+                CORRECT_ANSWER: '#16a34a',
+                CURIOSITY: '#0891b2', INFORMATIVE: '#0891b2',
+                CLARIFYING_IDK: '#d97706', CLARIFYING_WRONG: '#d97706', CLARIFYING_CONSTRAINT: '#d97706',
+                PLAY: '#7c3aed', EMOTIONAL: '#7c3aed',
+                SOCIAL: '#64748b', SOCIAL_ACKNOWLEDGMENT: '#64748b',
+                AVOIDANCE: '#dc2626', BOUNDARY: '#dc2626', ACTION: '#dc2626',
+            };
+            const intentColor = intentColors[exchange.intent_type] || '#94a3b8';
+            const intentBadge = exchange.intent_type
+                ? `<span style="display:inline-block; background:${intentColor}; color:#fff; font-size:0.65em; font-weight:600; padding:1px 7px; border-radius:9px; margin-left:5px; vertical-align:middle;">${exchange.intent_type}</span>`
+                : '';
+
+            // Response time label
+            const timeLabel = exchange.response_time_ms
+                ? `<span style="font-size:0.75em; color:#94a3b8; margin-left:8px; vertical-align:middle;">${(exchange.response_time_ms / 1000).toFixed(1)}s</span>`
+                : '';
+
             const header = document.createElement('div');
             header.style.cssText = 'padding:12px; background:#f8fafc; display:flex; align-items:flex-start; gap:10px; cursor:pointer;';
             header.innerHTML = `
                 <input type="checkbox" id="exchange_cb_${exchange.index}" data-index="${exchange.index}" style="margin-top:3px; cursor:pointer;" onchange="toggleExchangeCritique(${exchange.index})">
                 <div style="flex:1; min-width:0;">
                     <strong style="color:#1e293b;">Exchange ${exchange.index}</strong>
-                    <span style="display:inline-block; background:${badgeColor}; color:#fff; font-size:0.7em; font-weight:600; padding:1px 7px; border-radius:9px; margin-left:6px; vertical-align:middle;">${badgeLabel}</span>
+                    <span style="display:inline-block; background:${badgeColor}; color:#fff; font-size:0.7em; font-weight:600; padding:1px 7px; border-radius:9px; margin-left:6px; vertical-align:middle;">${badgeLabel}</span>${intentBadge}${timeLabel}
                     <div style="font-size:0.85em; color:#64748b; margin-top:4px;">
                         <div><b>Q:</b> ${escapeHtml(truncate(exchange.model_question, 80))}</div>
                         <div><b>A:</b> ${escapeHtml(truncate(exchange.child_response, 80))}</div>
@@ -1434,7 +1468,11 @@ function buildExchangeCritiqueFormHTML(exchange) {
         </div>
         <div style="margin-bottom:16px;">
             <div style="font-weight:bold; color:#475569; margin-bottom:6px;">Child Response</div>
-            <div style="background:#fefce8; padding:8px; border-radius:4px; font-size:0.9em; margin-bottom:8px; white-space:pre-wrap;">${escapeHtml(exchange.child_response)}</div>
+            <div style="background:#fefce8; padding:8px; border-radius:4px; font-size:0.9em; margin-bottom:4px; white-space:pre-wrap;">${escapeHtml(exchange.child_response)}</div>
+            <div style="font-size:0.78em; color:#64748b; margin-bottom:8px; display:flex; gap:12px;">
+                ${exchange.intent_type ? `<span>Intent: <strong>${exchange.intent_type}</strong></span>` : ''}
+                ${exchange.response_time_ms ? `<span>Response time: <strong>${(exchange.response_time_ms/1000).toFixed(1)}s</strong></span>` : ''}
+            </div>
         </div>
         <div style="margin-bottom:16px;">
             <div style="font-weight:bold; color:#475569; margin-bottom:6px;">Model Response</div>
@@ -1476,10 +1514,10 @@ function closeManualCritique() {
 }
 
 /**
- * Collect all checked exchanges and submit manual critique.
+ * Collect all checked exchanges from the critique form.
+ * Returns null (and shows an alert) if none are checked.
  */
-async function submitManualCritique() {
-    // Collect checked exchanges
+function collectExchangeCritiques() {
     const exchangeCritiques = [];
     const checkboxes = document.querySelectorAll('[id^="exchange_cb_"]');
 
@@ -1499,11 +1537,70 @@ async function submitManualCritique() {
 
     if (exchangeCritiques.length === 0) {
         alert('Please select at least one exchange to critique.');
-        return;
+        return null;
     }
+    return exchangeCritiques;
+}
+
+/**
+ * Save the critique report only — returns immediately without trace/culprit analysis.
+ */
+async function submitManualCritiqueToDatabase() {
+    const exchangeCritiques = collectExchangeCritiques();
+    if (!exchangeCritiques) return;
 
     const globalConclusion = document.getElementById('globalConclusion').value;
-    const submitBtn = document.getElementById('submitManualCritiqueBtn');
+    const submitBtn = document.getElementById('submitReportDbBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Saving...';
+
+    try {
+        const response = await fetch(`${API_BASE}/manual-critique`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                session_id: sessionId,
+                exchange_critiques: exchangeCritiques,
+                global_conclusion: globalConclusion,
+                skip_traces: true
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            console.log('[INFO] Manual critique saved to:', result.report_path);
+            console.log('[INFO] Exchanges critiqued:', result.exchanges_critiqued);
+            const btn = document.getElementById('sendReportBtn');
+            btn.textContent = 'Report Saved!';
+            btn.style.background = '#10b981';
+            setTimeout(() => {
+                btn.textContent = '\uD83D\uDCDD Send Report for Review';
+                btn.style.background = '#f59e0b';
+            }, 4000);
+            closeManualCritique();
+        } else {
+            alert('Failed to save critique: ' + result.error);
+        }
+    } catch (e) {
+        console.error('[ERROR] Manual critique (DB only) failed:', e);
+        alert('Failed to submit critique: ' + e.message);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit to Report Database';
+    }
+}
+
+/**
+ * Save the critique report AND run trace assembly + LLM culprit identification
+ * for the evolving-agent optimization flow.
+ */
+async function submitManualCritiqueWithEvolution() {
+    const exchangeCritiques = collectExchangeCritiques();
+    if (!exchangeCritiques) return;
+
+    const globalConclusion = document.getElementById('globalConclusion').value;
+    const submitBtn = document.getElementById('submitEvolvingAgentBtn');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting...';
 
@@ -1545,7 +1642,7 @@ async function submitManualCritique() {
         alert('Failed to submit critique: ' + e.message);
     } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Submit Critique';
+        submitBtn.textContent = 'Submit for Evolving Agent';
     }
 }
 
