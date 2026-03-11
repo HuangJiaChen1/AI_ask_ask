@@ -5,7 +5,7 @@ Covers:
 1. node_correct_answer increments correct_answer_count
 2. route_from_analyze_input does NOT divert to classify_theme below threshold
 3. route_from_analyze_input diverts to classify_theme at threshold (count 3 → 4)
-4. node_classify_theme falls back gracefully when classify_object_to_theme returns None
+4. node_classify_theme falls back gracefully when conversation-theme classification returns None
 """
 import asyncio
 import json
@@ -302,6 +302,46 @@ class TestThresholdTriggersClassifyTheme:
         assert assistant.key_concept is not None
         assert assistant.bridge_question is not None
 
+    @pytest.mark.asyncio
+    async def test_count_3_uses_history_theme_result_over_yaml_theme(self):
+        """
+        Guide entry should take the authoritative theme from conversation history,
+        while leaving the YAML-derived key concept in place.
+        """
+        assistant = PaixuejiAssistant()
+        assistant.correct_answer_count = 3
+        assistant.key_concept = "function"
+        assistant.bridge_question = "How does the bike move?"
+        assistant.category_prompt = "CONCEPT FOCUS: function"
+        assistant.fallback_theme_id = "how_world_works"
+        assistant.fallback_theme_name = "How the World Works"
+        assistant.fallback_theme_reason = "Object-based fallback"
+
+        state = _base_state(assistant, correct_answer_count=3)
+        state["messages"] = [
+            {"role": "system", "content": "system"},
+            {"role": "assistant", "content": "What helps the bike move?"},
+            {"role": "user", "content": "The wheels help it move!"},
+        ]
+
+        with patch(
+            "theme_classifier.classify_conversation_to_theme",
+            new=AsyncMock(return_value={
+                "theme_id": "who_we_are",
+                "theme_name": "Who We Are",
+                "reason": "The child focused on personal experience and body control.",
+            }),
+        ):
+            await node_classify_theme(state)
+
+        assert assistant.ibpyp_theme == "who_we_are"
+        assert assistant.ibpyp_theme_name == "Who We Are"
+        assert assistant.ibpyp_theme_reason == (
+            "The child focused on personal experience and body control."
+        )
+        assert assistant.key_concept == "function"
+        assert assistant.bridge_question == "How does the bike move?"
+
 
 # ---------------------------------------------------------------------------
 # Test 4 — node_classify_theme fallback when classification returns None
@@ -309,6 +349,37 @@ class TestThresholdTriggersClassifyTheme:
 
 class TestClassifyThemeFallback:
     """node_classify_theme must use YAML-based fallback when lookup returns no match."""
+
+    @pytest.mark.asyncio
+    async def test_history_theme_failure_uses_fallback_theme_fields(self):
+        """
+        If the history-based theme analysis fails, guide entry should fall back to
+        the assistant's stored object-derived theme.
+        """
+        assistant = PaixuejiAssistant()
+        assistant.correct_answer_count = 3
+        assistant.key_concept = "change"
+        assistant.bridge_question = "What changes when the apple gets old?"
+        assistant.category_prompt = "CONCEPT FOCUS: change"
+        assistant.fallback_theme_id = "how_world_works"
+        assistant.fallback_theme_name = "How the World Works"
+        assistant.fallback_theme_reason = "Fallback theme"
+
+        state = _base_state(assistant, correct_answer_count=3)
+        state["messages"] = [
+            {"role": "assistant", "content": "What changes when the apple gets old?"},
+            {"role": "user", "content": "It turns brown."},
+        ]
+
+        with patch(
+            "theme_classifier.classify_conversation_to_theme",
+            new=AsyncMock(return_value=None),
+        ):
+            await node_classify_theme(state)
+
+        assert assistant.ibpyp_theme == "how_world_works"
+        assert assistant.ibpyp_theme_name == "How the World Works"
+        assert assistant.ibpyp_theme_reason == "Fallback theme"
 
     @pytest.mark.asyncio
     async def test_fallback_sets_default_theme_name(self):

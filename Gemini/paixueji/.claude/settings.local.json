@@ -17,7 +17,17 @@
       "Skill(fix-flaw)",
       "Bash(gcloud:*)",
       "Bash(GOOGLE_APPLICATION_CREDENTIALS=~/.config/gcloud/application_default_credentials.json python:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(which gh:*)",
+      "Bash(gh auth:*)",
+      "Bash(gh pr:*)",
+      "Bash(gh api:*)",
+      "Bash(git fetch:*)",
+      "Read(//Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/**)",
+      "Bash(git check-ignore:*)",
+      "Bash(git add:*)",
+      "Bash(git worktree:*)",
+      "Bash(git -C /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask checkout main && git -C /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask pull)"
     ]
   },
   "outputStyle": "Explanatory"

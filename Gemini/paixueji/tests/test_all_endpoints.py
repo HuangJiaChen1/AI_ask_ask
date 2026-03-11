@@ -29,6 +29,10 @@ def test_static_index(client):
     response = client.get('/')
     assert response.status_code == 200
     assert b'Paixueji' in response.data
+    assert b'Classify' not in response.data
+    assert b'Level 1 Category' not in response.data
+    assert b'Level 2 Category' not in response.data
+    assert b'Level 3 Category' not in response.data
 
 def test_health_check(client):
     """Test health check endpoint."""
@@ -36,12 +40,11 @@ def test_health_check(client):
     assert response.status_code == 200
     assert response.get_json()['status'] == 'ok'
 
-def test_classification(client):
-    """Test taxonomic classification."""
+def test_classification_endpoint_removed(client):
+    """Test that the legacy classify endpoint is no longer exposed."""
     payload = {"object_name": "banana"}
     response = client.post('/api/classify', json=payload)
-    assert response.status_code == 200
-    assert response.get_json()['success'] is True
+    assert response.status_code == 404
 
 def test_full_conversation_flow(client):
     """Test the main lifecycle: Start -> List -> Continue -> Reset."""
@@ -52,6 +55,11 @@ def test_full_conversation_flow(client):
     events = parse_sse(response.data) # Consumes stream
     session_id = events[0]['data']['session_id']
     assert session_id is not None
+    assert all(
+        e['data'].get('ibpyp_theme_name') is None
+        for e in events
+        if e['event'] == 'chunk'
+    )
 
     # 2. Verify in sessions list
     response = client.get('/api/sessions')

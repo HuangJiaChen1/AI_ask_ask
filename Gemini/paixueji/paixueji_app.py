@@ -191,9 +191,8 @@ def start_conversation():
         {
             "age": 6 (optional, 3-8),
             "object_name": "apple" (required),
-            "level1_category": "foods" (optional),
-            "level2_category": "fresh_ingredients" (optional),
-            "level3_category": "some_level3" (optional)
+            "model_name_override": "gemini-3.1-flash-lite-preview" (optional),
+            "grounding_model_override": "gemini-3.1-flash-lite-preview" (optional)
         }
 
     SSE Events:
@@ -234,15 +233,10 @@ def start_conversation():
     assistant.object_name = object_name
     assistant.correct_answer_count = 0
 
-    # YAML classification: sets theme fields + category_prompt on assistant
-    from graph_lookup import classify_object_yaml
-    _cls = classify_object_yaml(object_name, age or 6)
-    assistant.ibpyp_theme = _cls["theme_id"]
-    assistant.ibpyp_theme_name = _cls["theme_name"]
-    assistant.ibpyp_theme_reason = _cls["theme_reasoning"]
-    assistant.key_concept = _cls["key_concept"]
-    assistant.bridge_question = _cls["bridge_question"]
-    assistant.category_prompt = _cls["category_prompt"]
+    # Prime object-derived concept context and fallback theme, but leave the
+    # active theme unset until guide mode begins.
+    assistant.load_object_context_from_yaml(object_name)
+    assistant.clear_active_theme()
 
     # Apply backbone model overrides (validated against whitelist)
     if model_name_override and model_name_override in ALLOWED_MODELS:
@@ -456,14 +450,8 @@ def start_guide_test():
             # Step 1: Run YAML classification
             print(f"[GUIDE-TEST] Running YAML classification for '{object_name}'...")
 
-            from graph_lookup import classify_object_yaml
-            _cls = classify_object_yaml(object_name, age or 6)
-            assistant.ibpyp_theme = _cls["theme_id"]
-            assistant.ibpyp_theme_name = _cls["theme_name"]
-            assistant.ibpyp_theme_reason = _cls["theme_reasoning"]
-            assistant.key_concept = _cls["key_concept"]
-            assistant.bridge_question = _cls["bridge_question"]
-            assistant.category_prompt = _cls["category_prompt"]
+            _cls = assistant.load_object_context_from_yaml(object_name)
+            assistant.apply_fallback_theme()
             print(
                 f"[GUIDE-TEST] YAML classification: theme={_cls['theme_name']}, "
                 f"concept={_cls['key_concept']}, success={_cls['success']}"
@@ -827,77 +815,6 @@ def list_sessions():
     })
 
 
-@app.route('/api/classify', methods=['POST'])
-def classify_object():
-    """
-    Classify an object into level2 category.
-
-    Request body:
-        {
-            "object_name": "apple"
-        }
-
-    Response:
-        {
-            "success": true,
-            "object_name": "apple",
-            "level2_category": "fresh_ingredients",
-            "level1_category": "foods"
-        }
-        OR
-        {
-            "success": true,
-            "object_name": "apple",
-            "level2_category": "none",
-            "level1_category": "none"
-        }
-    """
-    data = request.get_json()
-
-    if not data:
-        return jsonify({
-            "success": False,
-            "error": "Request body must be JSON"
-        }), 400
-
-    object_name = data.get('object_name')
-
-    if not object_name:
-        return jsonify({
-            "success": False,
-            "error": "Missing object_name"
-        }), 400
-
-    # Create a temporary assistant for classification
-    assistant = PaixuejiAssistant(client=GLOBAL_GEMINI_CLIENT)
-
-    try:
-        # YAML classification (in-memory, no LLM needed)
-        from graph_lookup import classify_object_yaml
-        _cls = classify_object_yaml(object_name, assistant.age or 6)
-        assistant.ibpyp_theme = _cls["theme_id"]
-        assistant.ibpyp_theme_name = _cls["theme_name"]
-        assistant.key_concept = _cls["key_concept"]
-        assistant.category_prompt = _cls["category_prompt"]
-
-        print(f"[INFO] Classified '{object_name}' -> theme_id={_cls['theme_id']}, concept={_cls['key_concept']}")
-
-        return jsonify({
-            "success": True,
-            "object_name": object_name,
-            "theme_id": _cls["theme_id"],
-            "key_concept": _cls["key_concept"],
-        })
-
-    except Exception as e:
-        print(f"[ERROR] Classification error: {e}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 500
-
 #graph_lookup 此处添加改动：年龄对应，搜索概念，返回JSON格式的结果
 @app.route('/api/lookup-concepts', methods=['POST'])
 def lookup_concepts():
@@ -1059,15 +976,9 @@ def force_switch():
         # Update object name
         assistant.object_name = new_object
 
-        # YAML classification (in-memory, instant)
-        from graph_lookup import classify_object_yaml
-        _cls = classify_object_yaml(new_object, assistant.age or 6)
-        assistant.ibpyp_theme = _cls["theme_id"]
-        assistant.ibpyp_theme_name = _cls["theme_name"]
-        assistant.ibpyp_theme_reason = _cls["theme_reasoning"]
-        assistant.key_concept = _cls["key_concept"]
-        assistant.bridge_question = _cls["bridge_question"]
-        assistant.category_prompt = _cls["category_prompt"]
+        # Refresh concept context and fallback theme for the new object.
+        _cls = assistant.load_object_context_from_yaml(new_object)
+        assistant.clear_active_theme()
         print(f"[FORCE-SWITCH] YAML classification complete for '{new_object}': "
               f"theme={_cls['theme_name']}, concept={_cls['key_concept']}")
 
@@ -2130,11 +2041,9 @@ if __name__ == '__main__':
     print("\nEndpoints:")
     print("  GET  /api/health          - Health check")
     print("  POST /api/start           - Start conversation (SSE)")
-    print("                              Requires: age, object_name, level1_category")
+    print("                              Requires: object_name")
     print("  POST /api/continue        - Continue conversation (SSE)")
     print("                              Requires: session_id, child_input")
-    print("  POST /api/classify        - Classify object into categories")
-    print("                              Requires: object_name")
     print("  POST /api/reset           - Delete session")
     print("  GET  /api/sessions        - List active sessions")
     print("  GET  /                    - Web interface")

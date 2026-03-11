@@ -66,6 +66,9 @@ class PaixuejiAssistant:
         self.ibpyp_theme = None  # Theme ID (e.g., "Category_Nature_And_Physics")
         self.ibpyp_theme_name = None  # Theme name (e.g., "How the World Works")
         self.ibpyp_theme_reason = None  # Classification reasoning
+        self.fallback_theme_id = None
+        self.fallback_theme_name = None
+        self.fallback_theme_reason = None
         self.key_concept = None
         self.bridge_question = None
         self.category_prompt = None  # Formatted YAML anchor block for {category_prompt} slot
@@ -115,25 +118,47 @@ class PaixuejiAssistant:
             except Exception as e:
                 safe_print(f"[ERROR] Failed to load themes: {e}")
 
+    def load_object_context_from_yaml(self, object_name: str):
+        """
+        Load object-derived concept context and fallback theme from YAML.
+        The fallback theme is retained internally; the authoritative guide theme
+        is set later from conversation history when guide mode starts.
+        """
+        from graph_lookup import classify_object_yaml
+
+        result = classify_object_yaml(object_name, self.age or 6)
+        self.fallback_theme_id = result["theme_id"]
+        self.fallback_theme_name = result["theme_name"]
+        self.fallback_theme_reason = result["theme_reasoning"]
+        self.key_concept = result["key_concept"]
+        self.bridge_question = result["bridge_question"]
+        self.category_prompt = result["category_prompt"]
+        return result
+
+    def apply_fallback_theme(self):
+        """Promote the stored object-derived fallback theme to the active theme."""
+        self.ibpyp_theme = self.fallback_theme_id
+        self.ibpyp_theme_name = self.fallback_theme_name
+        self.ibpyp_theme_reason = self.fallback_theme_reason
+
+    def clear_active_theme(self):
+        """Clear the active guide theme until conversation-based analysis runs."""
+        self.ibpyp_theme = None
+        self.ibpyp_theme_name = None
+        self.ibpyp_theme_reason = None
+
     def classify_theme_background(self, object_name: str):
         """
-        Background YAML classification for an object.
-        Updates ibpyp_theme*, key_concept, bridge_question, and category_prompt.
+        Background YAML context loading for an object.
+        Updates fallback theme, key concept, bridge question, and category prompt.
         Fire-and-forget: spawns a daemon thread and returns immediately.
         """
         import threading
-        from graph_lookup import classify_object_yaml
 
         def _classify():
-            result = classify_object_yaml(object_name, self.age or 6)
-            self.ibpyp_theme = result["theme_id"]
-            self.ibpyp_theme_name = result["theme_name"]
-            self.ibpyp_theme_reason = result["theme_reasoning"]
-            self.key_concept = result["key_concept"]
-            self.bridge_question = result["bridge_question"]
-            self.category_prompt = result["category_prompt"]
+            result = self.load_object_context_from_yaml(object_name)
             safe_print(
-                f"[CLASSIFY] YAML complete: {result['theme_name']} | "
+                f"[CLASSIFY] YAML context ready: {result['theme_name']} | "
                 f"Concept: {result['key_concept']}"
             )
 
@@ -228,6 +253,12 @@ class PaixuejiAssistant:
         self.object_name = None
         self.correct_answer_count = 0
         self.category_prompt = None
+        self.clear_active_theme()
+        self.fallback_theme_id = None
+        self.fallback_theme_name = None
+        self.fallback_theme_reason = None
+        self.key_concept = None
+        self.bridge_question = None
 
         # Reset guide state
         self.exit_guide_mode()

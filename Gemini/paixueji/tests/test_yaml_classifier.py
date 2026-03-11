@@ -1,5 +1,11 @@
 import pytest
-from graph_lookup import _age_to_tier, _THEME_ID_TO_NAME, _format_concept_anchors
+import theme_classifier
+from graph_lookup import (
+    _THEME_ID_TO_NAME,
+    _age_to_tier,
+    _entity_matches_query,
+    _format_concept_anchors,
+)
 
 
 def test_age_to_tier_boundaries():
@@ -54,6 +60,28 @@ def test_format_concept_anchors_no_anchors_key():
     assert "CONCEPT FOCUS: function" in result
 
 
+def test_entity_match_is_case_insensitive_exact():
+    entity = {
+        "entity_id": "plants_sunflower",
+        "entity_name": "Sunflower",
+        "entity_name_cn": "向日葵",
+    }
+    assert _entity_matches_query(entity, "sunflower") is True
+    assert _entity_matches_query(entity, "SUNFLOWER") is True
+    assert _entity_matches_query(entity, "向日葵") is True
+
+
+def test_entity_match_rejects_partial_match():
+    entity = {
+        "entity_id": "plants_sunflower",
+        "entity_name": "Sunflower",
+        "entity_name_cn": "向日葵",
+    }
+    assert _entity_matches_query(entity, "sun") is False
+    assert _entity_matches_query(entity, "flower") is False
+    assert _entity_matches_query(entity, "plants") is False
+
+
 from graph_lookup import classify_object_yaml
 import time
 from unittest.mock import MagicMock
@@ -61,7 +89,7 @@ from paixueji_assistant import PaixuejiAssistant
 
 
 def test_classify_theme_background_sets_fields():
-    """classify_theme_background should set category_prompt and theme fields."""
+    """classify_theme_background should set concept context and fallback theme fields."""
     assistant = PaixuejiAssistant(client=MagicMock())
     assistant.age = 5
     assistant.classify_theme_background("sunflower")
@@ -69,7 +97,8 @@ def test_classify_theme_background_sets_fields():
     time.sleep(1.0)
     assert assistant.category_prompt is not None
     assert "CONCEPT FOCUS:" in assistant.category_prompt
-    assert assistant.ibpyp_theme_name is not None
+    assert assistant.ibpyp_theme_name is None
+    assert assistant.fallback_theme_name is not None
     assert assistant.key_concept is not None
 
 
@@ -107,3 +136,9 @@ def test_classify_object_yaml_all_ages_no_crash():
         result = classify_object_yaml("apple", age)
         assert "theme_id" in result
         assert "category_prompt" in result
+
+
+def test_theme_classifier_only_exposes_conversation_theme_entrypoint():
+    """The old object-level LLM classifier should not remain in the public API."""
+    assert hasattr(theme_classifier, "classify_conversation_to_theme")
+    assert not hasattr(theme_classifier, "classify_object_to_theme")

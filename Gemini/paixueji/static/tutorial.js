@@ -28,19 +28,13 @@ const TUTORIAL_STEPS = [
     phase: 'setup',
     selector: '.object-input-row',
     title: 'Choose an Object',
-    body: 'Type what your child will learn about (e.g., "apple"). Then click <strong>Classify</strong> to automatically tag it with a learning category — this helps the AI ask smarter questions.',
+    body: 'Type what your child will learn about (e.g., "apple"). When you finish entering it, Paixueji automatically looks up related concepts so you can preview the topic before starting.',
   },
   {
     phase: 'setup',
     selector: '#age',
     title: "Set the Child's Age",
     body: 'The age adjusts question difficulty. A 3-year-old gets simpler questions than a 6-year-old.',
-  },
-  {
-    phase: 'setup',
-    selector: '#level1Category',
-    title: 'Categories (Optional)',
-    body: 'These are auto-filled when you Classify. You can override them manually if the AI picked the wrong category for your object.',
   },
   {
     phase: 'setup',

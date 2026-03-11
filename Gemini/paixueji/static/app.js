@@ -19,7 +19,6 @@ let isStreaming = false;
 let currentStreamController = null;
 let correctAnswerCount = 0;
 let conversationComplete = false;
-let categoryData = {};
 let detectedObject = null;  // For manual topic switch override
 let awaitingObjectSelection = false;  // Waiting for object choice flag
 
@@ -107,9 +106,6 @@ function displayChunk(element, text) {
 async function startConversation() {
     const age = parseInt(document.getElementById('age').value);
     const objectName = document.getElementById('objectName').value.trim();
-    const level1Category = document.getElementById('level1Category').value;
-    const level2Category = document.getElementById('level2Category').value;
-    const level3Category = document.getElementById('level3Category').value;
     // Save state for debug panel
     currentObject = objectName;
 
@@ -118,11 +114,6 @@ async function startConversation() {
         alert('Please enter an object name');
         return;
     }
-
-    // Convert "none" to null
-    const level1Value = (level1Category && level1Category !== 'none') ? level1Category : null;
-    const level2Value = (level2Category && level2Category !== 'none') ? level2Category : null;
-    const level3Value = (level3Category && level3Category !== 'none') ? level3Category : null;
 
     // Read backbone model overrides
     const conversationModel = document.querySelector('input[name="conversationModel"]:checked')?.value || 'gemini-3.1-flash-lite-preview';
@@ -133,6 +124,8 @@ async function startConversation() {
     sessionId = null;
     thinkingTimeDisplay.textContent = '';
     thinkingTimeDisplay.style.opacity = 0;
+    currentThemeName = null;
+    currentKeyConcept = null;
 
     // Reset progress
     correctAnswerCount = 0;
@@ -158,8 +151,7 @@ async function startConversation() {
     updateStopButton();
 
     try {
-        console.log('[INFO] Starting Paixueji conversation | age:', age, 'object:', objectName,
-                    'level1:', level1Value, 'level2:', level2Value, 'level3:', level3Value);
+        console.log('[INFO] Starting Paixueji conversation | age:', age, 'object:', objectName);
 
         // Create AbortController for this stream
         currentStreamController = new AbortController();
@@ -172,9 +164,6 @@ async function startConversation() {
             body: JSON.stringify({
                 age: age,
                 object_name: objectName,
-                level1_category: level1Value,
-                level2_category: level2Value,
-                level3_category: level3Value,
                 model_name_override: conversationModel,
                 grounding_model_override: groundingModel
             }),
@@ -282,6 +271,8 @@ async function startGuideTest() {
     sessionId = null;
     thinkingTimeDisplay.textContent = '';
     thinkingTimeDisplay.style.opacity = 0;
+    currentThemeName = null;
+    currentKeyConcept = null;
 
     // Set progress to 4 (simulating 4 correct answers)
     correctAnswerCount = 4;
@@ -722,124 +713,17 @@ function handleStreamChunk(chunk) {
 }
 
 /**
- * Load category data from object_prompts.json
- */
-async function loadCategoryData() {
-    try {
-        const response = await fetch('/static/object_prompts.json');
-        categoryData = await response.json();
-        populateLevel1Dropdown();
-        console.log('[INFO] Category data loaded');
-    } catch (error) {
-        console.error('[ERROR] Failed to load category data:', error);
-    }
-}
-
-/**
- * Populate Level 1 category dropdown
- */
-function populateLevel1Dropdown() {
-    const level1Select = document.getElementById('level1Category');
-    const level1Categories = Object.keys(categoryData.level1_categories || {});
-
-    level1Select.innerHTML = '<option value="">Select...</option>';
-
-    // Add "None of the Above" option
-    const noneOption = document.createElement('option');
-    noneOption.value = 'none';
-    noneOption.textContent = 'None of the Above';
-    level1Select.appendChild(noneOption);
-
-    // Add level1 categories
-    level1Categories.forEach(cat => {
-        const option = document.createElement('option');
-        option.value = cat;
-        option.textContent = formatCategoryName(cat);
-        level1Select.appendChild(option);
-    });
-}
-
-/**
- * Handle Level 1 category change - populate Level 2 dropdown
- */
-function onLevel1Change() {
-    const level1 = document.getElementById('level1Category').value;
-    const level2Select = document.getElementById('level2Category');
-    const level3Select = document.getElementById('level3Category');
-
-    // Reset level3 dropdown
-    level3Select.disabled = true;
-    level3Select.innerHTML = '<option value="">Select...</option>';
-
-    if (!level1 || level1 === 'none') {
-        level2Select.disabled = true;
-        level2Select.innerHTML = '<option value="">Select...</option>';
-        return;
-    }
-
-    // Find all level2 categories with this parent
-    const level2Categories = Object.entries(categoryData.level2_categories || {})
-        .filter(([key, val]) => val.parent === level1)
-        .map(([key, val]) => key);
-
-    level2Select.disabled = false;
-    level2Select.innerHTML = '<option value="">Select...</option>';
-
-    // Add "None of the Above" option
-    const noneOption = document.createElement('option');
-    noneOption.value = 'none';
-    noneOption.textContent = 'None of the Above';
-    level2Select.appendChild(noneOption);
-
-    // Add level2 categories
-    level2Categories.forEach(cat => {
-        const option = document.createElement('option');
-        option.value = cat;
-        option.textContent = formatCategoryName(cat);
-        level2Select.appendChild(option);
-    });
-}
-
-/**
- * Handle Level 2 category change - populate Level 3 dropdown
- */
-function onLevel2Change() {
-    const level2 = document.getElementById('level2Category').value;
-    const level3Select = document.getElementById('level3Category');
-
-    if (!level2 || level2 === 'none') {
-        level3Select.disabled = true;
-        level3Select.innerHTML = '<option value="">Select...</option>';
-        return;
-    }
-
-    // Find all level3 categories with this parent
-    const level3Categories = Object.entries(categoryData.level3_categories || {})
-        .filter(([key, val]) => val.parent === level2)
-        .map(([key, val]) => key);
-
-    level3Select.disabled = false;
-    level3Select.innerHTML = '<option value="">Select...</option>';
-
-    // Add "None of the Above" option
-    const noneOption = document.createElement('option');
-    noneOption.value = 'none';
-    noneOption.textContent = 'None of the Above';
-    level3Select.appendChild(noneOption);
-
-    // Add level3 categories
-    level3Categories.forEach(cat => {
-        const option = document.createElement('option');
-        option.value = cat;
-        option.textContent = formatCategoryName(cat);
-        level3Select.appendChild(option);
-    });
-}
-
-/**
  * Lookup available concepts for an object and age
  */
 //添加新的一栏用于显示检索到的JSOn格式结果
+function resetConceptsOutput() {
+    const conceptsOutput = document.getElementById('conceptsOutput');
+
+    if (conceptsOutput) {
+        conceptsOutput.innerHTML = '<span style="color: #6b7280;">Enter an object name to see available concepts...</span>';
+    }
+}
+
 async function lookupConcepts() {
     const objectName = document.getElementById('objectName').value.trim();
     const age = parseInt(document.getElementById('age').value);
@@ -931,91 +815,6 @@ async function lookupConcepts() {
         console.error('Concept lookup error:', error);
         conceptsOutput.innerHTML = `<span style="color: #dc2626;">Error: ${error.message}</span>`;
     }
-}
-
-/**
- * Classify an object and auto-populate category dropdowns
- */
-async function classifyObject() {
-    const objectName = document.getElementById('objectName').value.trim();
-    const classifyBtn = document.getElementById('classifyBtn');
-    const classifyStatus = document.getElementById('classifyStatus');
-
-    if (!objectName) {
-        classifyStatus.className = 'classify-status error';
-        classifyStatus.textContent = 'Please enter an object name first';
-        return;
-    }
-
-    // Disable button and show loading
-    classifyBtn.disabled = true;
-    classifyStatus.className = 'classify-status loading';
-    classifyStatus.textContent = 'Classifying...';
-
-    try {
-        // Lookup concepts first
-        await lookupConcepts();
-
-        const response = await fetch(`${API_BASE}/classify`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                object_name: objectName
-            })
-        });
-
-        const result = await response.json();
-
-        if (!result.success) {
-            throw new Error(result.error || 'Classification failed');
-        }
-
-        const { level1_category, level2_category } = result;
-
-        // Update dropdowns
-        const level1Select = document.getElementById('level1Category');
-        const level2Select = document.getElementById('level2Category');
-
-        if (level2_category === 'none') {
-            // No match found - select "None of the Above"
-            level1Select.value = 'none';
-            level2Select.disabled = true;
-            level2Select.innerHTML = '<option value="">Select...</option>';
-
-            classifyStatus.className = 'classify-status success';
-            classifyStatus.textContent = `"${objectName}" doesn't match our categories. Selected "None of the Above"`;
-        } else {
-            // Match found - update both dropdowns
-            level1Select.value = level1_category;
-
-            // Trigger level1 change to populate level2
-            onLevel1Change();
-
-            // Set level2 value
-            level2Select.value = level2_category;
-
-            classifyStatus.className = 'classify-status success';
-            classifyStatus.textContent = `✓ Classified as: ${formatCategoryName(level2_category)} (${formatCategoryName(level1_category)})`;
-        }
-
-    } catch (error) {
-        console.error('Classification error:', error);
-        classifyStatus.className = 'classify-status error';
-        classifyStatus.textContent = `Error: ${error.message}`;
-    } finally {
-        classifyBtn.disabled = false;
-    }
-}
-
-/**
- * Format category name for display (e.g., "fresh_ingredients" → "Fresh Ingredients")
- */
-function formatCategoryName(name) {
-    return name.split('_')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
 }
 
 /**
@@ -1182,27 +981,34 @@ function resetConversation() {
 function init() {
     console.log('[INFO] Paixueji Streaming Chat initialized');
 
-    // Load category data
-    loadCategoryData();
-
     // Show empty state
     if (messagesContainer.children.length === 0) {
         const emptyState = document.createElement('div');
         emptyState.className = 'empty-state';
         emptyState.innerHTML = `
             <p>👋 Welcome to Paixueji!</p>
-            <small>Enter an object name, click "Classify" to auto-categorize, then "Start Learning!" to begin</small>
+            <small>Enter an object name to preview concepts, then click "Start Learning!" to begin</small>
         `;
         messagesContainer.appendChild(emptyState);
     }
 
-    // Clear classification status when user types in object name
     const objectNameInput = document.getElementById('objectName');
-    const classifyStatus = document.getElementById('classifyStatus');
-    if (objectNameInput && classifyStatus) {
+    if (objectNameInput) {
         objectNameInput.addEventListener('input', () => {
-            classifyStatus.className = 'classify-status';
-            classifyStatus.textContent = '';
+            if (!objectNameInput.value.trim()) {
+                resetConceptsOutput();
+            }
+        });
+        objectNameInput.addEventListener('blur', async () => {
+            if (objectNameInput.value.trim()) {
+                await lookupConcepts();
+            }
+        });
+        objectNameInput.addEventListener('keydown', async (event) => {
+            if (event.key === 'Enter' && objectNameInput.value.trim()) {
+                event.preventDefault();
+                await lookupConcepts();
+            }
         });
     }
 
@@ -1219,6 +1025,7 @@ function init() {
 
     // Focus on object name input
     document.getElementById('objectName').focus();
+    resetConceptsOutput();
 }
 
 /**

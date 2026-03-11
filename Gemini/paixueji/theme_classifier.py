@@ -1,79 +1,116 @@
 """
-IB PYP Theme Classifier - LLM-based object to theme classification.
+IB PYP theme classification helpers.
 
-This module classifies objects into one of the 6 IB PYP Transdisciplinary Themes
-using an LLM. Classification runs in the background and updates the assistant state.
+The live path classifies a completed chat conversation into one theme when guide
+mode begins.
 """
 import json
 import os
-from typing import Optional
+from typing import Any, Optional
 from pydantic import BaseModel, Field
 from loguru import logger
+from google.genai.types import GenerateContentConfig
 
 
-class ThemeClassificationResult(BaseModel):
-    """Result of classifying an object into an IB PYP theme."""
+class ConversationThemeClassificationResult(BaseModel):
+    """Result of classifying a conversation into an IB PYP theme."""
     theme_id: str = Field(description="The ID of the matching IB PYP theme")
     theme_name: str = Field(description="The English name of the theme")
-    reason: str = Field(description="Brief explanation for why the object fits this theme")
-    key_concept: Optional[str] = Field(None, description="The selected IB PYP Key Concept (e.g., Function, Change)")
-    key_concept_reason: Optional[str] = Field(None, description="Why this key concept was selected")
-    bridge_question: Optional[str] = Field(None, description="A heuristic bridge question connecting object -> concept -> theme")
-    thinking: Optional[str] = Field(None, description="Internal Chain-of-Thought reasoning for classification and question generation")
+    reason: str = Field(description="Brief explanation grounded in the conversation")
 
 
-def classify_object_to_theme(object_name: str, client, config) -> Optional[ThemeClassificationResult]:
+def _load_simplified_themes() -> tuple[list[dict[str, str]], dict[str, str]]:
+    themes_path = os.path.join(os.path.dirname(__file__), "themes.json")
+    with open(themes_path, "r", encoding="utf-8") as f:
+        themes_data = json.load(f)
+
+    simplified_themes = [
+        {"id": t["id"], "name": t["name"], "description": t["description"]}
+        for t in themes_data.get("themes", [])
+    ]
+    theme_name_by_id = {t["id"]: t["name"] for t in simplified_themes}
+    return simplified_themes, theme_name_by_id
+
+
+def _format_chat_history(history: list[dict[str, Any]]) -> str:
+    lines = []
+    for msg in history:
+        role = msg.get("role")
+        if role not in {"assistant", "user"}:
+            continue
+        if msg.get("mode") == "guide":
+            continue
+        content = str(msg.get("content", "")).strip()
+        if not content:
+            continue
+        speaker = "Guide" if role == "assistant" else "Child"
+        lines.append(f"{speaker}: {content}")
+    return "\n".join(lines[-12:])
+
+
+async def classify_conversation_to_theme(
+    history: list[dict[str, Any]],
+    object_name: str,
+    age: int,
+    key_concept: str,
+    bridge_question: str,
+    client,
+    config,
+) -> Optional[dict[str, str]]:
     """
-    Classifies an object into one of the 6 IB PYP themes using LLM.
-    Uses the advanced prompt from paixueji_prompts.py.
+    Classify the chat-phase conversation into one IB PYP theme.
+    The conversation is authoritative; object and concept are supporting context only.
     """
     try:
-        from paixueji_prompts import THEME_CLASSIFICATION_PROMPT
-        
-        # Load themes
-        themes_path = os.path.join(os.path.dirname(__file__), 'themes.json')
-        with open(themes_path, 'r', encoding='utf-8') as f:
-            themes_data = json.load(f)
-            # Remove detailed keywords to save tokens, keep id/name/desc
-            simplified_themes = [
-                {"id": t["id"], "name": t["name"], "description": t["description"]} 
-                for t in themes_data.get("themes", [])
-            ]
-            themes_json = json.dumps(simplified_themes, indent=2)
+        from paixueji_prompts import HISTORY_THEME_CLASSIFICATION_PROMPT
 
-        # Load concepts
-        concepts_path = os.path.join(os.path.dirname(__file__), 'concepts.json')
-        with open(concepts_path, 'r', encoding='utf-8') as f:
-            concepts_data = json.load(f)
-            concepts_json = json.dumps(concepts_data.get("concepts", []), indent=2)
+        simplified_themes, theme_name_by_id = _load_simplified_themes()
+        conversation_text = _format_chat_history(history)
+        if not conversation_text:
+            logger.warning("[THEME_CLASSIFY] No chat history available for conversation theme analysis")
+            return None
 
-        prompt = THEME_CLASSIFICATION_PROMPT.format(
+        prompt = HISTORY_THEME_CLASSIFICATION_PROMPT.format(
             object_name=object_name,
-            themes_json=themes_json,
-            concepts_json=concepts_json
+            age=age,
+            key_concept=key_concept or "unknown",
+            bridge_question=bridge_question or "unknown",
+            themes_json=json.dumps(simplified_themes, indent=2),
+            conversation_history=conversation_text,
         )
 
-        logger.info(f"[THEME_CLASSIFY] Classifying object: {object_name}")
-
-        response = client.models.generate_content(
+        logger.info(f"[THEME_CLASSIFY] Classifying conversation theme for: {object_name}")
+        response = await client.aio.models.generate_content(
             model=config["model_name"],
             contents=prompt,
-            config={
-                'response_mime_type': 'application/json',
-                'temperature': 0.1,  # Low temp for deterministic classification
-            }
+            config=GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.1,
+            ),
         )
 
         if not response.text:
-            logger.error("[THEME_CLASSIFY] Empty response from LLM")
+            logger.error("[THEME_CLASSIFY] Empty response from conversation theme classifier")
             return None
 
-        result_dict = json.loads(response.text)
-        result = ThemeClassificationResult(**result_dict)
-        
-        logger.info(f"[THEME_CLASSIFY] SUCCESS: {object_name} -> {result.theme_id} | Concept: {result.key_concept} | Question: {result.bridge_question} | Thinking: {result.thinking}")
-        return result
+        result = ConversationThemeClassificationResult(**json.loads(response.text))
+        if result.theme_id not in theme_name_by_id:
+            logger.error(f"[THEME_CLASSIFY] Unknown theme_id from conversation classifier: {result.theme_id}")
+            return None
 
+        if not result.theme_name:
+            result.theme_name = theme_name_by_id[result.theme_id]
+
+        logger.info(
+            f"[THEME_CLASSIFY] Conversation theme success: {object_name} -> {result.theme_name}"
+        )
+        return result.model_dump()
     except Exception as e:
-        logger.error(f"[THEME_CLASSIFY] Error classifying object: {e}")
+        logger.error(f"[THEME_CLASSIFY] Conversation theme classification failed: {e}")
         return None
+
+
+__all__ = [
+    "ConversationThemeClassificationResult",
+    "classify_conversation_to_theme",
+]

@@ -47,7 +47,7 @@ python paixueji_app.py
 *   `paixueji_app.py`: Main entry point. Initializes Flask, handles API routes (`/api/start`, `/api/continue`), and manages the `asyncio` event loop bridge.
 *   `paixueji_assistant.py`: Core logic class (`PaixuejiAssistant`). Manages session state, conversation history, and prompts.
 *   `paixueji_stream.py`: Handles the interaction with the Gemini API, specifically the streaming logic for questions and feedback.
-*   `theme_classifier.py`: Logic for classifying objects into IB PYP themes.
+*   `theme_classifier.py`: Logic for classifying chat history into an IB PYP theme when guide mode begins.
 *   `config.json`: Configuration settings for the AI model and project.
 *   `requirements.txt`: Python dependencies.
 *   `static/`: Frontend assets (HTML, CSS, JS).

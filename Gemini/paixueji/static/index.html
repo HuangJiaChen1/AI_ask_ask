@@ -29,9 +29,7 @@
 <label for="objectName">What object are we learning about?</label>
             <div class="object-input-row">
                 <input type="text" id="objectName" placeholder="e.g., apple, dog, tree" />
-                <button type="button" onclick="classifyObject()" id="classifyBtn" class="classify-btn">Classify</button>
             </div>
-            <div id="classifyStatus" class="classify-status"></div>
 
             <div class="guide-test-section" style="margin: 15px 0; padding: 15px; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px;">
                 <h3 style="margin: 0 0 8px 0; color: #92400e; font-size: 1em;">Test Guide Mode</h3>
@@ -59,25 +57,9 @@
                     color: #1f2937;
                     font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
                 ">
-                    <span style="color: #6b7280;">Enter an object name and click "Classify" or "Start Learning!" to see available concepts...</span>
+                    <span style="color: #6b7280;">Enter an object name to preview available concepts before you start learning.</span>
                 </div>
             </div>
-
-            <label for="level1Category">Level 1 Category:</label>
-            <select id="level1Category" onchange="onLevel1Change()">
-                <option value="">Select...</option>
-                <option value="none">None of the Above</option>
-            </select>
-
-            <label for="level2Category">Level 2 Category:</label>
-            <select id="level2Category" onchange="onLevel2Change()" disabled>
-                <option value="">Select...</option>
-            </select>
-
-            <label for="level3Category">Level 3 Category:</label>
-            <select id="level3Category" disabled>
-                <option value="">Select...</option>
-            </select>
 
             <!-- Backbone Model Override Panel -->
             <div style="margin: 4px 0; padding: 12px 14px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px;">

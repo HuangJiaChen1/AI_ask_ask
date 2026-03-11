@@ -213,20 +213,14 @@ async def _apply_topic_switch(state: PaixuejiState, new_obj: str) -> dict:
     Update assistant state for a named-object topic switch and return state updates.
     Uses YAML lookup (in-memory, no LLM call needed).
     """
-    from graph_lookup import classify_object_yaml
     from paixueji_assistant import ConversationState
 
     assistant = state["assistant"]
     assistant.object_name = new_obj
     assistant.state = ConversationState.ASKING_QUESTION
 
-    result = classify_object_yaml(new_obj, state["age"] or 6)
-    assistant.ibpyp_theme = result["theme_id"]
-    assistant.ibpyp_theme_name = result["theme_name"]
-    assistant.ibpyp_theme_reason = result["theme_reasoning"]
-    assistant.key_concept = result["key_concept"]
-    assistant.bridge_question = result["bridge_question"]
-    assistant.category_prompt = result["category_prompt"]
+    assistant.load_object_context_from_yaml(new_obj)
+    assistant.clear_active_theme()
 
     return {
         "object_name": new_obj,
@@ -281,9 +275,6 @@ async def node_generate_fun_fact(state: PaixuejiState) -> dict:
     """
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Generate Fun Fact for '{state['object_name']}'")
-
-    # Trigger background IB PYP theme classification on introduction
-    state["assistant"].classify_theme_background(state["object_name"])
 
     from stream.fun_fact import generate_fun_fact
 
@@ -1205,6 +1196,10 @@ async def node_finalize(state: PaixuejiState) -> dict:
         state["nodes_executed"] = merged
         assistant._router_traces = []
 
+    # Theme should stay unset during chat; only expose it once guide mode starts.
+    guide_phase = state.get("guide_phase") or state["assistant"].guide_phase
+    include_theme = bool(guide_phase)
+
     # Send final chunk
     final_chunk = StreamChunk(
         response=full_response,
@@ -1230,12 +1225,12 @@ async def node_finalize(state: PaixuejiState) -> dict:
 
         # Theme classification fields
         key_concept=state["assistant"].key_concept or None,
-        ibpyp_theme_name=state["assistant"].ibpyp_theme_name or None,
-        theme_classification_reason=state["assistant"].ibpyp_theme_reason or None,
+        ibpyp_theme_name=state["assistant"].ibpyp_theme_name if include_theme else None,
+        theme_classification_reason=state["assistant"].ibpyp_theme_reason if include_theme else None,
 
         # Guide Phase specific fields
-        guide_phase=state.get("guide_phase") or state["assistant"].guide_phase,
-        bridge_question=state["assistant"].bridge_question if (state.get("guide_phase") or state["assistant"].guide_phase) else None,
+        guide_phase=guide_phase,
+        bridge_question=state["assistant"].bridge_question if include_theme else None,
         is_guide_success=state.get("is_guide_success", False),
 
         # Node execution trace (for critique reports)
@@ -1251,34 +1246,47 @@ async def node_finalize(state: PaixuejiState) -> dict:
 @trace_node
 async def node_classify_theme(state: PaixuejiState) -> dict:
     """
-    4th correct answer threshold reached: classify object into IB PYP theme via YAML.
-    YAML lookup is in-memory — no thread pool needed.
+    4th correct answer threshold reached: classify guide theme from conversation history.
+    Key concept and bridge question stay object-derived from YAML.
     """
-    from graph_lookup import classify_object_yaml
+    from theme_classifier import classify_conversation_to_theme
 
     assistant = state["assistant"]
     logger.info(f"[{state['session_id']}] Node: Classify Theme (guide mode entry)")
 
     assistant.increment_correct_answers()
 
-    result = classify_object_yaml(state["object_name"], state["age"] or 6)
+    if (
+        not assistant.key_concept
+        or not assistant.bridge_question
+        or not assistant.category_prompt
+        or not assistant.fallback_theme_id
+    ):
+        assistant.load_object_context_from_yaml(state["object_name"])
 
-    assistant.ibpyp_theme = result["theme_id"]
-    assistant.ibpyp_theme_name = result["theme_name"]
-    assistant.ibpyp_theme_reason = result["theme_reasoning"]
-    assistant.key_concept = result["key_concept"]
-    assistant.bridge_question = result["bridge_question"]
-    assistant.category_prompt = result["category_prompt"]
+    result = await classify_conversation_to_theme(
+        history=state["messages"],
+        object_name=state["object_name"],
+        age=state["age"] or 6,
+        key_concept=assistant.key_concept or "",
+        bridge_question=assistant.bridge_question or "",
+        client=state["client"],
+        config=state["config"],
+    )
 
-    if result["success"]:
+    if result:
+        assistant.ibpyp_theme = result["theme_id"]
+        assistant.ibpyp_theme_name = result["theme_name"]
+        assistant.ibpyp_theme_reason = result["reason"]
         logger.info(
             f"[{state['session_id']}] Theme: {result['theme_name']} | "
-            f"Concept: {result['key_concept']}"
+            f"Concept: {assistant.key_concept}"
         )
     else:
+        assistant.apply_fallback_theme()
         logger.warning(
-            f"[{state['session_id']}] Theme YAML lookup failed for "
-            f"'{state['object_name']}', using fallback"
+            f"[{state['session_id']}] Conversation theme analysis failed for "
+            f"'{state['object_name']}', using fallback theme"
         )
 
     return {"correct_answer_count": assistant.correct_answer_count}

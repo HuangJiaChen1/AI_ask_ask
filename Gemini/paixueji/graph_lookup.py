@@ -161,7 +161,7 @@ def _entity_matches_query(entity: Dict[str, Any], query: str) -> bool:
         entity.get("entity_name", ""),
         entity.get("entity_name_cn", ""),
     ]
-    return any(q in _norm(v) for v in hay)
+    return any(q == _norm(v) for v in hay)
 
 
 def _iter_tier_concepts(
@@ -478,7 +478,7 @@ def lookup_top_available_concepts(query: str, age_tier: str) -> Dict[str, Any]:
 def classify_object_yaml(object_name: str, age: int) -> Dict[str, Any]:
     """
     Unified YAML-based object classifier. Replaces both:
-    - classify_object_to_theme  (LLM theme classifier)
+    - the removed object-level LLM theme classifier
     - classify_object_sync + get_category_prompt  (LLM category classifier)
 
     Returns a dict with all downstream-needed fields:
@@ -547,4 +547,3 @@ __all__ = [
     "lookup_top_available_concepts",
     "classify_object_yaml",
 ]
-

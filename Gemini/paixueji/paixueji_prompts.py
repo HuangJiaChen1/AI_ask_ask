@@ -1068,55 +1068,35 @@ OUTPUT JSON ONLY:
 # 8. GUIDANCE MAPPINGS
 # ============================================================================
 
-THEME_CLASSIFICATION_PROMPT = """
-### ROLE & OBJECTIVE
-You are Kido, an AI engine for the IB Primary Years Programme (PYP). 
-Your task is to take a raw input `{object_name}`, and perform a full "Object-to-Inquiry" mapping process:
-1.  **CLASSIFY:** Map the object to the most relevant **Transdisciplinary Theme**.
-2.  **SELECT:** Choose the best **Key Concept** to act as a "lens" for this object.
-3.  **GENERATE:** Create a "Bridge Question" that leads a child from the object to the theme.
+HISTORY_THEME_CLASSIFICATION_PROMPT = """
+You are classifying the IB PYP transdisciplinary theme for a child's conversation.
 
-### INPUT ARGUMENTS
-**Target Object:** "{object_name}"
+The theme must be determined primarily from how the child talks about the object,
+not from the object label alone.
 
-**Candidate Themes (Select One):**
+OBJECT:
+- Object: {object_name}
+- Age: {age}
+- Current key concept: {key_concept}
+- Current bridge question: {bridge_question}
+
+AVAILABLE THEMES:
 {themes_json}
 
-**Candidate Concepts (Select One):**
-{concepts_json}
+CHAT-PHASE CONVERSATION:
+{conversation_history}
 
-### DECISION RULES (Logic Engine)
-1.  **Theme Selection:** Choose the theme based on the *deepest* potential for inquiry, not just the surface label.
-    * *Example:* A "Family Photo" fits *Who We Are* (Relationships) better than *How We Express Ourselves* (Art).
-2.  **Concept Selection:** Choose the concept that creates the strongest "Aha!" moment for a 3-6 year old.
-    * *Avoid:* "Causation" for static objects (hard to explain).
-    * *Prefer:* "Function" or "Form" for machines; "Change" for nature.
+RULES:
+1. Use the conversation as the primary evidence.
+2. The object name is only supporting context.
+3. Choose exactly one theme from the provided IDs.
+4. Keep the reason short and grounded in what the child focused on.
 
-### GENERATION RULES (Creative Engine)
-1.  **Sensory Hook:** The question MUST reference a visible/tactile part of the object (e.g., "wheels," "handle," "leaves").
-2.  **No Abstract Terms:** Do not use the Theme Name or Concept Name in the question itself.
-3.  **Causal Invitation:** The question MUST invite the child to reason about *why* or *how*, NOT just describe what they see.
-    - BAD (observation trap): "What do you notice about the banana's skin?"
-    - GOOD (causal invitation): "Why do you think the banana's skin changes color as it gets older?"
-4.  **Wonder Framing:** Begin with "Why do you think...", "What do you think happens when...", or "How do you think...". NEVER start with "What do you see/notice/observe".
-
-### CHAIN OF THOUGHT (Execute this internally)
-1.  **Analyze Object:** What is {object_name}? What are its physical features?
-2.  **Match Theme:** Compare object against the definitions in {themes_json}. Pick the best fit.
-3.  **Match Concept:** Which concept from {concepts_json} unlocks a fun mystery about this object?
-4.  **Draft Question:** Write the question based on the selected Concept.
-
-### OUTPUT FORMAT
-Return strictly VALID JSON. No markdown, no pre-text.
-
+Return strictly valid JSON:
 {{
-  "theme_id": "<ID of the selected theme from input>",
-  "theme_name": "<Name of the selected theme>",
-  "reason": "<Brief logic: Why does this object belong to this Theme?>",
-  "key_concept": "<Name of the selected concept from input>",
-  "key_concept_reason": "<Brief logic: Why is this concept the best lens?>",
-  "thinking": "<Internal CoT: Object Features -> Theme Match -> Concept Selection>",
-  "bridge_question": "<The final concrete, sensory bridge question for the child>"
+  "theme_id": "<theme id from AVAILABLE THEMES>",
+  "theme_name": "<theme name>",
+  "reason": "<one short explanation grounded in the conversation>"
 }}
 """
 
