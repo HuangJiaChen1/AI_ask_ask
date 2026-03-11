@@ -204,9 +204,6 @@ def start_conversation():
     data = request.get_json() or {}
     age = data.get('age')
     object_name = data.get('object_name')
-    level1_category = data.get('level1_category')
-    level2_category = data.get('level2_category')
-    level3_category = data.get('level3_category')
     model_name_override = data.get('model_name_override')
     grounding_model_override = data.get('grounding_model_override')
     # Validate required fields
@@ -235,10 +232,17 @@ def start_conversation():
     # Store session state
     assistant.age = age
     assistant.object_name = object_name
-    assistant.level1_category = level1_category
-    assistant.level2_category = level2_category
-    assistant.level3_category = level3_category
     assistant.correct_answer_count = 0
+
+    # YAML classification: sets theme fields + category_prompt on assistant
+    from graph_lookup import classify_object_yaml
+    _cls = classify_object_yaml(object_name, age or 6)
+    assistant.ibpyp_theme = _cls["theme_id"]
+    assistant.ibpyp_theme_name = _cls["theme_name"]
+    assistant.ibpyp_theme_reason = _cls["theme_reasoning"]
+    assistant.key_concept = _cls["key_concept"]
+    assistant.bridge_question = _cls["bridge_question"]
+    assistant.category_prompt = _cls["category_prompt"]
 
     # Apply backbone model overrides (validated against whitelist)
     if model_name_override and model_name_override in ALLOWED_MODELS:
@@ -252,7 +256,7 @@ def start_conversation():
     request_id = str(uuid.uuid4())
 
     print(f"[INFO] Created Paixueji session {session_id[:8]}... | age={age}, object={object_name}, "
-          f"level1={level1_category}, level2={level2_category}, level3={level3_category}, request_id={request_id[:8]}...")
+          f"request_id={request_id[:8]}...")
 
     def generate():
         """Generator for SSE stream."""
@@ -267,10 +271,8 @@ def start_conversation():
                 if age_prompt:
                     system_prompt += f"\n\nAGE-SPECIFIC GUIDANCE:\n{age_prompt}"
 
-            # Get category prompt
-            category_prompt = assistant.get_category_prompt(level1_category, level2_category, level3_category)
-            if category_prompt:
-                system_prompt += f"\n\nCATEGORY GUIDANCE:\n{category_prompt}"
+            # Get category prompt (set by YAML classification above)
+            category_prompt = assistant.category_prompt or ""
 
             # Initialize conversation history with system prompt
             assistant.conversation_history = [
@@ -297,11 +299,8 @@ def start_conversation():
                         "assistant": assistant,
                         "age_prompt": age_prompt,
                         "object_name": object_name,
-                        "level1_category": level1_category,
-                        "level2_category": level2_category,
-                        "level3_category": level3_category,
                         "correct_answer_count": 0,
-                        "category_prompt": category_prompt,
+                        "category_prompt": assistant.category_prompt,
 
                         # Initialize outputs
                         "full_response_text": "",
@@ -337,9 +336,6 @@ def start_conversation():
                             "hint_given": assistant.hint_given,
                             "ibpyp_theme_name": assistant.ibpyp_theme_name,
                             "key_concept": assistant.key_concept,
-                            "level1_category": assistant.level1_category,
-                            "level2_category": assistant.level2_category,
-                            "level3_category": assistant.level3_category,
                         },
                     }
 
@@ -403,7 +399,6 @@ def start_guide_test():
         - complete: Final completion marker
         - error: Error information
     """
-    from theme_classifier import classify_object_to_theme
     from google.genai.types import GenerateContentConfig
 
     data = request.get_json() or {}
@@ -458,23 +453,21 @@ def start_guide_test():
     def generate():
         """Generator for SSE stream."""
         try:
-            # Step 1: Run theme classification SYNCHRONOUSLY
-            print(f"[GUIDE-TEST] Running theme classification for '{object_name}'...")
+            # Step 1: Run YAML classification
+            print(f"[GUIDE-TEST] Running YAML classification for '{object_name}'...")
 
-            result = classify_object_to_theme(object_name, assistant.client, assistant.config)
-
-            if result:
-                assistant.ibpyp_theme = result.theme_id
-                assistant.ibpyp_theme_name = result.theme_name
-                assistant.key_concept = result.key_concept
-                assistant.bridge_question = result.bridge_question
-                print(f"[GUIDE-TEST] Classification complete: theme={result.theme_name}, concept={result.key_concept}")
-            else:
-                print(f"[GUIDE-TEST] Classification failed, using fallback")
-                assistant.ibpyp_theme = "how_the_world_works"
-                assistant.ibpyp_theme_name = "How the World Works"
-                assistant.key_concept = "Change"
-                assistant.bridge_question = f"What happens to {object_name} over time?"
+            from graph_lookup import classify_object_yaml
+            _cls = classify_object_yaml(object_name, age or 6)
+            assistant.ibpyp_theme = _cls["theme_id"]
+            assistant.ibpyp_theme_name = _cls["theme_name"]
+            assistant.ibpyp_theme_reason = _cls["theme_reasoning"]
+            assistant.key_concept = _cls["key_concept"]
+            assistant.bridge_question = _cls["bridge_question"]
+            assistant.category_prompt = _cls["category_prompt"]
+            print(
+                f"[GUIDE-TEST] YAML classification: theme={_cls['theme_name']}, "
+                f"concept={_cls['key_concept']}, success={_cls['success']}"
+            )
 
             # Step 2: Enter guide mode
             assistant.enter_guide_mode()
@@ -658,13 +651,9 @@ def continue_conversation():
             if assistant.age is not None:
                 age_prompt = assistant.get_age_prompt(assistant.age)
 
-            # Get category prompt
-            category_prompt = assistant.get_category_prompt(
-                assistant.level1_category,
-                assistant.level2_category,
-                assistant.level3_category
-            )
-            
+            # Get category prompt (set by YAML classification on session start or topic switch)
+            category_prompt = assistant.category_prompt or ""
+
             # NOTE: User message is added to conversation_history inside the graph after turn completes
 
             loop = _ASYNC_LOOP
@@ -690,9 +679,6 @@ def continue_conversation():
                         "assistant": assistant,
                         "age_prompt": age_prompt,
                         "object_name": assistant.object_name,
-                        "level1_category": assistant.level1_category,
-                        "level2_category": assistant.level2_category,
-                        "level3_category": assistant.level3_category,
                         "correct_answer_count": assistant.correct_answer_count,
                         "category_prompt": category_prompt,
 
@@ -730,9 +716,6 @@ def continue_conversation():
                             "hint_given": assistant.hint_given,
                             "ibpyp_theme_name": assistant.ibpyp_theme_name,
                             "key_concept": assistant.key_concept,
-                            "level1_category": assistant.level1_category,
-                            "level2_category": assistant.level2_category,
-                            "level3_category": assistant.level3_category,
                         },
                     }
 
@@ -889,20 +872,21 @@ def classify_object():
     assistant = PaixuejiAssistant(client=GLOBAL_GEMINI_CLIENT)
 
     try:
-        # Run classification synchronously
-        assistant.classify_object_sync(object_name)
+        # YAML classification (in-memory, no LLM needed)
+        from graph_lookup import classify_object_yaml
+        _cls = classify_object_yaml(object_name, assistant.age or 6)
+        assistant.ibpyp_theme = _cls["theme_id"]
+        assistant.ibpyp_theme_name = _cls["theme_name"]
+        assistant.key_concept = _cls["key_concept"]
+        assistant.category_prompt = _cls["category_prompt"]
 
-        # Get results
-        level2_category = assistant.level2_category or "none"
-        level1_category = assistant.level1_category or "none"
-
-        print(f"[INFO] Classified '{object_name}' -> level2={level2_category}, level1={level1_category}")
+        print(f"[INFO] Classified '{object_name}' -> theme_id={_cls['theme_id']}, concept={_cls['key_concept']}")
 
         return jsonify({
             "success": True,
             "object_name": object_name,
-            "level2_category": level2_category,
-            "level1_category": level1_category
+            "theme_id": _cls["theme_id"],
+            "key_concept": _cls["key_concept"],
         })
 
     except Exception as e:
@@ -1075,15 +1059,17 @@ def force_switch():
         # Update object name
         assistant.object_name = new_object
 
-        # Classify new object with timeout
-        import concurrent.futures
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            future = executor.submit(assistant.classify_object_sync, new_object)
-            try:
-                future.result(timeout=1.0)
-                print(f"[FORCE-SWITCH] Classification completed for {new_object}")
-            except concurrent.futures.TimeoutError:
-                print(f"[FORCE-SWITCH] Classification timeout for {new_object}, continuing anyway")
+        # YAML classification (in-memory, instant)
+        from graph_lookup import classify_object_yaml
+        _cls = classify_object_yaml(new_object, assistant.age or 6)
+        assistant.ibpyp_theme = _cls["theme_id"]
+        assistant.ibpyp_theme_name = _cls["theme_name"]
+        assistant.ibpyp_theme_reason = _cls["theme_reasoning"]
+        assistant.key_concept = _cls["key_concept"]
+        assistant.bridge_question = _cls["bridge_question"]
+        assistant.category_prompt = _cls["category_prompt"]
+        print(f"[FORCE-SWITCH] YAML classification complete for '{new_object}': "
+              f"theme={_cls['theme_name']}, concept={_cls['key_concept']}")
 
         print(f"[FORCE-SWITCH] User forced switch from {previous_object} to {new_object}")
 
@@ -1537,9 +1523,6 @@ def get_exchanges(session_id):
         "age": assistant.age,
         "key_concept": assistant.key_concept,
         "ibpyp_theme_name": assistant.ibpyp_theme_name,
-        "level1_category": assistant.level1_category,
-        "level2_category": assistant.level2_category,
-        "level3_category": assistant.level3_category,
     })
 
 
