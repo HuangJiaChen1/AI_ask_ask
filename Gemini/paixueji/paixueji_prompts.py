@@ -104,7 +104,7 @@ Celebrate the transition to the new object.
 FOLLOWUP_QUESTION_PROMPT = """YOUR TASK:
 Continue the conversation about {object_name} with a {age}-year-old child.
 
-CATEGORY GUIDANCE:
+BACKGROUND CONTEXT (use as knowledge — do NOT ask abstract concept questions about this):
 {category_prompt}
 
 AGE GUIDANCE:
@@ -117,6 +117,19 @@ CRITICAL RULES:
 4. Start with a bridge phrase like "And...", "Also...", "You know what...". Do NOT use "Did you know..." — it sounds like a question and confuses children about whether to respond.
 5. Match complexity to age {age}.
 6. Respond naturally (NOT JSON).
+7. FORBIDDEN question types — never use these regardless of age:
+   - Hypothetical: "If you were...", "What would happen if...", "Imagine you were..."
+   - Abstract causal requiring outside knowledge: "Why do you think X is better/worse than Y?"
+   - Future speculation: "How would you feel after a week/month of..."
+8. GOOD question types:
+   - Direct observation: "What do you notice about the X?" / "What color/shape/size is...?"
+   - Personal experience: "Have you ever...?" / "Do you like...?"
+   - Simple comparison visible right now: "Is it bigger or smaller than your hand?"
+   - Binary/multiple-choice: "Do you think it goes fast or slow?"
+9. PREFER questions the child can answer by LOOKING at the object right now — not just from memory or yes/no.
+   GREAT: "What shape are the holes in the telescope lens?" / "How many pedals does the bicycle have?"
+   OK:    "Have you ever ridden a bicycle?" (experience — fine occasionally)
+   WEAK:  "Do you like bicycles?" (yes/no with no follow-through)
 """
 
 # ============================================================================
@@ -124,7 +137,8 @@ CRITICAL RULES:
 # ============================================================================
 
 INTRODUCTION_PROMPT = """You're starting a conversation about: {object_name}
-CATEGORY CONTEXT: {category_prompt}
+BACKGROUND CONTEXT (use as knowledge — do NOT ask abstract concept questions about this):
+{category_prompt}
 AGE GUIDANCE: {age_prompt}
 {grounded_facts_section}
 TASK — 3 BEATS (one sentence each):
@@ -143,9 +157,23 @@ BEAT 3 — SIMPLE QUESTION: Ask ONE easy, age-appropriate question.
     GOOD: "Do you like eating apples?" / "Have you ever tasted a green apple?"
     BAD: "What do you think happens to an apple if you leave it out?" (too abstract)
   Ages 6-8: Simple observation or preference question is OK.
+    GOOD: "What shape is the long tube of the telescope?" / "Does the bicycle have thick or thin wheels?"
+    BAD:  "What do you think you'd see if you looked through it?" (hypothetical)
+    BAD:  "Why do you think people use telescopes?" (requires abstract knowledge)
   {fun_fact_instruction}
 
-4. **IMPORTANT**: Use the VERIFIED FACTS provided above to inform your question if relevant. Do NOT make up facts."""
+4. **IMPORTANT**: Use the VERIFIED FACTS provided above to inform your question if relevant. Do NOT make up facts.
+7. FORBIDDEN question types — never use these regardless of age:
+   - Hypothetical: "If you were...", "What would happen if...", "Imagine..."
+   - Abstract causal: "Why do you think X is better/worse/more/less than Y?"
+   - Future speculation: "How would you feel after a week/month of..."
+8. GOOD question types:
+   - Direct observation: "What color/shape/size is...?" / "What do you notice about...?"
+   - Personal experience: "Have you ever...?" / "Do you like...?"
+   - Simple comparison visible now: "Is it bigger or smaller than your hand?"
+9. PREFER questions the child can answer by LOOKING at the object right now.
+   GREAT: "What shape is the long tube?" / "Does the butterfly look big or small compared to your hand?"
+   WEAK:  "Have you ever seen a butterfly before?" (memory — not about what's in front of them)"""
 
 FUN_FACT_GROUNDING_PROMPT = """Research "{object_name}" for a children's education app (child age: {age}).
 Category: {category}

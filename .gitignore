@@ -5,3 +5,5 @@ Gemini/paixueji.zip
 /Gemini/paixueji/reports
 /Gemini/paixueji/traces
 /Gemini/paixueji/docs/superpowers
+*.log
+/Gemini/paixueji/logs
