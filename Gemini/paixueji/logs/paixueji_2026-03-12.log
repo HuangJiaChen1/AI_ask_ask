@@ -78,3 +78,7 @@
 2026-03-12 17:00:37.717 | ERROR    | stream.question_generators:generate_followup_question_stream:259 | generate_followup_question_stream error | error=Event loop is closed, duration=0.003s
 2026-03-12 17:00:37.718 | INFO     | stream.question_generators:generate_followup_question_stream:215 | generate_followup_question_stream started | object=sunflower, age=6, is_switch=False
 2026-03-12 17:00:40.356 | INFO     | stream.question_generators:generate_followup_question_stream:271 | generate_followup_question_stream completed | duration=2.638s, length=217
+2026-03-12 18:09:47.709 | INFO     | graph:node_generate_fun_fact:277 | [a44eba65-4cc2-4996-aeac-fa6686cd62cd] Node: Generate Fun Fact for 'goldfish'
+2026-03-12 18:09:47.710 | INFO     | stream.fun_fact:generate_fun_fact:134 | [FUN_FACT] Step 1: Grounded research for 'goldfish' (model=gemini-3.1-flash-lite-preview)
+2026-03-12 18:10:05.776 | INFO     | stream.fun_fact:generate_fun_fact:150 | [FUN_FACT] Step 1 completed in 18.067s | text_length=1944
+2026-03-12 18:10:05.776 | INFO     | stream.fun_fact:generate_fun_fact:168 | [FUN_FACT] Step 2: JSON structuring for 'goldfish'
