@@ -82,51 +82,47 @@ class TestIntroductionPromptBeatStructure:
 # ===========================================================================
 
 class TestCorrectAnswerPromptBeat3:
-    """Verify that BEAT 3 in CORRECT_ANSWER_INTENT_PROMPT prefers yes/no for ages 3-5."""
+    """Verify CORRECT_ANSWER_INTENT_PROMPT is 2-beat (no question) and FOLLOWUP_QUESTION_PROMPT
+    carries the question guidance that was formerly in BEAT 3."""
 
     @pytest.fixture(autouse=True)
-    def load_prompt(self):
+    def load_prompts(self):
         import paixueji_prompts
         self.prompt = paixueji_prompts.CORRECT_ANSWER_INTENT_PROMPT
+        self.followup = paixueji_prompts.FOLLOWUP_QUESTION_PROMPT
 
-    def _beat3_section(self):
-        """Return the text from BEAT 3 onward (up to PROHIBITIONS section)."""
-        start = self.prompt.find("BEAT 3")
-        end = self.prompt.find("PROHIBITIONS", start)
-        if end == -1:
-            end = len(self.prompt)
-        return self.prompt[start:end]
-
-    def test_beat3_prefer_yes_no_or_simple_choice(self):
-        """BEAT 3 must contain 'PREFER yes/no or simple-choice format' for ages 3-5."""
-        beat3 = self._beat3_section()
-        assert "PREFER yes/no or simple-choice format" in beat3, (
-            "CORRECT_ANSWER_INTENT_PROMPT BEAT 3 must say 'PREFER yes/no or simple-choice format'"
+    def test_correct_answer_prompt_has_no_beat3(self):
+        """CORRECT_ANSWER_INTENT_PROMPT must NOT contain BEAT 3 — question is decoupled."""
+        assert "BEAT 3" not in self.prompt, (
+            "CORRECT_ANSWER_INTENT_PROMPT must not contain BEAT 3 after decoupling"
         )
 
-    def test_beat3_too_abstract_bad_example_label_present(self):
-        """BEAT 3 must contain a 'too abstract' label on the BAD example."""
-        beat3 = self._beat3_section()
-        assert "too abstract" in beat3, (
-            "CORRECT_ANSWER_INTENT_PROMPT BEAT 3 must label the BAD example as 'too abstract'"
+    def test_followup_prompt_prefers_observable_questions(self):
+        """FOLLOWUP_QUESTION_PROMPT must prefer questions the child can answer by looking."""
+        assert "PREFER" in self.followup, (
+            "FOLLOWUP_QUESTION_PROMPT must include a PREFER directive for question types"
+        )
+
+    def test_followup_prompt_has_abstract_causal_forbidden(self):
+        """FOLLOWUP_QUESTION_PROMPT must forbid abstract causal questions."""
+        assert "Abstract causal" in self.followup or "abstract" in self.followup.lower(), (
+            "FOLLOWUP_QUESTION_PROMPT must call out abstract causal questions as forbidden"
         )
 
     def test_beat3_old_text_open_ended_observation_question_removed(self):
-        """The old phrase 'open-ended observation question' must NOT appear in BEAT 3."""
-        beat3 = self._beat3_section()
-        assert "open-ended observation question" not in beat3, (
-            "Old text 'open-ended observation question' must be removed from BEAT 3"
+        """The old phrase 'open-ended observation question' must NOT appear in the prompt."""
+        assert "open-ended observation question" not in self.prompt, (
+            "Old text 'open-ended observation question' must not appear in CORRECT_ANSWER_INTENT_PROMPT"
         )
 
-    def test_beat3_did_you_know_prohibition_present(self):
-        """BEAT 3 must still say 'Do NOT use "Did you know...?" format'."""
-        beat3 = self._beat3_section()
-        assert 'Did you know' in beat3, (
-            "BEAT 3 must still reference 'Did you know' (in the prohibition)"
+    def test_followup_prompt_did_you_know_prohibition(self):
+        """FOLLOWUP_QUESTION_PROMPT must still ban 'Did you know...?' phrasing."""
+        assert "Did you know" in self.followup, (
+            "FOLLOWUP_QUESTION_PROMPT must reference 'Did you know' in a prohibition"
         )
 
     def test_prohibitions_section_retains_did_you_know_ban(self):
-        """The PROHIBITIONS section must still prohibit 'Did you know...?' anywhere."""
+        """The PROHIBITIONS section of CORRECT_ANSWER_INTENT_PROMPT must still ban 'Did you know...?'."""
         prohibitions_start = self.prompt.find("PROHIBITIONS")
         assert prohibitions_start != -1, "PROHIBITIONS section must exist"
         prohibitions_text = self.prompt[prohibitions_start:]
@@ -134,20 +130,10 @@ class TestCorrectAnswerPromptBeat3:
             "PROHIBITIONS section must retain the 'Did you know...?' ban"
         )
 
-    def test_what_do_you_think_happens_if_is_a_bad_example(self):
-        """'What do you think happens' must be listed as a BAD example in BEAT 3, not approved."""
-        beat3 = self._beat3_section()
-        # The phrase should appear near a BAD label, not a GOOD label
-        bad_pos = beat3.find("BAD")
-        phrase_pos = beat3.find("What do you think happens")
-        # phrase should exist and appear after (or in the vicinity of) a BAD label
-        assert phrase_pos != -1, (
-            "'What do you think happens' phrase should be present in BEAT 3 as a BAD example"
-        )
-        # Verify it appears after the first BAD label (within 200 chars is a reasonable window)
-        assert bad_pos != -1, "BEAT 3 must have a BAD label"
-        assert abs(phrase_pos - bad_pos) < 200, (
-            "'What do you think happens' must be labelled as BAD, not as an approved framing"
+    def test_followup_prompt_prefers_yes_no_to_avoid_hypotheticals(self):
+        """FOLLOWUP_QUESTION_PROMPT must prefer yes-no questions (which avoids hypothetical framing)."""
+        assert "yes-no" in self.followup or "yes/no" in self.followup, (
+            "FOLLOWUP_QUESTION_PROMPT must prefer yes-no questions to steer away from hypothetical framing"
         )
 
 

@@ -69,22 +69,20 @@ class TestCorrectAnswerPromptOverhaul:
             "CORRECT_ANSWER_INTENT_PROMPT must contain an ANTI-REPETITION rule"
         )
 
-    def test_beat_3_fresh_question_structure(self):
-        """Prompt must define a Beat 3 asking a fresh question about a DIFFERENT property."""
+    def test_beat_3_question_decoupled(self):
+        """CORRECT_ANSWER_INTENT_PROMPT must NOT contain BEAT 3 — question is now in followup prompt."""
         prompt = self._get_prompt()
-        assert "BEAT 3" in prompt, (
-            "CORRECT_ANSWER_INTENT_PROMPT must contain BEAT 3"
-        )
-        # Beat 3 must be about a different property
-        assert "DIFFERENT" in prompt, (
-            "BEAT 3 must instruct the model to ask about a DIFFERENT property"
+        assert "BEAT 3" not in prompt, (
+            "CORRECT_ANSWER_INTENT_PROMPT must not contain BEAT 3 — question generation "
+            "has been decoupled to ask_followup_question_stream / FOLLOWUP_QUESTION_PROMPT"
         )
 
-    def test_max_length_note_mentions_three_beats(self):
-        """Prompt should reference 3 beats in its length guidance."""
+    def test_max_length_note_mentions_two_beats(self):
+        """Prompt should reference 2 beats in its length guidance."""
         prompt = self._get_prompt()
-        assert "3 beats" in prompt or "3 sentences" in prompt, (
-            "CORRECT_ANSWER_INTENT_PROMPT must note a 3-sentence / 3-beat structure"
+        assert "2 beats" in prompt or "2 sentences" in prompt, (
+            "CORRECT_ANSWER_INTENT_PROMPT must note a 2-sentence / 2-beat structure "
+            "(question has been moved to the followup generator)"
         )
 
     def test_prohibitions_block_did_you_know_in_prohibitions_section(self):
@@ -106,51 +104,37 @@ class TestCorrectAnswerPromptOverhaul:
         # Ensure the value is the overhauled version (WOW FACT present)
         assert "WOW FACT" in prompts["correct_answer_intent_prompt"]
 
-    def test_beat_3_all_ages_one_to_two_word_answer_rule(self):
-        """Beat 3 must state a universal 1-2 word answer rule that applies to ALL AGES."""
+    def test_prohibitions_no_question_in_correct_answer(self):
+        """CORRECT_ANSWER_INTENT_PROMPT PROHIBITIONS must instruct the model not to ask a question."""
         prompt = self._get_prompt()
-        assert "ALL AGES: The question MUST be answerable in 1-2 words" in prompt, (
-            "CORRECT_ANSWER_INTENT_PROMPT Beat 3 must include the universal "
-            "'ALL AGES: The question MUST be answerable in 1-2 words' rule"
+        prohibitions_start = prompt.find("PROHIBITIONS")
+        assert prohibitions_start != -1, "Prompt must have a PROHIBITIONS section"
+        prohibitions_text = prompt[prohibitions_start:]
+        assert "Do NOT ask a question" in prohibitions_text, (
+            "PROHIBITIONS must explicitly forbid asking a question "
+            "(question has been decoupled to ask_followup_question_stream)"
         )
 
-    def test_beat_3_ages_6_to_8_bad_example_what_happens_when_you_bite(self):
-        """Beat 3 ages 6-8 section must list 'What happens when you bite into an apple?' as a BAD example."""
-        prompt = self._get_prompt()
-        beat3_start = prompt.find("BEAT 3")
-        assert beat3_start != -1, "CORRECT_ANSWER_INTENT_PROMPT must contain BEAT 3"
-        prohibitions_start = prompt.find("PROHIBITIONS", beat3_start)
-        beat3_text = prompt[beat3_start:prohibitions_start]
-        assert "What happens when you bite into an apple?" in beat3_text, (
-            "Beat 3 must include 'What happens when you bite into an apple?' as a BAD example"
+    def test_followup_question_prompt_exported_in_get_prompts(self):
+        """get_prompts() must export 'followup_question_prompt' for ask_followup_question_stream."""
+        prompts = paixueji_prompts.get_prompts()
+        assert "followup_question_prompt" in prompts, (
+            "get_prompts() must include 'followup_question_prompt'"
         )
-        # Confirm it appears in a BAD context, not a GOOD one
-        bad_idx = beat3_text.find("BAD: \"What happens when you bite into an apple?\"")
-        assert bad_idx != -1, (
-            "The phrase must appear explicitly after a BAD label, not as a GOOD example"
+        followup = prompts["followup_question_prompt"]
+        # Must instruct bridge-phrase to connect back to the conversation
+        assert "bridge" in followup.lower() or "And..." in followup or "Also..." in followup, (
+            "followup_question_prompt must include bridge phrase guidance "
+            "('And...', 'Also...', etc.) to connect to the prior confirmation"
         )
 
-    def test_beat_3_what_happens_when_you_not_a_good_example(self):
-        """'What happens when you...' must NOT appear as a GOOD example in Beat 3."""
-        prompt = self._get_prompt()
-        beat3_start = prompt.find("BEAT 3")
-        assert beat3_start != -1, "CORRECT_ANSWER_INTENT_PROMPT must contain BEAT 3"
-        prohibitions_start = prompt.find("PROHIBITIONS", beat3_start)
-        beat3_text = prompt[beat3_start:prohibitions_start]
-        # Locate every occurrence of the phrase and verify none is preceded by GOOD:
-        search_phrase = "What happens when you"
-        idx = 0
-        while True:
-            pos = beat3_text.find(search_phrase, idx)
-            if pos == -1:
-                break
-            # Look at the 10 chars before this occurrence for "GOOD"
-            preceding = beat3_text[max(0, pos - 10):pos]
-            assert "GOOD" not in preceding, (
-                f"'What happens when you' must NOT appear as a GOOD example in Beat 3 "
-                f"(found near position {pos} in beat3 section)"
-            )
-            idx = pos + 1
+    def test_followup_prompt_steers_away_from_hypotheticals(self):
+        """FOLLOWUP_QUESTION_PROMPT must steer toward concrete/yes-no questions (which avoids hypothetical framing)."""
+        prompts = paixueji_prompts.get_prompts()
+        followup = prompts["followup_question_prompt"]
+        assert "yes-no" in followup or "yes/no" in followup or "PREFER" in followup, (
+            "followup_question_prompt must prefer yes-no or observable questions to avoid hypothetical framing"
+        )
 
 
 # ============================================================================
@@ -200,11 +184,14 @@ class TestSocialAcknowledgmentPrompt:
             "SOCIAL_ACKNOWLEDGMENT_INTENT_PROMPT must have BEAT 1"
         )
 
-    def test_social_acknowledgment_prompt_has_pivot_beat(self):
-        """Prompt must define a pivot-forward beat (Beat 2) with a fresh question."""
+    def test_social_acknowledgment_prompt_delegates_question_to_generator(self):
+        """Prompt must NOT embed a question — question is delegated to follow-up question generator."""
         prompt = paixueji_prompts.SOCIAL_ACKNOWLEDGMENT_INTENT_PROMPT
-        assert "BEAT 2" in prompt, (
-            "SOCIAL_ACKNOWLEDGMENT_INTENT_PROMPT must have BEAT 2 for pivoting forward"
+        assert "BEAT 2" not in prompt, (
+            "SOCIAL_ACKNOWLEDGMENT_INTENT_PROMPT must not contain BEAT 2 after decoupling"
+        )
+        assert "question generator" in prompt or "follow-up question generator" in prompt, (
+            "SOCIAL_ACKNOWLEDGMENT_INTENT_PROMPT must mention generator delegation"
         )
 
     def test_social_acknowledgment_prompt_prohibits_did_you_know(self):

@@ -117,19 +117,13 @@ CRITICAL RULES:
 4. Start with a bridge phrase like "And...", "Also...", "You know what...". Do NOT use "Did you know..." — it sounds like a question and confuses children about whether to respond.
 5. Match complexity to age {age}.
 6. Respond naturally (NOT JSON).
-7. FORBIDDEN question types — never use these regardless of age:
-   - Hypothetical: "If you were...", "What would happen if...", "Imagine you were..."
-   - Abstract causal requiring outside knowledge: "Why do you think X is better/worse than Y?"
-   - Future speculation: "How would you feel after a week/month of..."
-8. GOOD question types:
-   - Direct observation: "What do you notice about the X?" / "What color/shape/size is...?"
-   - Personal experience: "Have you ever...?" / "Do you like...?"
-   - Simple comparison visible right now: "Is it bigger or smaller than your hand?"
-   - Binary/multiple-choice: "Do you think it goes fast or slow?"
+7. Prefer using yes-no questions
+8. If your question is not a yes-no question, you *MUST* provide choices after your question, which must include the correct answer. USE NATURAL LANGUAGE
 9. PREFER questions the child can answer by LOOKING at the object right now — not just from memory or yes/no.
    GREAT: "What shape are the holes in the telescope lens?" / "How many pedals does the bicycle have?"
    OK:    "Have you ever ridden a bicycle?" (experience — fine occasionally)
    WEAK:  "Do you like bicycles?" (yes/no with no follow-through)
+10. ONLY ASK *1* QUESTION, or else the child will be confused.
 """
 
 # ============================================================================
@@ -514,7 +508,7 @@ AGE GUIDANCE:
 
 YOUR MISSION:
 The child has said "I don't know" twice. Stop hinting — give them the answer directly.
-Make it feel like a gift, not a correction. Then move forward naturally.
+Make it feel like a gift, not a correction.
 
 BEAT 1 — ACCEPTANCE (one short phrase): "That's okay!" / "No worries!"
 
@@ -525,10 +519,7 @@ BEAT 2 — DIRECT ANSWER (1-2 simple sentences): Tell them the answer plainly.
     apples grow big and sweet — just like you need food to grow big and strong!"
   Do NOT hint again. Do NOT re-ask the question.
 
-BEAT 3 — LIGHT FORWARD MOVE (optional): A very easy yes/no question to re-engage.
-  "Pretty cool, right?" / "Did you know that?" / "Want to find out something else about it?"
-
-Respond naturally (NOT JSON). 3 sentences max.
+Respond naturally (NOT JSON). 2 sentences max.
 """
 
 CLARIFYING_WRONG_INTENT_PROMPT = """\
@@ -627,10 +618,9 @@ CATEGORY GUIDANCE:
 {category_prompt}
 
 YOUR MISSION:
-The child answered your question — confirm it, reward them with one surprising related fact,
-then ask ONE fresh question about a different aspect.
+The child answered your question — confirm it, then reward them with one surprising related fact.
 
-STRUCTURE (3 sentences, 3 beats):
+STRUCTURE (2 sentences, 2 beats):
 
 BEAT 1 — CONFIRM (paraphrase — do NOT echo their exact words verbatim):
   Child: "I feel sweet" → "Yes! Apples taste sweet — you got it!"
@@ -650,24 +640,13 @@ BEAT 2 — WOW FACT (statement only): Deliver ONE surprising related fact as a d
   ANTI-REPETITION — The wow fact MUST NOT repeat anything already stated in the immediately
     preceding model message. Check the conversation history and choose a DIFFERENT angle or property.
 
-BEAT 3 — ONE FRESH QUESTION: Ask ONE age-appropriate question about a NEW aspect of {object_name}.
-  ALL AGES: The question MUST be answerable in 1-2 words or a short phrase.
-  Ages 3-5: PREFER yes/no or simple-choice format — open "why/how/what happens" questions are too hard.
-    GOOD: "Do you think apples float in water?" / "Is the inside of an apple white or yellow?"
-    BAD: "What do you think happens to an apple if you leave it on the counter?" (too abstract)
-  Ages 6-8: Also prefer yes/no, simple-choice, or short-answer questions.
-    GOOD: "Have you ever seen a green apple?" / "Is the inside of an apple white or yellow?"
-    BAD: "What happens when you bite into an apple?" (open-ended — hard for a child to form an answer)
-    BAD: "What do you notice about the skin?" (vague observation — child doesn't know where to start)
-  - Do NOT use "Did you know...?" format
-  - The question must be about a DIFFERENT property than what was just confirmed in Beat 1
-
 PROHIBITIONS:
 - Do NOT ask "How did you know that?" — they answered YOUR question
 - Do NOT echo their exact words as the celebration — paraphrase
 - Do NOT use "Did you know...?" anywhere in this response
+- Do NOT ask a question — end with the wow fact only
 
-Respond naturally (NOT JSON). 3 sentences max.
+Respond naturally (NOT JSON). 2 sentences max.
 """
 
 INFORMATIVE_INTENT_PROMPT = """\
@@ -684,9 +663,9 @@ CATEGORY GUIDANCE:
 
 YOUR MISSION:
 The child volunteered knowledge — they feel smart right now. Amplify that feeling fully.
-Do NOT evaluate, correct, or lecture on top of what they said. Just celebrate and ask ONE warm social question.
+Do NOT evaluate, correct, or lecture on top of what they said. Just celebrate their contribution.
 
-STRUCTURE (1-2 sentences, 2 beats):
+STRUCTURE (1 sentence, 1 beat):
 
 BEAT 1 — GENUINE REACTION: Show their knowledge actually delighted you. Match or slightly exceed their energy.
   - "Wow, you knew that already?!"
@@ -694,16 +673,13 @@ BEAT 1 — GENUINE REACTION: Show their knowledge actually delighted you. Match 
   - "You are SO knowledgeable about {object_name}!"
   NOT: "Interesting..." (flat, passive — do not use this)
 
-BEAT 2 — ONE SOCIAL QUESTION: Ask about THEM and their knowledge, not about the object.
-  - "How did you know that?"
-  - "Have you seen one up close before?"
-  - "Did someone teach you that or did you figure it out yourself?"
-  NOT: "And can you tell me what color it is?" (knowledge test, not social)
-
 IMPORTANT: Even if the child said something slightly inaccurate — still lead with celebration.
 Accuracy can be gently addressed in a future turn. Right now, celebrate their engagement.
 
-Respond naturally (NOT JSON). 1-2 sentences max.
+PROHIBITIONS:
+- Do NOT ask a question — the follow-up question generator handles that
+
+Respond naturally (NOT JSON). 1 sentence max.
 """
 
 PLAY_INTENT_PROMPT = """\
@@ -976,28 +952,23 @@ CATEGORY GUIDANCE:
 
 YOUR MISSION:
 The child just acknowledged something you said — they haven't contributed new content,
-they're just reacting socially. Acknowledge their reaction naturally, then pivot forward
-with ONE fresh question about a new aspect of {object_name}.
+they're just reacting socially. Acknowledge their reaction naturally and warmly.
 
-STRUCTURE (2 sentences, 2 beats):
+STRUCTURE (1 sentence, 1 beat):
 
 BEAT 1 — BRIEF NATURAL REACTION (1 short phrase — vary each time):
   "Yeah, pretty cool right?" / "Wild, isn't it?" / "Right?! Surprising stuff."
   Do NOT say "Great!" or "Wonderful!" — those feel like grading, not reacting.
   Do NOT repeat the fact they just acknowledged.
 
-BEAT 2 — PIVOT FORWARD: Name what they just discovered (1 word or phrase), then ask ONE
-  fresh open-ended question about a NEW aspect of {object_name}.
-  "Now that you know about the color signal — what do you think the inside looks like?"
-  The new question MUST be about a DIFFERENT property than what triggered the reaction.
-
 PROHIBITIONS:
 - Do NOT repeat or re-explain the fact they just reacted to
 - Do NOT ask "Did you know...?"
-- Do NOT give another wow fact — pivot immediately to the question
+- Do NOT give another wow fact
 - Do NOT use hollow praise like "Great!", "Wonderful!", "Amazing answer!"
+- Do NOT ask a question — the follow-up question generator handles that
 
-Respond naturally (NOT JSON). 2 sentences max.
+Respond naturally (NOT JSON). 1 sentence max.
 """
 
 # ============================================================================

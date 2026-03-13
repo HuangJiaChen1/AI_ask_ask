@@ -6,7 +6,7 @@ It is organized into several sub-modules:
 
 - utils: Utility functions for message preparation and format conversion
 - response_generators: Intent-based response generators (9-node architecture)
-- question_generators: Question-only stream generators (intro path)
+- question_generators: Question-only stream generators (intro path + followup)
 - validation: Intent classification logic
 - fun_fact: Grounded fun fact generation
 - guide_hint: LLM-based scaffold hints for guide mode
@@ -32,9 +32,10 @@ from .response_generators import (
     generate_explicit_switch_response_stream,
 )
 
-# Question generators (intro path only)
+# Question generators (intro path + followup)
 from .question_generators import (
     ask_introduction_question_stream,
+    ask_followup_question_stream,
 )
 
 # Intent classification (replaces decide_topic_switch_with_validation)
@@ -62,8 +63,9 @@ __all__ = [
     'generate_topic_switch_response_stream',
     'generate_explicit_switch_response_stream',
 
-    # Question generators (intro path)
+    # Question generators (intro path + followup)
     'ask_introduction_question_stream',
+    'ask_followup_question_stream',
 
     # Intent classification
     'classify_intent',

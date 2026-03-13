@@ -3,9 +3,11 @@ Question stream generators for Paixueji assistant.
 
 This module contains question-only stream generators:
 - Introduction question for starting conversations
+- Follow-up question after correct-answer confirmation
 
 Functions:
     - ask_introduction_question_stream: First question about an object
+    - ask_followup_question_stream: Follow-up question after correct-answer node
 """
 import time
 from typing import AsyncGenerator
@@ -174,3 +176,75 @@ async def ask_introduction_question_stream(
         'switch_decision_reasoning': None
     }
     yield ("", token_usage, full_response, decision_info)
+
+
+async def ask_followup_question_stream(
+    messages: list[dict],
+    object_name: str,
+    category_prompt: str,
+    age_prompt: str,
+    age: int,
+    config: dict,
+    client: genai.Client,
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
+    """
+    Stream a follow-up question after the correct-answer confirmation+wow-fact burst.
+
+    Yields:
+        Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
+    """
+    start_time = time.time()
+    logger.info(f"ask_followup_question_stream started | object={object_name}, age={age}")
+
+    prompts = paixueji_prompts.get_prompts()
+    followup_prompt = prompts['followup_question_prompt'].format(
+        object_name=object_name,
+        age=age,
+        category_prompt=category_prompt,
+        age_prompt=age_prompt,
+    )
+
+    messages_to_send = messages + [{"role": "user", "content": followup_prompt}]
+    clean_messages = clean_messages_for_api(messages_to_send)
+    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
+
+    full_response = ""
+    token_usage = None
+    stream = None
+    try:
+        gen_config = GenerateContentConfig(
+            temperature=config.get("temperature", 0.3),
+            max_output_tokens=config.get("max_tokens", 2000),
+            system_instruction=system_instruction if system_instruction else None
+        )
+        stream = await client.aio.models.generate_content_stream(
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config
+        )
+        async for chunk in stream:
+            if chunk.text:
+                full_response += chunk.text
+                yield (chunk.text, None, full_response)
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(f"ask_followup_question_stream LLM error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        if full_response:
+            yield ("", token_usage, full_response)
+        return
+    finally:
+        if stream is not None:
+            try:
+                del stream
+            except:
+                pass
+
+    duration = time.time() - start_time
+    logger.info(
+        f"ask_followup_question_stream completed | "
+        f"duration={duration:.3f}s, response_length={len(full_response)}"
+    )
+    if duration > SLOW_LLM_CALL_THRESHOLD:
+        logger.warning(f"Slow LLM call | duration={duration:.3f}s exceeded threshold {SLOW_LLM_CALL_THRESHOLD}s")
+
+    yield ("", token_usage, full_response)

@@ -11,6 +11,7 @@ import time
 
 from stream import (
     ask_introduction_question_stream,
+    ask_followup_question_stream,
     classify_intent,
     generate_intent_response_stream,
     generate_explicit_switch_response_stream,
@@ -481,6 +482,8 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
 
     state["assistant"].consecutive_idk_count = 0
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+
+    # First call: acceptance + direct answer (no question)
     generator = generate_intent_response_stream(
         intent_type="give_answer_idk",
         messages=messages,
@@ -493,11 +496,27 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
     )
-    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
+
+    # Update sequence so second generator picks up where first left off
+    state["sequence_number"] = new_seq
+
+    # Second call: follow-up question
+    followup_gen = ask_followup_question_stream(
+        messages=messages,
+        object_name=state["object_name"],
+        category_prompt=state["category_prompt"],
+        age_prompt=state["age_prompt"],
+        age=state["age"],
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
+
     logger.info(f"[{state['session_id']}] Node: Give Answer IDK finished in {time.time() - start_time:.3f}s")
     return {
         "response_type": "give_answer_idk",
-        "full_response_text": full_text,
+        "full_response_text": full_text_intent + " " + full_text_question,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
     }
@@ -568,6 +587,8 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
     logger.info(f"[{state['session_id']}] Node: Correct Answer")
 
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+
+    # First call: confirm + wow fact (no question)
     generator = generate_intent_response_stream(
         intent_type="correct_answer",
         messages=messages,
@@ -580,12 +601,28 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
     )
-    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
     state["assistant"].increment_correct_answers()
+
+    # Update sequence so second generator picks up where first left off
+    state["sequence_number"] = new_seq
+
+    # Second call: followup question
+    followup_gen = ask_followup_question_stream(
+        messages=messages,
+        object_name=state["object_name"],
+        category_prompt=state["category_prompt"],
+        age_prompt=state["age_prompt"],
+        age=state["age"],
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
+
     logger.info(f"[{state['session_id']}] Node: Correct Answer finished in {time.time() - start_time:.3f}s")
     return {
         "response_type": "correct_answer",
-        "full_response_text": full_text,
+        "full_response_text": full_text_intent + " " + full_text_question,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
         "correct_answer_count": state["assistant"].correct_answer_count,
@@ -599,6 +636,8 @@ async def node_informative(state: PaixuejiState) -> dict:
     logger.info(f"[{state['session_id']}] Node: Informative")
 
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+
+    # First call: genuine celebration reaction (no question)
     generator = generate_intent_response_stream(
         intent_type="informative",
         messages=messages,
@@ -611,11 +650,27 @@ async def node_informative(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
     )
-    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
+
+    # Update sequence so second generator picks up where first left off
+    state["sequence_number"] = new_seq
+
+    # Second call: follow-up question
+    followup_gen = ask_followup_question_stream(
+        messages=messages,
+        object_name=state["object_name"],
+        category_prompt=state["category_prompt"],
+        age_prompt=state["age_prompt"],
+        age=state["age"],
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
+
     logger.info(f"[{state['session_id']}] Node: Informative finished in {time.time() - start_time:.3f}s")
     return {
         "response_type": "informative",
-        "full_response_text": full_text,
+        "full_response_text": full_text_intent + " " + full_text_question,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
     }
@@ -815,6 +870,8 @@ async def node_social(state: PaixuejiState) -> dict:
     logger.info(f"[{state['session_id']}] Node: Social")
 
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+
+    # First call: warm direct answer (no question — prompt already prohibits it)
     generator = generate_intent_response_stream(
         intent_type="social",
         messages=messages,
@@ -827,11 +884,27 @@ async def node_social(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
     )
-    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
+
+    # Update sequence so second generator picks up where first left off
+    state["sequence_number"] = new_seq
+
+    # Second call: follow-up question
+    followup_gen = ask_followup_question_stream(
+        messages=messages,
+        object_name=state["object_name"],
+        category_prompt=state["category_prompt"],
+        age_prompt=state["age_prompt"],
+        age=state["age"],
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
+
     logger.info(f"[{state['session_id']}] Node: Social finished in {time.time() - start_time:.3f}s")
     return {
         "response_type": "social",
-        "full_response_text": full_text,
+        "full_response_text": full_text_intent + " " + full_text_question,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
     }
@@ -844,6 +917,8 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
     logger.info(f"[{state['session_id']}] Node: Social Acknowledgment")
 
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+
+    # First call: brief natural reaction (no question)
     generator = generate_intent_response_stream(
         intent_type="social_acknowledgment",
         messages=messages,
@@ -856,11 +931,27 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
     )
-    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
+
+    # Update sequence so second generator picks up where first left off
+    state["sequence_number"] = new_seq
+
+    # Second call: follow-up question
+    followup_gen = ask_followup_question_stream(
+        messages=messages,
+        object_name=state["object_name"],
+        category_prompt=state["category_prompt"],
+        age_prompt=state["age_prompt"],
+        age=state["age"],
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
+
     logger.info(f"[{state['session_id']}] Node: Social Acknowledgment finished in {time.time() - start_time:.3f}s")
     return {
         "response_type": "social_acknowledgment",
-        "full_response_text": full_text,
+        "full_response_text": full_text_intent + " " + full_text_question,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
     }
