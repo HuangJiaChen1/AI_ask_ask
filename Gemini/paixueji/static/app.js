@@ -707,6 +707,11 @@ function handleStreamChunk(chunk) {
         currentResponseType = chunk.response_type;
         updateDebugPanel();
     }
+
+    // Chat phase complete: show modal and disable input after close
+    if (chunk.chat_phase_complete) {
+        showChatPhaseCompleteModal();
+    }
 }
 
 /**
@@ -802,6 +807,20 @@ function updateDebugPanel() {
     if (responseTypeEl) {
         responseTypeEl.textContent = currentResponseType || '-';
     }
+}
+
+/**
+ * Show the "chat phase complete" modal (4th correct answer reached)
+ */
+function showChatPhaseCompleteModal() {
+    const modal = document.getElementById('chatPhaseCompleteModal');
+    modal.style.display = 'flex';
+}
+
+function closeChatPhaseCompleteModal() {
+    document.getElementById('chatPhaseCompleteModal').style.display = 'none';
+    document.getElementById('userInput').disabled = true;
+    document.getElementById('sendBtn').disabled = true;
 }
 
 /**

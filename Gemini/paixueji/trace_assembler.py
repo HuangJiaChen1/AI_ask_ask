@@ -47,6 +47,7 @@ _NODE_GLOSSARY = """Graph node roles:
 - guide_hint: Gives direct hint when max turns reached
 - guide_success: Celebrates child's successful conceptual connection
 - guide_exit: Gracefully exits guide mode after resistance/timeout
+- chat_complete: Ends chat phase after 4th correct answer; signals frontend to disable input
 - finalize: Sends final StreamChunk and closes the turn"""
 
 
@@ -158,7 +159,7 @@ Output a single JSON object with EXACTLY these fields:
   "culprit_name": "<exact node or component name from the glossary above>",
   "confidence_level": "LOW" | "MODERATE" | "CONFIDENT" | "VERY_CONFIDENT",
   "reasoning": "<2-4 sentences referencing the actual exchange content and why this component is responsible>",
-  "prompt_template_name": "<exact key — pick from: fun_fact_structuring_prompt, fun_fact_grounding_prompt, introduction_prompt, user_intent_prompt (analyze_input), curiosity_intent_prompt, clarifying_idk_intent_prompt, clarifying_wrong_intent_prompt, clarifying_constraint_intent_prompt, give_answer_idk_intent_prompt, correct_answer_intent_prompt, informative_intent_prompt, play_intent_prompt, emotional_intent_prompt, avoidance_intent_prompt, boundary_intent_prompt, action_intent_prompt, social_intent_prompt, social_acknowledgment_intent_prompt, topic_switch_response_prompt, followup_question_prompt, completion_prompt, classification_prompt, theme_navigator_rules (guide_navigator / ThemeNavigator). Use null ONLY for pure routers (router:*), finalize, generate_intro, guide_driver, guide_hint, guide_success, guide_exit.>",
+  "prompt_template_name": "<exact key — pick from: fun_fact_structuring_prompt, fun_fact_grounding_prompt, introduction_prompt, user_intent_prompt (analyze_input), curiosity_intent_prompt, clarifying_idk_intent_prompt, clarifying_wrong_intent_prompt, clarifying_constraint_intent_prompt, give_answer_idk_intent_prompt, correct_answer_intent_prompt, informative_intent_prompt, play_intent_prompt, emotional_intent_prompt, avoidance_intent_prompt, boundary_intent_prompt, action_intent_prompt, social_intent_prompt, social_acknowledgment_intent_prompt, topic_switch_response_prompt, followup_question_prompt, completion_prompt, classification_prompt, theme_navigator_rules (guide_navigator / ThemeNavigator). Use null ONLY for pure routers (router:*), finalize, generate_intro, guide_driver, guide_hint, guide_success, guide_exit, chat_complete.>",
   "culprit_phase": "question" | "response" | null
 }}
 """

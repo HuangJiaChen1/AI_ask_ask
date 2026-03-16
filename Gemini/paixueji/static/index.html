@@ -216,6 +216,20 @@
         </div>
     </div>
 
+    <!-- Chat Phase Complete Modal -->
+    <div id="chatPhaseCompleteModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; justify-content:center; align-items:center;">
+        <div style="background:white; border-radius:16px; padding:40px; max-width:420px; width:90%; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+            <div style="font-size:52px; margin-bottom:16px;">🎉</div>
+            <h2 style="margin:0 0 12px 0; color:#1e293b;">Amazing work!</h2>
+            <p style="color:#64748b; margin:0 0 28px 0; font-size:1em; line-height:1.5;">
+                You've done a great job! Now it's time to switch to <strong>activities</strong>.
+            </p>
+            <button onclick="closeChatPhaseCompleteModal()" style="padding:14px 32px; background:#10b981; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:1em; width:100%;">
+                Got it!
+            </button>
+        </div>
+    </div>
+
     <!-- Manual Critique Form -->
     <div id="manualCritiqueOverlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2100; overflow-y:auto;">
         <div style="background:white; max-width:800px; margin:20px auto; border-radius:12px; padding:30px; box-shadow:0 8px 32px rgba(0,0,0,0.3);">

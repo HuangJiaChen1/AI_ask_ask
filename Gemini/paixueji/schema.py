@@ -118,3 +118,6 @@ class StreamChunk(BaseModel):
 
     # Node execution tracing (for critique reports)
     nodes_executed: list[dict] | None = None  # Passed through final chunk
+
+    # Chat phase completion signal (one-shot, sent on 4th correct answer turn)
+    chat_phase_complete: Optional[bool] = None

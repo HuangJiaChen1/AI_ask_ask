@@ -1371,6 +1371,49 @@ async def node_classify_theme(state: PaixuejiState) -> dict:
     return {"correct_answer_count": assistant.correct_answer_count}
 
 
+@trace_node
+async def node_chat_complete(state: PaixuejiState) -> dict:
+    """
+    4th correct answer: acknowledge and signal that the chat phase is complete.
+    Template-based — no LLM call. Increments correct_answer_count and sets
+    chat_phase_complete=True in the outgoing chunk to trigger the frontend modal.
+    """
+    logger.info(f"[{state['session_id']}] Node: Chat Complete")
+
+    assistant = state["assistant"]
+    assistant.increment_correct_answers()
+
+    celebration = (
+        "Yes, that's right! Wonderful work — you've been such a great explorer today! 🎉 "
+        "You've answered all the questions so well. Now it's time to switch to activities!"
+    )
+
+    callback = state.get("stream_callback")
+    new_seq = state["sequence_number"] + 1
+    if callback:
+        chunk = StreamChunk(
+            response=celebration,
+            session_finished=(state["status"] == "over"),
+            duration=time.time() - state["start_time"],
+            finish=False,
+            sequence_number=new_seq,
+            timestamp=time.time(),
+            session_id=state["session_id"],
+            request_id=state["request_id"],
+            response_type="correct_answer",
+            correct_answer_count=assistant.correct_answer_count,
+            chat_phase_complete=True,
+        )
+        await callback(chunk)
+
+    return {
+        "response_type": "correct_answer",
+        "full_response_text": celebration,
+        "sequence_number": new_seq,
+        "correct_answer_count": assistant.correct_answer_count,
+    }
+
+
 # ============================================================================
 # GRAPH DEFINITION
 # ============================================================================
@@ -1450,7 +1493,7 @@ def build_paixueji_graph():
         # Intercept the Nth correct answer to run theme classification
         if (intent == "correct_answer" and
                 state["assistant"].correct_answer_count + 1 >= GUIDE_MODE_THRESHOLD):
-            return "classify_theme"
+            return "chat_complete"
         # Intercept repeated IDK — route to dedicated answer-reveal node
         if intent == "clarifying_idk" and state["assistant"].consecutive_idk_count > 0:
             return "give_answer_idk"
@@ -1474,11 +1517,12 @@ def build_paixueji_graph():
             "action": "action",
             "social": "social",
             "social_acknowledgment": "social_acknowledgment",
-            "classify_theme": "classify_theme",
+            "chat_complete": "chat_complete",
         }
     )
 
-    workflow.add_edge("classify_theme", "start_guide")
+    workflow.add_node("chat_complete", node_chat_complete)
+    workflow.add_edge("chat_complete", "finalize")
 
     # All 14 intent nodes → finalize
     for intent_node in ["curiosity", "clarifying_idk", "give_answer_idk", "clarifying_wrong",
