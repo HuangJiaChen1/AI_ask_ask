@@ -244,157 +244,6 @@ async function startConversation() {
 }
 
 /**
- * Start a direct guide mode test - skips introduction and enters guide phase immediately.
- */
-async function startGuideTest() {
-    const age = parseInt(document.getElementById('age').value);
-    const objectName = document.getElementById('objectName').value.trim();
-
-    // Read backbone model overrides
-    const conversationModel = document.querySelector('input[name="conversationModel"]:checked')?.value || 'gemini-3.1-flash-lite-preview';
-    const groundingModel = document.querySelector('input[name="groundingModel"]:checked')?.value || 'gemini-3.1-flash-lite-preview';
-
-    // Save state for debug panel
-    currentObject = objectName;
-
-    // Validation - only object name is required
-    if (!objectName) {
-        alert('Please enter an object name');
-        return;
-    }
-
-    // Clear previous messages
-    messagesContainer.innerHTML = '';
-    sessionId = null;
-    thinkingTimeDisplay.textContent = '';
-    thinkingTimeDisplay.style.opacity = 0;
-    currentThemeName = null;
-    currentKeyConcept = null;
-
-    // Set progress to 4 (simulating 4 correct answers)
-    correctAnswerCount = 4;
-    conversationComplete = false;
-    updateProgressIndicator();
-
-    // Hide start form, show progress indicator and messages
-    startForm.style.display = 'none';
-    progressIndicator.style.display = 'flex';
-    messagesContainer.style.display = 'flex';
-    document.querySelector('.input-area').style.display = 'flex';
-    document.getElementById('backBtn').style.display = 'inline-block';
-
-    // Disable send button during streaming
-    sendBtn.disabled = true;
-    isStreaming = true;
-    updateStopButton();
-
-    // Add status message
-    const statusDiv = document.createElement('div');
-    statusDiv.className = 'status-message';
-    statusDiv.style.cssText = 'background: #fef3c7; padding: 10px; border-radius: 6px; margin-bottom: 10px; color: #92400e; font-style: italic;';
-    statusDiv.textContent = 'Running theme classification...';
-    messagesContainer.appendChild(statusDiv);
-
-    try {
-        console.log('[INFO] Starting GUIDE TEST | age:', age, 'object:', objectName);
-
-        // Create AbortController for this stream
-        currentStreamController = new AbortController();
-
-        const response = await fetch(`${API_BASE}/start-guide`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                age: age,
-                object_name: objectName,
-                model_name_override: conversationModel,
-                grounding_model_override: groundingModel
-            }),
-            signal: currentStreamController.signal
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        // Remove status message once streaming starts
-        statusDiv.remove();
-
-        // Create message bubble for streaming response (will be created on first chunk)
-        currentMessageDiv = null;
-
-        // Read streaming response
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-
-        while (true) {
-            const { done, value } = await reader.read();
-
-            if (done) {
-                console.log('[INFO] Guide test stream ended');
-                break;
-            }
-
-            // Decode chunk and add to buffer
-            buffer += decoder.decode(value, { stream: true });
-
-            // Process complete SSE events (separated by \n\n)
-            const lines = buffer.split('\n\n');
-            buffer = lines.pop(); // Keep incomplete event in buffer
-
-            for (const line of lines) {
-                if (!line.trim()) continue;
-
-                // Parse SSE event
-                const eventMatch = line.match(/^event: (.+)$/m);
-                const dataMatch = line.match(/^data: (.+)$/m);
-
-                if (eventMatch && dataMatch) {
-                    const eventType = eventMatch[1];
-                    const data = JSON.parse(dataMatch[1]);
-
-                    // Handle event
-                    await handleSSEEvent(eventType, data);
-                }
-            }
-        }
-
-    } catch (error) {
-        // Handle abort gracefully
-        if (error.name === 'AbortError') {
-            console.log('[INFO] Guide test stream interrupted by user');
-            return;
-        }
-
-        console.error('[ERROR] Failed to start guide test:', error);
-        messagesContainer.innerHTML = '';
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        errorDiv.textContent = `Error: ${error.message}. Please check if the server is running.`;
-        messagesContainer.appendChild(errorDiv);
-    } finally {
-        // Clear stream controller
-        currentStreamController = null;
-
-        // Show debug panel when session starts
-        if (sessionId) {
-            document.getElementById('debugPanel').style.display = 'block';
-            if (window.tutorialAdvanceToReport) window.tutorialAdvanceToReport();
-            updateDebugPanel();
-        }
-
-        // Re-enable send button
-        isStreaming = false;
-        sendBtn.disabled = false;
-        updateStopButton();
-        userInput.focus();
-    }
-}
-
-/**
  * Stop the current streaming response
  */
 function stopStreaming() {
@@ -898,13 +747,53 @@ function init() {
         emptyState.className = 'empty-state';
         emptyState.innerHTML = `
             <p>👋 Welcome to Paixueji!</p>
-            <small>Enter an object name to preview concepts, then click "Start Learning!" to begin</small>
+            <small>Choose an object from the dropdown, then click "Start Learning!" to begin</small>
         `;
         messagesContainer.appendChild(emptyState);
     }
 
-    // Focus on object name input
-    document.getElementById('objectName').focus();
+    loadObjects();
+}
+
+/**
+ * Fetch supported objects from the backend and populate the dropdown.
+ */
+async function loadObjects() {
+    const select = document.getElementById('objectName');
+    try {
+        const res = await fetch(`${API_BASE}/objects`);
+        const objects = await res.json();
+
+        // Group by domain
+        const byDomain = {};
+        for (const obj of objects) {
+            if (!byDomain[obj.domain]) byDomain[obj.domain] = { label: obj.domain_label, items: [] };
+            byDomain[obj.domain].items.push(obj);
+        }
+
+        select.innerHTML = '';
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.disabled = true;
+        placeholder.selected = true;
+        placeholder.textContent = 'Choose an object…';
+        select.appendChild(placeholder);
+
+        for (const { label, items } of Object.values(byDomain)) {
+            const group = document.createElement('optgroup');
+            group.label = label;
+            for (const item of items) {
+                const opt = document.createElement('option');
+                opt.value = item.name.toLowerCase();
+                opt.textContent = item.name;
+                group.appendChild(opt);
+            }
+            select.appendChild(group);
+        }
+    } catch (e) {
+        select.innerHTML = '<option value="" disabled selected>Failed to load objects</option>';
+        console.error('[ERROR] Failed to load objects:', e);
+    }
 }
 
 /**

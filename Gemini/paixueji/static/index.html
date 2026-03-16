@@ -28,18 +28,11 @@
 
 <label for="objectName">What object are we learning about?</label>
             <div class="object-input-row">
-                <input type="text" id="objectName" placeholder="e.g., apple, dog, tree" />
+                <select id="objectName">
+                    <option value="" disabled selected>Loading objects…</option>
+                </select>
             </div>
 
-            <div class="guide-test-section" style="margin: 15px 0; padding: 15px; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px;">
-                <h3 style="margin: 0 0 8px 0; color: #92400e; font-size: 1em;">Test Guide Mode</h3>
-                <p style="font-size: 0.85em; color: #78350f; margin: 0 0 10px 0;">
-                    Skip introduction and jump directly into theme guide testing
-                </p>
-                <button type="button" onclick="startGuideTest()" style="background: #f59e0b; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                    Start Guide Mode Test
-                </button>
-            </div>
             <!-- 最后一行是字体设置（可改） -->
 
             <!-- Backbone Model Override Panel -->

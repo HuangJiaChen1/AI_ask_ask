@@ -11,6 +11,7 @@ import uuid
 import asyncio
 import threading
 import os
+import yaml
 
 from google import genai
 from google.genai.types import HttpOptions
@@ -180,6 +181,59 @@ def health():
         "streaming": True,
         "active_sessions": len(sessions)
     })
+
+
+_DOMAIN_LABELS = {
+    'animals': 'Animals',
+    'arts_music': 'Arts & Music',
+    'buildings_places': 'Buildings & Places',
+    'clothing_accessories': 'Clothing & Accessories',
+    'daily_objects': 'Daily Objects',
+    'food': 'Food',
+    'human_body': 'Human Body',
+    'imagination': 'Imagination',
+    'natural_phenomena': 'Natural Phenomena',
+    'nature_landscapes': 'Nature & Landscapes',
+    'people_roles': 'People & Roles',
+    'plants': 'Plants',
+    'signs_symbols': 'Signs & Symbols',
+    'vehicles': 'Vehicles',
+}
+
+
+@app.route('/api/objects', methods=['GET'])
+def list_objects():
+    """Return the 20 fully-enriched supported objects, sorted by domain then name."""
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    mappings_dir = os.path.join(base_dir, 'mappings_dev20')
+
+    with open(os.path.join(mappings_dir, '_enrich_progress.json'), 'r') as f:
+        completed = json.load(f)['completed']
+
+    with open(os.path.join(mappings_dir, '_index.yaml'), 'r') as f:
+        index = yaml.safe_load(f)  # {entity_id: "relative/path.yaml"}
+
+    objects = []
+    for entity_id in completed:
+        rel_path = index.get(entity_id)
+        if not rel_path:
+            continue
+        yaml_path = os.path.join(mappings_dir, rel_path)
+        with open(yaml_path, 'r') as f:
+            entities = yaml.safe_load(f)
+        entity = next((e for e in entities if e.get('entity_id') == entity_id), None)
+        if not entity:
+            continue
+        domain = entity.get('domain', '')
+        objects.append({
+            'id': entity_id,
+            'name': entity['entity_name'],
+            'domain': domain,
+            'domain_label': _DOMAIN_LABELS.get(domain, domain.replace('_', ' ').title()),
+        })
+
+    objects.sort(key=lambda x: (x['domain'], x['name']))
+    return jsonify(objects)
 
 
 @app.route('/api/start', methods=['POST'])

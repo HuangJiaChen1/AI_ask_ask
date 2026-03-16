@@ -27,7 +27,9 @@
       "Bash(git check-ignore:*)",
       "Bash(git add:*)",
       "Bash(git worktree:*)",
-      "Bash(git -C /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask checkout main && git -C /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask pull)"
+      "Bash(git -C /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask checkout main && git -C /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask pull)",
+      "Bash(for dir:*)",
+      "Bash(python3:*)"
     ]
   },
   "outputStyle": "Explanatory"
