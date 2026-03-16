@@ -18,6 +18,7 @@ from loguru import logger
 
 from schema import TokenUsage
 import paixueji_prompts
+from .errors import raise_if_rate_limited
 from .utils import (
     clean_messages_for_api,
     convert_messages_to_gemini_format,
@@ -142,6 +143,7 @@ async def ask_introduction_question_stream(
     except Exception as e:
         duration = time.time() - start_time
         logger.error(f"answer_question_stream LLM error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        raise_if_rate_limited(e)
         # Still yield what we have so far (even if incomplete)
         if full_response:
             decision_info = {
@@ -229,6 +231,7 @@ async def ask_followup_question_stream(
     except Exception as e:
         duration = time.time() - start_time
         logger.error(f"ask_followup_question_stream LLM error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        raise_if_rate_limited(e)
         if full_response:
             yield ("", token_usage, full_response)
         return
