@@ -57,16 +57,16 @@ class CulpritIdentification(BaseModel):
 class HumanCritique(BaseModel):
     """Human feedback on a specific exchange."""
     exchange_index: int
-    model_question_expected: str = ""
-    model_question_problem: str = ""
+    model_question_expected: Optional[str] = None   # deprecated — pair-based exchanges have no model question
+    model_question_problem: Optional[str] = None    # deprecated — pair-based exchanges have no model question
     model_response_expected: str = ""
     model_response_problem: str = ""
     conclusion: str = ""
 
 
 class ExchangeContext(BaseModel):
-    """The model→child→model triplet that was critiqued."""
-    model_question: str
+    """The child→model pair that was critiqued."""
+    model_question: str = ""    # deprecated — kept for backward compat with traces on disk
     child_response: str
     model_response: str
     mode: str = "chat"

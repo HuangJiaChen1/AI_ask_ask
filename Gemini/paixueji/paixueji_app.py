@@ -1112,7 +1112,6 @@ def run_critique_background(task_id: str, session_id: str, transcript: list,
             coros = [
                 filler.fill_exchange(
                     exchange_index=idx + 1,
-                    model_question=ex["model_question"],
                     child_response=ex["child_response"],
                     model_response=ex["model_response"],
                     object_name=object_name,
@@ -1139,8 +1138,6 @@ def run_critique_background(task_id: str, session_id: str, transcript: list,
         exchange_critiques = [
             {
                 "exchange_index": hc.exchange_index,
-                "model_question_problem": hc.model_question_problem,
-                "model_question_expected": hc.model_question_expected,
                 "model_response_problem": hc.model_response_problem,
                 "model_response_expected": hc.model_response_expected,
                 "conclusion": hc.conclusion,
@@ -1191,8 +1188,6 @@ def run_critique_background(task_id: str, session_id: str, transcript: list,
                     session_id, assistant, idx, ex_data,
                     {
                         "exchange_index": hc.exchange_index,
-                        "model_question_problem": hc.model_question_problem,
-                        "model_question_expected": hc.model_question_expected,
                         "model_response_problem": hc.model_response_problem,
                         "model_response_expected": hc.model_response_expected,
                         "conclusion": hc.conclusion,
@@ -1326,20 +1321,23 @@ def critique_conversation():
     # Hold a reference so the GC won't collect assistant during the background thread run
     assistant_ref = assistant
 
-    # Pre-extract all exchange triplets so the background worker doesn't need the transcript
+    # Pre-extract all exchanges (child→model pairs) so the background worker doesn't need the transcript.
+    # The introduction (first model message) is skipped and not counted as an exchange.
     all_exchanges = []
     i = 0
-    while i < len(transcript) - 2:
-        if (transcript[i].get("role") == "model" and
-            transcript[i + 1].get("role") == "child" and
-            transcript[i + 2].get("role") == "model"):
+    while i < len(transcript):
+        if transcript[i].get("role") == "model":
+            i += 1
+            break
+        i += 1
+    while i < len(transcript) - 1:
+        if (transcript[i].get("role") == "child" and
+                transcript[i + 1].get("role") == "model"):
             all_exchanges.append({
-                "model_question": transcript[i]["content"],
-                "child_response": transcript[i + 1]["content"],
-                "model_response": transcript[i + 2]["content"],
-                "question_nodes_executed": transcript[i].get("nodes_executed", []),
-                "nodes_executed": transcript[i + 2].get("nodes_executed", []),
-                "mode": transcript[i].get("mode", "chat"),
+                "child_response": transcript[i]["content"],
+                "model_response": transcript[i + 1]["content"],
+                "nodes_executed": transcript[i + 1].get("nodes_executed", []),
+                "mode": transcript[i + 1].get("mode", "chat"),
             })
             i += 2
         else:
@@ -1443,17 +1441,30 @@ def get_exchanges(session_id):
             entry["mode"] = msg.get("mode", "chat")
         transcript.append(entry)
 
-    # Extract triplets: model → child → model
+    # Introduction: first model message
+    introduction = None
+    i = 0
+    while i < len(transcript):
+        if transcript[i]["role"] == "model":
+            intro_nodes = transcript[i].get("nodes_executed", [])
+            introduction = {
+                "content": transcript[i]["content"],
+                "nodes_executed": intro_nodes,
+                "mode": transcript[i].get("mode", "chat"),
+            }
+            i += 1
+            break
+        i += 1
+
+    # Exchanges: child → model pairs
     exchanges = []
     exchange_index = 0
-    i = 0
-    while i < len(transcript) - 2:
-        if (transcript[i].get("role") == "model" and
-            transcript[i + 1].get("role") == "child" and
-            transcript[i + 2].get("role") == "model"):
+    while i < len(transcript) - 1:
+        if (transcript[i].get("role") == "child" and
+                transcript[i + 1].get("role") == "model"):
 
             exchange_index += 1
-            nodes = transcript[i + 2].get("nodes_executed", [])
+            nodes = transcript[i + 1].get("nodes_executed", [])
 
             # Extract intent_type: first node whose 'changes' dict sets intent_type
             intent_type = None
@@ -1467,20 +1478,20 @@ def get_exchanges(session_id):
 
             exchanges.append({
                 "index": exchange_index,
-                "model_question": transcript[i]["content"],
-                "child_response": transcript[i + 1]["content"],
-                "model_response": transcript[i + 2]["content"],
+                "child_response": transcript[i]["content"],
+                "model_response": transcript[i + 1]["content"],
                 "nodes_executed": nodes,
-                "mode": transcript[i].get("mode", "chat"),
+                "mode": transcript[i + 1].get("mode", "chat"),
                 "intent_type": intent_type,
                 "response_time_ms": response_time_ms,
             })
-            i += 2  # Move past child response, next iteration checks from model response
+            i += 2
         else:
             i += 1
 
     return jsonify({
         "success": True,
+        "introduction": introduction,
         "exchanges": exchanges,
         "object_name": assistant.object_name,
         "age": assistant.age,
@@ -1566,24 +1577,37 @@ def manual_critique():
             entry["mode"] = msg.get("mode", "chat")
         transcript.append(entry)
 
-    # Re-extract all exchanges to match indices
+    # Re-extract introduction and all exchanges (child→model pairs) to match indices
+    introduction = None
     all_exchanges = []
     i = 0
-    while i < len(transcript) - 2:
-        if (transcript[i].get("role") == "model" and
-            transcript[i + 1].get("role") == "child" and
-            transcript[i + 2].get("role") == "model"):
-            all_exchanges.append({
-                "model_question": transcript[i]["content"],
-                "child_response": transcript[i + 1]["content"],
-                "model_response": transcript[i + 2]["content"],
-                "question_nodes_executed": transcript[i].get("nodes_executed", []),
-                "nodes_executed": transcript[i + 2].get("nodes_executed", []),
+    while i < len(transcript):
+        if transcript[i]["role"] == "model":
+            introduction = {
+                "content": transcript[i]["content"],
+                "nodes_executed": transcript[i].get("nodes_executed", []),
                 "mode": transcript[i].get("mode", "chat"),
+            }
+            i += 1
+            break
+        i += 1
+    while i < len(transcript) - 1:
+        if (transcript[i].get("role") == "child" and
+                transcript[i + 1].get("role") == "model"):
+            all_exchanges.append({
+                "child_response": transcript[i]["content"],
+                "model_response": transcript[i + 1]["content"],
+                "nodes_executed": transcript[i + 1].get("nodes_executed", []),
+                "mode": transcript[i + 1].get("mode", "chat"),
             })
             i += 2
         else:
             i += 1
+
+    # Separate out the introduction critique (exchange_index == 0) if present
+    introduction_critique = next(
+        (ec for ec in exchange_critiques if ec.get("exchange_index") == 0), None
+    )
 
     try:
         report_md = build_human_feedback_report(
@@ -1595,6 +1619,8 @@ def manual_critique():
             exchange_critiques=exchange_critiques,
             global_conclusion=global_conclusion,
             key_concept=assistant.key_concept,
+            introduction=introduction,
+            introduction_critique=introduction_critique,
         )
 
         # Save to reports/HF/YYYY-MM-DD/
@@ -1624,14 +1650,14 @@ def manual_critique():
                 "traces": [],
             })
 
-        # Assemble TraceObjects for each critiqued exchange
+        # Assemble TraceObjects for each critiqued exchange (skip index 0 = Introduction)
         from trace_assembler import assemble_trace_object, save_trace_object
         trace_paths = []
         saved_traces = []
         for ec in exchange_critiques:
             idx = ec.get("exchange_index")
             if idx is None or idx < 1 or idx > len(all_exchanges):
-                continue
+                continue  # idx == 0 (Introduction) is excluded by idx < 1
             try:
                 trace_obj = assemble_trace_object(
                     session_id, assistant, idx, all_exchanges[idx - 1], ec
@@ -1829,12 +1855,13 @@ def _load_config() -> dict:
 
 def build_human_feedback_report(object_name, age, session_id, transcript,
                                  all_exchanges, exchange_critiques,
-                                 global_conclusion, key_concept=None):
+                                 global_conclusion, key_concept=None,
+                                 introduction=None, introduction_critique=None):
     """
     Generate a markdown report for human feedback critique.
 
-    Structures the report into Chat Phase and Guide Phase sections,
-    mirroring the two-phase structure of the AI critique report.
+    Structures the report into an optional Introduction Critique section,
+    then Chat Phase and Guide Phase sections.
 
     Args:
         object_name: Object being discussed
@@ -1845,6 +1872,8 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
         exchange_critiques: User-submitted critiques (list of dicts)
         global_conclusion: Overall conclusion text
         key_concept: Key concept being taught in guide phase
+        introduction: Optional {content, nodes_executed, mode} for the first model message
+        introduction_critique: Optional critique dict for the introduction (exchange_index == 0)
 
     Returns:
         str: Markdown report content
@@ -1863,6 +1892,25 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
     report += f"**Feedback Type:** Manual (Human)\n"
     report += f"**Exchanges Critiqued:** {critiqued_count} / {total_exchanges}\n\n"
     report += "---\n\n"
+
+    # Introduction Critique section (if the reviewer critiqued the introduction)
+    if introduction and introduction_critique:
+        report += "## Introduction — Human Critique\n\n"
+        intro_content = introduction.get("content", "")
+        report += f"**Introduction:** \"{intro_content}\"\n\n"
+        mr_expected = introduction_critique.get("model_response_expected", "").strip()
+        mr_problem = introduction_critique.get("model_response_problem", "").strip()
+        if mr_expected or mr_problem:
+            report += "**Introduction Content:**\n"
+            if mr_expected:
+                report += f"- *What is expected:* {mr_expected}\n"
+            if mr_problem:
+                report += f"- *Why is it problematic:* {mr_problem}\n"
+            report += "\n"
+        conclusion = introduction_critique.get("conclusion", "").strip()
+        if conclusion:
+            report += f"#### Conclusion\n\n{conclusion}\n\n"
+        report += "---\n\n"
 
     # Conversation transcript (with mode labels)
     report += "## Conversation Transcript\n\n"
@@ -1885,7 +1933,7 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
     # Build critiqued exchange lookup: index → critique data
     critique_by_index = {ec["exchange_index"]: ec for ec in exchange_critiques}
 
-    # Classify exchanges by mode
+    # Classify exchanges by mode (skip index 0 = Introduction, handled separately)
     chat_critiqued = []
     guide_critiqued = []
     for ec in exchange_critiques:
@@ -1935,7 +1983,6 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
 def _render_hf_exchange(idx, exchange, ec):
     """Render a single HF exchange critique as markdown."""
     report = f"### Exchange {idx}\n\n"
-    report += f"**Model asked:** \"{exchange['model_question']}\"\n\n"
     report += f"**Child said:** \"{exchange['child_response']}\"\n\n"
     report += f"**Model responded:** \"{exchange['model_response']}\"\n\n"
 
@@ -1957,16 +2004,6 @@ def _render_hf_exchange(idx, exchange, ec):
 
     # Human critique sections
     report += "#### Human Critique\n\n"
-
-    mq_expected = ec.get("model_question_expected", "").strip()
-    mq_problem = ec.get("model_question_problem", "").strip()
-    if mq_expected or mq_problem:
-        report += "**Model Question:**\n"
-        if mq_expected:
-            report += f"- *What is expected:* {mq_expected}\n"
-        if mq_problem:
-            report += f"- *Why is it problematic:* {mq_problem}\n"
-        report += "\n"
 
     mr_expected = ec.get("model_response_expected", "").strip()
     mr_problem = ec.get("model_response_problem", "").strip()

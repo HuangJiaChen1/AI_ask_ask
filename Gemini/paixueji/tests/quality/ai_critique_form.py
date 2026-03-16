@@ -25,18 +25,11 @@ CONTEXT
 - Mode: {mode}  (chat = exploratory Q&A, guide = leading child toward a key concept){key_concept_line}{theme_line}
 
 EXCHANGE TO ASSESS
-Model question: "{model_question}"
 Child's response: "{child_response}"
 Model response: "{model_response}"
 
 TASK
-Fill in the five critique form fields below. Be thorough and honest — flag any genuine pedagogical issue, even a minor one. A {age}-year-old's learning experience depends on this feedback.
-
-Evaluate the MODEL QUESTION on:
-- Is it age-appropriate vocabulary and length for a {age}-year-old?
-- Does it build on what the child just said, or ignore it?
-- Is it interesting and curiosity-provoking, or generic?
-- Does it avoid repeating information already established?
+Fill in the three critique form fields below. Be thorough and honest — flag any genuine pedagogical issue, even a minor one. A {age}-year-old's learning experience depends on this feedback.
 
 Evaluate the MODEL RESPONSE on:
 - Does it genuinely acknowledge and engage with the child's specific answer?
@@ -47,22 +40,16 @@ Evaluate the MODEL RESPONSE on:
 
 FORM FIELDS
 
-1. model_question_problem — What is suboptimal about the model's question?
-   Quote the specific phrase that is problematic. Leave "" ONLY if the question is genuinely exemplary.
-
-2. model_question_expected — What should the model have asked instead? (concrete alternative)
-   Leave "" if model_question_problem is "".
-
-3. model_response_problem — What is suboptimal about the model's response?
+1. model_response_problem — What is suboptimal about the model's response?
    Quote the specific phrase that is problematic. Leave "" ONLY if the response is genuinely exemplary.
 
-4. model_response_expected — What should the model have responded instead? (concrete alternative)
+2. model_response_expected — What should the model have responded instead? (concrete alternative)
    Leave "" if model_response_problem is "".
 
-5. conclusion — 1-2 sentence overall assessment of this exchange's effectiveness.
-   Write this for any exchange where at least one field above is non-empty.
+3. conclusion — 1-2 sentence overall assessment of this exchange's effectiveness.
+   Write this if model_response_problem is non-empty.
 
-IMPORTANT: Empty fields ("") mean the question or response was genuinely excellent with no room for improvement for a {age}-year-old. This should be the exception, not the rule. Most exchanges have at least minor issues.
+IMPORTANT: Empty fields ("") mean the response was genuinely excellent with no room for improvement for a {age}-year-old. This should be the exception, not the rule. Most exchanges have at least minor issues.
 
 Return ONLY a valid JSON object. Do NOT include any text outside the JSON.
 
@@ -70,16 +57,12 @@ Use this schema — fill every field with a complete sentence (or "" ONLY for ge
 exemplary content). The values below are guidance for the expected style of critique:
 
 {{
-  "model_question_problem": "<quote the problematic phrase and explain why it fails for a {age}-year-old>",
-  "model_question_expected": "<a concrete, better alternative question>",
   "model_response_problem": "<quote the problematic phrase and explain the pedagogical failure>",
   "model_response_expected": "<a concrete, better alternative response>",
   "conclusion": "<1-2 sentence summary of this exchange's overall quality>"
 }}
 
-If the question had no flaws at all, set model_question_problem and model_question_expected to "".
-If the response had no flaws at all, set model_response_problem and model_response_expected to "".
-If both were flawless, set conclusion to "" as well.
+If the response had no flaws at all, set all fields to "".
 Finding no issues in a real teaching exchange should be rare — most have at least one.
 """
 
@@ -100,7 +83,6 @@ class AICritiqueFormFiller:
     async def fill_exchange(
         self,
         exchange_index: int,
-        model_question: str,
         child_response: str,
         model_response: str,
         object_name: str,
@@ -110,7 +92,7 @@ class AICritiqueFormFiller:
         ibpyp_theme_name: str | None = None,
     ) -> HumanCritique | None:
         """
-        Ask the LLM to fill in the 5-field critique form for one exchange.
+        Ask the LLM to fill in the critique form for one exchange (child→model pair).
 
         Returns:
             HumanCritique if any problem field is non-empty, else None.
@@ -124,7 +106,6 @@ class AICritiqueFormFiller:
             mode=mode,
             key_concept_line=key_concept_line,
             theme_line=theme_line,
-            model_question=model_question,
             child_response=child_response,
             model_response=model_response,
         )
@@ -180,14 +161,12 @@ class AICritiqueFormFiller:
             )
             return None
 
-        mq_problem = data.get("model_question_problem", "").strip()
-        mq_expected = data.get("model_question_expected", "").strip()
         mr_problem = data.get("model_response_problem", "").strip()
         mr_expected = data.get("model_response_expected", "").strip()
         conclusion = data.get("conclusion", "").strip()
 
         # If all fields are empty the exchange passes — return None (skip it)
-        if not any([mq_problem, mq_expected, mr_problem, mr_expected, conclusion]):
+        if not any([mr_problem, mr_expected, conclusion]):
             logger.info(
                 f"[AICritiqueFormFiller] Exchange {exchange_index}: no issues found "
                 f"(raw: {text[:120]})"
@@ -196,14 +175,11 @@ class AICritiqueFormFiller:
 
         logger.info(
             f"[AICritiqueFormFiller] Exchange {exchange_index}: "
-            f"Q-problem={'yes' if mq_problem else 'no'}, "
             f"R-problem={'yes' if mr_problem else 'no'}"
         )
 
         return HumanCritique(
             exchange_index=exchange_index,
-            model_question_problem=mq_problem,
-            model_question_expected=mq_expected,
             model_response_problem=mr_problem,
             model_response_expected=mr_expected,
             conclusion=conclusion,

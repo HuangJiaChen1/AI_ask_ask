@@ -1008,8 +1008,8 @@ async function showManualCritiqueForm() {
             return;
         }
 
-        if (result.exchanges.length === 0) {
-            alert('No complete exchanges found. Need at least one model→child→model triplet.');
+        if (result.exchanges.length === 0 && !result.introduction) {
+            alert('No exchanges found. Need at least one child response after the introduction.');
             return;
         }
 
@@ -1043,6 +1043,40 @@ async function showManualCritiqueForm() {
         });
 
         exchangeList.appendChild(sessionBanner);
+
+        // Introduction card (index 0)
+        if (result.introduction) {
+            const intro = result.introduction;
+            const introWrapper = document.createElement('div');
+            introWrapper.style.cssText = 'margin-bottom:16px; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;';
+
+            const introHeader = document.createElement('div');
+            introHeader.style.cssText = 'padding:12px; background:#f8fafc; display:flex; align-items:flex-start; gap:10px; cursor:pointer;';
+            introHeader.innerHTML = `
+                <input type="checkbox" id="exchange_cb_0" data-index="0" style="margin-top:3px; cursor:pointer;" onchange="toggleExchangeCritique(0)">
+                <div style="flex:1; min-width:0;">
+                    <strong style="color:#1e293b;">Introduction</strong>
+                    <span style="display:inline-block; background:#0891b2; color:#fff; font-size:0.7em; font-weight:600; padding:1px 7px; border-radius:9px; margin-left:6px; vertical-align:middle;">INTRODUCTION</span>
+                    <div style="font-size:0.85em; color:#64748b; margin-top:4px; white-space:pre-wrap;">${escapeHtml(truncate(intro.content, 120))}</div>
+                </div>
+            `;
+            introHeader.onclick = function(e) {
+                if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                    const cb = document.getElementById('exchange_cb_0');
+                    cb.checked = !cb.checked;
+                    toggleExchangeCritique(0);
+                }
+            };
+
+            const introFormDiv = document.createElement('div');
+            introFormDiv.id = 'exchange_form_0';
+            introFormDiv.style.cssText = 'display:none; padding:16px; border-top:1px solid #e2e8f0;';
+            introFormDiv.innerHTML = buildIntroductionCritiqueFormHTML(intro);
+
+            introWrapper.appendChild(introHeader);
+            introWrapper.appendChild(introFormDiv);
+            exchangeList.appendChild(introWrapper);
+        }
 
         // Split exchanges into chat and guide groups
         const chatExchanges = result.exchanges.filter(e => (e.mode || 'chat') !== 'guide');
@@ -1085,7 +1119,6 @@ async function showManualCritiqueForm() {
                     <strong style="color:#1e293b;">Exchange ${exchange.index}</strong>
                     <span style="display:inline-block; background:${badgeColor}; color:#fff; font-size:0.7em; font-weight:600; padding:1px 7px; border-radius:9px; margin-left:6px; vertical-align:middle;">${badgeLabel}</span>${intentBadge}${timeLabel}
                     <div style="font-size:0.85em; color:#64748b; margin-top:4px;">
-                        <div><b>Q:</b> ${escapeHtml(truncate(exchange.model_question, 80))}</div>
                         <div><b>A:</b> ${escapeHtml(truncate(exchange.child_response, 80))}</div>
                         <div><b>R:</b> ${escapeHtml(truncate(exchange.model_response, 80))}</div>
                     </div>
@@ -1148,14 +1181,6 @@ function buildExchangeCritiqueFormHTML(exchange) {
     const idx = exchange.index;
     return `
         <div style="margin-bottom:16px;">
-            <div style="font-weight:bold; color:#475569; margin-bottom:6px;">Model Question</div>
-            <div style="background:#f0f9ff; padding:8px; border-radius:4px; font-size:0.9em; margin-bottom:8px; white-space:pre-wrap;">${escapeHtml(exchange.model_question)}</div>
-            <div style="display:flex; gap:8px;">
-                <div style="flex:1;"><label style="font-size:0.8em; color:#64748b;">What is expected</label><textarea id="mq_exp_${idx}" rows="2" style="width:100%; box-sizing:border-box; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-family:inherit; resize:vertical;" placeholder="What should the model have asked?"></textarea></div>
-                <div style="flex:1;"><label style="font-size:0.8em; color:#64748b;">Why is it problematic</label><textarea id="mq_prob_${idx}" rows="2" style="width:100%; box-sizing:border-box; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-family:inherit; resize:vertical;" placeholder="What's wrong with this question?"></textarea></div>
-            </div>
-        </div>
-        <div style="margin-bottom:16px;">
             <div style="font-weight:bold; color:#475569; margin-bottom:6px;">Child Response</div>
             <div style="background:#fefce8; padding:8px; border-radius:4px; font-size:0.9em; margin-bottom:4px; white-space:pre-wrap;">${escapeHtml(exchange.child_response)}</div>
             <div style="font-size:0.78em; color:#64748b; margin-bottom:8px; display:flex; gap:12px;">
@@ -1179,6 +1204,27 @@ function buildExchangeCritiqueFormHTML(exchange) {
 }
 
 /**
+ * Build HTML for the Introduction critique form (index 0).
+ * Shows only "Introduction Content" (model response) and a conclusion textarea.
+ */
+function buildIntroductionCritiqueFormHTML(introduction) {
+    return `
+        <div style="margin-bottom:16px;">
+            <div style="font-weight:bold; color:#475569; margin-bottom:6px;">Introduction Content</div>
+            <div style="background:#f0fdf4; padding:8px; border-radius:4px; font-size:0.9em; margin-bottom:8px; white-space:pre-wrap;">${escapeHtml(introduction.content || '')}</div>
+            <div style="display:flex; gap:8px;">
+                <div style="flex:1;"><label style="font-size:0.8em; color:#64748b;">What is expected</label><textarea id="mr_exp_0" rows="2" style="width:100%; box-sizing:border-box; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-family:inherit; resize:vertical;" placeholder="How should the introduction have been written?"></textarea></div>
+                <div style="flex:1;"><label style="font-size:0.8em; color:#64748b;">Why is it problematic</label><textarea id="mr_prob_0" rows="2" style="width:100%; box-sizing:border-box; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-family:inherit; resize:vertical;" placeholder="What's wrong with this introduction?"></textarea></div>
+            </div>
+        </div>
+        <div>
+            <label style="font-weight:bold; color:#475569; font-size:0.9em;">Conclusion</label>
+            <textarea id="ec_concl_0" rows="2" style="width:100%; box-sizing:border-box; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-family:inherit; resize:vertical; margin-top:4px;" placeholder="Summary of issues with this introduction..."></textarea>
+        </div>
+    `;
+}
+
+/**
  * Toggle visibility of an exchange critique form when checkbox changes.
  */
 function toggleExchangeCritique(index) {
@@ -1187,7 +1233,7 @@ function toggleExchangeCritique(index) {
     if (cb && form) {
         form.style.display = cb.checked ? 'block' : 'none';
         if (!cb.checked) {
-            ['mq_exp_', 'mq_prob_', 'mr_exp_', 'mr_prob_', 'ec_concl_'].forEach(prefix => {
+            ['mr_exp_', 'mr_prob_', 'ec_concl_'].forEach(prefix => {
                 const el = document.getElementById(prefix + index);
                 if (el) el.value = '';
             });
@@ -1216,8 +1262,6 @@ function collectExchangeCritiques() {
 
         exchangeCritiques.push({
             exchange_index: idx,
-            model_question_expected: (document.getElementById('mq_exp_' + idx) || {}).value || '',
-            model_question_problem: (document.getElementById('mq_prob_' + idx) || {}).value || '',
             model_response_expected: (document.getElementById('mr_exp_' + idx) || {}).value || '',
             model_response_problem: (document.getElementById('mr_prob_' + idx) || {}).value || '',
             conclusion: (document.getElementById('ec_concl_' + idx) || {}).value || ''

@@ -168,20 +168,25 @@ class PedagogicalCritiquePipeline:
         exchange_critiques = []
         turn_number = 0
 
-        # Find triplets: model → child → model
+        # Skip introduction: first model message
         i = 0
-        while i < len(transcript) - 2:
-            if (transcript[i].get("role") == "model" and
-                transcript[i + 1].get("role") == "child" and
-                transcript[i + 2].get("role") == "model"):
+        while i < len(transcript):
+            if transcript[i].get("role") == "model":
+                i += 1
+                break
+            i += 1
+
+        # Find pairs: child → model
+        while i < len(transcript) - 1:
+            if (transcript[i].get("role") == "child" and
+                    transcript[i + 1].get("role") == "model"):
 
                 turn_number += 1
 
-                model_question = transcript[i]["content"]
-                child_response = transcript[i + 1]["content"]
-                model_actual = transcript[i + 2]["content"]
+                child_response = transcript[i]["content"]
+                model_actual = transcript[i + 1]["content"]
                 # Extract node execution trace from the model's response
-                nodes_executed = transcript[i + 2].get("nodes_executed", [])
+                nodes_executed = transcript[i + 1].get("nodes_executed", [])
 
                 # Detect intent node from nodes_executed for per-intent evaluation criteria
                 _intent_node_names = {
@@ -197,7 +202,7 @@ class PedagogicalCritiquePipeline:
 
                 # Extract context
                 context = await self.analyzer.analyze(
-                    model_utterance=model_question,
+                    model_utterance=model_actual,
                     child_response=child_response,
                     setup=setup,
                 )
@@ -205,7 +210,7 @@ class PedagogicalCritiquePipeline:
                 # Critique
                 critique = await self.critic.critique(
                     turn_number=turn_number,
-                    model_question=model_question,
+                    model_question="",
                     child_response=child_response,
                     model_actual_response=model_actual,
                     context=context,
@@ -218,7 +223,7 @@ class PedagogicalCritiquePipeline:
                 critique.mode = mode
 
                 exchange_critiques.append(critique)
-                i += 2  # Move past child response, next iteration starts from model_actual
+                i += 2
             else:
                 i += 1
 
