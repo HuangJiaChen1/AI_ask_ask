@@ -87,6 +87,93 @@ const INTENT_METADATA = {
     },
 };
 
+const RESPONSE_METADATA = {
+    ACTION: {
+        color: '#10b981',
+        description: 'The assistant is following the child’s request or changing direction as asked.',
+    },
+    AVOIDANCE: {
+        color: '#6b7280',
+        description: 'The assistant is honoring the child’s wish to stop and offering a low-pressure next step.',
+    },
+    BOUNDARY: {
+        color: '#ef4444',
+        description: 'The assistant is redirecting risky curiosity into a safer way to explore.',
+    },
+    CLARIFYING_CONSTRAINT: {
+        color: '#f59e0b',
+        description: 'The assistant is validating the child’s limitation and keeping the topic going imaginatively.',
+    },
+    CLARIFYING_IDK: {
+        color: '#f59e0b',
+        description: 'The assistant is giving a clue instead of repeating the same question.',
+    },
+    CLARIFYING_WRONG: {
+        color: '#f59e0b',
+        description: 'The assistant is gently correcting the answer and inviting the child to look or think again.',
+    },
+    CORRECT_ANSWER: {
+        color: '#16a34a',
+        description: 'The assistant is confirming the answer and rewarding it with one related wow fact.',
+    },
+    CURIOSITY: {
+        color: '#8b5cf6',
+        description: 'The assistant is answering the child’s question, adding one interesting detail, and ending with an easy follow-up.',
+    },
+    EMOTIONAL: {
+        color: '#14b8a6',
+        description: 'The assistant is responding to the child’s feeling first, then offering a gentle next step.',
+    },
+    GIVE_ANSWER_IDK: {
+        color: '#f59e0b',
+        description: 'The assistant is stopping the hinting and giving the answer directly.',
+    },
+    GUIDE_EXIT: {
+        color: '#ef4444',
+        description: 'The assistant is ending the guided discovery gracefully because it is not working right now.',
+    },
+    GUIDE_HINT: {
+        color: '#f59e0b',
+        description: 'The assistant is giving a stronger, more concrete hint after the child has struggled a few times.',
+    },
+    GUIDE_RESPONSE: {
+        color: '#6366f1',
+        description: 'The assistant is giving the next guided-discovery step based on how the child is progressing.',
+    },
+    GUIDE_SUCCESS: {
+        color: '#16a34a',
+        description: 'The assistant is celebrating that the child reached the bigger idea.',
+    },
+    INFORMATIVE: {
+        color: '#3b82f6',
+        description: 'The assistant is celebrating what the child volunteered without interrupting it with correction.',
+    },
+    INTRODUCTION: {
+        color: '#0ea5e9',
+        description: 'The assistant is opening the conversation by naming the object, making it feel familiar, and sharing a fun fact.',
+    },
+    PLAY: {
+        color: '#ec4899',
+        description: 'The assistant is joining the child’s imagination and turning it into playful exploration.',
+    },
+    QUESTION: {
+        color: '#6366f1',
+        description: 'The assistant is starting a discovery question to guide the child toward a bigger idea.',
+    },
+    SOCIAL: {
+        color: '#f97316',
+        description: 'The assistant is answering a question about itself briefly and reconnecting through the child’s experience.',
+    },
+    SOCIAL_ACKNOWLEDGMENT: {
+        color: '#64748b',
+        description: 'The assistant gives a brief warm reaction without repeating the same fact.',
+    },
+    TOPIC_SWITCH: {
+        color: '#0ea5e9',
+        description: 'The assistant is celebrating the new object before moving the conversation there.',
+    },
+};
+
 // DOM elements
 const messagesContainer = document.getElementById('messages');
 const userInput = document.getElementById('userInput');
@@ -733,8 +820,19 @@ function updateDebugPanel() {
 
     // Update response type display
     const responseTypeEl = document.getElementById('debugResponseType');
+    const responseDescriptionEl = document.getElementById('debugResponseDescription');
     if (responseTypeEl) {
+        const normalizedResponseType = currentResponseType ? currentResponseType.toUpperCase() : null;
+        const responseMeta = normalizedResponseType ? RESPONSE_METADATA[normalizedResponseType] : null;
+
         responseTypeEl.textContent = currentResponseType || '-';
+        responseTypeEl.style.color = responseMeta ? responseMeta.color : '#0f172a';
+
+        if (responseDescriptionEl) {
+            responseDescriptionEl.textContent = responseMeta
+                ? responseMeta.description
+                : (currentResponseType ? 'The assistant is using a conversation strategy for this moment.' : '-');
+        }
     }
 }
 
