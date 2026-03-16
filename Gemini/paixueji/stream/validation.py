@@ -18,7 +18,6 @@ async def classify_intent(
     child_answer: str,
     object_name: str,
     age: int,
-    is_awaiting_topic_selection: bool = False
 ) -> dict:
     """
     Classify the child's utterance into one of 13 communicative intents.
@@ -28,8 +27,6 @@ async def classify_intent(
         child_answer: The child's input text
         object_name: Current object being discussed
         age: Child's age
-        is_awaiting_topic_selection: Whether the AI is waiting for child to pick a topic
-
     Returns:
         dict with keys:
             - intent_type: one of CURIOSITY, CLARIFYING_IDK, CLARIFYING_WRONG,
@@ -58,22 +55,12 @@ async def classify_intent(
         # Keep full response for better intent disambiguation; cap context size.
         last_model_response = last_model_response[-500:]
 
-    # Special instructions when awaiting topic selection
-    topic_selection_instructions = ""
-    if is_awaiting_topic_selection:
-        topic_selection_instructions = """\
-SPECIAL CONTEXT: AWAITING TOPIC SELECTION
-The previous message offered the child a choice of topics (e.g., "A, B, or C?").
-If the child names one of the options or any object → INTENT: ACTION, NEW_OBJECT: <that object>
-If the child expresses uncertainty ("don't know", "you decide", "surprise me") → INTENT: ACTION, NEW_OBJECT: null (AI will pick)
-If the child refuses entirely → INTENT: AVOIDANCE"""
-
     prompt_template = paixueji_prompts.get_prompts()["user_intent_prompt"]
     prompt = prompt_template.format(
         object_name=object_name,
         last_model_response=last_model_response,
         child_answer=child_answer,
-        topic_selection_instructions=topic_selection_instructions,
+        topic_selection_instructions="",
     )
 
     try:

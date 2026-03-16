@@ -306,7 +306,6 @@ def start_conversation():
                         "new_object_name": None,
                         "detected_object_name": None,
                         "response_type": "introduction",
-                        "suggested_objects": None,
 
                         # Fun fact (grounded)
                         "fun_fact": "",
@@ -680,7 +679,6 @@ def continue_conversation():
                         "new_object_name": None,
                         "detected_object_name": None,
                         "response_type": None,
-                        "suggested_objects": None,
 
                         # Fun fact (not used in continue, but required by state schema)
                         "fun_fact": "",

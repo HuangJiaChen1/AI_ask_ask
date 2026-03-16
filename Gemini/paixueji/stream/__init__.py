@@ -29,7 +29,6 @@ from .utils import (
 from .response_generators import (
     generate_intent_response_stream,
     generate_topic_switch_response_stream,
-    generate_explicit_switch_response_stream,
 )
 
 # Question generators (intro path + followup)
@@ -61,7 +60,6 @@ __all__ = [
     # Response generators
     'generate_intent_response_stream',
     'generate_topic_switch_response_stream',
-    'generate_explicit_switch_response_stream',
 
     # Question generators (intro path + followup)
     'ask_introduction_question_stream',

@@ -4,7 +4,6 @@ Response stream generators for Paixueji assistant.
 Functions:
     - generate_intent_response_stream: Universal intent response generator (9-node architecture)
     - generate_topic_switch_response_stream: Celebration for named-object topic transitions
-    - generate_explicit_switch_response_stream: Response for explicit switch requests (no named object)
 """
 import time
 from typing import AsyncGenerator
@@ -197,92 +196,5 @@ async def generate_topic_switch_response_stream(
 
     duration = time.time() - start_time
     logger.info(f"generate_topic_switch_response_stream completed | duration={duration:.3f}s, length={len(full_response)}")
-
-    yield ("", token_usage, full_response)
-
-
-async def generate_explicit_switch_response_stream(
-    messages: list[dict],
-    suggested_objects: list[str],
-    age: int,
-    config: dict,
-    client: genai.Client
-) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
-    """
-    Generate response for explicit switch requests where no specific object was named.
-
-    Used by node_avoidance and node_action when the child wants a new topic but
-    didn't name one — presents a list of options and sets awaiting_topic_selection.
-
-    Args:
-        messages: Conversation history
-        suggested_objects: List of objects to present as choices
-        age: Child's age
-        config: Configuration dict
-        client: Gemini client instance
-
-    Yields:
-        Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
-    """
-    start_time = time.time()
-    logger.info(f"generate_explicit_switch_response_stream started | objects={suggested_objects}, age={age}")
-
-    objects_list = ", ".join(suggested_objects[:-1]) + f", or {suggested_objects[-1]}"
-
-    prompt = f"""The child has explicitly requested to switch topics and explore something new.
-
-YOUR TASK:
-1. Warmly agree to switch topics (e.g., "Sure! That sounds fun!", "Okay, let's talk about something else!")
-2. Introduce the new choices in an exciting way
-3. Present the options: {objects_list}
-4. DO NOT ask any follow-up questions about the previous topic
-5. DO NOT congratulate them on exploring the previous topic
-6. Match vocabulary to age {age}
-7. Respond naturally (NOT JSON)
-8. Keep it brief and enthusiastic
-
-"""
-
-    messages_to_send = messages + [{"role": "user", "content": prompt}]
-    clean_messages = clean_messages_for_api(messages_to_send)
-    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
-
-    full_response = ""
-    token_usage = None
-    stream = None
-
-    try:
-        gen_config = GenerateContentConfig(
-            temperature=config.get("temperature", 0.3),
-            max_output_tokens=300,
-            system_instruction=system_instruction if system_instruction else None
-        )
-
-        stream = await client.aio.models.generate_content_stream(
-            model=config["model_name"],
-            contents=contents,
-            config=gen_config
-        )
-
-        async for chunk in stream:
-            if chunk.text:
-                full_response += chunk.text
-                yield (chunk.text, None, full_response)
-
-    except Exception as e:
-        duration = time.time() - start_time
-        logger.error(f"generate_explicit_switch_response_stream error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
-        if full_response:
-            yield ("", token_usage, full_response)
-        return
-    finally:
-        if stream is not None:
-            try:
-                del stream
-            except Exception:
-                pass
-
-    duration = time.time() - start_time
-    logger.info(f"generate_explicit_switch_response_stream completed | duration={duration:.3f}s, length={len(full_response)}")
 
     yield ("", token_usage, full_response)

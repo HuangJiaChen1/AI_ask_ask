@@ -24,9 +24,6 @@ class ConversationState(Enum):
     """Tracks the current state of the Paixueji conversation."""
     INTRODUCTION = "introduction"
     ASKING_QUESTION = "asking_question"
-    AWAITING_ANSWER = "awaiting_answer"
-    AWAITING_TOPIC_SELECTION = "awaiting_topic_selection"
-    COMPLETION = "completion"
 
 
 class PaixuejiAssistant:
@@ -54,13 +51,6 @@ class PaixuejiAssistant:
         # Paixueji-specific fields
         self.object_name = None
         self.correct_answer_count = 0
-
-        # Theme Guide fields
-        self.guide_mode = False
-        self.target_theme = None
-        self.current_plan = []
-        self.themes = []
-        self._load_themes()
 
         # IB PYP Theme Classification fields
         self.ibpyp_theme = None  # Theme ID (e.g., "Category_Nature_And_Physics")
@@ -101,23 +91,6 @@ class PaixuejiAssistant:
         import paixueji_prompts
         self.prompts = paixueji_prompts.get_prompts()
 
-    def _load_themes(self):
-        """Load themes from themes.json."""
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        themes_path = os.path.join(base_dir, "themes.json")
-        if os.path.exists(themes_path):
-            try:
-                with open(themes_path, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    # Handle new structure with "themes" key
-                    if isinstance(data, dict) and "themes" in data:
-                        self.themes = data["themes"]
-                    else:
-                        self.themes = data
-                safe_print(f"[THEME] Loaded {len(self.themes)} themes.")
-            except Exception as e:
-                safe_print(f"[ERROR] Failed to load themes: {e}")
-
     def load_object_context_from_yaml(self, object_name: str):
         """
         Load object-derived concept context and fallback theme from YAML.
@@ -146,42 +119,6 @@ class PaixuejiAssistant:
         self.ibpyp_theme = None
         self.ibpyp_theme_name = None
         self.ibpyp_theme_reason = None
-
-    def classify_theme_background(self, object_name: str):
-        """
-        Background YAML context loading for an object.
-        Updates fallback theme, key concept, bridge question, and category prompt.
-        Fire-and-forget: spawns a daemon thread and returns immediately.
-        """
-        import threading
-
-        def _classify():
-            result = self.load_object_context_from_yaml(object_name)
-            safe_print(
-                f"[CLASSIFY] YAML context ready: {result['theme_name']} | "
-                f"Concept: {result['key_concept']}"
-            )
-
-        thread = threading.Thread(target=_classify, daemon=True)
-        thread.start()
-
-    def start_theme_guide(self, theme_id):
-        """Enable guide mode for a specific theme."""
-        theme = next((t for t in self.themes if t['id'] == theme_id), None)
-        if theme:
-            self.guide_mode = True
-            self.target_theme = theme
-            self.current_plan = []
-            safe_print(f"[THEME] Guide mode STARTED for: {theme['name']}")
-            return True
-        return False
-
-    def stop_theme_guide(self):
-        """Disable guide mode."""
-        self.guide_mode = False
-        self.target_theme = None
-        self.current_plan = []
-        safe_print(f"[THEME] Guide mode STOPPED.")
 
     def _load_config(self, config_path):
         """Load configuration from JSON file."""
@@ -227,41 +164,6 @@ class PaixuejiAssistant:
         """
         self.correct_answer_count += 1
         return False
-
-    def get_conversation_history(self):
-        """Get the full conversation history."""
-        return self.conversation_history
-
-    def reset_object_state(self, new_object_name: str):
-        """
-        Reset state when switching to a new object.
-
-        Args:
-            new_object_name: Name of the new object to switch to
-        """
-        self.object_name = new_object_name
-        # Reset guide state for new object
-        self.exit_guide_mode()
-
-    def reset(self):
-        """Reset the conversation."""
-        self.conversation_history = []
-        self.state = ConversationState.INTRODUCTION
-        self.age = None
-
-        # Reset Paixueji-specific fields
-        self.object_name = None
-        self.correct_answer_count = 0
-        self.category_prompt = None
-        self.clear_active_theme()
-        self.fallback_theme_id = None
-        self.fallback_theme_name = None
-        self.fallback_theme_reason = None
-        self.key_concept = None
-        self.bridge_question = None
-
-        # Reset guide state
-        self.exit_guide_mode()
 
     # =========================================================================
     # MULTI-TURN GUIDE STATE MANAGEMENT
@@ -342,7 +244,3 @@ class PaixuejiAssistant:
         if self.guide_turn_count >= self.guide_max_turns and self.hint_given:
             return True
         return False
-
-    def get_current_scaffold_level(self) -> int:
-        """Get the current scaffolding level for the Navigator."""
-        return self.scaffold_level
