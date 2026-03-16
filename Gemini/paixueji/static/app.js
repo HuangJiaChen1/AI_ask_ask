@@ -31,6 +31,61 @@ let currentKeyConcept = null;  // Key concept for theme
 let currentIntentType = null;       // Last classified intent (9-node architecture)
 let currentResponseType = null;     // Last response node that actually ran
 
+const INTENT_METADATA = {
+    ACTION: {
+        color: '#10b981',
+        description: 'The child is asking the assistant to do something or change direction.',
+    },
+    AVOIDANCE: {
+        color: '#6b7280',
+        description: 'The child is trying to avoid or leave the current topic.',
+    },
+    BOUNDARY: {
+        color: '#ef4444',
+        description: 'The child is asking about something risky or unsafe.',
+    },
+    CLARIFYING_CONSTRAINT: {
+        color: '#f59e0b',
+        description: 'The child is engaged but explains they cannot do or access something.',
+    },
+    CLARIFYING_IDK: {
+        color: '#f59e0b',
+        description: 'The child seems unsure or does not know the answer yet.',
+    },
+    CLARIFYING_WRONG: {
+        color: '#f59e0b',
+        description: 'The child tried to answer, but the answer seems off.',
+    },
+    CORRECT_ANSWER: {
+        color: '#16a34a',
+        description: 'The child gave an on-target answer.',
+    },
+    CURIOSITY: {
+        color: '#8b5cf6',
+        description: 'The child is asking to learn more about the topic.',
+    },
+    EMOTIONAL: {
+        color: '#14b8a6',
+        description: 'The child is expressing a feeling.',
+    },
+    INFORMATIVE: {
+        color: '#3b82f6',
+        description: 'The child is sharing something they already know.',
+    },
+    PLAY: {
+        color: '#ec4899',
+        description: 'The child is being playful or imaginative.',
+    },
+    SOCIAL: {
+        color: '#f97316',
+        description: 'The child is asking about the assistant itself.',
+    },
+    SOCIAL_ACKNOWLEDGMENT: {
+        color: '#64748b',
+        description: 'The child is reacting briefly to what the assistant said.',
+    },
+};
+
 // DOM elements
 const messagesContainer = document.getElementById('messages');
 const userInput = document.getElementById('userInput');
@@ -633,22 +688,19 @@ function updateDebugPanel() {
 
     // Update last intent type
     const intentElement = document.getElementById('debugIntentType');
+    const intentDescriptionElement = document.getElementById('debugIntentDescription');
     if (intentElement) {
+        const normalizedIntent = currentIntentType ? currentIntentType.toUpperCase() : null;
+        const intentMeta = normalizedIntent ? INTENT_METADATA[normalizedIntent] : null;
+
         intentElement.textContent = currentIntentType || '-';
-        const intentColors = {
-            'curiosity':   '#8b5cf6',   // Purple  — exploratory question
-            'clarifying':  '#f59e0b',   // Amber   — uncertain/wrong guess
-            'informative': '#3b82f6',   // Blue    — sharing knowledge
-            'play':        '#ec4899',   // Pink    — silly/imaginative
-            'emotional':   '#14b8a6',   // Teal    — expressing feeling
-            'avoidance':   '#6b7280',   // Gray    — refusing/exiting
-            'boundary':    '#ef4444',   // Red     — risky action
-            'action':      '#10b981',   // Green   — issuing command
-            'social':      '#f97316',   // Orange  — asking about AI
-        };
-        intentElement.style.color = currentIntentType
-            ? (intentColors[currentIntentType.toLowerCase()] || '#374151')
-            : '#6b7280';
+        intentElement.style.color = intentMeta ? intentMeta.color : '#6b7280';
+
+        if (intentDescriptionElement) {
+            intentDescriptionElement.textContent = intentMeta
+                ? intentMeta.description
+                : (currentIntentType ? 'The system detected a conversation pattern.' : '-');
+        }
     }
 
     // Update response type display
