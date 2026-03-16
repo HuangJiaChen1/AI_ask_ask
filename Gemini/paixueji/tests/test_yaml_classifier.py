@@ -83,23 +83,6 @@ def test_entity_match_rejects_partial_match():
 
 
 from graph_lookup import classify_object_yaml
-import time
-from unittest.mock import MagicMock
-from paixueji_assistant import PaixuejiAssistant
-
-
-def test_classify_theme_background_sets_fields():
-    """classify_theme_background should set concept context and fallback theme fields."""
-    assistant = PaixuejiAssistant(client=MagicMock())
-    assistant.age = 5
-    assistant.classify_theme_background("sunflower")
-    # Background thread — give it time to complete
-    time.sleep(1.0)
-    assert assistant.category_prompt is not None
-    assert "CONCEPT FOCUS:" in assistant.category_prompt
-    assert assistant.ibpyp_theme_name is None
-    assert assistant.fallback_theme_name is not None
-    assert assistant.key_concept is not None
 
 
 def test_classify_object_yaml_known_object():

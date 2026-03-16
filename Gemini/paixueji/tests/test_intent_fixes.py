@@ -814,7 +814,6 @@ class TestSmoothieTasteQuestionFix:
             child_answer="is it yum?",
             object_name="banana",
             age=6,
-            is_awaiting_topic_selection=False,
         )
 
         assert result["intent_type"] == "CURIOSITY", (
@@ -868,7 +867,6 @@ class TestReferentCorrectionFix:
             child_answer="i meant smoothies",
             object_name="banana",
             age=6,
-            is_awaiting_topic_selection=False,
         )
 
         assert result["intent_type"] == "CURIOSITY", (

@@ -117,7 +117,6 @@ def _build_initial_state(assistant, user_input, messages, response_type=None):
         "new_object_name": None,
         "detected_object_name": None,
         "response_type": response_type,   # "introduction" → bypasses analyze_input
-        "suggested_objects": None,
         "fun_fact": "",
         "fun_fact_hook": "",
         "fun_fact_question": "",

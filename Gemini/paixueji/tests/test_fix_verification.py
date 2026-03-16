@@ -314,7 +314,6 @@ def _build_minimal_state(assistant, messages=None):
         "response_type": None,
         "new_object_name": None,
         "detected_object_name": None,
-        "suggested_objects": None,
         "fun_fact": None,
         "fun_fact_hook": None,
         "fun_fact_question": None,

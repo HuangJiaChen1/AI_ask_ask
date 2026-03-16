@@ -14,16 +14,13 @@ from stream import (
     ask_followup_question_stream,
     classify_intent,
     generate_intent_response_stream,
-    generate_explicit_switch_response_stream,
     generate_topic_switch_response_stream,
     extract_previous_question,
     prepare_messages_for_streaming,
-    clean_messages_for_api,
     generate_guide_hint
 )
 from stream.theme_guide import ThemeNavigator, ThemeDriver
-from schema import StreamChunk, TokenUsage
-import paixueji_prompts
+from schema import StreamChunk
 
 GUIDE_MODE_THRESHOLD = 4  # Correct answers required to enter guide mode
 
@@ -66,7 +63,6 @@ class PaixuejiState(TypedDict):
     detected_object_name: Optional[str]
 
     response_type: Optional[str]
-    suggested_objects: Optional[List[str]]
 
     # --- Guide State (Multi-turn Navigator/Driver) ---
     guide_phase: Optional[str]   # "active", "hint", "success", "exit"
@@ -244,15 +240,11 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Analyze Input")
 
-    assistant = state["assistant"]
-    is_awaiting_topic_selection = (assistant.state.value == "awaiting_topic_selection")
-
     intent_result = await classify_intent(
-        assistant=assistant,
+        assistant=state["assistant"],
         child_answer=state["content"],
         object_name=state["object_name"],
         age=state["age"],
-        is_awaiting_topic_selection=is_awaiting_topic_selection
     )
 
     intent_type = intent_result["intent_type"]
@@ -390,8 +382,6 @@ async def stream_generator_to_callback(generator, state: PaixuejiState, response
                 detected_object_name=state["detected_object_name"],
 
                 response_type=response_type_override or state["response_type"],
-                suggested_objects=state["suggested_objects"],
-                object_selection_mode=bool(state["suggested_objects"]),
             )
             await state["stream_callback"](chunk)
 
@@ -1311,8 +1301,6 @@ async def node_finalize(state: PaixuejiState) -> dict:
         detected_object_name=state.get("detected_object_name"),
 
         response_type=state.get("response_type"),
-        suggested_objects=state.get("suggested_objects"),
-        object_selection_mode=bool(state.get("suggested_objects")),
 
         # Theme classification fields
         key_concept=state["assistant"].key_concept or None,

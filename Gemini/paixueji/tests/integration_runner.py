@@ -121,7 +121,6 @@ async def _run_turn(assistant, user_input, session_id, request_id):
         "new_object_name": None,
         "detected_object_name": None,
         "response_type": None,
-        "suggested_objects": None,
         "fun_fact": "",
         "fun_fact_hook": "",
         "fun_fact_question": "",
