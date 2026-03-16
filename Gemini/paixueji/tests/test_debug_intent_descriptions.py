@@ -34,6 +34,12 @@ def test_app_js_defines_plain_english_intent_descriptions():
     assert 'The child is asking to learn more about the topic.' in js, (
         "plain-English CURIOSITY description missing from app.js"
     )
+    assert '孩子只是在简短回应助手刚才说的话。' in js, (
+        "Chinese SOCIAL_ACKNOWLEDGMENT description missing from app.js"
+    )
+    assert '孩子正在提问，想更了解这个话题。' in js, (
+        "Chinese CURIOSITY description missing from app.js"
+    )
 
 
 def test_app_js_defines_plain_english_response_descriptions():
@@ -45,4 +51,10 @@ def test_app_js_defines_plain_english_response_descriptions():
     assert 'QUESTION' in js, "expected guide question response mapping in app.js"
     assert 'The assistant is starting a discovery question to guide the child toward a bigger idea.' in js, (
         "plain-English guide question response description missing from app.js"
+    )
+    assert '助手会先给一个简短温暖的回应，不重复刚才的事实。' in js, (
+        "Chinese social acknowledgment response description missing from app.js"
+    )
+    assert '助手正在用一个发现式问题，引导孩子走向更大的核心想法。' in js, (
+        "Chinese guide question response description missing from app.js"
     )

@@ -36,54 +36,67 @@ const INTENT_METADATA = {
     ACTION: {
         color: '#10b981',
         description: 'The child is asking the assistant to do something or change direction.',
+        descriptionZh: '孩子在请助手做点什么，或换个方向继续。',
     },
     AVOIDANCE: {
         color: '#6b7280',
         description: 'The child is trying to avoid or leave the current topic.',
+        descriptionZh: '孩子想避开或结束当前话题。',
     },
     BOUNDARY: {
         color: '#ef4444',
         description: 'The child is asking about something risky or unsafe.',
+        descriptionZh: '孩子在询问可能有风险或不安全的做法。',
     },
     CLARIFYING_CONSTRAINT: {
         color: '#f59e0b',
         description: 'The child is engaged but explains they cannot do or access something.',
+        descriptionZh: '孩子仍然愿意聊，但说明自己现在做不到或接触不到。',
     },
     CLARIFYING_IDK: {
         color: '#f59e0b',
         description: 'The child seems unsure or does not know the answer yet.',
+        descriptionZh: '孩子现在不太确定，或者还不知道答案。',
     },
     CLARIFYING_WRONG: {
         color: '#f59e0b',
         description: 'The child tried to answer, but the answer seems off.',
+        descriptionZh: '孩子试着回答了，但答案可能不太对。',
     },
     CORRECT_ANSWER: {
         color: '#16a34a',
         description: 'The child gave an on-target answer.',
+        descriptionZh: '孩子给出了基本正确的回答。',
     },
     CURIOSITY: {
         color: '#8b5cf6',
         description: 'The child is asking to learn more about the topic.',
+        descriptionZh: '孩子正在提问，想更了解这个话题。',
     },
     EMOTIONAL: {
         color: '#14b8a6',
         description: 'The child is expressing a feeling.',
+        descriptionZh: '孩子正在表达自己的感受。',
     },
     INFORMATIVE: {
         color: '#3b82f6',
         description: 'The child is sharing something they already know.',
+        descriptionZh: '孩子在主动分享自己已经知道的事情。',
     },
     PLAY: {
         color: '#ec4899',
         description: 'The child is being playful or imaginative.',
+        descriptionZh: '孩子在用玩笑或想象力来回应。',
     },
     SOCIAL: {
         color: '#f97316',
         description: 'The child is asking about the assistant itself.',
+        descriptionZh: '孩子在问助手本身，而不是在问这个话题。',
     },
     SOCIAL_ACKNOWLEDGMENT: {
         color: '#64748b',
         description: 'The child is reacting briefly to what the assistant said.',
+        descriptionZh: '孩子只是在简短回应助手刚才说的话。',
     },
 };
 
@@ -91,88 +104,131 @@ const RESPONSE_METADATA = {
     ACTION: {
         color: '#10b981',
         description: 'The assistant is following the child’s request or changing direction as asked.',
+        descriptionZh: '助手正在按孩子的要求行动，或按要求换个方向继续。',
     },
     AVOIDANCE: {
         color: '#6b7280',
         description: 'The assistant is honoring the child’s wish to stop and offering a low-pressure next step.',
+        descriptionZh: '助手正在尊重孩子想暂停的话，并给一个没有压力的下一步选项。',
     },
     BOUNDARY: {
         color: '#ef4444',
         description: 'The assistant is redirecting risky curiosity into a safer way to explore.',
+        descriptionZh: '助手正在把有风险的好奇心转成更安全的探索方式。',
     },
     CLARIFYING_CONSTRAINT: {
         color: '#f59e0b',
         description: 'The assistant is validating the child’s limitation and keeping the topic going imaginatively.',
+        descriptionZh: '助手正在接住孩子现实中的限制，同时用想象继续这个话题。',
     },
     CLARIFYING_IDK: {
         color: '#f59e0b',
         description: 'The assistant is giving a clue instead of repeating the same question.',
+        descriptionZh: '助手正在给一个线索，而不是把同一个问题再问一遍。',
     },
     CLARIFYING_WRONG: {
         color: '#f59e0b',
         description: 'The assistant is gently correcting the answer and inviting the child to look or think again.',
+        descriptionZh: '助手正在温和地纠正答案，并邀请孩子再看看或再想想。',
     },
     CORRECT_ANSWER: {
         color: '#16a34a',
         description: 'The assistant is confirming the answer and rewarding it with one related wow fact.',
+        descriptionZh: '助手正在确认孩子答对了，并送上一个相关的小惊喜事实。',
     },
     CURIOSITY: {
         color: '#8b5cf6',
         description: 'The assistant is answering the child’s question, adding one interesting detail, and ending with an easy follow-up.',
+        descriptionZh: '助手正在回答孩子的问题，补充一个有趣细节，并用一个容易接住的追问收尾。',
     },
     EMOTIONAL: {
         color: '#14b8a6',
         description: 'The assistant is responding to the child’s feeling first, then offering a gentle next step.',
+        descriptionZh: '助手正在先回应孩子的感受，再给一个温和的下一步。',
     },
     GIVE_ANSWER_IDK: {
         color: '#f59e0b',
         description: 'The assistant is stopping the hinting and giving the answer directly.',
+        descriptionZh: '助手不再继续提示，而是直接把答案告诉孩子。',
     },
     GUIDE_EXIT: {
         color: '#ef4444',
         description: 'The assistant is ending the guided discovery gracefully because it is not working right now.',
+        descriptionZh: '助手正在礼貌结束这段引导，因为现在这样聊下去效果不太好。',
     },
     GUIDE_HINT: {
         color: '#f59e0b',
         description: 'The assistant is giving a stronger, more concrete hint after the child has struggled a few times.',
+        descriptionZh: '助手正在给一个更具体、更明显的提示，因为孩子已经卡住了几次。',
     },
     GUIDE_RESPONSE: {
         color: '#6366f1',
         description: 'The assistant is giving the next guided-discovery step based on how the child is progressing.',
+        descriptionZh: '助手正在根据孩子目前的进展，给出下一步引导。',
     },
     GUIDE_SUCCESS: {
         color: '#16a34a',
         description: 'The assistant is celebrating that the child reached the bigger idea.',
+        descriptionZh: '助手正在庆祝孩子已经理解到那个更大的想法。',
     },
     INFORMATIVE: {
         color: '#3b82f6',
         description: 'The assistant is celebrating what the child volunteered without interrupting it with correction.',
+        descriptionZh: '助手正在庆祝孩子主动分享的内容，不急着打断或纠正。',
     },
     INTRODUCTION: {
         color: '#0ea5e9',
         description: 'The assistant is opening the conversation by naming the object, making it feel familiar, and sharing a fun fact.',
+        descriptionZh: '助手正在用认识物体、拉近感觉和一个有趣事实来开启对话。',
     },
     PLAY: {
         color: '#ec4899',
         description: 'The assistant is joining the child’s imagination and turning it into playful exploration.',
+        descriptionZh: '助手正在顺着孩子的想象，一起把对话变成好玩的探索。',
     },
     QUESTION: {
         color: '#6366f1',
         description: 'The assistant is starting a discovery question to guide the child toward a bigger idea.',
+        descriptionZh: '助手正在用一个发现式问题，引导孩子走向更大的核心想法。',
     },
     SOCIAL: {
         color: '#f97316',
         description: 'The assistant is answering a question about itself briefly and reconnecting through the child’s experience.',
+        descriptionZh: '助手正在简短回答关于自己的问题，再把重点连回孩子的真实体验。',
     },
     SOCIAL_ACKNOWLEDGMENT: {
         color: '#64748b',
         description: 'The assistant gives a brief warm reaction without repeating the same fact.',
+        descriptionZh: '助手会先给一个简短温暖的回应，不重复刚才的事实。',
     },
     TOPIC_SWITCH: {
         color: '#0ea5e9',
         description: 'The assistant is celebrating the new object before moving the conversation there.',
+        descriptionZh: '助手正在先庆祝新的物体，再把对话切换过去。',
     },
 };
+
+function setBilingualDescription(element, english, chinese) {
+    if (!element) {
+        return;
+    }
+
+    if (!english && !chinese) {
+        element.textContent = '-';
+        return;
+    }
+
+    element.replaceChildren();
+
+    const englishLine = document.createElement('div');
+    englishLine.textContent = english;
+    element.appendChild(englishLine);
+
+    const chineseLine = document.createElement('div');
+    chineseLine.textContent = chinese;
+    chineseLine.style.marginTop = '2px';
+    element.appendChild(chineseLine);
+}
 
 // DOM elements
 const messagesContainer = document.getElementById('messages');
@@ -812,9 +868,21 @@ function updateDebugPanel() {
         intentElement.style.color = intentMeta ? intentMeta.color : '#6b7280';
 
         if (intentDescriptionElement) {
-            intentDescriptionElement.textContent = intentMeta
-                ? intentMeta.description
-                : (currentIntentType ? 'The system detected a conversation pattern.' : '-');
+            if (intentMeta) {
+                setBilingualDescription(
+                    intentDescriptionElement,
+                    intentMeta.description,
+                    intentMeta.descriptionZh,
+                );
+            } else if (currentIntentType) {
+                setBilingualDescription(
+                    intentDescriptionElement,
+                    'The system detected a conversation pattern.',
+                    '系统识别到一种对话模式。',
+                );
+            } else {
+                intentDescriptionElement.textContent = '-';
+            }
         }
     }
 
@@ -829,9 +897,21 @@ function updateDebugPanel() {
         responseTypeEl.style.color = responseMeta ? responseMeta.color : '#0f172a';
 
         if (responseDescriptionEl) {
-            responseDescriptionEl.textContent = responseMeta
-                ? responseMeta.description
-                : (currentResponseType ? 'The assistant is using a conversation strategy for this moment.' : '-');
+            if (responseMeta) {
+                setBilingualDescription(
+                    responseDescriptionEl,
+                    responseMeta.description,
+                    responseMeta.descriptionZh,
+                );
+            } else if (currentResponseType) {
+                setBilingualDescription(
+                    responseDescriptionEl,
+                    'The assistant is using a conversation strategy for this moment.',
+                    '助手正在使用当前这一轮对话所需的回应策略。',
+                );
+            } else {
+                responseDescriptionEl.textContent = '-';
+            }
         }
     }
 }
