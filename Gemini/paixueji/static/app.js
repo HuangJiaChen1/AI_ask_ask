@@ -11,6 +11,7 @@
 
 // Automatically use the same host as the frontend (works for localhost, server, and ngrok)
 const API_BASE = `${window.location.protocol}//${window.location.host}/api`;
+const RATE_LIMIT_FALLBACK_MESSAGE = 'The model is busy right now, so there was no answer to show. Please try again in a moment.';
 
 // Global state
 let sessionId = null;
@@ -125,6 +126,21 @@ function addMessage(role, initialText = '', isCorrect = null) {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
     return bubble;
+}
+
+function addAssistantErrorMessage(message) {
+    const bubble = addMessage('assistant', message);
+    bubble.classList.add('assistant-error');
+    return bubble;
+}
+
+function isRateLimitedErrorPayload(data) {
+    return data && (data.code === 429 || data.error_type === 'rate_limited');
+}
+
+function renderRateLimitError(data = null) {
+    currentMessageDiv = null;
+    addAssistantErrorMessage(data?.user_message || RATE_LIMIT_FALLBACK_MESSAGE);
 }
 
 /**
@@ -274,6 +290,10 @@ async function startConversation() {
         }
 
         console.error('[ERROR] Failed to start conversation:', error);
+        if (String(error.message || '').includes('HTTP 429')) {
+            renderRateLimitError();
+            return;
+        }
         messagesContainer.innerHTML = '';
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
@@ -431,6 +451,10 @@ async function sendMessage() {
         }
 
         console.error('[ERROR] Failed to send message:', error);
+        if (String(error.message || '').includes('HTTP 429')) {
+            renderRateLimitError();
+            return;
+        }
         const errorDiv = document.createElement('div');
         errorDiv.className = 'error-message';
         errorDiv.textContent = `Error: ${error.message}`;
@@ -475,6 +499,10 @@ async function handleSSEEvent(eventType, data) {
         case 'error':
             // Error occurred during streaming
             console.error('[ERROR] Stream error:', data);
+            if (isRateLimitedErrorPayload(data)) {
+                renderRateLimitError(data);
+                break;
+            }
             if (currentMessageDiv) {
                 currentMessageDiv.textContent = '⚠ Error: ' + (data.message || 'An error occurred');
                 currentMessageDiv.style.color = '#d32f2f';

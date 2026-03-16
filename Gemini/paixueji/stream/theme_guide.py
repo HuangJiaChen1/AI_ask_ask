@@ -10,6 +10,7 @@ from google import genai
 from google.genai.types import GenerateContentConfig
 from loguru import logger
 from schema import TokenUsage
+from .errors import raise_if_rate_limited
 from .utils import convert_messages_to_gemini_format
 import paixueji_prompts
 
@@ -245,4 +246,5 @@ CRITICAL RULES:
 
         except Exception as e:
             logger.error(f"[Driver] Generation failed: {e}")
+            raise_if_rate_limited(e)
             yield ("That sounds interesting! Tell me more.", None, "Fallback")

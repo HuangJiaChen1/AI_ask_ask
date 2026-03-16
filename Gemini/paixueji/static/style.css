@@ -234,6 +234,12 @@ body {
     border-bottom-left-radius: 4px;
 }
 
+.message.assistant .message-bubble.assistant-error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
 .message.user .message-bubble {
     background: #10b981;
     color: white;

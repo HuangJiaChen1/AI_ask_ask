@@ -23,6 +23,7 @@ from schema import StreamChunk
 import paixueji_prompts
 import time
 from graph_lookup import lookup_top_available_concepts
+from stream.errors import build_sse_error_payload
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
@@ -420,7 +421,7 @@ def start_conversation():
             print(f"[ERROR] Error in start_conversation: {e}")
             import traceback
             traceback.print_exc()
-            yield sse_event("error", {"message": str(e)})
+            yield sse_event("error", build_sse_error_payload(e))
 
     return Response(generate(), mimetype='text/event-stream')
 
@@ -631,7 +632,7 @@ RULES:
             print(f"[ERROR] Error in start_guide_test: {e}")
             import traceback
             traceback.print_exc()
-            yield sse_event("error", {"message": str(e)})
+            yield sse_event("error", build_sse_error_payload(e))
 
     return Response(generate(), mimetype='text/event-stream')
 
@@ -800,7 +801,7 @@ def continue_conversation():
             print(f"[ERROR] Error in continue_conversation: {e}")
             import traceback
             traceback.print_exc()
-            yield sse_event("error", {"message": str(e)})
+            yield sse_event("error", build_sse_error_payload(e))
 
     return Response(generate(), mimetype='text/event-stream')
 

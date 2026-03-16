@@ -114,3 +114,50 @@ def test_continue_invalid_session(client):
     }
     response = client.post('/api/continue', json=payload)
     assert response.status_code == 404
+
+
+def test_start_conversation_surfaces_rate_limit_error(client, mock_gemini_client):
+    """A 429 from Gemini should be surfaced as a structured SSE error."""
+    mock_gemini_client.aio.models.generate_content_stream.side_effect = RuntimeError(
+        "429 RESOURCE_EXHAUSTED"
+    )
+
+    response = client.post('/api/start', json={"age": 6, "object_name": "apple"})
+    assert response.status_code == 200
+
+    events = parse_sse(response.data)
+    error_events = [e for e in events if e["event"] == "error"]
+
+    assert error_events, "Expected an SSE error event for rate limiting"
+    assert not any(e["event"] == "complete" for e in events)
+
+    error_data = error_events[0]["data"]
+    assert error_data["code"] == 429
+    assert error_data["error_type"] == "rate_limited"
+    assert "try again" in error_data["user_message"].lower()
+
+
+def test_continue_conversation_surfaces_rate_limit_error(client, mock_gemini_client):
+    """A 429 during continue should be surfaced instead of a silent completion."""
+    start_resp = client.post('/api/start', json={"age": 6, "object_name": "apple"})
+    session_id = parse_sse(start_resp.data)[0]["data"]["session_id"]
+
+    mock_gemini_client.aio.models.generate_content_stream.side_effect = RuntimeError(
+        "429 RESOURCE_EXHAUSTED"
+    )
+
+    response = client.post(
+        '/api/continue',
+        json={"session_id": session_id, "child_input": "It is red"}
+    )
+    assert response.status_code == 200
+
+    events = parse_sse(response.data)
+    error_events = [e for e in events if e["event"] == "error"]
+
+    assert error_events, "Expected an SSE error event for rate limiting"
+    assert not any(e["event"] == "complete" for e in events)
+
+    error_data = error_events[0]["data"]
+    assert error_data["code"] == 429
+    assert error_data["error_type"] == "rate_limited"
