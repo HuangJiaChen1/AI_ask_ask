@@ -17,6 +17,13 @@ def test_debug_panel_has_intent_description_element():
     )
 
 
+def test_debug_panel_has_response_description_element():
+    html = _read(INDEX_HTML)
+    assert 'id="debugResponseDescription"' in html, (
+        "debug response description element missing from index.html"
+    )
+
+
 def test_app_js_defines_plain_english_intent_descriptions():
     js = _read(APP_JS)
     assert 'SOCIAL_ACKNOWLEDGMENT' in js, "expected SOCIAL_ACKNOWLEDGMENT mapping in app.js"
@@ -26,4 +33,16 @@ def test_app_js_defines_plain_english_intent_descriptions():
     assert 'CURIOSITY' in js, "expected CURIOSITY mapping in app.js"
     assert 'The child is asking to learn more about the topic.' in js, (
         "plain-English CURIOSITY description missing from app.js"
+    )
+
+
+def test_app_js_defines_plain_english_response_descriptions():
+    js = _read(APP_JS)
+    assert 'SOCIAL_ACKNOWLEDGMENT' in js, "expected social acknowledgment response mapping in app.js"
+    assert 'The assistant gives a brief warm reaction without repeating the same fact.' in js, (
+        "plain-English social acknowledgment response description missing from app.js"
+    )
+    assert 'QUESTION' in js, "expected guide question response mapping in app.js"
+    assert 'The assistant is starting a discovery question to guide the child toward a bigger idea.' in js, (
+        "plain-English guide question response description missing from app.js"
     )
