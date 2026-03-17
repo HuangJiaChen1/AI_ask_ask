@@ -1,7 +1,8 @@
 """
 Verification tests for 4 behavioral fixes applied to paixueji.
 
-Fix 1: INTRODUCTION_PROMPT — 3-beat structure (RECOGNITION, EMOTIONAL HOOK, SIMPLE QUESTION)
+Fix 1: INTRODUCTION_PROMPT — 4-beat structure (EMOTIONAL OPENING, OBJECT CONFIRMATION,
+       FEATURE DESCRIPTION, ENGAGEMENT HOOK) — ends with life-experience question, never knowledge test
 Fix 2: CORRECT_ANSWER_INTENT_PROMPT BEAT 3 — yes/no preference for ages 3-5
 Fix 3: FOLLOWUP_QUESTION_PROMPT rule 6 — "Did you know..." banned; "You know what..." approved
 Fix 4: IDK Escalation — consecutive_idk_count field + node_clarifying_idk branching
@@ -11,33 +12,39 @@ from unittest.mock import MagicMock, AsyncMock, patch
 
 
 # ===========================================================================
-# Fix 1 — INTRODUCTION_PROMPT beat structure
+# Fix 1 — INTRODUCTION_PROMPT 4-beat structure
 # ===========================================================================
 
 class TestIntroductionPromptBeatStructure:
-    """Verify that INTRODUCTION_PROMPT contains the new 3-beat structure."""
+    """Verify that INTRODUCTION_PROMPT contains the new 4-beat structure."""
 
     @pytest.fixture(autouse=True)
     def load_prompt(self):
         import paixueji_prompts
         self.prompt = paixueji_prompts.INTRODUCTION_PROMPT
 
-    def test_beat1_recognition_heading_present(self):
-        """INTRODUCTION_PROMPT must contain 'BEAT 1 — RECOGNITION'."""
-        assert "BEAT 1 — RECOGNITION" in self.prompt, (
-            "INTRODUCTION_PROMPT must have 'BEAT 1 — RECOGNITION' heading"
+    def test_beat1_emotional_opening_heading_present(self):
+        """INTRODUCTION_PROMPT must contain 'BEAT 1 — EMOTIONAL OPENING'."""
+        assert "BEAT 1 — EMOTIONAL OPENING" in self.prompt, (
+            "INTRODUCTION_PROMPT must have 'BEAT 1 — EMOTIONAL OPENING' heading"
         )
 
-    def test_beat2_emotional_hook_heading_present(self):
-        """INTRODUCTION_PROMPT must contain 'BEAT 2 — EMOTIONAL HOOK'."""
-        assert "BEAT 2 — EMOTIONAL HOOK" in self.prompt, (
-            "INTRODUCTION_PROMPT must have 'BEAT 2 — EMOTIONAL HOOK' heading"
+    def test_beat2_object_confirmation_heading_present(self):
+        """INTRODUCTION_PROMPT must contain 'BEAT 2 — OBJECT CONFIRMATION'."""
+        assert "BEAT 2 — OBJECT CONFIRMATION" in self.prompt, (
+            "INTRODUCTION_PROMPT must have 'BEAT 2 — OBJECT CONFIRMATION' heading"
         )
 
-    def test_beat3_simple_question_heading_present(self):
-        """INTRODUCTION_PROMPT must contain 'BEAT 3 — SIMPLE QUESTION'."""
-        assert "BEAT 3 — SIMPLE QUESTION" in self.prompt, (
-            "INTRODUCTION_PROMPT must have 'BEAT 3 — SIMPLE QUESTION' heading"
+    def test_beat3_feature_description_heading_present(self):
+        """INTRODUCTION_PROMPT must contain 'BEAT 3 — FEATURE DESCRIPTION'."""
+        assert "BEAT 3 — FEATURE DESCRIPTION" in self.prompt, (
+            "INTRODUCTION_PROMPT must have 'BEAT 3 — FEATURE DESCRIPTION' heading"
+        )
+
+    def test_beat4_engagement_hook_heading_present(self):
+        """INTRODUCTION_PROMPT must contain 'BEAT 4 — ENGAGEMENT HOOK'."""
+        assert "BEAT 4 — ENGAGEMENT HOOK" in self.prompt, (
+            "INTRODUCTION_PROMPT must have 'BEAT 4 — ENGAGEMENT HOOK' heading"
         )
 
     def test_old_text_greet_child_warmly_removed(self):
@@ -52,10 +59,10 @@ class TestIntroductionPromptBeatStructure:
             "Old instruction 'Introduce the object with excitement' must be removed from INTRODUCTION_PROMPT"
         )
 
-    def test_beat3_yes_no_or_simple_choice_for_ages_3_5(self):
-        """BEAT 3 must specify 'YES/NO or simple-choice only' for ages 3-5."""
-        assert "YES/NO or simple-choice only" in self.prompt, (
-            "INTRODUCTION_PROMPT BEAT 3 must say 'YES/NO or simple-choice only' for ages 3-5"
+    def test_engagement_hook_forbids_knowledge_testing(self):
+        """BEAT 4 section must explicitly forbid knowledge-testing questions."""
+        assert "FORBIDDEN" in self.prompt and "knowledge" in self.prompt.lower(), (
+            "INTRODUCTION_PROMPT must explicitly forbid knowledge-testing questions in the hook"
         )
 
     def test_do_not_open_with_generic_instruction_present(self):
@@ -64,16 +71,17 @@ class TestIntroductionPromptBeatStructure:
             "INTRODUCTION_PROMPT must contain 'Do NOT open with a generic' instruction"
         )
 
-    def test_beat_ordering_recognition_before_hook_before_question(self):
-        """BEAT 1 must appear before BEAT 2, which must appear before BEAT 3."""
-        pos1 = self.prompt.find("BEAT 1 — RECOGNITION")
-        pos2 = self.prompt.find("BEAT 2 — EMOTIONAL HOOK")
-        pos3 = self.prompt.find("BEAT 3 — SIMPLE QUESTION")
-        assert pos1 != -1 and pos2 != -1 and pos3 != -1, (
-            "All three BEAT headings must be present"
+    def test_beat_ordering_all_four_beats_in_sequence(self):
+        """All 4 BEATs must be present and appear in order 1→2→3→4."""
+        pos1 = self.prompt.find("BEAT 1 — EMOTIONAL OPENING")
+        pos2 = self.prompt.find("BEAT 2 — OBJECT CONFIRMATION")
+        pos3 = self.prompt.find("BEAT 3 — FEATURE DESCRIPTION")
+        pos4 = self.prompt.find("BEAT 4 — ENGAGEMENT HOOK")
+        assert pos1 != -1 and pos2 != -1 and pos3 != -1 and pos4 != -1, (
+            "All four BEAT headings must be present"
         )
-        assert pos1 < pos2 < pos3, (
-            f"BEATs must appear in order 1→2→3 (positions: {pos1}, {pos2}, {pos3})"
+        assert pos1 < pos2 < pos3 < pos4, (
+            f"BEATs must appear in order 1→2→3→4 (positions: {pos1}, {pos2}, {pos3}, {pos4})"
         )
 
 

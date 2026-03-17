@@ -130,24 +130,48 @@ CRITICAL RULES:
 # 4. SPECIALIZED PROMPTS (MONOLITHIC)
 # ============================================================================
 
-INTRODUCTION_PROMPT = """You're starting a conversation about: {object_name}
-BACKGROUND CONTEXT (use as knowledge — do NOT ask abstract concept questions about this):
+INTRODUCTION_PROMPT = """You are starting a conversation with a child about: {object_name}
+
+BACKGROUND CONTEXT (use as knowledge only — do NOT ask abstract concept questions about this):
 {category_prompt}
 AGE GUIDANCE: {age_prompt}
 {grounded_facts_section}
-TASK — 3 BEATS (one sentence each):
+TASK — Write ONE short greeting (3–4 sentences max) using this formula:
 
-BEAT 1 — RECOGNITION: Name what the child found — make it feel like a discovery moment.
-  "Oh, you found an apple!" / "Wow, that's an apple!" / "Look at that — an apple!"
-  Do NOT open with a generic "Hey there!" — the object must come first.
+STRUCTURE: Emotional Opening → Object Confirmation → Feature Description (optional) → Engagement Hook
 
-BEAT 2 — EMOTIONAL HOOK (connect to child's world or senses):
-  Reference something they already know: taste, color, texture, sound, or a playful feeling.
-  "Apples are SO crunchy and sweet!" / "I love how shiny and red they are!"
-  Do NOT share a fact here — this beat is about emotional connection, not information.
+BEAT 1 — EMOTIONAL OPENING
+  Lead with a warm, excited exclamation that matches the child's energy.
+  Examples: "Wow!" / "Oh my!" / "Look at that!"
+  Do NOT open with a generic "Hey there!" — jump straight into the excitement.
 
-BEAT 3 — FUN FACT
-  Based on the grounded fun facts, share a fun fact here
+BEAT 2 — OBJECT CONFIRMATION
+  Name the object clearly so the child feels seen and understood.
+  Examples: "You found some really beautiful flowers!" / "I see a little toy dog!"
+
+BEAT 3 — FEATURE DESCRIPTION (OPTIONAL)
+  Add ONE vivid sensory or visual detail the child can relate to (see, touch, feel).
+  Use the VERIFIED FACTS above (if provided) to inspire natural-sounding details.
+  Do NOT present it as a "did you know" fact — weave it in naturally.
+  Examples: "It looks so soft and cuddly, with its little tongue sticking out!"
+
+BEAT 4 — ENGAGEMENT HOOK
+  End with exactly ONE question. The question MUST be about the child's emotional
+  experience, sharing motivation, or personal connection to the object.
+  ✓ ALLOWED — questions about feelings, ownership, preference, or life experience:
+    "Did someone special give it to you?" / "Is this your favorite toy?" / "Do you love dinosaurs?"
+  ✗ FORBIDDEN — any knowledge-testing question of any kind:
+    "Do you know what color it is?" / "Can you tell me what it's called?" / "How many legs does it have?"
+
+EXAMPLE SCRIPTS:
+Scene: Indoor | Object: Yellow flower (narcissus) | Age: 3
+→ "Wow! You found some really beautiful flowers! They're called daffodils. Did your mom give them to you?"
+
+Scene: Bedroom | Object: Toy dog | Age: 4
+→ "I see a little toy dog! It looks so cute and soft — its tiny tongue is even sticking out! Is this your favorite toy?"
+
+Scene: Park | Object: T-rex model | Age: 6
+→ "Whoa, it's a T-Rex! It looks so powerful and fierce. Do you love dinosaurs?"
 """
 
 FUN_FACT_GROUNDING_PROMPT = """Research "{object_name}" for a children's education app (child age: {age}).

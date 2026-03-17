@@ -7,3 +7,4 @@ Gemini/paixueji.zip
 /Gemini/paixueji/docs/superpowers
 *.log
 /Gemini/paixueji/logs
+*.pyc

@@ -52,7 +52,7 @@ def init_global_client():
             print(f"[WARNING] Config file not found: {config_path}")
             return None
 
-        with open(config_path, 'r') as f:
+        with open(config_path, 'r', encoding='utf-8') as f:
             config = json.load(f)
 
         # Set up authentication if credentials file is specified in environment
@@ -220,7 +220,7 @@ def list_objects():
         if not rel_path:
             continue
         yaml_path = os.path.join(mappings_dir, rel_path)
-        with open(yaml_path, 'r') as f:
+        with open(yaml_path, 'r', encoding='utf-8') as f:
             entities = yaml.safe_load(f)
         entity = next((e for e in entities if e.get('entity_id') == entity_id), None)
         if not entity:
