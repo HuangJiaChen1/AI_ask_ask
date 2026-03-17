@@ -247,18 +247,18 @@ class TestRoutingBelowThreshold:
 
 
 # ---------------------------------------------------------------------------
-# Test 3 — threshold triggers classify_theme → start_guide
+# Test 3 — threshold triggers classify_theme → chat_complete
 # ---------------------------------------------------------------------------
 
 class TestThresholdTriggersClassifyTheme:
     """At correct_answer_count=3, the 4th correct answer must route to classify_theme."""
 
     @pytest.mark.asyncio
-    async def test_count_3_triggers_guide_phase_active(self):
+    async def test_count_3_triggers_chat_complete_without_guide_mode(self):
         """
         With count=3 and intent=CORRECT_ANSWER (3+1=4 >= GUIDE_MODE_THRESHOLD):
         - assistant.correct_answer_count must become 4
-        - assistant.guide_phase must become 'active'
+        - assistant.guide_phase must remain inactive
         - assistant.ibpyp_theme_name must be set (non-empty)
         """
         assistant = PaixuejiAssistant()
@@ -273,15 +273,36 @@ class TestThresholdTriggersClassifyTheme:
             f"Expected count=4, got {assistant.correct_answer_count}"
         )
 
-        # Guide phase must be active (set by node_start_guide → enter_guide_mode())
+        # Chat phase should complete without entering guide mode.
         guide_phase = final_state.get("guide_phase") or assistant.guide_phase
-        assert guide_phase == "active", (
-            f"Expected guide_phase='active', got: {guide_phase}"
-        )
+        assert guide_phase != "active"
 
         # Theme name must have been set (mock returns "How the World Works")
         assert assistant.ibpyp_theme_name is not None
         assert len(assistant.ibpyp_theme_name) > 0
+
+    @pytest.mark.asyncio
+    async def test_count_3_emits_theme_fields_in_completion_chunks(self):
+        """
+        The threshold turn should classify the theme, then emit chat completion
+        chunks that include the classified theme metadata.
+        """
+        assistant = PaixuejiAssistant()
+        assistant.correct_answer_count = 3
+
+        captured_chunks = []
+
+        async def _callback(chunk):
+            captured_chunks.append(chunk)
+
+        state = _base_state(assistant, correct_answer_count=3)
+        state["stream_callback"] = _callback
+
+        await paixueji_graph.ainvoke(state)
+
+        assert len(captured_chunks) >= 2
+        assert any(chunk.chat_phase_complete for chunk in captured_chunks)
+        assert any(chunk.ibpyp_theme_name for chunk in captured_chunks)
 
     @pytest.mark.asyncio
     async def test_count_3_sets_theme_fields(self):

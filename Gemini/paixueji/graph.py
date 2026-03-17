@@ -1277,9 +1277,10 @@ async def node_finalize(state: PaixuejiState) -> dict:
         state["nodes_executed"] = merged
         assistant._router_traces = []
 
-    # Theme should stay unset during chat; only expose it once guide mode starts.
+    # Theme should stay unset during ordinary chat, but once classification has
+    # happened we expose it even if guide mode is not entered.
     guide_phase = state.get("guide_phase") or state["assistant"].guide_phase
-    include_theme = bool(guide_phase)
+    include_theme = bool(guide_phase or state["assistant"].ibpyp_theme_name)
 
     # Send final chunk
     final_chunk = StreamChunk(
@@ -1374,14 +1375,13 @@ async def node_classify_theme(state: PaixuejiState) -> dict:
 @trace_node
 async def node_chat_complete(state: PaixuejiState) -> dict:
     """
-    4th correct answer: acknowledge and signal that the chat phase is complete.
-    Template-based — no LLM call. Increments correct_answer_count and sets
-    chat_phase_complete=True in the outgoing chunk to trigger the frontend modal.
+    Chat phase completion: acknowledge and signal that the chat phase is complete.
+    Template-based — no LLM call. Assumes the threshold turn already updated the
+    correct-answer count and sets chat_phase_complete=True for the frontend modal.
     """
     logger.info(f"[{state['session_id']}] Node: Chat Complete")
 
     assistant = state["assistant"]
-    assistant.increment_correct_answers()
 
     celebration = (
         "Yes, that's right! Wonderful work — you've been such a great explorer today! 🎉 "
@@ -1402,6 +1402,9 @@ async def node_chat_complete(state: PaixuejiState) -> dict:
             request_id=state["request_id"],
             response_type="correct_answer",
             correct_answer_count=assistant.correct_answer_count,
+            key_concept=assistant.key_concept or None,
+            ibpyp_theme_name=assistant.ibpyp_theme_name or None,
+            theme_classification_reason=assistant.ibpyp_theme_reason or None,
             chat_phase_complete=True,
         )
         await callback(chunk)
@@ -1493,7 +1496,7 @@ def build_paixueji_graph():
         # Intercept the Nth correct answer to run theme classification
         if (intent == "correct_answer" and
                 state["assistant"].correct_answer_count + 1 >= GUIDE_MODE_THRESHOLD):
-            return "chat_complete"
+            return "classify_theme"
         # Intercept repeated IDK — route to dedicated answer-reveal node
         if intent == "clarifying_idk" and state["assistant"].consecutive_idk_count > 0:
             return "give_answer_idk"
@@ -1517,6 +1520,7 @@ def build_paixueji_graph():
             "action": "action",
             "social": "social",
             "social_acknowledgment": "social_acknowledgment",
+            "classify_theme": "classify_theme",
             "chat_complete": "chat_complete",
         }
     )
@@ -1532,6 +1536,7 @@ def build_paixueji_graph():
         workflow.add_edge(intent_node, "finalize")
 
     # Guide edges
+    workflow.add_edge("classify_theme", "chat_complete")
     workflow.add_edge("start_guide", "finalize")  # First turn — present bridge question
 
     @trace_router(["guide_strategy", "guide_status"])
