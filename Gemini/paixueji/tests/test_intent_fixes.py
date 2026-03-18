@@ -956,7 +956,7 @@ class TestClarifyingWrongBeat3RealLLM:
             object_name="banana",
             age=6,
             age_prompt="Use simple words and short sentences.",
-            last_model_question=last_question,
+            last_model_response=last_question,
             config=config,
             client=client,
         ):
@@ -1136,7 +1136,7 @@ class TestBoundaryCuriosityClosingQuestionRealLLM:
             object_name=object_name,
             age=age,
             age_prompt="Use simple words and short sentences.",
-            last_model_question=messages[0]["content"],
+            last_model_response=messages[0]["content"],
             config=config,
             client=client,
         ):

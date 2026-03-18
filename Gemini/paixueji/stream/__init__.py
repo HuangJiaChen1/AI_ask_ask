@@ -21,7 +21,7 @@ from .utils import (
     clean_messages_for_api,
     prepare_messages_for_streaming,
     convert_messages_to_gemini_format,
-    extract_previous_question,
+    extract_previous_response,
     SLOW_LLM_CALL_THRESHOLD
 )
 
@@ -54,7 +54,7 @@ __all__ = [
     'clean_messages_for_api',
     'prepare_messages_for_streaming',
     'convert_messages_to_gemini_format',
-    'extract_previous_question',
+    'extract_previous_response',
     'SLOW_LLM_CALL_THRESHOLD',
 
     # Response generators

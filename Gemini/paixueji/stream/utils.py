@@ -111,12 +111,15 @@ def convert_messages_to_gemini_format(messages: list[dict]) -> tuple[str, list[d
     return system_instruction.strip(), contents
 
 
-def extract_previous_question(messages: list[dict]) -> str:
+def extract_previous_response(messages: list[dict]) -> str:
     """
-    Extract the last question asked by the assistant from conversation history.
+    Extract the last full response by the assistant from conversation history.
 
     This looks for the most recent assistant message and returns it.
-    Used to provide context when explaining answers to "I don't know" responses.
+    The assistant turn contains the full combined response text (explanation,
+    wow detail, and closing question), not just the question alone.
+    Used to provide rich context when the child reacts to any part of the
+    previous turn (fun fact, explanation, question, etc.).
 
     Args:
         messages: Conversation history (list of role/content dicts)
@@ -128,8 +131,8 @@ def extract_previous_question(messages: list[dict]) -> str:
     for msg in reversed(messages):
         if msg.get("role") == "assistant":
             content = msg.get("content", "")
-            # Return the content (which contains the question)
+            # Return the full content (response + question combined)
             return content
 
     # Fallback if no assistant message found (shouldn't happen in practice)
-    return "the previous question"
+    return "the previous response"

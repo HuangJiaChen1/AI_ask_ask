@@ -467,7 +467,7 @@ CURIOSITY_INTENT_PROMPT = """\
 CONTEXT:
 - Child (age {age}) asked: "{child_answer}"
 - You're exploring: {object_name}
-- You last asked: "{last_model_question}"
+- Your last response: "{last_model_response}"
 
 AGE GUIDANCE:
 {age_prompt}
@@ -511,7 +511,7 @@ CLARIFYING_IDK_INTENT_PROMPT = """\
 CONTEXT:
 - Child (age {age}) responded: "{child_answer}"
 - You're exploring: {object_name}
-- You last asked: "{last_model_question}"
+- Your last response: "{last_model_response}"
 
 AGE GUIDANCE:
 {age_prompt}
@@ -533,7 +533,7 @@ BEAT 2 — SCAFFOLD CLUE: One concrete, sensory clue that opens the answer — N
   ANTI-PATTERN: Same question, different words. NEVER.
 
   CRITICAL CONSTRAINT: Your scaffold clue MUST stay within the SAME sensory dimension or
-  conceptual topic as {last_model_question}.
+  conceptual topic as the question in {last_model_response}.
     - If the question was about COLOR → scaffold about color (shade, comparison, visual cue)
     - If the question was about TASTE → scaffold about taste
     - If the question was about SOUND → scaffold about sound
@@ -544,7 +544,7 @@ BEAT 3 — SHORT INVITATION (3-5 words max, NOT a full question):
   "Give it a try!" / "What do you think?" / "Take a guess!"
 
 PROHIBITIONS:
-- Do NOT rephrase "{last_model_question}" in any form — that's re-asking
+- Do NOT rephrase "{last_model_response}" in any form — that's re-asking
 - Do NOT pivot to a different sensory dimension
 
 Respond naturally (NOT JSON). 2-3 sentences max.
@@ -554,7 +554,7 @@ GIVE_ANSWER_IDK_INTENT_PROMPT = """\
 CONTEXT:
 - Child (age {age}) said "I don't know" again after already receiving a hint.
 - You're exploring: {object_name}
-- The original question was: "{last_model_question}"
+- The original question was: "{last_model_response}"
 
 AGE GUIDANCE:
 {age_prompt}
@@ -579,7 +579,7 @@ CLARIFYING_WRONG_INTENT_PROMPT = """\
 CONTEXT:
 - Child (age {age}) responded: "{child_answer}"
 - You're exploring: {object_name}
-- You last asked: "{last_model_question}"
+- Your last response: "{last_model_response}"
 
 AGE GUIDANCE:
 {age_prompt}
@@ -598,10 +598,10 @@ BEAT 2 — GENTLE CORRECTION: State the correct fact simply.
   Ages 6-8: One fact with a brief "why"
 
 BEAT 3 — RE-ENGAGEMENT INVITE: Brief, action-based (NOT a knowledge question):
-  • If {last_model_question} was about an OBSERVABLE PROPERTY (color, shape, texture, size,
+  • If {last_model_response} was about an OBSERVABLE PROPERTY (color, shape, texture, size,
     appearance, smell): use a visual/sensory invite:
       "Take a close look!" / "See if you can spot it now!" / "Look right there!"
-  • If {last_model_question} was about a PROCESS, CONCEPT, or ACTION (how something works,
+  • If {last_model_response} was about a PROCESS, CONCEPT, or ACTION (how something works,
     how it is made/harvested/used, why something happens, where something comes from):
     use a thought/imagination invite:
       "What do you think?" / "Can you imagine?" / "Think about it!"
@@ -610,7 +610,7 @@ BEAT 3 — RE-ENGAGEMENT INVITE: Brief, action-based (NOT a knowledge question):
 PROHIBITIONS:
 - Do NOT scold or make corrections feel harsh
 - Do NOT end with a knowledge question
-- Do NOT rephrase "{last_model_question}" in any form — that's re-asking
+- Do NOT rephrase "{last_model_response}" in any form — that's re-asking
 
 Respond naturally (NOT JSON). 2-3 sentences max.
 """
@@ -619,7 +619,7 @@ CLARIFYING_CONSTRAINT_INTENT_PROMPT = """\
 CONTEXT:
 - Child (age {age}) responded: "{child_answer}"
 - You're exploring: {object_name}
-- You last asked: "{last_model_question}"
+- Your last response: "{last_model_response}"
 
 AGE GUIDANCE:
 {age_prompt}
@@ -647,7 +647,7 @@ BEAT 3 — ONE OPEN QUESTION:
 PROHIBITIONS:
 - Do NOT treat the constraint as avoidance — never say "That's okay, we can talk about something else!"
 - Do NOT drift to other objects or topics — all beats must remain anchored to {object_name}
-- Do NOT rephrase "{last_model_question}" in any form — that's re-asking
+- Do NOT rephrase "{last_model_response}" in any form — that's re-asking
 
 Respond naturally (NOT JSON). 2-3 sentences max.
 """
@@ -656,7 +656,7 @@ CORRECT_ANSWER_INTENT_PROMPT = """\
 CONTEXT:
 - Child (age {age}) answered: "{child_answer}"
 - You're exploring: {object_name}
-- You last asked: "{last_model_question}"
+- Your last response: "{last_model_response}"
 
 AGE GUIDANCE:
 {age_prompt}
@@ -703,7 +703,7 @@ INFORMATIVE_INTENT_PROMPT = """\
 CONTEXT:
 - Child (age {age}) shared: "{child_answer}"
 - You're exploring: {object_name}
-- You last asked: "{last_model_question}"
+- Your last response: "{last_model_response}"
 
 AGE GUIDANCE:
 {age_prompt}
@@ -744,7 +744,7 @@ PLAY_INTENT_PROMPT = """\
 CONTEXT:
 - Child (age {age}) said: "{child_answer}"
 - You're exploring: {object_name}
-- You last asked: "{last_model_question}"
+- Your last response: "{last_model_response}"
 
 AGE GUIDANCE:
 {age_prompt}
@@ -781,7 +781,7 @@ EMOTIONAL_INTENT_PROMPT = """\
 CONTEXT:
 - Child (age {age}) expressed: "{child_answer}"
 - You're exploring: {object_name}
-- You last asked: "{last_model_question}"
+- Your last response: "{last_model_response}"
 
 AGE GUIDANCE:
 {age_prompt}
@@ -822,7 +822,7 @@ AVOIDANCE_INTENT_PROMPT = """\
 CONTEXT:
 - Child (age {age}) said: "{child_answer}"
 - You're exploring: {object_name}
-- You last asked: "{last_model_question}"
+- Your last response: "{last_model_response}"
 
 AGE GUIDANCE:
 {age_prompt}
@@ -859,7 +859,7 @@ BOUNDARY_INTENT_PROMPT = """\
 CONTEXT:
 - Child (age {age}) proposed: "{child_answer}"
 - You're exploring: {object_name}
-- You last asked: "{last_model_question}"
+- Your last response: "{last_model_response}"
 
 AGE GUIDANCE:
 {age_prompt}
@@ -902,7 +902,7 @@ ACTION_INTENT_PROMPT = """\
 CONTEXT:
 - Child (age {age}) commanded or requested: "{child_answer}"
 - You're exploring: {object_name}
-- You last asked: "{last_model_question}"
+- Your last response: "{last_model_response}"
 
 AGE GUIDANCE:
 {age_prompt}
@@ -914,7 +914,7 @@ IDENTIFY the command type and respond accordingly:
 
 TYPE A — REPEAT REQUEST ("Say that again", "Can you repeat?"):
   Re-state the key information from your last response/question in fresh words.
-  "Sure! I was asking: [re-state core of {last_model_question} in new words]"
+  "Sure! I was asking: [re-state core of {last_model_response} in new words]"
   One sentence.
 
 TYPE B — NEW ACTIVITY REQUEST ("Give me a new question", "Let's do something else"):
@@ -943,7 +943,7 @@ SOCIAL_INTENT_PROMPT = """\
 CONTEXT:
 - Child (age {age}) asked about you: "{child_answer}"
 - You're exploring: {object_name}
-- You last asked: "{last_model_question}"
+- Your last response: "{last_model_response}"
 
 AGE GUIDANCE:
 {age_prompt}
@@ -982,7 +982,7 @@ SOCIAL_ACKNOWLEDGMENT_INTENT_PROMPT = """\
 CONTEXT:
 - Child (age {age}) reacted: "{child_answer}"
 - You're exploring: {object_name}
-- You last said: "{last_model_question}"
+- Your last response: "{last_model_response}"
 
 AGE GUIDANCE:
 {age_prompt}

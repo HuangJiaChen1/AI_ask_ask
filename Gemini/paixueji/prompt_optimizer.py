@@ -313,7 +313,6 @@ def _build_input_analyzer_context(trace: TraceObject) -> dict:
     return {
         "age": state.get("age") or trace.age or 6,
         "object_name": state.get("object_name") or trace.object_name or "",
-        "last_model_question": last_model_response,
         "last_model_response": last_model_response,
         "child_answer": trace.exchange.child_response,
     }
@@ -359,8 +358,7 @@ def _call_intent_classifier(client, config: dict, ctx: dict, prompt_template: st
     """
     prompt = prompt_template.format(
         object_name=ctx.get("object_name", ""),
-        last_model_question=ctx.get("last_model_question", ""),
-        last_model_response=ctx.get("last_model_response", ctx.get("last_model_question", "")),
+        last_model_response=ctx.get("last_model_response", ""),
         child_answer=ctx.get("child_answer", ""),
         topic_selection_instructions="",
     )
@@ -404,7 +402,7 @@ def _call_input_analyzer(client, config: dict, ctx: dict, rules_block: str) -> d
         f"You are an educational AI helping a {ctx['age']}-year-old child learn.\n\n"
         f"CONTEXT:\n"
         f"- Topic: {ctx['object_name']}\n"
-        f"- Question: \"{ctx['last_model_question']}\"\n"
+        f"- Question: \"{ctx['last_model_response']}\"\n"
         f"- Answer: \"{ctx['child_answer']}\"\n\n"
         f"{rules_block}"
     )
@@ -494,7 +492,7 @@ def _call_intent_response(
             age=age,
             age_prompt=_get_age_prompt(age),
             category_prompt=state.get("level1_category", ""),
-            last_model_question=state.get("last_model_question", "the previous question"),
+            last_model_response=state.get("last_model_response", "the previous response"),
         )
     except KeyError:
         formatted = prompt_template

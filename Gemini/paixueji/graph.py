@@ -15,7 +15,7 @@ from stream import (
     classify_intent,
     generate_intent_response_stream,
     generate_topic_switch_response_stream,
-    extract_previous_question,
+    extract_previous_response,
     prepare_messages_for_streaming,
     generate_guide_hint
 )
@@ -413,7 +413,7 @@ async def node_curiosity(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        last_model_question=extract_previous_question(state["messages"]),
+        last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
     )
@@ -450,7 +450,7 @@ async def node_clarifying_idk(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        last_model_question=extract_previous_question(state["messages"]),
+        last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
     )
@@ -481,7 +481,7 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        last_model_question=extract_previous_question(state["messages"]),
+        last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
     )
@@ -525,7 +525,7 @@ async def node_clarifying_wrong(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        last_model_question=extract_previous_question(state["messages"]),
+        last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
     )
@@ -553,7 +553,7 @@ async def node_clarifying_constraint(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        last_model_question=extract_previous_question(state["messages"]),
+        last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
     )
@@ -583,7 +583,7 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        last_model_question=extract_previous_question(state["messages"]),
+        last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
     )
@@ -631,7 +631,7 @@ async def node_informative(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        last_model_question=extract_previous_question(state["messages"]),
+        last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
     )
@@ -675,7 +675,7 @@ async def node_play(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        last_model_question=extract_previous_question(state["messages"]),
+        last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
     )
@@ -703,7 +703,7 @@ async def node_emotional(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        last_model_question=extract_previous_question(state["messages"]),
+        last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
     )
@@ -750,7 +750,7 @@ async def node_avoidance(state: PaixuejiState) -> dict:
             object_name=state["object_name"],
             age=state["age"],
             age_prompt=state["age_prompt"],
-            last_model_question=extract_previous_question(state["messages"]),
+            last_model_response=extract_previous_response(state["messages"]),
             config=state["config"],
             client=state["client"],
         )
@@ -780,7 +780,7 @@ async def node_boundary(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        last_model_question=extract_previous_question(state["messages"]),
+        last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
     )
@@ -827,7 +827,7 @@ async def node_action(state: PaixuejiState) -> dict:
             object_name=state["object_name"],
             age=state["age"],
             age_prompt=state["age_prompt"],
-            last_model_question=extract_previous_question(state["messages"]),
+            last_model_response=extract_previous_response(state["messages"]),
             config=state["config"],
             client=state["client"],
         )
@@ -859,7 +859,7 @@ async def node_social(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        last_model_question=extract_previous_question(state["messages"]),
+        last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
     )
@@ -905,7 +905,7 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        last_model_question=extract_previous_question(state["messages"]),
+        last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
     )
