@@ -105,16 +105,16 @@ class TestCorrectAnswerPromptBeat3:
             "CORRECT_ANSWER_INTENT_PROMPT must not contain BEAT 3 after decoupling"
         )
 
-    def test_followup_prompt_prefers_observable_questions(self):
-        """FOLLOWUP_QUESTION_PROMPT must prefer questions the child can answer by looking."""
-        assert "PREFER" in self.followup, (
-            "FOLLOWUP_QUESTION_PROMPT must include a PREFER directive for question types"
+    def test_followup_prompt_has_sensory_tier(self):
+        """FOLLOWUP_QUESTION_PROMPT must include a SENSORY INVITE tier for observable questions."""
+        assert "SENSORY" in self.followup, (
+            "FOLLOWUP_QUESTION_PROMPT must include a SENSORY INVITE tier for observable questions"
         )
 
-    def test_followup_prompt_has_abstract_causal_forbidden(self):
-        """FOLLOWUP_QUESTION_PROMPT must forbid abstract causal questions."""
-        assert "Abstract causal" in self.followup or "abstract" in self.followup.lower(), (
-            "FOLLOWUP_QUESTION_PROMPT must call out abstract causal questions as forbidden"
+    def test_followup_prompt_has_knowledge_testing_forbidden(self):
+        """FOLLOWUP_QUESTION_PROMPT must forbid knowledge-testing questions."""
+        assert "NEVER test knowledge" in self.followup or "knowledge" in self.followup.lower(), (
+            "FOLLOWUP_QUESTION_PROMPT must prohibit knowledge-testing questions"
         )
 
     def test_beat3_old_text_open_ended_observation_question_removed(self):
@@ -138,10 +138,10 @@ class TestCorrectAnswerPromptBeat3:
             "PROHIBITIONS section must retain the 'Did you know...?' ban"
         )
 
-    def test_followup_prompt_prefers_yes_no_to_avoid_hypotheticals(self):
-        """FOLLOWUP_QUESTION_PROMPT must prefer yes-no questions (which avoids hypothetical framing)."""
-        assert "yes-no" in self.followup or "yes/no" in self.followup, (
-            "FOLLOWUP_QUESTION_PROMPT must prefer yes-no questions to steer away from hypothetical framing"
+    def test_followup_prompt_promotes_fun_imaginative_questions(self):
+        """FOLLOWUP_QUESTION_PROMPT must promote fun/silly/imaginative questions over educational ones."""
+        assert "FUN" in self.followup or "SILLY" in self.followup or "IMAGINATIVE" in self.followup, (
+            "FOLLOWUP_QUESTION_PROMPT must promote fun/silly/imaginative questions"
         )
 
 
@@ -150,75 +150,60 @@ class TestCorrectAnswerPromptBeat3:
 # ===========================================================================
 
 class TestFollowupQuestionPromptRule6:
-    """Verify rule 6 changes in FOLLOWUP_QUESTION_PROMPT."""
+    """Verify 'Did you know' prohibition and GROW/SENSORY tiering in FOLLOWUP_QUESTION_PROMPT."""
 
     @pytest.fixture(autouse=True)
     def load_prompt(self):
         import paixueji_prompts
         self.prompt = paixueji_prompts.FOLLOWUP_QUESTION_PROMPT
 
-    def _rule6_section(self):
-        """Return the text of the bridge-phrase / 'Did you know' rule (formerly rule 6)."""
-        # Find the rule that discusses bridge phrases regardless of its number
-        start = self.prompt.find("bridge phrase")
-        assert start != -1, "Bridge phrase rule must exist in FOLLOWUP_QUESTION_PROMPT"
-        # Walk back to the start of this rule's line
-        rule_start = self.prompt.rfind("\n", 0, start) + 1
-        # Find where the next numbered rule begins
-        end = len(self.prompt)
-        for candidate in [f"\n{n}. " for n in range(1, 10)]:
-            idx = self.prompt.find(candidate, rule_start + 1)
-            if idx != -1 and idx < end:
-                end = idx
-        return self.prompt[rule_start:end]
+    def _rules_section(self):
+        """Return the RULES section of the prompt."""
+        start = self.prompt.find("RULES:")
+        assert start != -1, "RULES section must exist in FOLLOWUP_QUESTION_PROMPT"
+        return self.prompt[start:]
 
-    def test_rule6_does_not_list_did_you_know_as_approved(self):
-        """Rule 6 must NOT include 'Did you know...' as an approved bridge phrase."""
-        rule6 = self._rule6_section()
-        # The phrase exists but only as a prohibition target
-        # Ensure it is mentioned in the context of a prohibition (DO NOT), not as a plain example
-        if "Did you know" in rule6:
-            # Acceptable only if explicitly preceded by a prohibition marker
-            idx = rule6.find("Did you know")
-            context = rule6[max(0, idx - 40):idx + 20]
-            assert "NOT" in context or "not" in context or "DO NOT" in context or "Don't" in context, (
-                "In rule 6, 'Did you know...' must only appear in the context of a prohibition"
+    def test_did_you_know_only_appears_in_prohibition_context(self):
+        """'Did you know' must only appear in the context of a prohibition, not as an approved phrase."""
+        if "Did you know" in self.prompt:
+            idx = self.prompt.find("Did you know")
+            context = self.prompt[max(0, idx - 40):idx + 20]
+            assert "NEVER" in context or "NOT" in context or "not" in context or "never" in context, (
+                "'Did you know' must only appear in the context of a prohibition"
             )
 
-    def test_rule6_contains_do_not_use_did_you_know_prohibition(self):
-        """Rule 6 must explicitly say 'Do NOT use \"Did you know...\"'."""
-        rule6 = self._rule6_section()
-        assert "Do NOT use" in rule6 and "Did you know" in rule6, (
-            "Rule 6 must contain an explicit 'Do NOT use \"Did you know...\"' prohibition"
+    def test_rules_contain_never_use_did_you_know_prohibition(self):
+        """RULES section must explicitly ban 'Did you know...' phrasing."""
+        rules = self._rules_section()
+        assert "NEVER" in rules and "Did you know" in rules, (
+            "RULES section must contain an explicit 'NEVER use Did you know' prohibition"
         )
 
-    def test_rule6_approves_you_know_what_as_alternative(self):
-        """Rule 6 must list 'You know what...' as an approved bridge phrase."""
-        rule6 = self._rule6_section()
-        assert "You know what" in rule6, (
-            "Rule 6 must list 'You know what...' as an approved bridge phrase"
+    def test_grow_tier_listed_as_best_approach(self):
+        """FOLLOWUP_QUESTION_PROMPT must list GROW as the primary/best question approach."""
+        assert "GROW" in self.prompt, (
+            "FOLLOWUP_QUESTION_PROMPT must list GROW as the primary question approach"
         )
 
-    def test_rule6_contains_explanation_for_did_you_know_ban(self):
-        """Rule 6 must explain WHY 'Did you know...' is banned."""
-        rule6 = self._rule6_section()
-        # Explanation should reference something about sounding like a question or confusing children
+    def test_did_you_know_ban_has_explanation(self):
+        """The 'Did you know' ban must include an explanation."""
+        idx = self.prompt.find("Did you know")
+        assert idx != -1, "'Did you know' must appear in prompt"
+        surrounding = self.prompt[max(0, idx - 10):idx + 80]
         has_reason = (
-            "sounds like a question" in rule6
-            or "confuses" in rule6
-            or "sounds like" in rule6
-            or "whether to respond" in rule6
+            "reads like" in surrounding
+            or "sounds like" in surrounding
+            or "yet another" in surrounding
+            or "confuses" in surrounding
         )
         assert has_reason, (
-            "Rule 6 must explain why 'Did you know...' is banned "
-            "(e.g. 'sounds like a question and confuses children')"
+            "The 'Did you know' ban must explain why (e.g. 'reads like yet another question')"
         )
 
-    def test_rule6_approves_and_as_bridge(self):
-        """Rule 6 must still list 'And...' as an approved bridge phrase."""
-        rule6 = self._rule6_section()
-        assert '"And..."' in rule6 or '"And...' in rule6 or "And..." in rule6, (
-            "Rule 6 must still list 'And...' as an approved bridge phrase"
+    def test_sensory_invite_tier_exists(self):
+        """FOLLOWUP_QUESTION_PROMPT must list SENSORY INVITE as a fallback tier."""
+        assert "SENSORY" in self.prompt, (
+            "FOLLOWUP_QUESTION_PROMPT must include a SENSORY INVITE fallback tier"
         )
 
 
@@ -306,7 +291,6 @@ def _build_minimal_state(assistant, messages=None):
         "object_name": "apple",
         "age": 4,
         "age_prompt": "",
-        "category_prompt": "",
         "config": {"model_name": "mock-model"},
         "client": MagicMock(),
         "messages": messages or [],

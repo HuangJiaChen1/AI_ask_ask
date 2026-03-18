@@ -122,18 +122,17 @@ class TestCorrectAnswerPromptOverhaul:
             "get_prompts() must include 'followup_question_prompt'"
         )
         followup = prompts["followup_question_prompt"]
-        # Must instruct bridge-phrase to connect back to the conversation
-        assert "bridge" in followup.lower() or "And..." in followup or "Also..." in followup, (
-            "followup_question_prompt must include bridge phrase guidance "
-            "('And...', 'Also...', etc.) to connect to the prior confirmation"
+        # Must instruct question to GROW from the last assistant message (GROW or SENSORY tier)
+        assert "GROW" in followup or "SENSORY" in followup, (
+            "followup_question_prompt must describe a GROW or SENSORY approach for follow-up questions"
         )
 
-    def test_followup_prompt_steers_away_from_hypotheticals(self):
-        """FOLLOWUP_QUESTION_PROMPT must steer toward concrete/yes-no questions (which avoids hypothetical framing)."""
+    def test_followup_prompt_steers_away_from_knowledge_testing(self):
+        """FOLLOWUP_QUESTION_PROMPT must prohibit knowledge-testing questions."""
         prompts = paixueji_prompts.get_prompts()
         followup = prompts["followup_question_prompt"]
-        assert "yes-no" in followup or "yes/no" in followup or "PREFER" in followup, (
-            "followup_question_prompt must prefer yes-no or observable questions to avoid hypothetical framing"
+        assert "NEVER test knowledge" in followup or "not test" in followup.lower() or "knowledge" in followup.lower(), (
+            "followup_question_prompt must prohibit knowledge-testing questions"
         )
 
 
@@ -957,7 +956,6 @@ class TestClarifyingWrongBeat3RealLLM:
             object_name="banana",
             age=6,
             age_prompt="Use simple words and short sentences.",
-            category_prompt="Banana: yellow fruit, grows in bunches, harvested by cutting with a knife.",
             last_model_question=last_question,
             config=config,
             client=client,
@@ -1138,10 +1136,6 @@ class TestBoundaryCuriosityClosingQuestionRealLLM:
             object_name=object_name,
             age=age,
             age_prompt="Use simple words and short sentences.",
-            category_prompt=(
-                "Octopus: sea creature with eight arms, very intelligent, "
-                "can change color and texture, soft body with no bones."
-            ),
             last_model_question=messages[0]["content"],
             config=config,
             client=client,
@@ -1235,3 +1229,41 @@ class TestEllipticalAffirmativeDisambiguation:
             "USER_INTENT_PROMPT must list 'no idea' and 'no clue' as the qualifiers required "
             "for CLARIFYING_IDK, distinguishing them from bare 'I have'"
         )
+
+
+# ============================================================================
+# Education-to-Responses, Play-to-Questions structural tests
+# ============================================================================
+
+class TestEducationToResponsesPlayToQuestions:
+    """Lock in the new GROW/SENSORY follow-up prompt design and prompt structural changes."""
+
+    def test_followup_prompt_reads_last_assistant_message(self):
+        followup = paixueji_prompts.FOLLOWUP_QUESTION_PROMPT
+        assert "last assistant message" in followup, (
+            "FOLLOWUP_QUESTION_PROMPT must direct the model to read the last assistant message"
+        )
+
+    def test_followup_prompt_never_echo_rule(self):
+        followup = paixueji_prompts.FOLLOWUP_QUESTION_PROMPT
+        assert "NEVER echo" in followup or "never echo" in followup.lower(), (
+            "FOLLOWUP_QUESTION_PROMPT must prohibit echoing the previous assistant message"
+        )
+
+    def test_followup_prompt_fun_silly_imaginative_rule(self):
+        followup = paixueji_prompts.FOLLOWUP_QUESTION_PROMPT
+        assert "FUN" in followup or "SILLY" in followup or "IMAGINATIVE" in followup, (
+            "FOLLOWUP_QUESTION_PROMPT must emphasize fun/silly/imaginative over educational questions"
+        )
+
+    def test_informative_prompt_has_beat2_wow_extension(self):
+        prompt = paixueji_prompts.INFORMATIVE_INTENT_PROMPT
+        assert "BEAT 2" in prompt, "INFORMATIVE_INTENT_PROMPT must contain BEAT 2"
+        assert "WOW EXTENSION" in prompt, "INFORMATIVE_INTENT_PROMPT Beat 2 must be WOW EXTENSION"
+
+    def test_curiosity_beat3_bans_knowledge_testing(self):
+        prompt = paixueji_prompts.CURIOSITY_INTENT_PROMPT
+        beat3_start = prompt.find("BEAT 3 — CLOSING QUESTION")
+        assert beat3_start != -1, "BEAT 3 — CLOSING QUESTION must exist"
+        beat3_text = prompt[beat3_start:beat3_start + 600]
+        assert "BAD" in beat3_text, "BEAT 3 must label knowledge-testing as BAD"

@@ -36,6 +36,11 @@ def _load_router_overrides() -> dict:
     return {}
 
 
+def _build_generic_bridge_question(object_name: str) -> str:
+    """Create a guide-opening question without using mapping-derived copy."""
+    return f"What is one thing about {object_name} that makes you curious right now?"
+
+
 class PaixuejiState(TypedDict):
     # --- Inputs ---
     age: int
@@ -54,7 +59,6 @@ class PaixuejiState(TypedDict):
 
     # --- Prompts ---
     age_prompt: str
-    category_prompt: str
 
     # --- Flow Control & Computed State ---
     intent_type: Optional[str]   # one of 9 intent categories (chat mode)
@@ -223,7 +227,6 @@ async def _apply_topic_switch(state: PaixuejiState, new_obj: str) -> dict:
         "object_name": new_obj,
         "new_object_name": new_obj,
         "response_type": "topic_switch",
-        "category_prompt": assistant.category_prompt,
     }
 
 
@@ -300,7 +303,6 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
     generator = ask_introduction_question_stream(
         messages=messages,
         object_name=state["object_name"],
-        category_prompt=state["category_prompt"],
         age_prompt=state["age_prompt"],
         age=state["age"],
         config=state["config"],
@@ -411,7 +413,6 @@ async def node_curiosity(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        category_prompt=state["category_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -449,7 +450,6 @@ async def node_clarifying_idk(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        category_prompt=state["category_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -481,7 +481,6 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        category_prompt=state["category_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -490,12 +489,12 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
 
     # Update sequence so second generator picks up where first left off
     state["sequence_number"] = new_seq
+    messages_with_response = messages + [{"role": "assistant", "content": full_text_intent}]
 
     # Second call: follow-up question
     followup_gen = ask_followup_question_stream(
-        messages=messages,
+        messages=messages_with_response,
         object_name=state["object_name"],
-        category_prompt=state["category_prompt"],
         age_prompt=state["age_prompt"],
         age=state["age"],
         config=state["config"],
@@ -526,7 +525,6 @@ async def node_clarifying_wrong(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        category_prompt=state["category_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -555,7 +553,6 @@ async def node_clarifying_constraint(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        category_prompt=state["category_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -586,7 +583,6 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        category_prompt=state["category_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -596,12 +592,12 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
 
     # Update sequence so second generator picks up where first left off
     state["sequence_number"] = new_seq
+    messages_with_response = messages + [{"role": "assistant", "content": full_text_intent}]
 
     # Second call: followup question
     followup_gen = ask_followup_question_stream(
-        messages=messages,
+        messages=messages_with_response,
         object_name=state["object_name"],
-        category_prompt=state["category_prompt"],
         age_prompt=state["age_prompt"],
         age=state["age"],
         config=state["config"],
@@ -635,7 +631,6 @@ async def node_informative(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        category_prompt=state["category_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -644,12 +639,12 @@ async def node_informative(state: PaixuejiState) -> dict:
 
     # Update sequence so second generator picks up where first left off
     state["sequence_number"] = new_seq
+    messages_with_response = messages + [{"role": "assistant", "content": full_text_intent}]
 
     # Second call: follow-up question
     followup_gen = ask_followup_question_stream(
-        messages=messages,
+        messages=messages_with_response,
         object_name=state["object_name"],
-        category_prompt=state["category_prompt"],
         age_prompt=state["age_prompt"],
         age=state["age"],
         config=state["config"],
@@ -680,7 +675,6 @@ async def node_play(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        category_prompt=state["category_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -709,7 +703,6 @@ async def node_emotional(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        category_prompt=state["category_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -757,8 +750,7 @@ async def node_avoidance(state: PaixuejiState) -> dict:
             object_name=state["object_name"],
             age=state["age"],
             age_prompt=state["age_prompt"],
-            category_prompt=state["category_prompt"],
-                last_model_question=extract_previous_question(state["messages"]),
+            last_model_question=extract_previous_question(state["messages"]),
             config=state["config"],
             client=state["client"],
         )
@@ -788,7 +780,6 @@ async def node_boundary(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        category_prompt=state["category_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -836,8 +827,7 @@ async def node_action(state: PaixuejiState) -> dict:
             object_name=state["object_name"],
             age=state["age"],
             age_prompt=state["age_prompt"],
-            category_prompt=state["category_prompt"],
-                last_model_question=extract_previous_question(state["messages"]),
+            last_model_question=extract_previous_question(state["messages"]),
             config=state["config"],
             client=state["client"],
         )
@@ -869,7 +859,6 @@ async def node_social(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        category_prompt=state["category_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -878,12 +867,12 @@ async def node_social(state: PaixuejiState) -> dict:
 
     # Update sequence so second generator picks up where first left off
     state["sequence_number"] = new_seq
+    messages_with_response = messages + [{"role": "assistant", "content": full_text_intent}]
 
     # Second call: follow-up question
     followup_gen = ask_followup_question_stream(
-        messages=messages,
+        messages=messages_with_response,
         object_name=state["object_name"],
-        category_prompt=state["category_prompt"],
         age_prompt=state["age_prompt"],
         age=state["age"],
         config=state["config"],
@@ -916,7 +905,6 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
         object_name=state["object_name"],
         age=state["age"],
         age_prompt=state["age_prompt"],
-        category_prompt=state["category_prompt"],
         last_model_question=extract_previous_question(state["messages"]),
         config=state["config"],
         client=state["client"],
@@ -925,12 +913,12 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
 
     # Update sequence so second generator picks up where first left off
     state["sequence_number"] = new_seq
+    messages_with_response = messages + [{"role": "assistant", "content": full_text_intent}]
 
     # Second call: follow-up question
     followup_gen = ask_followup_question_stream(
-        messages=messages,
+        messages=messages_with_response,
         object_name=state["object_name"],
-        category_prompt=state["category_prompt"],
         age_prompt=state["age_prompt"],
         age=state["age"],
         config=state["config"],
@@ -962,7 +950,8 @@ async def node_start_guide(state: PaixuejiState):
     # Initialize multi-turn guide state
     assistant.enter_guide_mode()
 
-    bridge_question = assistant.bridge_question
+    bridge_question = _build_generic_bridge_question(state["object_name"])
+    assistant.bridge_question = bridge_question
     key_concept = assistant.key_concept
     theme_name = assistant.ibpyp_theme_name
     object_name = state["object_name"]
@@ -1032,7 +1021,7 @@ async def node_guide_navigator(state: PaixuejiState):
         current_topic=state["object_name"],
         target_theme=target_theme,
         age=state["age"],
-        key_concept=assistant.key_concept or "",
+        key_concept="",
         bridge_question=assistant.bridge_question or "",
         turn_count=assistant.guide_turn_count,
         max_turns=assistant.guide_max_turns,
@@ -1072,7 +1061,6 @@ async def node_guide_driver(state: PaixuejiState):
     )
 
     object_name = state["object_name"]
-    key_concept = assistant.key_concept or ""
     theme_name = assistant.ibpyp_theme_name or ""
 
     full_text = ""
@@ -1083,7 +1071,7 @@ async def node_guide_driver(state: PaixuejiState):
         nav_plan=nav_state,
         age=state["age"],
         object_name=object_name,
-        key_concept=key_concept,
+        key_concept="",
         theme_name=theme_name
     ):
         if text_chunk:
@@ -1132,8 +1120,8 @@ async def node_guide_hint(state: PaixuejiState):
 
     hint_message = await generate_guide_hint(
         object_name=state["object_name"],
-        key_concept=assistant.key_concept or "something special",
-        key_concept_reason=assistant.ibpyp_theme_reason or "",
+        key_concept="",
+        key_concept_reason="",
         bridge_question=assistant.bridge_question or "",
         theme_name=assistant.ibpyp_theme_name or "",
         age=state["age"],
@@ -1218,11 +1206,11 @@ async def node_guide_success(state: PaixuejiState):
     logger.info(f"[{state['session_id']}] Node: Guide Success")
 
     assistant = state["assistant"]
-    key_concept = assistant.key_concept or "this idea"
     object_name = state["object_name"]
+    theme_name = assistant.ibpyp_theme_name or "this big idea"
 
     msg = (
-        f"That's wonderful! You discovered that {object_name} is connected to {key_concept}! "
+        f"That's wonderful! You found a really interesting idea about {object_name} in {theme_name}! "
         f"You're thinking like a real explorer now!"
     )
 
@@ -1327,7 +1315,8 @@ async def node_finalize(state: PaixuejiState) -> dict:
 async def node_classify_theme(state: PaixuejiState) -> dict:
     """
     4th correct answer threshold reached: classify guide theme from conversation history.
-    Key concept and bridge question stay object-derived from YAML.
+    Guide theme is classified from conversation history, while response text
+    stays free of mapping-derived prompt content.
     """
     from theme_classifier import classify_conversation_to_theme
 
@@ -1337,10 +1326,8 @@ async def node_classify_theme(state: PaixuejiState) -> dict:
     assistant.increment_correct_answers()
 
     if (
-        not assistant.key_concept
-        or not assistant.bridge_question
-        or not assistant.category_prompt
-        or not assistant.fallback_theme_id
+        not assistant.fallback_theme_id
+        or not assistant.fallback_theme_name
     ):
         assistant.load_object_context_from_yaml(state["object_name"])
 
@@ -1348,8 +1335,6 @@ async def node_classify_theme(state: PaixuejiState) -> dict:
         history=state["messages"],
         object_name=state["object_name"],
         age=state["age"] or 6,
-        key_concept=assistant.key_concept or "",
-        bridge_question=assistant.bridge_question or "",
         client=state["client"],
         config=state["config"],
     )
