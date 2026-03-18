@@ -1,0 +1,276 @@
+- entity_id: imagination_tyrannosaurus_rex
+  entity_name: Tyrannosaurus Rex
+  entity_name_cn: 霸王龙
+  domain: imagination
+  parent_category: dinosaurs
+  subcategory: theropods
+  primary_theme:
+    theme_id: how_we_express
+    weight: 0.35
+    reasoning: Children use a T. rex to act out loud roars, big movements, and exciting chase stories, expressing emotions
+      like bravery and fear through dramatic pretend play and drawings.
+  secondary_themes:
+  - theme_id: how_world_works
+    weight: 0.3
+    reasoning: T. rex invites questions about sharp teeth, strong legs, and how predators find food, letting children explore
+      simple ideas about bodies, eating, and animal behavior.
+    context_trigger: when the child points at the teeth and asks, "Why are they so sharp?" or pretends the dinosaur is hunting
+  - theme_id: where_place_time
+    weight: 0.26
+    reasoning: Kids often ask if T. rex lived 'a long time ago' and imagine jungles or volcanoes, linking the dinosaur to
+      prehistoric time and different places on Earth.
+    context_trigger: when the child says, "Was it alive when grandpa was little?" or asks where it lived while looking at
+      a background scene
+  - theme_id: how_we_organize
+    weight: 0.09
+    reasoning: Children organize play by assigning roles like hunter, explorer, or zookeeper, and they make rules for safety
+      and turn-taking during dinosaur games with a T. rex as the main character.
+    context_trigger: when the child sets rules like "Don’t go in the dinosaur zone" or assigns roles like "You be the ranger"
+  primary_key_concepts:
+  - concept_id: form
+    relevance: 1.0
+    reasoning: The T. rex has a recognizable shape with a big head, tiny arms, and strong tail, so children focus on describing
+      and noticing these clear features.
+  - concept_id: connection
+    relevance: 1.0
+    reasoning: Kids connect the T. rex to other dinosaurs, to stories about danger or rescue, and to ideas about teeth and
+      eating, linking what they see to what the dinosaur does.
+  - concept_id: perspective
+    relevance: 0.9
+    reasoning: Children imagine different viewpoints, like being the T. rex chasing or being a small animal hiding, and they
+      decide whether the dinosaur is a villain or just hungry.
+  secondary_key_concepts:
+  - concept_id: function
+    relevance: 0.6
+    reasoning: function for Tyrannosaurus Rex
+  - concept_id: causation
+    relevance: 0.3
+    reasoning: causation for Tyrannosaurus Rex
+  candidate_related_concepts:
+  - concept_id: creativity
+    discipline: Arts
+    reasoning: Children invent new scenes for the T. rex, such as superhero dinosaurs or silly dances, using imagination to
+      change a scary creature into many story possibilities.
+  - concept_id: expression
+    discipline: Arts
+    reasoning: Roaring, stomping, and posing like a T. rex lets children express energy and emotion, especially excitement
+      and confidence, through safe body play.
+  - concept_id: symbolism
+    discipline: Language
+    reasoning: The T. rex often symbolizes being powerful or 'the boss,' and children use it to represent strength in stories
+      where the biggest character leads or scares others.
+  - concept_id: technology
+    discipline: Design
+    reasoning: As a designed image or toy, the T. rex encourages noticing features like moving jaws or textures, and children
+      compare different models to see how design changes realism.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: color
+          value: green or brown
+          topics:
+          - What color is the T. rex?
+          - If you could choose, what color would you pick?
+        - attribute: shape
+          value: big body and tail
+          topics:
+          - Can you point to the T. rex tail?
+          - Is its body big or small?
+        - attribute: glow
+          value: does not glow
+          topics:
+          - Does the T. rex glow in the dark?
+          - What would it look like if it did glow?
+        senses:
+        - attribute: feel
+          value: rough and bumpy skin
+          topics:
+          - Do you think its skin feels smooth or bumpy?
+          - What else feels bumpy?
+        - attribute: sound
+          value: loud roaring sound
+          topics:
+          - What sound does a T. rex make?
+          - Can you roar softly or loudly?
+        emotions:
+        - Do you like T. rexes?
+        - Does a roaring T. rex feel scary or fun?
+        - Would you want to see a T. rex from far away?
+        - Is your T. rex friendly or not friendly?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: tooth_shape
+          value: Big pointy teeth like jagged white triangles
+          topics:
+          - Why might a T. rex have pointy teeth instead of flat teeth?
+          - How are pointy teeth different from your chewing teeth?
+        - attribute: eye_detail
+          value: Small bright eyes that look sharp and alert
+          topics:
+          - Why would a hunter dinosaur need sharp-looking eyes?
+          - How are small eyes different from big cartoon eyes?
+        - attribute: pattern_markings
+          value: Stripey or spotty markings that break up its body
+          topics:
+          - How could stripes help a T. rex hide compared to plain skin?
+          - Why might spots work better than stripes in some places?
+        context:
+        - attribute: storybook_scene
+          value: Stomps through pages in a bedtime dinosaur tale
+          topics:
+          - How does a storybook T. rex feel different from a real one?
+          - Why do bedtime stories sometimes make dinosaurs silly instead of scary?
+        - attribute: dream_visit
+          value: Shows up in dreams, changing size and mood
+          topics:
+          - Why might a dream T. rex change size so quickly?
+          - How is a dream dinosaur different from a movie dinosaur?
+        function:
+        - attribute: roaring
+          value: Roars loudly to scare others or call friends
+          topics:
+          - Why would a roar help more than a quiet whisper?
+          - How is roaring different from growling?
+        - attribute: hunting_style
+          value: Uses strong legs to chase and surprise prey
+          topics:
+          - How could running help a T. rex catch food compared to waiting still?
+          - Why might surprise be better than being seen?
+        - attribute: tail_balance
+          value: Long tail helps balance while turning and stopping
+          topics:
+          - How does a tail help balance like your arms do?
+          - Why would turning be harder without a tail?
+        structure:
+        - attribute: tiny_arms
+          value: Short strong arms with little hooked claws
+          topics:
+          - Why might tiny arms still be useful for a big dinosaur?
+          - How are T. rex arms different from bird wings?
+        - attribute: big_jaw
+          value: Wide jaw that opens like a huge door
+          topics:
+          - How does a big jaw help more than a small jaw?
+          - Why would opening wide matter when eating?
+        - attribute: scales
+          value: Bumpy scaly skin like tough puzzle pieces
+          topics:
+          - Why might scales protect better than soft skin?
+          - How are scales different from feathers?
+        emotions:
+        - Would you want the T. rex to be friendly or spooky?
+        - How would you feel if you heard a roar outside your window?
+        - Do you like dinosaur stories that are funny or scary?
+        relationship:
+        - What animal today does the T. rex remind you of?
+        - How is a T. rex different from a crocodile?
+        - Is a T. rex more like a giant bird or a giant lizard to you?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: scar_streaks
+          value: In this imagined T. rex, scars are raised lines where the skin ‘repaired’ after a battle, showing where the
+            outer layer grew back thicker.
+          topics:
+          - What kind of adventure could give a T. rex those scars?
+          - How might scars change the way its skin stretches when it roars?
+        - attribute: pupil_style
+          value: Its eyes could have round pupils for more all-around light or slit pupils to control bright light better,
+            changing how it hunts in different places.
+          topics:
+          - Which pupil shape would help more in bright sunlight, and why?
+          - If it hunted at night, what eye changes would you design for it?
+        - attribute: bioluminescent_spots
+          value: Glowing spots could be made by tiny light-making chemicals in the skin, used like signals—brightening or
+            dimming to communicate.
+          topics:
+          - What messages could the glowing spots send—like ‘follow me’ or ‘stay back’?
+          - How could glowing help, and how could it be a problem for a sneaky dinosaur?
+        change:
+        - attribute: mood_color_shift
+          value: Its skin could change color by moving dark and light pigments in tiny skin cells, letting it show feelings
+            or blend into new places.
+          topics:
+          - Why would changing color be helpful during a chase or a hide-and-seek moment?
+          - What colors would it turn when it’s calm versus when it’s angry?
+        - attribute: power_growth_with_feeding
+          value: After it eats, energy could ‘charge up’ special organs, making it stronger or giving it a new ability for
+            a short time.
+          topics:
+          - If eating gave it temporary powers, what power would make the most sense and why?
+          - What might happen if it used all its power too fast?
+        - attribute: seasonal_scale_shedding
+          value: It might shed old scales in patches as it grows, revealing newer ones underneath—like replacing worn armor
+            with fresh armor.
+          topics:
+          - Why would shedding old scales help a growing dinosaur?
+          - How would its behavior change while it’s shedding—would it hide or show off?
+        context:
+        - attribute: portal_appearance_place
+          value: This T. rex shows up where imagination is strongest—like a shadowy hallway at bedtime or a page where a kid
+            draws a doorway into dino-land.
+          topics:
+          - Where do you think it would appear if it wanted to surprise you in a friendly way?
+          - Why do you think certain places feel more ‘magical’ for imagining dinosaurs?
+        - attribute: weather_summoned
+          value: It could arrive when thunder or fog happens, because the story-world uses dramatic weather as a ‘summon signal’
+            that something big is near.
+          topics:
+          - What kind of weather would match a brave T. rex versus a sneaky one?
+          - If the weather changed suddenly, what clue would tell you a T. rex is coming?
+        function:
+        - attribute: fire_breath_control
+          value: It might breathe fire by mixing stored gases with a spark-like organ, and it would need careful control so
+            it doesn’t overheat itself.
+          topics:
+          - How could it aim fire safely without burning its own face?
+          - What would it use fire for besides fighting?
+        - attribute: camouflage_mode
+          value: By shifting patterns and brightness on its skin, it could match rocks, trees, or moonlight so it’s harder
+            to spot from far away.
+          topics:
+          - Which places would be easiest for it to camouflage into, and why?
+          - What would be a good way to spot it even when it’s camouflaged?
+        senses:
+        - attribute: footstep_vibration
+          value: Its heavy steps could make ground vibrations you can feel more than hear, because big weight pushes the ground
+            and sends waves through it.
+          topics:
+          - How could you tell it’s coming if you couldn’t see it yet?
+          - Why do bigger animals usually make stronger ground vibrations?
+        - attribute: breath_steam
+          value: Warm breath meeting cool air could make a foggy puff, showing how heat and water in breath turn into tiny
+            droplets you can see.
+          topics:
+          - When would you see its breath puff the most—on a cold day or hot day? Why?
+          - How might seeing its breath give away its hiding spot?
+        structure:
+        - attribute: tail_fin_ridge
+          value: A tall ridge along the tail could act like a steering fin, helping it turn quickly by pushing air or water
+            to one side.
+          topics:
+          - How would a tail ridge help it turn without tipping over?
+          - If the ridge was damaged, what movements might become harder?
+        - attribute: armored_throat_plates
+          value: Overlapping plates under the neck could protect important parts while still letting it bend and swallow,
+            like flexible armor.
+          topics:
+          - Why would the throat need protection more than some other areas?
+          - How can something be both armored and bendy at the same time?
+        emotions:
+        - Would you want this T. rex to be your friend, your enemy, or your teammate? Why?
+        - What feelings do you think it has when it roars—proud, lonely, excited, or something else?
+        imagination:
+        - Design a new special ability for this T. rex that no one has seen before. What is it and how does it work?
+        - Pretend you can talk to it for five minutes—what questions would you ask?
+        narrative:
+        - Tell a story where the T. rex has a problem it can’t solve with strength—how does it solve it?
+        - Once upon a time, a T. rex found something tiny and important. What was it?
+        reasoning:
+        - If it could breathe fire, what rules would it need to follow so it doesn’t start a huge accident?
+        - What would be the best way for it to make friends with people who are scared of it?
+        relationship:
+        - How is this imagined T. rex different from a real dinosaur you’ve seen in books?
+        - What animal today does it remind you of, and what makes you think that?

@@ -1,0 +1,303 @@
+- entity_id: people_roles_firefighter
+  entity_name: Firefighter
+  entity_name_cn: 消防员
+  domain: people_roles
+  parent_category: professions
+  subcategory: emergency_services
+  primary_theme:
+    theme_id: how_we_organize
+    weight: 0.41
+    reasoning: Firefighters are part of organized emergency services with stations, alarms, drills, and teamwork, which children
+      notice through sirens, safety talks, and community helpers.
+  secondary_themes:
+  - theme_id: who_we_are
+    weight: 0.4
+    reasoning: Children see firefighters as brave helpers who protect others, exploring qualities like courage, caring, and
+      making safe choices during scary situations.
+    context_trigger: when the child says “they save people,” pretends to be brave with a helmet, or asks what firefighters
+      do all day.
+  - theme_id: how_we_express
+    weight: 0.19
+    reasoning: Firefighters use clear signals and instructions—sirens, alarms, and shouted directions—so children explore
+      communication that keeps everyone calm and safe.
+    context_trigger: when the child imitates a siren, practices “stop, drop, and roll,” or gives pretend safety instructions
+      to toys.
+  primary_key_concepts:
+  - concept_id: connection
+    relevance: 1.1
+    reasoning: Firefighters connect the fire station, trucks, hoses, and community calls, and children notice how one alarm
+      leads to many helpers working together.
+  - concept_id: responsibility
+    relevance: 1.0
+    reasoning: Firefighters are responsible for protecting people and property, and children can observe this through safety
+      gear, drills, and careful rescue actions.
+  - concept_id: function
+    relevance: 0.9
+    reasoning: Children explore the function of firefighter tools like hoses, ladders, and helmets, linking each item to a
+      job such as spraying water or climbing.
+  secondary_key_concepts:
+  - concept_id: form
+    relevance: 0.6
+    reasoning: Kids notice the form of the fire truck and equipment—big wheels, long ladders, heavy jackets—and compare how
+      shapes match the work.
+  - concept_id: causation
+    relevance: 0.3
+    reasoning: Children ask what causes fires and how to prevent them, linking matches, cooking, and smoke alarms to real
+      outcomes they can understand.
+  candidate_related_concepts:
+  - concept_id: roles
+    discipline: Social Studies
+    reasoning: Firefighter is a familiar helper role, with clear actions children can recognize like responding to emergencies
+      and teaching safety.
+  - concept_id: community
+    discipline: Social Studies
+    reasoning: Firefighters serve the whole community, and children connect this to shared safety in homes, schools, and neighborhoods.
+  - concept_id: collaboration
+    discipline: Social Studies
+    reasoning: Firefighting requires teamwork—driving, spraying water, rescuing—so children can practice turn-taking and working
+      together in pretend play.
+  - concept_id: rules
+    discipline: Personal, Social and Physical Education
+    reasoning: Fire safety rules like exiting calmly and not hiding are concrete actions children can rehearse, making rules
+      meaningful and memorable.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: uniform_color
+          value: dark coat and pants
+          topics:
+          - What color are the firefighter’s clothes?
+          - Can you point to the firefighter’s coat?
+          - Do you see the pants too?
+        - attribute: helmet
+          value: hard helmet on head
+          topics:
+          - Can you find the firefighter’s helmet?
+          - What shape is the helmet?
+          - Where does the helmet go?
+        - attribute: reflective_stripes
+          value: bright stripes on clothes
+          topics:
+          - Can you point to the bright stripes?
+          - Where are the stripes—arms or legs?
+          - Do the stripes look shiny?
+        senses:
+        - attribute: voice_sound
+          value: loud, clear voice
+          topics:
+          - Do firefighters talk loud or quiet?
+          - Can you use a loud helper voice?
+        - attribute: gear_feel
+          value: thick, heavy clothes
+          topics:
+          - Do you think the clothes feel thick?
+          - Do you think the gear feels heavy?
+        - attribute: boots_feel
+          value: hard boots on feet
+          topics:
+          - Do you think the boots feel hard?
+          - Would the boots feel heavy or light?
+        emotions:
+        - Do firefighters feel friendly to you?
+        - Do you feel safe when you see a firefighter?
+        - Would you like to wave to a firefighter?
+        - Is a firefighter scary or not scary?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: face_shield
+          value: clear visor that flips down like a window
+          topics:
+          - Why does a firefighter flip the shield down, like sunglasses?
+          - How is a face shield different from regular glasses?
+        - attribute: glove_color
+          value: thick gloves, often tan or dark gray
+          topics:
+          - Why are firefighter gloves thicker than winter mittens?
+          - How are these gloves different from your play gloves?
+        - attribute: air_tank_shape
+          value: a tall round tank strapped to the back
+          topics:
+          - Why does the air tank sit on the back, like a backpack?
+          - How is an air tank different from a water bottle?
+        context:
+        - attribute: fire_station_waiting
+          value: waiting at the station, ready for a call
+          topics:
+          - Why do firefighters wait together at a station, like a team?
+          - How is waiting at the station different from waiting at home?
+        - attribute: smoke_filled_places
+          value: going into smoky rooms to help people
+          topics:
+          - Why do firefighters crawl low in smoke, like a kitty?
+          - How is a smoky room different from a clear room?
+        - attribute: community_visits
+          value: visiting schools to teach safety rules
+          topics:
+          - Why do firefighters visit kids, like teachers do?
+          - How is a safety visit different from a real emergency?
+        function:
+        - attribute: rescue_helping
+          value: finding people and helping them get out safely
+          topics:
+          - Why do firefighters help people first, before anything else?
+          - How is rescuing different from just putting out flames?
+        - attribute: smoke_protection
+          value: wearing breathing gear to avoid breathing smoke
+          topics:
+          - Why do firefighters breathe from a tank, like a diver?
+          - How is clean air different from smoky air for breathing?
+        - attribute: fire_prevention
+          value: checking buildings and teaching ways to stay safe
+          topics:
+          - Why is stopping fires early better than waiting for big fires?
+          - How is checking for danger different from fixing danger?
+        senses:
+        - attribute: radio_sound
+          value: crackly beeps and voices saying quick messages
+          topics:
+          - Why does the radio sound crackly, like a walkie-talkie toy?
+          - How is a radio voice different from a regular talking voice?
+        - attribute: mask_breathing_sound
+          value: soft whoosh-whoosh sounds while breathing in the mask
+          topics:
+          - Why does the mask make a whooshing sound when they breathe?
+          - How is breathing with a mask different from breathing without one?
+        structure:
+        - attribute: air_mask
+          value: a snug face mask with straps around the head
+          topics:
+          - Why does the mask need tight straps, like a helmet strap?
+          - How is a firefighter mask different from a cloth face mask?
+        - attribute: jacket_layers
+          value: a heavy coat with layers that block heat
+          topics:
+          - Why does the coat have layers, like a warm blanket stack?
+          - How is this coat different from a raincoat?
+        - attribute: badge_patch
+          value: a name or station patch sewn on the coat
+          topics:
+          - Why do firefighters wear a patch, like a team logo?
+          - How is a name patch different from a picture patch?
+        emotions:
+        - How do you feel when you see a firefighter—safe, nervous, or excited?
+        - Would you want to say hello to a firefighter? Why or why not?
+        - What is the bravest thing you think firefighters do?
+        relationship:
+        - How is a firefighter like a doctor, and how is it different?
+        - What job reminds you of firefighters—police officer or teacher? Why?
+        - How is a firefighter helper different from a family helper at home?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: helmet_visors_and_straps
+          value: A firefighter helmet often has a visor for eye protection and a chin strap that keeps it from slipping when
+            they crawl, climb, or get sprayed with water.
+          topics:
+          - Why would a chin strap matter when a firefighter has to move fast or bend down low?
+          - What could happen if the visor was missing when smoke or tiny bits of ash are in the air?
+        - attribute: boot_tread_pattern
+          value: Firefighter boots usually have deep tread (grippy patterns) so they can hold onto wet floors, slippery stairs,
+            or loose dirt without sliding.
+          topics:
+          - How do you think deep tread helps on a floor covered with water or foam?
+          - If the tread got worn smooth over time, what would change about how they walk or run?
+        - attribute: identification_name_tag
+          value: Many firefighters wear a name tag or ID so teammates can quickly recognize each other, especially when everyone
+            is dressed the same and visibility is low.
+          topics:
+          - Why might it be harder to recognize people when they’re wearing the same gear?
+          - How could a name tag help teamwork when it’s noisy and smoky?
+        change:
+        - attribute: fitness_and_stamina_building
+          value: As firefighters train, their stamina improves so they can work longer while carrying heavy gear and still
+            think clearly when they’re tired.
+          topics:
+          - Why would being tired make it harder to make safe choices during an emergency?
+          - What kinds of practice might help someone get stronger for climbing stairs in gear?
+        - attribute: skill_progression_special_roles
+          value: Over time, a firefighter can learn more specialized skills—like medical help, search techniques, or leading
+            a team—so their responsibilities grow.
+          topics:
+          - Why might learning first aid be important even when the main problem is a fire?
+          - How could being a team leader change what a firefighter pays attention to?
+        - attribute: gear_wear_and_replacement
+          value: Protective gear can get scuffed, stretched, or damaged by heat and chemicals, so it gets checked and repaired
+            or replaced to keep it protective.
+          topics:
+          - Why is checking gear before and after a job like checking your shoelaces before running?
+          - What might happen if a tiny tear in gear was ignored and heat got in?
+        context:
+        - attribute: night_calls_and_shift_work
+          value: Firefighters often work in shifts and can be called at night, because emergencies can happen at any time,
+            not just during the day.
+          topics:
+          - Why do you think firefighters need to be ready even when most people are sleeping?
+          - How might the job feel different at night compared to daytime?
+        - attribute: training_drills_locations
+          value: Firefighters practice in drill areas or training buildings where they can safely learn search, communication,
+            and movement skills before real emergencies.
+          topics:
+          - Why is practicing in a safe place helpful before trying it in a real emergency?
+          - What kinds of pretend problems should a training drill include to make it realistic?
+        function:
+        - attribute: search_and_locate_people
+          value: A firefighter’s job often includes searching rooms carefully and systematically, using touch, teamwork, and
+            patterns so they don’t miss someone who needs help.
+          topics:
+          - Why might searching in a pattern be safer than running around randomly?
+          - If smoke makes it hard to see, what other ways could firefighters use to find a person?
+        - attribute: risk_assessment_and_safety_checks
+          value: Firefighters constantly check for dangers like weak floors, falling objects, or changing smoke, so they can
+            decide where it’s safe to go and when to back out.
+          topics:
+          - Why is ‘knowing when to stop’ also part of being brave?
+          - What clues could tell a firefighter that a room is becoming too dangerous?
+        senses:
+        - attribute: breathing_through_regulator_feel
+          value: Breathing through an air regulator can feel different than normal breathing because air comes through a valve
+            and hose, and you may hear and feel the airflow.
+          topics:
+          - How might breathing feel different when air comes through a machine instead of your nose?
+          - Why would a steady, controlled breath help someone stay calm while working?
+        - attribute: glove_dexterity_limits
+          value: Thick gloves protect hands from heat and sharp edges, but they can make fingers feel clumsier, so firefighters
+            practice handling tools and doors with less finger feeling.
+          topics:
+          - Why would thicker gloves make it harder to pick up small things?
+          - How could practicing with gloves on help a firefighter work faster and safer?
+        structure:
+        - attribute: turnout_coat_closures
+          value: A turnout coat often uses strong closures (like hooks, loops, and heavy zippers) that can be fastened quickly
+            and stay shut to block heat and hot water.
+          topics:
+          - Why would a firefighter need closures that work even when things are wet or slippery?
+          - What could happen if part of the coat popped open during a rescue?
+        - attribute: helmet_brim_design
+          value: The helmet brim helps direct dripping water and falling debris away from the face and neck, acting like a
+            protective ‘shield edge’ while they move.
+          topics:
+          - How could a brim help when water is spraying everywhere?
+          - If the brim were tiny, what parts of the body might be less protected?
+        emotions:
+        - How do you feel when you see a firefighter—safe, nervous, curious, or something else? Why?
+        - What part of being a firefighter sounds exciting, and what part sounds a little scary?
+        - If a firefighter helped your neighborhood, how would you want to say thank you?
+        imagination:
+        - Pretend you are a firefighter arriving at a smoky building—what are the first three things you do?
+        - If a firefighter’s helmet could talk, what important reminders would it say during a rescue?
+        - Design a firefighter badge for a special skill (like ‘Super Helper’). What would it look like and what would it
+          mean?
+        narrative:
+        - Tell a story about a firefighter who has to solve a problem without using any words—only hand signals.
+        - Once upon a time, a firefighter found a scared pet hiding—what happened next?
+        - Tell a story where the firefighter has to help two people at once. How do they decide what to do first?
+        reasoning:
+        - Why do you think firefighters practice drills again and again, even after they already know what to do?
+        - What might happen if firefighters rushed in without checking if the floor was safe?
+        - If you couldn’t see well in smoke, what rules would you make for your team so nobody gets lost?
+        relationship:
+        - How is a firefighter similar to a teacher, and how is it different?
+        - What other helpers in a community work as a team like firefighters do?
+        - How is protective gear like a turtle’s shell, and how is it not the same?

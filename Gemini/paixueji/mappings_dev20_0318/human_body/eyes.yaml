@@ -1,0 +1,277 @@
+- entity_id: human_body_eye
+  entity_name: Eye
+  entity_name_cn: 眼睛
+  domain: human_body
+  parent_category: facial_features
+  subcategory: eyes
+  primary_theme:
+    theme_id: who_we_are
+    weight: 0.61
+    reasoning: Eyes help children explore who they are by noticing how they see, recognize faces, and observe the world around
+      them.
+  secondary_themes:
+  - theme_id: how_world_works
+    weight: 0.26
+    reasoning: Children can investigate how eyes help them see colors, shapes, and light, and why blinking protects the eye.
+    context_trigger: when the child squints in bright light, asks why we blink, or points out colors and shapes they can see
+  - theme_id: how_we_express
+    weight: 0.13
+    reasoning: Eyes communicate feelings and attention because children look, stare, wink, or make eye contact to share meaning.
+    context_trigger: when the child says "Look at me!" makes eye contact, winks, or notices someone’s eyes look sad or excited
+  primary_key_concepts:
+  - concept_id: connection
+    relevance: 0.9
+    reasoning: Eyes connect children to their environment by letting them notice details, read pictures, and respond to what
+      they see.
+  - concept_id: perspective
+    relevance: 0.9
+    reasoning: Children learn that what they see depends on where they stand, how close they are, and what direction they
+      look.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: Kids can practice eye safety by not rubbing too hard, washing hands, and wearing sunglasses or goggles when
+      needed.
+  secondary_key_concepts:
+  - concept_id: form
+    relevance: 0.8
+    reasoning: Eyes have visible parts like eyelids, lashes, and iris color that children can observe and compare safely.
+  - concept_id: function
+    relevance: 0.8
+    reasoning: The function of eyes is vision, helping children navigate spaces, recognize people, and learn from pictures
+      and print.
+  candidate_related_concepts:
+  - concept_id: emotion
+    discipline: PSPE
+    reasoning: Children can notice tears, wide eyes, or relaxed eyes and connect these clues to feelings like fear or happiness.
+  - concept_id: identity
+    discipline: PSPE
+    reasoning: Eye color and wearing glasses can become part of how children describe themselves and appreciate differences.
+  - concept_id: wellbeing
+    discipline: PSPE
+    reasoning: Healthy screen breaks, good lighting, and eye checkups support comfortable seeing and reduce strain for young
+      learners.
+  - concept_id: relationships
+    discipline: PSPE
+    reasoning: Using eyes to look at a speaker and notice others’ expressions supports empathy, turn-taking, and friendly
+      communication.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: iris_color
+          value: brown, blue, or green
+          topics:
+          - What color are your eyes?
+          - Can you find someone with different eye color?
+        - attribute: shape
+          value: oval like an egg
+          topics:
+          - Is an eye more round or oval?
+          - Can you point to the shape of your eye?
+        - attribute: size
+          value: small on your face
+          topics:
+          - Are eyes big or small?
+          - How many eyes do you have?
+        senses:
+        - attribute: feel
+          value: soft and wet
+          topics:
+          - Do your eyes feel wet sometimes?
+          - Should we touch eyes with clean hands or dirty hands?
+        - attribute: sound
+          value: quiet when blinking
+          topics:
+          - Do eyes make a loud sound?
+          - Can you blink and listen—do you hear anything?
+        - attribute: temperature
+          value: warm like your skin
+          topics:
+          - Do your eyes feel warm or cold?
+          - Do your eyes feel different in the wind?
+        emotions:
+        - Do you like making silly eye faces?
+        - Do you feel happy when you see someone you love?
+        - Is it okay if bright light hurts your eyes?
+        - Do you like looking at colors?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: white_part
+          value: The white part looks smooth and slightly shiny
+          topics:
+          - Why is the white part not exactly paper-white?
+          - How is the white of an eye different from a tooth?
+        - attribute: pupil_size
+          value: A black dot that can grow big or small
+          topics:
+          - Why does the pupil get bigger in dim light?
+          - How is a big pupil different from a small pupil?
+        - attribute: eyebrow_shape
+          value: Hairy arches above the eye like soft lines
+          topics:
+          - Why do eyebrows sit above the eyes, not below?
+          - How are eyebrows different from eyelashes?
+        context:
+        - attribute: face_position
+          value: Two eyes sit near the front of your face
+          topics:
+          - Why do we have two eyes instead of one?
+          - How is having eyes in front different from eyes on the sides?
+        - attribute: when_you_use_them
+          value: You use them all day, even for tiny details
+          topics:
+          - How do your eyes help when you look far away?
+          - Why do your eyes work differently for near things and far things?
+        function:
+        - attribute: blinking
+          value: Blinking wipes and wets the eye like a quick sweep
+          topics:
+          - Why do you blink without thinking about it?
+          - How is blinking different from closing your eyes for sleep?
+        - attribute: focusing
+          value: The eye changes focus to see near or far
+          topics:
+          - How does your eye help you see a tiny dot versus a big ball?
+          - Why is it harder to see things when they are super close?
+        - attribute: protecting
+          value: Lids and lashes help block dust and bright light
+          topics:
+          - Why do eyelashes point outward like little guards?
+          - How do eyelids protect your eyes differently than eyebrows do?
+        structure:
+        - attribute: eyelid
+          value: A soft sliding cover that opens and closes
+          topics:
+          - How does an eyelid move like a little curtain?
+          - Why do you have upper and lower eyelids instead of just one?
+        - attribute: eyelashes
+          value: Tiny hairs that catch dust before it lands
+          topics:
+          - Why are eyelashes short and not super long like head hair?
+          - How do eyelashes help differently than eyelids?
+        - attribute: tear_fluid
+          value: Salty water that keeps eyes comfy and clean
+          topics:
+          - Why do tears come out when something gets in your eye?
+          - How are tears different from sweat?
+        emotions:
+        - How do you feel when someone smiles with their eyes?
+        - Do bright lights bother your eyes, or do you like them?
+        - When you’re tired, how do your eyes feel?
+        relationship:
+        - What is your eye like—more like a marble or a squishy grape?
+        - How are eyes different from cameras?
+        - What do your eyes help you notice that your ears can’t?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: sclera_blood_vessels
+          value: Tiny red lines can show on the white part because small blood vessels sit there; they can look bigger when
+            you’re tired or your eye is irritated.
+          topics:
+          - Why might the white part look a little red after a long day?
+          - What do you think your eye is trying to tell you when it looks red or itchy?
+        - attribute: eyelid_crease
+          value: Some people have a visible fold on the eyelid and some don’t; it’s about how the skin and a thin muscle layer
+            are shaped and attached.
+          topics:
+          - How can two people’s eyelids look different even though both work the same?
+          - What do eyelids have to do all day that might explain why they’re built with folds?
+        - attribute: tear_shine
+          value: A thin wet layer makes the eye look shiny because it reflects light; that same layer also helps keep the
+            surface smooth for clear seeing.
+          topics:
+          - Why do eyes look shiny like they have a tiny ‘glossy’ coating?
+          - What might happen to your vision if the eye’s surface got too dry?
+        change:
+        - attribute: dark_circles_and_puffiness
+          value: The skin around eyes is thin, so sleep, allergies, or extra fluid can make shadows or puffiness show more
+            easily.
+          topics:
+          - Why do you think tiredness shows around the eyes faster than on other parts of the face?
+          - What changes could make puffiness go down—rest, water, or something else?
+        - attribute: healing_after_irritation
+          value: If dust or a tiny scratch irritates the eye surface, tears and blinking help wash it away while the surface
+            repairs itself.
+          topics:
+          - How do blinking and tears help an eye heal when something tiny gets in?
+          - What do you think would happen if you tried not to blink when your eye felt scratchy?
+        - attribute: vision_changes_with_growth
+          value: As kids grow, the eye’s shape can change a little, which can change how images focus and may lead to needing
+            glasses for clearer sight.
+          topics:
+          - Why might growing change how clearly you see far-away things?
+          - How would you notice if your eyes weren’t focusing the way you want anymore?
+        context:
+        - attribute: two_eye_teamwork
+          value: Your eyes usually work as a pair, pointing at the same thing so your brain can compare the two pictures and
+            judge distance.
+          topics:
+          - What jobs are easier with two eyes than with one? Why?
+          - How do you think your brain uses two pictures to figure out how far away something is?
+        - attribute: light_levels
+          value: Eyes are used in bright and dim places; they adjust so you can see without getting overwhelmed by too much
+            light.
+          topics:
+          - Why does it take a moment to see better after you walk into a dark room?
+          - What do you think your eyes are doing differently in sunlight than in a dark hallway?
+        function:
+        - attribute: pupil_light_control
+          value: The pupil changes size to control how much light enters, like a doorway opening wider in the dark and smaller
+            in bright light.
+          topics:
+          - Why would your eye want less light when it’s very bright?
+          - What might happen if your pupil couldn’t get smaller in sunlight?
+        - attribute: color_detection
+          value: Special cells in the eye respond to different kinds of light, helping your brain tell colors apart, especially
+            in good lighting.
+          topics:
+          - Why do colors look more dull when the light is dim?
+          - What would be tricky about life if you couldn’t tell two similar colors apart?
+        senses:
+        - attribute: blink_reflex_feeling
+          value: When something comes close, your body can blink fast without you deciding, protecting the eye before it gets
+            poked or dried out.
+          topics:
+          - Why do you think your body blinks before you even have time to think?
+          - What kinds of situations make your eyes want to blink more often?
+        - attribute: watery_eyes_sensation
+          value: Tears can increase when your eye is dry, windy, or irritated; that wetness can feel cool and can also make
+            your vision blurry for a moment.
+          topics:
+          - Why might your eyes water on a windy day even if you aren’t sad?
+          - How can tears both help your eyes and also make seeing harder for a moment?
+        structure:
+        - attribute: iris_muscle_ring
+          value: The iris is a colored ring with tiny muscles that help change pupil size to control light coming in.
+          topics:
+          - Why would the colored part need muscles inside it?
+          - What do you think happens to the pupil when you shine a flashlight nearby (not in your eyes)?
+        - attribute: cornea_clear_window
+          value: The cornea is the clear front ‘window’ that bends light first; it needs to stay smooth and clean for sharp
+            vision.
+          topics:
+          - Why does a smooth clear ‘window’ help you see better than a rough one?
+          - What might happen to what you see if that clear window got smudgy or scratched?
+        - attribute: tear_drain_holes
+          value: Tiny openings near the inner corners help drain extra tears into your nose area, which is why your nose can
+            run when you cry.
+          topics:
+          - Why do you think tears can make your nose feel stuffy or runny?
+          - What would happen if your eyes made tears but had no way to drain extra liquid?
+        emotions:
+        - How do you feel when someone makes eye contact with you—comfortable, shy, brave, or something else?
+        - What feelings do you think different eyes can show (happy, worried, excited)? How can you tell?
+        imagination:
+        - If your eye could take a picture of your favorite moment, what would it choose and why?
+        - Pretend your eyes have ‘night-vision mode’—what would you do differently after bedtime?
+        narrative:
+        - Tell a story about an eye that notices a tiny clue nobody else sees.
+        - Once upon a time, two eyes went on a ‘search-and-find’ adventure—what did they discover?
+        reasoning:
+        - Why do you think blinking helps you see better instead of getting in the way?
+        - What would happen if your eyes never made tears—what problems might show up first?
+        relationship:
+        - How are eyes like cameras, and how are they different?
+        - What’s similar between an eye and a window, and what’s not the same?

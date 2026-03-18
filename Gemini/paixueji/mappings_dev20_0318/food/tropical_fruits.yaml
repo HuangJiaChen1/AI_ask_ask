@@ -1,0 +1,305 @@
+- entity_id: food_banana
+  entity_name: Banana
+  entity_name_cn: 香蕉
+  domain: food
+  parent_category: fruits
+  subcategory: tropical_fruits
+  primary_theme:
+    theme_id: who_we_are
+    weight: 0.39
+    reasoning: A banana relates to who we are because children choose it as a snack, notice how it tastes and feels, and learn
+      how food helps their bodies grow and play.
+  secondary_themes:
+  - theme_id: how_world_works
+    weight: 0.27
+    reasoning: Children explore how bananas ripen from green to yellow to brown, and how peeling reveals the inside, showing
+      changes over time.
+    context_trigger: when the child points to spots and says the banana is changing, or asks why it is greener or softer
+  - theme_id: sharing_planet
+    weight: 0.19
+    reasoning: Bananas can prompt discussion about plants growing in warm places, transporting food, and using peels for compost
+      instead of litter.
+    context_trigger: when the child throws or drops a peel, or asks where bananas grow and how they get to the shop
+  - theme_id: how_we_organize
+    weight: 0.15
+    reasoning: Buying bananas in bunches and sorting them by ripeness shows how stores organize food, and how families plan
+      snacks for school or trips.
+    context_trigger: when the child counts bananas in a bunch, chooses the 'yellow one', or packs one into a lunchbox
+  primary_key_concepts:
+  - concept_id: connection
+    relevance: 0.9
+    reasoning: A banana connects children to their bodies, to plants that grow fruit, and to people who pick, ship, and sell
+      food we eat every day.
+  - concept_id: perspective
+    relevance: 0.9
+    reasoning: Children notice that some friends like bananas very ripe and others do not, building understanding that preferences
+      and needs differ.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: Eating bananas encourages responsibility by washing hands, peeling safely, cleaning up peels, and choosing
+      a snack portion without wasting food.
+  secondary_key_concepts:
+  - concept_id: form
+    relevance: 0.7
+    reasoning: Children can describe the banana’s curved shape, soft flesh, peel layers, and small strings, using careful
+      observation and new vocabulary.
+  - concept_id: function
+    relevance: 0.7
+    reasoning: A banana’s function is to be eaten for quick energy, and children explore ways to use it in smoothies, slices,
+      or baking.
+  candidate_related_concepts:
+  - concept_id: nutrition
+    discipline: PSPE
+    reasoning: Bananas are an easy example of fruit that gives energy and supports healthy snack choices children can recognize
+      and practice.
+  - concept_id: relationships
+    discipline: Social Studies
+    reasoning: Sharing bananas, offering the last one, or preparing fruit together supports kindness, turn-taking, and family
+      or classroom routines.
+  - concept_id: wellbeing
+    discipline: PSPE
+    reasoning: Children can connect bananas to feeling ready to play, noticing hunger before activities, and choosing foods
+      that help them feel good.
+  - concept_id: resources
+    discipline: Science
+    reasoning: Talking about bananas includes natural resources for growing plants and the idea of reducing waste by using
+      peels properly.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: color
+          value: yellow with brown spots
+          topics:
+          - What color is the banana?
+          - Do you see any brown spots?
+          - Is it more yellow or more brown?
+        - attribute: shape
+          value: long and curved
+          topics:
+          - Is the banana straight or curved?
+          - Can you make a curved shape with your arm?
+          - Is it long or short?
+        - attribute: size
+          value: fits in your hand
+          topics:
+          - Is the banana big or small?
+          - Can you hold it in one hand?
+          - Is it bigger than your hand?
+        senses:
+        - attribute: taste
+          value: sweet and yummy
+          topics:
+          - Does a banana taste sweet?
+          - Do you like the taste, yes or no?
+          - Is it yummy or yucky?
+        - attribute: smell
+          value: soft sweet smell
+          topics:
+          - What does the banana smell like?
+          - Can you take a little sniff?
+          - Does it smell good or not good?
+        - attribute: texture
+          value: smooth outside, mushy inside
+          topics:
+          - How does the peel feel?
+          - How does the banana inside feel in your mouth?
+          - Is it smooth or bumpy?
+        - attribute: sound
+          value: peel makes a rip
+          topics:
+          - What sound does the peel make?
+          - Can you say 'rip'?
+          - Is it a loud rip or a quiet rip?
+        emotions:
+        - Do you like bananas?
+        - Do bananas make you feel happy to eat?
+        - Would you like a banana snack today?
+        - Is a banana a friendly food or a scary food?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: peel_spots
+          value: little brown freckles appear as it ripens
+          topics:
+          - Why do bananas get freckles more than apples do?
+          - How do the spots change compared to a smooth peel?
+        - attribute: inside_color
+          value: inside is creamy pale, like soft sunshine
+          topics:
+          - Why is the inside lighter than the peel?
+          - How does the inside color compare to a pear’s inside?
+        - attribute: stem_end
+          value: a tough stem at the top like a handle
+          topics:
+          - Why is the stem tougher than the soft fruit?
+          - How does the stem help holding more than the slippery peel?
+        context:
+        - attribute: store_display
+          value: often sits in bunches at the grocery store
+          topics:
+          - Why are bananas sold in bunches more than single grapes?
+          - How does a bunch make carrying easier than loose bananas?
+        - attribute: kitchen_counter_ripening
+          value: ripens on the counter, changing day by day
+          topics:
+          - Why does a banana ripen faster on the counter than in the fridge?
+          - How does waiting a few days change it more than one hour?
+        - attribute: lunch_snack_time
+          value: packed in lunches for a quick sweet snack
+          topics:
+          - Why is a banana an easy snack compared to a watermelon?
+          - How does peeling make it faster to eat than cutting?
+        function:
+        - attribute: quick_energy_food
+          value: gives your body energy for running and playing
+          topics:
+          - Why does eating help your body more than just smelling food?
+          - How does a banana snack help faster than a big meal?
+        - attribute: easy_to_hold_eat
+          value: made to hold in your hand while eating
+          topics:
+          - Why is a banana easier to hold than applesauce?
+          - How does the peel act like a handle compared to no peel?
+        - attribute: cooking_mashing
+          value: can be mashed smooth for baking or mixing
+          topics:
+          - Why does a ripe banana mash easier than a crunchy apple?
+          - How does mashing change it compared to biting it?
+        senses:
+        - attribute: peel_slippery
+          value: peel feels waxy and a bit slippery
+          topics:
+          - Why does the peel feel slipperier than the inside?
+          - How does a wet peel feel different from a dry peel?
+        - attribute: softness_when_ripe
+          value: gets softer and squishier as it ripens
+          topics:
+          - Why is a ripe banana softer than a green banana?
+          - How does squishing tell you ripeness better than looking?
+        - attribute: stringy_peel_threads
+          value: thin stringy bits cling when you peel
+          topics:
+          - Why do stringy bits stick more than the peel does?
+          - How is pulling strings different from peeling the big skin?
+        structure:
+        - attribute: peel_layers
+          value: peel opens in strips like opening a jacket
+          topics:
+          - Why does the peel open in strips instead of one piece?
+          - How is peeling a banana different from peeling an orange?
+        - attribute: fruit_sections
+          value: inside has gentle sections you can split apart
+          topics:
+          - Why can a banana split into sections more than a grape can?
+          - How does breaking sections feel different from cutting with a knife?
+        - attribute: tiny_seeds
+          value: has teeny seeds you can barely see
+          topics:
+          - Why can’t you see banana seeds like apple seeds?
+          - How are tiny seeds different from big seeds like pumpkin seeds?
+        emotions:
+        - Do you like bananas, or do you not like them? Why?
+        - How do you feel when a banana is too mushy?
+        - Would you rather eat a banana plain or in a snack mix?
+        - Does the smell of a banana make you hungry or not?
+        relationship:
+        - How is a banana like an apple, and how is it different?
+        - What other fruit has a peel you take off first?
+        - How is a green banana different from a yellow one?
+        - What does a banana remind you of—like a smile or a moon?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: curve_direction_and_reason
+          value: Bananas often curve because, as they grow, they bend toward sunlight; the growing fruit changes direction
+            as it reaches for light.
+          topics:
+          - Why would growing toward sunlight make a banana curve?
+          - If a banana grew with light coming from a different side, how might its shape change?
+        - attribute: peel_ridges_and_lines
+          value: A banana peel has ridges and lines that act like built-in fold paths, helping the peel open in sections and
+            making it easier to grip.
+          topics:
+          - How do the peel lines help you know where the banana might split open?
+          - What might peeling be like if the peel were perfectly smooth with no ridges?
+        change:
+        - attribute: brown_spots_sugar_change
+          value: As bananas ripen, starch inside turns into sugar; the peel often gets more brown spots as this change happens,
+            and the fruit tastes sweeter.
+          topics:
+          - Why might a spotty banana taste sweeter than a green one?
+          - If you wanted a less-sweet banana, what peel clues would you look for?
+        - attribute: oxidation_after_peeling
+          value: After you peel or cut a banana, the exposed fruit can turn brown because it reacts with oxygen in the air—like
+            a slow color change on the surface.
+          topics:
+          - Why does the banana change color more on the outside than the inside after you peel it?
+          - What do you think could slow down the browning—keeping air away, or adding more air? Why?
+        context:
+        - attribute: shipping_and_green_harvest
+          value: Bananas are often picked green so they don’t get too mushy during travel, and they finish ripening later
+            in warmer storage areas.
+          topics:
+          - Why might picking bananas green help them survive a long trip?
+          - If bananas ripened too early during travel, what problems could happen?
+        - attribute: bunch_position_effect
+          value: In a bunch, bananas can ripen at slightly different speeds because they’re pressed together and share trapped
+            air; the ones in the middle may stay warmer and ripen faster.
+          topics:
+          - Why might bananas in the middle of a bunch ripen differently than the ones on the edge?
+          - How could you arrange bananas if you wanted them to ripen more slowly?
+        function:
+        - attribute: quick_digest_energy
+          value: Bananas give your body energy because they have carbohydrates that your body can break down; riper bananas
+            are often easier to chew and digest.
+          topics:
+          - Why might a ripe banana be easier for your body to use for energy than a very green one?
+          - When would a banana be a helpful snack—before playing hard or after—and why?
+        - attribute: natural_food_packaging
+          value: The peel acts like a built-in wrapper that protects the fruit from bumps and dirt, and it helps keep the
+            inside from drying out too fast.
+          topics:
+          - How does the peel protect the banana like a wrapper?
+          - What might happen to a banana if it had no peel at all?
+        senses:
+        - attribute: astringent_taste_when_unripe
+          value: Less-ripe bananas can taste a bit “dry” or mouth-sticky because they have more starch and different plant
+            chemicals than ripe bananas.
+          topics:
+          - How does the taste change from green to yellow to spotty-brown?
+          - Why might your mouth feel different after a bite of a greener banana?
+        - attribute: scent_strength_with_ripeness
+          value: As bananas ripen, they make stronger fruity smells because more aroma chemicals are released; warm bananas
+            often smell stronger than cold ones.
+          topics:
+          - Why do you think a riper banana smells stronger?
+          - How might the smell change if the banana is cold from the fridge versus warm on the counter?
+        structure:
+        - attribute: phloem_strings_in_peel
+          value: The stringy bits stuck to the banana are part of the peel’s transport system from when it was growing; they
+            helped move water and nutrients through the fruit.
+          topics:
+          - Why would a growing banana need a system to move water and food around?
+          - What do you think would happen if a plant couldn’t move nutrients through its fruit?
+        - attribute: fiber_threads_in_flesh
+          value: Inside the banana are tiny fibers that hold the fruit together, like soft threads; they affect how the banana
+            breaks apart when you bite it.
+          topics:
+          - Why doesn’t a banana fall into mush immediately when you hold it?
+          - How do you think the fibers change when the banana gets very ripe?
+        emotions:
+        - Do bananas feel like a “happy snack” to you or a “boring snack”? What makes you feel that way?
+        - 'Which do you prefer: a greenish banana, a yellow banana, or a spotty sweet one—and why?'
+        imagination:
+        - If a banana could talk while it ripens, what would it say as it changes each day?
+        - Imagine bananas grew in your backyard. What banana rules would your family make?
+        narrative:
+        - Tell a story about a banana that wants to become the perfect snack for a hero.
+        - Make up a story where a banana peel is a map that leads to treasure.
+        reasoning:
+        - Why do you think bananas bruise easily when they get very ripe?
+        - What would happen if you left a peeled banana out in the air for a long time? Why?
+        relationship:
+        - How is a banana like an apple, and how is it different?
+        - What other foods change a lot as they ripen or sit out, like bananas do?

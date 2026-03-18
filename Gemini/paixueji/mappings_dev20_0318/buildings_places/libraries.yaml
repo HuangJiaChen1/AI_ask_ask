@@ -1,0 +1,269 @@
+- entity_id: buildings_places_city_library
+  entity_name: City Library
+  entity_name_cn: 市图书馆
+  domain: buildings_places
+  parent_category: public_buildings
+  subcategory: libraries
+  primary_theme:
+    theme_id: how_we_organize
+    weight: 0.41
+    reasoning: A city library shows how people organize learning with book shelves, borrowing systems, quiet spaces, and helpers
+      so everyone can share resources.
+  secondary_themes:
+  - theme_id: where_place_time
+    weight: 0.33
+    reasoning: Children experience the library as a specific place in their city with sections and regular visiting times,
+      like story time or after-school reading.
+    context_trigger: when the child looks for a section, points to shelves, or says “we come here for story time” or “where
+      do the picture books live?”
+  - theme_id: how_world_works
+    weight: 0.26
+    reasoning: A library includes working systems like library cards, check-out scanners, return slots, and sorting carts
+      that children can watch and copy in play.
+    context_trigger: when the child scans a card, drops a book in the return box, or asks “how do they know it’s my book?”
+  primary_key_concepts:
+  - concept_id: function
+    relevance: 1.1
+    reasoning: The library’s function is to lend books and provide a reading space, which children can explore by choosing,
+      borrowing, and returning items.
+  - concept_id: connection
+    relevance: 0.9
+    reasoning: Children see connections between readers, librarians, books, and rules, noticing how sharing and organizing
+      helps many people use the same stories.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: Borrowing books teaches responsibility, like taking care of pages, returning on time, and using quiet voices
+      so others can read.
+  secondary_key_concepts:
+  - concept_id: form
+    relevance: 0.7
+    reasoning: Children can describe the library’s form by noticing shelves, labels, reading corners, computers, and the building
+      layout that guides where books go.
+  - concept_id: causation
+    relevance: 0.3
+    reasoning: Children can explore causation, such as returning a book makes it available for another child, or misplacing
+      it causes someone else not to find it.
+  candidate_related_concepts:
+  - concept_id: community
+    discipline: Social Studies
+    reasoning: A city library is a shared community resource where many families can access books, learning programs, and
+      safe public spaces together.
+  - concept_id: rules
+    discipline: Social Studies
+    reasoning: Library rules like whispering, handling books gently, and checking out items help children understand how shared
+      places work for everyone.
+  - concept_id: collaboration
+    discipline: Social Studies
+    reasoning: Children can notice collaboration when librarians, volunteers, and visitors work together to keep books organized
+      and programs running.
+  - concept_id: roles
+    discipline: Social Studies
+    reasoning: The library shows roles such as librarian, borrower, and storyteller, helping children see how different people
+      support learning.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: shape
+          value: big building shape
+          topics:
+          - Is the library a big building?
+          - Does it look tall or wide?
+        - attribute: size
+          value: many rooms inside
+          topics:
+          - Does the library look big?
+          - Do you think it has many rooms?
+        - attribute: style
+          value: has big front doors
+          topics:
+          - Can you find the front doors?
+          - Are the doors big or small?
+        - attribute: color
+          value: gray, tan, or red
+          topics:
+          - What color is the library?
+          - Can you point to the color you see?
+        senses:
+        - attribute: echo_sound
+          value: quiet, soft echoes
+          topics:
+          - Is the library loud or quiet?
+          - Do your footsteps make soft sounds?
+        - attribute: floor_feel
+          value: hard, smooth floor
+          topics:
+          - Does the floor feel hard?
+          - Does it feel smooth under your shoes?
+        - attribute: air_smell
+          value: smells like books
+          topics:
+          - What do you think a library smells like?
+          - Does it smell like books and paper?
+        emotions:
+        - Do you like going to the library?
+        - Does the library feel calm to you?
+        - Would you like to sit and read there?
+        - Does the quiet feel nice or scary?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: sign_letters
+          value: Big sign letters that tell the building’s name
+          topics:
+          - How do big letters help people, like labels on toy bins?
+          - Why are library signs easier to read than tiny book words?
+        - attribute: window_style
+          value: Wide windows that let sunshine in for reading
+          topics:
+          - How do big windows change the inside, compared to small windows?
+          - Why would sunlight help you read better than dim light?
+        - attribute: entrance_look
+          value: Front doors that look welcoming and easy to find
+          topics:
+          - How does a big entrance help visitors, like a big gate?
+          - Why is the front door easier to spot than a side door?
+        context:
+        - attribute: city_location
+          value: In busy neighborhoods near streets and sidewalks
+          topics:
+          - Why put a library where people can walk, not far in the woods?
+          - How is a city library different from a little town library?
+        - attribute: visit_times
+          value: People visit after school, weekends, and rainy days
+          topics:
+          - Why do more people come on rainy days than sunny playground days?
+          - How is a weekend visit different from a quick after-school visit?
+        function:
+        - attribute: borrowing_books
+          value: Lets people borrow books and bring them back
+          topics:
+          - How is borrowing different from keeping, like sharing toys?
+          - Why is returning important so others can read too?
+        - attribute: quiet_reading
+          value: A place to read quietly and focus your brain
+          topics:
+          - How does quiet help you think, compared to loud noise?
+          - Why might whispering be better than shouting inside?
+        - attribute: community_help
+          value: Helpers can answer questions and find books
+          topics:
+          - How do helpers make finding books easier than searching alone?
+          - Why ask a librarian instead of guessing where a book is?
+        structure:
+        - attribute: bookshelves
+          value: Tall shelves lined with books like colorful blocks
+          topics:
+          - How do shelves keep books safe, like a bed keeps you off the floor?
+          - Why are some shelves taller than you and some shorter?
+        - attribute: reading_areas
+          value: Cozy corners with tables, chairs, and little lamps
+          topics:
+          - How do chairs and tables help reading, compared to standing up?
+          - Why might a cozy corner feel different than an open room?
+        - attribute: checkout_desk
+          value: Front desk where books get checked in and out
+          topics:
+          - How does the desk help keep track, like a list helps remember?
+          - Why do you think checking out is done in one place, not everywhere?
+        emotions:
+        - Do libraries make you feel calm, excited, or both?
+        - Would you rather read alone or with someone at the library? Why?
+        relationship:
+        - How is a library like a bookstore, and how is it different?
+        - What place does a library remind you of—a classroom, a clubhouse, or somewhere else?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: lighting_style_brightness
+          value: Libraries often use bright, even lighting to reduce shadows on pages, helping eyes focus and making it easier
+            to find titles on shelves.
+          topics:
+          - Why is even lighting helpful when you’re trying to read tiny words?
+          - How might the library feel different if the lights were very dim like a movie theater?
+        - attribute: layout_signage_visual_cues
+          value: Many libraries use clear signs, labels, and maps so people can navigate the building quickly and quietly
+            without needing to ask out loud.
+          topics:
+          - Why do signs help a library stay quieter?
+          - If you were designing library signs for kids, what pictures or words would you include and why?
+        change:
+        - attribute: collection_turnover_displays
+          value: Libraries change over time by rotating displays, adding new books, and moving shelves to fit new sections,
+            which changes how the space feels and works.
+          topics:
+          - Why might a library move shelves or change displays during the year?
+          - How could you tell the library got new books without reading every title?
+        - attribute: wear_patterns_high_traffic
+          value: Busy areas can show wear—like shinier floors or smoother door handles—because repeated touch and footsteps
+            slowly polish surfaces.
+          topics:
+          - What places in a library do you think get touched the most, and why?
+          - How does repeated use change a surface over time?
+        context:
+        - attribute: community_event_times
+          value: City libraries often have scheduled times for story hours, homework help, or meetings, so the same building
+            can feel quiet at one time and lively at another.
+          topics:
+          - How might the library feel different during story time compared to a quiet afternoon?
+          - Why do you think libraries choose certain times for events?
+        - attribute: accessibility_and_public_space_rules
+          value: Libraries are public spaces with rules that help many people share the space—like quiet areas, computer use
+            rules, and sometimes snack rules.
+          topics:
+          - Why do you think libraries have different rules in different areas of the building?
+          - What rule would help the most people enjoy the library at the same time?
+        function:
+        - attribute: information_finding_system
+          value: Libraries use organized systems (like sections and call numbers) so people can find one exact book among
+            thousands without searching every shelf.
+          topics:
+          - Why is an organizing system necessary when there are so many books?
+          - If books were arranged only by color, what problems might happen when you try to find one?
+        - attribute: quiet_zones_vs_activity_zones
+          value: Many libraries separate spaces so different needs can happen at once—quiet reading and studying in one area,
+            and group learning or kids’ programs in another.
+          topics:
+          - Why is it helpful to have both quiet zones and talking zones in the same library?
+          - How would you design the library so noise from one area doesn’t bother another?
+        senses:
+        - attribute: page_paper_smell_sources
+          value: The “book smell” can come from paper and glue slowly releasing tiny molecules into the air, and older books
+            may smell stronger as materials age.
+          topics:
+          - Why do you think older books might smell stronger than newer books?
+          - What other places have a special smell because of the materials inside?
+        - attribute: quiet_soundscape_small_noises
+          value: Because libraries are quiet, small sounds stand out—like page turns, soft footsteps, or chairs sliding—so
+            people often move more carefully.
+          topics:
+          - Why do tiny sounds seem louder in a quiet library than on a busy street?
+          - What could you do to move quietly through the library without making big noises?
+        structure:
+        - attribute: rooms_and_sections_kids_area
+          value: Libraries often have separate rooms or sections (like a children’s area) to match different readers’ needs,
+            including lower shelves and open spaces for groups.
+          topics:
+          - Why are shelves in the kids’ area often shorter than in the adult area?
+          - How does separating sections help people find what they need faster?
+        - attribute: study_rooms_and_sound_barriers
+          value: Some libraries have study rooms with doors or thicker walls that block sound, so groups can talk without
+            disturbing quiet readers.
+          topics:
+          - How do walls and doors help stop sound from traveling?
+          - If you were building a study room, what materials or shapes might help keep it quieter?
+        emotions:
+        - How do you feel when you walk into a library—curious, calm, excited, or something else?
+        - Is a quiet place like a library relaxing for you or tricky? Why?
+        imagination:
+        - If the city library came alive at night, what would the books and shelves do?
+        - Design your dream library room—what would it look like and what special spaces would it have?
+        narrative:
+        - Tell a story about a kid who finds a surprising message hidden in a library book (in your story!).
+        - Once upon a time, the library had to solve a mystery before closing time—what happened?
+        reasoning:
+        - Why do you think libraries want people to return books on time?
+        - What might happen if everyone talked loudly everywhere in the library all day?
+        relationship:
+        - How is a library like a museum, and how is it different?
+        - What places in your community remind you of the library, and why?

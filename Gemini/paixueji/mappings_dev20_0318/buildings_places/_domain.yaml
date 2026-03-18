@@ -1,0 +1,49 @@
+domain: buildings_places
+entity_count: 67
+subcategories:
+  animal_shelters: 1
+  animal_shops: 1
+  attractions: 1
+  community: 1
+  culture: 2
+  decorations: 1
+  dessert_shops: 1
+  dining_areas: 1
+  dining_places: 3
+  emergency_services: 2
+  entertainment: 1
+  food_stores: 2
+  garden_structures: 1
+  government: 1
+  health_and_beauty: 1
+  healthcare: 2
+  home_parts: 4
+  homes: 4
+  kids_shops: 1
+  landmarks: 1
+  libraries: 1
+  lodging: 2
+  parking: 1
+  parks: 1
+  play_areas: 1
+  play_houses: 1
+  public_art: 1
+  retail_shops: 4
+  services: 4
+  shopping_centers: 1
+  sports: 1
+  sports_places: 4
+  stations: 2
+  stops: 1
+  store_areas: 1
+  street_features: 5
+  street_objects: 1
+  transport_structures: 1
+  yard_structures: 2
+default_themes:
+- theme_id: how_we_organize
+  weight: 0.35
+- theme_id: where_place_time
+  weight: 0.35
+- theme_id: how_world_works
+  weight: 0.3

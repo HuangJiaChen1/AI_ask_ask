@@ -1,0 +1,299 @@
+- entity_id: daily_objects_toothbrush_holder
+  entity_name: Toothbrush Holder
+  entity_name_cn: 牙刷架
+  domain: daily_objects
+  parent_category: daily_objects
+  subcategory: bathroom_items
+  primary_theme:
+    theme_id: how_we_organize
+    weight: 0.4
+    reasoning: A toothbrush holder organizes toothbrushes in one spot so children can find their own brush, keep the sink
+      area neat, and follow daily routines for brushing teeth.
+  secondary_themes:
+  - theme_id: who_we_are
+    weight: 0.24
+    reasoning: It supports self-care and identity because children often have a specific brush, color, or cup, helping them
+      feel ownership of hygiene habits and personal space.
+    context_trigger: when the child points to a specific toothbrush and says ‘that one is mine’ or talks about brushing routine
+  - theme_id: how_world_works
+    weight: 0.2
+    reasoning: Children can notice how holes or compartments keep brushes upright so they can dry, and how water drips down,
+      showing basic ideas about materials and cleanliness.
+    context_trigger: when the child shakes water off a brush, notices drips, or asks why the brush must stand up
+  - theme_id: how_we_express
+    weight: 0.16
+    reasoning: If the holder is artistic or decorative, children may talk about colors, patterns, and choosing designs they
+      like, using the object to express taste and creativity.
+    context_trigger: when the child comments on the holder’s colors or design, or wants to decorate and pick a special one
+  primary_key_concepts:
+  - concept_id: function
+    relevance: 1.1
+    reasoning: A toothbrush holder keeps toothbrushes separated, upright, and easy to reach, helping children store tools
+      for brushing without losing them.
+  - concept_id: connection
+    relevance: 0.9
+    reasoning: It connects to toothbrushing, bedtime and morning routines, and shared bathroom spaces, showing how one organizer
+      supports many daily habits.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: Children can be responsible by putting their toothbrush back after use, keeping it clean, and not mixing it
+      up with someone else’s brush.
+  secondary_key_concepts:
+  - concept_id: form
+    relevance: 0.7
+    reasoning: The holder’s cups or slots are shaped to fit toothbrush handles, and the base helps it stand steady on the
+      sink so it does not tip over.
+  - concept_id: causation
+    relevance: 0.3
+    reasoning: If a wet toothbrush is laid flat, it can make puddles and stay wet longer, so children see how storage choices
+      cause cleaner or messier spaces.
+  candidate_related_concepts:
+  - concept_id: rules
+    discipline: Social Studies
+    reasoning: Families may have rules like ‘don’t share toothbrushes’ and ‘put it back in the holder,’ teaching children
+      health-focused routines.
+  - concept_id: community
+    discipline: Social Studies
+    reasoning: In a shared bathroom, organizing toothbrushes helps everyone find their items and reduces mess, supporting
+      a cooperative living space.
+  - concept_id: roles
+    discipline: Social Studies
+    reasoning: Children can take on the role of being in charge of their own toothbrush area, while adults might clean the
+      holder, showing shared responsibilities.
+  - concept_id: safety
+    discipline: Health
+    reasoning: Keeping brushes separate and clean helps prevent germ spreading, and a stable holder reduces the chance of
+      toothbrushes falling onto dirty surfaces.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: color
+          value: white or bright color
+          topics:
+          - What color is the toothbrush holder?
+          - Can you point to the holder?
+          - Can you find something the same color?
+        - attribute: shape
+          value: cup shape with holes
+          topics:
+          - Is it shaped like a cup?
+          - Do you see holes on it?
+          - Where does the toothbrush go?
+        - attribute: size
+          value: small and hand-sized
+          topics:
+          - Is the holder big or small?
+          - Can you hold it with your hands?
+          - Is it taller or shorter than your toothbrush?
+        senses:
+        - attribute: surface_feel
+          value: hard and smooth
+          topics:
+          - How do you think it feels?
+          - Is it smooth or bumpy?
+          - Is it hard or soft?
+        - attribute: weight
+          value: light when empty
+          topics:
+          - Is it heavy or light?
+          - Is it lighter when empty?
+          - Can you gently pick it up?
+        - attribute: sound
+          value: clink on the sink
+          topics:
+          - What sound might it make on the sink?
+          - Can you say 'clink clink'?
+          - Is the sound loud or quiet?
+        emotions:
+        - Do you like having your toothbrush in a holder?
+        - Does the holder look nice to you?
+        - Would you pick a fun color for it?
+        - Is it friendly-looking or yucky-looking?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: cup_or_caddy_style
+          value: looks like a little cup with toothbrush slots
+          topics:
+          - Why does a holder have slots more than a regular cup?
+          - How is a slot-holder different from just laying brushes down?
+        - attribute: see_through_window
+          value: sometimes clear so you can see inside
+          topics:
+          - Why might clear plastic help more than solid plastic?
+          - How does seeing inside change how you use it?
+        - attribute: drip_holes_pattern
+          value: tiny holes or grooves for drips to go
+          topics:
+          - Why would a holder need holes more than a water bottle?
+          - How do little holes help drying better than no holes?
+        context:
+        - attribute: sink_side_spot
+          value: usually sits right next to the bathroom sink
+          topics:
+          - Why is it kept by the sink more than by the bed?
+          - How does being close help more than being far away?
+        - attribute: morning_night_routine
+          value: used most at morning and bedtime brushing
+          topics:
+          - Why do we use it more at night than lunchtime?
+          - How does bedtime brushing feel different from morning brushing?
+        - attribute: shared_family_item
+          value: often shared when families keep brushes together
+          topics:
+          - Why might each person want their own spot in the holder?
+          - How is sharing a holder different from sharing a toothbrush?
+        function:
+        - attribute: keeps_bristles_cleaner
+          value: keeps brush heads up and away from mess
+          topics:
+          - Why keep bristles up instead of flat on the counter?
+          - How does being off the counter keep it cleaner than being on it?
+        - attribute: helps_drying
+          value: lets water drip down so brushes dry faster
+          topics:
+          - Why do wet bristles need drying more than dry ones?
+          - How does air help a brush dry better than a closed box?
+        - attribute: organizes_many_items
+          value: keeps everyone’s toothbrushes in one tidy place
+          topics:
+          - Why is organizing helpful when there are many brushes?
+          - How does a holder make finding your brush easier than a drawer?
+        senses:
+        - attribute: cool_smooth_touch
+          value: feels cool and smooth like a little stone
+          topics:
+          - Why does it feel cooler than a towel?
+          - How does smooth plastic feel different from bumpy rubber?
+        - attribute: clink_when_set_down
+          value: can make a small clink on the sink
+          topics:
+          - Why does it clink more than a sponge?
+          - How does setting it down softly change the sound?
+        - attribute: soapy_clean_smell
+          value: smells a little like soap after cleaning
+          topics:
+          - Why does it smell more like soap than like food?
+          - How does the smell change after rinsing compared to before?
+        structure:
+        - attribute: separate_slots
+          value: separate holes so brushes don’t touch
+          topics:
+          - Why keep toothbrushes apart instead of all in one big space?
+          - How do separate holes keep things neater than one open cup?
+        - attribute: weighted_bottom
+          value: bottom feels heavier so it won’t tip easily
+          topics:
+          - Why would a heavier bottom help more than a light bottom?
+          - How does tipping happen differently on a wet counter than a dry one?
+        - attribute: drainable_base
+          value: base catches drips and can be poured out
+          topics:
+          - Why catch drips in a base instead of letting them puddle?
+          - How does pouring out water help keep it cleaner than leaving it?
+        emotions:
+        - Do you like when the toothbrush holder looks tidy? Why?
+        - How do you feel when you can’t find your toothbrush spot?
+        - Would you want a fun-shaped holder or a simple one?
+        - Does a clean bathroom item make you feel calm or rushed?
+        relationship:
+        - How is a toothbrush holder like a cup, and how is it different?
+        - What else in your home helps you keep things organized?
+        - How is a toothbrush holder different from a soap dish?
+        - What does a toothbrush holder remind you of—like a little parking lot?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: opening_shape_match
+          value: The top openings can be circles, ovals, or slots; the shape helps a toothbrush stand up instead of tipping,
+            and spacing helps brushes not bump together.
+          topics:
+          - Why might a slot shape hold a toothbrush differently than a round hole?
+          - What could happen if the holes were too close together?
+        - attribute: height_and_visibility
+          value: Some holders are low so you can grab quickly, and some are tall to hide more of the handle; the height changes
+            how easy it is to see which brush is yours.
+          topics:
+          - 'Which is easier for finding your toothbrush: a tall holder or a short one? Why?'
+          - How could a holder help everyone tell their toothbrushes apart?
+        change:
+        - attribute: mineral_build_up_from_water
+          value: When water dries, tiny minerals can be left behind as a crusty or cloudy film; it can build up near edges
+            where water sits the longest.
+          topics:
+          - Why do you think build-up happens more where water puddles?
+          - What could you do to stop water from sitting in the same spot every day?
+        - attribute: tilting_or_wobble_over_time
+          value: If the bottom gets scratched, warped, or uneven, the holder can start to wobble; wobbling can make brushes
+            fall or touch each other more.
+          topics:
+          - How does a tiny wobble change what happens when you put a toothbrush back?
+          - What could you check on the bottom to see why it’s wobbling?
+        context:
+        - attribute: splash_zone_near_sink
+          value: Toothbrush holders often sit where water splashes, so they need to handle frequent wetting and drying without
+            getting gross or slippery.
+          topics:
+          - Why does it matter where you place the holder near the sink?
+          - What would happen if the holder sat right where the water splashes the most?
+        - attribute: shared_space_hygiene_rules
+          value: In shared bathrooms, holders help keep brushes separated and upright so bristles can dry; where it sits can
+            affect whether brushes touch or stay apart.
+          topics:
+          - Why is it helpful for toothbrushes to not touch each other?
+          - If a family shares one holder, what rules would keep it clean?
+        function:
+        - attribute: airflow_for_drying
+          value: A good holder allows air to reach the bristles so they dry faster; drying matters because germs like damp
+            places more than dry places.
+          topics:
+          - Why do you think drying a toothbrush matters after brushing?
+          - How could a holder be designed to get more air to the bristles?
+        - attribute: spill_and_tip_resistance
+          value: A holder’s shape can spread weight lower and wider so it resists tipping when someone bumps the counter,
+            helping keep brushes off the sink.
+          topics:
+          - Why does a wider base make a holder harder to tip over?
+          - What might happen if the holder were very tall and very narrow?
+        senses:
+        - attribute: wet_slip_feel
+          value: When wet, smooth plastic or glazed ceramic can feel slippery because a thin water layer reduces friction
+            between your fingers and the surface.
+          topics:
+          - Why does something feel more slippery when there’s water on it?
+          - What kind of surface would be easier to grip with wet hands, and why?
+        - attribute: stale_water_smell_if_not_drained
+          value: If water collects at the bottom, it can start to smell stale as it sits; draining and airflow help prevent
+            that trapped-water smell.
+          topics:
+          - Why might water that sits for days start to smell different?
+          - What changes could help keep water from staying trapped inside the holder?
+        structure:
+        - attribute: removable_inner_tray
+          value: Some holders have an inner tray that lifts out, so you can dump trapped water and rinse the inside; it’s
+            like making the hard-to-reach part reachable.
+          topics:
+          - How does a removable tray make cleaning easier?
+          - What might you find under the tray if it hasn’t been cleaned in a while?
+        - attribute: anti_skid_base_material
+          value: Some holders have a rubbery ring or pad on the bottom to increase friction so it doesn’t slide when the counter
+            is wet.
+          topics:
+          - Why does rubber help stop sliding better than smooth plastic?
+          - If the anti-skid pad fell off, what changes might you notice?
+        emotions:
+        - Do you like your toothbrush holder neat and simple or fun and silly? Why?
+        - How do you feel when the toothbrush area is messy versus tidy?
+        imagination:
+        - If the toothbrush holder were a tiny hotel, who stays in each “room” and what are the rules?
+        - Design a toothbrush holder for a sea creature. What would it look like and how would it keep things dry?
+        narrative:
+        - Tell a story about a toothbrush holder that tries to keep peace between toothbrushes that don’t get along.
+        - Make up a story where the toothbrush holder is a guard tower protecting the bathroom from “Germ Monsters.”
+        reasoning:
+        - Why do you think many toothbrush holders keep brushes standing up instead of lying down?
+        - What would happen if a toothbrush holder had no way for water to drain?
+        relationship:
+        - How is a toothbrush holder like a pencil holder? How is it different?
+        - What other bathroom item helps with organizing the way a toothbrush holder does?

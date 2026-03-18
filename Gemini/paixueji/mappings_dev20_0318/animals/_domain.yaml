@@ -1,0 +1,42 @@
+domain: animals
+entity_count: 133
+subcategories:
+  bears: 3
+  big_cats: 5
+  cats: 5
+  city_birds: 1
+  crocodilians: 2
+  dogs: 10
+  farm_animals: 8
+  farm_birds: 4
+  flightless_birds: 3
+  flying_mammals: 1
+  forest_animals: 11
+  forest_birds: 2
+  frogs: 1
+  grassland_mammals: 1
+  lizards: 3
+  ocean_fish: 2
+  pet_birds: 4
+  pet_fish: 4
+  pond_fish: 1
+  primates: 5
+  raptors: 4
+  saltwater_fish: 1
+  sea_creatures: 8
+  small_mammals: 5
+  snakes: 1
+  songbirds: 5
+  turtles: 2
+  water_birds: 8
+  water_mammals: 5
+  wild_canines: 3
+  zoo_birds: 2
+  zoo_mammals: 13
+default_themes:
+- theme_id: how_world_works
+  weight: 0.5
+- theme_id: sharing_planet
+  weight: 0.3
+- theme_id: who_we_are
+  weight: 0.2

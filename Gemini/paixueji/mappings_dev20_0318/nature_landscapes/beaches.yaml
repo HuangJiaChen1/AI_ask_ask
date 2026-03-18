@@ -1,0 +1,274 @@
+- entity_id: nature_landscapes_sandy_beach
+  entity_name: Sandy Beach
+  entity_name_cn: 沙滩
+  domain: nature_landscapes
+  parent_category: coastal_features
+  subcategory: beaches
+  primary_theme:
+    theme_id: sharing_planet
+    weight: 0.42
+    reasoning: A sandy beach is a shared place where people and wildlife coexist, and children can explore caring choices
+      like cleaning litter and respecting animals living in the sand.
+  secondary_themes:
+  - theme_id: where_place_time
+    weight: 0.33
+    reasoning: Beaches are found along coasts worldwide, and children can compare different beaches and notice how tides and
+      seasons change what they see.
+    context_trigger: when the child asks where this beach is, compares two beach photos, or notices the sea is farther away
+      at different times
+  - theme_id: how_world_works
+    weight: 0.25
+    reasoning: Waves, wind, and tides move sand and shells, helping children understand natural processes that shape the beach
+      and make patterns.
+    context_trigger: when the child watches waves wash in and out, draws lines in sand, or asks why the sand is wet near the
+      water
+  primary_key_concepts:
+  - concept_id: connection
+    relevance: 1.0
+    reasoning: Children can see connections between ocean, sand, shells, and animals, noticing how seaweed and driftwood arrive
+      from the water.
+  - concept_id: causation
+    relevance: 0.9
+    reasoning: Waves cause shells to be sorted and sand to pile up; children can observe that stronger waves change the shoreline
+      faster.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: Kids can act responsibly by taking rubbish home, not breaking shells, and avoiding trampling areas where animals
+      hide.
+  secondary_key_concepts:
+  - concept_id: change
+    relevance: 0.6
+    reasoning: The beach changes with footprints, tides, and weather, and children can notice morning sand looks different
+      from afternoon sand.
+  - concept_id: form
+    relevance: 0.5
+    reasoning: Children can describe forms like grains, dunes, and shell shapes, using their senses to compare rough, smooth,
+      big, and tiny.
+  candidate_related_concepts:
+  - concept_id: diversity
+    discipline: Science
+    reasoning: Children can look for different beach animals and plants, noticing variety in shells, seaweed types, and small
+      moving creatures.
+  - concept_id: conservation
+    discipline: Social Studies
+    reasoning: Kids can talk about beach clean-ups and protected nesting areas, understanding that rules help keep the beach
+      healthy.
+  - concept_id: sustainability
+    discipline: Science
+    reasoning: Children can explore sustainable habits like using refillable water bottles and not leaving toys or plastics
+      that can harm the ocean.
+  - concept_id: habitat
+    discipline: Science
+    reasoning: A sandy beach is a habitat where crabs, birds, and tiny sand animals live, and children can search for tracks
+      and burrows.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: colors
+          value: tan sand and blue water
+          topics:
+          - What color is the sand?
+          - What color is the water near the beach?
+        - attribute: terrain_shape
+          value: flat sand near water
+          topics:
+          - Is the beach flat or bumpy?
+          - Can you point to where the sand meets the water?
+        - attribute: size
+          value: big open place
+          topics:
+          - Does the beach feel big or small?
+          - Can you stretch your arms wide like a big beach?
+        senses:
+        - attribute: ground_feel
+          value: gritty and warm sand
+          topics:
+          - How does sand feel on your feet?
+          - Is the sand warm or cool?
+        - attribute: ambient_sound
+          value: waves go whoosh
+          topics:
+          - What sound do waves make?
+          - Can you make a whoosh sound?
+        - attribute: air_smell
+          value: salty ocean smell
+          topics:
+          - How does the beach air smell?
+          - Does the smell feel nice to you?
+        emotions:
+        - Do you like going to the beach?
+        - Does the beach make you feel excited or sleepy?
+        - Would you like to walk on the sand barefoot?
+        - Is the beach friendly or scary?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: sand_grain_sparkle
+          value: Tiny grains that can glitter in sunshine
+          topics:
+          - Why does sand sparkle more when the sun is bright?
+          - How is sparkly sand different from sparkly snow?
+        - attribute: footprint_patterns
+          value: Footprints make bumpy trails and toe shapes
+          topics:
+          - How do footprints change when sand is wet versus dry?
+          - Why do some footprints look deeper than others?
+        - attribute: wet_dry_color_change
+          value: Wet sand looks darker than dry sand
+          topics:
+          - Why does wet sand look darker than dry sand?
+          - How is wet sand different from dry sand when you shape it?
+        context:
+        - attribute: edge_of_land
+          value: Where land meets water in a wiggly line
+          topics:
+          - Why does the beach edge move when waves come in?
+          - How is a beach edge different from a riverbank edge?
+        - attribute: weather_changes
+          value: Wind and waves can change it every day
+          topics:
+          - How does wind move sand compared to water moving sand?
+          - Why might the beach look different after a storm?
+        function:
+        - attribute: habitat
+          value: A living place for tiny burrowers and shore critters
+          topics:
+          - Why do some animals hide under sand instead of on top?
+          - How is living on a beach different from living in a forest?
+        - attribute: play_and_rest
+          value: A place to walk, dig, rest, and explore
+          topics:
+          - How does digging in sand work better than digging in dirt?
+          - Why do people like resting on sand compared to rocks?
+        structure:
+        - attribute: sand_layers
+          value: Layers can be dry on top, wet underneath
+          topics:
+          - How can sand be dry and wet in different layers?
+          - Why does digging down feel different than touching the top?
+        - attribute: shell_bits
+          value: Mixed-in tiny shell pieces with sharp edges
+          topics:
+          - Why do some beach sands have more shell bits than others?
+          - How are shell bits different from smooth sand grains?
+        - attribute: dunes
+          value: Wind-made sand hills with curvy ridges
+          topics:
+          - How does wind build dunes like little sand mountains?
+          - Why are dunes shaped differently than regular hills?
+        emotions:
+        - Do you feel calm or excited when you think about a beach?
+        - Would you like sand on your feet, or not? Why?
+        - How do you feel when waves whoosh in and out?
+        relationship:
+        - How is a sandy beach different from a rocky beach?
+        - What does the beach sound remind you of at home?
+        - Is beach sand more like flour or more like tiny pebbles to you? Why?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: sand_color_variation
+          value: Sand can look lighter or darker in different patches because grains can be made from different rocks and
+            shells, and because wet grains reflect light differently.
+          topics:
+          - Why might sand be different colors in different spots on the same beach?
+          - If you found a stripe of very dark sand, what could that tell you about where those grains came from?
+        - attribute: ripple_ridges
+          value: Wind and water push sand into tiny ridges, making repeating ripple patterns that show which direction the
+            sand was moved.
+          topics:
+          - How can ripples in sand act like clues about wind or waves?
+          - What do you think would happen to ripples after lots of people walk over them?
+        - attribute: shoreline_curve
+          value: The edge where water meets land can curve because waves and currents move sand along the coast, building
+            some areas and taking away others.
+          topics:
+          - Why is the shoreline rarely a perfectly straight line?
+          - If waves came mostly from one direction for many days, how might the curve change?
+        change:
+        - attribute: tide_line_movement
+          value: As tides rise and fall, the wet line on the beach moves up and down; that movement shows how far the ocean
+            reaches at different times.
+          topics:
+          - Why does the wet sand line move during the day?
+          - How could you use the tide line to guess where it might be safe to sit?
+        - attribute: storm_reshaping
+          value: Big storms can move huge amounts of sand quickly, carving steep edges or piling new sand, because stronger
+            waves carry more sand energy.
+          topics:
+          - Why do storms change the beach faster than calm days?
+          - If a storm steals sand from one place, where do you think it might end up?
+        - attribute: seasonal_beach_width
+          value: Some beaches get wider in calmer seasons when sand builds up, and narrower in rough seasons when waves pull
+            sand away.
+          topics:
+          - Why might a beach look bigger in one season and smaller in another?
+          - What clues could you look for to tell whether sand is building up or being taken away?
+        context:
+        - attribute: near_river_mouths
+          value: Beaches near river mouths can have different sand because rivers bring tiny pieces of rock and mud that mix
+            with ocean sand.
+          topics:
+          - How might a nearby river change what the beach looks and feels like?
+          - Why would river sand and ocean sand be mixed together in some places?
+        - attribute: time_of_day_experience
+          value: Morning, noon, and evening can make the beach look and feel different because the sun angle changes shadows
+            and the sand warms or cools.
+          topics:
+          - How does the beach change from morning to afternoon just because of the sun?
+          - Why do footprints and ripples sometimes look more ‘3D’ when the sun is low?
+        function:
+        - attribute: wave_energy_buffer
+          value: A sandy beach can act like a cushion that absorbs and spreads wave energy, helping protect the land behind
+            it from constant pounding water.
+          topics:
+          - How does soft sand change what waves do when they reach land?
+          - What might happen to the land behind the beach if there were no sand buffer?
+        - attribute: nesting_and_hiding_space
+          value: Sand can provide hiding and nesting spaces because it can be dug into and it holds warmth, helping some animals
+            stay safer and keep eggs warmer.
+          topics:
+          - Why would warm sand be useful for eggs or tiny animals?
+          - How does being able to dig into sand help animals stay safe?
+        senses:
+        - attribute: salt_air_taste
+          value: Near the ocean, tiny salty droplets can float in the air; they can land on your lips and give a slight salty
+            taste.
+          topics:
+          - Why can you sometimes taste salt in the air at the beach?
+          - How might a windy day change how salty the air seems?
+        - attribute: sun_warmed_sand_temperature
+          value: Dry sand heats up fast in sunlight because the surface grains soak up heat; wet sand often stays cooler because
+            water carries heat away.
+          topics:
+          - Why might dry sand feel much hotter than wet sand?
+          - Where on the beach do you think sand will be coolest, and why?
+        structure:
+        - attribute: grain_size_mix
+          value: A beach can have a mix of tiny grains and bigger grains; bigger grains let water drain faster while tiny
+            grains pack tighter and hold shape more.
+          topics:
+          - Why does water drain differently through coarse sand than fine sand?
+          - How would grain size change how easy it is to build a sandcastle?
+        - attribute: intertidal_zone
+          value: The intertidal zone is the strip that gets covered at high tide and exposed at low tide, so it’s a place
+            that must handle both water and air every day.
+          topics:
+          - What makes living in the intertidal zone tricky for plants or animals?
+          - How do you think the sand there feels different from sand higher up the beach?
+        emotions:
+        - Does the beach make you feel peaceful, energetic, or something else? What do you notice that causes that feeling?
+        - Is the ocean at the beach ever a little scary to you? What would help you feel brave?
+        imagination:
+        - Pretend the beach is a giant sleeping creature—what parts are the dunes, waves, and tide line?
+        - If you could invent a new beach rule that makes it more fun for everyone, what would it be?
+        narrative:
+        - Tell a story about a day at the beach that starts calm and turns into a surprising adventure.
+        - Once upon a time, a footprint on the beach was a clue—who left it and where did they go?
+        reasoning:
+        - Why do you think waves keep coming again and again without stopping?
+        - What would happen to the beach if there were no tides at all?
+        relationship:
+        - How is a sandy beach different from a rocky beach, and what stays the same?
+        - What does the beach remind you of (a desert, a playground, a blanket)? Why?

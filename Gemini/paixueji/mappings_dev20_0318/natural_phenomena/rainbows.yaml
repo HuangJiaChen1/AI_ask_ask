@@ -1,0 +1,256 @@
+- entity_id: natural_phenomena_double_rainbow
+  entity_name: Double Rainbow
+  entity_name_cn: 双彩虹
+  domain: natural_phenomena
+  parent_category: optical_phenomena
+  subcategory: rainbows
+  primary_theme:
+    theme_id: how_world_works
+    weight: 0.57
+    reasoning: A double rainbow helps children explore how the world works by noticing sunlight and rain together create two
+      arcs of colors in the sky.
+  secondary_themes:
+  - theme_id: sharing_planet
+    weight: 0.26
+    reasoning: Seeing a double rainbow can prompt children to talk about protecting skies and appreciating nature with others,
+      sharing observations and stories about weather after rain.
+    context_trigger: when the child calls others to look, wants to take photos together, or talks about how the rainbow appeared
+      after the rain stopped
+  - theme_id: where_place_time
+    weight: 0.17
+    reasoning: Double rainbows appear only at certain times and viewing positions, so children can explore where to stand
+      and when to look after a shower.
+    context_trigger: when the child asks 'where should I stand to see it?' or notices it shows up only after rain with the
+      sun behind them
+  primary_key_concepts:
+  - concept_id: causation
+    relevance: 1.1
+    reasoning: Children wonder what makes two rainbows, leading to cause-and-effect ideas about sun, raindrops, and light
+      making colors appear.
+  - concept_id: form
+    relevance: 0.6
+    reasoning: They can compare the form of two arcs, noticing one is fainter and sometimes has reversed color order compared
+      with the brighter one.
+  - concept_id: change
+    relevance: 1.0
+    reasoning: A double rainbow changes quickly, fading as clouds move or the sun shifts, letting children observe how weather
+      scenes transform in minutes.
+  secondary_key_concepts:
+  - concept_id: function
+    relevance: 0.9
+    reasoning: Children can explore that raindrops act like tiny prisms or mirrors for light, helping explain what the rainbow
+      is doing in the air.
+  - concept_id: connection
+    relevance: 0.6
+    reasoning: They can connect rain ending, sun coming out, and the rainbow appearing, linking sky conditions with what they
+      see and feel outdoors.
+  candidate_related_concepts:
+  - concept_id: force
+    discipline: Science
+    reasoning: Gravity pulls raindrops downward while wind moves them sideways, affecting where rain falls and where children
+      might spot the rainbow.
+  - concept_id: energy
+    discipline: Science
+    reasoning: Light is energy from the sun, and children can learn that this light energy spreads into different colors when
+      it passes through raindrops.
+  - concept_id: cycles
+    discipline: Science
+    reasoning: Rainbows often appear in repeating weather patterns—rain then sun—helping children recognize cycles of showers
+      and clearing skies.
+  - concept_id: properties
+    discipline: Science
+    reasoning: Children can explore properties like bright versus faint colors, arc size, and the order of colors, building
+      careful observation skills.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: colors
+          value: many bright colors
+          topics:
+          - What colors do you see in the rainbow?
+          - Can you point to your favorite color?
+        - attribute: brightness
+          value: one bright, one faint
+          topics:
+          - Which rainbow looks brighter?
+          - Can you find the fainter rainbow?
+        - attribute: movement_pattern
+          value: stays still in sky
+          topics:
+          - Does the rainbow move fast or stay still?
+          - What happens to the rainbow after a while?
+        senses:
+        - attribute: feel
+          value: cannot be touched
+          topics:
+          - Can we grab a rainbow with our hands?
+          - What can you touch instead—water or sand?
+        - attribute: sound
+          value: no sound at all
+          topics:
+          - Does a rainbow make a sound?
+          - What sounds might you hear when you see one?
+        - attribute: temperature
+          value: air can feel cool
+          topics:
+          - Is the air after rain warm or cool?
+          - Do you feel cooler when the clouds come?
+        emotions:
+        - Do you like looking at rainbows?
+        - Do rainbows make you feel happy or calm?
+        - Would you want to run outside to see one?
+        - Is a double rainbow surprising to you?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: second_arc_faintness
+          value: A lighter second bow, like a whisper of colors
+          topics:
+          - Why is the second rainbow usually fainter than the first?
+          - How is a faint rainbow different from a bright one?
+        - attribute: color_order_swap
+          value: Outer rainbow can have colors in reverse order
+          topics:
+          - Why might the outside rainbow’s colors look flipped around?
+          - How is the outside rainbow different from the inside rainbow?
+        - attribute: gap_band
+          value: A darker space between bows, like a shadow stripe
+          topics:
+          - Why is there a darker gap between the two rainbows?
+          - How is the dark gap different from a cloudy patch?
+        context:
+        - attribute: after_rain_timing
+          value: Often appears when rain is ending and sun peeks out
+          topics:
+          - Why do double rainbows show up when rain is stopping?
+          - How is seeing a rainbow after rain different from seeing clouds during rain?
+        - attribute: sun_position
+          value: Happens when sun is behind you, lowish in sky
+          topics:
+          - Why do you usually face away from the sun to see it?
+          - How is a low sun different from a high noon sun for rainbows?
+        function:
+        - attribute: light_bounce_twice
+          value: Light bounces inside drops two times to make two bows
+          topics:
+          - How does bouncing twice make a second rainbow?
+          - Why is two bounces different from one bounce in a raindrop?
+        - attribute: weather_hint
+          value: A clue that sun and rain are both nearby
+          topics:
+          - Why can a rainbow be a hint about the weather?
+          - How is a rainbow clue different from a thunder clue?
+        structure:
+        - attribute: two_arcs
+          value: Two curved bands, one inside and one outside
+          topics:
+          - How do the two arcs line up like nested smiles?
+          - Why is the outer arc bigger than the inner arc?
+        - attribute: color_bands
+          value: Many thin color bands that blend at the edges
+          topics:
+          - How do the colors look like they melt into each other?
+          - Why are the bands smoother than stripes on a shirt?
+        emotions:
+        - How do you feel when you spot a double rainbow in the sky?
+        - Would you want to take a picture or just stare? Why?
+        - Do rainbows feel magical to you or just pretty?
+        relationship:
+        - How is a double rainbow different from a single rainbow?
+        - What else looks like two curved lines in the sky?
+        - Does a rainbow remind you more of a bridge or a smile? Why?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: arc_spacing
+          value: The two arcs can look closer or farther apart depending on where you stand and how the raindrops are spread
+            in the sky, changing the picture your eyes catch.
+          topics:
+          - Why might the two rainbows look closer together from one spot but not from another?
+          - If you walked to the left, how do you think the spacing would change?
+        - attribute: edge_softness
+          value: Rainbow edges can look sharp or blurry because the raindrops are different sizes; mixed sizes scatter light
+            in slightly different directions.
+          topics:
+          - Why would different-sized raindrops make the rainbow’s edges look fuzzy?
+          - What kind of rain (misty or big drops) do you think makes clearer bands?
+        - attribute: color_band_width
+          value: Some color stripes can look thicker because your eyes notice some colors more, and because light spreads
+            out a bit differently in raindrops.
+          topics:
+          - Which color band do you notice first, and why do you think your eyes pick that one?
+          - What might make the bands look thicker or thinner on different days?
+        change:
+        - attribute: arc_breaks_and_rejoins
+          value: A double rainbow can look like it has gaps when clouds block sunlight or when rain is only falling in some
+            parts of the sky, then it can reappear when conditions line up again.
+          topics:
+          - Why would a cloud make part of the rainbow disappear but not all of it?
+          - What do you think needs to line up for the missing part to come back?
+        - attribute: brightness_shift_with_rain_intensity
+          value: If rain gets heavier or lighter, the number of droplets changes, so more or fewer droplets are available
+            to bend and reflect sunlight toward your eyes.
+          topics:
+          - Why would more raindrops sometimes make a rainbow brighter?
+          - Could too much rain ever make it harder to see? Why?
+        - attribute: position_shift_as_sun_moves
+          value: As the sun lowers or rises, the rainbow’s angle changes, so the arcs seem to move in the sky even though
+            the drops are just falling.
+          topics:
+          - Why does the rainbow seem to move when the sun moves?
+          - How would the rainbow look different near sunset compared to midday?
+        context:
+        - attribute: viewer_back_to_sun
+          value: You usually see a rainbow when the sun is behind you and rain is in front, because your eyes need to catch
+            light that bounced back from droplets.
+          topics:
+          - Why do you think you have to face the rain but keep the sun behind you?
+          - If you turned around, what would happen to the rainbow and why?
+        - attribute: best_view_with_dark_cloud_backdrop
+          value: A darker cloud behind the rain can make the colors stand out more, because there’s less bright background
+            light washing the colors away.
+          topics:
+          - Why do bright colors show up better on a dark background?
+          - Where would you look in the sky to find the best background for a rainbow?
+        function:
+        - attribute: light_split_by_wavelength
+          value: White sunlight is made of many colors; a raindrop bends each color a different amount, so the colors spread
+            out into a stripe.
+          topics:
+          - Why don’t all the colors bend the same way inside a raindrop?
+          - If sunlight were only one color, what would happen to the rainbow?
+        - attribute: double_reflection_reason
+          value: The second rainbow happens when light bounces one extra time inside raindrops, which makes it dimmer and
+            flips the colors compared to the first arc.
+          topics:
+          - Why does an extra bounce make the second rainbow fainter?
+          - How does bouncing an extra time change what your eyes receive?
+        structure:
+        - attribute: secondary_arc_geometry
+          value: The second arc appears at a slightly different angle than the first because the light takes a different path
+            inside the droplet, so it comes out in a different direction.
+          topics:
+          - Why would a different path inside the droplet make a second arc appear in a different place?
+          - If raindrops were shaped differently, how might the arc shapes change?
+        - attribute: alexanders_band_dark_region
+          value: The darker space between the two rainbows happens because less light exits droplets toward your eyes at those
+            angles, making a dim ‘in-between’ band.
+          topics:
+          - Why do you think the space between arcs can look darker than the sky around it?
+          - What does that dark band tell you about where the light is going instead?
+        emotions:
+        - How do you feel when you spot a double rainbow—surprised, joyful, curious, or something else?
+        - Do double rainbows feel like a special secret from the sky? Why or why not?
+        imagination:
+        - If a double rainbow was a doorway, where would each arc lead?
+        - Imagine the two rainbows are twin siblings—what are their personalities like?
+        narrative:
+        - Tell a story about someone who follows a double rainbow and finds something unexpected.
+        - Once upon a time, a double rainbow appeared only for one kid—why did it choose them?
+        reasoning:
+        - Why do you think a double rainbow is rarer than a single rainbow?
+        - What would happen to rainbows if there were no raindrops—could anything else in the air make one?
+        relationship:
+        - How is a double rainbow like a mirror trick, and how is it not like a mirror?
+        - What other things do you know that split light into colors, and how are they similar or different?

@@ -1,0 +1,299 @@
+- entity_id: vehicles_bicycle
+  entity_name: Bicycle
+  entity_name_cn: 自行车
+  domain: vehicles
+  parent_category: road vehicles
+  subcategory: two-wheelers
+  primary_theme:
+    theme_id: how_we_organize
+    weight: 0.48
+    reasoning: A bicycle fits how we organize because families use it for commuting and play with shared road rules, paths,
+      and routines like wearing helmets and parking bikes.
+  secondary_themes:
+  - theme_id: where_place_time
+    weight: 0.26
+    reasoning: Children relate bikes to familiar places like parks, sidewalks, and bike lanes, and can talk about routes from
+      home to school at different times of day.
+    context_trigger: when the child says, "Let’s ride to the park," traces a route with their finger, or talks about riding
+      in the morning or after school
+  - theme_id: how_world_works
+    weight: 0.26
+    reasoning: 'Kids can explore motion: pedaling turns the chain, wheels spin, brakes slow down, and balance keeps the rider
+      upright, matching their curiosity about movement.'
+    context_trigger: when the child asks, "Why do the wheels spin?" or experiments with pedaling, braking, or balancing a
+      toy bike
+  primary_key_concepts:
+  - concept_id: function
+    relevance: 1.1
+    reasoning: Its function is to help a person travel using their own leg power, moving from place to place for fun, exercise,
+      or getting somewhere nearby.
+  - concept_id: connection
+    relevance: 0.9
+    reasoning: A bicycle connects the rider to the neighborhood, linking home, school, and parks, and it connects body movement
+      to the bike’s moving parts.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: Children can practice responsibility by wearing a helmet, watching for cars, using bells or hand signals, and
+      taking care of the bike by parking it properly.
+  secondary_key_concepts:
+  - concept_id: form
+    relevance: 0.7
+    reasoning: Two wheels, handlebars, pedals, and a seat are arranged to help a rider steer, push, and balance, showing how
+      parts are made for riding.
+  - concept_id: causation
+    relevance: 0.3
+    reasoning: When you pedal faster the bike goes faster, and when you squeeze the brakes it slows, helping children link
+      actions with clear outcomes.
+  candidate_related_concepts:
+  - concept_id: rules
+    discipline: Social Studies
+    reasoning: Biking involves rules like stopping at crossings and riding on the correct side, which children can rehearse
+      with a simple pretend road track.
+  - concept_id: community
+    discipline: Social Studies
+    reasoning: Bikes are part of community life, and children can notice how people share paths, greet neighbors, and travel
+      together on family rides.
+  - concept_id: collaboration
+    discipline: Social Studies
+    reasoning: Children can collaborate by riding in a group, taking turns leading, or helping a friend learn, showing how
+      shared movement needs cooperation.
+  - concept_id: change_over_time
+    discipline: Social Studies
+    reasoning: Kids can compare learning stages—from balance bike to pedal bike—and notice how their ability changes over
+      time with practice and growth.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: body_color
+          value: many different colors
+          topics:
+          - What color is the bicycle?
+          - Can you find the color on the frame?
+          - Do you like that color?
+        - attribute: wheels
+          value: two big wheels
+          topics:
+          - How many wheels do you see?
+          - Can you point to one wheel?
+          - Are the wheels big or small?
+        - attribute: handlebars
+          value: curved bars to hold
+          topics:
+          - Can you find the handlebars?
+          - Where do hands go on a bicycle?
+          - Are the handlebars straight or curvy?
+        - attribute: seat
+          value: small seat
+          topics:
+          - Can you point to the seat?
+          - Do you sit on the seat?
+          - Is the seat big or small?
+        senses:
+        - attribute: surface_feel
+          value: smooth metal frame
+          topics:
+          - Do you think the frame feels smooth?
+          - Would it feel cold or warm?
+        - attribute: bell_sound
+          value: ring-ring sound
+          topics:
+          - What sound can a bicycle bell make?
+          - Can you make a ring-ring sound?
+        - attribute: tire_feel
+          value: rubbery tires
+          topics:
+          - Do you think the tires feel soft or hard?
+          - Do you think the tires feel rubbery?
+        emotions:
+        - Do you like bicycles?
+        - Does riding a bicycle feel fun?
+        - Would you want to ride fast or slow?
+        - Is a bicycle a little scary or not scary?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: frame_shape
+          value: triangle-shaped frame like a strong stick puzzle
+          topics:
+          - Why is the bike frame shaped like triangles, not circles?
+          - How is a big frame different from a small frame for riding?
+        - attribute: spoke_pattern
+          value: thin spokes spreading out like a wheel spiderweb
+          topics:
+          - Why do wheels have many spokes, not just a solid plate?
+          - How are lots of thin spokes different from a few thick ones?
+        - attribute: reflectors
+          value: tiny shiny reflectors that sparkle when lights hit
+          topics:
+          - Why do bikes have reflectors, like little mirrors?
+          - How is a reflector different from a light for being seen?
+        context:
+        - attribute: sidewalks_paths
+          value: often seen on paths, parks, and quiet streets
+          topics:
+          - Why do bikes fit well on paths, not busy highways?
+          - How is riding in a park different from riding near cars?
+        - attribute: bike_racks
+          value: parked standing up in racks near stores or schools
+          topics:
+          - Why do bikes park in racks, like slots in a row?
+          - How is parking a bike different from parking a car?
+        function:
+        - attribute: pedal_power
+          value: moving forward when feet push the pedals around
+          topics:
+          - Why does pedaling make the bike go, like walking but faster?
+          - How is pedaling different from pushing with your feet on the ground?
+        - attribute: balancing
+          value: staying upright by balancing while the wheels roll
+          topics:
+          - Why is balancing easier when the bike is moving than stopped?
+          - How is balancing on a bike different from standing still?
+        - attribute: braking
+          value: slowing down by squeezing brakes with your hands
+          topics:
+          - Why do bikes use hand brakes, not foot brakes like some toys?
+          - How is stopping slowly different from stopping quickly?
+        senses:
+        - attribute: chain_sound
+          value: a soft clicking and whirring as it turns
+          topics:
+          - Why does the chain make a clicking sound when pedaling?
+          - How is a smooth chain sound different from a clunky chain sound?
+        - attribute: wind_on_face
+          value: cool wind whooshing on cheeks when riding
+          topics:
+          - Why do you feel more wind when going fast than slow?
+          - How is wind on your face different on a bike versus walking?
+        structure:
+        - attribute: chain_and_gears
+          value: a metal chain wrapping around bumpy round gears
+          topics:
+          - Why does the chain wrap around gears, like a track?
+          - How are big gears different from small gears for pedaling?
+        - attribute: brake_levers
+          value: two hand levers that pull cables to stop
+          topics:
+          - Why do brake levers pull cables, like tugging a string?
+          - How is a hand lever different from a button for braking?
+        - attribute: pedals
+          value: two flat pedals with bumps for gripping shoes
+          topics:
+          - Why do pedals have bumps, like tiny teeth?
+          - How are wide pedals different from skinny pedals for feet?
+        emotions:
+        - Do bicycles feel fun or a little scary to you? Why?
+        - Where would you like to ride a bicycle—park or street?
+        - What color bicycle would you want if you could choose?
+        relationship:
+        - How is a bicycle like a scooter, and how is it different?
+        - How is riding a bike different from walking to the same place?
+        - What does a bicycle remind you of—freedom, playtime, or sport?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: tire_tread_and_width
+          value: Bicycle tires can be skinny or wide, and the tread pattern can be smooth or bumpy; this changes how much
+            grip they have and how easily they roll.
+          topics:
+          - Why might a wide, bumpy tire grip better on dirt than a smooth skinny tire?
+          - What do you think happens to speed when a tire has more grip and more rubber touching the ground?
+        - attribute: gear_count_indicator
+          value: Some bikes show numbers or markings for gears, giving clues that the bike can change how hard pedaling feels
+            on hills versus flat ground.
+          topics:
+          - Why would a bike need more than one gear for different places you ride?
+          - If the gear number is higher or lower, how might the pedaling feel different?
+        - attribute: brake_cable_routing
+          value: Many bicycles have visible cables running from the handlebars to the brakes; the way the cable curves helps
+            it pull smoothly without getting stuck.
+          topics:
+          - Why do you think the cable needs a gentle curve instead of a sharp bend?
+          - What might happen if the cable got kinked or tangled?
+        change:
+        - attribute: tire_wear_and_flat_spots
+          value: Over time, tires wear down where they touch the ground most, which can reduce grip and make slipping more
+            likely on wet surfaces.
+          topics:
+          - How could you tell a tire is worn out just by looking at the tread?
+          - Why might a worn tire be more slippery in rain than a new tire?
+        - attribute: chain_stretch_and_slip
+          value: A chain can slowly ‘stretch’ (tiny wear in the links), which can make shifting less smooth and can cause
+            skipping when you pedal hard.
+          topics:
+          - Why might a worn chain skip more when you push hard on the pedals?
+          - What do you think could happen if a chain is too loose or too tight?
+        context:
+        - attribute: different_riding_surfaces
+          value: Bikes behave differently on pavement, gravel, grass, or sand because the wheels interact with the surface
+            in different ways (grip, sinking, bouncing).
+          topics:
+          - Why is riding on sand harder than riding on a smooth path?
+          - If you had to ride on gravel, what would you do differently to stay steady?
+        - attribute: shared_paths_with_others
+          value: Bicycles often share space with walkers and other riders, so where you ride affects how you steer, slow down,
+            and communicate.
+          topics:
+          - Why is it important to slow down near people walking or pets?
+          - What clues help you decide when it’s safe to pass someone on a path?
+        function:
+        - attribute: steering_and_balance_control
+          value: A bike stays upright when moving because steering and forward motion help balance; small handlebar turns
+            can keep the bike under your center of weight.
+          topics:
+          - Why do you think balancing is easier when the bike is moving than when it’s stopped?
+          - How can tiny steering adjustments help you stay upright?
+        - attribute: gear_shifting_for_hills
+          value: Gears change how much the rear wheel turns for each pedal turn, letting you trade speed for easier pedaling
+            on hills.
+          topics:
+          - Why would you choose an easier gear on a hill even if it makes you go slower?
+          - What might happen if you stayed in a hard gear while starting on a steep hill?
+        senses:
+        - attribute: handlebar_grip_texture
+          value: Handlebar grips are textured rubber or foam to reduce slipping from sweaty hands and to soften vibration
+            from bumps.
+          topics:
+          - Why would a grippy texture matter when your hands are sweaty or it’s raining?
+          - How do bumps in the road travel into your hands through the handlebars?
+        - attribute: brake_squeal_or_rub_sound
+          value: Brakes can squeal or rub if pads are wet, dirty, or misaligned; friction makes sound as the pads press the
+            rim or rotor to slow the wheel.
+          topics:
+          - Why does pressing something to slow it down sometimes make a squeaky sound?
+          - What do you think changes when brakes are wet compared to dry?
+        structure:
+        - attribute: spokes_tension_system
+          value: Spokes are stretched tight like many small supports; together they help the wheel stay strong and round while
+            still being lightweight.
+          topics:
+          - How can lots of thin spokes be strong enough to hold a rider?
+          - What might happen if a few spokes became loose—how would the wheel change?
+        - attribute: front_fork_and_head_tube_joint
+          value: The front fork connects to the frame at a turning joint, allowing the front wheel to pivot for steering while
+            still supporting the rider’s weight.
+          topics:
+          - Why does the front wheel need to pivot instead of the whole bike turning as one piece?
+          - What would be hard about riding if the front wheel couldn’t turn at all?
+        emotions:
+        - How do you feel when you ride a bicycle—free, nervous, proud, or something else?
+        - What’s your favorite part of biking, and what’s the hardest part for you?
+        - Do you like going fast on a bike, or do you prefer slow and steady? Why?
+        imagination:
+        - Pretend your bicycle can talk while you ride—what advice would it give you?
+        - Design a dream bicycle for your neighborhood. What special features would it have for safety and fun?
+        - Imagine your bike could change into a different kind of bike (mountain, racing, tiny, giant). When would you use
+          each one?
+        narrative:
+        - Tell a story about a bicycle that helps someone get home before a storm.
+        - Once upon a time, a bicycle got lost—how did it find its way back?
+        - Tell a story about a bike ride where you discover something surprising on the path.
+        reasoning:
+        - Why do you think bicycles use two wheels instead of one or three for most riders?
+        - What would happen if you tried to brake with only the front brake all the time?
+        - If your chain keeps slipping, what clues would you look for to figure out why?
+        relationship:
+        - How is a bicycle like walking, and how is it different?
+        - How is a bicycle different from a scooter or skateboard?
+        - What does pedaling remind you of (like climbing stairs or pushing a swing)? Why?

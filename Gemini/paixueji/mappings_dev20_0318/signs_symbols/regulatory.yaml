@@ -1,0 +1,272 @@
+- entity_id: signs_symbols_stop_sign
+  entity_name: Stop Sign
+  entity_name_cn: 停止标志
+  domain: signs_symbols
+  parent_category: road_signs
+  subcategory: regulatory
+  primary_theme:
+    theme_id: how_we_organize
+    weight: 0.43
+    reasoning: A Stop sign organizes road safety by giving a clear rule that everyone must pause, take turns, and avoid crashes
+      at crossings.
+  secondary_themes:
+  - theme_id: how_we_express
+    weight: 0.38
+    reasoning: Its bold color, special shape, and single word express a strong message that young children can recognize quickly.
+    context_trigger: when the child shouts “Stop!” while seeing the sign or imitates the octagon shape with their hands
+  - theme_id: where_place_time
+    weight: 0.19
+    reasoning: Children notice Stop signs appear at intersections and near crossings, linking the sign to specific places
+      and moments to pause.
+    context_trigger: when the child says “There’s a stop sign at this corner” or anticipates stopping as the car approaches
+      an intersection
+  primary_key_concepts:
+  - concept_id: connection
+    relevance: 1.0
+    reasoning: The child connects the sign with stopping behavior, looking both ways, and letting other cars or people go
+      first.
+  - concept_id: function
+    relevance: 0.9
+    reasoning: Its function is to control traffic flow by requiring a full stop so everyone can move safely in turn.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: It encourages responsibility by reminding people to follow the rule even when they feel in a hurry.
+  secondary_key_concepts:
+  - concept_id: form
+    relevance: 0.8
+    reasoning: Children can identify the unique octagon shape and red color that make the Stop sign different from other signs.
+  - concept_id: causation
+    relevance: 0.3
+    reasoning: It supports understanding that not stopping can cause accidents, while stopping can prevent someone from getting
+      hurt.
+  candidate_related_concepts:
+  - concept_id: communication
+    discipline: Social Studies
+    reasoning: The sign communicates a simple action message that drivers understand instantly without needing to talk.
+  - concept_id: rules
+    discipline: Social Studies
+    reasoning: It is a clear rule that helps children see how shared rules make busy places safer and fairer.
+  - concept_id: community
+    discipline: Social Studies
+    reasoning: Stop signs protect the community by coordinating cars, bikes, and pedestrians who all share the same streets.
+  - concept_id: symbolism
+    discipline: Arts
+    reasoning: The octagon and the word “STOP” symbolize an action everyone agrees on, even from far away.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: color
+          value: red with white letters
+          topics:
+          - What color is the stop sign?
+          - Can you point to the white letters?
+          - Do you see red all around?
+        - attribute: shape
+          value: octagon shape
+          topics:
+          - Is it a circle or not a circle?
+          - Can you trace the shape with your finger?
+          - Does it have corners?
+        - attribute: markings
+          value: says STOP
+          topics:
+          - What word is on the sign?
+          - Can you say “stop”?
+          - Can you point to the letters?
+        senses:
+        - attribute: touch_feel
+          value: smooth, hard metal
+          topics:
+          - Do you think it feels hard or soft?
+          - Do you think it feels smooth or bumpy?
+        - attribute: weight
+          value: very heavy
+          topics:
+          - Do you think it is heavy?
+          - Would you be able to lift it?
+        - attribute: sound
+          value: quiet, no sound
+          topics:
+          - Does a stop sign make a sound?
+          - What sounds do you hear near a stop sign?
+        emotions:
+        - Do stop signs feel helpful to you?
+        - Do you feel safe when cars stop?
+        - Is a stop sign scary or friendly?
+        - Do you like the bright red color?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: white_border
+          value: a bright white edge that frames the red
+          topics:
+          - Why does a stop sign have a white border, like a picture frame?
+          - How is a sign with a border different from one without a border?
+        - attribute: reflective_shine
+          value: shiny coating that glows when lights hit it
+          topics:
+          - Why does the sign look shiny at night, like a glow sticker?
+          - How is a shiny sign different from a dull sign in the dark?
+        context:
+        - attribute: street_corners
+          value: standing at corners where roads cross each other
+          topics:
+          - Why do stop signs sit at corners, not in the middle of the road?
+          - How is a corner crossing different from a straight road?
+        - attribute: school_zones
+          value: near schools where many kids might cross
+          topics:
+          - Why are stop signs common near schools, like extra careful places?
+          - How is a school street different from a quiet neighborhood street?
+        - attribute: parking_lots
+          value: in parking lots where cars move slowly
+          topics:
+          - Why do parking lots need stop signs even with slow cars?
+          - How is a parking lot different from a big road for stopping?
+        function:
+        - attribute: traffic_stopping_rule
+          value: telling drivers to stop fully before going
+          topics:
+          - Why is ‘stop’ different from ‘slow down’ on the road?
+          - How does stopping help more than just honking?
+        - attribute: turn_taking
+          value: helping cars take turns safely at crossings
+          topics:
+          - Why do cars need turns at crossings, like sharing a toy?
+          - How is taking turns different from everyone going at once?
+        senses:
+        - attribute: metal_coolness
+          value: cool hard metal that stays chilly in shade
+          topics:
+          - Why does metal feel cooler than wood in the shade?
+          - How is a cool sign different from a warm sign in sunshine?
+        - attribute: tap_sound
+          value: a sharp ting-ting sound when gently tapped
+          topics:
+          - Why does tapping make a ting sound, like a pot lid?
+          - How is the sign’s sound different from tapping a tree?
+        structure:
+        - attribute: post_pole
+          value: a tall pole holding the sign up high
+          topics:
+          - Why is the sign up on a pole, not on the ground?
+          - How is a tall pole different from a short pole for seeing?
+        - attribute: bolt_fasteners
+          value: strong bolts that pinch the sign to the pole
+          topics:
+          - Why use bolts to hold it tight, like buttons that don’t pop off?
+          - How are bolts different from glue when it’s windy?
+        emotions:
+        - How do you feel when you see a stop sign—safe, annoyed, or calm?
+        - Do you like rules like ‘STOP’? Why or why not?
+        - If a stop sign could talk, would it sound friendly or strict?
+        relationship:
+        - How is a stop sign different from a traffic light?
+        - What other sign do you see a lot, and how is it different from STOP?
+        - How is a stop sign like a grown-up saying ‘wait,’ and different too?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: octagon_reasoning_shape
+          value: A stop sign’s octagon shape is chosen so it’s recognizable even from the back or in low light—drivers can
+            identify it by shape, not just color or words.
+          topics:
+          - How could you recognize a stop sign if snow covered the word?
+          - Why might a unique shape help people react faster than reading?
+        - attribute: letter_style_and_spacing
+          value: The letters are designed to be thick and spaced clearly so they can be read quickly at a distance and still
+            stay readable when headlights shine on them.
+          topics:
+          - Why would thicker letters be easier to read from far away?
+          - What might happen if the letters were fancy and curly instead of simple and bold?
+        - attribute: mounting_height_visibility
+          value: Stop signs are placed at a height that helps drivers see them over parked cars and shrubs, making the sign
+            visible early enough to stop safely.
+          topics:
+          - Why does seeing a stop sign early help people stop more safely?
+          - What could go wrong if a stop sign were placed too low near bushes?
+        change:
+        - attribute: sun_and_weather_fading
+          value: Sunlight and weather slowly break down paint and reflective layers, so the red can fade and the sign can
+            become less bright at night.
+          topics:
+          - Why might a faded sign be more dangerous at night than during the day?
+          - What kinds of weather do you think would wear a sign out the fastest?
+        - attribute: bending_denting_damage
+          value: A stop sign can get bent by wind, bumps, or crashes, which can change how light reflects and make it harder
+            to notice from certain angles.
+          topics:
+          - How could a bent sign look different from different directions?
+          - Why might a small dent matter for how the sign shines in headlights?
+        context:
+        - attribute: intersection_decision_points
+          value: Stop signs are put where roads cross or where visibility is tricky, so drivers pause, check for others, and
+            take turns safely.
+          topics:
+          - Why do you think stop signs are common at corners instead of in the middle of a long road?
+          - If a corner has a building blocking the view, how does a stop sign help?
+        - attribute: places_with_people_crossing
+          value: They’re often near places where people walk or bike, so stopping gives drivers time to notice someone crossing.
+          topics:
+          - Why is it important to stop when people might be crossing even if you don’t see anyone yet?
+          - How might a stop sign help bikes and cars share the same crossing safely?
+        function:
+        - attribute: clear_full_stop_signal
+          value: A stop sign tells drivers to make a complete stop so their brains have time to look left-right-left, listen,
+            and decide whose turn it is.
+          topics:
+          - Why might ‘stop’ be safer than ‘slow down’ at some intersections?
+          - What checks should a driver do during the stop before moving again?
+        - attribute: predictable_turn_taking
+          value: Stop signs make traffic predictable by creating a shared rule for who goes next, which reduces surprises
+            and crashes.
+          topics:
+          - How do rules help people cooperate even when they don’t know each other?
+          - What might happen if everyone made up their own ‘turn’ rules at the same corner?
+        senses:
+        - attribute: reflective_glow_in_headlights
+          value: The sign can seem to ‘glow’ at night because tiny reflective pieces bounce light back toward headlights,
+            making it bright for drivers.
+          topics:
+          - Why does it look brighter at night when a car’s lights shine on it?
+          - How would it look different if it wasn’t reflective at all?
+        - attribute: wind_vibration_rattle
+          value: In strong wind, a sign can vibrate slightly; if it’s a bit loose, it might make a faint rattle as metal parts
+            move against each other.
+          topics:
+          - Why might a looser sign make more noise than a tightly fastened one?
+          - How could you tell (without touching) that a sign might be loose on a windy day?
+        structure:
+        - attribute: reflective_sheeting_layer
+          value: A stop sign has a top layer (sheeting) with reflective material that’s bonded to the metal so it stays visible
+            in different lighting.
+          topics:
+          - Why would a sign need a special top layer instead of just paint?
+          - What could happen if the reflective layer started peeling?
+        - attribute: rounded_edges_for_safety
+          value: The edges are usually rounded or hemmed so there aren’t sharp corners, helping prevent cuts and making the
+            sign sturdier.
+          topics:
+          - How do rounded edges make the sign safer for people nearby?
+          - Why might folding or rounding an edge make the metal stronger?
+        emotions:
+        - How do you feel when you see a stop sign—safe, annoyed, or thankful? Why?
+        - Do you think stop signs are bossy or helpful? Explain your answer.
+        - What would you feel if a stop sign was missing from a busy corner you use?
+        imagination:
+        - If a stop sign could talk for one day, what would it say to cars, bikes, and people?
+        - Imagine a world where stop signs changed colors for different situations. What colors would mean what?
+        - Pretend you are a stop sign at a tricky corner—what would you watch for all day?
+        narrative:
+        - Tell a story about a stop sign that helps solve a mystery at an intersection.
+        - Once upon a time, a stop sign saved the day—what happened?
+        - Tell a story where the stop sign meets a new sign and they argue about the best rule.
+        reasoning:
+        - Why do you think the stop sign uses both a special shape and a word?
+        - What would happen if two stop signs gave different rules at the same intersection?
+        - If it’s foggy and hard to see, what should people do differently when they reach a stop sign?
+        relationship:
+        - How is a stop sign like a classroom rule, and how is it different?
+        - What other signs or signals tell you to pause or be careful? How are they similar?
+        - What does a stop sign remind you of (a badge, a shield, a sticker)? Why?

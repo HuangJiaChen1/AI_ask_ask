@@ -1,0 +1,48 @@
+domain: food
+entity_count: 99
+subcategories:
+  alliums: 1
+  apples: 2
+  baked_goods: 1
+  berries: 4
+  bread: 2
+  breakfast: 3
+  cakes: 3
+  citrus: 6
+  cookies: 2
+  cruciferous: 1
+  dried_fruits: 4
+  fast_food: 6
+  fried_food: 1
+  frozen_treats: 1
+  fruit_vegetables: 6
+  ice_cream: 1
+  japanese_food: 2
+  leafy_greens: 3
+  legumes: 3
+  melons: 3
+  mexican_food: 3
+  mushrooms: 1
+  noodles: 2
+  pasta: 2
+  pizza: 2
+  pome_fruits: 1
+  rice_dishes: 2
+  root_vegetables: 3
+  sandwiches: 4
+  savory_snacks: 1
+  side_dishes: 2
+  squash: 3
+  stalk_vegetables: 2
+  starchy_vegetables: 1
+  stone_fruits: 5
+  tropical_fruits: 10
+default_themes:
+- theme_id: who_we_are
+  weight: 0.4
+- theme_id: how_world_works
+  weight: 0.3
+- theme_id: sharing_planet
+  weight: 0.2
+- theme_id: how_we_organize
+  weight: 0.1

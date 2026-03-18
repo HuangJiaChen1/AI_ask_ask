@@ -1,0 +1,29 @@
+domain: arts_music
+entity_count: 58
+subcategories:
+  accessories: 7
+  adhesives: 2
+  audio_gear: 3
+  brass_instruments: 4
+  craft_materials: 1
+  cutting_tools: 1
+  drawing_tools: 6
+  jewelry_making: 2
+  keyboard_instruments: 2
+  measuring_tools: 1
+  painting_surfaces: 1
+  painting_tools: 3
+  paints: 2
+  paper_products: 2
+  percussion_instruments: 8
+  sculpting_materials: 1
+  sculpting_tools: 1
+  string_instruments: 6
+  wind_instruments: 5
+default_themes:
+- theme_id: how_we_express
+  weight: 0.55
+- theme_id: who_we_are
+  weight: 0.25
+- theme_id: where_place_time
+  weight: 0.2

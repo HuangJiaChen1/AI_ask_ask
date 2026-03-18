@@ -1,0 +1,312 @@
+- entity_id: plants_sunflower
+  entity_name: Sunflower
+  entity_name_cn: 向日葵
+  domain: plants
+  parent_category: flowers
+  subcategory: garden flowers
+  primary_theme:
+    theme_id: how_world_works
+    weight: 0.46
+    reasoning: Sunflowers help children notice how plants use sunlight, water, and soil to grow, and how the flower head can
+      turn to follow the sun in the sky.
+  secondary_themes:
+  - theme_id: sharing_planet
+    weight: 0.25
+    reasoning: Children can explore how sunflowers support bees and birds with nectar and seeds, and how growing flowers can
+      help a garden ecosystem stay healthy.
+    context_trigger: when the child points to a bee or bird near the sunflower and asks what it is eating or doing
+  - theme_id: how_we_express
+    weight: 0.21
+    reasoning: Sunflowers are often drawn, painted, and used in stories, letting children express feelings about bright colors,
+      tall plants, and sunny days through art and words.
+    context_trigger: when the child wants to draw the big yellow petals or says the flower looks like the sun
+  - theme_id: where_place_time
+    weight: 0.08
+    reasoning: A sunflower’s daily facing direction and seasonal growth help children talk about time, day versus night, and
+      how plants change across weeks in one place.
+    context_trigger: when the child notices the flower facing a different direction later and says "it moved"
+  primary_key_concepts:
+  - concept_id: change
+    relevance: 1.1
+    reasoning: A sunflower changes from seed to sprout to tall stem and flower, and children can watch the head and leaves
+      change over days and weeks.
+  - concept_id: form
+    relevance: 0.7
+    reasoning: Children can observe the sunflower’s round center, many petals, tall stalk, and rough leaves, describing shapes,
+      sizes, and patterns they can see.
+  - concept_id: function
+    relevance: 0.9
+    reasoning: The petals attract pollinators, the stem holds the flower up to the light, and the seeds feed animals, helping
+      children connect parts to jobs.
+  secondary_key_concepts:
+  - concept_id: causation
+    relevance: 0.9
+    reasoning: Children can link causes and effects, like how sunlight and watering make the plant grow, and how lack of water
+      makes it droop.
+  - concept_id: connection
+    relevance: 0.6
+    reasoning: Sunflowers connect to the sun, soil, insects, and people, helping children see relationships between living
+      things and their environment.
+  candidate_related_concepts:
+  - concept_id: interdependence
+    discipline: Science
+    reasoning: Bees help the sunflower make seeds, and the sunflower provides food, showing children how living things need
+      each other.
+  - concept_id: growth
+    discipline: Science
+    reasoning: Children can measure the sunflower getting taller and growing new leaves, making growth visible and easy to
+      track.
+  - concept_id: cycles
+    discipline: Science
+    reasoning: The sunflower life cycle repeats from seed to flower to new seeds, which children can plant again to restart
+      the cycle.
+  - concept_id: sustainability
+    discipline: Social Studies
+    reasoning: Growing sunflowers can encourage saving seeds, feeding wildlife, and caring for soil and water, which supports
+      responsible garden habits.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: flower_color
+          value: yellow petals
+          topics:
+          - What color are the petals?
+          - Can you point to the yellow petals?
+          - Do you see lots of petals?
+        - attribute: center_color
+          value: brown middle circle
+          topics:
+          - What color is the middle?
+          - Can you point to the brown middle?
+          - Is the middle a circle?
+        - attribute: size
+          value: tall flower
+          topics:
+          - Is the sunflower tall or short?
+          - Can you show tall with your hands?
+          - Does it look bigger than your head?
+        - attribute: leaf_shape
+          value: big green leaves
+          topics:
+          - Can you find a leaf?
+          - Are the leaves big or small?
+          - What color are the leaves?
+        senses:
+        - attribute: leaf_feel
+          value: a little rough
+          topics:
+          - Do you think the leaf feels smooth or rough?
+          - What else feels a little rough?
+        - attribute: smell
+          value: soft plant smell
+          topics:
+          - Do you think it smells good?
+          - Is the smell strong or soft?
+        - attribute: stem_feel
+          value: firm, stiff stem
+          topics:
+          - Do you think the stem feels stiff?
+          - Is the stem bendy or not bendy?
+        emotions:
+        - Do you like sunflowers?
+        - Do sunflowers make you feel happy?
+        - Would you want to smell a sunflower?
+        - Is a sunflower friendly or scary?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: petal_shape
+          value: long skinny petals like sunny little rays
+          topics:
+          - Why do sunflower petals look like rays, not circles?
+          - How are sunflower petals different from rose petals?
+        - attribute: seed_pattern
+          value: tiny seeds packed in swirly circle patterns
+          topics:
+          - Why do the seeds make swirls, like a spiral?
+          - How is this seed pattern different from dots in a row?
+        - attribute: stem_thickness
+          value: a thick stem, like a strong green straw
+          topics:
+          - Why is the stem thicker than many tiny flowers?
+          - How is a thick stem different from a thin stem in wind?
+        context:
+        - attribute: sunny_places
+          value: growing in bright sunny spots with lots of light
+          topics:
+          - Why do sunflowers like sunny places more than shady places?
+          - How is a sunny garden different from a shady garden for plants?
+        - attribute: summer_peak
+          value: often tallest and brightest in warm summer days
+          topics:
+          - Why do sunflowers grow big in summer, not winter?
+          - How is summer weather different from spring weather for growing?
+        - attribute: field_rows
+          value: sometimes planted in long rows like a plant parade
+          topics:
+          - Why do people plant sunflowers in rows, like lines?
+          - How is growing in rows different from growing wild?
+        function:
+        - attribute: sun_tracking
+          value: young heads can turn to face the sun
+          topics:
+          - Why would a sunflower try to face the sun, like looking up?
+          - How is turning to the sun different from staying still?
+        - attribute: pollinator_feeding
+          value: giving nectar and pollen to busy bees
+          topics:
+          - Why do bees visit sunflowers more than some small flowers?
+          - How is nectar different from pollen for a bee?
+        - attribute: seed_making
+          value: making lots of seeds that can become new plants
+          topics:
+          - Why does one flower make so many seeds, not just one?
+          - How is a seed different from a leaf for making a new plant?
+        senses:
+        - attribute: petal_feel
+          value: soft and a little papery, like thin tissue
+          topics:
+          - Why do petals feel papery instead of thick like leaves?
+          - How does a petal feel different from the stem?
+        - attribute: center_texture
+          value: bumpy and scratchy in the middle, like tiny beads
+          topics:
+          - Why is the middle bumpy, not smooth like the petals?
+          - How is the center texture different from the leaf texture?
+        structure:
+        - attribute: flower_head
+          value: one big head made of many tiny flowers
+          topics:
+          - Why is a sunflower head like a crowd of tiny flowers?
+          - How is one big head different from lots of separate flowers?
+        - attribute: veiny_leaves
+          value: big leaves with lines like little roads
+          topics:
+          - Why do leaves have veins, like lines on a map?
+          - How are leaf veins different from the stem inside?
+        - attribute: roots_anchor
+          value: roots spread out to hold the tall plant steady
+          topics:
+          - Why do tall sunflowers need strong roots, like tree roots?
+          - How are roots different from stems for holding and feeding?
+        emotions:
+        - Do sunflowers make you feel happy or calm? Why?
+        - Would you like to grow a sunflower near your home?
+        - What name would you give a sunflower?
+        relationship:
+        - How is a sunflower like the sun, and how is it different?
+        - What other flower reminds you of a sunflower? How is it different?
+        - How is a sunflower different from a tree in your yard?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: petal_arrangement_symmetry
+          value: Sunflower petals usually form a ring around the center, and the pattern often looks balanced because the
+            flower grows evenly around the head as it develops.
+          topics:
+          - What do you notice about how the petals are spaced around the center?
+          - Why might a balanced petal ring help the flower catch sunlight or attract insects?
+        - attribute: hairy_stem_surface
+          value: Many sunflowers have tiny hairs on their stems that can help reduce water loss and may make it harder for
+            some tiny bugs to climb up.
+          topics:
+          - How could tiny hairs help a plant on a hot, dry day?
+          - If the stem were smooth instead of hairy, what might change for the plant?
+        - attribute: flower_head_tilt_direction
+          value: A sunflower head can tilt as it grows, and the way it faces can help it collect more light and warmth for
+            making food in the plant.
+          topics:
+          - What do you think decides which way the sunflower head points?
+          - If the head pointed down all the time, how might that affect the seeds or the center staying dry?
+        change:
+        - attribute: bud_to_bloom_opening_steps
+          value: A sunflower starts as a tight bud, then slowly opens its petals as the flower head grows larger and the center
+            develops to support future seeds.
+          topics:
+          - Why do you think the flower opens slowly instead of all at once?
+          - What might the bud be protecting while it’s still closed?
+        - attribute: seed_head_maturing_and_drying
+          value: After blooming, the flower head focuses energy on making seeds; the head can become heavier and drier as
+            seeds mature and get ready to spread.
+          topics:
+          - Why might the head get heavier as the seeds grow?
+          - How could drying help the seeds later on?
+        - attribute: seasonal_dieback
+          value: When the season ends or the plant can’t get enough water and warmth, the sunflower can wilt and dry out,
+            which is part of its life cycle after seed making.
+          topics:
+          - How is wilting like the plant ‘saving energy’ when conditions are tough?
+          - What would you look for to tell if a sunflower is still healthy or starting to die back?
+        context:
+        - attribute: pollinator_busy_times
+          value: Sunflowers are often busiest when pollinators are active—usually warm, bright parts of the day—because insects
+            move pollen while looking for food.
+          topics:
+          - Why do you think insects visit more when it’s warm and sunny?
+          - If it rained all day, how might the sunflower’s pollination change?
+        - attribute: soil_and_space_needs
+          value: Sunflowers do best where roots can spread and reach water; crowded plants may compete for light, water, and
+            nutrients.
+          topics:
+          - What do you think happens when too many sunflowers grow close together?
+          - How could you tell if a sunflower isn’t getting enough space or nutrients?
+        function:
+        - attribute: photosynthesis_food_making
+          value: Sunflowers use leaves to capture sunlight and make sugar (food) from water and air; this food powers growth
+            and helps build seeds.
+          topics:
+          - Why would the plant need to make extra food before it can make seeds?
+          - What might happen if a sunflower didn’t get much sunlight for a week?
+        - attribute: nectar_and_pollen_exchange
+          value: The flower offers nectar and pollen that attract insects; as insects move from flower to flower, they help
+            the plant mix pollen so seeds can develop.
+          topics:
+          - Why would a sunflower ‘want’ to attract insects instead of keeping them away?
+          - How is trading nectar for pollination like making a deal?
+        senses:
+        - attribute: sticky_pollen_feel
+          value: Sunflower pollen can feel dusty or slightly sticky because it’s made to cling to insects (and fingers) so
+            it can be carried to other flowers.
+          topics:
+          - Why is it helpful that pollen can stick to visitors?
+          - Where do you think the pollen goes after it sticks to a bee?
+        - attribute: leaf_rustle_sound
+          value: When wind moves through sunflower leaves, they can rustle because the broad leaves flap and rub, changing
+            sound depending on how strong the wind is.
+          topics:
+          - How do you think the rustling would sound in a gentle wind versus a strong wind?
+          - Why might big leaves make louder sounds than tiny leaves?
+        structure:
+        - attribute: disk_florets_in_center
+          value: The center is made of many tiny flowers (disk florets). Each tiny flower can become a seed, which is why
+            the center is packed with repeating patterns.
+          topics:
+          - How can one ‘big flower’ actually be lots of tiny flowers together?
+          - Why would packing many tiny flowers into one head help the plant make more seeds?
+        - attribute: hollow_or_pithy_stem_core
+          value: Inside, the stem can be pithy (spongy) rather than solid wood; it supports the plant while letting water
+            move upward through tubes.
+          topics:
+          - How can something spongy still help hold a tall plant up?
+          - What might happen to the sunflower if the tubes that carry water got blocked?
+        emotions:
+        - How does seeing a sunflower make you feel—calm, cheerful, or something else? Why?
+        - Would you rather have a sunflower in your yard or in a pot? What would you like about it?
+        - Do you think sunflowers look more friendly or more serious? What makes you think that?
+        imagination:
+        - Pretend you are a sunflower for a day. What do you do from sunrise to sunset?
+        - If a sunflower could talk to a bee, what would it say to invite the bee over?
+        - Invent a brand-new sunflower color or pattern. What would it look like, and why would animals like it?
+        narrative:
+        - Tell a story about a tiny seed that dreams of becoming the tallest sunflower in the garden.
+        - Once upon a time, a sunflower and a cloud had an argument—what was it about, and how did they solve it?
+        - Tell a story about a sunflower that helps another plant that’s struggling.
+        reasoning:
+        - Why do you think a sunflower makes so many seeds instead of just a few?
+        - What would happen if there were no insects to visit the sunflower’s flowers?
+        - If a sunflower grew in the shade, what changes would you expect to see in its stem or leaves?
+        relationship:
+        - How is a sunflower like a solar panel, and how is it different?
+        - What other plants remind you of sunflowers? What makes them similar?
+        - How is the sunflower’s center pattern like patterns you see in nature (like shells or pinecones)?

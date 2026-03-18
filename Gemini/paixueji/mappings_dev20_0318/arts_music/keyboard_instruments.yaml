@@ -1,0 +1,267 @@
+- entity_id: arts_music_piano
+  entity_name: Piano
+  entity_name_cn: 钢琴
+  domain: arts_music
+  parent_category: music_instruments
+  subcategory: keyboard_instruments
+  primary_theme:
+    theme_id: how_we_express
+    weight: 0.58
+    reasoning: A piano lets children create music by pressing keys, exploring loud and soft sounds to express moods, stories,
+      and feelings through songs.
+  secondary_themes:
+  - theme_id: who_we_are
+    weight: 0.19
+    reasoning: Playing piano supports identity as a learner and musician, letting children practice, perform, and share what
+      they like and feel in music.
+    context_trigger: when the child says “Listen to my song,” chooses favorite notes, or reacts emotionally like “This sounds
+      sad/happy.”
+  - theme_id: where_place_time
+    weight: 0.15
+    reasoning: Pianos are found in homes, schools, and concert halls, and children can notice how music performances happen
+      in different places and times.
+    context_trigger: when discussing concerts, recitals, or “playing on a big stage,” or when the child asks about old pianos
+      or famous composers.
+  - theme_id: how_we_organize
+    weight: 0.08
+    reasoning: The keyboard is arranged in repeating patterns, and songs follow sequences and practice routines, helping children
+      see organization in music-making.
+    context_trigger: when the child points out the black-key pattern, counts notes, follows a simple practice plan, or says
+      “First this part, then that part.”
+  primary_key_concepts:
+  - concept_id: form
+    relevance: 1.1
+    reasoning: Children can explore the piano’s parts—keys, pedals, lid—and notice the repeating black-and-white key pattern.
+  - concept_id: perspective
+    relevance: 1.0
+    reasoning: Different children interpret the same melody differently, choosing tempo and volume that match how they feel
+      and what they imagine.
+  - concept_id: connection
+    relevance: 0.9
+    reasoning: Pressing keys connects physical action to sound, and connects music reading, listening, and coordinating two
+      hands together.
+  secondary_key_concepts:
+  - concept_id: function
+    relevance: 0.6
+    reasoning: Children can investigate how the piano works by playing single notes, chords, and loud/soft dynamics to see
+      what it can do.
+  - concept_id: causation
+    relevance: 0.3
+    reasoning: Hitting a key harder causes a louder sound, and using pedals causes notes to ring longer, showing clear cause-and-effect.
+  candidate_related_concepts:
+  - concept_id: creativity
+    discipline: Arts
+    reasoning: The piano invites improvisation, making up tunes, and experimenting with patterns to create new music.
+  - concept_id: expression
+    discipline: Arts
+    reasoning: Children can express feelings through volume, speed, and melody, like soft lullabies or energetic “storm” sounds.
+  - concept_id: culture
+    discipline: Social Studies
+    reasoning: Piano music appears in many cultural settings, from classical concerts to pop songs, helping children connect
+      music to community events.
+  - concept_id: symbolism
+    discipline: Arts
+    reasoning: Musical notes and rhythms are symbols that represent sounds, and the piano helps children link these symbols
+      to what they hear.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: color
+          value: black or brown
+          topics:
+          - What color is the piano?
+          - Is it more black or brown?
+        - attribute: shape
+          value: big box shape
+          topics:
+          - Is the piano big or small?
+          - Does it look like a big box?
+        - attribute: design
+          value: black and white keys
+          topics:
+          - Can you point to the keys?
+          - Do you see black and white keys?
+        senses:
+        - attribute: sound
+          value: loud or soft notes
+          topics:
+          - Can the piano be loud?
+          - Can it be soft and quiet too?
+        - attribute: vibration_feel
+          value: you can feel vibrations
+          topics:
+          - Can you feel it buzz when it plays?
+          - Do you feel it in your hands?
+        - attribute: touch_feel
+          value: smooth, hard keys
+          topics:
+          - Do the keys feel smooth?
+          - Are the keys hard or squishy?
+        emotions:
+        - Do you like piano music?
+        - Does the piano sound happy or sleepy?
+        - Would you like to press the keys?
+        - Is the piano too loud or just right?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: key_pattern
+          value: Black keys in groups of two and three
+          topics:
+          - How do the key groups help you find your place, like a map?
+          - Why are the black keys in two-then-three, not all evenly spaced?
+        - attribute: key_size
+          value: Long white keys and shorter black keys
+          topics:
+          - How does key size help your fingers, like big steps vs small steps?
+          - Why might shorter keys sit higher than longer keys?
+        - attribute: lid_shape
+          value: Big lid that can open like a giant mouth
+          topics:
+          - How might opening the lid change the sound, compared to closing it?
+          - Why is the lid bigger than a book cover?
+        context:
+        - attribute: performance_places
+          value: Seen in music rooms, homes, and concert halls
+          topics:
+          - Why do big rooms work well for pianos, compared to tiny closets?
+          - How is playing at home different from playing on a stage?
+        - attribute: quiet_rule_places
+          value: Often in places where listening quietly is important
+          topics:
+          - Why do people get quiet to listen, like during a story?
+          - How is piano time different from playground time?
+        function:
+        - attribute: making_music
+          value: Makes notes when you press keys down
+          topics:
+          - How does pressing harder change the sound, like tapping vs knocking?
+          - Why do different keys make higher or lower notes?
+        - attribute: playing_hands
+          value: Two hands can play different parts together
+          topics:
+          - How can two hands do two jobs, like patting and clapping?
+          - Why might the left hand play lower notes than the right hand?
+        - attribute: pedal_effect
+          value: Pedals can make notes last longer or softer
+          topics:
+          - How does a pedal make sound stay, like echoing in a room?
+          - Why use your foot at all, instead of only your hands?
+        structure:
+        - attribute: keys
+          value: Many smooth keys lined up like neat teeth
+          topics:
+          - How do the keys move when you press them, like a see-saw?
+          - Why are there so many keys instead of just a few?
+        - attribute: strings_inside
+          value: Tight strings inside that get tapped by hammers
+          topics:
+          - How does tapping a string make a sound, like plucking a rubber band?
+          - Why do longer strings sound lower than shorter ones?
+        - attribute: pedals
+          value: Foot pedals at the bottom like special buttons
+          topics:
+          - How is a pedal like a button, and how is it different?
+          - Why are pedals on the floor instead of next to the keys?
+        emotions:
+        - What kind of song would you want the piano to play—happy or sleepy?
+        - Do you feel brave or nervous playing in front of others?
+        relationship:
+        - How is a piano like a xylophone, and how is it different?
+        - What does the piano sound remind you of—rain, marching, or something else?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: key_surface_material
+          value: Piano keys have smooth tops (often plastic today) to help fingers slide and press evenly, which supports
+            fast, controlled playing.
+          topics:
+          - Why might smooth key tops help you play quickly without getting stuck?
+          - How do you think the keys would feel and sound different if they were made of rubber?
+        - attribute: music_stand_design
+          value: The music stand is shaped to hold pages upright so the player can see music while hands stay on the keys,
+            reducing the need to look away.
+          topics:
+          - Why is it helpful for music to be upright instead of flat on the piano?
+          - What could happen if the stand was too low or wobbly while someone played?
+        change:
+        - attribute: humidity_effect_on_tuning
+          value: Changes in humidity can make wooden parts swell or shrink and can slightly change string tension, which can
+            shift how “in tune” notes sound.
+          topics:
+          - Why would wetter air or drier air change how a piano sounds?
+          - If a piano sounded different in summer than winter, what might be the reason?
+        - attribute: felt_wear_on_hammers
+          value: Inside the piano, felt on the hammers can compress and wear from lots of playing, which can change the tone
+            from bright to softer or uneven.
+          topics:
+          - How could worn felt change the sound of a piano note?
+          - Why do you think the piano uses soft felt to hit strings instead of metal?
+        context:
+        - attribute: room_acoustics_effect
+          value: A piano can sound different in different rooms because walls and floors reflect sound; big empty rooms may
+            echo more than carpeted rooms.
+          topics:
+          - Why might a piano sound louder in a big empty room than in a room with curtains and carpet?
+          - What changes could you make in a room to make the piano sound less echo-y?
+        - attribute: positioning_near_wall
+          value: 'Where a piano sits affects sound: placing it near walls can reflect sound outward, while open space may
+            spread sound differently.'
+          topics:
+          - How might moving a piano closer to a wall change what you hear?
+          - Where would you place a piano so people across the room can hear it best, and why?
+        function:
+        - attribute: dynamic_control_soft_loud
+          value: Pressing a key gently or firmly changes how fast the hammer hits the string, which changes volume and the
+            feeling of the music.
+          topics:
+          - Why does a stronger press usually make a louder sound on a piano?
+          - How could you use soft and loud notes to tell a story in music?
+        - attribute: sustain_mechanism_after_key_release
+          value: When you release a key, dampers normally stop the string; using sustain keeps dampers off so notes keep ringing
+            and blend together.
+          topics:
+          - Why do notes stop quickly when you let go of a key without sustain?
+          - What would happen to a song if every note kept ringing for a long time?
+        senses:
+        - attribute: sound_attack_and_decay
+          value: A piano note often starts with a clear “attack” when the hammer strikes, then slowly fades as the vibration
+            loses energy.
+          topics:
+          - Can you describe how a piano note changes from the start to the end?
+          - Why do you think the sound fades even if you don’t touch the key anymore?
+        - attribute: key_weight_resistance
+          value: Keys push back a little because you’re moving a whole mechanism; that resistance helps players control speed
+            and power.
+          topics:
+          - Why is it helpful that keys have a little push-back instead of feeling weightless?
+          - How might playing change if the keys were very heavy or very light?
+        structure:
+        - attribute: hammer_action_linkage
+          value: Pressing a key moves a connected action that swings a hammer to strike a string and then quickly moves away
+            so the string can keep vibrating.
+          topics:
+          - Why does the hammer need to bounce back instead of staying pressed on the string?
+          - How do you think the piano makes sure the hammer hits the string at the right time?
+        - attribute: soundboard_amplifier
+          value: The soundboard is a large wooden surface that vibrates with the strings, pushing more air and making the
+            sound much louder than strings alone.
+          topics:
+          - Why would thin strings need a big soundboard to help them be loud?
+          - What do you think would happen to the sound if the piano had strings but no soundboard?
+        emotions:
+        - What kind of piano music makes you feel calm, and what kind makes you feel excited?
+        - How do you feel when you hear a song played very softly on a piano?
+        imagination:
+        - If the piano could talk after a concert, what would it say about the music it made?
+        - Pretend each key is a different character—who are the low keys and who are the high keys?
+        narrative:
+        - Tell a story about a piano that remembers every song ever played on it.
+        - Once upon a time, a piano had to help someone feel brave—what did it play?
+        reasoning:
+        - Why do you think a piano has so many keys instead of just a few?
+        - What would happen if you held down the sustain pedal for a whole song—what would sound different?
+        relationship:
+        - How is a piano like a drum, and how is it different?
+        - What other instruments can play both very soft and very loud like a piano can?

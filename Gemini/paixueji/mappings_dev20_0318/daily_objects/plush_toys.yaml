@@ -1,0 +1,294 @@
+- entity_id: daily_objects_teddy_bear
+  entity_name: Teddy Bear
+  entity_name_cn: 泰迪熊
+  domain: daily_objects
+  parent_category: toys
+  subcategory: plush_toys
+  primary_theme:
+    theme_id: how_we_organize
+    weight: 0.38
+    reasoning: A teddy bear becomes part of organized daily life through routines like bedtime, travel, and classroom quiet
+      time, and children manage where it stays, when it is used, and how it is shared or stored.
+  secondary_themes:
+  - theme_id: who_we_are
+    weight: 0.31
+    reasoning: Children use a teddy bear to explore emotions and relationships by comforting it, telling it secrets, and practicing
+      caring behaviors that mirror how they want to be treated.
+    context_trigger: when the child uses the bear to talk about feelings, says it needs a hug, or uses it as a “brave buddy”
+  - theme_id: how_world_works
+    weight: 0.31
+    reasoning: Kids investigate what the teddy is made of and how it changes with use—softness, stitching, cleaning, and wear—helping
+      them distinguish living needs from how man-made materials behave.
+    context_trigger: when the child asks what the bear is made of, notices a tear, or wonders why it doesn’t eat or move
+  primary_key_concepts:
+  - concept_id: function
+    relevance: 1.1
+    reasoning: 'For young children, the teddy’s function is clear and meaningful: comfort, companionship, pretend caregiving,
+      and a familiar object that supports calm and security.'
+  - concept_id: connection
+    relevance: 0.9
+    reasoning: The teddy bear connects home and school experiences, connects children to memories and relationships, and connects
+      play stories to real caring actions like helping and soothing.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: Children show responsibility by keeping the bear safe, clean, and in its place, repairing it with adult help,
+      and respecting others’ comfort objects during group time.
+  secondary_key_concepts:
+  - concept_id: form
+    relevance: 0.7
+    reasoning: Children notice form features—paws, ears, fur texture, and face—and these details shape how they hold it, dress
+      it up, or pretend it can wave or walk.
+  - concept_id: causation
+    relevance: 0.3
+    reasoning: Children explore causation by noticing that pulling too hard can rip seams, washing can change texture, and
+      gentle care keeps the bear looking nice over time.
+  candidate_related_concepts:
+  - concept_id: rules
+    discipline: Social Studies
+    reasoning: Shared spaces need rules for teddy bears such as keeping them off the floor during meals, not throwing, and
+      returning them after borrowing to respect everyone’s belongings.
+  - concept_id: community
+    discipline: Social Studies
+    reasoning: A teddy bear can be part of classroom community traditions like show-and-tell or a class mascot, helping children
+      feel included and learn about each other’s lives.
+  - concept_id: roles
+    discipline: Social Studies
+    reasoning: The teddy bear encourages role-play like parent, doctor, teacher, or friend, letting children rehearse caring
+      roles and practice helpful language with others.
+  - concept_id: safety
+    discipline: PSPE
+    reasoning: Safety includes checking for loose parts like buttons, keeping bears away from faces of very young children,
+      and using gentle play so no one gets hurt during active games.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: color
+          value: brown or tan fur
+          topics:
+          - What color is the teddy bear?
+          - Can you find the bear’s color on something else?
+          - Is it dark or light?
+        - attribute: shape
+          value: round head and belly
+          topics:
+          - Can you point to the teddy’s head?
+          - Where is the teddy’s belly?
+          - Is the teddy round or pointy?
+        - attribute: size
+          value: small enough to hug
+          topics:
+          - Is the teddy bear big or small?
+          - Can you show me how you hug it?
+          - Can you find a bigger one or smaller one?
+        senses:
+        - attribute: surface_feel
+          value: soft and fluffy
+          topics:
+          - How does the teddy bear feel?
+          - Is it soft or rough?
+          - Do you like fluffy hugs?
+        - attribute: weight
+          value: light in your arms
+          topics:
+          - Is the teddy bear heavy or light?
+          - Can you lift it up?
+          - Can you hold it with one hand?
+        - attribute: sound
+          value: quiet when you hug
+          topics:
+          - Does the teddy bear make a sound?
+          - Is it quiet or noisy?
+          - What sound could your teddy make?
+        emotions:
+        - Do you like teddy bears?
+        - Does your teddy bear make you feel safe?
+        - Do you want to cuddle it now?
+        - Is the teddy bear friendly or scary?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: eye_style
+          value: shiny button eyes that look like tiny beads
+          topics:
+          - Why do the eyes shine more than the fur?
+          - How do button eyes look different from stitched eyes?
+        - attribute: nose_shape
+          value: a small triangle nose, sometimes stitched on
+          topics:
+          - Why is the nose smaller than the ears?
+          - How does a stitched nose stay on differently than a plastic nose?
+        - attribute: paw_pad_details
+          value: paw pads may have stitching lines like little toes
+          topics:
+          - Why do paws have extra stitching more than the belly?
+          - How do stitched toes help paws look different from plain paws?
+        context:
+        - attribute: bedtime_place
+          value: often waits on beds for sleepy snuggles
+          topics:
+          - Why do teddy bears show up at bedtime more than breakfast time?
+          - How does a teddy on the bed feel different from one on a shelf?
+        - attribute: travel_companion
+          value: sometimes comes along in cars or sleepovers
+          topics:
+          - Why might you bring a teddy on a trip more than a pillow?
+          - How does a teddy help in a new place more than an empty bag?
+        - attribute: quiet_corner
+          value: sits in a cozy corner during quiet play
+          topics:
+          - Why is a quiet corner better for teddies than a noisy hallway?
+          - How does quiet play feel different from running play?
+        function:
+        - attribute: comfort_hugging
+          value: made for hugging close when you need comfort
+          topics:
+          - Why does hugging help you feel better more than just looking?
+          - How does a soft teddy comfort differently than a hard block?
+        - attribute: pretend_friend
+          value: acts like a pretend friend who listens
+          topics:
+          - Why is a teddy good for pretend talking more than a chair?
+          - How does pretending it listens change your feelings?
+        - attribute: sleep_routine_helper
+          value: helps make a bedtime routine feel familiar
+          topics:
+          - Why do routines help bedtime more than surprises?
+          - How does holding the same teddy help more than holding a new toy?
+        senses:
+        - attribute: warmth_after_hug
+          value: gets a little warm after long cuddles
+          topics:
+          - Why does the teddy feel warmer after hugging than before?
+          - How does warmth feel different from the teddy’s usual coolness?
+        - attribute: fur_direction
+          value: fur changes shade when brushed one way
+          topics:
+          - Why does fur look different when you brush it backward?
+          - How is brushing fur different from patting it?
+        - attribute: stuffing_squish
+          value: squishy middle that bounces back slowly
+          topics:
+          - Why does the belly squish more than the nose?
+          - How does squishing slowly feel different from squeezing quickly?
+        structure:
+        - attribute: stitch_seams
+          value: seams stitched around arms, legs, and belly
+          topics:
+          - Why does a teddy need seams more than a real bear?
+          - How do seams hold stuffing in better than an open edge?
+        - attribute: stuffing_material
+          value: fluffy stuffing inside like soft springy clouds
+          topics:
+          - Why is stuffing used instead of rocks inside?
+          - How does fluffy stuffing change the teddy’s shape when hugged?
+        - attribute: joint_flexibility
+          value: arms and legs bend a bit, not too much
+          topics:
+          - Why can a teddy bend less than your real arm?
+          - How do soft joints move differently than hard plastic joints?
+        emotions:
+        - Do you have a teddy bear or a favorite cuddly toy?
+        - How do you feel when you hug a teddy—calm, happy, or sleepy?
+        - Would you rather cuddle your teddy or hold your hand? Why?
+        - Does your teddy ever feel a little scary in the dark, or always friendly?
+        relationship:
+        - How is a teddy bear like a real animal, and how is it different?
+        - What other toy feels as cuddly as a teddy bear?
+        - How is a teddy different from a doll?
+        - What does a teddy remind you of—family, pets, or bedtime?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: fur_length_and_pile
+          value: A teddy bear’s fur can be short and velvety or long and fluffy; longer fur can look bigger and softer but
+            can tangle more easily with lots of hugs.
+          topics:
+          - How would a teddy bear look different with very long fur versus very short fur?
+          - Why might long fur get messy faster than short fur?
+        - attribute: symmetry_and_face_placement
+          value: Many teddy bears have faces placed symmetrically (eyes and ears spaced evenly), which helps it look friendly
+            and easy to read like a character.
+          topics:
+          - How does a teddy bear’s face change if one eye is higher than the other?
+          - Why do you think a symmetrical face can feel calmer or friendlier?
+        change:
+        - attribute: fur_matting_over_time
+          value: With lots of cuddles, fur fibers can press flat and clump together, making “hug spots” where the bear looks
+            smoother and less fluffy.
+          topics:
+          - Where do you think a teddy bear gets the most matted from hugs, and why?
+          - How could you help a teddy bear look fluffier again without hurting it?
+        - attribute: stitch_looseness_and_repair
+          value: Stitches can loosen when a bear is pulled or squeezed a lot; small gaps can appear at seams, and fixing them
+            early can stop stuffing from leaking out.
+          topics:
+          - Why is it smart to fix a tiny seam gap before it becomes a big hole?
+          - What might happen to the stuffing if a seam opens during play?
+        context:
+        - attribute: comfort_during_new_situations
+          value: Teddy bears often show up in new or uncertain moments—like sleeping somewhere new—because holding something
+            familiar can help a body feel safer and calmer.
+          topics:
+          - 'When might someone want a teddy bear most: a normal night or a new place? Why?'
+          - How can something familiar help your brain when things feel new?
+        - attribute: display_vs_play_spots
+          value: Some teddy bears stay on shelves or beds for decoration, while others are carried around; where it lives
+            can change how clean, worn, or “adventurous” it becomes.
+          topics:
+          - How would a teddy bear change if it stayed on a shelf all year?
+          - What’s different about a bear that travels everywhere compared to one that stays home?
+        function:
+        - attribute: deep_pressure_comfort
+          value: When you hug a teddy bear, it gives gentle pressure back; that steady squeeze can help some kids relax and
+            settle their breathing.
+          topics:
+          - Why might a tight hug feel calming when you’re upset?
+          - How does hugging a teddy bear feel different from hugging a pillow?
+        - attribute: role_play_practice
+          value: A teddy bear can be a “practice buddy” for caring behaviors—like being gentle, using kind words, or pretending
+            to help it feel better.
+          topics:
+          - If your teddy bear had a tough day, what would you say to it?
+          - How can practicing kindness with a teddy bear help with real friends?
+        senses:
+        - attribute: smell_of_familiar_fabric
+          value: A teddy bear can pick up familiar home smells from rooms and laundry, which can feel comforting because your
+            brain recognizes it as “safe and known.”
+          topics:
+          - Why do you think a familiar smell can make you feel calmer?
+          - If a teddy bear starts smelling different after a trip, what might that tell you about where it’s been?
+        - attribute: sound_of_fabric_rub
+          value: When you rub or squeeze a teddy bear, the fabric can make soft whooshing or squeaky sounds depending on the
+            fur type and how the fibers slide.
+          topics:
+          - What kind of teddy bear fabric do you think would be the quietest, and why?
+          - Why might rubbing fast make a different sound than rubbing slowly?
+        structure:
+        - attribute: weighted_pellets_or_beans
+          value: Some teddy bears have small pellets in the belly or paws to add weight; the extra weight helps it sit up
+            and can feel more “real” when held.
+          topics:
+          - How does a heavier teddy bear feel different in your arms than a super light one?
+          - Why might weight in the paws help a teddy bear sit or pose?
+        - attribute: inner_lining_and_stuffing_containment
+          value: Some bears have an inner lining that keeps stuffing from poking through outer fur; it works like a hidden
+            second layer that holds everything in place.
+          topics:
+          - Why might a teddy bear need a hidden inner layer?
+          - What could happen if the outer fabric had tiny holes but there was no lining?
+        emotions:
+        - What mood is your teddy bear in today, and how can you tell?
+        - Do you like sleeping with a teddy bear, or do you prefer it nearby? Why?
+        imagination:
+        - If your teddy bear could talk at night, what secret would it tell you?
+        - Pretend your teddy bear is the captain of a team. What is the team’s mission?
+        narrative:
+        - Tell a story about a teddy bear who gets lost and uses clues to find home.
+        - Make up a story where your teddy bear becomes tiny and explores your room like a jungle.
+        reasoning:
+        - Why do you think teddy bears often have rounder shapes instead of sharp corners?
+        - What would happen if a teddy bear were filled with hard blocks instead of soft stuffing?
+        relationship:
+        - How is a teddy bear like a pet? How is it different?
+        - What other object feels comforting like a teddy bear, and what makes it similar?

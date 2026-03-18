@@ -1,0 +1,40 @@
+domain: plants
+entity_count: 82
+subcategories:
+  berry_plants: 4
+  bulbs: 2
+  citrus_trees: 2
+  cruciferous_vegetables: 2
+  evergreen_trees: 4
+  ferns: 1
+  fruit_trees: 5
+  garden_flowers: 10
+  garden_vegetables: 2
+  grasses: 2
+  ground_cover: 2
+  herbs: 1
+  house_plants: 6
+  leafy_vegetables: 2
+  leaves: 1
+  palm_trees: 2
+  root_vegetables: 1
+  roots: 1
+  shade_trees: 4
+  shrubs: 4
+  spring_flowers: 2
+  succulents: 2
+  tree_blossoms: 2
+  tropical_flowers: 1
+  tropical_fruit_trees: 1
+  tropical_plants: 1
+  tubers: 2
+  vines: 6
+  water_plants: 2
+  wildflowers: 5
+default_themes:
+- theme_id: how_world_works
+  weight: 0.45
+- theme_id: sharing_planet
+  weight: 0.3
+- theme_id: how_we_express
+  weight: 0.25

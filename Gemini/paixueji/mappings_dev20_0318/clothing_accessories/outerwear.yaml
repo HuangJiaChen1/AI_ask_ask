@@ -1,0 +1,300 @@
+- entity_id: clothing_accessories_raincoat
+  entity_name: Raincoat
+  entity_name_cn: 雨衣
+  domain: clothing_accessories
+  parent_category: clothing
+  subcategory: outerwear
+  primary_theme:
+    theme_id: who_we_are
+    weight: 0.35
+    reasoning: A raincoat helps children stay dry and healthy in rainy weather, supporting self-care decisions and independence
+      while going outside.
+  secondary_themes:
+  - theme_id: how_we_express
+    weight: 0.31
+    reasoning: Children select raincoats by color or character designs, using clothing to show their preferences and how they
+      want to look.
+    context_trigger: when the child says, "I want my yellow raincoat" or talks about the pictures on it while putting it on
+  - theme_id: how_we_organize
+    weight: 0.24
+    reasoning: Using a raincoat involves planning for weather, hanging it to dry, and following routines for muddy or wet
+      clothing.
+    context_trigger: when the child checks outside for rain, asks to hang the coat up, or brings it to the designated drying
+      area
+  - theme_id: how_world_works
+    weight: 0.1
+    reasoning: Children can investigate water-repellent materials, hoods, and seams to see how rain rolls off and keeps clothing
+      underneath dry.
+    context_trigger: when the child pours or shakes water off the coat, watches droplets bead, or asks, "Why doesn’t it get
+      wet inside?"
+  primary_key_concepts:
+  - concept_id: connection
+    relevance: 0.9
+    reasoning: The raincoat connects changing weather to choices about clothing, enabling outdoor play and travel without
+      getting soaked.
+  - concept_id: perspective
+    relevance: 0.9
+    reasoning: Children notice that some people like wearing hoods and others don’t, and they learn different comfort preferences
+      in rain.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: A child shows responsibility by putting the coat on before going out, zipping it up, and hanging it to dry
+      afterward.
+  secondary_key_concepts:
+  - concept_id: form
+    relevance: 0.8
+    reasoning: Children explore features like the hood, sleeves, fasteners, and smooth surface, noticing how a coat is shaped
+      to cover the body.
+  - concept_id: function
+    relevance: 0.7
+    reasoning: Its function is to block rain; children test it by touching the inside, checking for wet spots, and seeing
+      if clothes stay dry.
+  candidate_related_concepts:
+  - concept_id: culture
+    discipline: Social Studies
+    reasoning: Rain gear is more common in some places; children can compare what people wear in rainy climates versus dry
+      ones.
+  - concept_id: expression
+    discipline: Arts
+    reasoning: Bright raincoats and fun prints help children express style, and they often talk about looking like a firefighter
+      or explorer.
+  - concept_id: identity
+    discipline: PSHE
+    reasoning: Wearing a personal raincoat supports independence and belonging, as children recognize their own item and feel
+      prepared.
+  - concept_id: creativity
+    discipline: Arts
+    reasoning: Raincoats become costumes in imaginative play, letting children pretend to be adventurers, sailors, or storm
+      chasers.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: color
+          value: bright yellow color
+          topics:
+          - What color is the raincoat?
+          - Can you find something else yellow?
+          - Is it light or dark?
+        - attribute: pattern
+          value: dots or stripes
+          topics:
+          - Does the raincoat have dots or stripes?
+          - Can you point to a dot?
+          - Can you point to a stripe?
+        - attribute: shape
+          value: long coat with hood
+          topics:
+          - Does the raincoat have a hood?
+          - Where does the hood go?
+          - Is it long or short?
+        senses:
+        - attribute: fabric_feel
+          value: smooth and slippery feel
+          topics:
+          - How do you think a raincoat feels?
+          - Is it smooth or scratchy?
+          - Does it feel slippery?
+        - attribute: weight
+          value: light to wear
+          topics:
+          - Is the raincoat heavy or light?
+          - Does it feel easy to wear?
+          - Can you pretend to put it on?
+        - attribute: sound
+          value: swishy when you move
+          topics:
+          - What sound does a raincoat make?
+          - Can you make a swish-swish sound?
+          - Does it sound loud or quiet?
+        emotions:
+        - Do you like wearing a raincoat?
+        - Does wearing it make you feel cozy?
+        - Do you want a raincoat with a hood?
+        - Would you wear it in the rain, yes or no?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: hood_shape
+          value: a round hood that frames your face
+          topics:
+          - Why does a hood wrap your head more than a hat?
+          - How does a hood shape help block rain better than no hood?
+        - attribute: reflective_strips
+          value: shiny strips that glow when light hits
+          topics:
+          - Why do shiny strips stand out more than plain fabric?
+          - How does light make reflective strips brighter than regular color?
+        - attribute: cuff_tightness
+          value: snug cuffs that hug wrists like gentle bracelets
+          topics:
+          - Why are cuffs tighter than the sleeves?
+          - How do snug cuffs keep water out better than loose cuffs?
+        context:
+        - attribute: rainy_weather_use
+          value: worn when raindrops fall and puddles grow
+          topics:
+          - Why do you need a raincoat in rain more than in snow?
+          - How do puddles tell you faster than clouds that rain is here?
+        - attribute: school_walks
+          value: handy for walking to school on wet mornings
+          topics:
+          - Why is a raincoat helpful for walking more than for sitting inside?
+          - How does a wet morning feel different from a dry morning?
+        - attribute: spring_fall_days
+          value: common in spring and fall when weather changes
+          topics:
+          - Why does weather change more in spring than in summer?
+          - How do cool drizzles feel different from warm summer rain?
+        function:
+        - attribute: water_blocking
+          value: keeps your shirt dry under splashy rain
+          topics:
+          - Why does a raincoat block water better than a sweater?
+          - How does water roll off a raincoat more than off cotton?
+        - attribute: wind_breaking
+          value: stops chilly wind from sneaking through clothes
+          topics:
+          - Why does wind feel colder when your clothes are wet?
+          - How does a raincoat block wind more than a thin T-shirt?
+        - attribute: easy_clean
+          value: mud wipes off easier than from soft fabric
+          topics:
+          - Why does mud wipe off a raincoat more than jeans?
+          - How does smooth fabric clean faster than fuzzy fabric?
+        senses:
+        - attribute: cool_touch_when_wet
+          value: feels cool and slick when raindrops land
+          topics:
+          - Why does wet raincoat fabric feel cooler than dry fabric?
+          - How do raindrops make it feel more slippery than before?
+        - attribute: water_beads
+          value: tiny water beads sit like little round pearls
+          topics:
+          - Why does water bead up here more than on a towel?
+          - How do little beads move differently than a big wet patch?
+        - attribute: zipper_click_sound
+          value: zipper makes a zzzip and a tiny click
+          topics:
+          - Why does a zipper sound louder than a button?
+          - How does pulling fast change the zipper sound compared to slow?
+        structure:
+        - attribute: seam_taping
+          value: extra strip inside seams to block leaks
+          topics:
+          - Why would seams need extra help more than the middle part?
+          - How does a taped seam stop drips better than a plain seam?
+        - attribute: zipper_flap
+          value: a flap covers the zipper like a little door
+          topics:
+          - Why cover a zipper with a flap at all?
+          - How does a flap block rain better than an open zipper line?
+        - attribute: drawstring_or_elastic_hood
+          value: hood edge can tighten gently around your face
+          topics:
+          - Why tighten the hood more in wind than in light rain?
+          - How does a tighter hood stay on better than a loose hood?
+        emotions:
+        - How do you feel when you put on a raincoat—cozy or itchy?
+        - Do you like rainy-day walks in your raincoat? Why?
+        - What color raincoat would make you feel happy?
+        - Does wearing a hood make you feel safe or silly?
+        relationship:
+        - How is a raincoat like an umbrella, and how is it different?
+        - How is a raincoat different from a winter coat?
+        - What else keeps water off like a raincoat does?
+        - What does a raincoat remind you of—like a tent or a shell?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: surface_finish_glossiness
+          value: Some raincoats look shiny and some look matte; shinier finishes often shed water faster because droplets
+            slide off more easily.
+          topics:
+          - Why might a shiny raincoat look different when water hits it?
+          - If a raincoat were very matte and “grabby,” what could that do to raindrops?
+        - attribute: length_and_coverage
+          value: Raincoats can be short or long; longer ones cover more legs but can also flap or get in the way when running.
+          topics:
+          - What are the good and tricky parts of having a longer raincoat?
+          - How would you choose a raincoat length for jumping in puddles—and why?
+        change:
+        - attribute: waterproof_coating_wear
+          value: Over time, the special coating that helps water bead up can wear down, so fabric may start to soak instead
+            of letting drops roll off.
+          topics:
+          - How could you tell if a raincoat is starting to soak up water instead of beading it?
+          - Why do you think the coating wears out more on shoulders or elbows?
+        - attribute: cracks_and_peeling_in_rubbery_materials
+          value: Rubbery raincoats can crack or peel if they get folded tightly, stretched a lot, or left in strong sun, because
+            the material can dry out and lose flexibility.
+          topics:
+          - Why might folding a raincoat the same way every time make one spot wear out faster?
+          - What could you do to help a raincoat stay flexible for longer?
+        context:
+        - attribute: temperature_and_layering
+          value: A raincoat is often worn over other clothes; on warmer rainy days it can feel sweaty, but on cooler rainy
+            days it helps block cold wind and wetness together.
+          topics:
+          - How would you decide what to wear under a raincoat on a warm rainy day?
+          - Why can rain feel colder when wind is blowing?
+        - attribute: visibility_in_dark_weather
+          value: Rainy days can look darker and gray, so being seen matters more; brighter colors can stand out against cloudy
+            skies and wet streets.
+          topics:
+          - Why might bright colors be extra helpful on a rainy, dark day?
+          - If your raincoat were a dark color, what other ideas could help people notice you?
+        function:
+        - attribute: hood_rain_channeling
+          value: A hood can act like a little roof, guiding water away from your face; the brim shape and fit can change where
+            the water drips.
+          topics:
+          - Where do you think the water goes when it runs off a hood?
+          - What hood shape would keep rain out of your eyes best, and why?
+        - attribute: breathability_vs_water_blocking
+          value: Raincoats try to block water from getting in, but your body also makes warm, wet air (sweat); some materials
+            let a little air out while still stopping raindrops.
+          topics:
+          - Why might you feel sweaty inside a raincoat even though it’s raining outside?
+          - What could a raincoat do to let heat out but keep rain out?
+        senses:
+        - attribute: humid_feeling_inside
+          value: Inside a raincoat can feel warm and damp because your body heat and sweat get trapped, especially if the
+            coat doesn’t let much air move through.
+          topics:
+          - When does the inside of a raincoat feel most humid—walking, running, or standing still—and why?
+          - What could you do (without taking it off) to feel less sweaty in a raincoat?
+        - attribute: raindrop_drumming_sound
+          value: Raindrops can make different tapping sounds depending on the raincoat’s thickness and stiffness—light rain
+            can sound like tiny clicks, heavy rain like louder drumming.
+          topics:
+          - Why do bigger raindrops sound louder on a raincoat?
+          - How do you think the sound changes if the raincoat is thicker or thinner?
+        structure:
+        - attribute: underarm_vents_or_eyelets
+          value: Some raincoats have small holes or vents under the arms so warm air can escape while rain still mostly stays
+            out because the openings are placed where water doesn’t fall straight in.
+          topics:
+          - Why put vents under the arms instead of on top of the shoulders?
+          - What might happen if the vents were too big?
+        - attribute: snap_button_reinforcement_patches
+          value: Where snaps or buttons attach, raincoats may have extra layers of fabric so pulling doesn’t tear the material;
+            the patch spreads the force over a bigger area.
+          topics:
+          - Why would a snap area need extra fabric underneath it?
+          - If you pull hard on a snap with no reinforcement, what could happen to the fabric?
+        emotions:
+        - How do you feel when you put on a raincoat—ready for adventure, cozy, or annoyed? Why?
+        - What raincoat color would make you feel cheerful on a gray day?
+        imagination:
+        - If your raincoat had a superpower, what would it do in a storm?
+        - Design a raincoat for an animal (like a cat or an elephant). What special parts would it need?
+        narrative:
+        - Tell a story about a raincoat that helps someone find something important on a rainy day.
+        - Make up a story where the raincoat can whisper weather secrets.
+        reasoning:
+        - Why do you think raincoats usually have hoods instead of only umbrellas?
+        - What would happen if a raincoat absorbed water like a towel?
+        relationship:
+        - How is a raincoat like a tent? How is it different?
+        - What other clothing works like a raincoat in some ways, but not all ways?

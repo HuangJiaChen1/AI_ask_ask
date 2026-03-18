@@ -1,0 +1,269 @@
+- entity_id: arts_music_crayons
+  entity_name: Crayons
+  entity_name_cn: 蜡笔
+  domain: arts_music
+  parent_category: art_supplies
+  subcategory: drawing_tools
+  primary_theme:
+    theme_id: how_we_express
+    weight: 0.58
+    reasoning: Crayons help young children express themselves quickly with bright colors, making pictures and marks that communicate
+      feelings, stories, and experiences.
+  secondary_themes:
+  - theme_id: who_we_are
+    weight: 0.19
+    reasoning: Children often pick crayon colors that match their preferences and emotions, using drawings to show what matters
+      to them and who they are.
+    context_trigger: when the child chooses one color repeatedly and says “This is my favorite” or draws themselves with chosen
+      colors.
+  - theme_id: where_place_time
+    weight: 0.15
+    reasoning: Crayon drawings often show familiar places and times, like school, a trip, or seasons, helping children represent
+      their world and memories.
+    context_trigger: when the child draws a place and says “This is our classroom” or “We went here yesterday” while adding
+      details.
+  - theme_id: how_we_organize
+    weight: 0.08
+    reasoning: Crayons encourage organizing by sorting colors, staying inside shapes, and following steps like outline then
+      fill, building early planning habits.
+    context_trigger: when the child lines crayons up, asks for a specific color, or says “First I do the border, then I color.”
+  primary_key_concepts:
+  - concept_id: form
+    relevance: 1.1
+    reasoning: Crayons have a simple form that fits small hands, and children explore how different tip angles and strokes
+      create varied lines and shapes.
+  - concept_id: perspective
+    relevance: 1.0
+    reasoning: Children explain their drawings in their own way, showing that one picture can have many meanings depending
+      on the artist’s viewpoint.
+  - concept_id: connection
+    relevance: 0.9
+    reasoning: Crayons connect color to ideas—blue for water, yellow for sun—and connect children’s talk to their drawings
+      when they narrate what they made.
+  secondary_key_concepts:
+  - concept_id: function
+    relevance: 0.6
+    reasoning: Children learn crayons are made to color smoothly on paper, covering areas quickly and creating strong, waxy
+      marks that do not erase easily.
+  - concept_id: causation
+    relevance: 0.3
+    reasoning: Kids see that pushing harder makes darker color and rubbing fast warms the wax, causing different textures
+      and sometimes crayon flakes.
+  candidate_related_concepts:
+  - concept_id: creativity
+    discipline: arts
+    reasoning: Crayons invite imaginative drawing without many rules, helping children invent characters, patterns, and pretend
+      scenes during free exploration.
+  - concept_id: expression
+    discipline: arts
+    reasoning: Children use crayons to show emotions through color choices and energetic strokes, making it easy to communicate
+      feelings without words.
+  - concept_id: culture
+    discipline: social_studies
+    reasoning: Children may draw cultural foods, celebrations, and community symbols with crayons, connecting everyday experiences
+      and traditions to visual art.
+  - concept_id: symbolism
+    discipline: arts
+    reasoning: Crayon marks can become symbols like traffic lights, flags, or simple signs, teaching that colors and shapes
+      can represent shared meanings.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: color
+          value: many bright colors
+          topics:
+          - What colors do you see?
+          - Which color do you want to pick?
+        - attribute: shape
+          value: short, round sticks
+          topics:
+          - Are the crayons long or short?
+          - Do they look round like a stick?
+        - attribute: design
+          value: paper label wrapper
+          topics:
+          - Do you see the paper wrapper?
+          - Can you point to the label?
+        senses:
+        - attribute: touch_feel
+          value: smooth and waxy
+          topics:
+          - Do crayons feel smooth?
+          - Do they feel a little waxy?
+        - attribute: sound
+          value: soft scribble sound
+          topics:
+          - What sound do crayons make on paper?
+          - Can you make a scribble sound?
+        - attribute: vibration_feel
+          value: tiny bumps when drawing
+          topics:
+          - Do you feel little bumps when you draw?
+          - Does it feel bumpy or smooth?
+        emotions:
+        - Do you like drawing with crayons?
+        - Which crayon color makes you happy?
+        - Does coloring feel fun or boring?
+        - Do crayons feel friendly to you?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: wrapper_paper
+          value: Paper wrapper with tiny words and a little stripe
+          topics:
+          - Why do crayons wear paper, like a coat for your hands?
+          - How is a wrapped crayon different from an unwrapped one?
+        - attribute: tip_wear
+          value: Pointy tip becomes flat after lots of coloring
+          topics:
+          - How does the tip change when you press hard vs softly?
+          - Why might a flat tip color faster than a sharp tip?
+        - attribute: shine_level
+          value: Some look waxy-shiny, others look more matte
+          topics:
+          - How does a shiny crayon look different from a dull one?
+          - Why might shiny wax show more on dark paper than light paper?
+        context:
+        - attribute: use_places
+          value: Found in classrooms, kitchens, and art corners
+          topics:
+          - Why do crayons show up where kids make things, not in the fridge?
+          - How is coloring at school different from coloring at home?
+        - attribute: storage_spot
+          value: Often kept in a box or cup together
+          topics:
+          - How does a box help crayons, like a toy bin helps toys?
+          - Why is keeping crayons together better than spreading them everywhere?
+        function:
+        - attribute: coloring_action
+          value: Leaves color when wax rubs onto paper
+          topics:
+          - How does rubbing make color appear, like chalk on a sidewalk?
+          - Why does pressing harder make darker color than pressing softly?
+        - attribute: blending
+          value: Colors can mix when you layer them slowly
+          topics:
+          - How do two colors make a new color, like red and yellow?
+          - Why does layering look different from coloring just once?
+        - attribute: resist_effect
+          value: Wax can stop paint from sticking in spots
+          topics:
+          - How can wax “block” paint, like an umbrella blocks rain?
+          - Why would paint slide off wax more than off plain paper?
+        structure:
+        - attribute: wax_core
+          value: Solid wax stick that softens with warm hands
+          topics:
+          - How does warmth make wax softer, like butter getting soft?
+          - Why is a solid stick easier to hold than melted wax?
+        - attribute: cylinder_body
+          value: Short cylinder shape that fits in small fingers
+          topics:
+          - How does the cylinder shape help you grip, compared to a flat piece?
+          - Why are some crayons thicker than others?
+        - attribute: break_point
+          value: Can snap in the middle if you bend it
+          topics:
+          - How does bending make it break, like a cracker snapping?
+          - Why might a thicker crayon break differently than a skinny one?
+        emotions:
+        - Which crayon color makes you feel happy?
+        - Do you like coloring big spaces or tiny details more? Why?
+        relationship:
+        - How are crayons like markers, and how are they different?
+        - What does a crayon remind you of—candy, candles, or something else?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: label_text_and_brand_marks
+          value: Many crayons have printed names or symbols so people can quickly identify colors and sort them without guessing.
+          topics:
+          - How does having a color name on the crayon help you when you’re drawing?
+          - If the labels rubbed off, what other clues could you use to tell similar colors apart?
+        - attribute: color_strength_opacity
+          value: Some crayons look more bold or more pale because different color pigments mix into the wax differently, changing
+            how much paper shows through.
+          topics:
+          - Why do you think some crayons make darker lines with the same pressure?
+          - How could you test whether a crayon is more “see-through” or more “solid” in color?
+        change:
+        - attribute: melting_and_reshaping
+          value: Crayons can melt when warm because wax softens; when it cools, it hardens again, so a crayon can change shape
+            and become one solid piece.
+          topics:
+          - Why does wax get soft when it’s warm and hard when it cools?
+          - If a crayon melted and then cooled, how might that change how it draws?
+        - attribute: paper_build_up_and_smoothing
+          value: As crayons get used, tiny bits of paper and wax can build up, and the tip can become smoother or flatter
+            depending on how you hold it.
+          topics:
+          - How does a pointy tip versus a flat tip change the kind of lines you can make?
+          - What could you do to change the tip shape on purpose for a certain drawing effect?
+        context:
+        - attribute: paper_surface_effect
+          value: Crayons behave differently on smooth paper versus rough paper because wax catches on bumps and slides differently
+            across the surface.
+          topics:
+          - Why might rough paper make a crayon look more “scratchy” or textured?
+          - What kind of paper would you pick to make a very smooth sky, and why?
+        - attribute: temperature_in_hand
+          value: Warm hands can slightly soften the wax near the tip, which can make coloring feel smoother and lay down more
+            wax.
+          topics:
+          - How might crayons work differently in a cold room compared to a warm room?
+          - What signs would tell you the crayon wax is getting softer while you color?
+        function:
+        - attribute: pressure_controls_line_darkness
+          value: Pressing harder can push more wax into the paper’s tiny gaps, making darker, thicker marks; pressing lightly
+            leaves a thinner layer.
+          topics:
+          - Why does pressing harder usually make the color look darker?
+          - How could you use light and hard pressure to make shadows in a drawing?
+        - attribute: edge_vs_side_drawing
+          value: Using the tip makes small, precise lines, while using the side lays down a wide patch of color because more
+            wax touches the paper at once.
+          topics:
+          - When would you choose to color with the side instead of the tip, and why?
+          - What kinds of shapes are easier with the tip, and what’s easier with the side?
+        senses:
+        - attribute: wax_smell_when_warmed
+          value: Crayons can have a mild waxy smell that may become stronger if the wax warms up, because warming can release
+            more scent into the air.
+          topics:
+          - Why do you think warm crayons might smell stronger than cool crayons?
+          - What other things smell stronger when they’re warm?
+        - attribute: drag_and_glide_feel
+          value: A crayon can feel like it drags or glides depending on paper texture, how hard you press, and how much wax
+            is already on the spot.
+          topics:
+          - Why might a crayon glide more easily over an area you already colored?
+          - How could you change your pressure to make the crayon feel smoother or less smooth?
+        structure:
+        - attribute: pigment_in_wax_mix
+          value: Crayons are a mix of wax and colored pigments; the pigment gives the color and the wax helps it stick to
+            paper in a thin layer.
+          topics:
+          - What jobs do the wax and the pigment each do in a crayon?
+          - If a crayon had lots of wax but very little pigment, what do you think the color would look like?
+        - attribute: wrapper_as_grip_and_heat_shield
+          value: The paper wrapper can improve grip and keep fingers cleaner; it also helps slow how quickly hand heat warms
+            and softens the wax.
+          topics:
+          - How does the wrapper change the way the crayon feels in your hand?
+          - What might happen if you colored a lot with an unwrapped crayon in a warm room?
+        emotions:
+        - Which crayon color feels the happiest to you, and what makes it feel that way?
+        - How do you feel when a crayon breaks—what would you do next?
+        imagination:
+        - If your crayons were tiny characters, what would the brightest one’s personality be like?
+        - Invent a brand-new color that doesn’t exist yet—what would you name it and what would it look like?
+        narrative:
+        - Tell a story about a crayon that wants to be used for something other than coloring.
+        - Once upon a time, a box of crayons went on a trip—where did they go and what did they draw?
+        reasoning:
+        - Why do you think crayons come in sets with many similar shades of one color?
+        - What might happen if you press so hard that lots of wax piles up in one spot on the paper?
+        relationship:
+        - How are crayons different from colored pencils when you try to make a very light, gentle color?
+        - What does a crayon’s waxy feeling remind you of in real life?

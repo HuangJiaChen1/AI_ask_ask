@@ -1,0 +1,33 @@
+domain: people_roles
+entity_count: 58
+subcategories:
+  agriculture: 1
+  building_services: 2
+  caregivers: 3
+  children: 1
+  construction: 2
+  delivery_services: 2
+  education: 4
+  emergency_services: 1
+  extended_family: 3
+  food_service: 4
+  friends: 1
+  grandparents: 2
+  healthcare: 6
+  home_services: 2
+  neighbors: 1
+  outdoor_work: 1
+  parents: 5
+  public_safety: 2
+  repair_services: 1
+  retail: 2
+  school_roles: 1
+  siblings: 6
+  transportation: 5
+default_themes:
+- theme_id: who_we_are
+  weight: 0.4
+- theme_id: how_we_organize
+  weight: 0.35
+- theme_id: how_we_express
+  weight: 0.25

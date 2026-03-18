@@ -1,0 +1,300 @@
+- entity_id: vehicles_fire_truck
+  entity_name: Fire Truck
+  entity_name_cn: 消防车
+  domain: vehicles
+  parent_category: emergency vehicles
+  subcategory: fire
+  primary_theme:
+    theme_id: how_we_organize
+    weight: 0.55
+    reasoning: A fire truck shows children how communities organize emergency help, with firefighters, stations, special equipment,
+      and clear routines to respond quickly and protect people.
+  secondary_themes:
+  - theme_id: who_we_are
+    weight: 0.25
+    reasoning: Children often admire firefighters and explore bravery, helping others, and feelings during emergencies, building
+      empathy and identity as helpers.
+    context_trigger: when the child pretends to be a firefighter, puts on a helmet, or says they want to help people
+  - theme_id: how_world_works
+    weight: 0.2
+    reasoning: Kids investigate how water hoses, ladders, sirens, and pumps work to put out fires, rescue people, and move
+      safely through streets.
+    context_trigger: when the child asks what the hose does, why the siren is loud, or how the ladder goes up
+  primary_key_concepts:
+  - concept_id: function
+    relevance: 1.1
+    reasoning: 'Children can explain the fire truck’s function: carrying firefighters and tools to put out fires and help
+      in emergencies.'
+  - concept_id: connection
+    relevance: 0.9
+    reasoning: Kids connect the fire truck to the fire station, emergency number, firefighters, and neighborhoods, noticing
+      how help reaches homes.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: A fire truck supports responsibility ideas like making safe choices, listening to adults, and moving aside
+      so emergency vehicles can pass.
+  secondary_key_concepts:
+  - concept_id: form
+    relevance: 0.7
+    reasoning: Children notice the truck’s big body, ladder, hose reels, and flashing lights and link each part to a job.
+  - concept_id: causation
+    relevance: 0.3
+    reasoning: Kids can discuss that smoke and fire cause danger, so firefighters need water, protective gear, and fast vehicles
+      to respond.
+  candidate_related_concepts:
+  - concept_id: community
+    discipline: Social Studies
+    reasoning: Fire trucks represent a community service where helpers protect everyone, including families, schools, and
+      neighborhoods.
+  - concept_id: rules
+    discipline: Social Studies
+    reasoning: Children learn rules like stopping for sirens, following evacuation directions, and not touching equipment
+      without permission.
+  - concept_id: collaboration
+    discipline: Social Studies
+    reasoning: Firefighters collaborate by driving, holding hoses, climbing ladders, and communicating, showing teamwork under
+      pressure.
+  - concept_id: safety
+    discipline: PSPE
+    reasoning: A fire truck naturally leads to safety learning such as smoke alarms, fire drills, and safe behavior around
+      roads and emergencies.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: body_color
+          value: bright red
+          topics:
+          - What color is the fire truck?
+          - Can you point to the red part?
+          - Do you see any other colors?
+        - attribute: size
+          value: very big truck
+          topics:
+          - Is the fire truck big or small?
+          - Can you show big with your arms?
+          - Is it bigger than a car?
+        - attribute: lights
+          value: flashing lights on top
+          topics:
+          - Can you find the lights?
+          - Where are the lights—top or bottom?
+          - Do the lights look bright?
+        - attribute: ladder
+          value: long ladder
+          topics:
+          - Can you point to the ladder?
+          - Is the ladder long or short?
+          - Where is the ladder on the truck?
+        senses:
+        - attribute: engine_sound
+          value: loud rumble
+          topics:
+          - Is the fire truck loud or quiet?
+          - Can you make a rumble sound?
+        - attribute: siren_sound
+          value: wee-woo siren
+          topics:
+          - What sound does the siren make?
+          - Can you make a wee-woo sound?
+        - attribute: surface_feel
+          value: hard, smooth truck
+          topics:
+          - Do you think the truck feels hard?
+          - Do you think it feels smooth or bumpy?
+        emotions:
+        - Do you like fire trucks?
+        - Do the loud sounds bother you or not?
+        - Do fire trucks make you feel safe?
+        - Would you want to see a fire truck up close?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: stripe_pattern
+          value: bright stripes along the sides like fast zigzags
+          topics:
+          - Why do fire trucks have stripes, like a big warning pattern?
+          - How are stripes different from polka dots for being noticed?
+        - attribute: big_wheels
+          value: huge thick wheels that look taller than a kid
+          topics:
+          - Why does a fire truck need bigger wheels than a small car?
+          - How are thick wheels different from thin wheels on bumpy roads?
+        - attribute: cab_shape
+          value: a tall front cab with wide windows for seeing
+          topics:
+          - Why is the cab so tall, like sitting up high?
+          - How are wide windows different from small windows for driving?
+        context:
+        - attribute: fire_station_bays
+          value: parked in a station garage, ready to roll out
+          topics:
+          - Why do fire trucks wait inside a station, not outside all day?
+          - How is a station garage different from a regular home garage?
+        - attribute: emergency_roads
+          value: driving quickly on roads when there is danger
+          topics:
+          - Why do fire trucks go fast in emergencies but not all the time?
+          - How is an emergency drive different from a normal drive?
+        - attribute: community_events
+          value: sometimes seen in parades or safety days
+          topics:
+          - Why do fire trucks visit parades, like special guests?
+          - How is a parade visit different from a fire call?
+        function:
+        - attribute: water_pumping
+          value: pumping water strongly to help fight fires
+          topics:
+          - Why does a fire truck need a strong pump, not just a bucket?
+          - How is spraying water far different from pouring water close?
+        - attribute: carrying_crew
+          value: bringing firefighters and gear together to the scene
+          topics:
+          - Why do firefighters ride together, like a team?
+          - How is carrying people different from carrying only supplies?
+        - attribute: scene_visibility
+          value: using bright warnings so others notice and move
+          topics:
+          - Why does a fire truck need to be noticed quickly, like a big sign?
+          - How is a bright warning different from a quiet warning?
+        senses:
+        - attribute: horn_sound
+          value: a loud deep HONK that feels in your chest
+          topics:
+          - Why is the horn so loud compared with a bicycle bell?
+          - How is a deep horn different from a high beep?
+        - attribute: diesel_smell
+          value: a strong engine smell, a bit like buses
+          topics:
+          - Why does a big truck smell stronger than a small car?
+          - How is engine smell different when the truck is off versus on?
+        structure:
+        - attribute: hose_sections
+          value: long hoses rolled up like giant sleeping snakes
+          topics:
+          - Why are hoses stored rolled up, like a coil?
+          - How is a long hose different from a short hose for reaching?
+        - attribute: water_tank
+          value: a big built-in tank that holds lots of water
+          topics:
+          - Why does the truck carry its own water, like a big bottle?
+          - How is a big tank different from a small tank in an emergency?
+        - attribute: control_panels
+          value: buttons and gauges that help run water and tools
+          topics:
+          - Why do firefighters use gauges, like numbers on a dial?
+          - How is a control panel different from a simple on-off switch?
+        emotions:
+        - How do you feel when you hear a fire truck—excited, worried, or safe?
+        - Would you want to sit inside a fire truck someday? Why?
+        - What part of a fire truck seems the coolest to you?
+        relationship:
+        - How is a fire truck different from an ambulance?
+        - How is a fire truck like a big helper, and how is it different from a teacher helper?
+        - What other vehicle sounds loud like a fire truck, and how is it different?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: high_visibility_chevron_rear
+          value: Many fire trucks have bright chevron patterns on the back to grab attention and make the truck easier to
+            notice quickly, especially in busy or dark conditions.
+          topics:
+          - Why would the back of the truck need extra attention-grabbing patterns?
+          - How might those patterns help drivers judge distance and slow down?
+        - attribute: multiple_compartment_doors
+          value: The sides often show many compartment doors of different sizes, which helps organize equipment so firefighters
+            can find what they need fast.
+          topics:
+          - Why would having many smaller doors be helpful instead of one giant door?
+          - How could the sizes of compartments give clues about what might be inside?
+        - attribute: light_bar_and_strobe_positions
+          value: Emergency lights are placed high and around the truck so they can be seen from different directions; flashing
+            patterns help catch attention through movement.
+          topics:
+          - Why is it useful to have lights that can be seen from the side as well as the front?
+          - How does flashing light help people notice something faster than steady light?
+        change:
+        - attribute: maintenance_and_safety_inspections
+          value: Fire trucks are checked often so pumps, brakes, and lights work correctly; small problems get fixed before
+            they become dangerous during an emergency.
+          topics:
+          - Why is it better to find a problem during an inspection than during an emergency?
+          - What parts do you think would be most important to check every day?
+        - attribute: equipment_upgrades_over_years
+          value: Over time, fire trucks can get upgraded with new technology like better lighting, improved controls, or safer
+            seating to help crews work more effectively.
+          topics:
+          - Why might new technology make emergency work safer or faster?
+          - What upgrade would you invent to help firefighters communicate better?
+        context:
+        - attribute: staged_at_incident_scene
+          value: At an emergency, a fire truck is parked in a careful spot so firefighters have space to work and so the truck
+            stays visible to other drivers.
+          topics:
+          - Why might the truck need extra space around it while firefighters work?
+          - What could happen if the truck parked too close to the danger or too far away?
+        - attribute: city_vs_rural_access
+          value: 'Where the truck is driving matters: tight city streets, narrow bridges, or rural roads can change the route
+            and how quickly it can arrive.'
+          topics:
+          - Why would a big truck have different challenges in a narrow street than on a wide road?
+          - If a road is blocked, how might the driver decide a new route quickly?
+        function:
+        - attribute: pressurizing_water_for_hoses
+          value: A fire truck uses a pump to pressurize water so it can travel through long hoses and reach higher places;
+            pressure helps push water farther and faster.
+          topics:
+          - Why does water need pressure to reach far or go upward?
+          - What do you think would happen if the pressure was too low or too high?
+        - attribute: scene_safety_blocking_and_warning
+          value: Fire trucks help protect the scene by using their size and lights to warn traffic and create a safer space
+            where firefighters can work.
+          topics:
+          - How can a big vehicle help keep people safer at an emergency scene?
+          - Why is warning traffic part of helping, even if there isn’t a fire right next to the road?
+        senses:
+        - attribute: air_brake_hiss
+          value: Many large trucks use air brakes, which can make a hissing sound when air pressure releases to help slow
+            or stop the vehicle.
+          topics:
+          - Why might a brake system that uses air make a hissing noise?
+          - How could that sound be a clue that the truck is stopping or getting ready to move?
+        - attribute: pump_vibration_hum
+          value: When the pump operates, you might sense a steady hum or vibration because powerful parts are spinning and
+            pushing water through pipes.
+          topics:
+          - Why would pushing lots of water make the truck vibrate or hum?
+          - How might the sound change if the pump worked harder or easier?
+        structure:
+        - attribute: stabilizer_outriggers
+          value: Some fire trucks have outriggers that extend outward to widen the base so the truck doesn’t tip when a ladder
+            is raised or weight shifts.
+          topics:
+          - Why does making the base wider help prevent tipping?
+          - What might happen if a ladder went up high without stabilizers on uneven ground?
+        - attribute: valves_and_gauges_network
+          value: Fire trucks have many valves and gauges that control where water goes and how strong it flows; gauges help
+            firefighters see pressure so they can adjust safely.
+          topics:
+          - Why would firefighters need to measure pressure instead of guessing?
+          - How could turning one valve change what happens at the end of a hose?
+        emotions:
+        - How do you feel when you hear or see a fire truck—excited, worried, safe, or something else?
+        - Do loud sirens bother you or help you feel protected? Why?
+        - If you could thank a fire truck crew, what would you say?
+        imagination:
+        - Pretend you are a fire truck driving to help—what do you ‘notice’ on the road to stay safe?
+        - If a fire truck could choose its own siren song, what would it sound like and why?
+        - Design a fire truck that works best in your town. What would you change about it?
+        narrative:
+        - Tell a story about a fire truck that has to help during a big storm. What problems does it face?
+        - Once upon a time, a fire truck’s lights stopped working—how did the crew solve the problem safely?
+        - Tell a story where a fire truck helps in a way that isn’t about fire at all.
+        reasoning:
+        - Why do you think fire trucks are built so large instead of small like a car?
+        - What would happen if a fire truck arrived fast but parked in the wrong place?
+        - If the truck’s pump made a strange sound, what steps should the crew take before using it?
+        relationship:
+        - How is a fire truck like an ambulance, and how is it different?
+        - What other big vehicles remind you of a fire truck? What’s similar about how they’re used?
+        - How is the fire truck like a ‘moving safety station’ for firefighters?

@@ -1,0 +1,270 @@
+- entity_id: animals_lion
+  entity_name: Lion
+  entity_name_cn: 狮子
+  domain: animals
+  parent_category: mammals
+  subcategory: big cats
+  primary_theme:
+    theme_id: how_world_works
+    weight: 0.5
+    reasoning: Lions help children explore how the world works through body features, hunting and resting behaviors, and loud
+      roars that communicate across wide spaces.
+  secondary_themes:
+  - theme_id: sharing_planet
+    weight: 0.3
+    reasoning: Lions depend on grassland habitats and other animals for food, so children can discuss protecting wild places
+      and balancing needs of predators and prey.
+    context_trigger: when the child asks what happens if there are no zebras, talks about drought, or wonders why lions need
+      big open land
+  - theme_id: who_we_are
+    weight: 0.2
+    reasoning: Because lions live in groups and use sounds like roaring, children can compare lion families and teamwork with
+      human families, rules, and communication.
+    context_trigger: when the child pretends to roar to call others, asks who is in the lion family, or assigns roles like
+      'leader' and 'babies' in play
+  primary_key_concepts:
+  - concept_id: function
+    relevance: 0.9
+    reasoning: Children can see functions like roaring to communicate, using teeth and claws to eat, and working together
+      in a pride to get food.
+  - concept_id: form
+    relevance: 0.8
+    reasoning: The mane, strong paws, sharp claws, and big teeth are clear forms children notice and connect to protection,
+      fighting, and hunting.
+  - concept_id: causation
+    relevance: 0.9
+    reasoning: Kids can explore cause and effect, such as how roaring warns others away, or how working together can lead
+      to catching prey.
+  secondary_key_concepts:
+  - concept_id: change
+    relevance: 0.9
+    reasoning: Lions change as cubs grow, manes develop on males, and behavior changes from playful practice to real hunting
+      and parenting.
+  - concept_id: connection
+    relevance: 0.7
+    reasoning: Children can connect lions to prey animals, water, grasslands, and pride members, noticing how survival depends
+      on many living and nonliving things.
+  candidate_related_concepts:
+  - concept_id: habitat
+    discipline: Science
+    reasoning: Savanna habitat features like tall grass and watering holes help children see what lions need and why they
+      live in particular environments.
+  - concept_id: growth
+    discipline: Science
+    reasoning: Watching how cubs grow into strong adults supports understanding of growth stages and how young animals learn
+      skills over time.
+  - concept_id: adaptation
+    discipline: Science
+    reasoning: Sharp claws, strong jaws, and camouflage coloring are adaptations that help lions hunt, eat, and survive in
+      open grasslands.
+  - concept_id: cycles
+    discipline: Science
+    reasoning: Children can notice repeating cycles like resting during hot times, being active at cooler times, and the ongoing
+      cycle of hunting and feeding.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: body_color
+          value: yellow-brown fur
+          topics:
+          - What color is the lion?
+          - Can you find the yellow-brown fur?
+        - attribute: covering
+          value: soft-looking fur
+          topics:
+          - Does the lion look furry?
+          - Can you point to its fur?
+        - attribute: markings
+          value: dark tail tip
+          topics:
+          - Can you find the lion’s tail?
+          - Is the tail tip darker?
+        - attribute: body_size
+          value: very big cat
+          topics:
+          - Is the lion big or small?
+          - Is it bigger than you?
+        senses:
+        - attribute: fur_feel
+          value: warm and fuzzy
+          topics:
+          - Do you think its fur feels warm?
+          - Do you think it feels fuzzy?
+        - attribute: sound
+          value: loud roaring sound
+          topics:
+          - What sound does a lion make?
+          - Can you try a quiet roar?
+        - attribute: smell
+          value: strong animal smell
+          topics:
+          - Do you think a lion smells strong?
+          - Would it smell like a pet or wild?
+        emotions:
+        - Do you like lions?
+        - Does the lion seem scary or friendly?
+        - How do you feel when you hear a roar?
+        - Would you want to see a lion from far away?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: mane_look
+          value: Big fluffy mane around the male lion’s face
+          topics:
+          - Why might a mane make a lion look bigger than it is?
+          - How is a mane different from the hair on your head?
+        - attribute: paw_size
+          value: Huge paws that press deep prints in sand
+          topics:
+          - How do big paws help it run, like big shoes helping you?
+          - Why would a lion’s paw print be bigger than a dog’s?
+        - attribute: tail_tip
+          value: Long tail with a fluffy tuft at the end
+          topics:
+          - How might a tail help with balance, like your arms do?
+          - Why would a tail be long instead of short for running?
+        context:
+        - attribute: habitat_savanna
+          value: Lives on warm grassy savannas with few trees
+          topics:
+          - Why is tall grass a good hiding place, compared to a clear floor?
+          - How is a savanna different from a snowy place?
+        - attribute: continent_home
+          value: Most live in Africa; a few live in India
+          topics:
+          - Why do you think lions live in warm places more than cold places?
+          - How might Africa be different from where you live?
+        function:
+        - attribute: hunting_teamwork
+          value: Often hunts together, sneaking close very quietly
+          topics:
+          - How does working together help, like playing on a team?
+          - Why is sneaking better than shouting when hunting?
+        - attribute: communication_roar
+          value: Roars loudly to tell others “I’m here!”
+          topics:
+          - How does a roar travel farther than a whisper?
+          - Why might roaring be safer than walking up close?
+        - attribute: defense_claws_teeth
+          value: Uses sharp claws and teeth to protect itself
+          topics:
+          - How do claws help differently than teeth, like hands vs mouth?
+          - Why might sharp claws be better for grabbing than smooth paws?
+        structure:
+        - attribute: claws
+          value: Curved claws that can grip and hold tight
+          topics:
+          - How do curved claws grab better than flat nails?
+          - Why would claws be useful for climbing or holding?
+        - attribute: teeth_types
+          value: Long pointy teeth for biting and tearing meat
+          topics:
+          - How are pointy teeth different from your flat chewing teeth?
+          - Why does tearing help more than chewing for a lion?
+        - attribute: whiskers
+          value: Stiff whiskers that help sense nearby things
+          topics:
+          - How might whiskers help in the dark, compared to your eyes?
+          - Why are whiskers on the face instead of on the tail?
+        emotions:
+        - Do lions seem scary, brave, or both to you?
+        - If you saw a lion far away, how would you feel?
+        relationship:
+        - How is a lion like a house cat, and how is it different?
+        - What animal do you think is the lion’s best look-alike? Why?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: nose_pigment_and_shape
+          value: A lion’s nose is often dark and wide, with nostrils shaped to pull in lots of air quickly during running
+            and exertion.
+          topics:
+          - Why would a wide nose help a lion when it runs fast?
+          - How might a lion’s nose look different from a cat at home, and why?
+        - attribute: coat_camouflage_shading
+          value: Its coat can have slightly different shades that blend with dry grass and shadows, helping it stay harder
+            to spot when it stalks.
+          topics:
+          - How do grass color and shadow help a lion’s coat blend in?
+          - What would change about hunting if lions were bright blue instead of tan?
+        change:
+        - attribute: cub_to_adult_skill_growth
+          value: As lions grow, they build muscle and practice skills—like stalking, pouncing, and teamwork—through play that
+            slowly turns into real hunting practice.
+          topics:
+          - How can play-fighting help lion cubs when they’re older?
+          - What skills do you think take the longest for a cub to learn well?
+        - attribute: coat_condition_with_seasons_health
+          value: A lion’s coat can look rougher or smoother depending on health, parasites, and the environment; grooming
+            and rest can affect how it looks.
+          topics:
+          - What might a lion’s coat tell you about how healthy it is?
+          - Why would grooming matter even for a wild animal like a lion?
+        context:
+        - attribute: pride_territory_use
+          value: Lions live in territories where they rest, hunt, and raise cubs; they often choose places with cover and
+            nearby animals to hunt.
+          topics:
+          - Why would a pride want a territory with both shade and open space?
+          - What problems could happen if two prides wanted the same territory?
+        - attribute: daily_activity_timing
+          value: Lions often rest during the hottest times and become more active when it’s cooler, saving energy and avoiding
+            overheating.
+          topics:
+          - Why is resting in the heat a smart choice for a big animal?
+          - If the weather stayed cool all day, how might a lion’s schedule change?
+        function:
+        - attribute: silent_stalk_then_sprint
+          value: A lion often stalks quietly to get close, then uses a short, powerful sprint—because fast running for a long
+            time takes lots of energy.
+          topics:
+          - Why is it helpful to get close before sprinting?
+          - What would happen if a lion tried to chase prey for a very long distance?
+        - attribute: tail_signals_balance
+          value: A lion’s tail helps with balance during quick turns and can also send signals—small flicks or movements that
+            other lions may notice.
+          topics:
+          - How could a tail help a lion turn quickly without falling?
+          - Why might a small tail flick be useful when lions hunt or interact?
+        senses:
+        - attribute: night_vision_advantage
+          value: Lions’ eyes are adapted to low light, helping them see better at dawn, dusk, and night than many animals
+            they hunt.
+          topics:
+          - Why is seeing well in low light helpful for a hunter like a lion?
+          - If a lion couldn’t see well at dusk, how might it change when it hunts?
+        - attribute: hearing_direction_finding
+          value: A lion’s ears can pick up small sounds and help locate where a noise comes from, which matters when prey
+            is hidden in grass.
+          topics:
+          - How do you think a lion tells which direction a sound is coming from?
+          - What kinds of tiny sounds might help a lion find prey in tall grass?
+        structure:
+        - attribute: retractable_claw_mechanism
+          value: Lions can pull their claws in to keep them sharp and protected, then extend them quickly for gripping during
+            hunting or climbing.
+          topics:
+          - Why would keeping claws tucked away help them stay sharp?
+          - What might happen if a lion’s claws were always out on the ground?
+        - attribute: powerful_jaw_muscles
+          value: Strong jaw muscles help a lion hold and subdue prey; the skull and muscles work together like a powerful
+            clamp.
+          topics:
+          - Why does a lion need a super-strong bite compared to smaller animals?
+          - How do muscles and bones work together to make a bite strong?
+        emotions:
+        - Do lions seem scary, brave, calm, or something else to you? Why?
+        - How would you feel if you heard a lion roar far away while you were safe inside?
+        imagination:
+        - If you could talk to a lion for five minutes, what questions would you ask?
+        - Pretend you are a lion choosing a comfy resting spot—what would you look for?
+        narrative:
+        - Tell a story about a young lion learning an important lesson from an older lion.
+        - Make up an adventure where a lion must solve a problem without using its roar.
+        reasoning:
+        - Why do you think lions live in groups instead of always living alone?
+        - What would happen to lions if their habitat became much drier with less shade?
+        relationship:
+        - How is a lion similar to a house cat, and how is it very different?
+        - What other animals work as a team like lions sometimes do?

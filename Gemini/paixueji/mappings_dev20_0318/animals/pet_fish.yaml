@@ -1,0 +1,267 @@
+- entity_id: animals_goldfish
+  entity_name: Goldfish
+  entity_name_cn: 金鱼
+  domain: animals
+  parent_category: fish
+  subcategory: pet fish
+  primary_theme:
+    theme_id: how_world_works
+    weight: 0.36
+    reasoning: Goldfish let children watch how a living creature moves, breathes in water, and needs food and clean space,
+      supporting curiosity about how living things work.
+  secondary_themes:
+  - theme_id: who_we_are
+    weight: 0.36
+    reasoning: As a pet, a goldfish invites children to practice responsibility, patience, and empathy by remembering feeding
+      times and noticing the fish’s health and behavior.
+    context_trigger: when the child asks to feed the fish, watches it for a long time, or says “Is it hungry?” “Is it okay?”
+      or “It’s sleeping!”
+  - theme_id: sharing_planet
+    weight: 0.28
+    reasoning: Caring for a goldfish connects to sharing water resources and respecting animal needs, including keeping tanks
+      clean and not releasing pets into lakes or rivers.
+    context_trigger: when the child pours water, points to a dirty tank, asks why filters run, or talks about putting the
+      fish “back in the river”
+  primary_key_concepts:
+  - concept_id: function
+    relevance: 0.9
+    reasoning: Children can observe how the goldfish uses fins to swim and gills to breathe, and how it finds food, linking
+      body parts to what they do.
+  - concept_id: form
+    relevance: 0.8
+    reasoning: The goldfish’s shiny scales, tail fin shape, and rounded body are clear features children can notice and draw,
+      comparing it with other fish.
+  - concept_id: causation
+    relevance: 0.9
+    reasoning: Kids see cause and effect when feeding leads to swimming toward food, or when loud tapping or quick movements
+      make the fish dart away.
+  secondary_key_concepts:
+  - concept_id: change
+    relevance: 0.9
+    reasoning: Children can notice change as the fish grows, its color shifts slightly, and the tank environment changes when
+      water is cleaned or plants are added.
+  - concept_id: connection
+    relevance: 0.7
+    reasoning: A goldfish helps children see connections between living things and their environment, like how water quality,
+      oxygen, and food all affect health.
+  candidate_related_concepts:
+  - concept_id: habitat
+    discipline: Science
+    reasoning: Children explore the goldfish habitat by comparing a tank to ponds, noticing the need for water, space, hiding
+      places, and clean conditions.
+  - concept_id: growth
+    discipline: Science
+    reasoning: Kids can track growth by noticing the fish getting bigger and needing different amounts of food and a larger
+      tank over time.
+  - concept_id: adaptation
+    discipline: Science
+    reasoning: Fins, gills, and slippery scales show how the goldfish is adapted to living in water, moving smoothly and breathing
+      underwater.
+  - concept_id: cycles
+    discipline: Science
+    reasoning: Children can learn simple cycles like feeding schedules and day-night activity, plus tank care cycles like
+      filtering and water changes.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: body_color
+          value: orange or gold
+          topics:
+          - What color is the goldfish?
+          - Can you point to the orange fish?
+        - attribute: covering
+          value: shiny, smooth scales
+          topics:
+          - Does the goldfish look shiny?
+          - Do you see its tiny scales?
+        - attribute: markings
+          value: sometimes has dark spots
+          topics:
+          - Do you see any spots on it?
+          - Can you point to a spot?
+        - attribute: body_size
+          value: small, hand-sized fish
+          topics:
+          - Is the goldfish big or small?
+          - Is it smaller than your hand?
+        senses:
+        - attribute: touch_feel
+          value: wet and slippery
+          topics:
+          - Do you think it feels wet?
+          - Do you think it feels slippery?
+        - attribute: sound
+          value: very quiet
+          topics:
+          - Does a goldfish make loud sounds?
+          - Can you be as quiet as a goldfish?
+        - attribute: smell
+          value: smells like water
+          topics:
+          - What do you think it smells like?
+          - Does it smell like clean water?
+        emotions:
+        - Do you like goldfish?
+        - Does the goldfish feel friendly to you?
+        - Would you like to watch it swim?
+        - Does it make you feel calm?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: fin_shape
+          value: Floaty fins that wave like tiny flags
+          topics:
+          - How do its fins help it move, like your hands paddling?
+          - Why might longer fins look more flowy than short fins?
+        - attribute: eye_look
+          value: Round, shiny eyes that seem always surprised
+          topics:
+          - How do its eyes help it find food, like your eyes do?
+          - Why do you think fish eyes look rounder than ours?
+        - attribute: tail_style
+          value: Fan-shaped tail that swishes side to side
+          topics:
+          - How does a swishy tail push it forward, like a paddle?
+          - Why might a wider tail help more than a skinny tail?
+        context:
+        - attribute: pet_home
+          value: Usually lives in a glass tank at home
+          topics:
+          - Why does a tank need water, but your bed doesn’t?
+          - How is a tank different from a pond for a goldfish?
+        - attribute: water_type
+          value: Freshwater swimmer, not a salty ocean fish
+          topics:
+          - Why can’t it live in salty water like some fish?
+          - How is freshwater water different from ocean water?
+        function:
+        - attribute: movement_style
+          value: Glides, stops, then zooms with tail flicks
+          topics:
+          - How does flicking the tail make it zoom, like kicking in a pool?
+          - Why might it glide quietly instead of stomping like you?
+        - attribute: breathing_method
+          value: Breathes with gills, taking air from water
+          topics:
+          - How do gills work differently than your lungs?
+          - Why can it breathe underwater, but you can’t?
+        - attribute: defense_hiding
+          value: Darts away and hides when it feels scared
+          topics:
+          - How does hiding keep it safe, like hiding in a game?
+          - Why is swimming away easier for a fish than for a snail?
+        structure:
+        - attribute: gills
+          value: Little breathing slits behind its head
+          topics:
+          - How do the gills help it breathe, compared to your nose?
+          - Why are gills on the sides instead of on the front?
+        - attribute: scales
+          value: Tiny overlapping scales like shiny roof tiles
+          topics:
+          - How do scales protect it, like a jacket protects you?
+          - Why might slippery scales be better than fuzzy fur underwater?
+        - attribute: mouth_position
+          value: Small mouth at the front that nibbles bits
+          topics:
+          - How does it eat without chewing like you do?
+          - Why is a small mouth good for tiny bites, not big chunks?
+        emotions:
+        - Do goldfish seem calm or wiggly to you?
+        - Would you like to watch a goldfish after a busy day? Why?
+        relationship:
+        - How is a goldfish like a butterfly, and how is it different?
+        - What other pet reminds you of a goldfish, and why?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: scale_shimmer_pattern
+          value: Its scales can reflect light like tiny mirrors, so it may look sparkly when it turns and the light hits different
+            angles.
+          topics:
+          - Why do you think the goldfish looks shinier when it turns its body?
+          - If the light in the room got dimmer, how would the goldfish’s shimmer change?
+        - attribute: body_shape_streamlined
+          value: Its body is shaped to help water flow around it smoothly, which can make swimming easier and use less energy.
+          topics:
+          - How does a smooth, streamlined shape help a goldfish move through water?
+          - What do you think would happen if a goldfish had a boxy, square body shape instead?
+        change:
+        - attribute: growth_size_limits
+          value: Goldfish grow as they eat and stay healthy, but their growth can slow depending on space, water quality,
+            and how much food they get.
+          topics:
+          - Why might a goldfish grow differently in a small tank compared to a big pond?
+          - What clues would tell you a goldfish is growing well and staying healthy?
+        - attribute: color_shift_with_age_health
+          value: A goldfish’s color can deepen, fade, or change a bit as it ages, and stress or poor water can make colors
+            look duller.
+          topics:
+          - Why might a goldfish’s color look brighter some days and duller on other days?
+          - If a goldfish changed color over time, what reasons could explain it?
+        context:
+        - attribute: light_day_night_routine
+          value: Goldfish often act differently depending on light—more active when it’s bright and calmer when it’s dark,
+            like a daily routine.
+          topics:
+          - What changes do you notice in a goldfish when the tank light turns on or off?
+          - Why do you think having a regular day-and-night light pattern might matter to a goldfish?
+        - attribute: water_flow_preference
+          value: In a tank, goldfish may choose calmer spots or gently moving water because strong currents can make swimming
+            harder and use more energy.
+          topics:
+          - If the water in the tank moved very fast, where do you think the goldfish would try to swim?
+          - How could you tell whether the water flow is too strong for a goldfish?
+        function:
+        - attribute: fin_control_steering_braking
+          value: Different fins do different jobs—some help steer, some help balance, and some help slow down, like built-in
+            “controls” for swimming.
+          topics:
+          - Which fin movements do you think help a goldfish turn without tipping over?
+          - How might a goldfish “brake” or stop quickly in water?
+        - attribute: schooling_social_spacing
+          value: Goldfish can pay attention to other fish nearby and adjust their distance, which can help them feel safer
+            and avoid bumping.
+          topics:
+          - Why might swimming near other fish sometimes feel safer than swimming alone?
+          - What could happen if two goldfish don’t keep enough space while swimming?
+        senses:
+        - attribute: lateral_line_water_vibration_sense
+          value: Goldfish have a special line along their sides that helps them sense tiny water movements and vibrations,
+            almost like “feeling” motion in the water.
+          topics:
+          - How could sensing water vibrations help a goldfish notice food or danger?
+          - If you gently tapped the tank (not too hard), what do you think the goldfish might sense and do?
+        - attribute: taste_buds_on_lips
+          value: Goldfish can have taste sensors around the mouth area, helping them decide if something is food before swallowing.
+          topics:
+          - Why would it help a goldfish to “taste” something before swallowing it?
+          - What might a goldfish do if it mouthed something that didn’t taste like food?
+        structure:
+        - attribute: swim_bladder_buoyancy
+          value: Inside the body, a swim bladder helps the fish float at different depths by adjusting how much gas is inside
+            it.
+          topics:
+          - How does a swim bladder help a goldfish stay at the same depth without sinking?
+          - What do you think would happen if a goldfish couldn’t control its buoyancy well?
+        - attribute: operculum_gill_cover
+          value: A bony flap called the operculum covers and protects the gills and helps move water across them for breathing.
+          topics:
+          - Why is it helpful for gills to have a cover instead of being fully exposed?
+          - How does moving the operculum help push water over the gills?
+        emotions:
+        - How do you feel when you watch a goldfish swim slowly and calmly?
+        - Would you rather care for a goldfish that is shy or one that swims up to the front a lot? Why?
+        imagination:
+        - Pretend you are a goldfish exploring your tank like it’s a tiny ocean—what places would you name?
+        - If a goldfish could make up a “bubble language,” what do you think it would say to you?
+        narrative:
+        - Tell a story about a goldfish who discovers a “mysterious corner” of its tank.
+        - Once upon a time, a goldfish became the captain of a pond—what happened next?
+        reasoning:
+        - Why do you think goldfish sometimes pause and hover instead of swimming nonstop?
+        - What might happen if you fed a goldfish too much food every day? How could that affect it?
+        relationship:
+        - How is a goldfish like a bird, and how is it different?
+        - What other animals use their bodies to steer and balance like a goldfish does with fins?

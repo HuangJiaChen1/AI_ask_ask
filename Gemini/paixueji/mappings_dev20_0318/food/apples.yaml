@@ -1,0 +1,292 @@
+- entity_id: food_green_apple
+  entity_name: Green Apple
+  entity_name_cn: 青苹果
+  domain: food
+  parent_category: fruits
+  subcategory: apples
+  primary_theme:
+    theme_id: who_we_are
+    weight: 0.39
+    reasoning: Green apples fit who we are because children explore their senses, preferences, and healthy habits by tasting
+      crunchy, sour fruit.
+  secondary_themes:
+  - theme_id: how_world_works
+    weight: 0.27
+    reasoning: Children investigate how apples have skin, flesh, seeds, and juice, and what happens when an apple is cut,
+      bitten, or turns brown.
+    context_trigger: when the child notices browning and says “Why is it turning brown?” or “What are these seeds for?”
+  - theme_id: sharing_planet
+    weight: 0.19
+    reasoning: Green apples invite discussion about growing on trees, seasonal harvests, and what to do with cores to reduce
+      waste.
+    context_trigger: when the child finishes an apple and asks “Can we put the core in compost?” or “Does this grow a tree?”
+  - theme_id: how_we_organize
+    weight: 0.15
+    reasoning: Children notice how apples are sorted, washed, packed for lunch, and cut for safety, showing routines and rules
+      around food.
+    context_trigger: when the child lines up apples to choose one or says “We have to wash it before eating.”
+  primary_key_concepts:
+  - concept_id: connection
+    relevance: 0.9
+    reasoning: Green apples connect children to nature and daily routines, linking the tree, the farmer, the store, and the
+      snack in their hand.
+  - concept_id: perspective
+    relevance: 0.9
+    reasoning: Children practice perspective by comparing sour green apples with sweet ones and respecting that friends may
+      like different tastes.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: Children show responsibility by washing the apple, eating safely, and disposing of the core properly without
+      littering.
+  secondary_key_concepts:
+  - concept_id: form
+    relevance: 0.7
+    reasoning: Children explore form by observing the apple’s round shape, green color, smooth skin, and the star shape around
+      the seeds.
+  - concept_id: function
+    relevance: 0.7
+    reasoning: Children explore function as apples provide crunch, hydration, and nutrients, helping them have energy for
+      play and learning.
+  candidate_related_concepts:
+  - concept_id: nutrition
+    discipline: Health
+    reasoning: Green apples support nutrition learning by discussing fruit as a healthy snack and how it helps bodies with
+      fiber and vitamins.
+  - concept_id: relationships
+    discipline: Social Studies
+    reasoning: Eating apples together supports relationships through sharing slices, offering the last piece, and listening
+      to others’ preferences.
+  - concept_id: wellbeing
+    discipline: PSPE
+    reasoning: Children connect apples to wellbeing by noticing how crunchy foods feel, practicing mindful biting, and choosing
+      snacks that help them feel good.
+  - concept_id: resources
+    discipline: Science
+    reasoning: Green apples help children consider resources like orchards, water, and transport, and how reducing waste with
+      cores saves resources.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: skin_color
+          value: bright green skin
+          topics:
+          - What color is the green apple?
+          - Can you point to the green part?
+        - attribute: shape
+          value: round like a ball
+          topics:
+          - Is the apple round or long?
+          - Can you make a round shape with your hands?
+        - attribute: size
+          value: fits in your hand
+          topics:
+          - Is the apple big or small?
+          - Can you hold your hands to show its size?
+        senses:
+        - attribute: taste
+          value: sweet and a little sour
+          topics:
+          - Does it taste sweet or sour?
+          - Do you like the taste?
+        - attribute: smell
+          value: fresh fruity smell
+          topics:
+          - Can you smell the apple?
+          - Does it smell good to you?
+        - attribute: texture
+          value: smooth and shiny
+          topics:
+          - How does the apple feel—smooth or bumpy?
+          - Can you rub it and feel the skin?
+        - attribute: sound
+          value: crunch sound when bitten
+          topics:
+          - What sound does an apple make when you bite it?
+          - Can you make a crunchy sound?
+        emotions:
+        - Do you like green apples?
+        - Does a green apple make you feel happy or yucky?
+        - Would you want a bite right now?
+        - Is a green apple friendly or scary?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: skin_speckles
+          value: Tiny pale dots sprinkled like apple freckles
+          topics:
+          - Why do some green apples have more speckles than others?
+          - How are apple speckles different from spots on bananas?
+        - attribute: shine_level
+          value: Glossy skin that can look gently shiny
+          topics:
+          - Why does one apple look shinier than another apple?
+          - How is a shiny apple different from a dull-looking apple?
+        - attribute: stem_color
+          value: Brownish stem like a little twig handle
+          topics:
+          - Why is the stem brown instead of green like the apple?
+          - How is an apple stem different from a cherry stem?
+        context:
+        - attribute: where_it_grows
+          value: Hangs on branches in sunny apple trees
+          topics:
+          - Why do apples grow up in trees, not underground?
+          - How is an apple tree different from a berry bush?
+        - attribute: where_you_find_it
+          value: Sits in bowls, lunchboxes, and store bins
+          topics:
+          - Why do we keep apples in a bowl instead of a cup?
+          - How is finding apples in a store different from finding them on a farm?
+        - attribute: season_peak
+          value: Often picked in cool fall harvest time
+          topics:
+          - Why are apples picked a lot in fall instead of winter?
+          - How is an apple season different from a watermelon season?
+        function:
+        - attribute: eating_style
+          value: Crunchy snack you bite, slice, or chop
+          topics:
+          - How does biting an apple work differently than biting bread?
+          - Why might someone slice an apple instead of biting it whole?
+        - attribute: cooking_use
+          value: Can be baked soft, or cooked into sauce
+          topics:
+          - How does an apple change when you bake it compared to raw?
+          - Why do cooked apples get softer than raw apples?
+        - attribute: juice_use
+          value: Can be pressed to make sweet-tart juice
+          topics:
+          - How does pressing an apple make juice compared to squeezing an orange?
+          - Why do you get liquid from an apple when you press hard?
+        structure:
+        - attribute: core
+          value: A firm middle pocket that holds the seeds
+          topics:
+          - Why does the apple keep seeds in the middle core?
+          - How is an apple core different from the middle of a peach?
+        - attribute: seed_shape
+          value: Small teardrop seeds, smooth and dark
+          topics:
+          - Why are apple seeds small compared to avocado pits?
+          - How do apple seeds look different from sunflower seeds?
+        - attribute: flesh_color
+          value: Pale, creamy inside that looks almost white
+          topics:
+          - Why is the inside lighter than the green outside?
+          - How is apple flesh different from cucumber insides?
+        emotions:
+        - Do you like green apples, or do you like red apples more?
+        - How do you feel when you hear a big crunchy bite?
+        - Would you rather eat a green apple whole or in slices? Why?
+        relationship:
+        - What other fruit feels crunchy like a green apple?
+        - How is a green apple different from a pear?
+        - What does a green apple remind you of—maybe a smell or a place?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: skin_thickness
+          value: The skin is a thin protective layer that helps keep water in and germs out, and it can feel tougher if the
+            apple grew with more sun and wind.
+          topics:
+          - Why do you think an apple has skin—what would happen if it didn’t?
+          - If an apple had super-thick skin, how would that change eating it or keeping it fresh?
+        - attribute: bruise_spots
+          value: Bruises happen when the apple gets bumped and tiny cells inside get squished, turning the spot softer and
+            darker as air reacts with the damaged parts.
+          topics:
+          - Why do you think a bumped apple gets a soft, darker spot instead of staying the same?
+          - What could we do when carrying apples so they don’t bruise as much?
+        - attribute: stem_length
+          value: The stem is the leftover connection to the tree; a longer or shorter stem can change how easily the apple
+            gets pulled off and how it sits in a pile.
+          topics:
+          - How might a long stem change the way apples stack together in a bowl?
+          - Why do you think the apple keeps its stem after it’s picked?
+        change:
+        - attribute: browning_after_cut
+          value: When you cut the apple, air touches the inside and starts a reaction that turns the surface brown, kind of
+            like the apple is making a ‘rusty’ color.
+          topics:
+          - Why do you think the inside changes color when air touches it?
+          - What might happen if you cover the cut apple so less air can get to it?
+        - attribute: softening_over_time
+          value: As an apple ages, its cell walls slowly break down and water moves around, so it can go from crisp to softer
+            even if it still looks okay.
+          topics:
+          - What changes first—how the apple feels when you bite it, or how it looks?
+          - If you wanted an apple to stay crisp longer, what place do you think would help most?
+        - attribute: wrinkling_from_drying
+          value: If the apple loses water to the air, the skin can wrinkle because there’s less water pushing the skin outward
+            from the inside.
+          topics:
+          - Why does losing water make the skin look wrinkly?
+          - How would a very dry room change an apple compared to a more humid room?
+        context:
+        - attribute: storage_place
+          value: Green apples are often kept in cool places because cold slows the tiny changes inside the fruit that make
+            it soften and spoil.
+          topics:
+          - Why would a cool place slow down changes in an apple?
+          - Where in a kitchen do you think an apple stays fresh longest, and why?
+        - attribute: sold_by_grade
+          value: In stores, apples can be sorted by how even they look and how firm they are, because shoppers often pick
+            the ones that seem freshest.
+          topics:
+          - If you were sorting apples, what would you check to decide which ones are ‘best’?
+          - Do you think a funny-looking apple can still taste great? Why?
+        function:
+        - attribute: fiber_job
+          value: The apple’s fiber is a part your body can’t fully break down; it helps food move through your tummy and can
+            help you feel full.
+          topics:
+          - How might fiber help your body after you eat an apple?
+          - What do you notice about feeling full after a crunchy snack versus a sugary drink?
+        - attribute: water_content
+          value: A green apple holds lots of water inside its cells, which is why it feels juicy and can help hydrate your
+            body a little when you eat it.
+          topics:
+          - Why does biting an apple feel ‘juicy’—where does that liquid come from?
+          - If an apple dried out, how would its job as a juicy snack change?
+        senses:
+        - attribute: crispness_level
+          value: Crispness happens when firm cell walls snap as you bite, making a sharp crunch; softer apples have weaker
+            walls so they squish more.
+          topics:
+          - Why do some bites sound louder and crunchier than others?
+          - What do you think would make an apple lose its crisp crunch over time?
+        - attribute: juice_spray
+          value: When you bite, pressure pops some juice-filled cells and liquid spreads across your tongue, which can make
+            the flavor feel stronger.
+          topics:
+          - Why does the flavor feel bigger when the bite is extra juicy?
+          - If you took tiny bites instead of a big bite, how might the taste feel different?
+        structure:
+        - attribute: seed_pockets
+          value: Inside the core are little chambers that hold seeds; these pockets keep seeds protected so they can travel
+            and maybe grow into a new tree.
+          topics:
+          - Why would the apple keep seeds in little pockets instead of loose inside?
+          - What might happen to the seeds if the apple didn’t have a core around them?
+        - attribute: vascular_strands
+          value: Thin ‘stringy’ paths inside carried water and sugars from the tree into the apple while it grew, like tiny
+            delivery roads.
+          topics:
+          - What do you think the apple was being ‘delivered’ through those tiny strands while it grew?
+          - If those delivery paths didn’t work well, how might the apple turn out?
+        emotions:
+        - Do you feel excited, calm, or something else when you hear a crunchy apple bite? Why?
+        - Do you prefer green apples or sweeter apples, and what does that choice say about you?
+        imagination:
+        - If a green apple could talk, what would it brag about—its crunch, its sour taste, or something else?
+        - Imagine you shrink down and live inside an apple for a day—what rooms would you explore?
+        narrative:
+        - Tell a story about a green apple that wants to become the best snack in the whole kitchen.
+        - Once upon a time, a green apple rolled away—where did it go and who did it meet?
+        reasoning:
+        - Why do you think green apples often taste more tart than some other apples?
+        - What do you think happens inside an apple first when it starts to spoil—what clues could you look for?
+        relationship:
+        - How is a green apple like a lemon, and how is it different?
+        - What other foods have a ‘crunch’ like an apple, and what makes their crunch the same or different?

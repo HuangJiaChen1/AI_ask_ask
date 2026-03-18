@@ -1,0 +1,295 @@
+- entity_id: buildings_places_playground
+  entity_name: Playground
+  entity_name_cn: 游乐场
+  domain: buildings_places
+  parent_category: public_spaces
+  subcategory: play_areas
+  primary_theme:
+    theme_id: who_we_are
+    weight: 0.4
+    reasoning: A playground helps children explore who they are through play, friendships, confidence, and choices as they
+      try new equipment and interact with others.
+  secondary_themes:
+  - theme_id: how_we_organize
+    weight: 0.35
+    reasoning: Playgrounds have organized spaces and routines, like taking turns on swings and using different zones for climbing,
+      sliding, and resting.
+    context_trigger: when the child waits for a turn, talks about the line for the slide, or asks “What are the rules here?”
+  - theme_id: how_world_works
+    weight: 0.25
+    reasoning: Children discover how forces and motion work by swinging, sliding, spinning, and balancing, noticing how pushing,
+      gravity, and friction change movement.
+    context_trigger: when the child experiments by pushing a swing harder, tries different slide positions, or asks “Why do
+      I go faster?”
+  primary_key_concepts:
+  - concept_id: connection
+    relevance: 0.9
+    reasoning: Children make connections between their actions and others, like playing together, sharing space, and noticing
+      how one child’s turn affects everyone waiting.
+  - concept_id: perspective
+    relevance: 0.9
+    reasoning: A playground invites different perspectives because children may feel brave or nervous on the same climber,
+      and they learn others may want different games.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: Children practice responsibility by using equipment safely, watching for smaller children, tidying toys, and
+      following adult guidance to avoid injuries.
+  secondary_key_concepts:
+  - concept_id: function
+    relevance: 0.8
+    reasoning: Each piece of equipment has a function, like slides for going down, ladders for climbing up, and swings for
+      back-and-forth motion.
+  - concept_id: form
+    relevance: 0.7
+    reasoning: Children notice forms such as curved slides, round merry-go-rounds, and rope nets, and how shapes and sizes
+      change what they can do.
+  candidate_related_concepts:
+  - concept_id: community
+    discipline: Social Studies
+    reasoning: A playground is a community place where families meet, children play together, and people share public equipment
+      and space.
+  - concept_id: identity
+    discipline: PSPE
+    reasoning: Children build identity by discovering what they enjoy, what they can do, and how they see themselves as a
+      friend, leader, or careful risk-taker.
+  - concept_id: safety
+    discipline: PSPE
+    reasoning: Safety is visible through soft ground, handrails, and adult reminders, helping children learn to check spaces,
+      hold on, and play thoughtfully.
+  - concept_id: rules
+    discipline: Social Studies
+    reasoning: Rules like taking turns, no pushing, and using equipment the right way help children understand fairness and
+      prevent accidents.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: main_colors
+          value: bright red and blue
+          topics:
+          - What colors do you see at the playground?
+          - Can you point to something red?
+          - Can you point to something blue?
+        - attribute: big_shapes
+          value: tall and twisty shapes
+          topics:
+          - Do you see anything tall?
+          - Can you point to something twisty?
+          - Is it long or short?
+        - attribute: size
+          value: big space to play
+          topics:
+          - Is the playground big or small?
+          - Can you stretch your arms wide for big?
+          - Where is a small spot?
+        senses:
+        - attribute: ground_feel
+          value: soft and bouncy ground
+          topics:
+          - How do you think the ground feels?
+          - Is it soft or hard?
+          - Do your feet bounce a little?
+        - attribute: sounds
+          value: kids laughing and shouting
+          topics:
+          - What sounds do you hear at the playground?
+          - Can you make a laughing sound?
+          - Is it loud or quiet?
+        - attribute: outside_air_smell
+          value: fresh outside air smell
+          topics:
+          - What does the air smell like outside?
+          - Does it smell good or yucky?
+          - Can you take a big sniff?
+        emotions:
+        - Do you like going to the playground?
+        - Does the playground feel fun or scary?
+        - What is your favorite part at the playground?
+        - Would you rather climb or slide?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: slide_surface_shine
+          value: smooth and a little shiny in sunlight
+          topics:
+          - Why does the slide look shinier than the steps?
+          - How does sunlight make metal shine more than plastic?
+        - attribute: paint_wear_spots
+          value: tiny chipped spots where many hands touch
+          topics:
+          - Why does paint rub off more on rails than walls?
+          - How can lots of hands change paint faster than rain?
+        - attribute: shadow_shapes
+          value: long stripey shadows under bars and ladders
+          topics:
+          - Why are playground shadows stripier than tree shadows?
+          - How do bars make different shadows than a flat wall?
+        context:
+        - attribute: nearby_sitting_places
+          value: benches nearby where grown-ups can watch
+          topics:
+          - Why are benches closer to swings than to slides?
+          - How does sitting nearby help more than standing far away?
+        - attribute: busy_times
+          value: loudest after school and on sunny weekends
+          topics:
+          - Why is a playground busier on sunny days than rainy days?
+          - How does after-school time change the playground more than morning time?
+        - attribute: fenced_edges
+          value: a fence around the edges near roads
+          topics:
+          - Why do some playgrounds have fences more than others?
+          - How does a fence keep kids safer than a painted line?
+        function:
+        - attribute: climbing_practice
+          value: helps bodies practice climbing, balancing, and holding tight
+          topics:
+          - Why does climbing help balance more than sitting still?
+          - How does holding a bar help your hands more than holding a toy?
+        - attribute: turn_taking
+          value: a place to practice sharing space and waiting
+          topics:
+          - Why do swings need more turn-taking than a sandbox?
+          - How does waiting in line keep play fairer than pushing in?
+        - attribute: big_movements
+          value: lets you run, jump, and stretch big
+          topics:
+          - Why is running easier here than in a small room?
+          - How do big jumps feel different from tiny hops?
+        senses:
+        - attribute: sun_warmed_parts
+          value: some parts feel warm like toast in sun
+          topics:
+          - Why do metal rails feel hotter than wooden ones?
+          - How does sunshine warm a slide faster than a bench?
+        - attribute: rope_rub_feel
+          value: rope feels scratchy and bumpy on fingers
+          topics:
+          - Why does rope feel rougher than smooth plastic?
+          - How do tiny bumps help you grip better than slippery surfaces?
+        - attribute: creak_and_clank
+          value: swings can creak, chains can clink softly
+          topics:
+          - Why do chains clink more than a rubber seat?
+          - How does moving make more sound than standing still?
+        structure:
+        - attribute: safety_bar_heights
+          value: bars at different heights for different climbers
+          topics:
+          - Why are some bars higher than your head?
+          - How do lower bars help beginners more than high bars?
+        - attribute: bolts_and_joints
+          value: big bolts holding parts together like puzzle pieces
+          topics:
+          - Why do bolts hold tight better than tape?
+          - How do joints let parts connect like elbows on arms?
+        - attribute: swing_chain_links
+          value: chain links connect like tiny metal loops
+          topics:
+          - Why do many small links bend easier than one stiff rod?
+          - How does a chain help swinging more than a hard pole?
+        emotions:
+        - How do you feel when you first arrive at a playground?
+        - Which part feels a little scary, and why?
+        - What makes a playground feel friendly to you?
+        - How do you feel when you have to wait your turn?
+        relationship:
+        - What is a playground like, and how is it different from a park?
+        - How is a playground different from your living room for playing?
+        - What part of a playground reminds you of climbing like an animal?
+        - Which playground thing is most like a staircase, and how is it different?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: texture_mix_on_surfaces
+          value: A playground often has smooth parts (like plastic panels) and rougher parts (like metal grips or rope), and
+            the different textures help with holding on and not slipping.
+          topics:
+          - Why might a climbing handle be a little rough instead of super smooth?
+          - If every part were slippery-smooth, what could happen when kids climb or run?
+        - attribute: height_levels_and_layers
+          value: Many playgrounds have different height levels—low steps, medium platforms, and higher climbing areas—so kids
+            can choose challenge levels and move between them safely.
+          topics:
+          - How do different height levels help kids of different ages play together?
+          - What could you add to help someone move from a low level to a higher level safely?
+        change:
+        - attribute: seasonal_surface_temperature
+          value: 'Playground surfaces change temperature with seasons and sunlight: metal and dark colors can heat up fast
+            in summer, while everything can feel colder and stiffer in winter.'
+          topics:
+          - Why do you think metal can feel hotter than plastic on a sunny day?
+          - What could kids do to check if a surface is too hot or too cold before playing?
+        - attribute: ground_settling_and_wear_paths
+          value: Over time, the ground under popular spots can pack down or shift from many footsteps, which can change how
+            bouncy or level it feels and where puddles form.
+          topics:
+          - Why do you think the ground gets flatter where lots of feet land?
+          - If the ground starts making a dip under a swing, what might happen when it rains?
+        context:
+        - attribute: shade_and_sun_zones
+          value: Playgrounds often have sunny areas and shaded areas (from trees or nearby buildings), and where you play
+            can change how hot you feel and how long you want to stay.
+          topics:
+          - How might your game change if half the playground is in shade and half is in sun?
+          - Where would you choose to play on a very hot day, and why?
+        - attribute: after_rain_conditions
+          value: After rain, some areas dry faster than others depending on wind, sun, and materials; water can collect in
+            low spots or on flat surfaces.
+          topics:
+          - Which parts do you think dry first after rain, and why?
+          - What clues could you look for to find a drier path to play?
+        function:
+        - attribute: balance_and_coordination_training
+          value: Some playground parts are designed to wobble or require careful steps, which helps kids practice balancing,
+            timing, and body control.
+          topics:
+          - How does walking on something wobbly make your body work differently?
+          - 'What would be easier: balancing while standing still or while moving—and why?'
+        - attribute: social_game_space_design
+          value: Open spaces, corners, and pathways can support different games—like chase games, pretend play, or quiet talking—because
+            the space gives choices for how groups move and gather.
+          topics:
+          - How do open spaces versus tight spaces change the kind of games kids choose?
+          - If you wanted a spot for quiet talking, where would you put it in a playground and why?
+        senses:
+        - attribute: wind_sound_through_parts
+          value: Wind can make different sounds as it moves through gaps, rails, and ropes—like whistling, whooshing, or soft
+            tapping—depending on shape and looseness.
+          topics:
+          - Why might wind make a whistle sound in some places but not others?
+          - What parts do you think would make the softest wind sound, and what parts the loudest?
+        - attribute: smell_after_rain
+          value: After rain, the air can smell “fresh” because water lifts smells from soil, plants, and warm surfaces; the
+            smell can be stronger near dirt or trees.
+          topics:
+          - Where do you think the rainy-day smell is strongest at a playground, and why?
+          - Why might the smell change again once the sun comes out?
+        structure:
+        - attribute: support_post_anchoring
+          value: Big playground parts usually have support posts anchored deep into the ground or into concrete so they don’t
+            tip when kids climb and pull in different directions.
+          topics:
+          - Why do you think the posts need to go deep into the ground?
+          - If the posts were only sitting on top of the ground, what might happen when lots of kids climb?
+        - attribute: platform_drain_gaps
+          value: Some platforms have tiny holes or small gaps so rainwater can drain away instead of pooling, which helps
+            keep surfaces less slippery and dries them faster.
+          topics:
+          - Why is it helpful for a platform to let water drain through?
+          - What might happen if a flat platform had no holes and kept puddles?
+        emotions:
+        - Which part of a playground makes you feel the bravest, and why?
+        - Is there any part that makes you feel a little nervous? What could help you feel safer?
+        imagination:
+        - Pretend the playground is a giant animal. What animal is it, and which parts are its legs, tail, or wings?
+        - If you could redesign the playground as a space station, what would each area be used for?
+        narrative:
+        - Tell a story about a rainy-day playground that turns into a magical kingdom after the sun comes out.
+        - Make up a story where the playground has a secret rule that only kind kids discover.
+        reasoning:
+        - Why do you think playgrounds often have different zones instead of just one big piece?
+        - What would happen if the ground under the playground was hard concrete instead of a softer surface?
+        relationship:
+        - How is a playground like an obstacle course? How is it different?
+        - What does the playground remind you of—a jungle, a castle, a mountain trail—and why?
