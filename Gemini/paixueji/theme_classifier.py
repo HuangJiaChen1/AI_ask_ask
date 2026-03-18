@@ -52,10 +52,10 @@ async def classify_conversation_to_theme(
     history: list[dict[str, Any]],
     object_name: str,
     age: int,
-    key_concept: str,
-    bridge_question: str,
     client,
     config,
+    key_concept: str = "",
+    bridge_question: str = "",
 ) -> Optional[dict[str, str]]:
     """
     Classify the chat-phase conversation into one IB PYP theme.
