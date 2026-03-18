@@ -428,6 +428,34 @@ async def node_curiosity(state: PaixuejiState) -> dict:
 
 
 @trace_node
+async def node_concept_confusion(state: PaixuejiState) -> dict:
+    """Child is confused about or disputes a concept the model just introduced — explain, bridge, re-ask."""
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Concept Confusion")
+
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    generator = generate_intent_response_stream(
+        intent_type="concept_confusion",
+        messages=messages,
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
+        age_prompt=state["age_prompt"],
+        last_model_response=extract_previous_response(state["messages"]),
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    logger.info(f"[{state['session_id']}] Node: Concept Confusion finished in {time.time() - start_time:.3f}s")
+    return {
+        "response_type": "concept_confusion",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
+    }
+
+
+@trace_node
 async def node_clarifying_idk(state: PaixuejiState) -> dict:
     """Child said IDK. On 1st IDK increment counter; on 2nd+ IDK reveal the answer and reset."""
     start_time = time.time()
@@ -1414,8 +1442,9 @@ def build_paixueji_graph():
     workflow.add_node("generate_fun_fact", node_generate_fun_fact)
     workflow.add_node("generate_intro", node_generate_intro)
 
-    # --- 12 Intent nodes ---
+    # --- 13 Intent nodes ---
     workflow.add_node("curiosity", node_curiosity)
+    workflow.add_node("concept_confusion", node_concept_confusion)
     workflow.add_node("clarifying_idk", node_clarifying_idk)
     workflow.add_node("give_answer_idk", node_give_answer_idk)
     workflow.add_node("clarifying_wrong", node_clarifying_wrong)
@@ -1492,6 +1521,7 @@ def build_paixueji_graph():
         route_from_analyze_input,
         {
             "curiosity": "curiosity",
+            "concept_confusion": "concept_confusion",
             "clarifying_idk": "clarifying_idk",
             "give_answer_idk": "give_answer_idk",
             "clarifying_wrong": "clarifying_wrong",
@@ -1513,11 +1543,11 @@ def build_paixueji_graph():
     workflow.add_node("chat_complete", node_chat_complete)
     workflow.add_edge("chat_complete", "finalize")
 
-    # All 14 intent nodes → finalize
-    for intent_node in ["curiosity", "clarifying_idk", "give_answer_idk", "clarifying_wrong",
-                        "clarifying_constraint", "correct_answer", "informative", "play",
-                        "emotional", "avoidance", "boundary", "action", "social",
-                        "social_acknowledgment"]:
+    # All 15 intent nodes → finalize
+    for intent_node in ["curiosity", "concept_confusion", "clarifying_idk", "give_answer_idk",
+                        "clarifying_wrong", "clarifying_constraint", "correct_answer",
+                        "informative", "play", "emotional", "avoidance", "boundary",
+                        "action", "social", "social_acknowledgment"]:
         workflow.add_edge(intent_node, "finalize")
 
     # Guide edges

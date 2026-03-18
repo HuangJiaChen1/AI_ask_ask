@@ -29,7 +29,6 @@ from .utils import (
 async def ask_introduction_question_stream(
     messages: list[dict],
     object_name: str,
-    category_prompt: str,
     age_prompt: str,
     age: int,
     config: dict,
@@ -46,7 +45,6 @@ async def ask_introduction_question_stream(
     Args:
         messages: Conversation history
         object_name: Name of object to ask about
-        category_prompt: Category-specific guidance
         age_prompt: Age-specific guidance
         age: Child's age
         config: Configuration dict with model settings
@@ -78,7 +76,6 @@ async def ask_introduction_question_stream(
     prompts = paixueji_prompts.get_prompts()
     introduction_prompt = prompts['introduction_prompt'].format(
         object_name=object_name,
-        category_prompt=category_prompt,
         age_prompt=age_prompt,
         age=age,
         grounded_facts_section=grounded_facts_section,
@@ -183,7 +180,6 @@ async def ask_introduction_question_stream(
 async def ask_followup_question_stream(
     messages: list[dict],
     object_name: str,
-    category_prompt: str,
     age_prompt: str,
     age: int,
     config: dict,
@@ -202,7 +198,6 @@ async def ask_followup_question_stream(
     followup_prompt = prompts['followup_question_prompt'].format(
         object_name=object_name,
         age=age,
-        category_prompt=category_prompt,
         age_prompt=age_prompt,
     )
 

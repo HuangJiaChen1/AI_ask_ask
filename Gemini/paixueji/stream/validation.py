@@ -85,7 +85,8 @@ async def classify_intent(
         valid_intents = {
             "CURIOSITY", "CLARIFYING_IDK", "CLARIFYING_WRONG", "CLARIFYING_CONSTRAINT",
             "CORRECT_ANSWER", "INFORMATIVE", "PLAY", "EMOTIONAL",
-            "AVOIDANCE", "BOUNDARY", "ACTION", "SOCIAL", "SOCIAL_ACKNOWLEDGMENT"
+            "AVOIDANCE", "BOUNDARY", "ACTION", "SOCIAL", "SOCIAL_ACKNOWLEDGMENT",
+            "CONCEPT_CONFUSION"
         }
         raw_intent = _get(r"INTENT:\s*(\w+)", "CLARIFYING_IDK").upper()
         intent_type = raw_intent if raw_intent in valid_intents else "CLARIFYING_IDK"

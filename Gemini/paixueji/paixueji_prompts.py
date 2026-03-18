@@ -258,10 +258,32 @@ CONTEXT:
 
 RULE 1 — INTENT (choose exactly ONE):
 
-  CURIOSITY             : Child asks "why", "what", "how" about the topic, OR asks what the model's
-                          own statement means ("what do you mean...?", "what does that mean?").
+  CURIOSITY             : Child asks "why", "what", "how" about the topic, OR asks the model to
+                          re-explain an idea or whole statement ("what do you mean...?",
+                          "what does that mean?").
                           Examples: "Why is it green?", "What does it eat?", "How does it fly?",
-                                    "What do you mean it has air inside?", "What does hollow mean?"
+                                    "What do you mean it has air inside?"
+                          NOT curiosity: asking for a definition of a specific vocabulary word the
+                          model just introduced (e.g. "What's a feline?" after model used "feline")
+                          → that is CONCEPT_CONFUSION
+
+  CONCEPT_CONFUSION     : Child is confused about or disputes something the model just stated —
+                          because they lack the background knowledge to understand or accept it.
+                          Two triggers:
+                          (A) Child asks for a definition of a word/term the model just used.
+                              Examples: "What's a feline?", "What's a mammal?",
+                                        "What does nocturnal mean?", "What's photosynthesis?"
+                          (B) Child contradicts a fact in the model's response because their
+                              existing knowledge doesn't include the concept.
+                              Examples: "lions are not cats", "but birds can't swim",
+                                        "I thought pigs were not mammals", "no, that's wrong"
+                          In both cases the child is reacting to the MODEL'S RESPONSE TEXT,
+                          not attempting to answer the model's question.
+                          NOT concept confusion: "What does it eat?" (general curiosity) → CURIOSITY
+                          NOT concept confusion: "What do you mean it has air inside?" (asking model
+                          to re-explain an idea, not a specific word/fact) → CURIOSITY
+                          NOT concept confusion: "Hmm, a dog?" (child trying to answer a question
+                          but getting it wrong) → CLARIFYING_WRONG
 
   CLARIFYING_IDK        : Child said "I don't know", is silent/blank, or gave a single confused word.
                           Examples: "I don't know.", "Um...", "Hmm", "I have no idea", "I have no clue"
@@ -327,9 +349,15 @@ DISAMBIGUATION RULES:
       SOCIAL_ACKNOWLEDGMENT (child is reacting to a fun fact, NOT stuck on an answer question)
   - "oh yeah" (acknowledging fact, not answering a question) → SOCIAL_ACKNOWLEDGMENT
   - Short single-word affirmations when no specific question was asked → SOCIAL_ACKNOWLEDGMENT
-  - "What do you mean [X]?" or "What does that mean?" where the child is asking the model to
-    re-explain something the model said → CURIOSITY, NOT CLARIFYING
-    (CLARIFYING is only for a child attempting/failing to respond to the AI's last response)
+  - "What's a [X]?" or "What does [X] mean?" where [X] is a word the model just used →
+    CONCEPT_CONFUSION, NOT CURIOSITY
+  - "[object] is not [Y]" or "no that's wrong" where the child is disputing a fact the model
+    stated (not trying to answer a question) → CONCEPT_CONFUSION, NOT CLARIFYING_WRONG
+    (CLARIFYING_WRONG is only for a child attempting to answer the model's question and failing;
+    a child pushing back on a statement in the model's response body is CONCEPT_CONFUSION)
+  - "What do you mean [whole idea]?" or "What does that mean?" (vague, no specific term) →
+    CURIOSITY, NOT CONCEPT_CONFUSION (child wants re-explanation of an idea, not a term definition)
+  - "I don't understand" with no specific term or disputed fact → CLARIFYING_IDK, NOT CONCEPT_CONFUSION
   - "Is it yum?", "Is it tasty?", "Does it taste good?", "Is it delicious?" — asking about
     the sensory/taste quality of the food or sub-topic just discussed → CURIOSITY, NOT SOCIAL
     (even though the phrasing is ambiguous, a young child asking about a food's taste is
@@ -360,10 +388,32 @@ CONTEXT:
 
 RULE 1 — INTENT (choose exactly ONE):
 
-  CURIOSITY             : Child asks "why", "what", "how" about the topic, OR asks what the model's
-                          own statement means ("what do you mean...?", "what does that mean?").
+  CURIOSITY             : Child asks "why", "what", "how" about the topic, OR asks the model to
+                          re-explain an idea or whole statement ("what do you mean...?",
+                          "what does that mean?").
                           Examples: "Why is it green?", "What does it eat?", "How does it fly?",
-                                    "What do you mean it has air inside?", "What does hollow mean?"
+                                    "What do you mean it has air inside?"
+                          NOT curiosity: asking for a definition of a specific vocabulary word the
+                          model just introduced (e.g. "What's a feline?" after model used "feline")
+                          → that is CONCEPT_CONFUSION
+
+  CONCEPT_CONFUSION     : Child is confused about or disputes something the model just stated —
+                          because they lack the background knowledge to understand or accept it.
+                          Two triggers:
+                          (A) Child asks for a definition of a word/term the model just used.
+                              Examples: "What's a feline?", "What's a mammal?",
+                                        "What does nocturnal mean?", "What's photosynthesis?"
+                          (B) Child contradicts a fact in the model's response because their
+                              existing knowledge doesn't include the concept.
+                              Examples: "lions are not cats", "but birds can't swim",
+                                        "I thought pigs were not mammals", "no, that's wrong"
+                          In both cases the child is reacting to the MODEL'S RESPONSE TEXT,
+                          not attempting to answer the model's question.
+                          NOT concept confusion: "What does it eat?" (general curiosity) → CURIOSITY
+                          NOT concept confusion: "What do you mean it has air inside?" (asking model
+                          to re-explain an idea, not a specific word/fact) → CURIOSITY
+                          NOT concept confusion: "Hmm, a dog?" (child trying to answer a question
+                          but getting it wrong) → CLARIFYING_WRONG
 
   CLARIFYING_IDK        : Child said "I don't know", is silent/blank, or gave a single confused word.
                           Examples: "I don't know.", "Um...", "Hmm", "I have no idea", "I have no clue"
@@ -429,9 +479,15 @@ DISAMBIGUATION RULES:
       SOCIAL_ACKNOWLEDGMENT (child is reacting to a fun fact, NOT stuck on an answer question)
   - "oh yeah" (acknowledging fact, not answering a question) → SOCIAL_ACKNOWLEDGMENT
   - Short single-word affirmations when no specific question was asked → SOCIAL_ACKNOWLEDGMENT
-  - "What do you mean [X]?" or "What does that mean?" where the child is asking the model to
-    re-explain something the model said → CURIOSITY, NOT CLARIFYING
-    (CLARIFYING is only for a child attempting/failing to respond to the AI's last response)
+  - "What's a [X]?" or "What does [X] mean?" where [X] is a word the model just used →
+    CONCEPT_CONFUSION, NOT CURIOSITY
+  - "[object] is not [Y]" or "no that's wrong" where the child is disputing a fact the model
+    stated (not trying to answer a question) → CONCEPT_CONFUSION, NOT CLARIFYING_WRONG
+    (CLARIFYING_WRONG is only for a child attempting to answer the model's question and failing;
+    a child pushing back on a statement in the model's response body is CONCEPT_CONFUSION)
+  - "What do you mean [whole idea]?" or "What does that mean?" (vague, no specific term) →
+    CURIOSITY, NOT CONCEPT_CONFUSION (child wants re-explanation of an idea, not a term definition)
+  - "I don't understand" with no specific term or disputed fact → CLARIFYING_IDK, NOT CONCEPT_CONFUSION
   - "Is it yum?", "Is it tasty?", "Does it taste good?", "Is it delicious?" — asking about
     the sensory/taste quality of the food or sub-topic just discussed → CURIOSITY, NOT SOCIAL
     (even though the phrasing is ambiguous, a young child asking about a food's taste is
@@ -454,7 +510,7 @@ RULE 2 — NEW OBJECT (only for ACTION or AVOIDANCE):
 {topic_selection_instructions}
 
 OUTPUT (one field per line, no extra text):
-INTENT: <one of the 13 categories>
+INTENT: <one of the 14 categories>
 NEW_OBJECT: ObjectName or null
 REASONING: one brief sentence
 """
@@ -1008,6 +1064,58 @@ PROHIBITIONS:
 Respond naturally (NOT JSON). 1 sentence max.
 """
 
+CONCEPT_CONFUSION_INTENT_PROMPT = """\
+CONTEXT:
+- Child (age {age}) said: "{child_answer}"
+- You're exploring: {object_name}
+- Your last response (which caused the confusion): "{last_model_response}"
+
+AGE GUIDANCE:
+{age_prompt}
+
+YOUR MISSION:
+The child is confused about — or is pushing back on — something you just said, because they
+lack the background knowledge to understand it. There are two situations:
+  (A) They asked what a word means: "What's a feline?"
+  (B) They contradicted a fact you stated because they didn't know it was true:
+      "lions are not cats"
+
+In either case: gently confirm or clarify, explain the concept simply, bridge it back to
+{object_name}, then re-ask the question you asked at the end of your last response.
+Do NOT start with "That's a great question!" — lead with the explanation right away.
+
+STRUCTURE (2–3 sentences, 3 beats):
+
+BEAT 1 — EXPLAIN OR GENTLY CONFIRM:
+  (A) Vocabulary: Define the term in the simplest possible words, using a comparison the child
+      already knows. NEVER reuse the confusing word in the definition.
+      Ages 3–5: "A feline is just another name for the cat family — like tigers and the cat
+                 at your house!"
+  (B) Disputed fact: Gently confirm that you're right and explain why, without making the child
+      feel bad. Lead with warmth, not correction.
+      "Oh, lions actually ARE cats — they're part of the cat family, just like tigers and leopards!
+       They're called felines."
+      Do NOT say "That's wrong!" or "Actually, no." — warm, not corrective.
+
+BEAT 2 — BRIDGE BACK TO OBJECT: One sentence connecting the explanation to {object_name}.
+  GOOD: "So lions really are felines — just the biggest, loudest kind of cat!"
+  BAD: "Anyway, back to learning!" (abrupt, doesn't connect)
+
+BEAT 3 — RE-ASK: Re-ask the question from your last response ("{last_model_response}")
+  in fresh words — same question, slightly different phrasing.
+  GOOD: "So — what do you think a lion's roar sounds like?"
+  The re-ask should feel natural, not mechanical.
+
+PROHIBITIONS:
+- Do NOT say "That's a great question!" or "Great!"
+- Do NOT say "That's wrong!", "Actually, no", or anything that sounds corrective or dismissive
+- Do NOT introduce new vocabulary in the explanation
+- Do NOT skip Beat 3 — the child must not be left hanging after the clarification
+- Do NOT ask a different question — re-ask the one from your last response
+
+Respond naturally (NOT JSON). 2–3 sentences max.
+"""
+
 # ============================================================================
 # 7. ROUTER RULES BLOCKS (overridable via prompt_overrides.json)
 # ============================================================================
@@ -1168,6 +1276,7 @@ def get_prompts():
         'action_intent_prompt': ACTION_INTENT_PROMPT,
         'social_intent_prompt': SOCIAL_INTENT_PROMPT,
         'social_acknowledgment_intent_prompt': SOCIAL_ACKNOWLEDGMENT_INTENT_PROMPT,
+        'concept_confusion_intent_prompt': CONCEPT_CONFUSION_INTENT_PROMPT,
         # Guide navigator rules
         'theme_navigator_rules': THEME_NAVIGATOR_RULES,
     }

@@ -29,7 +29,12 @@
       "Bash(git worktree:*)",
       "Bash(git -C /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask checkout main && git -C /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask pull)",
       "Bash(for dir:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "Bash(git merge:*)",
+      "Bash(git:*)",
+      "Bash(git commit:*)"
     ]
   },
   "outputStyle": "Explanatory"
