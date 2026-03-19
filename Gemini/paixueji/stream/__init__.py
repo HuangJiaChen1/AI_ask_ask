@@ -40,6 +40,7 @@ from .question_generators import (
 # Intent classification (replaces decide_topic_switch_with_validation)
 from .validation import (
     classify_intent,
+    classify_dimension,
 )
 
 # Fun fact (grounded)
@@ -67,6 +68,7 @@ __all__ = [
 
     # Intent classification
     'classify_intent',
+    'classify_dimension',
 
     # Fun fact (grounded)
     'generate_fun_fact',

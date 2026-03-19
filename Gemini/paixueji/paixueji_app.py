@@ -293,6 +293,9 @@ def start_conversation():
     assistant.load_object_context_from_yaml(object_name)
     assistant.clear_active_theme()
 
+    # Load age-tiered dimension coverage map (graceful: empty dicts if not in DB)
+    assistant.load_dimension_data(object_name)
+
     # Apply backbone model overrides (validated against whitelist)
     if model_name_override and model_name_override in ALLOWED_MODELS:
         assistant.config["model_name"] = model_name_override
@@ -350,6 +353,12 @@ def start_conversation():
                         "object_name": object_name,
                         "correct_answer_count": 0,
                         "category_prompt": assistant.category_prompt,
+
+                        # Dimension coverage (loaded at session start)
+                        "physical_dimensions": assistant.physical_dimensions,
+                        "engagement_dimensions": assistant.engagement_dimensions,
+                        "dimensions_covered": assistant.dimensions_covered,
+                        "current_dimension": None,
 
                         # Initialize outputs
                         "full_response_text": "",
@@ -723,6 +732,12 @@ def continue_conversation():
                         "object_name": assistant.object_name,
                         "correct_answer_count": assistant.correct_answer_count,
                         "category_prompt": category_prompt,
+
+                        # Dimension coverage (persisted on assistant between turns)
+                        "physical_dimensions": assistant.physical_dimensions,
+                        "engagement_dimensions": assistant.engagement_dimensions,
+                        "dimensions_covered": assistant.dimensions_covered,
+                        "current_dimension": None,
 
                         # Initialize outputs
                         "full_response_text": "",

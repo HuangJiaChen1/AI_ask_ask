@@ -1,6 +1,7 @@
 import asyncio
 import functools
 import json
+import random
 from pathlib import Path
 from typing import TypedDict, Annotated, List, Optional, Any
 from langgraph.graph import StateGraph, END, START
@@ -13,6 +14,7 @@ from stream import (
     ask_introduction_question_stream,
     ask_followup_question_stream,
     classify_intent,
+    classify_dimension,
     generate_intent_response_stream,
     generate_topic_switch_response_stream,
     extract_previous_response,
@@ -56,6 +58,12 @@ class PaixuejiState(TypedDict):
     # --- Context ---
     object_name: str
     correct_answer_count: int
+
+    # --- Dimension Coverage ---
+    physical_dimensions: dict      # {dim: {attr: value}}, loaded at session start
+    engagement_dimensions: dict    # {dim: [topic_examples]}, loaded at session start
+    dimensions_covered: list       # dimension names explored so far
+    current_dimension: Optional[str]  # dimension classified for this turn
 
     # --- Prompts ---
     age_prompt: str
@@ -103,7 +111,8 @@ class PaixuejiState(TypedDict):
 KEY_STATE_FIELDS = [
     "intent_type", "response_type",
     "guide_phase", "guide_status", "guide_strategy",
-    "new_object_name", "scaffold_level", "guide_turn_count"
+    "new_object_name", "scaffold_level", "guide_turn_count",
+    "current_dimension",
 ]
 
 
@@ -206,6 +215,52 @@ def trace_router(capture_fields):
 
 
 # ============================================================================
+# DIMENSION HINT HELPER
+# ============================================================================
+
+def _build_dimension_hint(state: "PaixuejiState") -> str:
+    """
+    Pick one random unexplored dimension and format a soft hint for the
+    follow-up question prompt.  Returns "" when no dimensions are available
+    (entity not in DB, or all dimensions already covered).
+    """
+    physical = state.get("physical_dimensions") or {}
+    engagement = state.get("engagement_dimensions") or {}
+    covered = set(state.get("dimensions_covered") or [])
+
+    remaining_physical = {k: v for k, v in physical.items() if k not in covered}
+    remaining_engagement = {k: v for k, v in engagement.items() if k not in covered}
+
+    if not remaining_physical and not remaining_engagement:
+        return ""
+
+    all_remaining = list(remaining_physical.keys()) + list(remaining_engagement.keys())
+    chosen = random.choice(all_remaining)
+
+    object_name = state.get("object_name", "this object")
+
+    if chosen in remaining_physical:
+        attrs = remaining_physical[chosen]
+        if not attrs:
+            return ""
+        lines = [f'[Dimension suggestion: "{chosen}"]']
+        lines.append(f"Known facts about {object_name}'s {chosen}:")
+        for attr, val in list(attrs.items())[:3]:
+            lines.append(f'  - {attr.replace("_", " ")}: "{val}"')
+        lines.append("Use these as grounding — ask a question that lets the child discover one naturally.")
+        return "\n".join(lines)
+    else:
+        examples = remaining_engagement[chosen]
+        if not examples:
+            return ""
+        lines = [f'[Dimension suggestion: "{chosen}"]']
+        lines.append("Example questions in this style (do not repeat verbatim — generalize a fresh one):")
+        for ex in examples[:3]:
+            lines.append(f'  - "{ex}"')
+        return "\n".join(lines)
+
+
+# ============================================================================
 # TOPIC SWITCH HELPER
 # ============================================================================
 
@@ -238,16 +293,34 @@ async def _apply_topic_switch(state: PaixuejiState, new_obj: str) -> dict:
 async def node_analyze_input(state: PaixuejiState) -> dict:
     """
     Classify child utterance into one of 9 communicative intents.
+    Runs dimension classification in parallel for coverage tracking.
     Routes to a dedicated intent node for response generation.
     """
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Analyze Input")
 
-    intent_result = await classify_intent(
-        assistant=state["assistant"],
-        child_answer=state["content"],
-        object_name=state["object_name"],
-        age=state["age"],
+    # Build list of dimensions not yet explored (for parallel dim classification)
+    all_dims = (
+        list((state.get("physical_dimensions") or {}).keys())
+        + list((state.get("engagement_dimensions") or {}).keys())
+    )
+    remaining_dims = [d for d in all_dims if d not in (state.get("dimensions_covered") or [])]
+
+    # Run intent + dimension classification in parallel
+    intent_result, current_dim = await asyncio.gather(
+        classify_intent(
+            assistant=state["assistant"],
+            child_answer=state["content"],
+            object_name=state["object_name"],
+            age=state["age"],
+        ),
+        classify_dimension(
+            assistant=state["assistant"],
+            child_answer=state["content"],
+            last_assistant_message=state.get("full_response_text", ""),
+            object_name=state["object_name"],
+            available_dimensions=remaining_dims,
+        ),
     )
 
     intent_type = intent_result["intent_type"]
@@ -256,10 +329,21 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
     if intent_type != "CLARIFYING_IDK":
         state["assistant"].consecutive_idk_count = 0
 
-    logger.info(f"[{state['session_id']}] Node: Analyze Input finished in {time.time() - start_time:.3f}s")
+    # Update dimension coverage (mutate assistant so next turn sees it)
+    new_covered = list(state.get("dimensions_covered") or [])
+    if current_dim and current_dim not in new_covered:
+        new_covered.append(current_dim)
+    state["assistant"].dimensions_covered = new_covered
+
+    logger.info(
+        f"[{state['session_id']}] Node: Analyze Input finished in {time.time() - start_time:.3f}s "
+        f"| intent={intent_type} | dim={current_dim}"
+    )
     return {
         "intent_type": intent_type,
         "new_object_name": intent_result.get("new_object"),
+        "current_dimension": current_dim,
+        "dimensions_covered": new_covered,
     }
 
 
@@ -527,6 +611,7 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
         age=state["age"],
         config=state["config"],
         client=state["client"],
+        dimension_hint=_build_dimension_hint(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 
@@ -630,6 +715,7 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
         age=state["age"],
         config=state["config"],
         client=state["client"],
+        dimension_hint=_build_dimension_hint(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 
@@ -677,6 +763,7 @@ async def node_informative(state: PaixuejiState) -> dict:
         age=state["age"],
         config=state["config"],
         client=state["client"],
+        dimension_hint=_build_dimension_hint(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 
@@ -905,6 +992,7 @@ async def node_social(state: PaixuejiState) -> dict:
         age=state["age"],
         config=state["config"],
         client=state["client"],
+        dimension_hint=_build_dimension_hint(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 
@@ -951,6 +1039,7 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
         age=state["age"],
         config=state["config"],
         client=state["client"],
+        dimension_hint=_build_dimension_hint(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 

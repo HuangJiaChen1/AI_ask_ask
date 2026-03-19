@@ -184,9 +184,14 @@ async def ask_followup_question_stream(
     age: int,
     config: dict,
     client: genai.Client,
+    dimension_hint: str = "",
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
     Stream a follow-up question after the correct-answer confirmation+wow-fact burst.
+
+    Args:
+        dimension_hint: Optional soft hint injected into the prompt to nudge the
+            model toward an unexplored dimension. Empty string → no hint.
 
     Yields:
         Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
@@ -199,6 +204,7 @@ async def ask_followup_question_stream(
         object_name=object_name,
         age=age,
         age_prompt=age_prompt,
+        dimension_hint=dimension_hint,
     )
 
     messages_to_send = messages + [{"role": "user", "content": followup_prompt}]

@@ -64,6 +64,11 @@ class PaixuejiAssistant:
         self.category_prompt = None  # Formatted YAML anchor block for {category_prompt} slot
         self.guide_phase = None  # "active", "success", "exit", etc.
 
+        # Dimension coverage tracking (from mappings_dev20_0318/)
+        self.physical_dimensions: dict = {}    # {dim: {attr: value}}
+        self.engagement_dimensions: dict = {}  # {dim: [topic_examples]}
+        self.dimensions_covered: list = []     # dimension names visited so far
+
         # Multi-turn guide state (new Navigator/Driver integration)
         self.guide_turn_count = 0
         self.guide_max_turns = 6
@@ -90,6 +95,13 @@ class PaixuejiAssistant:
         # Load prompts
         import paixueji_prompts
         self.prompts = paixueji_prompts.get_prompts()
+
+    def load_dimension_data(self, object_name: str):
+        """Load age-tiered dimension map from mappings_dev20_0318/."""
+        from stream.db_loader import load_physical_dimensions, load_engagement_dimensions
+        self.physical_dimensions = load_physical_dimensions(object_name, self.age or 6)
+        self.engagement_dimensions = load_engagement_dimensions(object_name, self.age or 6)
+        self.dimensions_covered = []
 
     def load_object_context_from_yaml(self, object_name: str):
         """

@@ -1,11 +1,12 @@
 """
-Intent classification logic for Paixueji assistant.
+Intent and dimension classification logic for Paixueji assistant.
 
 Classifies child utterances into one of 9 communicative intents, enabling
 the fan-out architecture where each intent routes to a dedicated response node.
 
 Functions:
     - classify_intent: Async LLM classifier → 9 intents + optional new_object extraction
+    - classify_dimension: Async LLM classifier → which exploration dimension a turn belongs to
 """
 import re
 import time
@@ -117,3 +118,58 @@ async def classify_intent(
             "new_object": None,
             "reasoning": f"Classification error: {str(e)}"
         }
+
+
+async def classify_dimension(
+    assistant,
+    child_answer: str,
+    last_assistant_message: str,
+    object_name: str,
+    available_dimensions: list[str],
+) -> str | None:
+    """
+    Classify which exploration dimension the current exchange belongs to.
+
+    Uses a minimal LLM call (temp=0, max 10 tokens) to pick one dimension
+    from the provided list, or returns None if none match or on any error.
+
+    Args:
+        assistant: PaixuejiAssistant (provides client + config)
+        child_answer: The child's input text
+        last_assistant_message: The assistant's prior response (truncated)
+        object_name: Current object being discussed
+        available_dimensions: List of dimension names not yet covered
+
+    Returns:
+        Matched dimension name string, or None.
+    """
+    if not available_dimensions:
+        return None
+
+    prompt = (
+        f"The assistant and child are talking about: {object_name}\n"
+        f"Assistant said: {last_assistant_message[-300:]}\n"
+        f"Child replied: {child_answer}\n\n"
+        f"Which ONE exploration dimension does this exchange belong to?\n"
+        f"Options: {', '.join(available_dimensions)}\n"
+        f"If none match, reply: none\n\n"
+        f"Reply with exactly one word from the options above."
+    )
+
+    try:
+        response = await assistant.client.aio.models.generate_content(
+            model=assistant.config["model_name"],
+            contents=prompt,
+            config={
+                "temperature": 0,
+                "max_output_tokens": 10,
+            },
+        )
+        text = (response.text or "").strip().lower()
+        for dim in available_dimensions:
+            if text == dim.lower():
+                return dim
+        return None
+    except Exception as e:
+        logger.debug(f"[DIM_CLASSIFY] Error (non-fatal): {e}")
+        return None

@@ -158,7 +158,7 @@ RULES:
 - Age {age}: very short sentences, easy words, playful warm tone.
 - Sound like a curious friend exploring alongside the child — not a teacher.
 - Respond naturally (NOT JSON).
-"""
+{dimension_hint}"""
 
 # ============================================================================
 # 4. SPECIALIZED PROMPTS (MONOLITHIC)
