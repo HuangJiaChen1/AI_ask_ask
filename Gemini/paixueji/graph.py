@@ -235,7 +235,13 @@ def _build_dimension_hint(state: "PaixuejiState") -> str:
         return ""
 
     all_remaining = list(remaining_physical.keys()) + list(remaining_engagement.keys())
-    chosen = random.choice(all_remaining)
+
+    # Prefer the dimension the child's current exchange belongs to (hook-alignment)
+    preferred = state.get("current_dimension", "")
+    if preferred and preferred in all_remaining:
+        chosen = preferred
+    else:
+        chosen = random.choice(all_remaining) if all_remaining else None
 
     object_name = state.get("object_name", "this object")
 

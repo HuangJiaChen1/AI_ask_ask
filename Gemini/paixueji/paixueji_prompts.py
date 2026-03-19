@@ -158,6 +158,8 @@ RULES:
 - Age {age}: very short sentences, easy words, playful warm tone.
 - Sound like a curious friend exploring alongside the child — not a teacher.
 - Respond naturally (NOT JSON).
+
+DIMENSION SUGGESTION (fallback only — use only when the WOW fact above gives no clear hook to GROW from):
 {dimension_hint}"""
 
 # ============================================================================
