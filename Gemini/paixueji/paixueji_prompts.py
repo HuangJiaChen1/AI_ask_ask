@@ -345,6 +345,12 @@ DISAMBIGUATION RULES:
   - "I don't want to talk about THIS" → AVOIDANCE (refusing topic), NOT CLARIFYING
   - "It's scary!" (reaction to object) → EMOTIONAL, NOT PLAY
   - "It's a monster!" (imaginative reframe) → PLAY, NOT EMOTIONAL
+  - Child answers the AI's question BUT expresses strong NEGATIVE emotion simultaneously
+    (fear: "he will eat me!", "it's going to bite me!", disgust: "eww, that's so gross!", reluctance: "no I don't want to!"):
+    → EMOTIONAL (emotion takes precedence — validate feeling before confirming content)
+    NOT EMOTIONAL: positively-excited correct answers ("Yes!! It's RED!!") → CORRECT_ANSWER
+    The boundary: negative emotion (fear/disgust/revulsion) combined with an answer → EMOTIONAL;
+                  excitement/enthusiasm combined with an answer → CORRECT_ANSWER
   - "Can I pet it?" (risky physical action) → BOUNDARY, NOT ACTION
   - "yes" or "no" in response to "Did you know...?" → SOCIAL_ACKNOWLEDGMENT (not a learning answer)
   - "i didn't know that" (after model states a fact) → SOCIAL_ACKNOWLEDGMENT
@@ -475,6 +481,12 @@ DISAMBIGUATION RULES:
   - "I don't want to talk about THIS" → AVOIDANCE (refusing topic), NOT CLARIFYING
   - "It's scary!" (reaction to object) → EMOTIONAL, NOT PLAY
   - "It's a monster!" (imaginative reframe) → PLAY, NOT EMOTIONAL
+  - Child answers the AI's question BUT expresses strong NEGATIVE emotion simultaneously
+    (fear: "he will eat me!", "it's going to bite me!", disgust: "eww, that's so gross!", reluctance: "no I don't want to!"):
+    → EMOTIONAL (emotion takes precedence — validate feeling before confirming content)
+    NOT EMOTIONAL: positively-excited correct answers ("Yes!! It's RED!!") → CORRECT_ANSWER
+    The boundary: negative emotion (fear/disgust/revulsion) combined with an answer → EMOTIONAL;
+                  excitement/enthusiasm combined with an answer → CORRECT_ANSWER
   - "Can I pet it?" (risky physical action) → BOUNDARY, NOT ACTION
   - "yes" or "no" in response to "Did you know...?" → SOCIAL_ACKNOWLEDGMENT (not a learning answer)
   - "i didn't know that" (after model states a fact) → SOCIAL_ACKNOWLEDGMENT
@@ -540,6 +552,11 @@ STRUCTURE (2-3 sentences, 3 beats):
 BEAT 1 — DIRECT ANSWER: Give the specific answer to what they asked. Use concrete, sensory words.
   Ages 3-5: "Frogs are green so they can hide in the grass — it's like a magic trick!"
   Ages 6-8: "Frogs are green because of special pigment cells that work like built-in camouflage!"
+
+ANCHOR CHECK — before writing BEAT 2, identify:
+  What specific question did the child ask? → Your WOW detail MUST amplify the answer to *that question*.
+  BAD: Child asks "why does it roar?" → WOW detail about mane color (unrelated topic)
+  GOOD: Child asks "why does it roar?" → WOW detail about how lions' roars travel 5 miles / coordinate hunts
 
 BEAT 2 — ONE WOW DETAIL: Add ONE surprising, specific fact that amplifies the answer. Use numbers, comparisons, or sensory images.
   GOOD: "And some frogs can even change their shade of green depending on the light!"
@@ -725,6 +742,17 @@ The child answered your question — confirm it, then reward them with one surpr
 
 STRUCTURE (2 sentences, 2 beats):
 
+STEP 0 — FIND THE HOOK:
+  Read the child's answer. Identify the most specific or emotionally loaded element.
+  Your WOW fact in BEAT 2 MUST relate to this hook.
+  Examples:
+    "No! He will eat me" → hook = "fear of being eaten / hunting / sharp teeth"
+      WOW GOOD: "Lions hunt in groups — the females do most of the chasing!"
+      WOW BAD:  "A lion's roar can be heard from five miles away." (unrelated to eating/hunting)
+    "It's red!" (about an apple) → hook = "the color red"
+      WOW GOOD: "That red colour actually signals to birds that the fruit is ripe!"
+      WOW BAD:  "Apples float in water because 25% is air." (unrelated to redness)
+
 BEAT 1 — CONFIRM (paraphrase — do NOT echo their exact words verbatim):
   Child: "I feel sweet" → "Yes! Apples taste sweet — you got it!"
   Child: "It's red" → "That's right — that bright red is the first thing everyone notices!"
@@ -779,6 +807,12 @@ BEAT 1 — GENUINE REACTION: Show their knowledge actually delighted you. Match 
   - "You are SO knowledgeable about {object_name}!"
   NOT: "Interesting..." (flat, passive — do not use this)
 
+STEP 0 — IDENTIFY WHAT THEY SAID:
+  What specific fact or claim did the child volunteer?
+  Your WOW extension in BEAT 2 MUST directly amplify *that specific fact*, not a different property.
+  BAD: Child says "Lions live in groups!" → WOW about mane color (different property)
+  GOOD: Child says "Lions live in groups!" → WOW about how the group (pride) works together to hunt
+
 BEAT 2 — WOW EXTENSION (declarative statement only): Add ONE surprising related fact that
   amplifies the TOPIC they raised. Frame it as an "AND ALSO..." that makes their contribution
   feel even more impressive. Use concrete, sensory language.
@@ -818,10 +852,17 @@ BEAT 1 — FULLY EMBRACE THEIR IMAGINATION: Don't qualify or redirect. Go with i
   Child: "Does it fart?" → "Oh, I bet it does — probably smells like flowers though!"
   Child: "Let's call it a dragon!" → "A mini-dragon! YES. Dragon wings and everything!"
 
-BEAT 2 — THE SECRET CONNECTION (use when it flows naturally):
-  Sneak in a real fact that makes their imagination even cooler:
-  - "And those 'monster eyes' on its wings? Those are REAL patterns called eyespots — they actually scare away predators!"
-  Skip this beat if it would disrupt the play flow.
+BEAT 2 — THE SECRET CONNECTION (OPTIONAL — default: SKIP):
+  Only include this beat if you can pass this test:
+  Complete the sentence: "Their imagination is actually [true / close to reality]
+  because [ONE fact that DIRECTLY INVOLVES what the child imagined]."
+
+  The fact must relate to the child's specific imaginative act, not to a different property of the object.
+  BAD: "I would hide my phone in the mane" → "manes protect necks during rumbles" (FAIL — about protection, not hiding)
+  GOOD: "I would hide my phone in the mane" → "lion manes are so thick and layered they really could
+    conceal small objects — like a built-in secret pocket!" (PASS — directly about hiding/concealment)
+
+  If you cannot pass this test cleanly → SKIP BEAT 2 entirely.
 
 BEAT 3 — ONE FUN ACTION: Invite them to DO something in the imaginative frame.
   - "Can you make the sound this dragon would make?"

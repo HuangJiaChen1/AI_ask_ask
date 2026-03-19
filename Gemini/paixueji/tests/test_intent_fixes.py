@@ -255,10 +255,10 @@ class TestUserIntentPromptSocialAcknowledgment:
         )
 
     def test_user_intent_prompt_updated_category_count(self):
-        """USER_INTENT_PROMPT output instruction should reference 13 categories after decoupling CLARIFYING."""
+        """USER_INTENT_PROMPT output instruction should reference 14 categories (13 + SOCIAL_ACKNOWLEDGMENT)."""
         prompt = paixueji_prompts.USER_INTENT_PROMPT
-        assert "13" in prompt, (
-            "USER_INTENT_PROMPT must reference '13 categories' after decoupling CLARIFYING into 3 sub-intents"
+        assert "14" in prompt, (
+            "USER_INTENT_PROMPT must reference '14 categories' (13 original + SOCIAL_ACKNOWLEDGMENT)"
         )
 
     def test_user_intent_prompt_yes_no_disambiguation_rule(self):
@@ -498,8 +498,8 @@ class TestCuriosityPromptCoversWhatDoYouMean:
         rule_2_start = prompt.find("RULE 2", disambiguation_start)
         end = rule_2_start if rule_2_start != -1 else len(prompt)
         disambiguation_section = prompt[disambiguation_start:end]
-        assert "re-explain something the model said" in disambiguation_section or \
-               "CLARIFYING is only for" in disambiguation_section, (
+        assert "What do you mean" in disambiguation_section and \
+               "CURIOSITY" in disambiguation_section, (
             "DISAMBIGUATION RULES must clarify that 'what do you mean?' is CURIOSITY, "
             "not CLARIFYING — CLARIFYING is only for answer attempts"
         )
