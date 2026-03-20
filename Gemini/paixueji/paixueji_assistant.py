@@ -75,7 +75,7 @@ class PaixuejiAssistant:
         self.hint_given = False  # Track if hint was given at timeout
         self.last_navigation_state = None  # Last Navigator analysis result
         self.consecutive_stuck_count = 0  # Track consecutive STUCK statuses (renamed from resistance)
-        self.consecutive_idk_count = 0  # Resets when child gives any non-IDK response
+        self.consecutive_struggle_count = 0  # Resets on any non-struggling response (IDK or wrong)
         self.scaffold_level = 0  # 0=original question, 1-4=progressive hint levels
 
         # Initialize Google Gemini client
