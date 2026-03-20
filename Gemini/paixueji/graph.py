@@ -82,8 +82,10 @@ class PaixuejiState(TypedDict):
     # --- Dimension Coverage ---
     physical_dimensions: dict      # {dim: {attr: value}}, loaded at session start
     engagement_dimensions: dict    # {dim: [topic_examples]}, loaded at session start
-    dimensions_covered: list       # dimension names explored so far
+    dimensions_covered: list       # added only when LEAVING a dimension
     current_dimension: Optional[str]  # dimension classified for this turn
+    active_dimension: Optional[str]      # dimension we are dwelling in (persists across turns)
+    active_dimension_turn_count: int     # turns in current dimension (drives attr rotation)
 
     # --- Prompts ---
     age_prompt: str
@@ -136,7 +138,7 @@ KEY_STATE_FIELDS = [
     "intent_type", "response_type",
     "guide_phase", "guide_status", "guide_strategy",
     "new_object_name", "scaffold_level", "guide_turn_count",
-    "current_dimension",
+    "current_dimension", "active_dimension",
 ]
 
 
@@ -260,10 +262,11 @@ def _build_dimension_hint(state: "PaixuejiState") -> str:
 
     all_remaining = list(remaining_physical.keys()) + list(remaining_engagement.keys())
 
-    # Prefer the dimension the child's current exchange belongs to (hook-alignment)
-    preferred = state.get("current_dimension", "")
-    if preferred and preferred in all_remaining:
-        chosen = preferred
+    # Use persistent active_dimension (not per-turn current_dimension)
+    active_dim = state.get("active_dimension")
+    turn_count = state.get("active_dimension_turn_count", 0)
+    if active_dim and active_dim in all_remaining:
+        chosen = active_dim
     else:
         chosen = random.choice(all_remaining) if all_remaining else None
 
@@ -273,9 +276,14 @@ def _build_dimension_hint(state: "PaixuejiState") -> str:
         attrs = remaining_physical[chosen]
         if not attrs:
             return ""
+        attr_items = list(attrs.items())
+        n = len(attr_items)
+        start = turn_count % n
+        indices = [i % n for i in range(start, start + min(3, n))]
         lines = [f'[Dimension suggestion: "{chosen}"]']
         lines.append(f"Known facts about {object_name}'s {chosen}:")
-        for attr, val in list(attrs.items())[:3]:
+        for i in indices:
+            attr, val = attr_items[i]
             lines.append(f'  - {attr.replace("_", " ")}: "{val}"')
         lines.append("Use these as grounding — ask a question that lets the child discover one naturally.")
         return "\n".join(lines)
@@ -283,9 +291,12 @@ def _build_dimension_hint(state: "PaixuejiState") -> str:
         examples = remaining_engagement[chosen]
         if not examples:
             return ""
+        n = len(examples)
+        start = turn_count % n
+        rotated = [examples[i % n] for i in range(start, start + min(3, n))]
         lines = [f'[Dimension suggestion: "{chosen}"]']
         lines.append("Example questions in this style (do not repeat verbatim — generalize a fresh one):")
-        for ex in examples[:3]:
+        for ex in rotated:
             lines.append(f'  - "{ex}"')
         return "\n".join(lines)
 
@@ -361,21 +372,42 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
     else:
         state["assistant"].consecutive_struggle_count = 0
 
-    # Update dimension coverage (mutate assistant so next turn sees it)
-    new_covered = list(state.get("dimensions_covered") or [])
-    if current_dim and current_dim not in new_covered:
-        new_covered.append(current_dim)
-    state["assistant"].dimensions_covered = new_covered
+    # --- Active Dimension Dwelling Logic ---
+    active_dim      = state.get("active_dimension")
+    active_dim_turn = state.get("active_dimension_turn_count", 0)
+    new_covered     = list(state.get("dimensions_covered") or [])
+
+    if current_dim is None:
+        # LLM could not classify — stay put, change nothing
+        new_active_dim      = active_dim
+        new_active_dim_turn = active_dim_turn
+    elif current_dim == active_dim:
+        # Child's response stays within the dimension we are dwelling in
+        new_active_dim      = active_dim
+        new_active_dim_turn = active_dim_turn + 1
+    else:
+        # Child's response belongs to a DIFFERENT dimension — leave old, enter new
+        if active_dim and active_dim not in new_covered:
+            new_covered.append(active_dim)   # mark old dimension as covered
+        new_active_dim      = current_dim
+        new_active_dim_turn = 0              # reset turn counter for new dimension
+
+    # Persist to assistant so next turn's continue-state can read it
+    state["assistant"].dimensions_covered          = new_covered
+    state["assistant"].active_dimension            = new_active_dim
+    state["assistant"].active_dimension_turn_count = new_active_dim_turn
 
     logger.info(
         f"[{state['session_id']}] Node: Analyze Input finished in {time.time() - start_time:.3f}s "
-        f"| intent={intent_type} | dim={current_dim}"
+        f"| intent={intent_type} | dim={current_dim} | active={new_active_dim} (turn {new_active_dim_turn})"
     )
     return {
         "intent_type": intent_type,
         "new_object_name": intent_result.get("new_object"),
         "current_dimension": current_dim,
         "dimensions_covered": new_covered,
+        "active_dimension": new_active_dim,
+        "active_dimension_turn_count": new_active_dim_turn,
     }
 
 

@@ -7,6 +7,7 @@ while the actual streaming logic is in paixueji_stream.py.
 import json
 import os
 from enum import Enum
+from typing import Optional
 
 from google import genai
 from google.genai.types import HttpOptions
@@ -68,6 +69,8 @@ class PaixuejiAssistant:
         self.physical_dimensions: dict = {}    # {dim: {attr: value}}
         self.engagement_dimensions: dict = {}  # {dim: [topic_examples]}
         self.dimensions_covered: list = []     # dimension names visited so far
+        self.active_dimension: Optional[str] = None
+        self.active_dimension_turn_count: int = 0
 
         # Multi-turn guide state (new Navigator/Driver integration)
         self.guide_turn_count = 0
@@ -102,6 +105,8 @@ class PaixuejiAssistant:
         self.physical_dimensions = load_physical_dimensions(object_name, self.age or 6)
         self.engagement_dimensions = load_engagement_dimensions(object_name, self.age or 6)
         self.dimensions_covered = []
+        self.active_dimension = None
+        self.active_dimension_turn_count = 0
 
     def load_object_context_from_yaml(self, object_name: str):
         """

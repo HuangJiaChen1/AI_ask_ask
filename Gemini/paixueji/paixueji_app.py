@@ -378,6 +378,8 @@ def start_conversation():
                         "engagement_dimensions": assistant.engagement_dimensions,
                         "dimensions_covered": assistant.dimensions_covered,
                         "current_dimension": None,
+                        "active_dimension": None,
+                        "active_dimension_turn_count": 0,
 
                         # Initialize outputs
                         "full_response_text": "",
@@ -761,6 +763,8 @@ def continue_conversation():
                         "engagement_dimensions": assistant.engagement_dimensions,
                         "dimensions_covered": assistant.dimensions_covered,
                         "current_dimension": None,
+                        "active_dimension": assistant.active_dimension,
+                        "active_dimension_turn_count": assistant.active_dimension_turn_count,
 
                         # Initialize outputs
                         "full_response_text": "",
