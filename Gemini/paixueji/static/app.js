@@ -22,6 +22,10 @@ let correctAnswerCount = 0;
 let conversationComplete = false;
 let detectedObject = null;  // For manual topic switch override
 let awaitingObjectSelection = false;  // Waiting for object choice flag
+let lastRequest = null;           // { type: 'start' | 'continue', childInput?: string }
+let retryCountdownInterval = null;
+let retryAutoTimer = null;
+let errorBubble = null;           // DOM reference to active error bubble
 
 // UI state
 let currentObject = null;  // Current object being discussed
@@ -298,6 +302,92 @@ function renderRateLimitError(data = null) {
     addAssistantErrorMessage(data?.user_message || RATE_LIMIT_FALLBACK_MESSAGE);
 }
 
+function clearRetryState() {
+    clearInterval(retryCountdownInterval);
+    clearTimeout(retryAutoTimer);
+    retryCountdownInterval = null;
+    retryAutoTimer = null;
+    if (errorBubble) { errorBubble.remove(); errorBubble = null; }
+}
+
+function clearPartialBubble() {
+    if (currentMessageDiv) {
+        currentMessageDiv.parentElement?.remove();
+        currentMessageDiv = null;
+    }
+}
+
+function renderRetryUI(is429, message) {
+    const bubble = document.createElement('div');
+    bubble.className = 'retry-error-bubble';
+
+    const msg = document.createElement('p');
+    msg.className = 'retry-message';
+
+    const actions = document.createElement('div');
+    actions.className = 'retry-actions';
+
+    if (is429) {
+        let remaining = 5;
+        msg.textContent = `⚠ The model is busy. Retrying in ${remaining}s…`;
+
+        const retryNowBtn = document.createElement('button');
+        retryNowBtn.className = 'btn-retry-now';
+        retryNowBtn.textContent = 'Retry now';
+        retryNowBtn.onclick = () => executeRetry();
+
+        const cancelBtn = document.createElement('button');
+        cancelBtn.className = 'btn-cancel-retry';
+        cancelBtn.textContent = 'Cancel';
+        cancelBtn.onclick = () => clearRetryState();
+
+        retryCountdownInterval = setInterval(() => {
+            remaining--;
+            if (remaining > 0) {
+                msg.textContent = `⚠ The model is busy. Retrying in ${remaining}s…`;
+            }
+        }, 1000);
+
+        retryAutoTimer = setTimeout(() => executeRetry(), 5000);
+
+        actions.append(retryNowBtn, cancelBtn);
+    } else {
+        msg.textContent = `⚠ ${message || 'Response interrupted.'}`;
+
+        const retryBtn = document.createElement('button');
+        retryBtn.className = 'btn-retry-manual';
+        retryBtn.textContent = '↻ Retry';
+        retryBtn.onclick = () => executeRetry();
+
+        const dismissBtn = document.createElement('button');
+        dismissBtn.className = 'btn-cancel-retry';
+        dismissBtn.textContent = 'Dismiss';
+        dismissBtn.onclick = () => clearRetryState();
+
+        actions.append(retryBtn, dismissBtn);
+    }
+
+    bubble.append(msg, actions);
+    messagesContainer.appendChild(bubble);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    errorBubble = bubble;
+}
+
+function executeRetry() {
+    const req = lastRequest;
+    clearRetryState();
+    if (!req) return;
+    if (req.type === 'start') {
+        startConversation();
+    } else if (req.type === 'continue') {
+        // Re-run streaming only — user message is already in the DOM
+        sendBtn.disabled = true;
+        isStreaming = true;
+        updateStopButton();
+        continueConversation(req.childInput);
+    }
+}
+
 /**
  * Display text chunk immediately (no artificial delay)
  * The streaming itself provides the real-time effect!
@@ -378,6 +468,8 @@ async function startConversation() {
 
         // Create AbortController for this stream
         currentStreamController = new AbortController();
+        clearRetryState();
+        lastRequest = { type: 'start' };
 
         const response = await fetch(`${API_BASE}/start`, {
             method: 'POST',
@@ -438,22 +530,14 @@ async function startConversation() {
         }
 
     } catch (error) {
-        // Handle abort gracefully
         if (error.name === 'AbortError') {
             console.log('[INFO] Stream interrupted by user');
             return;
         }
-
         console.error('[ERROR] Failed to start conversation:', error);
-        if (String(error.message || '').includes('HTTP 429')) {
-            renderRateLimitError();
-            return;
-        }
-        messagesContainer.innerHTML = '';
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        errorDiv.textContent = `Error: ${error.message}. Please check if the server is running.`;
-        messagesContainer.appendChild(errorDiv);
+        const is429 = String(error.message || '').includes('HTTP 429');
+        clearPartialBubble();
+        renderRetryUI(is429, is429 ? null : error.message);
     } finally {
         // Clear stream controller
         currentStreamController = null;
@@ -503,50 +587,24 @@ function updateStopButton() {
 }
 
 /**
- * Send a user message
+ * Stream a continuation response for the given child input.
+ * Does NOT add the user message to the DOM — caller is responsible for that.
  */
-async function sendMessage() {
-    const text = userInput.value.trim();
-
-    // Validate input
-    if (!text || !sessionId) {
-        return;
-    }
-
-    // Interrupt ongoing stream if exists (abort frontend connection only)
-    if (isStreaming && currentStreamController) {
-        console.log('[INFO] Interrupting previous stream');
-        currentStreamController.abort();
-        currentStreamController = null;
-    }
-
-    // Clear thinking time display
-    thinkingTimeDisplay.textContent = '';
-    thinkingTimeDisplay.style.opacity = 0;
-
-    // Add user message to chat
-    addMessage('user', text);
-    userInput.value = '';
-
-    // Disable send button during streaming
-    sendBtn.disabled = true;
-    isStreaming = true;
-    updateStopButton();
+async function continueConversation(childInput) {
+    clearRetryState();
+    lastRequest = { type: 'continue', childInput };
 
     try {
-        console.log('[INFO] Sending message:', text);
+        console.log('[INFO] Sending message:', childInput);
 
-        // Create AbortController for this stream
         currentStreamController = new AbortController();
 
         const response = await fetch(`${API_BASE}/continue`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 session_id: sessionId,
-                child_input: text
+                child_input: childInput
             }),
             signal: currentStreamController.signal
         });
@@ -558,72 +616,77 @@ async function sendMessage() {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        // Create message bubble for streaming response (will be created on first chunk)
         currentMessageDiv = null;
 
-        // Read streaming response
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
 
         while (true) {
             const { done, value } = await reader.read();
-
             if (done) {
                 console.log('[INFO] Stream ended');
                 break;
             }
-
-            // Decode chunk and add to buffer
             buffer += decoder.decode(value, { stream: true });
-
-            // Process complete SSE events
             const lines = buffer.split('\n\n');
             buffer = lines.pop();
-
             for (const line of lines) {
                 if (!line.trim()) continue;
-
-                // Parse SSE event
                 const eventMatch = line.match(/^event: (.+)$/m);
                 const dataMatch = line.match(/^data: (.+)$/m);
-
                 if (eventMatch && dataMatch) {
                     const eventType = eventMatch[1];
                     const data = JSON.parse(dataMatch[1]);
-
-                    // Handle event
                     await handleSSEEvent(eventType, data);
                 }
             }
         }
 
     } catch (error) {
-        // Handle abort gracefully
         if (error.name === 'AbortError') {
             console.log('[INFO] Stream interrupted by user');
             return;
         }
-
         console.error('[ERROR] Failed to send message:', error);
-        if (String(error.message || '').includes('HTTP 429')) {
-            renderRateLimitError();
-            return;
-        }
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'error-message';
-        errorDiv.textContent = `Error: ${error.message}`;
-        messagesContainer.appendChild(errorDiv);
+        const is429 = String(error.message || '').includes('HTTP 429');
+        clearPartialBubble();
+        renderRetryUI(is429, is429 ? null : error.message);
     } finally {
-        // Clear stream controller
         currentStreamController = null;
-
-        // Re-enable send button
         isStreaming = false;
         sendBtn.disabled = false;
         updateStopButton();
         userInput.focus();
     }
+}
+
+/**
+ * Send a user message
+ */
+async function sendMessage() {
+    const text = userInput.value.trim();
+    if (!text || !sessionId) return;
+
+    if (isStreaming && currentStreamController) {
+        console.log('[INFO] Interrupting previous stream');
+        currentStreamController.abort();
+        currentStreamController = null;
+    }
+
+    clearRetryState();
+    thinkingTimeDisplay.textContent = '';
+    thinkingTimeDisplay.style.opacity = 0;
+
+    addMessage('user', text);
+    userInput.value = '';
+
+    sendBtn.disabled = true;
+    isStreaming = true;
+    updateStopButton();
+
+    lastRequest = { type: 'continue', childInput: text };
+    await continueConversation(text);
 }
 
 /**
@@ -652,16 +715,9 @@ async function handleSSEEvent(eventType, data) {
             break;
 
         case 'error':
-            // Error occurred during streaming
             console.error('[ERROR] Stream error:', data);
-            if (isRateLimitedErrorPayload(data)) {
-                renderRateLimitError(data);
-                break;
-            }
-            if (currentMessageDiv) {
-                currentMessageDiv.textContent = '⚠ Error: ' + (data.message || 'An error occurred');
-                currentMessageDiv.style.color = '#d32f2f';
-            }
+            clearPartialBubble();
+            renderRetryUI(isRateLimitedErrorPayload(data), data?.user_message || data?.message);
             break;
 
         default:
