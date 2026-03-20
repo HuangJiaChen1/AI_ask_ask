@@ -25,6 +25,25 @@ from stream.theme_guide import ThemeNavigator, ThemeDriver
 from schema import StreamChunk
 
 GUIDE_MODE_THRESHOLD = 4  # Correct answers required to enter guide mode
+_STRUGGLING_INTENTS = {"CLARIFYING_IDK", "CLARIFYING_WRONG"}  # Intents that share the struggle counter
+
+
+def route_from_analyze_input(state) -> str:
+    """
+    Routing logic for analyze_input conditional edges.
+
+    Extracted to module level for testability (LangGraph requires nested decorated
+    functions for wiring, but the pure logic should be testable without building the graph).
+    """
+    intent = state.get("intent_type", "clarifying_idk").lower()
+    # Intercept the Nth correct answer to run theme classification
+    if (intent == "correct_answer" and
+            state["assistant"].correct_answer_count + 1 >= GUIDE_MODE_THRESHOLD):
+        return "classify_theme"
+    # Intercept 2nd+ struggle (IDK or wrong) — route to dedicated answer-reveal node
+    if intent in ("clarifying_idk", "clarifying_wrong") and state["assistant"].consecutive_struggle_count >= 2:
+        return "give_answer_idk"
+    return intent
 
 
 def _load_router_overrides() -> dict:
@@ -331,9 +350,11 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
 
     intent_type = intent_result["intent_type"]
 
-    # Reset IDK streak when child gives any non-IDK response
-    if intent_type != "CLARIFYING_IDK":
-        state["assistant"].consecutive_idk_count = 0
+    # Update unified struggle counter (IDK or wrong answer)
+    if intent_type in _STRUGGLING_INTENTS:
+        state["assistant"].consecutive_struggle_count += 1
+    else:
+        state["assistant"].consecutive_struggle_count = 0
 
     # Update dimension coverage (mutate assistant so next turn sees it)
     new_covered = list(state.get("dimensions_covered") or [])
@@ -547,22 +568,14 @@ async def node_concept_confusion(state: PaixuejiState) -> dict:
 
 @trace_node
 async def node_clarifying_idk(state: PaixuejiState) -> dict:
-    """Child said IDK. On 1st IDK increment counter; on 2nd+ IDK reveal the answer and reset."""
+    """Child said IDK — give a scaffold hint (router guarantees struggle_count < 2)."""
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Clarifying IDK")
 
-    if state["assistant"].consecutive_idk_count >= 1:
-        # Second IDK — give the answer directly and reset the counter
-        state["assistant"].consecutive_idk_count = 0
-        intent_type = "give_answer_idk"
-    else:
-        # First IDK — scaffold hint and increment counter
-        state["assistant"].consecutive_idk_count += 1
-        intent_type = "clarifying_idk"
-
+    # No counter mutation here — node_analyze_input handles it upstream.
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
     generator = generate_intent_response_stream(
-        intent_type=intent_type,
+        intent_type="clarifying_idk",
         messages=messages,
         child_answer=state["content"],
         object_name=state["object_name"],
@@ -575,7 +588,7 @@ async def node_clarifying_idk(state: PaixuejiState) -> dict:
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     logger.info(f"[{state['session_id']}] Node: Clarifying IDK finished in {time.time() - start_time:.3f}s")
     return {
-        "response_type": intent_type,
+        "response_type": "clarifying_idk",
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
@@ -584,11 +597,11 @@ async def node_clarifying_idk(state: PaixuejiState) -> dict:
 
 @trace_node
 async def node_give_answer_idk(state: PaixuejiState) -> dict:
-    """Child said IDK twice — reveal the answer directly and reset the IDK counter."""
+    """Child said IDK/wrong twice — reveal the answer directly and reset the struggle counter."""
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Give Answer IDK")
 
-    state["assistant"].consecutive_idk_count = 0
+    state["assistant"].consecutive_struggle_count = 0
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
 
     # First call: acceptance + direct answer (no question)
@@ -1599,21 +1612,13 @@ def build_paixueji_graph():
     workflow.add_edge("generate_intro", "finalize")
 
     # Chat path: analyze_input → route_from_analyze_input → one of 9 intent nodes
-    @trace_router(["intent_type"])
-    def route_from_analyze_input(state):
-        intent = state.get("intent_type", "clarifying_idk").lower()
-        # Intercept the Nth correct answer to run theme classification
-        if (intent == "correct_answer" and
-                state["assistant"].correct_answer_count + 1 >= GUIDE_MODE_THRESHOLD):
-            return "classify_theme"
-        # Intercept repeated IDK — route to dedicated answer-reveal node
-        if intent == "clarifying_idk" and state["assistant"].consecutive_idk_count > 0:
-            return "give_answer_idk"
-        return intent
+    # The module-level route_from_analyze_input holds the pure logic; wrap it with
+    # trace_router here so the graph can observe routing decisions.
+    _traced_route_from_analyze_input = trace_router(["intent_type"])(route_from_analyze_input)
 
     workflow.add_conditional_edges(
         "analyze_input",
-        route_from_analyze_input,
+        _traced_route_from_analyze_input,
         {
             "curiosity": "curiosity",
             "concept_confusion": "concept_confusion",

@@ -389,7 +389,7 @@ async def run_scenarios_cd(client):
     print("=" * 70)
 
     # Fresh assistant — C and D must share the SAME instance so
-    # consecutive_idk_count increments correctly between turns.
+    # consecutive_struggle_count increments correctly between turns.
     assistant = make_assistant(client)
     assistant.conversation_history += [
         {
@@ -410,7 +410,7 @@ async def run_scenarios_cd(client):
     ]
 
     # ---- Turn C: First IDK ----
-    print(f"\nconsecutive_idk_count BEFORE Turn C: {assistant.consecutive_idk_count}")
+    print(f"\nconsecutive_struggle_count BEFORE Turn C: {assistant.consecutive_struggle_count}")
     print()
     print("TURN C — 'I don't know' (first IDK)")
     print("-" * 50)
@@ -418,7 +418,7 @@ async def run_scenarios_cd(client):
     response_c, rtype_c = await run_turn(assistant, "I don't know")
 
     print(f"response_type  : {rtype_c}")
-    print(f"idk_count after: {assistant.consecutive_idk_count}")
+    print(f"idk_count after: {assistant.consecutive_struggle_count}")
     print("\nMODEL RESPONSE:")
     print(response_c)
     print()
@@ -426,13 +426,13 @@ async def run_scenarios_cd(client):
     print("VERIFICATION:")
     check(rtype_c == "clarifying_idk", f'response_type == "clarifying_idk" (got: {rtype_c})')
     check(
-        assistant.consecutive_idk_count == 1,
-        f"consecutive_idk_count incremented to 1 (got: {assistant.consecutive_idk_count})",
+        assistant.consecutive_struggle_count == 1,
+        f"consecutive_struggle_count incremented to 1 (got: {assistant.consecutive_struggle_count})",
     )
     print()
 
     # ---- Turn D: Second IDK ----
-    print(f"consecutive_idk_count BEFORE Turn D: {assistant.consecutive_idk_count}")
+    print(f"consecutive_struggle_count BEFORE Turn D: {assistant.consecutive_struggle_count}")
     print()
     print("TURN D — 'I don't know' again (second IDK)")
     print("-" * 50)
@@ -440,7 +440,7 @@ async def run_scenarios_cd(client):
     response_d, rtype_d = await run_turn(assistant, "I don't know")
 
     print(f"response_type  : {rtype_d}")
-    print(f"idk_count after: {assistant.consecutive_idk_count}")
+    print(f"idk_count after: {assistant.consecutive_struggle_count}")
     print("\nMODEL RESPONSE:")
     print(response_d)
     print()
@@ -448,8 +448,8 @@ async def run_scenarios_cd(client):
     print("VERIFICATION:")
     check(rtype_d == "give_answer_idk", f'response_type == "give_answer_idk" (got: {rtype_d})')
     check(
-        assistant.consecutive_idk_count == 0,
-        f"consecutive_idk_count reset to 0 (got: {assistant.consecutive_idk_count})",
+        assistant.consecutive_struggle_count == 0,
+        f"consecutive_struggle_count reset to 0 (got: {assistant.consecutive_struggle_count})",
     )
     # Accept "that's okay", "no worries", or "okay" appearing in the first 60 chars
     opening = response_d.lower()[:60]

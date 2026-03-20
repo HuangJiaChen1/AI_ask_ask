@@ -5,7 +5,7 @@ Fix 1: INTRODUCTION_PROMPT — 4-beat structure (EMOTIONAL OPENING, OBJECT CONFI
        FEATURE DESCRIPTION, ENGAGEMENT HOOK) — ends with life-experience question, never knowledge test
 Fix 2: CORRECT_ANSWER_INTENT_PROMPT BEAT 3 — yes/no preference for ages 3-5
 Fix 3: FOLLOWUP_QUESTION_PROMPT rule 6 — "Did you know..." banned; "You know what..." approved
-Fix 4: IDK Escalation — consecutive_idk_count field + node_clarifying_idk branching
+Fix 4: IDK Escalation — unified consecutive_struggle_count (IDK + wrong) + router-level escalation
 """
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
@@ -212,19 +212,15 @@ class TestFollowupQuestionPromptRule6:
 # ===========================================================================
 
 class TestIdkEscalationPromptAndAttributes:
-    """Verify static prompt content and assistant attribute for IDK escalation."""
+    """Verify static prompt content and assistant attribute for IDK/wrong escalation."""
 
-    def test_paixueji_assistant_has_consecutive_idk_count_attribute(self):
-        """PaixuejiAssistant must have consecutive_idk_count initialized to 0."""
-        from paixueji_assistant import PaixuejiAssistant
-        assistant = PaixuejiAssistant.__new__(PaixuejiAssistant)
-        # Initialize only the fields we care about, bypassing network calls
-        assistant.consecutive_idk_count = 0  # default value; test that class sets it
-        # Re-verify by checking actual __init__ would set it — inspect source
+    def test_paixueji_assistant_has_consecutive_struggle_count_attribute(self):
+        """PaixuejiAssistant must have consecutive_struggle_count initialized to 0."""
         import inspect
+        from paixueji_assistant import PaixuejiAssistant
         src = inspect.getsource(PaixuejiAssistant.__init__)
-        assert "consecutive_idk_count = 0" in src, (
-            "PaixuejiAssistant.__init__ must set consecutive_idk_count = 0"
+        assert "consecutive_struggle_count = 0" in src, (
+            "PaixuejiAssistant.__init__ must set consecutive_struggle_count = 0"
         )
 
     def test_get_prompts_registers_give_answer_idk_intent_prompt(self):
@@ -277,10 +273,10 @@ class TestIdkEscalationPromptAndAttributes:
 
 
 # ===========================================================================
-# Fix 4 — node_clarifying_idk branching behavior (async node tests)
+# Fix 4 — node_clarifying_idk and router behavior (unified struggle counter)
 # ===========================================================================
 
-def _build_minimal_state(assistant, messages=None):
+def _build_minimal_state(assistant, messages=None, intent_type="clarifying_idk"):
     """Build the minimum PaixuejiState dict needed for node_clarifying_idk."""
     mock_callback = AsyncMock()
     return {
@@ -302,7 +298,7 @@ def _build_minimal_state(assistant, messages=None):
         "ttft": None,
         "nodes_executed": [],
         # Other PaixuejiState fields (defaults)
-        "intent_type": "clarifying_idk",
+        "intent_type": intent_type,
         "response_type": None,
         "new_object_name": None,
         "detected_object_name": None,
@@ -324,139 +320,109 @@ def _build_minimal_state(assistant, messages=None):
     }
 
 
-def _make_mock_assistant(idk_count=0):
-    """Create a lightweight mock assistant with consecutive_idk_count."""
+def _make_mock_assistant(struggle_count=0):
+    """Create a lightweight mock assistant with consecutive_struggle_count."""
     assistant = MagicMock()
-    assistant.consecutive_idk_count = idk_count
+    assistant.consecutive_struggle_count = struggle_count
+    assistant.correct_answer_count = 0
     assistant.state = MagicMock()
     assistant.state.value = "awaiting_answer"
     return assistant
 
 
 class TestNodeClarifyingIdkBranching:
-    """Verify node_clarifying_idk branches correctly on consecutive_idk_count."""
+    """Verify node_clarifying_idk always produces clarifying_idk (router owns escalation)."""
 
     @pytest.mark.asyncio
     async def test_first_idk_uses_clarifying_idk_intent(self):
-        """On first IDK (count=0), node must use intent_type='clarifying_idk'."""
+        """node_clarifying_idk must always return response_type='clarifying_idk'."""
         import graph
 
-        assistant = _make_mock_assistant(idk_count=0)
+        assistant = _make_mock_assistant(struggle_count=1)
         state = _build_minimal_state(assistant)
 
-        async def mock_generator(*args, **kwargs):
-            yield MagicMock(text="here's a hint", type="content")
-
-        with patch("graph.generate_intent_response_stream", return_value=mock_generator()) as mock_gen, \
+        with patch("graph.generate_intent_response_stream") as mock_gen, \
              patch("graph.stream_generator_to_callback", new_callable=AsyncMock) as mock_stream:
+
+            async def fake_gen(*args, **kwargs):
+                yield MagicMock(text="here's a hint", type="content")
+
+            mock_gen.return_value = fake_gen()
             mock_stream.return_value = ("scaffold hint response", 1)
 
             result = await graph.node_clarifying_idk(state)
 
         assert result["response_type"] == "clarifying_idk", (
-            f"First IDK must set response_type='clarifying_idk', got '{result['response_type']}'"
+            f"node_clarifying_idk must always set response_type='clarifying_idk', "
+            f"got '{result['response_type']}'"
         )
 
     @pytest.mark.asyncio
     async def test_first_idk_increments_count_to_1(self):
-        """On first IDK (count=0), node must increment consecutive_idk_count to 1."""
-        import graph
-
-        assistant = _make_mock_assistant(idk_count=0)
-        state = _build_minimal_state(assistant)
-
-        async def mock_generator(*args, **kwargs):
-            yield MagicMock(text="here's a hint", type="content")
-
-        with patch("graph.generate_intent_response_stream", return_value=mock_generator()), \
-             patch("graph.stream_generator_to_callback", new_callable=AsyncMock) as mock_stream:
-            mock_stream.return_value = ("scaffold hint response", 1)
-
-            await graph.node_clarifying_idk(state)
-
-        assert assistant.consecutive_idk_count == 1, (
-            f"After first IDK, consecutive_idk_count must be 1, got {assistant.consecutive_idk_count}"
+        """struggle_count is incremented by node_analyze_input (not node_clarifying_idk)."""
+        import inspect
+        import graph as graph_module
+        source = inspect.getsource(graph_module.node_analyze_input)
+        # node_analyze_input must increment on _STRUGGLING_INTENTS
+        assert "consecutive_struggle_count += 1" in source, (
+            "node_analyze_input must increment consecutive_struggle_count for struggling intents"
         )
 
     @pytest.mark.asyncio
     async def test_second_idk_uses_give_answer_idk_intent(self):
-        """On second IDK (count=1), node must use intent_type='give_answer_idk'."""
+        """Router must return 'give_answer_idk' when struggle_count >= 2 and intent is clarifying_idk."""
         import graph
 
-        assistant = _make_mock_assistant(idk_count=1)
+        assistant = _make_mock_assistant(struggle_count=2)
+        # Build a minimal state that mimics what route_from_analyze_input sees
         state = _build_minimal_state(assistant)
 
-        async def mock_generator(*args, **kwargs):
-            yield MagicMock(text="here's the answer", type="content")
+        router_result = graph.route_from_analyze_input(state)
 
-        with patch("graph.generate_intent_response_stream", return_value=mock_generator()) as mock_gen, \
-             patch("graph.stream_generator_to_callback", new_callable=AsyncMock) as mock_stream:
-            mock_stream.return_value = ("direct answer response", 2)
-
-            result = await graph.node_clarifying_idk(state)
-
-        assert result["response_type"] == "give_answer_idk", (
-            f"Second IDK must set response_type='give_answer_idk', got '{result['response_type']}'"
+        assert router_result == "give_answer_idk", (
+            f"Router must return 'give_answer_idk' at struggle_count=2 + clarifying_idk, "
+            f"got '{router_result}'"
         )
 
     @pytest.mark.asyncio
     async def test_second_idk_resets_count_to_0(self):
-        """On second IDK (count=1), node must reset consecutive_idk_count to 0."""
-        import graph
-
-        assistant = _make_mock_assistant(idk_count=1)
-        state = _build_minimal_state(assistant)
-
-        async def mock_generator(*args, **kwargs):
-            yield MagicMock(text="here's the answer", type="content")
-
-        with patch("graph.generate_intent_response_stream", return_value=mock_generator()), \
-             patch("graph.stream_generator_to_callback", new_callable=AsyncMock) as mock_stream:
-            mock_stream.return_value = ("direct answer response", 2)
-
-            await graph.node_clarifying_idk(state)
-
-        assert assistant.consecutive_idk_count == 0, (
-            f"After second IDK, consecutive_idk_count must be reset to 0, "
-            f"got {assistant.consecutive_idk_count}"
+        """node_give_answer_idk must reset consecutive_struggle_count to 0."""
+        import inspect
+        import graph as graph_module
+        source = inspect.getsource(graph_module.node_give_answer_idk)
+        assert "consecutive_struggle_count = 0" in source, (
+            "node_give_answer_idk must reset consecutive_struggle_count = 0"
         )
 
     def test_node_analyze_input_resets_count_for_non_idk_intent(self):
-        """node_analyze_input source must reset consecutive_idk_count for non-IDK intents."""
+        """node_analyze_input source must reset consecutive_struggle_count for non-struggling intents."""
         import inspect
         import graph as graph_module
         source = inspect.getsource(graph_module.node_analyze_input)
-        # Must contain a branch that resets the count when intent is not IDK
-        assert "consecutive_idk_count = 0" in source, (
-            "node_analyze_input must reset consecutive_idk_count = 0 for non-IDK intents"
+        assert "consecutive_struggle_count = 0" in source, (
+            "node_analyze_input must reset consecutive_struggle_count = 0 for non-struggling intents"
         )
-        # Must check against CLARIFYING_IDK (uppercase — matches classify_intent return format)
-        assert "CLARIFYING_IDK" in source, (
-            "node_analyze_input must reference 'CLARIFYING_IDK' when deciding whether to reset count"
+        # The check uses the _STRUGGLING_INTENTS constant (not the literal string)
+        assert "_STRUGGLING_INTENTS" in source, (
+            "node_analyze_input must use _STRUGGLING_INTENTS to gate the counter increment/reset"
         )
 
     def test_node_analyze_input_reset_excludes_clarifying_idk(self):
-        """node_analyze_input must NOT reset count when intent IS clarifying_idk."""
+        """node_analyze_input must also exclude CLARIFYING_WRONG from the reset."""
         import inspect
         import graph as graph_module
         source = inspect.getsource(graph_module.node_analyze_input)
-        # The reset should be inside an 'if intent NOT IN (CLARIFYING_IDK, ...)' branch
-        # Verify the source has 'not in' or '!=' guard before the reset
-        # The simplest structural check: reset comes with an exclusion condition
-        assert (
-            'not in' in source and 'CLARIFYING_IDK' in source
-        ) or (
-            '!= "CLARIFYING_IDK"' in source
-        ), (
-            "node_analyze_input must protect the reset behind 'intent not in (CLARIFYING_IDK, ...)'"
+        # Both IDK and WRONG must be in _STRUGGLING_INTENTS (module-level constant)
+        assert "CLARIFYING_WRONG" in source or "_STRUGGLING_INTENTS" in source, (
+            "node_analyze_input must reference _STRUGGLING_INTENTS which includes CLARIFYING_WRONG"
         )
 
     @pytest.mark.asyncio
     async def test_first_idk_gives_scaffold_not_answer(self):
-        """First IDK response_type must be 'clarifying_idk' (scaffold), not 'give_answer_idk'."""
+        """node_clarifying_idk must always produce 'clarifying_idk', never 'give_answer_idk'."""
         import graph
 
-        assistant = _make_mock_assistant(idk_count=0)
+        assistant = _make_mock_assistant(struggle_count=1)
         state = _build_minimal_state(assistant)
 
         with patch("graph.generate_intent_response_stream") as mock_gen, \
@@ -470,10 +436,91 @@ class TestNodeClarifyingIdkBranching:
 
             result = await graph.node_clarifying_idk(state)
 
-        # Regression: first IDK must NOT give the direct answer
         assert result["response_type"] != "give_answer_idk", (
-            "First IDK must give a scaffold hint (clarifying_idk), not the direct answer (give_answer_idk)"
+            "node_clarifying_idk must give a scaffold hint, not the direct answer"
         )
         assert result["response_type"] == "clarifying_idk", (
-            "First IDK response_type must be 'clarifying_idk'"
+            "node_clarifying_idk response_type must always be 'clarifying_idk'"
+        )
+
+
+class TestUnifiedStruggleCounter:
+    """New tests for unified IDK+wrong escalation behavior."""
+
+    def test_struggling_intents_constant_includes_both(self):
+        """_STRUGGLING_INTENTS must include both CLARIFYING_IDK and CLARIFYING_WRONG."""
+        import graph as graph_module
+        assert "CLARIFYING_IDK" in graph_module._STRUGGLING_INTENTS, (
+            "_STRUGGLING_INTENTS must include CLARIFYING_IDK"
+        )
+        assert "CLARIFYING_WRONG" in graph_module._STRUGGLING_INTENTS, (
+            "_STRUGGLING_INTENTS must include CLARIFYING_WRONG"
+        )
+
+    def test_wrong_answer_increments_struggle_count(self):
+        """node_analyze_input source must increment struggle_count for CLARIFYING_WRONG."""
+        import inspect
+        import graph as graph_module
+        source = inspect.getsource(graph_module.node_analyze_input)
+        assert "_STRUGGLING_INTENTS" in source, (
+            "node_analyze_input must use _STRUGGLING_INTENTS to gate the increment"
+        )
+        assert "consecutive_struggle_count += 1" in source, (
+            "node_analyze_input must increment consecutive_struggle_count"
+        )
+
+    def test_idk_then_wrong_triggers_give_answer(self):
+        """Router returns 'give_answer_idk' when struggle_count=2 and intent is clarifying_wrong."""
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=2)
+        state = _build_minimal_state(assistant, intent_type="clarifying_wrong")
+
+        router_result = graph.route_from_analyze_input(state)
+
+        assert router_result == "give_answer_idk", (
+            f"IDK→wrong sequence (struggle_count=2, intent=clarifying_wrong) must route to "
+            f"'give_answer_idk', got '{router_result}'"
+        )
+
+    def test_wrong_then_idk_triggers_give_answer(self):
+        """Router returns 'give_answer_idk' when struggle_count=2 and intent is clarifying_idk."""
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=2)
+        state = _build_minimal_state(assistant, intent_type="clarifying_idk")
+
+        router_result = graph.route_from_analyze_input(state)
+
+        assert router_result == "give_answer_idk", (
+            f"wrong→IDK sequence (struggle_count=2, intent=clarifying_idk) must route to "
+            f"'give_answer_idk', got '{router_result}'"
+        )
+
+    def test_single_wrong_does_not_trigger_give_answer(self):
+        """Router must return 'clarifying_wrong' (not give_answer_idk) when struggle_count=1."""
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=1)
+        state = _build_minimal_state(assistant, intent_type="clarifying_wrong")
+
+        router_result = graph.route_from_analyze_input(state)
+
+        assert router_result == "clarifying_wrong", (
+            f"First wrong answer (struggle_count=1) must route to 'clarifying_wrong', "
+            f"got '{router_result}'"
+        )
+
+    def test_single_idk_does_not_trigger_give_answer(self):
+        """Router must return 'clarifying_idk' (not give_answer_idk) when struggle_count=1."""
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=1)
+        state = _build_minimal_state(assistant, intent_type="clarifying_idk")
+
+        router_result = graph.route_from_analyze_input(state)
+
+        assert router_result == "clarifying_idk", (
+            f"First IDK (struggle_count=1) must route to 'clarifying_idk', "
+            f"got '{router_result}'"
         )
