@@ -4,6 +4,7 @@ Utility functions for stream processing.
 This module contains helper functions for message preparation,
 format conversion, and other utilities used across stream modules.
 """
+import random
 from loguru import logger
 
 # Configure loguru for this module
@@ -109,6 +110,59 @@ def convert_messages_to_gemini_format(messages: list[dict]) -> tuple[str, list[d
             contents.append({"role": "model", "parts": [{"text": content}]})
 
     return system_instruction.strip(), contents
+
+
+def select_hook_type(age: int, messages: list, hook_types: dict) -> tuple[str, str]:
+    """
+    Select a hook type for the introduction question using age-weighted random sampling.
+
+    Args:
+        age: Child's age (3-8)
+        messages: Current conversation history (used to check history length)
+        hook_types: Dict loaded from hook_types.json
+
+    Returns:
+        (hook_type_name, hook_type_section_string) — the selected hook name and
+        a formatted block ready to inject into the INTRODUCTION_PROMPT.
+    """
+    age_str = str(min(max(age or 5, 3), 8))  # clamp to supported range; default 5 if None
+
+    pool = []
+    weights = []
+
+    for name, hook in hook_types.items():
+        # Exclude hooks that need conversation context when not enough history exists
+        if hook.get("requires_history", False) and len(messages) < 4:
+            continue
+
+        base_weight = hook.get("age_weights", {}).get(age_str, 1)
+
+        # 意图好奇 is best for child-created objects; penalise in general sessions
+        if name == "意图好奇":
+            base_weight *= 0.5
+
+        pool.append(name)
+        weights.append(base_weight)
+
+    if not pool:
+        # Fallback: pick any hook that doesn't require history
+        for name, hook in hook_types.items():
+            if not hook.get("requires_history", False):
+                pool.append(name)
+                weights.append(1.0)
+
+    selected_name = random.choices(pool, weights=weights, k=1)[0]
+    hook = hook_types[selected_name]
+
+    examples_text = "\n".join(f'    "{ex}"' for ex in hook.get("examples", []))
+    section = (
+        f"Hook style: {hook['name']}\n"
+        f"  Concept: {hook['concept']}\n"
+        f"  Examples:\n{examples_text}"
+    )
+
+    logger.debug(f"select_hook_type | age={age}, selected={selected_name}, pool_size={len(pool)}")
+    return selected_name, section
 
 
 def extract_previous_response(messages: list[dict]) -> str:

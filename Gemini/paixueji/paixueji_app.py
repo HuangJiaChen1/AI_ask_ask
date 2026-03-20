@@ -76,6 +76,25 @@ def init_global_client():
 
 GLOBAL_GEMINI_CLIENT = init_global_client()
 
+# Load hook types config once at startup (runtime-static)
+def _load_hook_types() -> dict:
+    """Load hook_types.json from the project root."""
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        path = os.path.join(base_dir, "hook_types.json")
+        if not os.path.exists(path):
+            print(f"[WARNING] hook_types.json not found: {path}")
+            return {}
+        with open(path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        print(f"[INFO] Loaded {len(data)} hook types from hook_types.json")
+        return data
+    except Exception as e:
+        print(f"[ERROR] Failed to load hook_types.json: {e}")
+        return {}
+
+HOOK_TYPES = _load_hook_types()
+
 # Single persistent event loop running in a dedicated daemon thread.
 # All async work is submitted via asyncio.run_coroutine_threadsafe() so that
 # the httpx/anyio transport (used by client.aio) always sees the same loop
@@ -376,6 +395,10 @@ def start_conversation():
                         "fun_fact_hook": "",
                         "fun_fact_question": "",
                         "real_facts": "",
+
+                        # Hook type selection
+                        "hook_types": HOOK_TYPES,
+                        "selected_hook_type": None,
 
                         # Node execution tracing
                         "nodes_executed": [],
@@ -755,6 +778,10 @@ def continue_conversation():
                         "fun_fact_hook": "",
                         "fun_fact_question": "",
                         "real_facts": "",
+
+                        # Hook type (not used in continue turns, required by state schema)
+                        "hook_types": HOOK_TYPES,
+                        "selected_hook_type": None,
 
                         # Node execution tracing
                         "nodes_executed": [],

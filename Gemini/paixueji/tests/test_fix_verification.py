@@ -144,6 +144,26 @@ class TestCorrectAnswerPromptBeat3:
             "FOLLOWUP_QUESTION_PROMPT must promote fun/silly/imaginative questions"
         )
 
+    def test_correct_answer_prompt_handles_negative_preference_detours(self):
+        """Negative preference replies must be acknowledged briefly without making the alternate item the hook."""
+        lower = self.prompt.lower()
+        assert "negative preference" in lower or "alternate favorite" in lower, (
+            "CORRECT_ANSWER_INTENT_PROMPT must explicitly address negative preference replies"
+        )
+        assert "must stay anchored to {object_name}".lower() in lower or "stay anchored to {object_name}" in lower, (
+            "CORRECT_ANSWER_INTENT_PROMPT must require staying anchored to the current object"
+        )
+
+    def test_correct_answer_prompt_forbids_alternate_object_topic_switch(self):
+        """Naming another liked object must not silently become a topic switch inside correct_answer."""
+        lower = self.prompt.lower()
+        assert "must not become the teaching hook" in lower or "must not become the hook" in lower, (
+            "CORRECT_ANSWER_INTENT_PROMPT must forbid making the alternate item the teaching hook"
+        )
+        assert "unless topic-switch logic explicitly changed the object" in lower, (
+            "CORRECT_ANSWER_INTENT_PROMPT must preserve explicit topic switching as the only exception"
+        )
+
 
 # ===========================================================================
 # Fix 3 — FOLLOWUP_QUESTION_PROMPT rule 6
@@ -204,6 +224,26 @@ class TestFollowupQuestionPromptRule6:
         """FOLLOWUP_QUESTION_PROMPT must list SENSORY INVITE as a fallback tier."""
         assert "SENSORY" in self.prompt, (
             "FOLLOWUP_QUESTION_PROMPT must include a SENSORY INVITE fallback tier"
+        )
+
+    def test_followup_prompt_preserves_qualified_facts(self):
+        """Qualified facts must not be flattened into contradictions."""
+        lower = self.prompt.lower()
+        assert "looks like x but is y" in lower or "qualified fact" in lower, (
+            "FOLLOWUP_QUESTION_PROMPT must explicitly cover qualified or contrastive facts"
+        )
+        assert "must not restate the surface comparison as literal fact" in lower, (
+            "FOLLOWUP_QUESTION_PROMPT must forbid flattening a qualified comparison into a false statement"
+        )
+
+    def test_followup_prompt_contains_banana_herb_tree_example(self):
+        """The prompt should document the banana herb/tree regression explicitly."""
+        lower = self.prompt.lower()
+        assert "banana" in lower and "herb" in lower and "tree" in lower, (
+            "FOLLOWUP_QUESTION_PROMPT must include the banana herb/tree example"
+        )
+        assert "must not say bananas grow on a tree" in lower, (
+            "FOLLOWUP_QUESTION_PROMPT must explicitly ban the reviewed banana contradiction"
         )
 
 

@@ -113,6 +113,20 @@ STEP 1 — FIND ONE VIVID DETAIL.
 Read the last assistant message. Pick one concrete image, action, or fact from it.
 That detail is your springboard.
 
+QUALIFIED FACT CHECK:
+If the last assistant message contains a qualified fact or contrastive fact
+such as "looks like X but is Y", "not X", "technically", or "actually",
+preserve that qualification in your thinking.
+You may grow from the vivid part of the idea, but you must not restate the surface comparison as literal fact.
+
+Banana example:
+Last response: bananas grow on giant plants that look like trees, but they
+are technically giant herbs.
+GOOD follow-up hook: the giant plant, the big bunches, the curvy bananas.
+BAD follow-up: "If you were a banana growing on a tree..."
+You must not say bananas grow on a tree after the last response said the
+banana plant is an herb.
+
 STEP 2 — CHOOSE YOUR QUESTION STYLE:
 
   BEST — GROW from the last response:
@@ -190,12 +204,11 @@ BEAT 3 — FEATURE DESCRIPTION (OPTIONAL)
   Examples: "It looks so soft and cuddly, with its little tongue sticking out!"
 
 BEAT 4 — ENGAGEMENT HOOK
-  End with exactly ONE question. The question MUST be about the child's emotional
-  experience, sharing motivation, or personal connection to the object.
-  ✓ ALLOWED — questions about feelings, ownership, preference, or life experience:
-    "Did someone special give it to you?" / "Is this your favorite toy?" / "Do you love dinosaurs?"
-  ✗ FORBIDDEN — any knowledge-testing question of any kind:
-    "Do you know what color it is?" / "Can you tell me what it's called?" / "How many legs does it have?"
+  End with exactly ONE question using this specific hook style:
+  {hook_type_section}
+
+  ABSOLUTE RULE: Never ask a knowledge-testing question of any kind.
+  ✗ FORBIDDEN: "Do you know what color it is?" / "How many legs does it have?"
 
 EXAMPLE SCRIPTS:
 Scene: Indoor | Object: Yellow flower (narcissus) | Age: 3
@@ -754,6 +767,14 @@ STEP 0 — FIND THE HOOK:
     "It's red!" (about an apple) → hook = "the color red"
       WOW GOOD: "That red colour actually signals to birds that the fruit is ripe!"
       WOW BAD:  "Apples float in water because 25% is air." (unrelated to redness)
+
+  NEGATIVE PREFERENCE SPECIAL CASE:
+    If the child gives a negative preference reply such as "No, I like potato chips,"
+    you may briefly acknowledge the alternate favorite in BEAT 1.
+    But the response must stay anchored to {object_name}.
+    The alternate item must not become the hook or the teaching hook for BEAT 2.
+    Unless topic-switch logic explicitly changed the object, the wow fact must remain
+    about {object_name}, not the alternate snack, toy, or object.
 
 BEAT 1 — CONFIRM (paraphrase — do NOT echo their exact words verbatim):
   Child: "I feel sweet" → "Yes! Apples taste sweet — you got it!"

@@ -1,0 +1,91 @@
+{
+  "意图好奇": {
+    "name": "意图好奇",
+    "concept": "Ask about the child's creative intent or purpose behind the object — why they chose it, made it, or what they imagine it doing.",
+    "examples": [
+      "Did you make this yourself? What were you trying to build?",
+      "What do you want this to do when you grow up?",
+      "Is this from a story you made up?"
+    ],
+    "age_weights": {"3": 1, "4": 1, "5": 1, "6": 1, "7": 2, "8": 2},
+    "requires_history": false,
+    "note": "Best when the object is child-created; always apply ×0.5 weight penalty in selector"
+  },
+  "想象导向": {
+    "name": "想象导向",
+    "concept": "Pull the real object into a fantasy or magical world — invite the child to imagine a scenario where the object transforms or goes on an adventure.",
+    "examples": [
+      "If this toy dog could fly, where would it go first?",
+      "What if these flowers were magic — what power would they have?",
+      "Imagine this T-Rex is alive — what would it eat for breakfast?"
+    ],
+    "age_weights": {"3": 1, "4": 1, "5": 2, "6": 2, "7": 1, "8": 1},
+    "requires_history": false
+  },
+  "情绪投射": {
+    "name": "情绪投射",
+    "concept": "Project emotions onto the object — treat it as if it has feelings and ask the child how the object feels right now.",
+    "examples": [
+      "Do you think your toy dog is happy today?",
+      "If this flower could talk, would it say it feels lonely or loved?",
+      "Does your dinosaur look scared or excited to you?"
+    ],
+    "age_weights": {"3": 2, "4": 2, "5": 1, "6": 1, "7": 1, "8": 1},
+    "requires_history": false
+  },
+  "角色代入": {
+    "name": "角色代入",
+    "concept": "Put the child into an interactive role with the object — make them a character in a mini-story alongside it.",
+    "examples": [
+      "If you were a tiny person living inside this flower, what would your house look like?",
+      "Pretend you're the T-Rex's best friend — where would you go together?",
+      "If this toy dog was YOUR pet for a day, what would you feed it?"
+    ],
+    "age_weights": {"3": 2, "4": 2, "5": 1, "6": 1, "7": 1, "8": 1},
+    "requires_history": false
+  },
+  "选择偏好": {
+    "name": "选择偏好",
+    "concept": "Invite the child to express a personal like, dislike, or preference about the object — no right or wrong answer.",
+    "examples": [
+      "Is this your favorite toy, or do you have an even more special one?",
+      "Do you love dinosaurs, or do you like other animals more?",
+      "Which color flower do you like best — this one or a red one?"
+    ],
+    "age_weights": {"3": 2, "4": 2, "5": 1, "6": 1, "7": 1, "8": 1},
+    "requires_history": false
+  },
+  "细节发现": {
+    "name": "细节发现",
+    "concept": "Point out ONE specific sensory or visual detail of the object and invite the child to notice or react to it — no teaching, just shared discovery.",
+    "examples": [
+      "Look at how tiny its paws are — have you ever noticed that before?",
+      "The petals feel so soft, don't they? Did you touch it?",
+      "Those spiky plates on its back look so cool — what do you think they're for?"
+    ],
+    "age_weights": {"3": 1, "4": 1, "5": 2, "6": 2, "7": 1, "8": 1},
+    "requires_history": false
+  },
+  "经验、生活链接": {
+    "name": "经验、生活链接",
+    "concept": "Connect the object to something from the child's own life or experiences mentioned earlier in the conversation.",
+    "examples": [
+      "You mentioned you have a dog at home — is this toy anything like your real dog?",
+      "Last time you talked about loving the park — did you find this there?",
+      "This reminds me of what you said before — do you collect these?"
+    ],
+    "age_weights": {"3": 1, "4": 1, "5": 1, "6": 1, "7": 2, "8": 2},
+    "requires_history": true
+  },
+  "创意改造": {
+    "name": "创意改造",
+    "concept": "Encourage the child to imagine redesigning or upgrading the object — what would they change if they could?",
+    "examples": [
+      "If you could add one superpower to this toy dog, what would it be?",
+      "If you were the designer, would you make this flower a different color?",
+      "What would you add to this T-Rex to make it even more amazing?"
+    ],
+    "age_weights": {"3": 1, "4": 1, "5": 2, "6": 2, "7": 1, "8": 1},
+    "requires_history": false
+  }
+}

@@ -19,7 +19,8 @@ from stream import (
     generate_topic_switch_response_stream,
     extract_previous_response,
     prepare_messages_for_streaming,
-    generate_guide_hint
+    generate_guide_hint,
+    select_hook_type
 )
 from stream.theme_guide import ThemeNavigator, ThemeDriver
 from schema import StreamChunk
@@ -89,6 +90,10 @@ class PaixuejiState(TypedDict):
     fun_fact_hook: Optional[str]
     fun_fact_question: Optional[str]
     real_facts: Optional[str]
+
+    # --- Hook Type Selection ---
+    hook_types: dict                       # Loaded from hook_types.json at startup
+    selected_hook_type: Optional[str]      # e.g. "情绪投射", "创意改造"
 
     # --- Output Accumulation ---
     full_response_text: str
@@ -390,6 +395,17 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
 
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
 
+    # Select a hook type for this session using age-weighted sampling
+    hook_types = state.get("hook_types") or {}
+    if hook_types:
+        hook_type_name, hook_type_section = select_hook_type(
+            state["age"], state["messages"], hook_types
+        )
+        logger.info(f"[{state['session_id']}] Hook type selected: {hook_type_name}")
+    else:
+        hook_type_name = None
+        hook_type_section = ""
+
     generator = ask_introduction_question_stream(
         messages=messages,
         object_name=state["object_name"],
@@ -400,7 +416,8 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
         fun_fact=state.get("fun_fact", ""),
         fun_fact_hook=state.get("fun_fact_hook", ""),
         fun_fact_question=state.get("fun_fact_question", ""),
-        real_facts=state.get("real_facts", "")
+        real_facts=state.get("real_facts", ""),
+        hook_type_section=hook_type_section
     )
 
     full_text, new_seq = await stream_generator_to_callback(
@@ -413,6 +430,7 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
         "sequence_number": new_seq,
         "response_type": "introduction",
         "ttft": state.get("ttft"),
+        "selected_hook_type": hook_type_name,
     }
 
 
@@ -1425,7 +1443,10 @@ async def node_finalize(state: PaixuejiState) -> dict:
         is_guide_success=state.get("is_guide_success", False),
 
         # Node execution trace (for critique reports)
-        nodes_executed=state.get("nodes_executed", [])
+        nodes_executed=state.get("nodes_executed", []),
+
+        # Hook type (set on introduction turns only)
+        selected_hook_type=state.get("selected_hook_type"),
     )
     await state["stream_callback"](final_chunk)
 

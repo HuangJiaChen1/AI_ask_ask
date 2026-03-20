@@ -34,7 +34,11 @@
       "Bash(git pull:*)",
       "Bash(git merge:*)",
       "Bash(git:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(pip install:*)",
+      "Skill(commit-commands:commit-push-pr)",
+      "Bash(WPATH=\"/Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/.worktrees/fix-unified-struggle-counter/Gemini/paixueji\")",
+      "Read(//Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/.worktrees/fix-unified-struggle-counter/**)"
     ]
   },
   "outputStyle": "Explanatory"

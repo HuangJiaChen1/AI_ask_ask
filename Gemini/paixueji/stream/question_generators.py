@@ -37,7 +37,8 @@ async def ask_introduction_question_stream(
     fun_fact: str = "",
     fun_fact_hook: str = "",
     fun_fact_question: str = "",
-    real_facts: str = ""
+    real_facts: str = "",
+    hook_type_section: str = ""
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str, dict], None]:
     """
     Stream first question about the object.
@@ -54,6 +55,7 @@ async def ask_introduction_question_stream(
         fun_fact_hook: Excited greeting hook (empty string if unavailable)
         fun_fact_question: Follow-up question from fun fact (empty string if unavailable)
         real_facts: Grounded real facts about the object (empty string if unavailable)
+        hook_type_section: Pre-formatted hook type block injected into Beat 4 of the prompt
 
     Yields:
         Tuple of (text_chunk, token_usage_or_None, full_response_so_far, decision_info)
@@ -79,7 +81,8 @@ async def ask_introduction_question_stream(
         age_prompt=age_prompt,
         age=age,
         grounded_facts_section=grounded_facts_section,
-        fun_fact_instruction=fun_fact_instruction
+        fun_fact_instruction=fun_fact_instruction,
+        hook_type_section=hook_type_section
     )
 
     # Prepare messages with introduction prompt

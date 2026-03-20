@@ -121,3 +121,6 @@ class StreamChunk(BaseModel):
 
     # Chat phase completion signal (one-shot, sent on 4th correct answer turn)
     chat_phase_complete: Optional[bool] = None
+
+    # Hook type selected for this session (set on introduction, null otherwise)
+    selected_hook_type: Optional[str] = None

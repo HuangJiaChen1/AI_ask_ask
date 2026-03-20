@@ -31,6 +31,7 @@ let currentThemeName = null;  // IB PYP theme name
 let currentKeyConcept = null;  // Key concept for theme
 let currentIntentType = null;       // Last classified intent (9-node architecture)
 let currentResponseType = null;     // Last response node that actually ran
+let currentHookType = null;         // Hook type selected for this session
 
 const INTENT_METADATA = {
     ACTION: {
@@ -206,6 +207,17 @@ const RESPONSE_METADATA = {
         description: 'The assistant is celebrating the new object before moving the conversation there.',
         descriptionZh: '助手正在先庆祝新的物体，再把对话切换过去。',
     },
+};
+
+const HOOK_TYPE_METADATA = {
+    '意图好奇':      { color: '#7c3aed', description: 'Ask about the child\'s creative intent',        descriptionZh: '询问孩子的创作意图' },
+    '想象导向':      { color: '#0891b2', description: 'Pull the object into a fantasy world',          descriptionZh: '把物品带入奇幻世界' },
+    '情绪投射':      { color: '#be185d', description: 'Project emotions onto the object (animism)',    descriptionZh: '把情感投射到物品上' },
+    '角色代入':      { color: '#b45309', description: 'Put the child in an interactive role',          descriptionZh: '让孩子扮演互动角色' },
+    '选择偏好':      { color: '#059669', description: 'Express personal likes or dislikes',            descriptionZh: '表达个人喜好' },
+    '细节发现':      { color: '#2563eb', description: 'Notice a specific sensory detail',              descriptionZh: '引导发现一个细节' },
+    '经验、生活链接': { color: '#d97706', description: 'Connect to the child\'s own experiences',       descriptionZh: '与孩子自身经历联结' },
+    '创意改造':      { color: '#dc2626', description: 'Imagine redesigning or upgrading the object',   descriptionZh: '鼓励孩子改造或升级物品' },
 };
 
 function setBilingualDescription(element, english, chinese) {
@@ -783,6 +795,12 @@ function handleStreamChunk(chunk) {
         updateDebugPanel();
     }
 
+    // Update hook type (set on introduction, persists for session)
+    if (chunk.selected_hook_type) {
+        currentHookType = chunk.selected_hook_type;
+        updateDebugPanel();
+    }
+
     // Chat phase complete: show modal and disable input after close
     if (chunk.chat_phase_complete) {
         showChatPhaseCompleteModal();
@@ -911,6 +929,22 @@ function updateDebugPanel() {
                 );
             } else {
                 responseDescriptionEl.textContent = '-';
+            }
+        }
+    }
+
+    // Update hook type
+    const hookTypeEl = document.getElementById('debugHookType');
+    if (hookTypeEl) {
+        const hookMeta = currentHookType ? HOOK_TYPE_METADATA[currentHookType] : null;
+        hookTypeEl.textContent = currentHookType || '-';
+        hookTypeEl.style.color = hookMeta ? hookMeta.color : '#64748b';
+        const hookDescEl = document.getElementById('debugHookTypeDescription');
+        if (hookDescEl) {
+            if (hookMeta) {
+                setBilingualDescription(hookDescEl, hookMeta.description, hookMeta.descriptionZh);
+            } else {
+                hookDescEl.textContent = '-';
             }
         }
     }

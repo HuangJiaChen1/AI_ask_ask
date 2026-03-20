@@ -22,6 +22,7 @@ from .utils import (
     prepare_messages_for_streaming,
     convert_messages_to_gemini_format,
     extract_previous_response,
+    select_hook_type,
     SLOW_LLM_CALL_THRESHOLD
 )
 
@@ -56,6 +57,7 @@ __all__ = [
     'prepare_messages_for_streaming',
     'convert_messages_to_gemini_format',
     'extract_previous_response',
+    'select_hook_type',
     'SLOW_LLM_CALL_THRESHOLD',
 
     # Response generators
