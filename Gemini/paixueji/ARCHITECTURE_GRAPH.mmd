@@ -67,9 +67,9 @@ flowchart TD
     gi --> fin
 
     %% --- INTENT ROUTING ---------------------------------------------------
-    intent_router -->|intent=clarifying_idk| idk_gate
-    idk_gate -->|"consecutive_idk_count == 0 (1st IDK after reset)"| idk
-    idk_gate -->|"consecutive_idk_count > 0 (2nd consecutive IDK)"| give_answer
+    intent_router -->|"intent=clarifying_idk or clarifying_wrong"| struggle_gate
+    struggle_gate -->|"consecutive_struggle_count < 2 (1st struggle)"| idk
+    struggle_gate -->|"consecutive_struggle_count >= 2 (2nd+ struggle)"| give_answer
 
     intent_router -->|intent=correct_answer| correct_gate
     correct_gate -->|"correct_answer_count + 1 >= GUIDE_MODE_THRESHOLD"| classify
@@ -96,8 +96,8 @@ flowchart TD
     guide_route -->|otherwise| gd
 
     %% --- HANDLERS -> FINALIZE ---------------------------------------------
-    idk -->|"response=clarifying_idk; consecutive_idk_count += 1"| fin
-    give_answer -->|"response=give_answer_idk; consecutive_idk_count = 0 (cycle reset)"| fin
+    idk -->|"response=clarifying_idk; (struggle_count tracked upstream)"| fin
+    give_answer -->|"response=give_answer_idk; consecutive_struggle_count = 0 (cycle reset)"| fin
     curiosity & wrong & constraint & correct & informative & play & emotional & avoidance & boundary & action & social & social_ack --> fin
 
     %% --- GUIDE OUTCOMES -> FINALIZE ---------------------------------------
