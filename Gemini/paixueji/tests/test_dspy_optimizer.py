@@ -289,3 +289,10 @@ def test_resolve_prompt_name_raises_on_mismatch():
     t2 = _make_culprit_trace("t2", "informative", "prompt_b")
     with pytest.raises(ValueError):
         resolve_prompt_name([t1, t2])
+
+
+# ── prompt_optimizer integration ──────────────────────────────────────────
+
+def test_run_dspy_optimization_importable():
+    from prompt_optimizer import run_dspy_optimization
+    assert callable(run_dspy_optimization)
