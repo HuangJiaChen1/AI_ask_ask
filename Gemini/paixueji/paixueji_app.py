@@ -1433,43 +1433,81 @@ def manual_critique():
 # Prompt Optimization Endpoints
 # ============================================================================
 
+@app.route('/api/optimize-prompt/candidates', methods=['GET'])
+def optimize_prompt_candidates():
+    """
+    Return unoptimized traces grouped by culprit for the UI.
+
+    Response: {"culprit_name": [{trace_id, object_name, timestamp, model_response_problem}, ...]}
+    """
+    from optimizer.trigger import group_traces_by_culprit
+    try:
+        groups = group_traces_by_culprit()
+        return jsonify({
+            culprit: [
+                {
+                    "trace_id": t.trace_id,
+                    "object_name": t.object_name,
+                    "timestamp": t.timestamp,
+                    "model_response_problem": t.critique.model_response_problem,
+                }
+                for t in traces
+            ]
+            for culprit, traces in groups.items()
+        })
+    except Exception as e:
+        logger.error(f"[OPTIMIZE/candidates] {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.route('/api/optimize-prompt', methods=['POST'])
 def optimize_prompt():
     """
     Run prompt optimization for a given culprit.
 
-    Request body:
-        {
-            "culprit_name": "generate_fun_fact",
-            "prompt_name": null,   # optional explicit override
-            "trace_id": null       # optional; if provided, only that trace is used
-        }
+    Request body variants:
+        {culprit_name}                            <- all unoptimized traces (DSPy loop)
+        {culprit_name, trace_ids: ["id1","id2"]}  <- human-selected batch (DSPy loop)
+        {culprit_name, trace_id: "id1"}           <- single trace (legacy OPRO path)
 
-    When trace_id is provided the optimizer runs in single-trace mode, which
-    prevents stale historical traces from diluting or reverting recent fixes.
-    Omit trace_id (or pass null) to use all historical traces for the culprit.
-
-    Response: full OptimizationResult JSON (optimization_id, failure_pattern,
-              rationale, original_prompt, optimized_prompt, preview_response, ...)
+    Response: full OptimizationResult JSON
     """
-    from prompt_optimizer import run_optimization
+    from prompt_optimizer import run_optimization, run_dspy_optimization
+    from optimizer.trigger import get_unoptimized_traces, get_traces_by_ids
 
     data = request.get_json() or {}
     culprit_name = data.get("culprit_name")
-    prompt_name = data.get("prompt_name")  # optional
-    trace_id = data.get("trace_id")        # optional; enables single-trace mode
+    prompt_name  = data.get("prompt_name")   # optional explicit override
+    trace_id     = data.get("trace_id")      # legacy single-trace path
+    trace_ids    = data.get("trace_ids")     # DSPy batch path
 
     if not culprit_name:
         return jsonify({"success": False, "error": "culprit_name is required"}), 400
 
     try:
-        result = run_optimization(
-            client=GLOBAL_GEMINI_CLIENT,
-            config=_load_config(),
-            culprit_name=culprit_name,
-            prompt_name=prompt_name or None,
-            trace_id=trace_id or None,
-        )
+        if trace_id and not trace_ids:
+            # Legacy single-trace OPRO path
+            result = run_optimization(
+                client=GLOBAL_GEMINI_CLIENT,
+                config=_load_config(),
+                culprit_name=culprit_name,
+                prompt_name=prompt_name or None,
+                trace_id=trace_id,
+            )
+        else:
+            # DSPy Hybrid B+C path
+            cfg = _load_config()
+            traces = get_traces_by_ids(trace_ids) if trace_ids else get_unoptimized_traces(culprit_name)
+            if not traces:
+                return jsonify({"success": False, "error": f"No unoptimized traces for '{culprit_name}'"}), 400
+            result = run_dspy_optimization(
+                culprit_name=culprit_name,
+                traces=traces,
+                config=cfg,
+                client=GLOBAL_GEMINI_CLIENT,
+            )
+            if result is None:
+                return jsonify({"success": False, "error": "Score too low — nothing saved"}), 422
         return jsonify(result.model_dump())
     except ValueError as e:
         return jsonify({"success": False, "error": str(e)}), 400

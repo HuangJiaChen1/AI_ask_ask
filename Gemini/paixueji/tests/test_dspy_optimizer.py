@@ -296,3 +296,11 @@ def test_resolve_prompt_name_raises_on_mismatch():
 def test_run_dspy_optimization_importable():
     from prompt_optimizer import run_dspy_optimization
     assert callable(run_dspy_optimization)
+
+
+# ── app endpoints ─────────────────────────────────────────────────────────
+
+def test_candidates_endpoint_exists(client):
+    resp = client.get("/api/optimize-prompt/candidates")
+    assert resp.status_code == 200
+    assert isinstance(resp.get_json(), dict)
