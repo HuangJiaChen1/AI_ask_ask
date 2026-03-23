@@ -222,3 +222,54 @@ def test_inject_examples_replaces_placeholder():
     result = inject_examples(prompt, [ex])
     assert "{few_shot_examples}" not in result
     assert 'Child said "red"' in result
+
+
+# ── trigger ───────────────────────────────────────────────────────────────
+
+def _write_trace(traces_dir, trace):
+    (traces_dir / f"{trace.trace_id}.json").write_text(
+        trace.model_dump_json(), encoding="utf-8"
+    )
+
+
+def _make_culprit_trace(trace_id, culprit_name, prompt_name):
+    from trace_schema import (TraceObject, HumanCritique, ExchangeContext,
+                               CulpritIdentification, CulpritType, ConfidenceLevel)
+    return TraceObject(
+        trace_id=trace_id, session_id="s1", timestamp="2026-01-01T00:00:00",
+        object_name="apple", exchange_index=0,
+        culprits=[CulpritIdentification(
+            culprit_type=CulpritType.NODE, culprit_name=culprit_name,
+            confidence_level=ConfidenceLevel.CONFIDENT, reasoning="r",
+            prompt_template_name=prompt_name,
+        )],
+        critique=HumanCritique(exchange_index=0, model_response_expected="good", model_response_problem="bad"),
+        exchange=ExchangeContext(child_response="red", model_response="meh"),
+    )
+
+
+def test_group_traces_by_culprit(tmp_path, monkeypatch):
+    import optimizer.trigger as trigger
+    traces_dir = tmp_path / "traces"; traces_dir.mkdir()
+    trace = _make_culprit_trace("t1", "informative", "informative_intent_prompt")
+    _write_trace(traces_dir, trace)
+    monkeypatch.setattr(trigger, "TRACES_DIR", traces_dir)
+    monkeypatch.setattr(trigger, "OPTIMIZATIONS_DIR", tmp_path / "optimizations")
+    groups = trigger.group_traces_by_culprit()
+    assert "informative" in groups and len(groups["informative"]) == 1
+
+
+def test_covered_trace_ids_empty_no_optimizations(tmp_path, monkeypatch):
+    import optimizer.trigger as trigger
+    monkeypatch.setattr(trigger, "OPTIMIZATIONS_DIR", tmp_path / "optimizations")
+    assert trigger._get_covered_trace_ids() == set()
+
+
+def test_get_traces_by_ids(tmp_path, monkeypatch):
+    import optimizer.trigger as trigger
+    traces_dir = tmp_path / "traces"; traces_dir.mkdir()
+    trace = _make_culprit_trace("t99", "informative", "informative_intent_prompt")
+    _write_trace(traces_dir, trace)
+    monkeypatch.setattr(trigger, "TRACES_DIR", traces_dir)
+    result = trigger.get_traces_by_ids(["t99"])
+    assert len(result) == 1 and result[0].trace_id == "t99"
