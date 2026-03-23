@@ -304,11 +304,13 @@ class TestIdkEscalationPromptAndAttributes:
         )
 
     def test_give_answer_idk_prompt_exported_value_matches_module_constant(self):
-        """get_prompts()['give_answer_idk_intent_prompt'] must equal GIVE_ANSWER_IDK_INTENT_PROMPT."""
+        """get_prompts()['give_answer_idk_intent_prompt'] must match GIVE_ANSWER_IDK_INTENT_PROMPT after stripping clause markers."""
         import paixueji_prompts
         prompts = paixueji_prompts.get_prompts()
-        assert prompts["give_answer_idk_intent_prompt"] == paixueji_prompts.GIVE_ANSWER_IDK_INTENT_PROMPT, (
-            "get_prompts() must export the same object as the GIVE_ANSWER_IDK_INTENT_PROMPT constant"
+        # get_prompts() strips ## [CLAUSE:] markers before returning; compare against stripped constant
+        expected = paixueji_prompts._strip_clause_markers(paixueji_prompts.GIVE_ANSWER_IDK_INTENT_PROMPT)
+        assert prompts["give_answer_idk_intent_prompt"] == expected, (
+            "get_prompts() must export the stripped version of GIVE_ANSWER_IDK_INTENT_PROMPT"
         )
 
 
