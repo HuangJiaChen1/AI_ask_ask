@@ -36,12 +36,6 @@ sessions = {}
 
 ALLOWED_MODELS = {"gemini-3.1-flash-lite-preview", "gemini-2.0-flash-lite"}
 
-# Background critique task tracking
-# {task_id: {"status": "pending"|"running"|"completed"|"failed",
-#            "session_id": str, "report_path": str|None,
-#            "error": str|None, "started_at": float}}
-critique_tasks = {}
-
 # Initialize global Gemini client to enable connection reuse
 def init_global_client():
     """Initialize a global Gemini client instance to avoid cold starts."""
@@ -1114,344 +1108,6 @@ def force_switch():
 # ============================================================================
 
 
-# ============================================================================
-# Background Critique Worker
-# ============================================================================
-
-def run_critique_background(task_id: str, session_id: str, transcript: list,
-                            all_exchanges: list, assistant, object_name: str,
-                            key_concept: str, age: int, ibpyp_theme_name: str = None):
-    """
-    Background worker for AI critique generation.
-
-    Calls AICritiqueFormFiller once per exchange (in parallel) to fill in the
-    same 5-field form a human reviewer would complete. Only flawed exchanges
-    produce TraceObjects and Optimize buttons — identical to the manual path.
-
-    Args:
-        task_id: Unique identifier for this critique task
-        session_id: Session ID being critiqued
-        transcript: Conversation transcript [{role, content, mode?, nodes_executed?}, ...]
-        all_exchanges: Pre-extracted exchange triplets (list of dicts)
-        assistant: PaixuejiAssistant instance (held alive for trace assembly)
-        object_name: Object being discussed
-        key_concept: Key learning concept
-        age: Child's age
-        ibpyp_theme_name: IB PYP theme name (optional)
-    """
-    from datetime import datetime
-    from pathlib import Path
-    from tests.quality.ai_critique_form import AICritiqueFormFiller
-    from trace_assembler import assemble_trace_object, save_trace_object
-    from trace_schema import effective_culprits as _effective_culprits
-
-    try:
-        critique_tasks[task_id]["status"] = "running"
-        logger.info(f"[CRITIQUE] Task {task_id[:8]}... started for session {session_id[:8]}... "
-                    f"({len(all_exchanges)} exchanges)")
-
-        # Run all exchange form-fills in parallel via asyncio.gather
-        filler = AICritiqueFormFiller(GLOBAL_GEMINI_CLIENT, _load_config())
-
-        async def _gather_all():
-            semaphore = asyncio.Semaphore(2)  # max 2 concurrent Vertex AI calls
-
-            async def guarded(coro):
-                async with semaphore:
-                    return await coro
-
-            coros = [
-                filler.fill_exchange(
-                    exchange_index=idx + 1,
-                    child_response=ex["child_response"],
-                    model_response=ex["model_response"],
-                    object_name=object_name,
-                    age=age,
-                    mode=ex.get("mode", "chat"),
-                    key_concept=key_concept if ex.get("mode") == "guide" else None,
-                    ibpyp_theme_name=ibpyp_theme_name,
-                )
-                for idx, ex in enumerate(all_exchanges)
-            ]
-            return await asyncio.gather(*[guarded(c) for c in coros])
-
-        future = asyncio.run_coroutine_threadsafe(_gather_all(), _ASYNC_LOOP)
-        results = future.result()  # blocks this background thread until done
-
-        # Keep only flawed exchanges (non-None HumanCritique objects)
-        flawed_critiques = [(hc, all_exchanges[hc.exchange_index - 1])
-                            for hc in results if hc is not None]
-
-        logger.info(f"[CRITIQUE] Task {task_id[:8]}... "
-                    f"{len(flawed_critiques)}/{len(all_exchanges)} exchanges flagged as flawed")
-
-        # Build exchange_critiques list (same format as manual_critique)
-        exchange_critiques = [
-            {
-                "exchange_index": hc.exchange_index,
-                "model_response_problem": hc.model_response_problem,
-                "model_response_expected": hc.model_response_expected,
-                "conclusion": hc.conclusion,
-            }
-            for hc, _ in flawed_critiques
-        ]
-
-        # Build report using the same function as manual critique
-        report_md = build_human_feedback_report(
-            object_name=object_name,
-            age=age,
-            session_id=session_id,
-            transcript=transcript,
-            all_exchanges=all_exchanges,
-            exchange_critiques=exchange_critiques,
-            global_conclusion="",
-            key_concept=key_concept,
-        )
-
-        # Patch feedback type label
-        report_md = report_md.replace(
-            "**Feedback Type:** Manual (Human)",
-            "**Feedback Type:** AI (Automated)",
-        )
-
-        # Save to reports/AIF/YYYY-MM-DD/
-        now = datetime.now()
-        date_dir = now.strftime("%Y-%m-%d")
-        reports_dir = Path(__file__).parent / "reports" / "AIF" / date_dir
-        reports_dir.mkdir(parents=True, exist_ok=True)
-
-        timestamp = now.strftime("%Y%m%d_%H%M%S")
-        safe_object_name = "".join(
-            c if c.isalnum() or c in "-_" else "_" for c in (object_name or "unknown")
-        )
-        filename = f"{safe_object_name}_{timestamp}.md"
-        report_path = reports_dir / filename
-        report_path.write_text(report_md, encoding="utf-8")
-
-        logger.info(f"[CRITIQUE] Task {task_id[:8]}... report saved: {report_path}")
-
-        # Assemble TraceObjects for each flagged exchange (sync — loop already closed)
-        saved_traces = []
-        for hc, ex_data in flawed_critiques:
-            idx = hc.exchange_index
-            try:
-                trace_obj = assemble_trace_object(
-                    session_id, assistant, idx, ex_data,
-                    {
-                        "exchange_index": hc.exchange_index,
-                        "model_response_problem": hc.model_response_problem,
-                        "model_response_expected": hc.model_response_expected,
-                        "conclusion": hc.conclusion,
-                    }
-                )
-                save_trace_object(trace_obj)
-                saved_traces.append(trace_obj)
-            except Exception as trace_err:
-                logger.warning(
-                    f"[CRITIQUE] Failed to assemble trace for exchange {idx}: {trace_err}"
-                )
-
-        # Build trace_items list for the UI (one item per distinct trace_id × culprit)
-        seen = set()
-        trace_items = []
-        for t in saved_traces:
-            for c in _effective_culprits(t):
-                if not c.culprit_name or c.culprit_name == "unknown":
-                    continue
-                key = (t.trace_id, c.culprit_name)
-                if key not in seen:
-                    seen.add(key)
-                    trace_items.append({
-                        "exchange_index": t.exchange_index,
-                        "trace_id": t.trace_id,
-                        "culprit_name": c.culprit_name,
-                        "prompt_template_name": c.prompt_template_name,
-                    })
-
-        critique_tasks[task_id]["status"] = "completed"
-        critique_tasks[task_id]["report_path"] = str(report_path)
-        critique_tasks[task_id]["overall_effectiveness"] = None
-        critique_tasks[task_id]["traces"] = trace_items
-
-        logger.info(f"[CRITIQUE] Task {task_id[:8]}... completed | "
-                    f"flawed: {len(flawed_critiques)} | traces: {len(trace_items)}")
-
-    except Exception as e:
-        critique_tasks[task_id]["status"] = "failed"
-        critique_tasks[task_id]["error"] = str(e)
-        logger.error(f"[CRITIQUE] Task {task_id[:8]}... failed: {e}")
-        import traceback
-        traceback.print_exc()
-
-
-# ============================================================================
-# Critique Endpoints for Engineer Review
-# ============================================================================
-
-@app.route('/api/critique', methods=['POST'])
-def critique_conversation():
-    """
-    Start a background critique of the current conversation.
-
-    Returns immediately with a task_id. Poll /api/critique/status/<task_id>
-    to check progress, then GET /api/critique/report/<task_id> to retrieve.
-
-    Request body:
-        {
-            "session_id": "uuid-string"
-        }
-
-    Response:
-        {
-            "success": true,
-            "task_id": "uuid-string",
-            "message": "Critique started. Poll /api/critique/status/<task_id> for progress."
-        }
-    """
-    data = request.get_json()
-
-    if not data:
-        return jsonify({
-            "success": False,
-            "error": "Request body must be JSON"
-        }), 400
-
-    session_id = data.get('session_id')
-
-    if not session_id:
-        return jsonify({
-            "success": False,
-            "error": "Missing session_id"
-        }), 400
-
-    if session_id not in sessions:
-        return jsonify({
-            "success": False,
-            "error": "Session not found"
-        }), 404
-
-    assistant = sessions[session_id]
-
-    # Build transcript from conversation history (with node execution traces + mode)
-    transcript = []
-    for msg in assistant.conversation_history:
-        if msg["role"] == "system":
-            continue
-        role = "model" if msg["role"] == "assistant" else "child"
-        entry = {"role": role, "content": msg["content"]}
-        if role == "model":
-            if "nodes_executed" in msg:
-                entry["nodes_executed"] = msg["nodes_executed"]
-            entry["mode"] = msg.get("mode", "chat")
-            entry["classification_status"] = msg.get("classification_status")
-            entry["classification_failure_reason"] = msg.get("classification_failure_reason")
-        transcript.append(entry)
-
-    if len(transcript) < 3:
-        return jsonify({
-            "success": False,
-            "error": "Need at least one complete exchange (model→child→model) to critique"
-        }), 400
-
-    # Create task entry
-    task_id = str(uuid.uuid4())
-    critique_tasks[task_id] = {
-        "status": "pending",
-        "session_id": session_id,
-        "report_path": None,
-        "error": None,
-        "overall_effectiveness": None,
-        "traces": [],
-        "started_at": time.time()
-    }
-
-    # Capture session state for background worker (session may be deleted while critique runs)
-    object_name = assistant.object_name
-    key_concept = assistant.key_concept or "learning objective"
-    ibpyp_theme_name = assistant.ibpyp_theme_name
-    age = assistant.age or 6
-
-    # Hold a reference so the GC won't collect assistant during the background thread run
-    assistant_ref = assistant
-
-    # Pre-extract all exchanges (child→model pairs) so the background worker doesn't need the transcript.
-    # The introduction (first model message) is skipped and not counted as an exchange.
-    all_exchanges = []
-    i = 0
-    while i < len(transcript):
-        if transcript[i].get("role") == "model":
-            i += 1
-            break
-        i += 1
-    while i < len(transcript) - 1:
-        if (transcript[i].get("role") == "child" and
-                transcript[i + 1].get("role") == "model"):
-            all_exchanges.append({
-                "child_response": transcript[i]["content"],
-                "model_response": transcript[i + 1]["content"],
-                "nodes_executed": transcript[i + 1].get("nodes_executed", []),
-                "mode": transcript[i + 1].get("mode", "chat"),
-                "classification_status": transcript[i + 1].get("classification_status"),
-                "classification_failure_reason": transcript[i + 1].get("classification_failure_reason"),
-            })
-            i += 2
-        else:
-            i += 1
-
-    # Spawn background worker
-    thread = threading.Thread(
-        target=run_critique_background,
-        args=(task_id, session_id, transcript, all_exchanges, assistant_ref,
-              object_name, key_concept, age, ibpyp_theme_name),
-        daemon=True
-    )
-    thread.start()
-
-    logger.info(f"[CRITIQUE] Task {task_id[:8]}... spawned for session {session_id[:8]}...")
-
-    return jsonify({
-        "success": True,
-        "task_id": task_id,
-        "message": "Critique started. Poll /api/critique/status/<task_id> for progress."
-    })
-
-
-@app.route('/api/critique/status/<task_id>', methods=['GET'])
-def critique_status(task_id):
-    """
-    Check status of a background critique task.
-
-    Response:
-        {
-            "success": true,
-            "task_id": "uuid-string",
-            "status": "pending" | "running" | "completed" | "failed",
-            "report_path": "reports/banana_20260207.md" (if completed),
-            "overall_effectiveness": 75.5 (if completed),
-            "error": "..." (if failed),
-            "elapsed_seconds": 15.2
-        }
-    """
-    if task_id not in critique_tasks:
-        return jsonify({
-            "success": False,
-            "error": "Task not found"
-        }), 404
-
-    task = critique_tasks[task_id]
-    return jsonify({
-        "success": True,
-        "task_id": task_id,
-        "status": task["status"],
-        "session_id": task["session_id"],
-        "report_path": task["report_path"],
-        "overall_effectiveness": task["overall_effectiveness"],
-        "traces": task.get("traces", []),
-        "error": task["error"],
-        "elapsed_seconds": round(time.time() - task["started_at"], 1)
-    })
-
-
 @app.route('/api/exchanges/<session_id>', methods=['GET'])
 def get_exchanges(session_id):
     """
@@ -2090,63 +1746,6 @@ def _render_hf_exchange(idx, exchange, ec):
     return report
 
 
-@app.route('/api/critique/report/<task_id>', methods=['GET'])
-def get_critique_report(task_id):
-    """
-    Retrieve the generated critique report content.
-
-    Response:
-        {
-            "success": true,
-            "report_content": "# Critique Report...",
-            "report_path": "reports/banana_20260207.md",
-            "overall_effectiveness": 75.5
-        }
-    """
-    from pathlib import Path
-
-    if task_id not in critique_tasks:
-        return jsonify({
-            "success": False,
-            "error": "Task not found"
-        }), 404
-
-    task = critique_tasks[task_id]
-
-    if task["status"] == "pending":
-        return jsonify({
-            "success": False,
-            "error": "Task is pending, not yet started"
-        }), 400
-
-    if task["status"] == "running":
-        return jsonify({
-            "success": False,
-            "error": f"Task is still running ({round(time.time() - task['started_at'], 1)}s elapsed)"
-        }), 400
-
-    if task["status"] == "failed":
-        return jsonify({
-            "success": False,
-            "error": f"Task failed: {task['error']}"
-        }), 400
-
-    # Status is "completed"
-    report_path = Path(task["report_path"])
-    if not report_path.exists():
-        return jsonify({
-            "success": False,
-            "error": "Report file not found on disk"
-        }), 404
-
-    return jsonify({
-        "success": True,
-        "report_content": report_path.read_text(encoding='utf-8'),
-        "report_path": str(report_path),
-        "overall_effectiveness": task["overall_effectiveness"]
-    })
-
-
 # ═══════════════════════════════════════════════════════════════════════════
 # HF Report Viewer API
 # ═══════════════════════════════════════════════════════════════════════════
@@ -2222,6 +1821,7 @@ def _parse_hf_report(filepath):
         i += 1
 
     # Assign exchange indices: child turn N → next model turn is exchange N
+    # The Introduction (first model turn before any child) gets index 0
     child_count = 0
     waiting_for_model = False
     for turn in turns:
@@ -2229,9 +1829,12 @@ def _parse_hf_report(filepath):
             child_count += 1
             turn["exchange_index"] = child_count
             waiting_for_model = True
-        elif turn["role"] == "model" and waiting_for_model:
-            turn["exchange_index"] = child_count
-            waiting_for_model = False
+        elif turn["role"] == "model":
+            if child_count == 0:
+                turn["exchange_index"] = 0  # Introduction: before any child turn
+            elif waiting_for_model:
+                turn["exchange_index"] = child_count
+                waiting_for_model = False
 
     result["transcript"] = turns
 
@@ -2271,6 +1874,19 @@ def _parse_hf_report(filepath):
             cm = re.search(r'#### Conclusion\n+(.+?)(?=\n\n---|\n###|\Z)', block, re.DOTALL)
             crit["conclusion"] = cm.group(1).strip() if cm else None
             critiques[eidx] = crit
+
+    # Parse Introduction critique (exchange_index == 0)
+    intro_sec = get_section("Introduction")
+    if intro_sec:
+        crit = {"phase": "CHAT", "expected": None, "problematic": None,
+                "conclusion": None, "node_trace": []}
+        all_expected    = re.findall(r'\*What is expected:\*\s*(.+)', intro_sec)
+        all_problematic = re.findall(r'\*Why is it problematic:\*\s*(.+)', intro_sec)
+        crit["expected"]    = all_expected[-1].strip()    if all_expected    else None
+        crit["problematic"] = all_problematic[-1].strip() if all_problematic else None
+        cm = re.search(r'#### Conclusion\n+(.+?)(?=\n\n---|\n###|\Z)', intro_sec, re.DOTALL)
+        crit["conclusion"] = cm.group(1).strip() if cm else None
+        critiques[0] = crit
 
     # Attach critiques to matching model turns
     for turn in result["transcript"]:

@@ -1268,134 +1268,9 @@ function dismissSwitchPanel() {
 // ============================================================================
 
 /**
- * Show the critique choice modal (AI vs Manual).
- */
-function showCritiqueChoice() {
-    if (!sessionId) {
-        alert('No active session');
-        return;
-    }
-    const modal = document.getElementById('critiqueChoiceModal');
-    modal.style.display = 'flex';
-}
-
-/**
- * Close the critique choice modal.
- */
-function closeCritiqueChoice() {
-    document.getElementById('critiqueChoiceModal').style.display = 'none';
-}
-
-/**
- * Send AI critique and poll for results.
- */
-async function sendAICritique() {
-    closeCritiqueChoice();
-
-    const btn = document.getElementById('sendReportBtn');
-    btn.disabled = true;
-    btn.textContent = 'Analyzing...';
-
-    // Reset status section
-    const statusSection = document.getElementById('aiCritiqueStatus');
-    const statusText = document.getElementById('aiCritiqueStatusText');
-    document.getElementById('aiCritiqueOptimizeButtons').innerHTML = '';
-    statusSection.style.background = '#f1f5f9';
-    statusText.textContent = '⏳ AI critique in progress...';
-    statusSection.style.display = 'block';
-
-    try {
-        const response = await fetch(`${API_BASE}/critique`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ session_id: sessionId })
-        });
-        const result = await response.json();
-
-        if (result.success) {
-            _pollAICritiqueStatus(result.task_id);
-        } else {
-            btn.disabled = false;
-            btn.textContent = '📝 Send Report for Review';
-            statusSection.style.background = '#fee2e2';
-            statusText.textContent = '✗ Failed: ' + result.error;
-        }
-    } catch (e) {
-        btn.disabled = false;
-        btn.textContent = '📝 Send Report for Review';
-        statusSection.style.background = '#fee2e2';
-        statusText.textContent = '✗ Error: ' + e.message;
-    }
-}
-
-/**
- * Poll /api/critique/status/<taskId> every 3s and render results when done.
- */
-function _pollAICritiqueStatus(taskId) {
-    const btn = document.getElementById('sendReportBtn');
-    const statusSection = document.getElementById('aiCritiqueStatus');
-    const statusText = document.getElementById('aiCritiqueStatusText');
-    const optimizeButtons = document.getElementById('aiCritiqueOptimizeButtons');
-
-    const interval = setInterval(async () => {
-        try {
-            const response = await fetch(`${API_BASE}/critique/status/${taskId}`);
-            const data = await response.json();
-
-            if (data.status === 'completed') {
-                clearInterval(interval);
-                btn.disabled = false;
-                btn.textContent = '📝 Send Report for Review';
-
-                if (data.traces && data.traces.length > 0) {
-                    statusSection.style.background = '#fef3c7';
-                    statusText.textContent =
-                        `⚠ ${data.traces.length} exchange(s) flagged — optimize their prompts:`;
-                    data.traces.forEach(trace => {
-                        if (!trace.culprit_name || trace.culprit_name === 'unknown') return;
-                        const optBtn = document.createElement('button');
-                        optBtn.textContent = 'Optimize: ' + trace.culprit_name;
-                        optBtn.style.cssText =
-                            'width:100%; margin-top:8px; padding:8px; background:#3b82f6; ' +
-                            'color:white; border:none; border-radius:6px; cursor:pointer; ' +
-                            'font-weight:bold; font-size:0.85em;';
-                        optBtn.onclick = () => runOptimization(
-                            trace.culprit_name,
-                            trace.prompt_template_name,
-                            trace.trace_id
-                        );
-                        optimizeButtons.appendChild(optBtn);
-                    });
-                } else {
-                    statusSection.style.background = '#d1fae5';
-                    statusText.textContent = '✓ No issues found in this session.';
-                }
-
-            } else if (data.status === 'failed') {
-                clearInterval(interval);
-                btn.disabled = false;
-                btn.textContent = '📝 Send Report for Review';
-                statusSection.style.background = '#fee2e2';
-                statusText.textContent = '✗ Critique failed: ' + (data.error || 'unknown error');
-            }
-            // status === 'pending' | 'running' → keep polling
-
-        } catch (e) {
-            clearInterval(interval);
-            btn.disabled = false;
-            btn.textContent = '📝 Send Report for Review';
-            statusSection.style.background = '#fee2e2';
-            statusText.textContent = '✗ Polling error: ' + e.message;
-        }
-    }, 3000);
-}
-
-/**
  * Fetch exchanges and show the manual critique form.
  */
 async function showManualCritiqueForm() {
-    closeCritiqueChoice();
-
     try {
         const response = await fetch(`${API_BASE}/exchanges/${sessionId}`);
         const result = await response.json();
@@ -1661,11 +1536,18 @@ function collectExchangeCritiques() {
         if (!cb.checked) return;
         const idx = parseInt(cb.dataset.index);
 
+        const expected   = (document.getElementById('mr_exp_'   + idx) || {}).value || '';
+        const problem    = (document.getElementById('mr_prob_'  + idx) || {}).value || '';
+        const conclusion = (document.getElementById('ec_concl_' + idx) || {}).value || '';
+
+        // Skip exchanges where the user checked the box but wrote no critique
+        if (!expected.trim() && !problem.trim() && !conclusion.trim()) return;
+
         exchangeCritiques.push({
             exchange_index: idx,
-            model_response_expected: (document.getElementById('mr_exp_' + idx) || {}).value || '',
-            model_response_problem: (document.getElementById('mr_prob_' + idx) || {}).value || '',
-            conclusion: (document.getElementById('ec_concl_' + idx) || {}).value || ''
+            model_response_expected: expected,
+            model_response_problem:  problem,
+            conclusion:              conclusion
         });
     });
 

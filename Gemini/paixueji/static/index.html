@@ -195,36 +195,11 @@
 
         <!-- Action Buttons -->
         <div style="margin-bottom: 15px;">
-            <button id="sendReportBtn" onclick="showCritiqueChoice()" style="width: 100%; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+            <button id="sendReportBtn" onclick="showManualCritiqueForm()" style="width: 100%; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
                 📝 Send Report for Review
             </button>
-            <div id="aiCritiqueStatus" style="display:none; margin-top:10px; padding:10px; background:#f1f5f9; border-radius:6px; font-size:0.85em;">
-                <div id="aiCritiqueStatusText" style="color:#475569; margin-bottom:4px;"></div>
-                <div id="aiCritiqueOptimizeButtons"></div>
-            </div>
         </div>
     </div>
-    <!-- Critique Choice Modal -->
-    <div id="critiqueChoiceModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; justify-content:center; align-items:center;">
-        <div style="background:white; border-radius:12px; padding:30px; max-width:400px; width:90%; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.3);">
-            <h2 style="margin:0 0 8px 0; color:#1e293b;">Choose Review Type</h2>
-            <p style="color:#64748b; margin:0 0 24px 0; font-size:0.9em;">How would you like to review this conversation?</p>
-            <div style="display:flex; flex-direction:column; gap:12px;">
-                <button onclick="sendAICritique()" style="padding:14px; background:#8b5cf6; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:1em;">
-                    AI Critique
-                    <div style="font-weight:normal; font-size:0.8em; margin-top:4px; opacity:0.9;">Automated pedagogical analysis</div>
-                </button>
-                <button onclick="showManualCritiqueForm()" style="padding:14px; background:#0ea5e9; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:1em;">
-                    Manual Critique
-                    <div style="font-weight:normal; font-size:0.8em; margin-top:4px; opacity:0.9;">Write your own feedback per exchange</div>
-                </button>
-                <button onclick="closeCritiqueChoice()" style="padding:10px; background:#e2e8f0; color:#475569; border:none; border-radius:8px; cursor:pointer; font-size:0.9em;">
-                    Cancel
-                </button>
-            </div>
-        </div>
-    </div>
-
     <!-- Chat Phase Complete Modal -->
     <div id="chatPhaseCompleteModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:2000; justify-content:center; align-items:center;">
         <div style="background:white; border-radius:16px; padding:40px; max-width:420px; width:90%; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.3);">

@@ -120,16 +120,6 @@ def test_critique_engine(client):
     assert response.status_code == 200
     assert response.get_json()['success'] is True
 
-    # 3. AI Critique task initiation
-    response = client.post('/api/critique', json={"session_id": session_id})
-    assert response.status_code == 200
-    task_id = response.get_json()['task_id']
-
-    # 4. Critique status polling
-    response = client.get(f'/api/critique/status/{task_id}')
-    assert response.status_code == 200
-    assert "status" in response.get_json()
-
 def test_start_guide_direct(client):
     """Test the testing-only direct guide entry endpoint."""
     payload = {"object_name": "banana", "age": 6}
