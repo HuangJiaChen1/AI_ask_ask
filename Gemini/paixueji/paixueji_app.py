@@ -2147,6 +2147,198 @@ def get_critique_report(task_id):
     })
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# HF Report Viewer API
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _parse_hf_report(filepath):
+    """Parse an HF report markdown file into a structured dict."""
+    import re
+
+    text = filepath.read_text(encoding='utf-8')
+    result = {"meta": {}, "transcript": [], "global_conclusion": None}
+    meta = result["meta"]
+
+    # ── Header fields ──────────────────────────────────────────────────────
+    m = re.search(r'^# Human Feedback Critique Report: (.+)$', text, re.MULTILINE)
+    meta["object"] = m.group(1).strip() if m else "unknown"
+
+    for key, pattern in [
+        ("session",       r'\*\*Session:\*\*\s+(.+)'),
+        ("age",           r'\*\*Age:\*\*\s+(.+)'),
+        ("key_concept",   r'\*\*Key Concept:\*\*\s+(.+)'),
+        ("date",          r'\*\*Date:\*\*\s+(.+)'),
+        ("feedback_type", r'\*\*Feedback Type:\*\*\s+(.+)'),
+    ]:
+        m = re.search(pattern, text)
+        meta[key] = m.group(1).strip() if m else None
+
+    if meta["age"] == "None":
+        meta["age"] = None
+
+    m = re.search(r'\*\*Exchanges Critiqued:\*\*\s+(\d+)\s*/\s*(\d+)', text)
+    meta["exchanges_critiqued"] = int(m.group(1)) if m else 0
+    meta["exchanges_total"]     = int(m.group(2)) if m else 0
+
+    # ── Split into sections by "## " headings ──────────────────────────────
+    section_positions = [sm.start() for sm in re.finditer(r'^## ', text, re.MULTILINE)]
+    sections = {}
+    for i, pos in enumerate(section_positions):
+        end = section_positions[i + 1] if i + 1 < len(section_positions) else len(text)
+        sec = text[pos:end]
+        name = sec.split('\n', 1)[0][3:].strip()
+        sections[name] = sec
+
+    def get_section(*keywords):
+        for k, v in sections.items():
+            if all(kw in k for kw in keywords):
+                return v
+        return ""
+
+    # ── Parse transcript ────────────────────────────────────────────────────
+    tlines = get_section("Conversation Transcript").splitlines()
+    turns = []
+    i = 0
+    while i < len(tlines):
+        line = tlines[i]
+        # Model turn: **Model** `[PHASE]`**: [nodes] (Xms)
+        mm = re.match(r'\*\*Model\*\*.*?\[([A-Z]+)\].*?\[([^\]]+)\]\s+\((\d+)ms\)', line)
+        if mm:
+            phase   = mm.group(1)
+            nodes   = [n.strip() for n in mm.group(2).split('→')]
+            time_ms = int(mm.group(3))
+            body = []
+            i += 1
+            while i < len(tlines) and tlines[i] and not tlines[i].startswith('**') and tlines[i] != '---':
+                body.append(tlines[i])
+                i += 1
+            turns.append({"role": "model", "phase": phase, "text": " ".join(body).strip(),
+                          "nodes": nodes, "time_ms": time_ms, "exchange_index": None, "critique": None})
+            continue
+        # Child turn: **Child:** text
+        mm = re.match(r'\*\*Child:\*\*\s*(.*)', line)
+        if mm:
+            turns.append({"role": "child", "text": mm.group(1).strip(), "exchange_index": None})
+        i += 1
+
+    # Assign exchange indices: child turn N → next model turn is exchange N
+    child_count = 0
+    waiting_for_model = False
+    for turn in turns:
+        if turn["role"] == "child":
+            child_count += 1
+            turn["exchange_index"] = child_count
+            waiting_for_model = True
+        elif turn["role"] == "model" and waiting_for_model:
+            turn["exchange_index"] = child_count
+            waiting_for_model = False
+
+    result["transcript"] = turns
+
+    # ── Parse critique sections ─────────────────────────────────────────────
+    critiques = {}
+    for phase_label, phase_key in [("Chat Phase", "CHAT"), ("Guide Phase", "GUIDE")]:
+        sec = get_section(phase_label, "Critique")
+        if not sec:
+            continue
+        blocks = re.split(r'\n### Exchange (\d+)\n', sec)
+        it = iter(blocks[1:])
+        for idx_str, block in zip(it, it):
+            try:
+                eidx = int(idx_str)
+            except ValueError:
+                continue
+
+            crit = {"phase": phase_key, "expected": None, "problematic": None,
+                    "conclusion": None, "node_trace": []}
+
+            # Node trace rows (skip header/separator rows)
+            for rm in re.finditer(r'\|\s*([^|\n]+?)\s*\|\s*([^|\n]+?)\s*\|\s*([^|\n]+?)\s*\|', block):
+                nd, tm, st = rm.group(1).strip(), rm.group(2).strip(), rm.group(3).strip()
+                if nd in ("Node", "") or re.match(r'^-+$', nd):
+                    continue
+                crit["node_trace"].append({
+                    "node":          nd,
+                    "time_ms":       int(re.sub(r'[^\d]', '', tm) or '0'),
+                    "state_changes": st if st not in ('-', '—', '') else None,
+                })
+
+            all_expected    = re.findall(r'\*What is expected:\*\s*(.+)', block)
+            all_problematic = re.findall(r'\*Why is it problematic:\*\s*(.+)', block)
+            crit["expected"]    = all_expected[-1].strip()    if all_expected    else None
+            crit["problematic"] = all_problematic[-1].strip() if all_problematic else None
+
+            cm = re.search(r'#### Conclusion\n+(.+?)(?=\n\n---|\n###|\Z)', block, re.DOTALL)
+            crit["conclusion"] = cm.group(1).strip() if cm else None
+            critiques[eidx] = crit
+
+    # Attach critiques to matching model turns
+    for turn in result["transcript"]:
+        if turn["role"] == "model" and turn.get("exchange_index") in critiques:
+            turn["critique"] = critiques[turn["exchange_index"]]
+
+    # ── Global conclusion ────────────────────────────────────────────────────
+    gc_sec = get_section("Global Conclusion")
+    if gc_sec:
+        body = re.sub(r'^## Global Conclusion\s*\n+', '', gc_sec).strip()
+        result["global_conclusion"] = body or None
+
+    return result
+
+
+@app.route('/api/reports/hf')
+def list_hf_reports():
+    """Return metadata list for all HF reports, newest first."""
+    from pathlib import Path
+    hf_dir = Path(__file__).parent / "reports" / "HF"
+    if not hf_dir.exists():
+        return jsonify([])
+
+    reports = []
+    for date_dir in sorted(hf_dir.iterdir(), reverse=True):
+        if not date_dir.is_dir():
+            continue
+        date_str = date_dir.name
+        for md_file in sorted(date_dir.glob("*.md"), reverse=True):
+            try:
+                parsed = _parse_hf_report(md_file)
+                reports.append({"date": date_str, "filename": md_file.name, "meta": parsed["meta"]})
+            except Exception as e:
+                logger.warning(f"Failed to parse {md_file}: {e}")
+    return jsonify(reports)
+
+
+@app.route('/api/reports/hf/<date>/<filename>')
+def get_hf_report(date, filename):
+    """Return full parsed HF report as JSON."""
+    from pathlib import Path
+    filepath = Path(__file__).parent / "reports" / "HF" / date / filename
+    if not filepath.exists() or filepath.suffix != '.md':
+        return jsonify({"error": "Report not found"}), 404
+    try:
+        data = _parse_hf_report(filepath)
+        data["date"] = date
+        data["filename"] = filename
+        return jsonify(data)
+    except Exception as e:
+        logger.error(f"Failed to parse {filepath}: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/reports/hf/<date>/<filename>/raw')
+def get_hf_report_raw(date, filename):
+    """Return raw markdown content of an HF report as plain text."""
+    from pathlib import Path
+    filepath = Path(__file__).parent / "reports" / "HF" / date / filename
+    if not filepath.exists() or filepath.suffix != '.md':
+        return "Report not found", 404
+    return Response(
+        filepath.read_text(encoding='utf-8'),
+        mimetype='text/plain',
+        headers={"Content-Disposition": f"inline; filename={filename}"},
+    )
+
+
 def async_gen_to_sync(async_gen, loop):
     """
     Bridge async generator to sync generator WITHOUT buffering.
