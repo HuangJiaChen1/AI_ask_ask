@@ -174,3 +174,51 @@ def test_apply_diffs_replaces_content_preserves_marker():
     assert "You are a tutor." in result
     assert "You are a learning companion." not in result
     assert "## [CLAUSE: constraints]" in result
+
+
+# ── bootstrap ─────────────────────────────────────────────────────────────
+
+def _make_trace(trace_id="t1", age=6, obj="apple", child="red", response="good"):
+    from trace_schema import TraceObject, HumanCritique, ExchangeContext
+    return TraceObject(
+        trace_id=trace_id, session_id="s1", timestamp="2026-01-01T00:00:00",
+        object_name=obj, age=age, exchange_index=0,
+        critique=HumanCritique(exchange_index=0, model_response_expected="great", model_response_problem=""),
+        exchange=ExchangeContext(child_response=child, model_response=response),
+        conversation_history=[{"role": "user", "content": child}],
+    )
+
+
+def test_add_golden_example_creates_file(tmp_path, monkeypatch):
+    import optimizer.bootstrap as bs
+    monkeypatch.setattr(bs, "EXAMPLES_DIR", tmp_path)
+    bs.add_golden_example("informative_intent_prompt", _make_trace(), "nice response", 0.95)
+    data = json.loads((tmp_path / "informative_intent_prompt.json").read_text())
+    assert len(data) == 1 and data[0]["score"] == 0.95
+
+
+def test_add_golden_example_skips_below_threshold(tmp_path, monkeypatch):
+    import optimizer.bootstrap as bs
+    monkeypatch.setattr(bs, "EXAMPLES_DIR", tmp_path)
+    bs.add_golden_example("informative_intent_prompt", _make_trace(), "meh", 0.80)
+    assert not (tmp_path / "informative_intent_prompt.json").exists()
+
+
+def test_get_best_examples_returns_empty_when_no_file(tmp_path, monkeypatch):
+    import optimizer.bootstrap as bs
+    monkeypatch.setattr(bs, "EXAMPLES_DIR", tmp_path)
+    assert bs.get_best_examples("no_such_prompt") == []
+
+
+def test_inject_examples_replaces_placeholder():
+    from optimizer.bootstrap import inject_examples, GoldenExample, GoldenExampleContext
+    ex = GoldenExample(
+        id="1", prompt_name="p", score=0.95, trace_id="t", added_at="2026-01-01",
+        context=GoldenExampleContext(age=6, object_name="apple", child_response="red",
+                                     conversation_history_tail=[]),
+        response="Great observation!",
+    )
+    prompt = "## [CLAUSE: few_shot_examples]\n{few_shot_examples}\n"
+    result = inject_examples(prompt, [ex])
+    assert "{few_shot_examples}" not in result
+    assert 'Child said "red"' in result
