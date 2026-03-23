@@ -273,3 +273,19 @@ def test_get_traces_by_ids(tmp_path, monkeypatch):
     monkeypatch.setattr(trigger, "TRACES_DIR", traces_dir)
     result = trigger.get_traces_by_ids(["t99"])
     assert len(result) == 1 and result[0].trace_id == "t99"
+
+
+# ── convergence_loop ──────────────────────────────────────────────────────
+
+def test_resolve_prompt_name_from_traces():
+    from optimizer.convergence_loop import resolve_prompt_name
+    trace = _make_culprit_trace("t1", "informative", "informative_intent_prompt")
+    assert resolve_prompt_name([trace]) == "informative_intent_prompt"
+
+
+def test_resolve_prompt_name_raises_on_mismatch():
+    from optimizer.convergence_loop import resolve_prompt_name
+    t1 = _make_culprit_trace("t1", "informative", "prompt_a")
+    t2 = _make_culprit_trace("t2", "informative", "prompt_b")
+    with pytest.raises(ValueError):
+        resolve_prompt_name([t1, t2])
