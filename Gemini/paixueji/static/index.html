@@ -12,6 +12,7 @@
             <button id="backBtn" style="display:none" onclick="goBack()">← Back</button>
             <h1>Paixueji Assistant</h1>
             <p>Answer questions about objects!</p>
+            <button id="reportsBtn" onclick="openReportsViewer()">📊 Reports</button>
             <button id="tutorialHelpBtn" onclick="startTutorial('setup')" title="Show walkthrough tutorial">?</button>
         </div>
 
@@ -80,6 +81,9 @@
 
             <button onclick="startConversation()">Start Learning!</button>
         </div>
+
+        <!-- HF Report Viewer panel (replaces startForm when active) -->
+        <div id="reportViewer"></div>
 
         <div class="progress-indicator" id="progressIndicator" style="display: none;">
             <span id="progressText">Correct answers: 0/4</span>
@@ -394,7 +398,55 @@
       </div>
     </div>
 
+    <!-- HF Report Viewer: Critique Popup -->
+    <div id="rvCritiquePopup">
+        <div class="rv-popup-inner">
+            <div class="rv-popup-header">
+                <h3 id="rvPopupTitle">Exchange — Phase</h3>
+                <button class="rv-popup-close" onclick="closeRvCritiquePopup()">&#x2715;</button>
+            </div>
+            <div class="rv-popup-body">
+                <div class="rv-crit-panel rv-panel-green">
+                    <div class="rv-crit-panel-label">&#x2705; Expected</div>
+                    <div class="rv-crit-panel-text" id="rvPopupExpected"></div>
+                </div>
+                <div id="rvPopupProbPanel" class="rv-crit-panel rv-panel-red">
+                    <div class="rv-crit-panel-label">
+                        <span id="rvPopupProbIcon">&#x26A0;&#xFE0F;</span> Why Problematic
+                    </div>
+                    <div class="rv-crit-panel-text" id="rvPopupProblematic"></div>
+                </div>
+                <div class="rv-crit-panel rv-panel-blue">
+                    <div class="rv-crit-panel-label">&#x1F4AC; Conclusion</div>
+                    <div class="rv-crit-panel-text" id="rvPopupConclusion"></div>
+                </div>
+                <details class="rv-popup-trace">
+                    <summary>&#x25B8; Node Execution Trace</summary>
+                    <table>
+                        <thead>
+                            <tr><th>Node</th><th>Time</th><th>State</th></tr>
+                        </thead>
+                        <tbody id="rvPopupTraceBody"></tbody>
+                    </table>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <!-- HF Report Viewer: Raw Markdown Modal -->
+    <div id="rvRawModal">
+        <div class="rv-raw-inner">
+            <div class="rv-raw-topbar">
+                <span class="rv-raw-filename" id="rvRawFilename"></span>
+                <button id="rvCopyBtn" onclick="rvCopyRaw()">&#x1F4CB; Copy</button>
+                <button class="rv-raw-close" onclick="closeRvRawModal()">&#x2715;</button>
+            </div>
+            <pre id="rvRawContent"></pre>
+        </div>
+    </div>
+
     <script src="/static/app.js"></script>
     <script src="/static/tutorial.js"></script>
+    <script src="/static/reports.js"></script>
 </body>
 </html>
