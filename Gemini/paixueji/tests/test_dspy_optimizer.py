@@ -123,3 +123,54 @@ def test_compute_batch_score_synthesizes_when_sparse():
     )
     assert len(scores) == 1
     assert 0.0 <= scores[0] <= 1.0
+
+
+# ── backward_pass ─────────────────────────────────────────────────────────
+
+_SAMPLE_PROMPT = (
+    "## [CLAUSE: core]\nYou are a learning companion.\n\n"
+    "## [CLAUSE: constraints]\nDo not ask questions.\n"
+)
+
+
+def test_parse_clauses_returns_expected_ids():
+    from optimizer.backward_pass import parse_clauses
+    clauses = parse_clauses(_SAMPLE_PROMPT)
+    assert len(clauses) == 2
+    assert clauses[0]["clause_id"] == "core"
+    assert clauses[1]["clause_id"] == "constraints"
+    assert "## [CLAUSE:" not in clauses[0]["content"]
+
+
+def test_parse_clauses_empty_on_no_markers():
+    from optimizer.backward_pass import parse_clauses
+    assert parse_clauses("No markers here.") == []
+
+
+def test_aggregate_gradients_filters_single_low():
+    from optimizer.backward_pass import aggregate_gradients
+    result = aggregate_gradients([
+        {"clause_id": "core", "problem": "p", "suggested_fix": "f", "confidence": "LOW"}
+    ])
+    assert result == []
+
+
+def test_aggregate_gradients_sorted_by_priority():
+    from optimizer.backward_pass import aggregate_gradients
+    grads = [
+        {"clause_id": "a", "problem": "p", "suggested_fix": "f1", "confidence": "MODERATE"},
+        {"clause_id": "a", "problem": "p", "suggested_fix": "f1", "confidence": "HIGH"},
+        {"clause_id": "b", "problem": "p", "suggested_fix": "f2", "confidence": "HIGH"},
+    ]
+    result = aggregate_gradients(grads)
+    # "a": 2 votes, weight 1+2=3; "b": 1 vote, weight 2
+    assert result[0]["clause_id"] == "a"
+
+
+def test_apply_diffs_replaces_content_preserves_marker():
+    from optimizer.backward_pass import apply_diffs
+    result = apply_diffs(_SAMPLE_PROMPT, [{"clause_id": "core", "suggested_fix": "You are a tutor."}])
+    assert "## [CLAUSE: core]" in result
+    assert "You are a tutor." in result
+    assert "You are a learning companion." not in result
+    assert "## [CLAUSE: constraints]" in result
