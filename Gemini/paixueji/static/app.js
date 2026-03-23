@@ -36,6 +36,8 @@ let currentKeyConcept = null;  // Key concept for theme
 let currentIntentType = null;       // Last classified intent (9-node architecture)
 let currentResponseType = null;     // Last response node that actually ran
 let currentHookType = null;         // Hook type selected for this session
+let currentClassificationStatus = null;
+let currentClassificationFailureReason = null;
 
 const INTENT_METADATA = {
     ACTION: {
@@ -155,6 +157,11 @@ const RESPONSE_METADATA = {
         color: '#f59e0b',
         description: 'The assistant is stopping the hinting and giving the answer directly.',
         descriptionZh: '助手不再继续提示，而是直接把答案告诉孩子。',
+    },
+    FALLBACK_FREEFORM: {
+        color: '#0f766e',
+        description: 'The assistant is using a natural freeform recovery response because intent classification failed.',
+        descriptionZh: '因为意图分类失败，助手正在使用自然的自由恢复式回应。',
     },
     GUIDE_EXIT: {
         color: '#ef4444',
@@ -442,6 +449,11 @@ async function startConversation() {
     thinkingTimeDisplay.style.opacity = 0;
     currentThemeName = null;
     currentKeyConcept = null;
+    currentIntentType = null;
+    currentResponseType = null;
+    currentHookType = null;
+    currentClassificationStatus = null;
+    currentClassificationFailureReason = null;
 
     // Reset progress
     correctAnswerCount = 0;
@@ -840,14 +852,23 @@ function handleStreamChunk(chunk) {
     }
 
     // Update intent type (9-node architecture)
-    if (chunk.intent_type) {
+    if ('intent_type' in chunk) {
         currentIntentType = chunk.intent_type;
         updateDebugPanel();
     }
 
     // Update response type (which node actually ran — may differ from intent_type via routing intercept)
-    if (chunk.response_type) {
+    if ('response_type' in chunk) {
         currentResponseType = chunk.response_type;
+        updateDebugPanel();
+    }
+
+    if ('classification_status' in chunk) {
+        currentClassificationStatus = chunk.classification_status;
+        updateDebugPanel();
+    }
+    if ('classification_failure_reason' in chunk) {
+        currentClassificationFailureReason = chunk.classification_failure_reason;
         updateDebugPanel();
     }
 
@@ -1004,6 +1025,24 @@ function updateDebugPanel() {
             }
         }
     }
+
+    const classificationStatusEl = document.getElementById('debugClassificationStatus');
+    const classificationReasonEl = document.getElementById('debugClassificationReason');
+    if (classificationStatusEl) {
+        if (currentClassificationStatus === 'failed') {
+            classificationStatusEl.textContent = 'FAILED';
+            classificationStatusEl.style.color = '#dc2626';
+        } else if (currentClassificationStatus === 'ok') {
+            classificationStatusEl.textContent = 'OK';
+            classificationStatusEl.style.color = '#16a34a';
+        } else {
+            classificationStatusEl.textContent = '-';
+            classificationStatusEl.style.color = '#64748b';
+        }
+    }
+    if (classificationReasonEl) {
+        classificationReasonEl.textContent = currentClassificationFailureReason || '-';
+    }
 }
 
 /**
@@ -1059,6 +1098,16 @@ function resetConversation() {
     sessionId = null;
     correctAnswerCount = 0;
     conversationComplete = false;
+    currentObject = null;
+    guidePhase = null;
+    guideTurnCount = 0;
+    currentThemeName = null;
+    currentKeyConcept = null;
+    currentIntentType = null;
+    currentResponseType = null;
+    currentHookType = null;
+    currentClassificationStatus = null;
+    currentClassificationFailureReason = null;
 
     // Clear messages
     messagesContainer.innerHTML = '';
@@ -1453,6 +1502,9 @@ async function showManualCritiqueForm() {
             const intentBadge = exchange.intent_type
                 ? `<span style="display:inline-block; background:${intentColor}; color:#fff; font-size:0.65em; font-weight:600; padding:1px 7px; border-radius:9px; margin-left:5px; vertical-align:middle;">${exchange.intent_type}</span>`
                 : '';
+            const classifierBadge = exchange.classification_status === 'failed'
+                ? `<span style="display:inline-block; background:#dc2626; color:#fff; font-size:0.65em; font-weight:600; padding:1px 7px; border-radius:9px; margin-left:5px; vertical-align:middle;">CLASSIFIER FAILED</span>`
+                : '';
 
             // Response time label
             const timeLabel = exchange.response_time_ms
@@ -1465,7 +1517,7 @@ async function showManualCritiqueForm() {
                 <input type="checkbox" id="exchange_cb_${exchange.index}" data-index="${exchange.index}" style="margin-top:3px; cursor:pointer;" onchange="toggleExchangeCritique(${exchange.index})">
                 <div style="flex:1; min-width:0;">
                     <strong style="color:#1e293b;">Exchange ${exchange.index}</strong>
-                    <span style="display:inline-block; background:${badgeColor}; color:#fff; font-size:0.7em; font-weight:600; padding:1px 7px; border-radius:9px; margin-left:6px; vertical-align:middle;">${badgeLabel}</span>${intentBadge}${timeLabel}
+                    <span style="display:inline-block; background:${badgeColor}; color:#fff; font-size:0.7em; font-weight:600; padding:1px 7px; border-radius:9px; margin-left:6px; vertical-align:middle;">${badgeLabel}</span>${intentBadge}${classifierBadge}${timeLabel}
                     <div style="font-size:0.85em; color:#64748b; margin-top:4px;">
                         <div><b>A:</b> ${escapeHtml(truncate(exchange.child_response, 80))}</div>
                         <div><b>R:</b> ${escapeHtml(truncate(exchange.model_response, 80))}</div>
@@ -1533,6 +1585,7 @@ function buildExchangeCritiqueFormHTML(exchange) {
             <div style="background:#fefce8; padding:8px; border-radius:4px; font-size:0.9em; margin-bottom:4px; white-space:pre-wrap;">${escapeHtml(exchange.child_response)}</div>
             <div style="font-size:0.78em; color:#64748b; margin-bottom:8px; display:flex; gap:12px;">
                 ${exchange.intent_type ? `<span>Intent: <strong>${exchange.intent_type}</strong></span>` : ''}
+                ${exchange.classification_status === 'failed' ? `<span>Classifier: <strong>FAILED</strong> (${escapeHtml(exchange.classification_failure_reason || 'unknown')})</span>` : ''}
                 ${exchange.response_time_ms ? `<span>Response time: <strong>${(exchange.response_time_ms/1000).toFixed(1)}s</strong></span>` : ''}
             </div>
         </div>

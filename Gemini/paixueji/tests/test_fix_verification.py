@@ -564,3 +564,58 @@ class TestUnifiedStruggleCounter:
             f"First IDK (struggle_count=1) must route to 'clarifying_idk', "
             f"got '{router_result}'"
         )
+
+
+class TestClassificationFailureRouting:
+    """Classifier-failure turns should route to the freeform fallback path."""
+
+    def test_router_uses_fallback_freeform_when_classification_failed(self):
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=2)
+        state = _build_minimal_state(assistant, intent_type=None)
+        state["classification_status"] = "failed"
+        state["classification_failure_reason"] = "invalid_output"
+
+        router_result = graph.route_from_analyze_input(state)
+
+        assert router_result == "fallback_freeform", (
+            f"Classification failure must route to 'fallback_freeform', got '{router_result}'"
+        )
+
+    @pytest.mark.asyncio
+    async def test_node_analyze_input_resets_struggle_state_on_classification_failure(self):
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=2)
+        assistant.dimensions_covered = []
+        assistant.active_dimension = None
+        assistant.active_dimension_turn_count = 0
+
+        state = _build_minimal_state(assistant, intent_type=None)
+        state["physical_dimensions"] = {}
+        state["engagement_dimensions"] = {}
+        state["dimensions_covered"] = []
+        state["active_dimension"] = None
+        state["active_dimension_turn_count"] = 0
+
+        with patch(
+            "graph.classify_intent",
+            new=AsyncMock(
+                return_value={
+                    "intent_type": None,
+                    "new_object": None,
+                    "reasoning": "bad classifier output",
+                    "classification_status": "failed",
+                    "classification_failure_reason": "invalid_output",
+                }
+            ),
+        ), patch("graph.classify_dimension", new=AsyncMock(return_value=None)):
+            result = await graph.node_analyze_input(state)
+
+        assert assistant.consecutive_struggle_count == 0, (
+            "Classification failure must reset the struggle counter instead of carrying old state forward"
+        )
+        assert result["intent_type"] is None
+        assert result["classification_status"] == "failed"
+        assert result["classification_failure_reason"] == "invalid_output"

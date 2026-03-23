@@ -430,6 +430,8 @@ def start_conversation():
                                 "content": chunk.response,
                                 "nodes_executed": chunk.nodes_executed or [],
                                 "mode": "guide" if chunk.guide_phase else "chat",
+                                "classification_status": chunk.classification_status,
+                                "classification_failure_reason": chunk.classification_failure_reason,
                                 "_input_state_snapshot": initial_state.get("_input_state_snapshot", {}),
                             })
 
@@ -816,6 +818,8 @@ def continue_conversation():
                                 "content": chunk.response,
                                 "nodes_executed": chunk.nodes_executed or [],
                                 "mode": "guide" if chunk.guide_phase else "chat",
+                                "classification_status": chunk.classification_status,
+                                "classification_failure_reason": chunk.classification_failure_reason,
                                 "_input_state_snapshot": initial_state.get("_input_state_snapshot", {}),
                             })
 
@@ -1339,6 +1343,8 @@ def critique_conversation():
             if "nodes_executed" in msg:
                 entry["nodes_executed"] = msg["nodes_executed"]
             entry["mode"] = msg.get("mode", "chat")
+            entry["classification_status"] = msg.get("classification_status")
+            entry["classification_failure_reason"] = msg.get("classification_failure_reason")
         transcript.append(entry)
 
     if len(transcript) < 3:
@@ -1385,6 +1391,8 @@ def critique_conversation():
                 "model_response": transcript[i + 1]["content"],
                 "nodes_executed": transcript[i + 1].get("nodes_executed", []),
                 "mode": transcript[i + 1].get("mode", "chat"),
+                "classification_status": transcript[i + 1].get("classification_status"),
+                "classification_failure_reason": transcript[i + 1].get("classification_failure_reason"),
             })
             i += 2
         else:
@@ -1486,6 +1494,8 @@ def get_exchanges(session_id):
             if "nodes_executed" in msg:
                 entry["nodes_executed"] = msg["nodes_executed"]
             entry["mode"] = msg.get("mode", "chat")
+            entry["classification_status"] = msg.get("classification_status")
+            entry["classification_failure_reason"] = msg.get("classification_failure_reason")
         transcript.append(entry)
 
     # Introduction: first model message
@@ -1498,6 +1508,8 @@ def get_exchanges(session_id):
                 "content": transcript[i]["content"],
                 "nodes_executed": intro_nodes,
                 "mode": transcript[i].get("mode", "chat"),
+                "classification_status": transcript[i].get("classification_status"),
+                "classification_failure_reason": transcript[i].get("classification_failure_reason"),
             }
             i += 1
             break
@@ -1530,6 +1542,8 @@ def get_exchanges(session_id):
                 "nodes_executed": nodes,
                 "mode": transcript[i + 1].get("mode", "chat"),
                 "intent_type": intent_type,
+                "classification_status": transcript[i + 1].get("classification_status"),
+                "classification_failure_reason": transcript[i + 1].get("classification_failure_reason"),
                 "response_time_ms": response_time_ms,
             })
             i += 2
@@ -1622,6 +1636,8 @@ def manual_critique():
             if "nodes_executed" in msg:
                 entry["nodes_executed"] = msg["nodes_executed"]
             entry["mode"] = msg.get("mode", "chat")
+            entry["classification_status"] = msg.get("classification_status")
+            entry["classification_failure_reason"] = msg.get("classification_failure_reason")
         transcript.append(entry)
 
     # Re-extract introduction and all exchanges (child→model pairs) to match indices
@@ -1634,6 +1650,8 @@ def manual_critique():
                 "content": transcript[i]["content"],
                 "nodes_executed": transcript[i].get("nodes_executed", []),
                 "mode": transcript[i].get("mode", "chat"),
+                "classification_status": transcript[i].get("classification_status"),
+                "classification_failure_reason": transcript[i].get("classification_failure_reason"),
             }
             i += 1
             break
@@ -1646,6 +1664,8 @@ def manual_critique():
                 "model_response": transcript[i + 1]["content"],
                 "nodes_executed": transcript[i + 1].get("nodes_executed", []),
                 "mode": transcript[i + 1].get("mode", "chat"),
+                "classification_status": transcript[i + 1].get("classification_status"),
+                "classification_failure_reason": transcript[i + 1].get("classification_failure_reason"),
             })
             i += 2
         else:

@@ -25,6 +25,9 @@ Fix 4 — Context-aware BEAT 3 in CLARIFYING_WRONG_INTENT_PROMPT
     - Thought/imagination invites ("What do you think?") used for process/concept questions
     - Eliminates nonsensical "Take a close look!" when child answers a harvesting question
 """
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
 import paixueji_prompts
 from stream.validation import classify_intent
@@ -916,6 +919,74 @@ class TestRegressionGuard:
             age=6,
         )
         assert result["intent_type"] == "SOCIAL"
+
+
+class TestClassificationFailureFallback:
+    """Classifier failures must not masquerade as CLARIFYING_IDK."""
+
+    def _make_assistant(self, response_text=None, error=None):
+        async def _side_effect(*args, **kwargs):
+            if error is not None:
+                raise error
+            response = MagicMock()
+            response.text = response_text
+            return response
+
+        client = MagicMock()
+        client.aio = MagicMock()
+        client.aio.models.generate_content = AsyncMock(side_effect=_side_effect)
+        return SimpleNamespace(
+            conversation_history=[],
+            client=client,
+            config={"model_name": "mock-model"},
+        )
+
+    @pytest.mark.asyncio
+    async def test_invalid_classifier_output_returns_failed_status(self):
+        assistant = self._make_assistant(response_text="not valid classifier output")
+
+        result = await classify_intent(
+            assistant=assistant,
+            child_answer="It is red",
+            object_name="apple",
+            age=6,
+        )
+
+        assert result["intent_type"] is None
+        assert result["classification_status"] == "failed"
+        assert result["classification_failure_reason"] == "invalid_output"
+        assert result["new_object"] is None
+
+    @pytest.mark.asyncio
+    async def test_classifier_exception_returns_failed_status(self):
+        assistant = self._make_assistant(error=RuntimeError("boom"))
+
+        result = await classify_intent(
+            assistant=assistant,
+            child_answer="It is red",
+            object_name="apple",
+            age=6,
+        )
+
+        assert result["intent_type"] is None
+        assert result["classification_status"] == "failed"
+        assert result["classification_failure_reason"] == "exception"
+        assert result["new_object"] is None
+
+    @pytest.mark.asyncio
+    async def test_empty_input_still_returns_real_clarifying_idk(self):
+        assistant = self._make_assistant(response_text="INTENT: CORRECT_ANSWER")
+
+        result = await classify_intent(
+            assistant=assistant,
+            child_answer=" ",
+            object_name="apple",
+            age=6,
+        )
+
+        assert result["intent_type"] == "CLARIFYING_IDK"
+        assert result["classification_status"] == "ok"
+        assert result["classification_failure_reason"] is None
 
 
 # ============================================================================

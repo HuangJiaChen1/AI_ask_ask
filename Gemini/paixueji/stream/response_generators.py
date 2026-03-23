@@ -120,6 +120,80 @@ async def generate_intent_response_stream(
     yield ("", token_usage, full_response)
 
 
+async def generate_classification_fallback_stream(
+    messages: list[dict],
+    child_answer: str,
+    object_name: str,
+    age: int,
+    age_prompt: str,
+    last_model_response: str,
+    config: dict,
+    client: genai.Client,
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
+    """Generate a natural recovery response when intent classification failed."""
+    start_time = time.time()
+    logger.info(f"generate_classification_fallback_stream started | object={object_name}, age={age}")
+
+    prompt_template = paixueji_prompts.get_prompts()["classification_fallback_prompt"]
+    prompt = prompt_template.format(
+        child_answer=child_answer,
+        object_name=object_name,
+        age=age,
+        age_prompt=age_prompt,
+        last_model_response=last_model_response,
+    )
+
+    messages_to_send = messages + [{"role": "user", "content": prompt}]
+    clean_messages = clean_messages_for_api(messages_to_send)
+    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
+
+    full_response = ""
+    token_usage = None
+    stream = None
+
+    try:
+        gen_config = GenerateContentConfig(
+            temperature=config.get("temperature", 0.7),
+            max_output_tokens=config.get("max_tokens", 500),
+            system_instruction=system_instruction if system_instruction else None
+        )
+
+        stream = await client.aio.models.generate_content_stream(
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config
+        )
+
+        async for chunk in stream:
+            if chunk.text:
+                full_response += chunk.text
+                yield (chunk.text, None, full_response)
+
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(
+            f"generate_classification_fallback_stream error | error={str(e)}, duration={duration:.3f}s",
+            exc_info=True,
+        )
+        raise_if_rate_limited(e)
+        if full_response:
+            yield ("", token_usage, full_response)
+        return
+    finally:
+        if stream is not None:
+            try:
+                del stream
+            except Exception:
+                pass
+
+    duration = time.time() - start_time
+    logger.info(
+        f"generate_classification_fallback_stream completed | duration={duration:.3f}s, length={len(full_response)}"
+    )
+
+    yield ("", token_usage, full_response)
+
+
 async def generate_topic_switch_response_stream(
     messages: list[dict],
     previous_object: str,

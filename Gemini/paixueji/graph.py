@@ -15,6 +15,7 @@ from stream import (
     ask_followup_question_stream,
     classify_intent,
     classify_dimension,
+    generate_classification_fallback_stream,
     generate_intent_response_stream,
     generate_topic_switch_response_stream,
     extract_previous_response,
@@ -36,7 +37,10 @@ def route_from_analyze_input(state) -> str:
     Extracted to module level for testability (LangGraph requires nested decorated
     functions for wiring, but the pure logic should be testable without building the graph).
     """
-    intent = state.get("intent_type", "clarifying_idk").lower()
+    if state.get("classification_status") == "failed":
+        return "fallback_freeform"
+
+    intent = (state.get("intent_type") or "clarifying_idk").lower()
     # Intercept the Nth correct answer to run theme classification
     if (intent == "correct_answer" and
             state["assistant"].correct_answer_count + 1 >= GUIDE_MODE_THRESHOLD):
@@ -92,6 +96,8 @@ class PaixuejiState(TypedDict):
 
     # --- Flow Control & Computed State ---
     intent_type: Optional[str]   # one of 9 intent categories (chat mode)
+    classification_status: Optional[str]
+    classification_failure_reason: Optional[str]
 
     new_object_name: Optional[str]
     detected_object_name: Optional[str]
@@ -136,6 +142,7 @@ class PaixuejiState(TypedDict):
 
 KEY_STATE_FIELDS = [
     "intent_type", "response_type",
+    "classification_status", "classification_failure_reason",
     "guide_phase", "guide_status", "guide_strategy",
     "new_object_name", "scaffold_level", "guide_turn_count",
     "current_dimension", "active_dimension",
@@ -365,9 +372,13 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
     )
 
     intent_type = intent_result["intent_type"]
+    classification_status = intent_result.get("classification_status")
+    classification_failure_reason = intent_result.get("classification_failure_reason")
 
     # Update unified struggle counter (IDK or wrong answer)
-    if intent_type in _STRUGGLING_INTENTS:
+    if classification_status == "failed":
+        state["assistant"].consecutive_struggle_count = 0
+    elif intent_type in _STRUGGLING_INTENTS:
         state["assistant"].consecutive_struggle_count += 1
     else:
         state["assistant"].consecutive_struggle_count = 0
@@ -404,6 +415,8 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
     return {
         "intent_type": intent_type,
         "new_object_name": intent_result.get("new_object"),
+        "classification_status": classification_status,
+        "classification_failure_reason": classification_failure_reason,
         "current_dimension": current_dim,
         "dimensions_covered": new_covered,
         "active_dimension": new_active_dim,
@@ -541,6 +554,8 @@ async def stream_generator_to_callback(generator, state: PaixuejiState, response
                 conversation_complete=False,
 
                 intent_type=state.get("intent_type"),
+                classification_status=state.get("classification_status"),
+                classification_failure_reason=state.get("classification_failure_reason"),
                 new_object_name=state["new_object_name"],
                 detected_object_name=state["detected_object_name"],
 
@@ -639,6 +654,33 @@ async def node_clarifying_idk(state: PaixuejiState) -> dict:
     logger.info(f"[{state['session_id']}] Node: Clarifying IDK finished in {time.time() - start_time:.3f}s")
     return {
         "response_type": "clarifying_idk",
+        "full_response_text": full_text,
+        "sequence_number": new_seq,
+        "ttft": state.get("ttft"),
+    }
+
+
+@trace_node
+async def node_fallback_freeform(state: PaixuejiState) -> dict:
+    """Classifier failed — respond naturally without intent-specific prompting."""
+    start_time = time.time()
+    logger.info(f"[{state['session_id']}] Node: Fallback Freeform")
+
+    messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    generator = generate_classification_fallback_stream(
+        messages=messages,
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
+        age_prompt=state["age_prompt"],
+        last_model_response=extract_previous_response(state["messages"]),
+        config=state["config"],
+        client=state["client"],
+    )
+    full_text, new_seq = await stream_generator_to_callback(generator, state)
+    logger.info(f"[{state['session_id']}] Node: Fallback Freeform finished in {time.time() - start_time:.3f}s")
+    return {
+        "response_type": "fallback_freeform",
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
@@ -1472,6 +1514,8 @@ async def node_finalize(state: PaixuejiState) -> dict:
         conversation_complete=False,
 
         intent_type=state.get("intent_type"),
+        classification_status=state.get("classification_status"),
+        classification_failure_reason=state.get("classification_failure_reason"),
         new_object_name=state.get("new_object_name"),
         detected_object_name=state.get("detected_object_name"),
 
@@ -1607,6 +1651,7 @@ def build_paixueji_graph():
     workflow.add_node("curiosity", node_curiosity)
     workflow.add_node("concept_confusion", node_concept_confusion)
     workflow.add_node("clarifying_idk", node_clarifying_idk)
+    workflow.add_node("fallback_freeform", node_fallback_freeform)
     workflow.add_node("give_answer_idk", node_give_answer_idk)
     workflow.add_node("clarifying_wrong", node_clarifying_wrong)
     workflow.add_node("clarifying_constraint", node_clarifying_constraint)
@@ -1667,7 +1712,7 @@ def build_paixueji_graph():
     # Chat path: analyze_input → route_from_analyze_input → one of 9 intent nodes
     # The module-level route_from_analyze_input holds the pure logic; wrap it with
     # trace_router here so the graph can observe routing decisions.
-    _traced_route_from_analyze_input = trace_router(["intent_type"])(route_from_analyze_input)
+    _traced_route_from_analyze_input = trace_router(["intent_type", "classification_status"])(route_from_analyze_input)
 
     workflow.add_conditional_edges(
         "analyze_input",
@@ -1676,6 +1721,7 @@ def build_paixueji_graph():
             "curiosity": "curiosity",
             "concept_confusion": "concept_confusion",
             "clarifying_idk": "clarifying_idk",
+            "fallback_freeform": "fallback_freeform",
             "give_answer_idk": "give_answer_idk",
             "clarifying_wrong": "clarifying_wrong",
             "clarifying_constraint": "clarifying_constraint",
@@ -1697,7 +1743,7 @@ def build_paixueji_graph():
     workflow.add_edge("chat_complete", "finalize")
 
     # All 15 intent nodes → finalize
-    for intent_node in ["curiosity", "concept_confusion", "clarifying_idk", "give_answer_idk",
+    for intent_node in ["curiosity", "concept_confusion", "clarifying_idk", "fallback_freeform", "give_answer_idk",
                         "clarifying_wrong", "clarifying_constraint", "correct_answer",
                         "informative", "play", "emotional", "avoidance", "boundary",
                         "action", "social", "social_acknowledgment"]:

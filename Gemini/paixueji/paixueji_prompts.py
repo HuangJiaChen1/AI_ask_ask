@@ -641,6 +641,31 @@ PROHIBITIONS:
 Respond naturally (NOT JSON). 2-3 sentences max.
 """
 
+CLASSIFICATION_FALLBACK_PROMPT = """\
+CONTEXT:
+- Child (age {age}) said: "{child_answer}"
+- You're exploring: {object_name}
+- Your last response: "{last_model_response}"
+
+AGE GUIDANCE:
+{age_prompt}
+
+YOUR MISSION:
+The intent classifier failed for this turn. Ignore intent categories and respond naturally
+to what the child just said.
+
+RULES:
+- Do NOT mention classifier failure or any system uncertainty.
+- Do NOT assume the child is wrong, stuck, or correct.
+- If the child seems to be answering your question, respond to that answer conversationally.
+- If the child seems to be asking a question, answer it simply.
+- If the child is genuinely unclear, ask ONE short clarifying question.
+- Stay on the current object: {object_name}.
+- Do NOT switch topics or claim the topic changed.
+
+Respond naturally (NOT JSON). 1-2 sentences max.
+"""
+
 GIVE_ANSWER_IDK_INTENT_PROMPT = """\
 CONTEXT:
 - Child (age {age}) said "I don't know" again after already receiving a hint.
@@ -1336,6 +1361,7 @@ def get_prompts():
         # Intent classification (replaces input_analyzer_rules)
         'user_intent_prompt': USER_INTENT_PROMPT,
         # Intent response prompts
+        'classification_fallback_prompt': CLASSIFICATION_FALLBACK_PROMPT,
         'curiosity_intent_prompt': CURIOSITY_INTENT_PROMPT,
         'clarifying_idk_intent_prompt': CLARIFYING_IDK_INTENT_PROMPT,
         'give_answer_idk_intent_prompt': GIVE_ANSWER_IDK_INTENT_PROMPT,

@@ -36,11 +36,19 @@ async def classify_intent(
                            SOCIAL_ACKNOWLEDGMENT
             - new_object: str | None  (only extracted for ACTION or AVOIDANCE)
             - reasoning: brief explanation string
+            - classification_status: "ok" | "failed"
+            - classification_failure_reason: None | "invalid_output" | "exception"
     """
     # Fast-path: only for truly empty input (≤2 chars total)
     if len(child_answer.strip()) <= 2:
         logger.info("[CLASSIFY] Fast-path CLARIFYING_IDK (empty/silent input)")
-        return {"intent_type": "CLARIFYING_IDK", "new_object": None, "reasoning": "Empty or silent input"}
+        return {
+            "intent_type": "CLARIFYING_IDK",
+            "new_object": None,
+            "reasoning": "Empty or silent input",
+            "classification_status": "ok",
+            "classification_failure_reason": None,
+        }
 
     # Extract the model's last full response from conversation history
     conversation_history = assistant.conversation_history
@@ -89,8 +97,18 @@ async def classify_intent(
             "AVOIDANCE", "BOUNDARY", "ACTION", "SOCIAL", "SOCIAL_ACKNOWLEDGMENT",
             "CONCEPT_CONFUSION"
         }
-        raw_intent = _get(r"INTENT:\s*(\w+)", "CLARIFYING_IDK").upper()
-        intent_type = raw_intent if raw_intent in valid_intents else "CLARIFYING_IDK"
+        raw_intent = _get(r"INTENT:\s*(\w+)", "").upper()
+        intent_type = raw_intent if raw_intent in valid_intents else None
+
+        if intent_type is None:
+            logger.warning(f"[CLASSIFY] Invalid classifier output, using fallback-freeform path | raw_intent={raw_intent!r}")
+            return {
+                "intent_type": None,
+                "new_object": None,
+                "reasoning": "Classifier output missing a valid intent",
+                "classification_status": "failed",
+                "classification_failure_reason": "invalid_output",
+            }
 
         new_object_raw = _get(r"NEW_OBJECT:\s*(.+)", "null")
         new_object = None if new_object_raw.lower() in ("null", "none", "") else new_object_raw
@@ -105,18 +123,22 @@ async def classify_intent(
             "intent_type": intent_type,
             "new_object": new_object,
             "reasoning": reasoning,
+            "classification_status": "ok",
+            "classification_failure_reason": None,
         }
         logger.info(f"[CLASSIFY] intent={intent_type} | new_object={new_object} | reasoning={reasoning}")
         return result
 
     except Exception as e:
-        logger.error(f"[CLASSIFY] Error: {e}, defaulting to CLARIFYING_IDK")
+        logger.error(f"[CLASSIFY] Error: {e}, using fallback-freeform path")
         import traceback
         traceback.print_exc()
         return {
-            "intent_type": "CLARIFYING_IDK",
+            "intent_type": None,
             "new_object": None,
-            "reasoning": f"Classification error: {str(e)}"
+            "reasoning": f"Classification error: {str(e)}",
+            "classification_status": "failed",
+            "classification_failure_reason": "exception",
         }
 
 

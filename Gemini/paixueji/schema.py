@@ -87,6 +87,8 @@ class StreamChunk(BaseModel):
 
     # Intent classification (9-node architecture)
     intent_type: str | None = None
+    classification_status: str | None = None
+    classification_failure_reason: str | None = None
 
     # Fun fact state
     fun_fact: Optional[str] = None
