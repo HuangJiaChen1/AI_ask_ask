@@ -353,6 +353,7 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
         + list((state.get("engagement_dimensions") or {}).keys())
     )
     remaining_dims = [d for d in all_dims if d not in (state.get("dimensions_covered") or [])]
+    previous_assistant_response = extract_previous_response(state["messages"])
 
     # Run intent + dimension classification in parallel
     intent_result, current_dim = await asyncio.gather(
@@ -365,7 +366,7 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
         classify_dimension(
             assistant=state["assistant"],
             child_answer=state["content"],
-            last_assistant_message=state.get("full_response_text", ""),
+            last_assistant_message=previous_assistant_response,
             object_name=state["object_name"],
             available_dimensions=remaining_dims,
         ),

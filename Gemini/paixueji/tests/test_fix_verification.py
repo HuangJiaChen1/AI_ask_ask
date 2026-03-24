@@ -619,3 +619,52 @@ class TestClassificationFailureRouting:
         assert result["intent_type"] is None
         assert result["classification_status"] == "failed"
         assert result["classification_failure_reason"] == "invalid_output"
+
+
+class TestDimensionClassificationContext:
+    """Dimension classification should read the previous assistant turn during analyze_input."""
+
+    @pytest.mark.asyncio
+    async def test_node_analyze_input_passes_previous_assistant_turn_to_dimension_classifier(self):
+        import graph
+
+        previous_assistant_turn = "It is round and shiny. What color is it?"
+        assistant = _make_mock_assistant(struggle_count=0)
+        assistant.dimensions_covered = []
+        assistant.active_dimension = None
+        assistant.active_dimension_turn_count = 0
+
+        state = _build_minimal_state(
+            assistant,
+            messages=[
+                {"role": "assistant", "content": previous_assistant_turn},
+                {"role": "user", "content": "Red"},
+            ],
+            intent_type=None,
+        )
+        state["content"] = "Red"
+        state["physical_dimensions"] = {"color": {"hue": "red"}}
+        state["engagement_dimensions"] = {}
+        state["dimensions_covered"] = []
+        state["active_dimension"] = None
+        state["active_dimension_turn_count"] = 0
+        state["full_response_text"] = ""
+
+        mock_intent = AsyncMock(
+            return_value={
+                "intent_type": "CORRECT_ANSWER",
+                "new_object": None,
+                "reasoning": "Child answered correctly",
+                "classification_status": "ok",
+                "classification_failure_reason": None,
+            }
+        )
+        mock_dimension = AsyncMock(return_value="color")
+
+        with patch("graph.classify_intent", new=mock_intent), patch(
+            "graph.classify_dimension", new=mock_dimension
+        ):
+            result = await graph.node_analyze_input(state)
+
+        assert mock_dimension.await_args.kwargs["last_assistant_message"] == previous_assistant_turn
+        assert result["current_dimension"] == "color"
