@@ -386,12 +386,6 @@ def start_conversation():
                         "detected_object_name": None,
                         "response_type": "introduction",
 
-                        # Fun fact (grounded)
-                        "fun_fact": "",
-                        "fun_fact_hook": "",
-                        "fun_fact_question": "",
-                        "real_facts": "",
-
                         # Hook type selection
                         "hook_types": HOOK_TYPES,
                         "selected_hook_type": None,

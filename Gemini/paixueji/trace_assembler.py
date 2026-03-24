@@ -21,10 +21,9 @@ from trace_schema import (
 
 
 _NODE_GLOSSARY = """Graph node roles:
-- router:route_from_start: Decides guide_navigator (guide active/hint), generate_fun_fact (intro), or analyze_input (chat)
+- router:route_from_start: Decides guide_navigator (guide active/hint), generate_intro (intro), or analyze_input (chat)
 - analyze_input: Classifies child's utterance into 1 of 9 intents; uses prompt 'user_intent_prompt'
 - router:route_from_analyze_input: Routes to one of 9 intent nodes based on intent_type
-- generate_fun_fact: Generates grounded fun facts for introduction turn (Google Search grounding)
 - generate_intro: Streams the introduction response using ask_introduction_question_stream
 - curiosity: Child asks why/what/how — expand gently + suggest action; uses 'curiosity_intent_prompt'
 - clarifying_idk: Child says "I don't know" — affirm + give partial answer; uses 'clarifying_idk_intent_prompt'

@@ -479,10 +479,6 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
         age=state["age"],
         config=state["config"],
         client=state["client"],
-        fun_fact=state.get("fun_fact", ""),
-        fun_fact_hook=state.get("fun_fact_hook", ""),
-        fun_fact_question=state.get("fun_fact_question", ""),
-        real_facts=state.get("real_facts", ""),
         hook_type_section=hook_type_section
     )
 
@@ -1644,7 +1640,6 @@ def build_paixueji_graph():
 
     # --- Core nodes ---
     workflow.add_node("analyze_input", node_analyze_input)
-    workflow.add_node("generate_fun_fact", node_generate_fun_fact)
     workflow.add_node("generate_intro", node_generate_intro)
 
     # --- 13 Intent nodes ---
@@ -1678,7 +1673,7 @@ def build_paixueji_graph():
 
     # --- START router ---
     # Guide phase active/hint → guide_navigator
-    # Introduction (response_type == "introduction") → generate_fun_fact
+    # Introduction (response_type == "introduction") → generate_intro
     # Everything else → analyze_input
     @trace_router(["guide_phase", "response_type"])
     def route_from_start(state):
@@ -1691,7 +1686,7 @@ def build_paixueji_graph():
             return "guide_navigator"
 
         if state.get("response_type") == "introduction":
-            return "generate_fun_fact"
+            return "generate_intro"
 
         return "analyze_input"
 
@@ -1700,13 +1695,12 @@ def build_paixueji_graph():
         route_from_start,
         {
             "analyze_input": "analyze_input",
-            "generate_fun_fact": "generate_fun_fact",
+            "generate_intro": "generate_intro",
             "guide_navigator": "guide_navigator"
         }
     )
 
-    # Introduction path: fun fact → intro → finalize
-    workflow.add_edge("generate_fun_fact", "generate_intro")
+    # Introduction path: intro → finalize
     workflow.add_edge("generate_intro", "finalize")
 
     # Chat path: analyze_input → route_from_analyze_input → one of 9 intent nodes
