@@ -185,7 +185,8 @@ function renderDetail(report) {
                 sep = `<div class="rv-phase-sep">── ${rvEsc(turn.phase)} PHASE ──</div>`;
                 lastPhase = turn.phase;
             }
-            const isCrit   = !!turn.critique;
+            const isCrit   = !!(turn.critique &&
+                (turn.critique.expected || turn.critique.problematic || turn.critique.conclusion));
             const critClass = isCrit ? ' rv-bubble-critiqued' : '';
             const critBadge = isCrit ? '<span class="rv-crit-badge">📝 Critique</span>' : '';
             const dataAttr  = isCrit ? ` data-exchange-idx="${turn.exchange_index}"` : '';

@@ -1873,7 +1873,8 @@ def _parse_hf_report(filepath):
 
             cm = re.search(r'#### Conclusion\n+(.+?)(?=\n\n---|\n###|\Z)', block, re.DOTALL)
             crit["conclusion"] = cm.group(1).strip() if cm else None
-            critiques[eidx] = crit
+            if crit["expected"] or crit["problematic"] or crit["conclusion"]:
+                critiques[eidx] = crit
 
     # Parse Introduction critique (exchange_index == 0)
     intro_sec = get_section("Introduction")
@@ -1886,7 +1887,8 @@ def _parse_hf_report(filepath):
         crit["problematic"] = all_problematic[-1].strip() if all_problematic else None
         cm = re.search(r'#### Conclusion\n+(.+?)(?=\n\n---|\n###|\Z)', intro_sec, re.DOTALL)
         crit["conclusion"] = cm.group(1).strip() if cm else None
-        critiques[0] = crit
+        if crit["expected"] or crit["problematic"] or crit["conclusion"]:
+            critiques[0] = crit
 
     # Attach critiques to matching model turns
     for turn in result["transcript"]:
