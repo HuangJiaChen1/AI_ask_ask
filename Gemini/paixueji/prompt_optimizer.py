@@ -1214,7 +1214,8 @@ def run_dspy_optimization(
     traces: "list[TraceObject]",
     config: dict,
     client,
+    verbose: bool = True,
 ) -> "OptimizationResult | None":
     """Entry point for the Hybrid B+C loop. Delegates to optimizer.convergence_loop."""
     from optimizer.convergence_loop import run_optimization_loop
-    return run_optimization_loop(culprit_name, traces, config, client)
+    return run_optimization_loop(culprit_name, traces, config, client, verbose=verbose)

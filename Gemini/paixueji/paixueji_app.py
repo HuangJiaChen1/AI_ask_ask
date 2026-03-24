@@ -1505,6 +1505,7 @@ def optimize_prompt():
                 traces=traces,
                 config=cfg,
                 client=GLOBAL_GEMINI_CLIENT,
+                verbose=True,
             )
             if result is None:
                 return jsonify({"success": False, "error": "Score too low — nothing saved"}), 422
