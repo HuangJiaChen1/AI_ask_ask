@@ -7,6 +7,7 @@ Fix 2: CORRECT_ANSWER_INTENT_PROMPT BEAT 3 — yes/no preference for ages 3-5
 Fix 3: FOLLOWUP_QUESTION_PROMPT rule 6 — "Did you know..." banned; "You know what..." approved
 Fix 4: IDK Escalation — unified consecutive_struggle_count (IDK + wrong) + router-level escalation
 """
+import asyncio
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 
@@ -666,5 +667,148 @@ class TestDimensionClassificationContext:
         ):
             result = await graph.node_analyze_input(state)
 
+        pending_task = result["pending_dimension_task"]
+        assert pending_task is not None
+        await pending_task
         assert mock_dimension.await_args.kwargs["last_assistant_message"] == previous_assistant_turn
-        assert result["current_dimension"] == "color"
+        assert result["current_dimension"] is None
+
+
+class TestDeferredDimensionClassification:
+    """Dimension classification should move off the TTFT-critical path."""
+
+    @pytest.mark.asyncio
+    async def test_node_analyze_input_does_not_wait_for_slow_dimension_classifier(self):
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=0)
+        assistant.dimensions_covered = []
+        assistant.active_dimension = None
+        assistant.active_dimension_turn_count = 0
+
+        state = _build_minimal_state(
+            assistant,
+            messages=[{"role": "assistant", "content": "What color is it?"}],
+            intent_type=None,
+        )
+        state["content"] = "Red"
+        state["physical_dimensions"] = {"color": {"hue": "red"}}
+        state["engagement_dimensions"] = {}
+        state["dimensions_covered"] = []
+        state["active_dimension"] = None
+        state["active_dimension_turn_count"] = 0
+
+        release_dimension = asyncio.Event()
+
+        async def slow_dimension(*args, **kwargs):
+            await release_dimension.wait()
+            return "color"
+
+        with patch(
+            "graph.classify_intent",
+            new=AsyncMock(
+                return_value={
+                    "intent_type": "CORRECT_ANSWER",
+                    "new_object": None,
+                    "reasoning": "Child answered correctly",
+                    "classification_status": "ok",
+                    "classification_failure_reason": None,
+                }
+            ),
+        ), patch("graph.classify_dimension", new=slow_dimension):
+            result = await asyncio.wait_for(graph.node_analyze_input(state), timeout=0.05)
+
+        pending_task = result["pending_dimension_task"]
+        assert pending_task is not None
+        assert not pending_task.done()
+        assert result["current_dimension"] is None
+        assert assistant.active_dimension is None
+
+        release_dimension.set()
+        resolved_dimension = await pending_task
+        assert resolved_dimension == "color"
+
+    @pytest.mark.asyncio
+    async def test_social_acknowledgment_waits_for_pending_dimension_before_followup(self):
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=0)
+        assistant.dimensions_covered = []
+        assistant.active_dimension = "shape"
+        assistant.active_dimension_turn_count = 1
+        assistant.guide_phase = None
+        assistant.ibpyp_theme_name = None
+        assistant.key_concept = None
+        assistant.ibpyp_theme_reason = None
+        assistant.bridge_question = None
+
+        state = _build_minimal_state(
+            assistant,
+            messages=[{"role": "assistant", "content": "Wow!"}],
+            intent_type="social_acknowledgment",
+        )
+        state["content"] = "cool"
+        state["physical_dimensions"] = {
+            "shape": {"form": "round"},
+            "color": {"hue": "red"},
+        }
+        state["engagement_dimensions"] = {}
+        state["dimensions_covered"] = []
+        state["active_dimension"] = "shape"
+        state["active_dimension_turn_count"] = 1
+        state["pending_dimension_task"] = asyncio.create_task(asyncio.sleep(0, result="color"))
+
+        with patch("graph.generate_intent_response_stream", return_value=object()), patch(
+            "graph.stream_generator_to_callback",
+            new=AsyncMock(side_effect=[("brief reaction", 1), ("follow-up question", 2)]),
+        ), patch("graph.ask_followup_question_stream", return_value=object()) as mock_followup:
+            result = await graph.node_social_acknowledgment(state)
+
+        dimension_hint = mock_followup.call_args.kwargs["dimension_hint"]
+        assert '[Dimension suggestion: "color"]' in dimension_hint
+        assert assistant.active_dimension == "color"
+        assert assistant.dimensions_covered == ["shape"]
+        assert state["pending_dimension_task"] is None
+        assert result["full_response_text"] == "brief reaction follow-up question"
+
+    @pytest.mark.asyncio
+    async def test_node_finalize_resolves_pending_dimension_for_one_stage_paths(self):
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=0)
+        assistant.dimensions_covered = []
+        assistant.active_dimension = "shape"
+        assistant.active_dimension_turn_count = 1
+        assistant.guide_phase = None
+        assistant.ibpyp_theme_name = None
+        assistant.key_concept = None
+        assistant.ibpyp_theme_reason = None
+        assistant.bridge_question = None
+        assistant._router_traces = []
+
+        state = _build_minimal_state(
+            assistant,
+            messages=[{"role": "assistant", "content": "It looks funny!"}],
+            intent_type="play",
+        )
+        state["content"] = "a monster"
+        state["physical_dimensions"] = {
+            "shape": {"form": "round"},
+            "color": {"hue": "red"},
+        }
+        state["engagement_dimensions"] = {}
+        state["dimensions_covered"] = []
+        state["active_dimension"] = "shape"
+        state["active_dimension_turn_count"] = 1
+        state["pending_dimension_task"] = asyncio.create_task(asyncio.sleep(0, result="color"))
+        state["full_response_text"] = "Let's imagine it together."
+        state["response_type"] = "play"
+        state["classification_status"] = "ok"
+        state["classification_failure_reason"] = None
+
+        await graph.node_finalize(state)
+
+        assert assistant.active_dimension == "color"
+        assert assistant.dimensions_covered == ["shape"]
+        assert state["pending_dimension_task"] is None
+        assert state["stream_callback"].await_count == 1

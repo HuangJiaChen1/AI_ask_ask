@@ -131,6 +131,7 @@ class PaixuejiState(TypedDict):
     stream_callback: Any   # Async callback function(chunk: StreamChunk) -> None
     start_time: float
     ttft: Optional[float]  # Time to First Token (seconds)
+    pending_dimension_task: Optional[Any]  # asyncio.Task[str | None] deferred off the TTFT path
 
     # --- Execution Tracing ---
     nodes_executed: List[dict]  # [{"node": str, "time_ms": float, "changes": dict}]
@@ -308,6 +309,61 @@ def _build_dimension_hint(state: "PaixuejiState") -> str:
         return "\n".join(lines)
 
 
+def _apply_dimension_result(state: "PaixuejiState", current_dim: str | None) -> dict:
+    """Apply a resolved dimension classification result to state and assistant."""
+    active_dim = state.get("active_dimension")
+    active_dim_turn = state.get("active_dimension_turn_count", 0)
+    new_covered = list(state.get("dimensions_covered") or [])
+
+    if current_dim is None:
+        new_active_dim = active_dim
+        new_active_dim_turn = active_dim_turn
+    elif current_dim == active_dim:
+        new_active_dim = active_dim
+        new_active_dim_turn = active_dim_turn + 1
+    else:
+        if active_dim and active_dim not in new_covered:
+            new_covered.append(active_dim)
+        new_active_dim = current_dim
+        new_active_dim_turn = 0
+
+    assistant = state["assistant"]
+    assistant.dimensions_covered = new_covered
+    assistant.active_dimension = new_active_dim
+    assistant.active_dimension_turn_count = new_active_dim_turn
+
+    updates = {
+        "current_dimension": current_dim,
+        "dimensions_covered": new_covered,
+        "active_dimension": new_active_dim,
+        "active_dimension_turn_count": new_active_dim_turn,
+    }
+    state.update(updates)
+    return updates
+
+
+async def _resolve_pending_dimension(state: "PaixuejiState", wait_context: str) -> dict:
+    """Await and apply any pending dimension classification exactly once."""
+    pending_task = state.get("pending_dimension_task")
+    if pending_task is None:
+        return {}
+
+    state["pending_dimension_task"] = None
+    wait_start = time.time()
+    try:
+        current_dim = await pending_task
+    except Exception as exc:
+        logger.warning(f"[{state['session_id']}] Deferred dimension classification failed during {wait_context}: {exc}")
+        current_dim = None
+
+    updates = _apply_dimension_result(state, current_dim)
+    logger.info(
+        f"[{state['session_id']}] Deferred dimension resolved in {time.time() - wait_start:.3f}s "
+        f"during {wait_context} | dim={current_dim}"
+    )
+    return updates
+
+
 # ============================================================================
 # TOPIC SWITCH HELPER
 # ============================================================================
@@ -354,22 +410,25 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
     )
     remaining_dims = [d for d in all_dims if d not in (state.get("dimensions_covered") or [])]
     previous_assistant_response = extract_previous_response(state["messages"])
+    pending_dimension_task = None
+    if remaining_dims:
+        pending_dimension_task = asyncio.create_task(
+            classify_dimension(
+                assistant=state["assistant"],
+                child_answer=state["content"],
+                last_assistant_message=previous_assistant_response,
+                object_name=state["object_name"],
+                available_dimensions=remaining_dims,
+            )
+        )
 
-    # Run intent + dimension classification in parallel
-    intent_result, current_dim = await asyncio.gather(
-        classify_intent(
-            assistant=state["assistant"],
-            child_answer=state["content"],
-            object_name=state["object_name"],
-            age=state["age"],
-        ),
-        classify_dimension(
-            assistant=state["assistant"],
-            child_answer=state["content"],
-            last_assistant_message=previous_assistant_response,
-            object_name=state["object_name"],
-            available_dimensions=remaining_dims,
-        ),
+    # Intent classification stays on the routing critical path; dimension classification
+    # continues in the background and is resolved later when needed.
+    intent_result = await classify_intent(
+        assistant=state["assistant"],
+        child_answer=state["content"],
+        object_name=state["object_name"],
+        age=state["age"],
     )
 
     intent_type = intent_result["intent_type"]
@@ -384,44 +443,20 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
     else:
         state["assistant"].consecutive_struggle_count = 0
 
-    # --- Active Dimension Dwelling Logic ---
-    active_dim      = state.get("active_dimension")
-    active_dim_turn = state.get("active_dimension_turn_count", 0)
-    new_covered     = list(state.get("dimensions_covered") or [])
-
-    if current_dim is None:
-        # LLM could not classify — stay put, change nothing
-        new_active_dim      = active_dim
-        new_active_dim_turn = active_dim_turn
-    elif current_dim == active_dim:
-        # Child's response stays within the dimension we are dwelling in
-        new_active_dim      = active_dim
-        new_active_dim_turn = active_dim_turn + 1
-    else:
-        # Child's response belongs to a DIFFERENT dimension — leave old, enter new
-        if active_dim and active_dim not in new_covered:
-            new_covered.append(active_dim)   # mark old dimension as covered
-        new_active_dim      = current_dim
-        new_active_dim_turn = 0              # reset turn counter for new dimension
-
-    # Persist to assistant so next turn's continue-state can read it
-    state["assistant"].dimensions_covered          = new_covered
-    state["assistant"].active_dimension            = new_active_dim
-    state["assistant"].active_dimension_turn_count = new_active_dim_turn
-
     logger.info(
         f"[{state['session_id']}] Node: Analyze Input finished in {time.time() - start_time:.3f}s "
-        f"| intent={intent_type} | dim={current_dim} | active={new_active_dim} (turn {new_active_dim_turn})"
+        f"| intent={intent_type} | dim={'pending' if pending_dimension_task else None}"
     )
     return {
         "intent_type": intent_type,
         "new_object_name": intent_result.get("new_object"),
         "classification_status": classification_status,
         "classification_failure_reason": classification_failure_reason,
-        "current_dimension": current_dim,
-        "dimensions_covered": new_covered,
-        "active_dimension": new_active_dim,
-        "active_dimension_turn_count": new_active_dim_turn,
+        "current_dimension": None,
+        "dimensions_covered": list(state.get("dimensions_covered") or []),
+        "active_dimension": state.get("active_dimension"),
+        "active_dimension_turn_count": state.get("active_dimension_turn_count", 0),
+        "pending_dimension_task": pending_dimension_task,
     }
 
 
@@ -712,6 +747,7 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
     messages_with_response = messages + [{"role": "assistant", "content": full_text_intent}]
 
     # Second call: follow-up question
+    await _resolve_pending_dimension(state, wait_context="give_answer_idk_followup")
     followup_gen = ask_followup_question_stream(
         messages=messages_with_response,
         object_name=state["object_name"],
@@ -816,6 +852,7 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
     messages_with_response = messages + [{"role": "assistant", "content": full_text_intent}]
 
     # Second call: followup question
+    await _resolve_pending_dimension(state, wait_context="correct_answer_followup")
     followup_gen = ask_followup_question_stream(
         messages=messages_with_response,
         object_name=state["object_name"],
@@ -864,6 +901,7 @@ async def node_informative(state: PaixuejiState) -> dict:
     messages_with_response = messages + [{"role": "assistant", "content": full_text_intent}]
 
     # Second call: follow-up question
+    await _resolve_pending_dimension(state, wait_context="informative_followup")
     followup_gen = ask_followup_question_stream(
         messages=messages_with_response,
         object_name=state["object_name"],
@@ -1093,6 +1131,7 @@ async def node_social(state: PaixuejiState) -> dict:
     messages_with_response = messages + [{"role": "assistant", "content": full_text_intent}]
 
     # Second call: follow-up question
+    await _resolve_pending_dimension(state, wait_context="social_followup")
     followup_gen = ask_followup_question_stream(
         messages=messages_with_response,
         object_name=state["object_name"],
@@ -1140,6 +1179,7 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
     messages_with_response = messages + [{"role": "assistant", "content": full_text_intent}]
 
     # Second call: follow-up question
+    await _resolve_pending_dimension(state, wait_context="social_ack_followup")
     followup_gen = ask_followup_question_stream(
         messages=messages_with_response,
         object_name=state["object_name"],
@@ -1477,6 +1517,7 @@ async def node_finalize(state: PaixuejiState) -> dict:
     """
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Finalize")
+    await _resolve_pending_dimension(state, wait_context="finalize")
 
     full_response = state.get("full_response_text", "")
     if state.get("full_question_text"):
