@@ -126,3 +126,10 @@ class StreamChunk(BaseModel):
 
     # Hook type selected for this session (set on introduction, null otherwise)
     selected_hook_type: Optional[str] = None
+
+    # Dimension debug info (set on follow-up question chunks)
+    active_dimension: Optional[str] = None
+    current_dimension: Optional[str] = None
+    active_dimension_turn_count: Optional[int] = None
+    dimensions_covered: Optional[list[str]] = None
+    dimension_hint_text: Optional[str] = None

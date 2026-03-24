@@ -1,12 +1,14 @@
 domain: animals
-entity_count: 133
+entity_count: 137
 subcategories:
   bears: 3
+  beetles: 1
   big_cats: 5
-  cats: 5
+  cats: 6
   city_birds: 1
   crocodilians: 2
-  dogs: 10
+  dinosaurs: 1
+  dogs: 11
   farm_animals: 8
   farm_birds: 4
   flightless_birds: 3

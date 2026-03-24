@@ -27,6 +27,9 @@ let retryCountdownInterval = null;
 let retryAutoTimer = null;
 let errorBubble = null;           // DOM reference to active error bubble
 
+// Game-eligible entities (populated from /api/objects has_game flag)
+const gameEntityNames = new Set();
+
 // UI state
 let currentObject = null;  // Current object being discussed
 let guidePhase = null;  // Guide phase (active, success, hint, exit)
@@ -38,6 +41,10 @@ let currentResponseType = null;     // Last response node that actually ran
 let currentHookType = null;         // Hook type selected for this session
 let currentClassificationStatus = null;
 let currentClassificationFailureReason = null;
+let currentActiveDimension = null;
+let currentCurrentDimension = null;
+let currentDimensionsCovered = [];
+let currentDimensionHintText = null;
 
 const INTENT_METADATA = {
     ACTION: {
@@ -229,6 +236,22 @@ const HOOK_TYPE_METADATA = {
     '细节发现':      { color: '#2563eb', description: 'Notice a specific sensory detail',              descriptionZh: '引导发现一个细节' },
     '经验、生活链接': { color: '#d97706', description: 'Connect to the child\'s own experiences',       descriptionZh: '与孩子自身经历联结' },
     '创意改造':      { color: '#dc2626', description: 'Imagine redesigning or upgrading the object',   descriptionZh: '鼓励孩子改造或升级物品' },
+};
+
+const DIMENSION_METADATA = {
+    // Physical (blue family)
+    'appearance':  { color: '#3b82f6' },
+    'senses':      { color: '#60a5fa' },
+    'function':    { color: '#2563eb' },
+    'structure':   { color: '#1d4ed8' },
+    'context':     { color: '#93c5fd' },
+    'change':      { color: '#bfdbfe' },
+    // Engagement (green/purple family)
+    'emotions':     { color: '#10b981' },
+    'relationship': { color: '#a855f7' },
+    'reasoning':    { color: '#8b5cf6' },
+    'imagination':  { color: '#06b6d4' },
+    'narrative':    { color: '#f59e0b' },
 };
 
 function setBilingualDescription(element, english, chinese) {
@@ -872,6 +895,24 @@ function handleStreamChunk(chunk) {
         updateDebugPanel();
     }
 
+    // Update dimension debug state (set on follow-up question chunks)
+    if (chunk.active_dimension !== undefined && chunk.active_dimension !== null) {
+        currentActiveDimension = chunk.active_dimension;
+        updateDebugPanel();
+    }
+    if (chunk.current_dimension !== undefined && chunk.current_dimension !== null) {
+        currentCurrentDimension = chunk.current_dimension;
+        updateDebugPanel();
+    }
+    if (chunk.dimensions_covered !== undefined && chunk.dimensions_covered !== null) {
+        currentDimensionsCovered = chunk.dimensions_covered;
+        updateDebugPanel();
+    }
+    if (chunk.dimension_hint_text !== undefined && chunk.dimension_hint_text !== null) {
+        currentDimensionHintText = chunk.dimension_hint_text;
+        updateDebugPanel();
+    }
+
     // Update hook type (set on introduction, persists for session)
     if (chunk.selected_hook_type) {
         currentHookType = chunk.selected_hook_type;
@@ -1043,20 +1084,98 @@ function updateDebugPanel() {
     if (classificationReasonEl) {
         classificationReasonEl.textContent = currentClassificationFailureReason || '-';
     }
+
+    // --- Dimension debug section ---
+    const activeDimEl = document.getElementById('debugActiveDimension');
+    if (activeDimEl) {
+        if (currentActiveDimension) {
+            const meta = DIMENSION_METADATA[currentActiveDimension] || {};
+            activeDimEl.textContent = currentActiveDimension;
+            activeDimEl.style.color = meta.color || '#0f172a';
+        } else {
+            activeDimEl.textContent = '-';
+            activeDimEl.style.color = '#94a3b8';
+        }
+    }
+
+    const currentDimEl = document.getElementById('debugCurrentDimension');
+    if (currentDimEl) {
+        if (currentCurrentDimension) {
+            const meta = DIMENSION_METADATA[currentCurrentDimension] || {};
+            currentDimEl.textContent = currentCurrentDimension;
+            currentDimEl.style.color = meta.color || '#0f172a';
+        } else {
+            currentDimEl.textContent = '-';
+            currentDimEl.style.color = '#94a3b8';
+        }
+    }
+
+    const coveredEl = document.getElementById('debugDimensionsCovered');
+    if (coveredEl) {
+        coveredEl.textContent = currentDimensionsCovered.length > 0
+            ? currentDimensionsCovered.join(' · ')
+            : '-';
+    }
+
+    const hintEl = document.getElementById('debugDimensionHint');
+    if (hintEl) {
+        hintEl.textContent = currentDimensionHintText || '(no hint — entity not in DB or all covered)';
+    }
+}
+
+function toggleDimensionHint() {
+    const hint = document.getElementById('debugDimensionHint');
+    const btn = hint.previousElementSibling;
+    if (hint.style.display === 'none') {
+        hint.style.display = 'block';
+        btn.textContent = 'Hint ▼';
+    } else {
+        hint.style.display = 'none';
+        btn.textContent = 'Hint ▶';
+    }
 }
 
 /**
- * Show the "chat phase complete" modal (4th correct answer reached)
+ * Show the "chat phase complete" modal (4th correct answer reached).
+ * For game-eligible entities the button becomes "Let's Play!" and triggers handoff.
  */
 function showChatPhaseCompleteModal() {
     const modal = document.getElementById('chatPhaseCompleteModal');
     modal.style.display = 'flex';
+
+    const btn = modal.querySelector('button');
+    if (currentObject && gameEntityNames.has(currentObject)) {
+        btn.textContent = "Let's Play!";
+        btn.onclick = handoff;
+    } else {
+        btn.textContent = 'Got it!';
+        btn.onclick = closeChatPhaseCompleteModal;
+    }
 }
 
 function closeChatPhaseCompleteModal() {
     document.getElementById('chatPhaseCompleteModal').style.display = 'none';
     document.getElementById('userInput').disabled = true;
     document.getElementById('sendBtn').disabled = true;
+}
+
+/**
+ * Save conversation history and redirect to WonderLens.
+ */
+async function handoff() {
+    try {
+        const res = await fetch('/api/handoff', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: sessionId }),
+        });
+        if (!res.ok) throw new Error('Handoff failed: ' + res.status);
+        const data = await res.json();
+        window.location.href = data.redirect_url;
+    } catch (err) {
+        console.error('Handoff error:', err);
+        closeChatPhaseCompleteModal();
+    }
 }
 
 /**
@@ -1182,7 +1301,12 @@ async function loadObjects() {
             for (const item of items) {
                 const opt = document.createElement('option');
                 opt.value = item.name.toLowerCase();
-                opt.textContent = item.name;
+                if (item.has_game) {
+                    opt.textContent = '🎮 ' + item.name;
+                    gameEntityNames.add(item.name.toLowerCase());
+                } else {
+                    opt.textContent = item.name;
+                }
                 group.appendChild(opt);
             }
             select.appendChild(group);

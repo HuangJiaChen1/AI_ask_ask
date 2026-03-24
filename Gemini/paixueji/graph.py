@@ -90,6 +90,7 @@ class PaixuejiState(TypedDict):
     current_dimension: Optional[str]  # dimension classified for this turn
     active_dimension: Optional[str]      # dimension we are dwelling in (persists across turns)
     active_dimension_turn_count: int     # turns in current dimension (drives attr rotation)
+    dimension_hint_text: Optional[str]   # transient: hint string set before followup, read by stream callback
 
     # --- Prompts ---
     age_prompt: str
@@ -592,6 +593,12 @@ async def stream_generator_to_callback(generator, state: PaixuejiState, response
                 detected_object_name=state["detected_object_name"],
 
                 response_type=response_type_override or state["response_type"],
+
+                active_dimension=state.get("active_dimension"),
+                current_dimension=state.get("current_dimension"),
+                active_dimension_turn_count=state.get("active_dimension_turn_count"),
+                dimensions_covered=state.get("dimensions_covered"),
+                dimension_hint_text=state.get("dimension_hint_text"),
             )
             await state["stream_callback"](chunk)
 
@@ -748,6 +755,8 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
 
     # Second call: follow-up question
     await _resolve_pending_dimension(state, wait_context="give_answer_idk_followup")
+    _dim_hint = _build_dimension_hint(state)
+    state["dimension_hint_text"] = _dim_hint
     followup_gen = ask_followup_question_stream(
         messages=messages_with_response,
         object_name=state["object_name"],
@@ -755,7 +764,7 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
         age=state["age"],
         config=state["config"],
         client=state["client"],
-        dimension_hint=_build_dimension_hint(state),
+        dimension_hint=_dim_hint,
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 
@@ -853,6 +862,8 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
 
     # Second call: followup question
     await _resolve_pending_dimension(state, wait_context="correct_answer_followup")
+    _dim_hint = _build_dimension_hint(state)
+    state["dimension_hint_text"] = _dim_hint
     followup_gen = ask_followup_question_stream(
         messages=messages_with_response,
         object_name=state["object_name"],
@@ -860,7 +871,7 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
         age=state["age"],
         config=state["config"],
         client=state["client"],
-        dimension_hint=_build_dimension_hint(state),
+        dimension_hint=_dim_hint,
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 
@@ -902,6 +913,8 @@ async def node_informative(state: PaixuejiState) -> dict:
 
     # Second call: follow-up question
     await _resolve_pending_dimension(state, wait_context="informative_followup")
+    _dim_hint = _build_dimension_hint(state)
+    state["dimension_hint_text"] = _dim_hint
     followup_gen = ask_followup_question_stream(
         messages=messages_with_response,
         object_name=state["object_name"],
@@ -909,7 +922,7 @@ async def node_informative(state: PaixuejiState) -> dict:
         age=state["age"],
         config=state["config"],
         client=state["client"],
-        dimension_hint=_build_dimension_hint(state),
+        dimension_hint=_dim_hint,
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 
@@ -1132,6 +1145,8 @@ async def node_social(state: PaixuejiState) -> dict:
 
     # Second call: follow-up question
     await _resolve_pending_dimension(state, wait_context="social_followup")
+    _dim_hint = _build_dimension_hint(state)
+    state["dimension_hint_text"] = _dim_hint
     followup_gen = ask_followup_question_stream(
         messages=messages_with_response,
         object_name=state["object_name"],
@@ -1139,7 +1154,7 @@ async def node_social(state: PaixuejiState) -> dict:
         age=state["age"],
         config=state["config"],
         client=state["client"],
-        dimension_hint=_build_dimension_hint(state),
+        dimension_hint=_dim_hint,
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 
@@ -1180,6 +1195,8 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
 
     # Second call: follow-up question
     await _resolve_pending_dimension(state, wait_context="social_ack_followup")
+    _dim_hint = _build_dimension_hint(state)
+    state["dimension_hint_text"] = _dim_hint
     followup_gen = ask_followup_question_stream(
         messages=messages_with_response,
         object_name=state["object_name"],
@@ -1187,7 +1204,7 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
         age=state["age"],
         config=state["config"],
         client=state["client"],
-        dimension_hint=_build_dimension_hint(state),
+        dimension_hint=_dim_hint,
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 

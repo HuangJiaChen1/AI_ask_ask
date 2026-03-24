@@ -1,0 +1,149 @@
+- entity_id: animals_dog
+  entity_name: Dog
+  entity_name_cn: 狗
+  domain: animals
+  parent_category: mammals
+  subcategory: dogs
+  primary_theme:
+    theme_id: who_we_are
+    weight: 0.45
+    reasoning: A dog supports children’s identity and belonging through companionship, play, and learning how families care
+      for pets and each other.
+  secondary_themes:
+  - theme_id: how_world_works
+    weight: 0.3
+    reasoning: Children explore how dogs use noses, ears, and paws, and they wonder why dogs bark, pant, and need walks for
+      exercise.
+    context_trigger: when the child hears barking and asks why the dog is barking or what the dog is trying to do
+  - theme_id: sharing_planet
+    weight: 0.15
+    reasoning: A dog introduces shared spaces, including leash rules, cleaning up, and respecting other people and animals
+      in parks and streets.
+    context_trigger: when the child talks about walking the dog outside or sees a dog on a leash and asks about rules
+  - theme_id: how_we_express
+    weight: 0.1
+    reasoning: Children interpret tail wags, barks, and body posture as communication, and practice expressing calm, friendly
+      behavior around dogs.
+    context_trigger: when the child points to a wagging tail, copies a bark, and says the dog is excited, scared, or friendly
+  primary_key_concepts:
+  - concept_id: connection
+    relevance: 1.0
+    reasoning: Dogs help children explore connection by noticing loyalty, play routines, and how pets and people respond to
+      each other.
+  - concept_id: perspective
+    relevance: 0.9
+    reasoning: Children consider a dog’s perspective by thinking about smells, loud sounds, and why a dog might feel nervous
+      with strangers.
+  - concept_id: responsibility
+    relevance: 0.9
+    reasoning: A dog makes responsibility visible through feeding schedules, water, grooming, and remembering daily walks
+      and training.
+  secondary_key_concepts:
+  - concept_id: form
+    relevance: 0.8
+    reasoning: Children compare dog forms—snouts, paws, fur, and different sizes—matching body features to what they observe
+      in real life.
+  - concept_id: function
+    relevance: 0.6
+    reasoning: Kids explore function by asking what a dog’s nose does, why it pants, and how teeth and paws help it play and
+      eat.
+  candidate_related_concepts:
+  - concept_id: relationships
+    discipline: social_studies
+    reasoning: Dogs help children learn about friendship and trust, including how kind actions shape the pet–person relationship
+      over time.
+  - concept_id: emotion
+    discipline: pshe
+    reasoning: Children practice naming feelings by connecting dog behaviors to emotions and reflecting on their own excitement
+      or fear.
+  - concept_id: safety
+    discipline: pshe
+    reasoning: Dogs support safety learning like asking before petting, reading warning signs, and staying calm around unknown
+      animals.
+  - concept_id: habitat
+    discipline: science
+    reasoning: Children explore what a dog needs in its habitat—shelter, space, water, and exercise—and compare home versus
+      outdoor areas.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: ears
+          value: floppy ears
+          topics:
+          - Can you see the floppy ears?
+          - Do the ears hang down or stick up?
+        - attribute: body
+          value: fluffy round body
+          topics:
+          - Does the dog look fluffy?
+          - Is the dog big or small?
+        - attribute: face
+          value: cute friendly face
+          topics:
+          - Does the dog look happy?
+          - Can you see its cute face?
+        senses:
+        - attribute: fur_feel
+          value: soft and warm
+          topics:
+          - How do you think the fur feels?
+          - Would you want to give it a cuddle?
+        - attribute: sound
+          value: woof or bark
+          topics:
+          - What sound does a dog make?
+          - Can you do a little woof?
+        emotions:
+        - How does the doggy look right now — happy, sleepy, or a little bored?
+        - How does seeing this fluffy friend make you feel?
+        - Do you think it wants to play or rest?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: floppy_ears_detail
+          value: Soft floppy ears that hang down and bounce when it moves
+          topics:
+          - Why do some dogs have floppy ears while others have pointy ears?
+          - How do the ears move when the dog is excited?
+        - attribute: expression_changes
+          value: Face looks different when happy, surprised, or excited
+          topics:
+          - How can you tell if a dog is surprised?
+          - What does a dog's face look like when it's really excited?
+        senses:
+        - attribute: warm_cuddle
+          value: Fur feels warm and cuddly when you squeeze
+          topics:
+          - What does it feel like to hug a fluffy dog?
+          - Do you think the dog likes being cuddled?
+        - attribute: tail_wag_sound
+          value: Tail goes thump thump thump on the floor
+          topics:
+          - Can you hear a tail wagging fast?
+          - What makes a dog wag its tail?
+        emotions:
+        - What do you think makes the dog feel cozy and safe?
+        - How would the dog feel if something surprising happened?
+        - What makes you feel the same way as an excited dog?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: body_language_detail
+          value: A dog's whole body shows its mood — stretching means cozy, freezing means surprised, jumping means excited.
+          topics:
+          - How does a dog's body change when it feels different emotions?
+          - What does your body do when you feel surprised?
+        senses:
+        - attribute: voice_tone_sensitivity
+          value: Dogs can hear differences in your voice — a gentle voice makes them calm, an excited voice makes them wag.
+          topics:
+          - Why does your voice change how a dog feels?
+          - What voice would you use to calm a nervous dog?
+        emotions:
+        - The same dog feels cozy, surprised, and excited — all depending on what happens around it. How is that like your
+          own day?
+        - How does imagining how someone else feels help you be a better friend?
+        imagination:
+        - If the dog could talk, what would it say when warm sunshine hits its belly?
+        - What story would the dog tell about its most exciting day?

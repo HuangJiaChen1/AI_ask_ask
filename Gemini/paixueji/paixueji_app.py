@@ -197,6 +197,11 @@ def health():
     })
 
 
+GAME_ENTITY_IDS = frozenset({
+    'animals_cat', 'animals_dog', 'animals_dinosaur',
+    'animals_ladybug', 'plants_dandelion',
+})
+
 _DOMAIN_LABELS = {
     'animals': 'Animals',
     'arts_music': 'Arts & Music',
@@ -217,21 +222,16 @@ _DOMAIN_LABELS = {
 
 @app.route('/api/objects', methods=['GET'])
 def list_objects():
-    """Return the 20 fully-enriched supported objects, sorted by domain then name."""
+    """Return all supported objects from mappings_dev20_0318, sorted by domain then name."""
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    mappings_dir = os.path.join(base_dir, 'mappings_dev20')
-
-    with open(os.path.join(mappings_dir, '_enrich_progress.json'), 'r') as f:
-        completed = json.load(f)['completed']
+    mappings_dir = os.path.join(base_dir, 'mappings_dev20_0318')
 
     with open(os.path.join(mappings_dir, '_index.yaml'), 'r') as f:
         index = yaml.safe_load(f)  # {entity_id: "relative/path.yaml"}
 
     objects = []
-    for entity_id in completed:
-        rel_path = index.get(entity_id)
-        if not rel_path:
-            continue
+    for entity_id in index.keys():
+        rel_path = index[entity_id]
         yaml_path = os.path.join(mappings_dir, rel_path)
         with open(yaml_path, 'r', encoding='utf-8') as f:
             entities = yaml.safe_load(f)
@@ -244,6 +244,7 @@ def list_objects():
             'name': entity['entity_name'],
             'domain': domain,
             'domain_label': _DOMAIN_LABELS.get(domain, domain.replace('_', ' ').title()),
+            'has_game': entity_id in GAME_ENTITY_IDS,
         })
 
     objects.sort(key=lambda x: (x['domain'], x['name']))
@@ -1994,6 +1995,59 @@ def async_gen_to_sync(async_gen, loop):
             break
         elif msg_type == 'error':
             raise exception_holder[0]
+
+
+@app.route('/api/handoff', methods=['POST'])
+def create_handoff():
+    """Save conversation history to /tmp/handoff/ and return a WonderLens redirect URL."""
+    data = request.get_json()
+    session_id = data.get('session_id')
+    assistant = sessions.get(session_id)
+    if not assistant:
+        return jsonify({'error': 'session not found'}), 404
+
+    entity_name = assistant.object_name or ''
+    age = assistant.age or 5
+    if age <= 4:
+        tier = 'T0'
+    elif age <= 6:
+        tier = 'T1'
+    else:
+        tier = 'T2'
+
+    conversation = []
+    for msg in assistant.conversation_history:
+        if msg.get('role') == 'user':
+            conversation.append({'role': 'child', 'text': msg.get('content', '')})
+        elif msg.get('role') == 'assistant' and msg.get('content'):
+            conversation.append({'role': 'ai', 'text': msg['content']})
+
+    os.makedirs('/tmp/handoff', exist_ok=True)
+    filename = uuid.uuid4().hex[:8] + '.json'
+    with open(f'/tmp/handoff/{filename}', 'w', encoding='utf-8') as f:
+        json.dump(conversation, f, indent=2, ensure_ascii=False)
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(base_dir, 'config.json'), 'r', encoding='utf-8') as f:
+        config = json.load(f)
+    wonderlens_url = config.get('wonderlens_url', 'http://localhost:5174')
+
+    context_url = request.host_url + f'handoff/{filename}'
+    redirect_url = f'{wonderlens_url}/?entity={entity_name}&tier={tier}&context={context_url}'
+
+    return jsonify({'redirect_url': redirect_url, 'context_path': f'/handoff/{filename}'})
+
+
+@app.route('/handoff/<filename>', methods=['GET'])
+def serve_handoff(filename):
+    """Serve a saved handoff JSON file from /tmp/handoff/."""
+    filename = os.path.basename(filename)
+    filepath = f'/tmp/handoff/{filename}'
+    if not os.path.exists(filepath):
+        return jsonify({'error': 'not found'}), 404
+    with open(filepath, 'r', encoding='utf-8') as f:
+        contents = f.read()
+    return Response(contents, mimetype='application/json')
 
 
 if __name__ == '__main__':

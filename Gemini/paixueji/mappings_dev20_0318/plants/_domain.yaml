@@ -1,5 +1,5 @@
 domain: plants
-entity_count: 82
+entity_count: 83
 subcategories:
   berry_plants: 4
   bulbs: 2
@@ -30,7 +30,7 @@ subcategories:
   tubers: 2
   vines: 6
   water_plants: 2
-  wildflowers: 5
+  wildflowers: 6
 default_themes:
 - theme_id: how_world_works
   weight: 0.45

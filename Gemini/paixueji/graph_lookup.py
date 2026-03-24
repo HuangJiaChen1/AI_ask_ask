@@ -75,10 +75,10 @@ def _format_concept_anchors(concept: Dict[str, Any], object_name: str) -> str:
     return "\n".join(lines)
 
 
-# 相对于当前文件定位 mappings_dev20，
+# 相对于当前文件定位 mappings_dev20_0318，
 DEFAULT_MAPPINGS_DIR = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
-    "mappings_dev20"
+    "mappings_dev20_0318"
 )
 
 

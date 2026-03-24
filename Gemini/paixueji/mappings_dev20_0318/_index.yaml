@@ -18,3 +18,8 @@ plants_sunflower: plants/garden_flowers.yaml
 signs_symbols_stop_sign: signs_symbols/regulatory.yaml
 vehicles_bicycle: vehicles/two_wheelers.yaml
 vehicles_fire_truck: vehicles/fire.yaml
+animals_cat: animals/cats.yaml
+animals_dog: animals/dogs.yaml
+animals_dinosaur: animals/dinosaurs.yaml
+animals_ladybug: animals/beetles.yaml
+plants_dandelion: plants/wildflowers.yaml
