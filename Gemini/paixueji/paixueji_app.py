@@ -1603,8 +1603,12 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
     """
     from datetime import datetime
 
-    total_exchanges = len(all_exchanges)
-    critiqued_count = len(exchange_critiques)
+    total_exchanges = (len(all_exchanges)
+                       + (1 if introduction else 0)
+                       + (1 if global_conclusion else 0))
+    critiqued_count = (len(exchange_critiques)
+                       + (1 if (introduction and introduction_critique) else 0)
+                       + (1 if global_conclusion else 0))
 
     report = f"# Human Feedback Critique Report: {object_name}\n\n"
     report += f"**Session:** {session_id}\n"
