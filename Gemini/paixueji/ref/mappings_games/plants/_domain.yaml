@@ -1,0 +1,11 @@
+domain: plants
+entity_count: 1
+subcategories:
+  wildflowers: 1
+default_themes:
+- theme_id: how_world_works
+  weight: 0.45
+- theme_id: sharing_planet
+  weight: 0.3
+- theme_id: how_we_express
+  weight: 0.25

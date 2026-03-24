@@ -1,0 +1,141 @@
+- entity_id: animals_ladybug
+  entity_name: Ladybug
+  entity_name_cn: 瓢虫
+  domain: animals
+  parent_category: insects
+  subcategory: beetles
+  primary_theme:
+    theme_id: how_world_works
+    weight: 0.5
+    reasoning: A ladybug supports how the world works because children can observe its body, movement, and helpful role in
+      gardens eating tiny pests.
+  secondary_themes:
+  - theme_id: sharing_planet
+    weight: 0.3
+    reasoning: Ladybugs encourage caring for small creatures and outdoor habitats, teaching children to watch gently and return
+      insects to plants safely.
+    context_trigger: when the child tries to catch the ladybug in their hands or asks where to put it back
+  - theme_id: who_we_are
+    weight: 0.2
+    reasoning: Handling a ladybug helps children practice patience and empathy, noticing their reactions like excitement,
+      fear, or gentleness with insects.
+    context_trigger: when the child says they feel scared or brave about holding the ladybug and asks if it will hurt them
+  primary_key_concepts:
+  - concept_id: function
+    relevance: 0.9
+    reasoning: Children explore function by noticing wings for flying, legs for crawling, and how ladybugs help plants by
+      eating aphids.
+  - concept_id: form
+    relevance: 0.8
+    reasoning: 'A ladybug’s form is clear and countable: round shell, spots, antennae, and tiny legs that children can observe
+      closely.'
+  - concept_id: causation
+    relevance: 0.9
+    reasoning: Kids ask cause-and-effect questions, like why the ladybug flies away, why it hides, or what happens when it
+      loses its habitat.
+  secondary_key_concepts:
+  - concept_id: change
+    relevance: 0.9
+    reasoning: Ladybugs demonstrate change through life stages, and children can notice differences between larvae, pupae,
+      and adult insects.
+  - concept_id: connection
+    relevance: 0.7
+    reasoning: Children see connections between ladybugs and gardens, including plants, prey insects, and places like leaves
+      where they rest.
+  candidate_related_concepts:
+  - concept_id: habitat
+    discipline: science
+    reasoning: Children explore where ladybugs live—on leaves, in grass, under plants—and what they need like food, shelter,
+      and moisture.
+  - concept_id: growth
+    discipline: science
+    reasoning: Watching ladybugs supports growth ideas by comparing sizes and noticing how insects develop as they get older.
+  - concept_id: adaptation
+    discipline: science
+    reasoning: Children can link spots and bright colors to protection, learning that patterns may help warn predators and
+      keep the insect safe.
+  - concept_id: cycles
+    discipline: science
+    reasoning: Ladybugs show cycles through repeating life cycles and seasonal changes, like appearing more often in warm
+      months.
+  tier_guidance:
+    tier_0:
+      dimensions:
+        appearance:
+        - attribute: shell_color
+          value: bright red shell
+          topics:
+          - What color is the ladybug?
+          - Can you find something else that's red?
+        - attribute: spots
+          value: black polka dots
+          topics:
+          - Can you see the black dots?
+          - How many dots can you count?
+        - attribute: size
+          value: tiny little bug
+          topics:
+          - Is the ladybug big or tiny?
+          - Is it smaller than your fingernail?
+        senses:
+        - attribute: shell_feel
+          value: smooth and hard
+          topics:
+          - How do you think the shell feels?
+          - Is it smooth or bumpy?
+        - attribute: tickle
+          value: tiny feet tickle
+          topics:
+          - What does it feel like when a ladybug walks on you?
+          - Do tiny legs tickle?
+        emotions:
+        - Do you think those dots look like tiny buttons or little windows?
+        - How does seeing a ladybug make you feel?
+        - Would you be brave enough to let it walk on your finger?
+    tier_1:
+      dimensions:
+        appearance:
+        - attribute: polka_dot_pattern
+          value: Black polka dots on a bright red coat like tiny buttons
+          topics:
+          - What do the dots remind you of — buttons, windows, or something else?
+          - Are all the dots the same size?
+        - attribute: tiny_parts
+          value: Tiny legs, small antennae sticking out like feelers
+          topics:
+          - Can you spot the tiny antennae?
+          - How many legs can you count?
+        senses:
+        - attribute: shell_texture
+          value: Shell feels smooth and a bit hard when touched gently
+          topics:
+          - How is the shell different from your skin?
+          - What else feels smooth and hard like that?
+        emotions:
+        - Do you think dots make things look more interesting?
+        - How does it feel to look really closely at something so small?
+        relationship:
+        - Can you find something else nearby that has dots, spots, or circles?
+        - Are the dots on that thing bigger or smaller than the ladybug's?
+    tier_2:
+      dimensions:
+        appearance:
+        - attribute: pattern_comparison
+          value: 'The same basic pattern — dots — looks completely different on different things: big splotches on a mushroom,
+            tiny speckles on a pebble, perfect round circles on a petal.'
+          topics:
+          - How can the same pattern look so different on different things?
+          - What makes big dots feel different from tiny speckles?
+        senses:
+        - attribute: close_looking
+          value: Looking very closely at small things reveals patterns you miss from far away — spots, lines, textures hiding
+            in plain sight.
+          topics:
+          - What happens when you look at something very closely?
+          - What patterns can you discover that you didn't notice before?
+        emotions:
+        - How does it feel to discover a pattern that was hiding in plain sight?
+        - What's your favorite kind of dot or spot you found today?
+        imagination:
+        - If you could give each spotted treasure a name, what would you call them?
+        - What would a world look like where everything had polka dots?

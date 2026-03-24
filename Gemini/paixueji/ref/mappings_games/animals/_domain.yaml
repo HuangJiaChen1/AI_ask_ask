@@ -1,0 +1,14 @@
+domain: animals
+entity_count: 4
+subcategories:
+  beetles: 1
+  cats: 1
+  dinosaurs: 1
+  dogs: 1
+default_themes:
+- theme_id: how_world_works
+  weight: 0.5
+- theme_id: sharing_planet
+  weight: 0.3
+- theme_id: who_we_are
+  weight: 0.2

@@ -1,0 +1,5 @@
+animals_cat: animals/cats.yaml
+animals_dinosaur: animals/dinosaurs.yaml
+animals_dog: animals/dogs.yaml
+animals_ladybug: animals/beetles.yaml
+plants_dandelion: plants/wildflowers.yaml
