@@ -304,3 +304,55 @@ def test_candidates_endpoint_exists(client):
     resp = client.get("/api/optimize-prompt/candidates")
     assert resp.status_code == 200
     assert isinstance(resp.get_json(), dict)
+
+
+# ── reporter ──────────────────────────────────────────────────────────────
+
+def test_reporter_disabled_produces_no_output(capsys):
+    from optimizer.reporter import Reporter
+    r = Reporter(enabled=False)
+    r.loop_start("culprit", "my_prompt", 3)
+    r.round_start(1, 5)
+    r.previews_generated(3)
+    r.round_scores(0.65, 0.0, {"t1": 0.65}, [{"trace_id": "t1", "preview": "Apples are red"}])
+    r.gradients_computed(2, [
+        {"clause_id": "core", "confidence": "HIGH", "problem": "too vague", "suggested_fix": "Be specific."}
+    ])
+    r.prompt_diff("## [CLAUSE: core]\nold text\n", "## [CLAUSE: core]\nnew text\n")
+    r.early_stop("no actionable gradients")
+    r.loop_end(0.65, "queued_for_review", 1)
+    assert capsys.readouterr().out == ""
+
+
+def test_reporter_enabled_prints_culprit_and_prompt(capsys):
+    from optimizer.reporter import Reporter
+    r = Reporter(enabled=True)
+    r.loop_start("informative", "informative_intent_prompt", 2)
+    out = capsys.readouterr().out
+    assert "informative" in out
+    assert "informative_intent_prompt" in out
+
+
+def test_reporter_round_scores_shows_arrow_up(capsys):
+    from optimizer.reporter import Reporter
+    r = Reporter(enabled=True)
+    r.round_scores(0.75, 0.60, {"t1": 0.75}, [{"trace_id": "t1", "preview": "Nice!"}])
+    out = capsys.readouterr().out
+    assert "0.750" in out
+    assert "↑" in out
+
+
+def test_reporter_prompt_diff_shows_change(capsys):
+    from optimizer.reporter import Reporter
+    r = Reporter(enabled=True)
+    r.prompt_diff("## [CLAUSE: core]\nold line\n", "## [CLAUSE: core]\nnew line\n")
+    out = capsys.readouterr().out
+    assert "-old line" in out
+    assert "+new line" in out
+
+
+def test_reporter_prompt_diff_silent_when_identical(capsys):
+    from optimizer.reporter import Reporter
+    r = Reporter(enabled=True)
+    r.prompt_diff("same\n", "same\n")
+    assert capsys.readouterr().out == ""
