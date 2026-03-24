@@ -56,32 +56,6 @@ def _get_age_prompt(age: int) -> str:
 # Trace loading
 # ============================================================================
 
-def load_traces_for_culprit(culprit_name: str) -> list[TraceObject]:
-    """
-    Scan traces/*.json, parse each as TraceObject, return all where
-    culprit.culprit_name == culprit_name, sorted oldest-first.
-
-    Loading all matching traces (not just the latest) forces the optimizer LLM
-    to extract a pattern rather than patch a single case.
-    """
-    traces_dir = Path(__file__).parent / "traces"
-    if not traces_dir.exists():
-        return []
-
-    results = []
-    for f in sorted(traces_dir.glob("*.json")):
-        try:
-            trace = TraceObject.model_validate_json(f.read_text(encoding="utf-8"))
-            culprit_names = {c.culprit_name for c in effective_culprits(trace)}
-            if culprit_name in culprit_names:
-                results.append(trace)
-        except Exception as e:
-            logger.warning(f"[Optimizer] Could not parse trace {f.name}: {e}")
-
-    # Sort oldest-first so the LLM sees the history of failures
-    results.sort(key=lambda t: t.timestamp)
-    return results
-
 
 def load_traces_by_ids(trace_ids: list[str]) -> list[TraceObject]:
     """Load specific TraceObjects by ID. Used for single-trace and refinement flows."""
@@ -1126,85 +1100,6 @@ def save_optimization(result: OptimizationResult, approved: bool = False) -> str
     logger.info(f"[Optimizer] Archived approved optimization: {archive_path}")
     return str(archive_path)
 
-
-# ============================================================================
-# Orchestrator
-# ============================================================================
-
-def run_optimization(
-    client,
-    config: dict,
-    culprit_name: str,
-    prompt_name: str | None = None,
-    trace_id: str | None = None,
-) -> OptimizationResult:
-    """
-    Full optimization pipeline:
-      1. Load traces for the culprit (all historical, or single if trace_id given)
-      2. Resolve prompt name (explicit arg > trace field > error)
-      3. Call the optimizer LLM
-      4. Generate a preview response with the new prompt
-      5. Save to optimizations/pending/ (NOT to overrides yet)
-
-    Args:
-        trace_id: If provided, only that one trace is used (single-trace mode).
-                  If omitted, all historical traces for culprit_name are used.
-
-    Returns the complete OptimizationResult for the API to return to the UI.
-    """
-    if trace_id:
-        traces = load_traces_by_ids([trace_id])
-        logger.info(f"[Optimizer] Single-trace mode — trace_id={trace_id}")
-    else:
-        traces = load_traces_for_culprit(culprit_name)
-    if not traces:
-        raise ValueError(
-            f"No traces found for culprit '{culprit_name}'. "
-            f"Submit a manual critique first to generate traces."
-        )
-
-    primary_culprits = effective_culprits(traces[0])
-    resolved_name = prompt_name or (primary_culprits[0].prompt_template_name if primary_culprits else None)
-    if not resolved_name:
-        available = [
-            k for k, v in paixueji_prompts.get_prompts().items()
-            if isinstance(v, str)  # exclude nested dicts
-        ]
-        raise ValueError(
-            f"prompt_name not specified and trace has no prompt_template_name. "
-            f"Pass prompt_name explicitly. Available prompt keys: {available}"
-        )
-
-    current_prompt = paixueji_prompts.get_prompts().get(resolved_name)
-    if not isinstance(current_prompt, str):
-        raise ValueError(
-            f"'{resolved_name}' is not a string prompt (got {type(current_prompt).__name__}). "
-            f"It may be a nested mapping. "
-            f"Specify a leaf prompt key."
-        )
-
-    logger.info(
-        f"[Optimizer] Starting optimization | culprit={culprit_name} "
-        f"prompt={resolved_name} traces={len(traces)}"
-    )
-
-    result = optimize_prompt_llm(
-        client, config, culprit_name, resolved_name, current_prompt, traces
-    )
-
-    # Generate previews — one per (trace, matching-culprit) pair, capped at 3
-    try:
-        result.previews = generate_previews_for_traces(
-            client, config, traces, result.optimized_prompt, resolved_name, culprit_name
-        )
-        result.preview_response = result.previews[0]["preview"] if result.previews else ""
-    except Exception as e:
-        logger.warning(f"[Optimizer] Preview generation failed: {e}")
-        result.preview_response = f"(Preview generation failed: {e})"
-        result.previews = []
-
-    save_optimization(result, approved=False)
-    return result
 
 
 # ── DSPy Hybrid B+C entry point ───────────────────────────────────────────

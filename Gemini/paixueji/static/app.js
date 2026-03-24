@@ -1708,7 +1708,7 @@ function showOptimizationPrompts(traces) {
         btn.onclick = () => runOptimization(
             trace.culprit_name,
             trace.prompt_template_name,  // may be null — backend will error with helpful message
-            trace.trace_id               // single-trace mode: only this evidence used
+            trace.trace_id               // passed as trace_ids batch of one
         );
         container.appendChild(btn);
     });
@@ -1842,7 +1842,7 @@ async function runOptimization(culpritName, promptName, traceId) {
         const response = await fetch(`${API_BASE}/optimize-prompt`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({culprit_name: culpritName, prompt_name: promptName, trace_id: traceId})
+            body: JSON.stringify({culprit_name: culpritName, prompt_name: promptName, trace_ids: [traceId]})
         });
         const result = await response.json();
 

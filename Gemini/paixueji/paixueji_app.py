@@ -1463,52 +1463,38 @@ def optimize_prompt_candidates():
 @app.route('/api/optimize-prompt', methods=['POST'])
 def optimize_prompt():
     """
-    Run prompt optimization for a given culprit.
+    Run prompt optimization for a given culprit (DSPy Hybrid B+C loop).
 
     Request body variants:
-        {culprit_name}                            <- all unoptimized traces (DSPy loop)
-        {culprit_name, trace_ids: ["id1","id2"]}  <- human-selected batch (DSPy loop)
-        {culprit_name, trace_id: "id1"}           <- single trace (legacy OPRO path)
+        {culprit_name}                            <- all unoptimized traces
+        {culprit_name, trace_ids: ["id1","id2"]}  <- human-selected batch
 
     Response: full OptimizationResult JSON
     """
-    from prompt_optimizer import run_optimization, run_dspy_optimization
+    from prompt_optimizer import run_dspy_optimization
     from optimizer.trigger import get_unoptimized_traces, get_traces_by_ids
 
     data = request.get_json() or {}
     culprit_name = data.get("culprit_name")
-    prompt_name  = data.get("prompt_name")   # optional explicit override
-    trace_id     = data.get("trace_id")      # legacy single-trace path
-    trace_ids    = data.get("trace_ids")     # DSPy batch path
+    trace_ids    = data.get("trace_ids")     # optional explicit batch
 
     if not culprit_name:
         return jsonify({"success": False, "error": "culprit_name is required"}), 400
 
     try:
-        if trace_id and not trace_ids:
-            # Legacy single-trace OPRO path
-            result = run_optimization(
-                client=GLOBAL_GEMINI_CLIENT,
-                config=_load_config(),
-                culprit_name=culprit_name,
-                prompt_name=prompt_name or None,
-                trace_id=trace_id,
-            )
-        else:
-            # DSPy Hybrid B+C path
-            cfg = _load_config()
-            traces = get_traces_by_ids(trace_ids) if trace_ids else get_unoptimized_traces(culprit_name)
-            if not traces:
-                return jsonify({"success": False, "error": f"No unoptimized traces for '{culprit_name}'"}), 400
-            result = run_dspy_optimization(
-                culprit_name=culprit_name,
-                traces=traces,
-                config=cfg,
-                client=GLOBAL_GEMINI_CLIENT,
-                verbose=True,
-            )
-            if result is None:
-                return jsonify({"success": False, "error": "Score too low — nothing saved"}), 422
+        cfg = _load_config()
+        traces = get_traces_by_ids(trace_ids) if trace_ids else get_unoptimized_traces(culprit_name)
+        if not traces:
+            return jsonify({"success": False, "error": f"No unoptimized traces for '{culprit_name}'"}), 400
+        result = run_dspy_optimization(
+            culprit_name=culprit_name,
+            traces=traces,
+            config=cfg,
+            client=GLOBAL_GEMINI_CLIENT,
+            verbose=True,
+        )
+        if result is None:
+            return jsonify({"success": False, "error": "Score too low — nothing saved"}), 422
         return jsonify(result.model_dump())
     except ValueError as e:
         return jsonify({"success": False, "error": str(e)}), 400
