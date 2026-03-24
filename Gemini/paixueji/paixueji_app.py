@@ -1267,10 +1267,10 @@ def manual_critique():
             "error": "Missing session_id"
         }), 400
 
-    if not exchange_critiques:
+    if not exchange_critiques and not global_conclusion:
         return jsonify({
             "success": False,
-            "error": "At least one exchange must be critiqued"
+            "error": "At least one exchange must be critiqued or a global conclusion must be provided"
         }), 400
 
     assistant = sessions.get(session_id)
@@ -1383,7 +1383,8 @@ def manual_critique():
                 continue  # idx == 0 (Introduction) is excluded by idx < 1
             try:
                 trace_obj = assemble_trace_object(
-                    session_id, assistant, idx, all_exchanges[idx - 1], ec
+                    session_id, assistant, idx, all_exchanges[idx - 1], ec,
+                    global_conclusion=global_conclusion,
                 )
                 trace_path = save_trace_object(trace_obj)
                 trace_paths.append(trace_path)

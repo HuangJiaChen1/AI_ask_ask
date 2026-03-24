@@ -8,3 +8,4 @@ Gemini/paixueji.zip
 *.log
 /Gemini/paixueji/logs
 *.pyc
+/Gemini/paixueji/optimizations

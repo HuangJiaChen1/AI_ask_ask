@@ -60,6 +60,7 @@ def identify_culprit_llm(
     validation_result: dict | None = None,
     navigation_result: dict | None = None,
     focus_aspect: str | None = None,   # "question" | "response" | None
+    global_conclusion: str | None = None,
 ) -> CulpritIdentification:
     """
     Use a Gemini LLM to holistically identify the component responsible for the failure.
@@ -124,7 +125,8 @@ Model response: {exchange.model_response}
 
 [HUMAN CRITIQUE]
 Response problem: {response_problem_text}
-Conclusion: {critique.conclusion or "(none)"}
+Exchange conclusion: {critique.conclusion or "(none)"}
+Global conclusion (applies to entire session): {global_conclusion or "(none)"}
 
 ---
 {focus_directive}
@@ -141,7 +143,7 @@ Output a single JSON object with EXACTLY these fields:
   "culprit_name": "<exact node or component name from the glossary above>",
   "confidence_level": "LOW" | "MODERATE" | "CONFIDENT" | "VERY_CONFIDENT",
   "reasoning": "<2-4 sentences referencing the actual exchange content and why this component is responsible>",
-  "prompt_template_name": "<exact key — pick from: fun_fact_structuring_prompt, fun_fact_grounding_prompt, introduction_prompt, user_intent_prompt (analyze_input), curiosity_intent_prompt, clarifying_idk_intent_prompt, clarifying_wrong_intent_prompt, clarifying_constraint_intent_prompt, give_answer_idk_intent_prompt, correct_answer_intent_prompt, informative_intent_prompt, play_intent_prompt, emotional_intent_prompt, avoidance_intent_prompt, boundary_intent_prompt, action_intent_prompt, social_intent_prompt, social_acknowledgment_intent_prompt, topic_switch_response_prompt, followup_question_prompt, completion_prompt, classification_prompt, theme_navigator_rules (guide_navigator / ThemeNavigator). Use null ONLY for pure routers (router:*), finalize, generate_intro, guide_driver, guide_hint, guide_success, guide_exit, chat_complete.>",
+  "prompt_template_name": "<exact key — pick from: system_prompt (age guidance, vocabulary, tone, core persona — use when the issue is systemic/stylistic across the full turn), fun_fact_structuring_prompt, fun_fact_grounding_prompt, introduction_prompt, user_intent_prompt (analyze_input), curiosity_intent_prompt, clarifying_idk_intent_prompt, clarifying_wrong_intent_prompt, clarifying_constraint_intent_prompt, give_answer_idk_intent_prompt, correct_answer_intent_prompt, informative_intent_prompt, play_intent_prompt, emotional_intent_prompt, avoidance_intent_prompt, boundary_intent_prompt, action_intent_prompt, social_intent_prompt, social_acknowledgment_intent_prompt, concept_confusion_intent_prompt, topic_switch_response_prompt, followup_question_prompt, classification_prompt, theme_navigator_rules (guide_navigator / ThemeNavigator). Use null ONLY for pure routers (router:*), finalize, generate_intro, guide_driver, guide_hint, guide_success, guide_exit, chat_complete.>",
   "culprit_phase": "question" | "response" | null
 }}
 """
@@ -266,6 +268,7 @@ def assemble_trace_object(
     exchange_index: int,
     exchange_data: dict,
     critique_data: dict,
+    global_conclusion: str | None = None,
 ) -> TraceObject:
     """
     Assemble a complete TraceObject from exchange and critique data.
@@ -340,6 +343,7 @@ def assemble_trace_object(
         exchange=exchange,
         validation_result=validation_result,
         navigation_result=navigation_result,
+        global_conclusion=global_conclusion,
     )
     culprits = []
     if critique.model_response_problem:

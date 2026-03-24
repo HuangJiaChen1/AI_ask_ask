@@ -1551,10 +1551,6 @@ function collectExchangeCritiques() {
         });
     });
 
-    if (exchangeCritiques.length === 0) {
-        alert('Please select at least one exchange to critique.');
-        return null;
-    }
     return exchangeCritiques;
 }
 
@@ -1563,9 +1559,11 @@ function collectExchangeCritiques() {
  */
 async function submitManualCritiqueToDatabase() {
     const exchangeCritiques = collectExchangeCritiques();
-    if (!exchangeCritiques) return;
-
     const globalConclusion = document.getElementById('globalConclusion').value;
+    if (exchangeCritiques.length === 0 && !globalConclusion.trim()) {
+        alert('Please select at least one exchange to critique, or write a global conclusion.');
+        return;
+    }
     const submitBtn = document.getElementById('submitReportDbBtn');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Saving...';
@@ -1613,9 +1611,11 @@ async function submitManualCritiqueToDatabase() {
  */
 async function submitManualCritiqueWithEvolution() {
     const exchangeCritiques = collectExchangeCritiques();
-    if (!exchangeCritiques) return;
-
     const globalConclusion = document.getElementById('globalConclusion').value;
+    if (exchangeCritiques.length === 0 && !globalConclusion.trim()) {
+        alert('Please select at least one exchange to critique, or write a global conclusion.');
+        return;
+    }
     const submitBtn = document.getElementById('submitEvolvingAgentBtn');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting...';

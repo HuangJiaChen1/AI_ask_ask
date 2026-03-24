@@ -401,17 +401,32 @@ class TestManualCritiqueEndpointErrorCases:
         assert response.get_json()["success"] is False
 
     def test_missing_exchange_critiques_returns_400(self, client):
+        # Both empty → 400
         session_id = _setup_session(client)
         payload = {
             "session_id": session_id,
             "exchange_critiques": [],
-            "global_conclusion": "test",
+            "global_conclusion": "",
         }
         response = client.post("/api/manual-critique", json=payload)
         assert response.status_code == 400
         data = response.get_json()
         assert data["success"] is False
-        assert "exchange" in data["error"].lower()
+
+    def test_global_conclusion_only_succeeds(self, client):
+        # No exchange critiques but a global conclusion is enough
+        session_id = _setup_session(client)
+        payload = {
+            "session_id": session_id,
+            "exchange_critiques": [],
+            "global_conclusion": "The model uses too many high-level terms overall.",
+            "skip_traces": True,
+        }
+        response = client.post("/api/manual-critique", json=payload)
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["exchanges_critiqued"] == 0
 
     def test_unknown_session_returns_404(self, client):
         payload = _base_critique_payload("nonexistent-session-id")
