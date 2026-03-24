@@ -33,11 +33,6 @@ async def ask_introduction_question_stream(
     age: int,
     config: dict,
     client: genai.Client,
-    level3_category: str = "",
-    fun_fact: str = "",
-    fun_fact_hook: str = "",
-    fun_fact_question: str = "",
-    real_facts: str = "",
     hook_type_section: str = ""
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str, dict], None]:
     """
@@ -50,11 +45,6 @@ async def ask_introduction_question_stream(
         age: Child's age
         config: Configuration dict with model settings
         client: Gemini client instance
-        level3_category: Level 3 category
-        fun_fact: Grounded fun fact to share (empty string if unavailable)
-        fun_fact_hook: Excited greeting hook (empty string if unavailable)
-        fun_fact_question: Follow-up question from fun fact (empty string if unavailable)
-        real_facts: Grounded real facts about the object (empty string if unavailable)
         hook_type_section: Pre-formatted hook type block injected into Beat 4 of the prompt
 
     Yields:
@@ -62,26 +52,13 @@ async def ask_introduction_question_stream(
         Note: decision_info contains new_object_name which is always None for introduction
     """
     start_time = time.time()
-    logger.info(f"ask_introduction_question_stream started | object={object_name}, age={age}, has_fun_fact={bool(fun_fact)}")
-
-    # Build grounded facts section dynamically
-    if fun_fact:
-        grounded_facts_section = (
-            f"\nVERIFIED FACTS ABOUT {object_name}:\n{real_facts}\n\n"
-            f"FUN FACT TO SHARE:\n{fun_fact}"
-        )
-        fun_fact_instruction = "Share the fun fact naturally in your greeting, then ask the FOCUS GUIDANCE question."
-    else:
-        grounded_facts_section = ""
-        fun_fact_instruction = "Ask your FIRST question following the FOCUS GUIDANCE."
+    logger.info(f"ask_introduction_question_stream started | object={object_name}, age={age}")
 
     prompts = paixueji_prompts.get_prompts()
     introduction_prompt = prompts['introduction_prompt'].format(
         object_name=object_name,
         age_prompt=age_prompt,
         age=age,
-        grounded_facts_section=grounded_facts_section,
-        fun_fact_instruction=fun_fact_instruction,
         hook_type_section=hook_type_section
     )
 

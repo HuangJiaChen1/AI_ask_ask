@@ -176,7 +176,7 @@ async def run_intro(assistant):
     Drive the introduction turn.
 
     Pre-sets response_type="introduction" so route_from_start bypasses
-    analyze_input and routes directly to generate_fun_fact → generate_intro.
+    analyze_input and routes directly to generate_intro.
     No user message is appended to messages (intro is model-initiated).
     """
     msgs = assistant.conversation_history.copy()  # system prompt only
