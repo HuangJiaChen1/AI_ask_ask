@@ -12,6 +12,7 @@ import asyncio
 import threading
 import os
 import yaml
+from pathlib import Path
 
 from google import genai
 from google.genai.types import HttpOptions
@@ -1565,10 +1566,24 @@ def reject_optimization(optimization_id):
 
 def _load_config() -> dict:
     """Load config.json (used by optimization endpoints that run outside request context)."""
-    import os
-    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
-    with open(config_path, "r") as f:
+    config_path = Path(__file__).resolve().parent / "config.json"
+    with open(config_path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def _resolve_handoff_dir(config: dict | None = None) -> Path:
+    """Resolve the runtime directory used for handoff JSON files."""
+    if config is None:
+        config = _load_config()
+
+    configured_dir = config.get("handoff_dir")
+    if configured_dir:
+        handoff_dir = Path(configured_dir)
+        if not handoff_dir.is_absolute():
+            handoff_dir = Path(__file__).resolve().parent / handoff_dir
+        return handoff_dir
+
+    return Path(__file__).resolve().parent / "handoff"
 
 
 def build_human_feedback_report(object_name, age, session_id, transcript,
@@ -1999,7 +2014,7 @@ def async_gen_to_sync(async_gen, loop):
 
 @app.route('/api/handoff', methods=['POST'])
 def create_handoff():
-    """Save conversation history to /tmp/handoff/ and return a WonderLens redirect URL."""
+    """Save conversation history and return a WonderLens redirect URL."""
     data = request.get_json()
     session_id = data.get('session_id')
     assistant = sessions.get(session_id)
@@ -2022,14 +2037,18 @@ def create_handoff():
         elif msg.get('role') == 'assistant' and msg.get('content'):
             conversation.append({'role': 'ai', 'text': msg['content']})
 
-    os.makedirs('/tmp/handoff', exist_ok=True)
+    config = _load_config()
+    handoff_dir = _resolve_handoff_dir(config)
     filename = uuid.uuid4().hex[:8] + '.json'
-    with open(f'/tmp/handoff/{filename}', 'w', encoding='utf-8') as f:
-        json.dump(conversation, f, indent=2, ensure_ascii=False)
+    filepath = handoff_dir / filename
+    try:
+        handoff_dir.mkdir(parents=True, exist_ok=True)
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump(conversation, f, indent=2, ensure_ascii=False)
+    except OSError as exc:
+        logger.error(f"[HANDOFF] Failed to write handoff file to {filepath}: {exc}")
+        return jsonify({'error': 'handoff unavailable'}), 500
 
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(base_dir, 'config.json'), 'r', encoding='utf-8') as f:
-        config = json.load(f)
     wonderlens_url = config.get('wonderlens_url', 'http://localhost:5174')
 
     context_url = request.host_url + f'handoff/{filename}'
@@ -2040,9 +2059,9 @@ def create_handoff():
 
 @app.route('/handoff/<filename>', methods=['GET'])
 def serve_handoff(filename):
-    """Serve a saved handoff JSON file from /tmp/handoff/."""
+    """Serve a saved handoff JSON file from the configured handoff directory."""
     filename = os.path.basename(filename)
-    filepath = f'/tmp/handoff/{filename}'
+    filepath = _resolve_handoff_dir() / filename
     if not os.path.exists(filepath):
         return jsonify({'error': 'not found'}), 404
     with open(filepath, 'r', encoding='utf-8') as f:
