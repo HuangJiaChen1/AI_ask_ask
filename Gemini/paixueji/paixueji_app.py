@@ -18,7 +18,7 @@ from google.genai.types import HttpOptions
 from loguru import logger
 
 from paixueji_assistant import PaixuejiAssistant
-from graph import paixueji_graph
+from graph import GUIDE_MODE_THRESHOLD, paixueji_graph
 from schema import StreamChunk
 import paixueji_prompts
 import time
@@ -508,7 +508,7 @@ def start_guide_test():
     # Store session state
     assistant.age = age
     assistant.object_name = object_name
-    assistant.correct_answer_count = 4  # Simulate 4 correct answers
+    assistant.correct_answer_count = GUIDE_MODE_THRESHOLD  # Simulate reaching the guide threshold
 
     # Apply backbone model overrides (validated against whitelist)
     if model_name_override and model_name_override in ALLOWED_MODELS:
@@ -600,7 +600,7 @@ RULES:
                                 session_finished=False,
                                 duration=0.0,
                                 timestamp=time.time(),
-                                correct_answer_count=4,
+                                correct_answer_count=GUIDE_MODE_THRESHOLD,
                                 response_type="guide_bridge",
                                 guide_phase=assistant.guide_phase,
                                 guide_turn_count=assistant.guide_turn_count,
@@ -618,7 +618,7 @@ RULES:
                         session_finished=False,
                         duration=duration,
                         timestamp=time.time(),
-                        correct_answer_count=4,
+                        correct_answer_count=GUIDE_MODE_THRESHOLD,
                         response_type="guide_bridge",
                         guide_phase=assistant.guide_phase,
                         guide_turn_count=assistant.guide_turn_count,

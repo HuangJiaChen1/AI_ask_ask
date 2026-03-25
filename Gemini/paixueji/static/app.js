@@ -12,6 +12,7 @@
 // Automatically use the same host as the frontend (works for localhost, server, and ngrok)
 const API_BASE = `${window.location.protocol}//${window.location.host}/api`;
 const RATE_LIMIT_FALLBACK_MESSAGE = 'The model is busy right now, so there was no answer to show. Please try again in a moment.';
+const CORRECT_ANSWER_THRESHOLD = 2;
 
 // Global state
 let sessionId = null;
@@ -930,9 +931,9 @@ function handleStreamChunk(chunk) {
  */
 function updateProgressIndicator() {
     document.getElementById('progressText').textContent =
-        `Correct answers: ${correctAnswerCount}/4`;
+        `Correct answers: ${correctAnswerCount}/${CORRECT_ANSWER_THRESHOLD}`;
 
-    const percentage = (correctAnswerCount / 4) * 100;
+    const percentage = (correctAnswerCount / CORRECT_ANSWER_THRESHOLD) * 100;
     document.getElementById('progressFill').style.width = percentage + '%';
 
     // Also update debug panel
@@ -958,7 +959,7 @@ function updateDebugPanel() {
     // Update correct answers count
     const correctCountElement = document.getElementById('debugCorrectCount');
     if (correctCountElement) {
-        correctCountElement.textContent = `${correctAnswerCount}/4`;
+        correctCountElement.textContent = `${correctAnswerCount}/${CORRECT_ANSWER_THRESHOLD}`;
     }
 
     // Update theme name
@@ -1136,7 +1137,7 @@ function toggleDimensionHint() {
 }
 
 /**
- * Show the "chat phase complete" modal (4th correct answer reached).
+ * Show the "chat phase complete" modal once the correct-answer threshold is reached.
  * For game-eligible entities the button becomes "Let's Play!" and triggers handoff.
  */
 function showChatPhaseCompleteModal() {

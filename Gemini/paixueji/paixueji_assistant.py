@@ -188,7 +188,7 @@ class PaixuejiAssistant:
 
     def enter_guide_mode(self):
         """
-        Called when entering theme guide after 4 correct answers.
+        Called when entering theme guide after the correct-answer threshold.
         Initializes the multi-turn guide state.
         """
         self.guide_phase = "active"

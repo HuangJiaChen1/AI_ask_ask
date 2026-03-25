@@ -4,7 +4,7 @@ Tests for the correct-answer tracking feature and classify_theme node.
 Covers:
 1. node_correct_answer increments correct_answer_count
 2. route_from_analyze_input does NOT divert to classify_theme below threshold
-3. route_from_analyze_input diverts to classify_theme at threshold (count 3 → 4)
+3. route_from_analyze_input diverts to classify_theme at threshold (count 1 → 2)
 4. node_classify_theme falls back gracefully when conversation-theme classification returns None
 """
 import asyncio
@@ -188,31 +188,31 @@ class TestRoutingBelowThreshold:
     """Bug fix 2: route_from_analyze_input should NOT divert to classify_theme below threshold."""
 
     @pytest.mark.asyncio
-    async def test_count_2_does_not_trigger_guide_mode(self):
+    async def test_count_0_does_not_trigger_guide_mode(self):
         """
-        With correct_answer_count=2 and intent=CORRECT_ANSWER, the graph should
+        With correct_answer_count=0 and intent=CORRECT_ANSWER, the graph should
         route to node_correct_answer (not classify_theme), leaving guide_phase
-        not 'active' and incrementing count to 3.
+        not 'active' and incrementing count to 1.
         """
         assistant = PaixuejiAssistant()
-        assistant.correct_answer_count = 2
+        assistant.correct_answer_count = 0
 
-        state = _base_state(assistant, correct_answer_count=2)
+        state = _base_state(assistant, correct_answer_count=0)
 
         # The analyze_input node uses assistant.client.aio.models.generate_content
         # which returns INTENT: CORRECT_ANSWER, so routing will check count.
-        # count=2, 2+1=3 < 4 → should NOT go to classify_theme.
+        # count=0, 0+1=1 < 2 -> should NOT go to classify_theme.
 
         final_state = await paixueji_graph.ainvoke(state)
 
         # guide_phase must NOT become "active"
         guide_phase = final_state.get("guide_phase") or assistant.guide_phase
         assert guide_phase != "active", (
-            f"Expected guide_phase != 'active' with count=2, got: {guide_phase}"
+            f"Expected guide_phase != 'active' with count=0, got: {guide_phase}"
         )
 
-        # Count must now be 3 (incremented by node_correct_answer)
-        assert assistant.correct_answer_count == 3
+        # Count must now be 1 (incremented by node_correct_answer)
+        assert assistant.correct_answer_count == 1
 
     @pytest.mark.asyncio
     async def test_count_0_does_not_trigger_guide_mode(self):
@@ -229,16 +229,16 @@ class TestRoutingBelowThreshold:
         assert assistant.correct_answer_count == 1
 
     @pytest.mark.asyncio
-    async def test_threshold_boundary_count_3_minus_1_is_not_triggered(self):
+    async def test_threshold_boundary_count_2_minus_1_is_not_triggered(self):
         """
-        count=2 → 2+1=3, which is less than GUIDE_MODE_THRESHOLD=4, so no diversion.
+        count=0 -> 0+1=1, which is less than GUIDE_MODE_THRESHOLD=2, so no diversion.
         Specifically verifies the constant value matters.
         """
-        assert GUIDE_MODE_THRESHOLD == 4, "Threshold changed — update this test if intentional"
+        assert GUIDE_MODE_THRESHOLD == 2, "Threshold changed — update this test if intentional"
 
         assistant = PaixuejiAssistant()
-        assistant.correct_answer_count = 2
-        state = _base_state(assistant, correct_answer_count=2)
+        assistant.correct_answer_count = 0
+        state = _base_state(assistant, correct_answer_count=0)
 
         final_state = await paixueji_graph.ainvoke(state)
 
@@ -251,26 +251,26 @@ class TestRoutingBelowThreshold:
 # ---------------------------------------------------------------------------
 
 class TestThresholdTriggersClassifyTheme:
-    """At correct_answer_count=3, the 4th correct answer must route to classify_theme."""
+    """At correct_answer_count=1, the 2nd correct answer must route to classify_theme."""
 
     @pytest.mark.asyncio
-    async def test_count_3_triggers_chat_complete_without_guide_mode(self):
+    async def test_count_1_triggers_chat_complete_without_guide_mode(self):
         """
-        With count=3 and intent=CORRECT_ANSWER (3+1=4 >= GUIDE_MODE_THRESHOLD):
-        - assistant.correct_answer_count must become 4
+        With count=1 and intent=CORRECT_ANSWER (1+1=2 >= GUIDE_MODE_THRESHOLD):
+        - assistant.correct_answer_count must become 2
         - assistant.guide_phase must remain inactive
         - assistant.ibpyp_theme_name must be set (non-empty)
         """
         assistant = PaixuejiAssistant()
-        assistant.correct_answer_count = 3
+        assistant.correct_answer_count = 1
 
-        state = _base_state(assistant, correct_answer_count=3)
+        state = _base_state(assistant, correct_answer_count=1)
 
         final_state = await paixueji_graph.ainvoke(state)
 
         # Count must have been incremented by node_classify_theme
-        assert assistant.correct_answer_count == 4, (
-            f"Expected count=4, got {assistant.correct_answer_count}"
+        assert assistant.correct_answer_count == 2, (
+            f"Expected count=2, got {assistant.correct_answer_count}"
         )
 
         # Chat phase should complete without entering guide mode.
@@ -282,20 +282,20 @@ class TestThresholdTriggersClassifyTheme:
         assert len(assistant.ibpyp_theme_name) > 0
 
     @pytest.mark.asyncio
-    async def test_count_3_emits_theme_fields_in_completion_chunks(self):
+    async def test_count_1_emits_theme_fields_in_completion_chunks(self):
         """
         The threshold turn should classify the theme, then emit chat completion
         chunks that include the classified theme metadata.
         """
         assistant = PaixuejiAssistant()
-        assistant.correct_answer_count = 3
+        assistant.correct_answer_count = 1
 
         captured_chunks = []
 
         async def _callback(chunk):
             captured_chunks.append(chunk)
 
-        state = _base_state(assistant, correct_answer_count=3)
+        state = _base_state(assistant, correct_answer_count=1)
         state["stream_callback"] = _callback
 
         await paixueji_graph.ainvoke(state)
@@ -305,14 +305,14 @@ class TestThresholdTriggersClassifyTheme:
         assert any(chunk.ibpyp_theme_name for chunk in captured_chunks)
 
     @pytest.mark.asyncio
-    async def test_count_3_sets_theme_fields(self):
+    async def test_count_1_sets_theme_fields(self):
         """
         After classify_theme runs, theme fields on the assistant must be populated.
         """
         assistant = PaixuejiAssistant()
-        assistant.correct_answer_count = 3
+        assistant.correct_answer_count = 1
 
-        state = _base_state(assistant, correct_answer_count=3)
+        state = _base_state(assistant, correct_answer_count=1)
 
         await paixueji_graph.ainvoke(state)
 
@@ -323,13 +323,13 @@ class TestThresholdTriggersClassifyTheme:
         assert assistant.bridge_question is not None
 
     @pytest.mark.asyncio
-    async def test_count_3_uses_history_theme_result_over_yaml_theme(self):
+    async def test_count_1_uses_history_theme_result_over_yaml_theme(self):
         """
         Guide entry should take the authoritative theme from conversation history,
         while leaving the YAML-derived key concept in place.
         """
         assistant = PaixuejiAssistant()
-        assistant.correct_answer_count = 3
+        assistant.correct_answer_count = 1
         assistant.key_concept = "function"
         assistant.bridge_question = "How does the bike move?"
         assistant.category_prompt = "CONCEPT FOCUS: function"
@@ -337,7 +337,7 @@ class TestThresholdTriggersClassifyTheme:
         assistant.fallback_theme_name = "How the World Works"
         assistant.fallback_theme_reason = "Object-based fallback"
 
-        state = _base_state(assistant, correct_answer_count=3)
+        state = _base_state(assistant, correct_answer_count=1)
         state["messages"] = [
             {"role": "system", "content": "system"},
             {"role": "assistant", "content": "What helps the bike move?"},
@@ -377,7 +377,7 @@ class TestClassifyThemeFallback:
         the assistant's stored object-derived theme.
         """
         assistant = PaixuejiAssistant()
-        assistant.correct_answer_count = 3
+        assistant.correct_answer_count = 1
         assistant.key_concept = "change"
         assistant.bridge_question = "What changes when the apple gets old?"
         assistant.category_prompt = "CONCEPT FOCUS: change"
@@ -385,7 +385,7 @@ class TestClassifyThemeFallback:
         assistant.fallback_theme_name = "How the World Works"
         assistant.fallback_theme_reason = "Fallback theme"
 
-        state = _base_state(assistant, correct_answer_count=3)
+        state = _base_state(assistant, correct_answer_count=1)
         state["messages"] = [
             {"role": "assistant", "content": "What changes when the apple gets old?"},
             {"role": "user", "content": "It turns brown."},
@@ -409,16 +409,16 @@ class TestClassifyThemeFallback:
         - assistant.key_concept == "function"
         """
         assistant = PaixuejiAssistant()
-        assistant.correct_answer_count = 3  # will become 4 inside the node
+        assistant.correct_answer_count = 1  # will become 2 inside the node
 
-        state = _base_state(assistant, correct_answer_count=3)
+        state = _base_state(assistant, correct_answer_count=1)
 
         # Patch the underlying YAML lookup to simulate a miss
         with patch("graph_lookup.lookup_top_available_concepts", return_value={"success": False, "error": "not found"}):
             result = await node_classify_theme(state)
 
         # Count incremented
-        assert assistant.correct_answer_count == 4
+        assert assistant.correct_answer_count == 2
 
         # Fallback theme values set
         assert assistant.ibpyp_theme_name == "How the World Works"
@@ -430,10 +430,10 @@ class TestClassifyThemeFallback:
         The fallback bridge question must mention the object_name from state.
         """
         assistant = PaixuejiAssistant()
-        assistant.correct_answer_count = 3
+        assistant.correct_answer_count = 1
 
         object_name = "bicycle"
-        state = _base_state(assistant, correct_answer_count=3, content="It rolls!")
+        state = _base_state(assistant, correct_answer_count=1, content="It rolls!")
         state["object_name"] = object_name
 
         with patch("graph_lookup.lookup_top_available_concepts", return_value={"success": False, "error": "not found"}):
@@ -450,14 +450,14 @@ class TestClassifyThemeFallback:
         Even on classification failure (YAML miss), node_classify_theme must increment count.
         """
         assistant = PaixuejiAssistant()
-        assistant.correct_answer_count = 3
+        assistant.correct_answer_count = 1
 
-        state = _base_state(assistant, correct_answer_count=3)
+        state = _base_state(assistant, correct_answer_count=1)
 
         with patch("graph_lookup.lookup_top_available_concepts", return_value={"success": False, "error": "not found"}):
             await node_classify_theme(state)
 
-        assert assistant.correct_answer_count == 4
+        assert assistant.correct_answer_count == 2
 
     @pytest.mark.asyncio
     async def test_fallback_result_dict_contains_correct_answer_count(self):
@@ -465,15 +465,15 @@ class TestClassifyThemeFallback:
         node_classify_theme must return a dict with 'correct_answer_count'.
         """
         assistant = PaixuejiAssistant()
-        assistant.correct_answer_count = 3
+        assistant.correct_answer_count = 1
 
-        state = _base_state(assistant, correct_answer_count=3)
+        state = _base_state(assistant, correct_answer_count=1)
 
         with patch("graph_lookup.lookup_top_available_concepts", return_value={"success": False, "error": "not found"}):
             result = await node_classify_theme(state)
 
         assert "correct_answer_count" in result
-        assert result["correct_answer_count"] == 4
+        assert result["correct_answer_count"] == 2
 
     @pytest.mark.asyncio
     async def test_success_path_sets_theme_from_result(self):
@@ -481,10 +481,10 @@ class TestClassifyThemeFallback:
         When YAML lookup succeeds, the result fields must be applied to the assistant.
         """
         assistant = PaixuejiAssistant()
-        assistant.correct_answer_count = 3
+        assistant.correct_answer_count = 1
 
         # sunflower is a known object in the YAML mappings
-        state = _base_state(assistant, correct_answer_count=3)
+        state = _base_state(assistant, correct_answer_count=1)
         state["object_name"] = "sunflower"
 
         result = await node_classify_theme(state)
@@ -494,4 +494,4 @@ class TestClassifyThemeFallback:
         assert assistant.key_concept is not None
         assert assistant.bridge_question is not None
         assert "CONCEPT FOCUS:" in (assistant.category_prompt or "")
-        assert assistant.correct_answer_count == 4
+        assert assistant.correct_answer_count == 2

@@ -46,7 +46,7 @@ _NODE_GLOSSARY = """Graph node roles:
 - guide_hint: Gives direct hint when max turns reached
 - guide_success: Celebrates child's successful conceptual connection
 - guide_exit: Gracefully exits guide mode after resistance/timeout
-- chat_complete: Ends chat phase after 4th correct answer; signals frontend to disable input
+- chat_complete: Ends chat phase after the threshold correct answer; signals frontend to disable input
 - finalize: Sends final StreamChunk and closes the turn"""
 
 

@@ -26,7 +26,7 @@ from stream import (
 from stream.theme_guide import ThemeNavigator, ThemeDriver
 from schema import StreamChunk
 
-GUIDE_MODE_THRESHOLD = 4  # Correct answers required to enter guide mode
+GUIDE_MODE_THRESHOLD = 2  # Correct answers required to complete chat mode
 _STRUGGLING_INTENTS = {"CLARIFYING_IDK", "CLARIFYING_WRONG"}  # Intents that share the struggle counter
 
 
@@ -1630,7 +1630,7 @@ async def node_finalize(state: PaixuejiState) -> dict:
 @trace_node
 async def node_classify_theme(state: PaixuejiState) -> dict:
     """
-    4th correct answer threshold reached: classify guide theme from conversation history.
+    Threshold correct answer reached: classify guide theme from conversation history.
     Guide theme is classified from conversation history, while response text
     stays free of mapping-derived prompt content.
     """

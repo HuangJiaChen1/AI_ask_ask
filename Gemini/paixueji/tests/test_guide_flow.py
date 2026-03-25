@@ -70,8 +70,8 @@ async def test_guide_flow():
         received_chunks.append(chunk)
         print(f"  [CHUNK] response_type={chunk.response_type}, guide_phase={chunk.guide_phase}")
 
-    # 3. Simulate Turn 4 (Trigger Turn) - User answers correctly, entering guide mode
-    print("\n[STEP 1] User answers 4th question correctly...")
+    # 3. Simulate Turn 2 (Trigger Turn) - User answers correctly, entering guide mode
+    print("\n[STEP 1] User answers 2nd question correctly...")
 
     initial_state = {
         "messages": [],
@@ -81,7 +81,7 @@ async def test_guide_flow():
         "object_name": "Bike",
 
         # Critical state for triggering
-        "correct_answer_count": 3,  # Will become 4
+        "correct_answer_count": 1,  # Will become 2
 
         # Required fields
         "age": 6,
@@ -128,14 +128,14 @@ async def test_guide_flow():
         # Don't fail completely - this test may need real LLM for full flow
         pytest.skip("Guide phase not triggered - may require real LLM calls")
 
-    # 4. Simulate Turn 5 (Navigator Turn) - User responds to bridge question
+    # 4. Simulate Turn 3 (Navigator Turn) - User responds to bridge question
     print("\n[STEP 2] User responds to bridge question ('Because they roll')...")
 
     turn_2_state = {
         **initial_state,
         "guide_phase": "active",  # Carry over from step 1
         "content": "Because they roll and help the bike move forward!",  # Strong understanding
-        "correct_answer_count": 4,
+        "correct_answer_count": 2,
         "messages": [
             {"role": "assistant", "content": assistant.bridge_question},
         ],
@@ -225,7 +225,7 @@ async def test_scaffold_flow():
         "session_id": "test_scaffold",
         "assistant": assistant,
         "object_name": "banana",
-        "correct_answer_count": 4,
+        "correct_answer_count": 2,
         "age": 6,
         "request_id": "req_scaffold",
         "config": {"model_name": "mock-model"},
