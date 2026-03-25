@@ -26,8 +26,9 @@ async def generate_intent_response_stream(
     age: int,
     age_prompt: str,
     last_model_response: str,
-    config: dict,
-    client: genai.Client,
+    config: dict = None,
+    client: genai.Client = None,
+    knowledge_context: str = "",
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
     Universal intent response generator for the 9-node architecture.
@@ -44,6 +45,7 @@ async def generate_intent_response_stream(
         age: Child's age
         age_prompt: Age-specific guidance string
         last_model_response: The previous full response by the model (response + question combined)
+        knowledge_context: Formatted physical_dimensions facts from YAML (optional grounding)
         config: Configuration dict with model settings
         client: Gemini client instance
 
@@ -69,6 +71,7 @@ async def generate_intent_response_stream(
             age=age,
             age_prompt=age_prompt,
             last_model_response=last_model_response,
+            knowledge_context=knowledge_context,
         )
     except KeyError as e:
         logger.warning(f"Prompt template formatting error for '{prompt_key}': {e}")

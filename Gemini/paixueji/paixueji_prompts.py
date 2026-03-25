@@ -421,6 +421,9 @@ CONTEXT:
 AGE GUIDANCE:
 {age_prompt}
 
+GROUNDING (prefer these facts over memory for BEAT 2 — use your best judgment if none fit):
+{knowledge_context}
+
 YOUR MISSION:
 A child asked a genuine question — reward it with a delightful, truthful, specific answer.
 Do NOT start with "That's a great question!" — lead with the answer immediately.
@@ -538,6 +541,9 @@ CONTEXT:
 AGE GUIDANCE:
 {age_prompt}
 
+GROUNDING (prefer these facts over memory for BEAT 2 — use your best judgment if none fit):
+{knowledge_context}
+
 YOUR MISSION:
 The child has said "I don't know" twice. Stop hinting — give them the answer directly.
 Make it feel like a gift, not a correction.
@@ -562,6 +568,9 @@ CONTEXT:
 
 AGE GUIDANCE:
 {age_prompt}
+
+GROUNDING (prefer these facts over memory for BEAT 2 — use your best judgment if none fit):
+{knowledge_context}
 
 YOUR MISSION:
 Child attempted to answer the AI's question but was incorrect or substantially incomplete.
@@ -640,6 +649,9 @@ CONTEXT:
 AGE GUIDANCE:
 {age_prompt}
 
+GROUNDING (prefer these facts over memory for BEAT 2 — use your best judgment if none fit):
+{knowledge_context}
+
 YOUR MISSION:
 The child answered your question — confirm it, then reward them with one surprising related fact.
 
@@ -705,6 +717,9 @@ CONTEXT:
 
 AGE GUIDANCE:
 {age_prompt}
+
+GROUNDING (prefer these facts over memory for BEAT 2 — use your best judgment if none fit):
+{knowledge_context}
 
 YOUR MISSION:
 The child volunteered knowledge — they feel smart right now. Amplify that feeling fully.

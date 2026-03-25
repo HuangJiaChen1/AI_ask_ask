@@ -310,6 +310,29 @@ def _build_dimension_hint(state: "PaixuejiState") -> str:
         return "\n".join(lines)
 
 
+def _build_intent_knowledge_context(state: "PaixuejiState") -> str:
+    """
+    Format ALL physical_dimensions as a flat fact palette for intent response
+    generators. The model uses this to ground BEAT 2 WOW facts in curated
+    knowledge rather than parametric memory.
+
+    Returns "" when no dimension data is loaded (graceful fallback).
+    """
+    physical = state.get("physical_dimensions") or {}
+    if not physical:
+        return ""
+
+    object_name = state.get("object_name", "this object")
+    lines = [f"Known facts about {object_name}:"]
+    for dim, attrs in physical.items():
+        if not attrs:
+            continue
+        lines.append(f"[{dim}]")
+        for attr, val in attrs.items():
+            lines.append(f"  - {attr.replace('_', ' ')}: {val}")
+    return "\n".join(lines)
+
+
 def _apply_dimension_result(state: "PaixuejiState", current_dim: str | None) -> dict:
     """Apply a resolved dimension classification result to state and assistant."""
     active_dim = state.get("active_dimension")
@@ -631,6 +654,7 @@ async def node_curiosity(state: PaixuejiState) -> dict:
         last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
+        knowledge_context=_build_intent_knowledge_context(state),
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     logger.info(f"[{state['session_id']}] Node: Curiosity finished in {time.time() - start_time:.3f}s")
@@ -746,6 +770,7 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
         last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
+        knowledge_context=_build_intent_knowledge_context(state),
     )
     full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
 
@@ -794,6 +819,7 @@ async def node_clarifying_wrong(state: PaixuejiState) -> dict:
         last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
+        knowledge_context=_build_intent_knowledge_context(state),
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     logger.info(f"[{state['session_id']}] Node: Clarifying Wrong finished in {time.time() - start_time:.3f}s")
@@ -852,6 +878,7 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
         last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
+        knowledge_context=_build_intent_knowledge_context(state),
     )
     full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
     state["assistant"].increment_correct_answers()
@@ -904,6 +931,7 @@ async def node_informative(state: PaixuejiState) -> dict:
         last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
+        knowledge_context=_build_intent_knowledge_context(state),
     )
     full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
 
