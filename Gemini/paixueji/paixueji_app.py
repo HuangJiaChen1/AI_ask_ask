@@ -2032,13 +2032,13 @@ def create_handoff():
         config = json.load(f)
     wonderlens_url = config.get('wonderlens_url', 'http://localhost:5174')
 
-    context_url = request.host_url + f'handoff/{filename}'
+    context_url = request.host_url + f'tmp/handoff/{filename}'
     redirect_url = f'{wonderlens_url}/?entity={entity_name}&tier={tier}&context={context_url}'
 
-    return jsonify({'redirect_url': redirect_url, 'context_path': f'/handoff/{filename}'})
+    return jsonify({'redirect_url': redirect_url, 'context_path': f'/tmp/handoff/{filename}'})
 
 
-@app.route('/handoff/<filename>', methods=['GET'])
+@app.route('/tmp/handoff/<filename>', methods=['GET'])
 def serve_handoff(filename):
     """Serve a saved handoff JSON file from /tmp/handoff/."""
     filename = os.path.basename(filename)

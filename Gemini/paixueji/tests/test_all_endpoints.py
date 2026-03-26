@@ -128,3 +128,27 @@ def test_start_guide_direct(client):
     events = parse_sse(response.data)
     # Check if we got a guide_bridge response type
     assert any(e['data'].get('response_type') == 'guide_bridge' for e in events if e['event'] == 'chunk')
+
+
+def test_handoff_uses_tmp_handoff_route(client):
+    """Test handoff redirect and file serving use /tmp/handoff/<file>.json."""
+    start_response = client.post('/api/start', json={"object_name": "apple", "age": 6})
+    events = parse_sse(start_response.data)
+    session_id = events[0]['data']['session_id']
+
+    handoff_response = client.post('/api/handoff', json={"session_id": session_id})
+    assert handoff_response.status_code == 200
+    handoff_data = handoff_response.get_json()
+
+    context_path = handoff_data["context_path"]
+    assert context_path.startswith("/tmp/handoff/")
+    assert context_path.endswith(".json")
+    assert "context=" in handoff_data["redirect_url"]
+    assert f"context=http://localhost{context_path}" in handoff_data["redirect_url"]
+
+    context_response = client.get(context_path)
+    assert context_response.status_code == 200
+    assert context_response.is_json
+
+    old_route_response = client.get(context_path.replace("/tmp/handoff/", "/handoff/"))
+    assert old_route_response.status_code == 404
