@@ -43,6 +43,7 @@ from .question_generators import (
 from .validation import (
     classify_intent,
     classify_dimension,
+    map_response_to_kb_item,
 )
 
 # Fun fact (grounded)
@@ -73,6 +74,7 @@ __all__ = [
     # Intent classification
     'classify_intent',
     'classify_dimension',
+    'map_response_to_kb_item',
 
     # Fun fact (grounded)
     'generate_fun_fact',

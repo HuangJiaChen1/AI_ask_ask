@@ -302,12 +302,7 @@ def start_conversation():
     assistant.object_name = object_name
     assistant.correct_answer_count = 0
 
-    # Prime object-derived concept context and fallback theme, but leave the
-    # active theme unset until guide mode begins.
-    assistant.load_object_context_from_yaml(object_name)
-    assistant.clear_active_theme()
-
-    # Load age-tiered dimension coverage map (graceful: empty dicts if not in DB)
+    # Ordinary chat uses only age-tiered dimension KB.
     assistant.load_dimension_data(object_name)
 
     # Apply backbone model overrides (validated against whitelist)
@@ -368,13 +363,11 @@ def start_conversation():
                         "correct_answer_count": 0,
                         "category_prompt": assistant.category_prompt,
 
-                        # Dimension coverage (loaded at session start)
+                        # Ordinary-chat KB (loaded at session start)
                         "physical_dimensions": assistant.physical_dimensions,
                         "engagement_dimensions": assistant.engagement_dimensions,
-                        "dimensions_covered": assistant.dimensions_covered,
-                        "current_dimension": None,
-                        "active_dimension": None,
-                        "active_dimension_turn_count": 0,
+                        "used_kb_item": None,
+                        "kb_mapping_status": None,
 
                         # Initialize outputs
                         "full_response_text": "",
@@ -749,13 +742,11 @@ def continue_conversation():
                         "correct_answer_count": assistant.correct_answer_count,
                         "category_prompt": category_prompt,
 
-                        # Dimension coverage (persisted on assistant between turns)
+                        # Ordinary-chat KB (persisted on assistant between turns)
                         "physical_dimensions": assistant.physical_dimensions,
                         "engagement_dimensions": assistant.engagement_dimensions,
-                        "dimensions_covered": assistant.dimensions_covered,
-                        "current_dimension": None,
-                        "active_dimension": assistant.active_dimension,
-                        "active_dimension_turn_count": assistant.active_dimension_turn_count,
+                        "used_kb_item": None,
+                        "kb_mapping_status": None,
 
                         # Initialize outputs
                         "full_response_text": "",
@@ -1068,11 +1059,8 @@ def force_switch():
         # Update object name
         assistant.object_name = new_object
 
-        # Refresh concept context and fallback theme for the new object.
-        _cls = assistant.load_object_context_from_yaml(new_object)
-        assistant.clear_active_theme()
-        print(f"[FORCE-SWITCH] YAML classification complete for '{new_object}': "
-              f"theme={_cls['theme_name']}, concept={_cls['key_concept']}")
+        # Refresh the ordinary-chat KB inventory for the new object.
+        assistant.load_dimension_data(new_object)
 
         print(f"[FORCE-SWITCH] User forced switch from {previous_object} to {new_object}")
 

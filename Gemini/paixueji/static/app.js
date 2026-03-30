@@ -42,10 +42,8 @@ let currentResponseType = null;     // Last response node that actually ran
 let currentHookType = null;         // Hook type selected for this session
 let currentClassificationStatus = null;
 let currentClassificationFailureReason = null;
-let currentActiveDimension = null;
-let currentCurrentDimension = null;
-let currentDimensionsCovered = [];
-let currentDimensionHintText = null;
+let currentUsedKbItem = null;
+let currentKbMappingStatus = null;
 
 const INTENT_METADATA = {
     ACTION: {
@@ -239,22 +237,6 @@ const HOOK_TYPE_METADATA = {
     '创意改造':      { color: '#dc2626', description: 'Imagine redesigning or upgrading the object',   descriptionZh: '鼓励孩子改造或升级物品' },
 };
 
-const DIMENSION_METADATA = {
-    // Physical (blue family)
-    'appearance':  { color: '#3b82f6' },
-    'senses':      { color: '#60a5fa' },
-    'function':    { color: '#2563eb' },
-    'structure':   { color: '#1d4ed8' },
-    'context':     { color: '#93c5fd' },
-    'change':      { color: '#bfdbfe' },
-    // Engagement (green/purple family)
-    'emotions':     { color: '#10b981' },
-    'relationship': { color: '#a855f7' },
-    'reasoning':    { color: '#8b5cf6' },
-    'imagination':  { color: '#06b6d4' },
-    'narrative':    { color: '#f59e0b' },
-};
-
 function setBilingualDescription(element, english, chinese) {
     if (!element) {
         return;
@@ -275,6 +257,22 @@ function setBilingualDescription(element, english, chinese) {
     chineseLine.textContent = chinese;
     chineseLine.style.marginTop = '2px';
     element.appendChild(chineseLine);
+}
+
+function formatUsedKbItem(item, status) {
+    if (status === 'not_applicable') {
+        return 'not applicable';
+    }
+    if (!item) {
+        return 'none matched';
+    }
+    if (item.kind === 'physical_attribute') {
+        return `physical.${item.dimension}.${item.attribute}: ${item.value}`;
+    }
+    if (item.kind === 'engagement_item') {
+        return `engagement.${item.dimension}: ${item.seed_text}`;
+    }
+    return JSON.stringify(item);
 }
 
 // DOM elements
@@ -478,6 +476,9 @@ async function startConversation() {
     currentHookType = null;
     currentClassificationStatus = null;
     currentClassificationFailureReason = null;
+    currentUsedKbItem = null;
+    currentKbMappingStatus = null;
+    currentKbMappingStatus = null;
 
     // Reset progress
     correctAnswerCount = 0;
@@ -896,21 +897,12 @@ function handleStreamChunk(chunk) {
         updateDebugPanel();
     }
 
-    // Update dimension debug state (set on follow-up question chunks)
-    if (chunk.active_dimension !== undefined && chunk.active_dimension !== null) {
-        currentActiveDimension = chunk.active_dimension;
+    if ('used_kb_item' in chunk) {
+        currentUsedKbItem = chunk.used_kb_item;
         updateDebugPanel();
     }
-    if (chunk.current_dimension !== undefined && chunk.current_dimension !== null) {
-        currentCurrentDimension = chunk.current_dimension;
-        updateDebugPanel();
-    }
-    if (chunk.dimensions_covered !== undefined && chunk.dimensions_covered !== null) {
-        currentDimensionsCovered = chunk.dimensions_covered;
-        updateDebugPanel();
-    }
-    if (chunk.dimension_hint_text !== undefined && chunk.dimension_hint_text !== null) {
-        currentDimensionHintText = chunk.dimension_hint_text;
+    if ('kb_mapping_status' in chunk) {
+        currentKbMappingStatus = chunk.kb_mapping_status;
         updateDebugPanel();
     }
 
@@ -1086,53 +1078,9 @@ function updateDebugPanel() {
         classificationReasonEl.textContent = currentClassificationFailureReason || '-';
     }
 
-    // --- Dimension debug section ---
-    const activeDimEl = document.getElementById('debugActiveDimension');
-    if (activeDimEl) {
-        if (currentActiveDimension) {
-            const meta = DIMENSION_METADATA[currentActiveDimension] || {};
-            activeDimEl.textContent = currentActiveDimension;
-            activeDimEl.style.color = meta.color || '#0f172a';
-        } else {
-            activeDimEl.textContent = '-';
-            activeDimEl.style.color = '#94a3b8';
-        }
-    }
-
-    const currentDimEl = document.getElementById('debugCurrentDimension');
-    if (currentDimEl) {
-        if (currentCurrentDimension) {
-            const meta = DIMENSION_METADATA[currentCurrentDimension] || {};
-            currentDimEl.textContent = currentCurrentDimension;
-            currentDimEl.style.color = meta.color || '#0f172a';
-        } else {
-            currentDimEl.textContent = '-';
-            currentDimEl.style.color = '#94a3b8';
-        }
-    }
-
-    const coveredEl = document.getElementById('debugDimensionsCovered');
-    if (coveredEl) {
-        coveredEl.textContent = currentDimensionsCovered.length > 0
-            ? currentDimensionsCovered.join(' · ')
-            : '-';
-    }
-
-    const hintEl = document.getElementById('debugDimensionHint');
-    if (hintEl) {
-        hintEl.textContent = currentDimensionHintText || '(no hint — entity not in DB or all covered)';
-    }
-}
-
-function toggleDimensionHint() {
-    const hint = document.getElementById('debugDimensionHint');
-    const btn = hint.previousElementSibling;
-    if (hint.style.display === 'none') {
-        hint.style.display = 'block';
-        btn.textContent = 'Hint ▼';
-    } else {
-        hint.style.display = 'none';
-        btn.textContent = 'Hint ▶';
+    const usedKbItemEl = document.getElementById('debugUsedKbItem');
+    if (usedKbItemEl) {
+        usedKbItemEl.textContent = formatUsedKbItem(currentUsedKbItem, currentKbMappingStatus);
     }
 }
 
@@ -1228,6 +1176,7 @@ function resetConversation() {
     currentHookType = null;
     currentClassificationStatus = null;
     currentClassificationFailureReason = null;
+    currentUsedKbItem = null;
 
     // Clear messages
     messagesContainer.innerHTML = '';

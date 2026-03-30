@@ -95,3 +95,47 @@ def test_paixueji_app_propagates_classification_failure_metadata():
     assert 'entry["classification_failure_reason"] = msg.get("classification_failure_reason")' in source, (
         "transcript builders must include classification_failure_reason for model messages"
     )
+
+
+def test_debug_panel_uses_used_kb_context_labels_not_legacy_dimension_labels():
+    html = _read(INDEX_HTML)
+    assert "Used KB Context" in html, (
+        "ordinary-chat debug panel must show the mapped used KB item"
+    )
+    assert "Follow-up Dimension" not in html, (
+        "legacy follow-up dimension label should be removed from the ordinary-chat panel"
+    )
+    assert 'id="debugUsedKbItem"' in html, (
+        "debug panel must expose a used-kb-item element"
+    )
+    assert 'id="debugActiveDimension"' not in html, (
+        "legacy active dimension element should be removed"
+    )
+    assert 'id="debugCurrentDimension"' not in html, (
+        "legacy current dimension element should be removed"
+    )
+
+
+def test_app_js_reads_used_kb_item_without_legacy_dimension_debug_fields():
+    js = _read(APP_JS)
+    assert "used_kb_item" in js, (
+        "app.js must read used_kb_item from streamed chunks"
+    )
+    assert "kb_mapping_status" in js, (
+        "app.js must read kb_mapping_status so the debug panel can distinguish not-applicable turns"
+    )
+    assert "debugUsedKbItem" in js, (
+        "app.js must update the used-kb-item debug element"
+    )
+    assert "not applicable" in js.lower(), (
+        "app.js must render an explicit not-applicable state for ungrounded intents"
+    )
+    assert "dimension_hint_text" not in js, (
+        "app.js must stop using the legacy dimension hint debug field"
+    )
+    assert "currentActiveDimension" not in js, (
+        "app.js must stop tracking legacy active dimension state"
+    )
+    assert "currentCurrentDimension" not in js, (
+        "app.js must stop tracking legacy current dimension state"
+    )
