@@ -1,7 +1,6 @@
 import asyncio
 import functools
 import json
-import random
 from pathlib import Path
 from typing import TypedDict, Annotated, List, Optional, Any
 from langgraph.graph import StateGraph, END, START
@@ -14,11 +13,11 @@ from stream import (
     ask_introduction_question_stream,
     ask_followup_question_stream,
     classify_intent,
-    classify_dimension,
     generate_classification_fallback_stream,
     generate_intent_response_stream,
     generate_topic_switch_response_stream,
     extract_previous_response,
+    map_response_to_kb_item,
     prepare_messages_for_streaming,
     generate_guide_hint,
     select_hook_type
@@ -28,6 +27,14 @@ from schema import StreamChunk
 
 GUIDE_MODE_THRESHOLD = 2  # Correct answers required to complete chat mode
 _STRUGGLING_INTENTS = {"CLARIFYING_IDK", "CLARIFYING_WRONG"}  # Intents that share the struggle counter
+GROUNDED_INTENTS = {
+    "curiosity",
+    "give_answer_idk",
+    "clarifying_wrong",
+    "correct_answer",
+    "informative",
+    "play",
+}
 
 
 def route_from_analyze_input(state) -> str:
@@ -85,12 +92,9 @@ class PaixuejiState(TypedDict):
 
     # --- Dimension Coverage ---
     physical_dimensions: dict      # {dim: {attr: value}}, loaded at session start
-    engagement_dimensions: dict    # {dim: [topic_examples]}, loaded at session start
-    dimensions_covered: list       # added only when LEAVING a dimension
-    current_dimension: Optional[str]  # dimension classified for this turn
-    active_dimension: Optional[str]      # dimension we are dwelling in (persists across turns)
-    active_dimension_turn_count: int     # turns in current dimension (drives attr rotation)
-    dimension_hint_text: Optional[str]   # transient: hint string set before followup, read by stream callback
+    engagement_dimensions: dict    # {dim: [seed_text]}, loaded at session start
+    used_kb_item: Optional[dict]   # debug-only top-1 KB item mapped from the main response
+    kb_mapping_status: Optional[str]  # mapped, none_matched, not_applicable
 
     # --- Prompts ---
     age_prompt: str
@@ -132,7 +136,6 @@ class PaixuejiState(TypedDict):
     stream_callback: Any   # Async callback function(chunk: StreamChunk) -> None
     start_time: float
     ttft: Optional[float]  # Time to First Token (seconds)
-    pending_dimension_task: Optional[Any]  # asyncio.Task[str | None] deferred off the TTFT path
 
     # --- Execution Tracing ---
     nodes_executed: List[dict]  # [{"node": str, "time_ms": float, "changes": dict}]
@@ -147,7 +150,6 @@ KEY_STATE_FIELDS = [
     "classification_status", "classification_failure_reason",
     "guide_phase", "guide_status", "guide_strategy",
     "new_object_name", "scaffold_level", "guide_turn_count",
-    "current_dimension", "active_dimension",
 ]
 
 
@@ -250,142 +252,84 @@ def trace_router(capture_fields):
 
 
 # ============================================================================
-# DIMENSION HINT HELPER
+# CHAT KB HELPERS
 # ============================================================================
 
-def _build_dimension_hint(state: "PaixuejiState") -> str:
+def _build_chat_kb_context(state: "PaixuejiState") -> str:
     """
-    Pick one random unexplored dimension and format a soft hint for the
-    follow-up question prompt.  Returns "" when no dimensions are available
-    (entity not in DB, or all dimensions already covered).
+    Format the full current-object dimension KB for ordinary chat.
+
+    This includes physical attribute/value facts plus engagement seed strings,
+    and excludes themes, concepts, and physical topics.
     """
     physical = state.get("physical_dimensions") or {}
     engagement = state.get("engagement_dimensions") or {}
-    covered = set(state.get("dimensions_covered") or [])
 
-    remaining_physical = {k: v for k, v in physical.items() if k not in covered}
-    remaining_engagement = {k: v for k, v in engagement.items() if k not in covered}
-
-    if not remaining_physical and not remaining_engagement:
-        return ""
-
-    all_remaining = list(remaining_physical.keys()) + list(remaining_engagement.keys())
-
-    # Use persistent active_dimension (not per-turn current_dimension)
-    active_dim = state.get("active_dimension")
-    turn_count = state.get("active_dimension_turn_count", 0)
-    if active_dim and active_dim in all_remaining:
-        chosen = active_dim
-    else:
-        chosen = random.choice(all_remaining) if all_remaining else None
-
-    object_name = state.get("object_name", "this object")
-
-    if chosen in remaining_physical:
-        attrs = remaining_physical[chosen]
-        if not attrs:
-            return ""
-        attr_items = list(attrs.items())
-        n = len(attr_items)
-        start = turn_count % n
-        indices = [i % n for i in range(start, start + min(3, n))]
-        lines = [f'[Dimension suggestion: "{chosen}"]']
-        lines.append(f"Known facts about {object_name}'s {chosen}:")
-        for i in indices:
-            attr, val = attr_items[i]
-            lines.append(f'  - {attr.replace("_", " ")}: "{val}"')
-        lines.append("Use these as grounding — ask a question that lets the child discover one naturally.")
-        return "\n".join(lines)
-    else:
-        examples = remaining_engagement[chosen]
-        if not examples:
-            return ""
-        n = len(examples)
-        start = turn_count % n
-        rotated = [examples[i % n] for i in range(start, start + min(3, n))]
-        lines = [f'[Dimension suggestion: "{chosen}"]']
-        lines.append("Example questions in this style (do not repeat verbatim — generalize a fresh one):")
-        for ex in rotated:
-            lines.append(f'  - "{ex}"')
-        return "\n".join(lines)
-
-
-def _build_intent_knowledge_context(state: "PaixuejiState") -> str:
-    """
-    Format ALL physical_dimensions as a flat fact palette for intent response
-    generators. The model uses this to ground BEAT 2 WOW facts in curated
-    knowledge rather than parametric memory.
-
-    Returns "" when no dimension data is loaded (graceful fallback).
-    """
-    physical = state.get("physical_dimensions") or {}
-    if not physical:
+    if not physical and not engagement:
         return ""
 
     object_name = state.get("object_name", "this object")
-    lines = [f"Known facts about {object_name}:"]
-    for dim, attrs in physical.items():
+    lines = [f"Current-object KB for {object_name}:"]
+
+    for dimension, attrs in physical.items():
         if not attrs:
             continue
-        lines.append(f"[{dim}]")
-        for attr, val in attrs.items():
-            lines.append(f"  - {attr.replace('_', ' ')}: {val}")
+        lines.append(f"[physical.{dimension}]")
+        for attribute, value in attrs.items():
+            lines.append(f"  - {attribute.replace('_', ' ')}: {value}")
+
+    for dimension, seeds in engagement.items():
+        if not seeds:
+            continue
+        lines.append(f"[engagement.{dimension}]")
+        for seed_text in seeds:
+            lines.append(f"  - {seed_text}")
+
     return "\n".join(lines)
 
 
-def _apply_dimension_result(state: "PaixuejiState", current_dim: str | None) -> dict:
-    """Apply a resolved dimension classification result to state and assistant."""
-    active_dim = state.get("active_dimension")
-    active_dim_turn = state.get("active_dimension_turn_count", 0)
-    new_covered = list(state.get("dimensions_covered") or [])
-
-    if current_dim is None:
-        new_active_dim = active_dim
-        new_active_dim_turn = active_dim_turn
-    elif current_dim == active_dim:
-        new_active_dim = active_dim
-        new_active_dim_turn = active_dim_turn + 1
-    else:
-        if active_dim and active_dim not in new_covered:
-            new_covered.append(active_dim)
-        new_active_dim = current_dim
-        new_active_dim_turn = 0
-
-    assistant = state["assistant"]
-    assistant.dimensions_covered = new_covered
-    assistant.active_dimension = new_active_dim
-    assistant.active_dimension_turn_count = new_active_dim_turn
-
-    updates = {
-        "current_dimension": current_dim,
-        "dimensions_covered": new_covered,
-        "active_dimension": new_active_dim,
-        "active_dimension_turn_count": new_active_dim_turn,
-    }
-    state.update(updates)
-    return updates
+def _intent_uses_grounding(intent_type: str | None) -> bool:
+    """Return whether this ordinary-chat intent explicitly consumes KB context."""
+    return (intent_type or "").lower() in GROUNDED_INTENTS
 
 
-async def _resolve_pending_dimension(state: "PaixuejiState", wait_context: str) -> dict:
-    """Await and apply any pending dimension classification exactly once."""
-    pending_task = state.get("pending_dimension_task")
-    if pending_task is None:
-        return {}
+def _grounding_context_for_intent(state: "PaixuejiState", intent_type: str | None) -> str:
+    """Only grounded intents should receive KB context in their prompt."""
+    if not _intent_uses_grounding(intent_type):
+        return ""
+    return _build_chat_kb_context(state)
 
-    state["pending_dimension_task"] = None
-    wait_start = time.time()
-    try:
-        current_dim = await pending_task
-    except Exception as exc:
-        logger.warning(f"[{state['session_id']}] Deferred dimension classification failed during {wait_context}: {exc}")
-        current_dim = None
 
-    updates = _apply_dimension_result(state, current_dim)
-    logger.info(
-        f"[{state['session_id']}] Deferred dimension resolved in {time.time() - wait_start:.3f}s "
-        f"during {wait_context} | dim={current_dim}"
+def _mark_kb_mapping_not_applicable(state: "PaixuejiState") -> None:
+    """Clear stale mapping data for turns that intentionally skip KB mapping."""
+    state["used_kb_item"] = None
+    state["kb_mapping_status"] = "not_applicable"
+
+
+async def _set_used_kb_item(state: "PaixuejiState", response_text: str) -> dict | None:
+    """Map a finished ordinary-chat response to one KB item for debug display."""
+    used_kb_item = await map_response_to_kb_item(
+        assistant=state["assistant"],
+        response_text=response_text,
+        object_name=state["object_name"],
+        physical_dimensions=state.get("physical_dimensions") or {},
+        engagement_dimensions=state.get("engagement_dimensions") or {},
     )
-    return updates
+    state["used_kb_item"] = used_kb_item
+    state["kb_mapping_status"] = "mapped" if used_kb_item else "none_matched"
+    return used_kb_item
+
+
+async def _maybe_set_used_kb_item(
+    state: "PaixuejiState",
+    intent_type: str | None,
+    response_text: str,
+) -> dict | None:
+    """Run the KB mapper only for intents that explicitly use grounded context."""
+    if not _intent_uses_grounding(intent_type):
+        _mark_kb_mapping_not_applicable(state)
+        return None
+    return await _set_used_kb_item(state, response_text)
 
 
 # ============================================================================
@@ -402,14 +346,16 @@ async def _apply_topic_switch(state: PaixuejiState, new_obj: str) -> dict:
     assistant = state["assistant"]
     assistant.object_name = new_obj
     assistant.state = ConversationState.ASKING_QUESTION
-
-    assistant.load_object_context_from_yaml(new_obj)
-    assistant.clear_active_theme()
+    assistant.load_dimension_data(new_obj)
 
     return {
         "object_name": new_obj,
         "new_object_name": new_obj,
         "response_type": "topic_switch",
+        "physical_dimensions": assistant.physical_dimensions,
+        "engagement_dimensions": assistant.engagement_dimensions,
+        "used_kb_item": None,
+        "kb_mapping_status": "not_applicable",
     }
 
 
@@ -421,33 +367,11 @@ async def _apply_topic_switch(state: PaixuejiState, new_obj: str) -> dict:
 async def node_analyze_input(state: PaixuejiState) -> dict:
     """
     Classify child utterance into one of 9 communicative intents.
-    Runs dimension classification in parallel for coverage tracking.
-    Routes to a dedicated intent node for response generation.
+    Ordinary chat no longer classifies or retires dimensions on the TTFT path.
     """
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Analyze Input")
 
-    # Build list of dimensions not yet explored (for parallel dim classification)
-    all_dims = (
-        list((state.get("physical_dimensions") or {}).keys())
-        + list((state.get("engagement_dimensions") or {}).keys())
-    )
-    remaining_dims = [d for d in all_dims if d not in (state.get("dimensions_covered") or [])]
-    previous_assistant_response = extract_previous_response(state["messages"])
-    pending_dimension_task = None
-    if remaining_dims:
-        pending_dimension_task = asyncio.create_task(
-            classify_dimension(
-                assistant=state["assistant"],
-                child_answer=state["content"],
-                last_assistant_message=previous_assistant_response,
-                object_name=state["object_name"],
-                available_dimensions=remaining_dims,
-            )
-        )
-
-    # Intent classification stays on the routing critical path; dimension classification
-    # continues in the background and is resolved later when needed.
     intent_result = await classify_intent(
         assistant=state["assistant"],
         child_answer=state["content"],
@@ -469,18 +393,15 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
 
     logger.info(
         f"[{state['session_id']}] Node: Analyze Input finished in {time.time() - start_time:.3f}s "
-        f"| intent={intent_type} | dim={'pending' if pending_dimension_task else None}"
+        f"| intent={intent_type}"
     )
     return {
         "intent_type": intent_type,
         "new_object_name": intent_result.get("new_object"),
         "classification_status": classification_status,
         "classification_failure_reason": classification_failure_reason,
-        "current_dimension": None,
-        "dimensions_covered": list(state.get("dimensions_covered") or []),
-        "active_dimension": state.get("active_dimension"),
-        "active_dimension_turn_count": state.get("active_dimension_turn_count", 0),
-        "pending_dimension_task": pending_dimension_task,
+        "used_kb_item": None,
+        "kb_mapping_status": None,
     }
 
 
@@ -616,12 +537,8 @@ async def stream_generator_to_callback(generator, state: PaixuejiState, response
                 detected_object_name=state["detected_object_name"],
 
                 response_type=response_type_override or state["response_type"],
-
-                active_dimension=state.get("active_dimension"),
-                current_dimension=state.get("current_dimension"),
-                active_dimension_turn_count=state.get("active_dimension_turn_count"),
-                dimensions_covered=state.get("dimensions_covered"),
-                dimension_hint_text=state.get("dimension_hint_text"),
+                used_kb_item=state.get("used_kb_item"),
+                kb_mapping_status=state.get("kb_mapping_status"),
             )
             await state["stream_callback"](chunk)
 
@@ -654,15 +571,18 @@ async def node_curiosity(state: PaixuejiState) -> dict:
         last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
-        knowledge_context=_build_intent_knowledge_context(state),
+        knowledge_context=_grounding_context_for_intent(state, "curiosity"),
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
+    await _maybe_set_used_kb_item(state, "curiosity", full_text)
     logger.info(f"[{state['session_id']}] Node: Curiosity finished in {time.time() - start_time:.3f}s")
     return {
         "response_type": "curiosity",
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "used_kb_item": state.get("used_kb_item"),
+        "kb_mapping_status": state.get("kb_mapping_status"),
     }
 
 
@@ -672,6 +592,7 @@ async def node_concept_confusion(state: PaixuejiState) -> dict:
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Concept Confusion")
 
+    _mark_kb_mapping_not_applicable(state)
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
     generator = generate_intent_response_stream(
         intent_type="concept_confusion",
@@ -683,6 +604,7 @@ async def node_concept_confusion(state: PaixuejiState) -> dict:
         last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
+        knowledge_context=_grounding_context_for_intent(state, "concept_confusion"),
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     logger.info(f"[{state['session_id']}] Node: Concept Confusion finished in {time.time() - start_time:.3f}s")
@@ -691,6 +613,8 @@ async def node_concept_confusion(state: PaixuejiState) -> dict:
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "used_kb_item": state.get("used_kb_item"),
+        "kb_mapping_status": state.get("kb_mapping_status"),
     }
 
 
@@ -701,6 +625,7 @@ async def node_clarifying_idk(state: PaixuejiState) -> dict:
     logger.info(f"[{state['session_id']}] Node: Clarifying IDK")
 
     # No counter mutation here — node_analyze_input handles it upstream.
+    _mark_kb_mapping_not_applicable(state)
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
     generator = generate_intent_response_stream(
         intent_type="clarifying_idk",
@@ -712,6 +637,7 @@ async def node_clarifying_idk(state: PaixuejiState) -> dict:
         last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
+        knowledge_context=_grounding_context_for_intent(state, "clarifying_idk"),
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     logger.info(f"[{state['session_id']}] Node: Clarifying IDK finished in {time.time() - start_time:.3f}s")
@@ -720,6 +646,8 @@ async def node_clarifying_idk(state: PaixuejiState) -> dict:
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "used_kb_item": state.get("used_kb_item"),
+        "kb_mapping_status": state.get("kb_mapping_status"),
     }
 
 
@@ -729,6 +657,7 @@ async def node_fallback_freeform(state: PaixuejiState) -> dict:
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Fallback Freeform")
 
+    _mark_kb_mapping_not_applicable(state)
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
     generator = generate_classification_fallback_stream(
         messages=messages,
@@ -747,6 +676,8 @@ async def node_fallback_freeform(state: PaixuejiState) -> dict:
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "used_kb_item": state.get("used_kb_item"),
+        "kb_mapping_status": state.get("kb_mapping_status"),
     }
 
 
@@ -770,18 +701,16 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
         last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
-        knowledge_context=_build_intent_knowledge_context(state),
+        knowledge_context=_grounding_context_for_intent(state, "give_answer_idk"),
     )
     full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
+    await _maybe_set_used_kb_item(state, "give_answer_idk", full_text_intent)
 
     # Update sequence so second generator picks up where first left off
     state["sequence_number"] = new_seq
     messages_with_response = messages + [{"role": "assistant", "content": full_text_intent}]
 
     # Second call: follow-up question
-    await _resolve_pending_dimension(state, wait_context="give_answer_idk_followup")
-    _dim_hint = _build_dimension_hint(state)
-    state["dimension_hint_text"] = _dim_hint
     followup_gen = ask_followup_question_stream(
         messages=messages_with_response,
         object_name=state["object_name"],
@@ -789,7 +718,7 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
         age=state["age"],
         config=state["config"],
         client=state["client"],
-        dimension_hint=_dim_hint,
+        knowledge_context=_build_chat_kb_context(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 
@@ -799,6 +728,8 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
         "full_response_text": full_text_intent + " " + full_text_question,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "used_kb_item": state.get("used_kb_item"),
+        "kb_mapping_status": state.get("kb_mapping_status"),
     }
 
 
@@ -819,15 +750,18 @@ async def node_clarifying_wrong(state: PaixuejiState) -> dict:
         last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
-        knowledge_context=_build_intent_knowledge_context(state),
+        knowledge_context=_grounding_context_for_intent(state, "clarifying_wrong"),
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
+    await _maybe_set_used_kb_item(state, "clarifying_wrong", full_text)
     logger.info(f"[{state['session_id']}] Node: Clarifying Wrong finished in {time.time() - start_time:.3f}s")
     return {
         "response_type": "clarifying_wrong",
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "used_kb_item": state.get("used_kb_item"),
+        "kb_mapping_status": state.get("kb_mapping_status"),
     }
 
 
@@ -837,6 +771,7 @@ async def node_clarifying_constraint(state: PaixuejiState) -> dict:
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Clarifying Constraint")
 
+    _mark_kb_mapping_not_applicable(state)
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
     generator = generate_intent_response_stream(
         intent_type="clarifying_constraint",
@@ -848,6 +783,7 @@ async def node_clarifying_constraint(state: PaixuejiState) -> dict:
         last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
+        knowledge_context=_grounding_context_for_intent(state, "clarifying_constraint"),
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     logger.info(f"[{state['session_id']}] Node: Clarifying Constraint finished in {time.time() - start_time:.3f}s")
@@ -856,6 +792,8 @@ async def node_clarifying_constraint(state: PaixuejiState) -> dict:
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "used_kb_item": state.get("used_kb_item"),
+        "kb_mapping_status": state.get("kb_mapping_status"),
     }
 
 
@@ -878,9 +816,10 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
         last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
-        knowledge_context=_build_intent_knowledge_context(state),
+        knowledge_context=_grounding_context_for_intent(state, "correct_answer"),
     )
     full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
+    await _maybe_set_used_kb_item(state, "correct_answer", full_text_intent)
     state["assistant"].increment_correct_answers()
 
     # Update sequence so second generator picks up where first left off
@@ -888,9 +827,6 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
     messages_with_response = messages + [{"role": "assistant", "content": full_text_intent}]
 
     # Second call: followup question
-    await _resolve_pending_dimension(state, wait_context="correct_answer_followup")
-    _dim_hint = _build_dimension_hint(state)
-    state["dimension_hint_text"] = _dim_hint
     followup_gen = ask_followup_question_stream(
         messages=messages_with_response,
         object_name=state["object_name"],
@@ -898,7 +834,7 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
         age=state["age"],
         config=state["config"],
         client=state["client"],
-        dimension_hint=_dim_hint,
+        knowledge_context=_build_chat_kb_context(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 
@@ -909,6 +845,8 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
         "correct_answer_count": state["assistant"].correct_answer_count,
+        "used_kb_item": state.get("used_kb_item"),
+        "kb_mapping_status": state.get("kb_mapping_status"),
     }
 
 
@@ -931,18 +869,16 @@ async def node_informative(state: PaixuejiState) -> dict:
         last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
-        knowledge_context=_build_intent_knowledge_context(state),
+        knowledge_context=_grounding_context_for_intent(state, "informative"),
     )
     full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
+    await _maybe_set_used_kb_item(state, "informative", full_text_intent)
 
     # Update sequence so second generator picks up where first left off
     state["sequence_number"] = new_seq
     messages_with_response = messages + [{"role": "assistant", "content": full_text_intent}]
 
     # Second call: follow-up question
-    await _resolve_pending_dimension(state, wait_context="informative_followup")
-    _dim_hint = _build_dimension_hint(state)
-    state["dimension_hint_text"] = _dim_hint
     followup_gen = ask_followup_question_stream(
         messages=messages_with_response,
         object_name=state["object_name"],
@@ -950,7 +886,7 @@ async def node_informative(state: PaixuejiState) -> dict:
         age=state["age"],
         config=state["config"],
         client=state["client"],
-        dimension_hint=_dim_hint,
+        knowledge_context=_build_chat_kb_context(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 
@@ -960,6 +896,8 @@ async def node_informative(state: PaixuejiState) -> dict:
         "full_response_text": full_text_intent + " " + full_text_question,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "used_kb_item": state.get("used_kb_item"),
+        "kb_mapping_status": state.get("kb_mapping_status"),
     }
 
 
@@ -980,14 +918,18 @@ async def node_play(state: PaixuejiState) -> dict:
         last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
+        knowledge_context=_grounding_context_for_intent(state, "play"),
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
+    await _maybe_set_used_kb_item(state, "play", full_text)
     logger.info(f"[{state['session_id']}] Node: Play finished in {time.time() - start_time:.3f}s")
     return {
         "response_type": "play",
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "used_kb_item": state.get("used_kb_item"),
+        "kb_mapping_status": state.get("kb_mapping_status"),
     }
 
 
@@ -997,6 +939,7 @@ async def node_emotional(state: PaixuejiState) -> dict:
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Emotional")
 
+    _mark_kb_mapping_not_applicable(state)
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
     generator = generate_intent_response_stream(
         intent_type="emotional",
@@ -1008,6 +951,7 @@ async def node_emotional(state: PaixuejiState) -> dict:
         last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
+        knowledge_context=_grounding_context_for_intent(state, "emotional"),
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     logger.info(f"[{state['session_id']}] Node: Emotional finished in {time.time() - start_time:.3f}s")
@@ -1016,6 +960,8 @@ async def node_emotional(state: PaixuejiState) -> dict:
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "used_kb_item": state.get("used_kb_item"),
+        "kb_mapping_status": state.get("kb_mapping_status"),
     }
 
 
@@ -1045,6 +991,7 @@ async def node_avoidance(state: PaixuejiState) -> dict:
             client=state["client"],
         )
     else:
+        _mark_kb_mapping_not_applicable(state)
         generator = generate_intent_response_stream(
             intent_type="avoidance",
             messages=messages,
@@ -1055,6 +1002,7 @@ async def node_avoidance(state: PaixuejiState) -> dict:
             last_model_response=extract_previous_response(state["messages"]),
             config=state["config"],
             client=state["client"],
+            knowledge_context=_grounding_context_for_intent(state, "avoidance"),
         )
 
     full_text, new_seq = await stream_generator_to_callback(generator, state)
@@ -1064,6 +1012,8 @@ async def node_avoidance(state: PaixuejiState) -> dict:
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "used_kb_item": state.get("used_kb_item"),
+        "kb_mapping_status": state.get("kb_mapping_status"),
         **extra_updates,
     }
 
@@ -1074,6 +1024,7 @@ async def node_boundary(state: PaixuejiState) -> dict:
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Boundary")
 
+    _mark_kb_mapping_not_applicable(state)
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
     generator = generate_intent_response_stream(
         intent_type="boundary",
@@ -1085,6 +1036,7 @@ async def node_boundary(state: PaixuejiState) -> dict:
         last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
+        knowledge_context=_grounding_context_for_intent(state, "boundary"),
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     logger.info(f"[{state['session_id']}] Node: Boundary finished in {time.time() - start_time:.3f}s")
@@ -1093,6 +1045,8 @@ async def node_boundary(state: PaixuejiState) -> dict:
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "used_kb_item": state.get("used_kb_item"),
+        "kb_mapping_status": state.get("kb_mapping_status"),
     }
 
 
@@ -1122,6 +1076,7 @@ async def node_action(state: PaixuejiState) -> dict:
             client=state["client"],
         )
     else:
+        _mark_kb_mapping_not_applicable(state)
         generator = generate_intent_response_stream(
             intent_type="action",
             messages=messages,
@@ -1132,6 +1087,7 @@ async def node_action(state: PaixuejiState) -> dict:
             last_model_response=extract_previous_response(state["messages"]),
             config=state["config"],
             client=state["client"],
+            knowledge_context=_grounding_context_for_intent(state, "action"),
         )
 
     full_text, new_seq = await stream_generator_to_callback(generator, state)
@@ -1141,6 +1097,8 @@ async def node_action(state: PaixuejiState) -> dict:
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "used_kb_item": state.get("used_kb_item"),
+        "kb_mapping_status": state.get("kb_mapping_status"),
         **extra_updates,
     }
 
@@ -1151,6 +1109,7 @@ async def node_social(state: PaixuejiState) -> dict:
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Social")
 
+    _mark_kb_mapping_not_applicable(state)
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
 
     # First call: warm direct answer (no question — prompt already prohibits it)
@@ -1164,6 +1123,7 @@ async def node_social(state: PaixuejiState) -> dict:
         last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
+        knowledge_context=_grounding_context_for_intent(state, "social"),
     )
     full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
 
@@ -1172,9 +1132,6 @@ async def node_social(state: PaixuejiState) -> dict:
     messages_with_response = messages + [{"role": "assistant", "content": full_text_intent}]
 
     # Second call: follow-up question
-    await _resolve_pending_dimension(state, wait_context="social_followup")
-    _dim_hint = _build_dimension_hint(state)
-    state["dimension_hint_text"] = _dim_hint
     followup_gen = ask_followup_question_stream(
         messages=messages_with_response,
         object_name=state["object_name"],
@@ -1182,7 +1139,7 @@ async def node_social(state: PaixuejiState) -> dict:
         age=state["age"],
         config=state["config"],
         client=state["client"],
-        dimension_hint=_dim_hint,
+        knowledge_context=_build_chat_kb_context(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 
@@ -1192,6 +1149,8 @@ async def node_social(state: PaixuejiState) -> dict:
         "full_response_text": full_text_intent + " " + full_text_question,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "used_kb_item": state.get("used_kb_item"),
+        "kb_mapping_status": state.get("kb_mapping_status"),
     }
 
 
@@ -1201,6 +1160,7 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Social Acknowledgment")
 
+    _mark_kb_mapping_not_applicable(state)
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
 
     # First call: brief natural reaction (no question)
@@ -1214,6 +1174,7 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
         last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
+        knowledge_context=_grounding_context_for_intent(state, "social_acknowledgment"),
     )
     full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
 
@@ -1222,9 +1183,6 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
     messages_with_response = messages + [{"role": "assistant", "content": full_text_intent}]
 
     # Second call: follow-up question
-    await _resolve_pending_dimension(state, wait_context="social_ack_followup")
-    _dim_hint = _build_dimension_hint(state)
-    state["dimension_hint_text"] = _dim_hint
     followup_gen = ask_followup_question_stream(
         messages=messages_with_response,
         object_name=state["object_name"],
@@ -1232,7 +1190,7 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
         age=state["age"],
         config=state["config"],
         client=state["client"],
-        dimension_hint=_dim_hint,
+        knowledge_context=_build_chat_kb_context(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 
@@ -1242,6 +1200,8 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
         "full_response_text": full_text_intent + " " + full_text_question,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "used_kb_item": state.get("used_kb_item"),
+        "kb_mapping_status": state.get("kb_mapping_status"),
     }
 
 
@@ -1562,7 +1522,6 @@ async def node_finalize(state: PaixuejiState) -> dict:
     """
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Finalize")
-    await _resolve_pending_dimension(state, wait_context="finalize")
 
     full_response = state.get("full_response_text", "")
     if state.get("full_question_text"):
@@ -1619,6 +1578,8 @@ async def node_finalize(state: PaixuejiState) -> dict:
 
         # Hook type (set on introduction turns only)
         selected_hook_type=state.get("selected_hook_type"),
+        used_kb_item=state.get("used_kb_item"),
+        kb_mapping_status=state.get("kb_mapping_status"),
     )
     await state["stream_callback"](final_chunk)
 

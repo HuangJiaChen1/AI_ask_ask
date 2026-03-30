@@ -358,6 +358,8 @@ def _build_minimal_state(assistant, messages=None, intent_type="clarifying_idk")
         "level3_category": None,
         "status": "normal",
         "scaffold_level": 0,
+        "used_kb_item": None,
+        "kb_mapping_status": None,
     }
 
 
@@ -397,6 +399,136 @@ class TestNodeClarifyingIdkBranching:
             f"node_clarifying_idk must always set response_type='clarifying_idk', "
             f"got '{result['response_type']}'"
         )
+
+
+class TestOrdinaryChatKbFlow:
+    """Ordinary chat should use dimension KB only, with post-response debug mapping."""
+
+    def test_start_route_does_not_load_object_context_for_ordinary_chat(self):
+        import paixueji_app
+
+        client = paixueji_app.app.test_client()
+
+        async def fake_stream_graph_execution(_initial_state):
+            if False:
+                yield None
+
+        with patch.object(paixueji_app.PaixuejiAssistant, "load_object_context_from_yaml") as mock_load_object, patch.object(
+            paixueji_app.PaixuejiAssistant, "load_dimension_data"
+        ) as mock_load_dimensions, patch(
+            "paixueji_app.stream_graph_execution", new=fake_stream_graph_execution
+        ):
+            response = client.post("/api/start", json={"object_name": "Cat", "age": 6})
+
+        assert response.status_code == 200
+        mock_load_object.assert_not_called()
+        mock_load_dimensions.assert_called_once_with("Cat")
+
+    def test_build_chat_kb_context_uses_dimension_data_only(self):
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=0)
+        state = _build_minimal_state(
+            assistant,
+            messages=[{"role": "assistant", "content": "Look at the cat"}],
+            intent_type="correct_answer",
+        )
+        state["object_name"] = "Cat"
+        state["age"] = 6
+        state["physical_dimensions"] = {
+            "appearance": {"paw_pads": "Soft pads underneath the paws for quiet steps"},
+            "senses": {"purring_vibration": "Gentle rumbling when comfortable"},
+        }
+        state["engagement_dimensions"] = {
+            "emotions": [
+                "What do you think makes a cat feel safe enough to fall asleep?",
+                "How does it feel when a warm, fluffy cat sits near you?",
+            ],
+        }
+
+        kb_context = graph._build_chat_kb_context(state)
+
+        assert "paw pads: Soft pads underneath the paws for quiet steps" in kb_context
+        assert "How does it feel when a warm, fluffy cat sits near you?" in kb_context
+        assert "Children notice and name emotions" not in kb_context
+        assert "primary theme reasoning" not in kb_context
+
+    @pytest.mark.asyncio
+    async def test_map_response_to_kb_item_returns_top_physical_item(self):
+        from stream.validation import map_response_to_kb_item
+
+        assistant = _make_mock_assistant(struggle_count=0)
+        response_text = (
+            "Cats tiptoe with soft pads under their paws, which helps them move very quietly."
+        )
+
+        result = await map_response_to_kb_item(
+            assistant=assistant,
+            response_text=response_text,
+            object_name="Cat",
+            physical_dimensions={
+                "appearance": {"paw_pads": "Soft pads underneath the paws for quiet steps"},
+            },
+            engagement_dimensions={
+                "emotions": ["How does it feel when a warm, fluffy cat sits near you?"],
+            },
+        )
+
+        assert result == {
+            "kind": "physical_attribute",
+            "dimension": "appearance",
+            "attribute": "paw_pads",
+            "value": "Soft pads underneath the paws for quiet steps",
+        }
+
+    def test_play_prompt_consumes_knowledge_context(self):
+        from paixueji_prompts import PLAY_INTENT_PROMPT
+
+        assert "{knowledge_context}" in PLAY_INTENT_PROMPT, (
+            "play prompt must explicitly consume knowledge_context to be treated as grounded"
+        )
+
+    @pytest.mark.asyncio
+    async def test_stream_chunks_emit_used_kb_item_without_legacy_dimension_fields(self):
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=0)
+        emitted = []
+
+        async def capture(chunk):
+            emitted.append(chunk.model_dump())
+
+        state = _build_minimal_state(assistant, intent_type="correct_answer")
+        state["stream_callback"] = capture
+        state["start_time"] = 0.0
+        state["sequence_number"] = 0
+        state["status"] = "active"
+        state["request_id"] = "req-1"
+        state["session_id"] = "session-1"
+        state["response_type"] = "correct_answer"
+        state["used_kb_item"] = {
+            "kind": "engagement_item",
+            "dimension": "emotions",
+            "seed_text": "How does it feel when a warm, fluffy cat sits near you?",
+        }
+        state["kb_mapping_status"] = "mapped"
+
+        async def fake_generator():
+            yield ("hello", None, "hello")
+
+        await graph.stream_generator_to_callback(fake_generator(), state)
+
+        assert emitted, "stream callback must emit at least one chunk"
+        payload = emitted[0]
+        assert payload["used_kb_item"] == {
+            "kind": "engagement_item",
+            "dimension": "emotions",
+            "seed_text": "How does it feel when a warm, fluffy cat sits near you?",
+        }
+        assert payload["kb_mapping_status"] == "mapped"
+        assert "dimension_hint_text" not in payload
+        assert "active_dimension" not in payload
+        assert "current_dimension" not in payload
 
     @pytest.mark.asyncio
     async def test_first_idk_increments_count_to_1(self):
@@ -611,7 +743,7 @@ class TestClassificationFailureRouting:
                     "classification_failure_reason": "invalid_output",
                 }
             ),
-        ), patch("graph.classify_dimension", new=AsyncMock(return_value=None)):
+        ):
             result = await graph.node_analyze_input(state)
 
         assert assistant.consecutive_struggle_count == 0, (
@@ -622,70 +754,14 @@ class TestClassificationFailureRouting:
         assert result["classification_failure_reason"] == "invalid_output"
 
 
-class TestDimensionClassificationContext:
-    """Dimension classification should read the previous assistant turn during analyze_input."""
+class TestOrdinaryChatKbStreaming:
+    """Ordinary chat should use full KB context without deferred dimension tracking."""
 
     @pytest.mark.asyncio
-    async def test_node_analyze_input_passes_previous_assistant_turn_to_dimension_classifier(self):
-        import graph
-
-        previous_assistant_turn = "It is round and shiny. What color is it?"
-        assistant = _make_mock_assistant(struggle_count=0)
-        assistant.dimensions_covered = []
-        assistant.active_dimension = None
-        assistant.active_dimension_turn_count = 0
-
-        state = _build_minimal_state(
-            assistant,
-            messages=[
-                {"role": "assistant", "content": previous_assistant_turn},
-                {"role": "user", "content": "Red"},
-            ],
-            intent_type=None,
-        )
-        state["content"] = "Red"
-        state["physical_dimensions"] = {"color": {"hue": "red"}}
-        state["engagement_dimensions"] = {}
-        state["dimensions_covered"] = []
-        state["active_dimension"] = None
-        state["active_dimension_turn_count"] = 0
-        state["full_response_text"] = ""
-
-        mock_intent = AsyncMock(
-            return_value={
-                "intent_type": "CORRECT_ANSWER",
-                "new_object": None,
-                "reasoning": "Child answered correctly",
-                "classification_status": "ok",
-                "classification_failure_reason": None,
-            }
-        )
-        mock_dimension = AsyncMock(return_value="color")
-
-        with patch("graph.classify_intent", new=mock_intent), patch(
-            "graph.classify_dimension", new=mock_dimension
-        ):
-            result = await graph.node_analyze_input(state)
-
-        pending_task = result["pending_dimension_task"]
-        assert pending_task is not None
-        await pending_task
-        assert mock_dimension.await_args.kwargs["last_assistant_message"] == previous_assistant_turn
-        assert result["current_dimension"] is None
-
-
-class TestDeferredDimensionClassification:
-    """Dimension classification should move off the TTFT-critical path."""
-
-    @pytest.mark.asyncio
-    async def test_node_analyze_input_does_not_wait_for_slow_dimension_classifier(self):
+    async def test_node_analyze_input_returns_used_kb_placeholder_not_dimension_task(self):
         import graph
 
         assistant = _make_mock_assistant(struggle_count=0)
-        assistant.dimensions_covered = []
-        assistant.active_dimension = None
-        assistant.active_dimension_turn_count = 0
-
         state = _build_minimal_state(
             assistant,
             messages=[{"role": "assistant", "content": "What color is it?"}],
@@ -694,15 +770,6 @@ class TestDeferredDimensionClassification:
         state["content"] = "Red"
         state["physical_dimensions"] = {"color": {"hue": "red"}}
         state["engagement_dimensions"] = {}
-        state["dimensions_covered"] = []
-        state["active_dimension"] = None
-        state["active_dimension_turn_count"] = 0
-
-        release_dimension = asyncio.Event()
-
-        async def slow_dimension(*args, **kwargs):
-            await release_dimension.wait()
-            return "color"
 
         with patch(
             "graph.classify_intent",
@@ -715,27 +782,18 @@ class TestDeferredDimensionClassification:
                     "classification_failure_reason": None,
                 }
             ),
-        ), patch("graph.classify_dimension", new=slow_dimension):
-            result = await asyncio.wait_for(graph.node_analyze_input(state), timeout=0.05)
+        ):
+            result = await graph.node_analyze_input(state)
 
-        pending_task = result["pending_dimension_task"]
-        assert pending_task is not None
-        assert not pending_task.done()
-        assert result["current_dimension"] is None
-        assert assistant.active_dimension is None
-
-        release_dimension.set()
-        resolved_dimension = await pending_task
-        assert resolved_dimension == "color"
+        assert result["used_kb_item"] is None
+        assert "pending_dimension_task" not in result
+        assert "current_dimension" not in result
 
     @pytest.mark.asyncio
-    async def test_social_acknowledgment_waits_for_pending_dimension_before_followup(self):
+    async def test_social_acknowledgment_followup_receives_full_kb_context(self):
         import graph
 
         assistant = _make_mock_assistant(struggle_count=0)
-        assistant.dimensions_covered = []
-        assistant.active_dimension = "shape"
-        assistant.active_dimension_turn_count = 1
         assistant.guide_phase = None
         assistant.ibpyp_theme_name = None
         assistant.key_concept = None
@@ -752,11 +810,9 @@ class TestDeferredDimensionClassification:
             "shape": {"form": "round"},
             "color": {"hue": "red"},
         }
-        state["engagement_dimensions"] = {}
-        state["dimensions_covered"] = []
-        state["active_dimension"] = "shape"
-        state["active_dimension_turn_count"] = 1
-        state["pending_dimension_task"] = asyncio.create_task(asyncio.sleep(0, result="color"))
+        state["engagement_dimensions"] = {
+            "emotions": ["How does it feel when a warm, fluffy cat sits near you?"],
+        }
 
         with patch("graph.generate_intent_response_stream", return_value=object()), patch(
             "graph.stream_generator_to_callback",
@@ -764,21 +820,16 @@ class TestDeferredDimensionClassification:
         ), patch("graph.ask_followup_question_stream", return_value=object()) as mock_followup:
             result = await graph.node_social_acknowledgment(state)
 
-        dimension_hint = mock_followup.call_args.kwargs["dimension_hint"]
-        assert '[Dimension suggestion: "color"]' in dimension_hint
-        assert assistant.active_dimension == "color"
-        assert assistant.dimensions_covered == ["shape"]
-        assert state["pending_dimension_task"] is None
+        knowledge_context = mock_followup.call_args.kwargs["knowledge_context"]
+        assert "[physical.shape]" in knowledge_context
+        assert "[engagement.emotions]" in knowledge_context
         assert result["full_response_text"] == "brief reaction follow-up question"
 
     @pytest.mark.asyncio
-    async def test_node_finalize_resolves_pending_dimension_for_one_stage_paths(self):
+    async def test_node_finalize_emits_used_kb_item_for_one_stage_paths(self):
         import graph
 
         assistant = _make_mock_assistant(struggle_count=0)
-        assistant.dimensions_covered = []
-        assistant.active_dimension = "shape"
-        assistant.active_dimension_turn_count = 1
         assistant.guide_phase = None
         assistant.ibpyp_theme_name = None
         assistant.key_concept = None
@@ -792,23 +843,89 @@ class TestDeferredDimensionClassification:
             intent_type="play",
         )
         state["content"] = "a monster"
-        state["physical_dimensions"] = {
-            "shape": {"form": "round"},
-            "color": {"hue": "red"},
-        }
-        state["engagement_dimensions"] = {}
-        state["dimensions_covered"] = []
-        state["active_dimension"] = "shape"
-        state["active_dimension_turn_count"] = 1
-        state["pending_dimension_task"] = asyncio.create_task(asyncio.sleep(0, result="color"))
         state["full_response_text"] = "Let's imagine it together."
         state["response_type"] = "play"
         state["classification_status"] = "ok"
         state["classification_failure_reason"] = None
+        state["used_kb_item"] = {
+            "kind": "physical_attribute",
+            "dimension": "shape",
+            "attribute": "form",
+            "value": "round",
+        }
+        state["kb_mapping_status"] = "mapped"
 
         await graph.node_finalize(state)
 
-        assert assistant.active_dimension == "color"
-        assert assistant.dimensions_covered == ["shape"]
-        assert state["pending_dimension_task"] is None
         assert state["stream_callback"].await_count == 1
+        final_chunk = state["stream_callback"].await_args.args[0]
+        assert final_chunk.used_kb_item == {
+            "kind": "physical_attribute",
+            "dimension": "shape",
+            "attribute": "form",
+            "value": "round",
+        }
+        assert final_chunk.kb_mapping_status == "mapped"
+
+    @pytest.mark.asyncio
+    async def test_social_turn_marks_kb_mapping_not_applicable_and_skips_mapper(self):
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=0)
+        state = _build_minimal_state(
+            assistant,
+            messages=[{"role": "assistant", "content": "Do you think I can see it?"}],
+            intent_type="social",
+        )
+        state["content"] = "Can you smell it?"
+        state["used_kb_item"] = {
+            "kind": "physical_attribute",
+            "dimension": "shape",
+            "attribute": "form",
+            "value": "round",
+        }
+        state["kb_mapping_status"] = "mapped"
+
+        with patch("graph.generate_intent_response_stream", return_value=object()), patch(
+            "graph.stream_generator_to_callback",
+            new=AsyncMock(side_effect=[("I don't have a nose.", 1), ("What would it smell like to you?", 2)]),
+        ), patch("graph.ask_followup_question_stream", return_value=object()), patch(
+            "graph._set_used_kb_item",
+            new=AsyncMock(),
+        ) as mock_set_used_kb_item:
+            result = await graph.node_social(state)
+
+        mock_set_used_kb_item.assert_not_awaited()
+        assert result["used_kb_item"] is None
+        assert result["kb_mapping_status"] == "not_applicable"
+
+    @pytest.mark.asyncio
+    async def test_fallback_freeform_marks_kb_mapping_not_applicable_and_skips_mapper(self):
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=0)
+        state = _build_minimal_state(
+            assistant,
+            messages=[{"role": "assistant", "content": "Tell me more!"}],
+            intent_type=None,
+        )
+        state["response_type"] = "fallback_freeform"
+        state["used_kb_item"] = {
+            "kind": "engagement_item",
+            "dimension": "emotions",
+            "seed_text": "How does it feel when a warm, fluffy cat sits near you?",
+        }
+        state["kb_mapping_status"] = "mapped"
+
+        with patch("graph.generate_classification_fallback_stream", return_value=object()), patch(
+            "graph.stream_generator_to_callback",
+            new=AsyncMock(return_value=("Natural fallback", 1)),
+        ), patch(
+            "graph._set_used_kb_item",
+            new=AsyncMock(),
+        ) as mock_set_used_kb_item:
+            result = await graph.node_fallback_freeform(state)
+
+        mock_set_used_kb_item.assert_not_awaited()
+        assert result["used_kb_item"] is None
+        assert result["kb_mapping_status"] == "not_applicable"

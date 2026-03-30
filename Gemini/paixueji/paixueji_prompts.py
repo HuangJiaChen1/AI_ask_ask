@@ -173,8 +173,10 @@ RULES:
 - Sound like a curious friend exploring alongside the child — not a teacher.
 - Respond naturally (NOT JSON).
 
-DIMENSION SUGGESTION (fallback only — use only when the WOW fact above gives no clear hook to GROW from):
-{dimension_hint}"""
+CURRENT OBJECT KB CONTEXT:
+Use this only as background inspiration if it helps you imagine a playful question.
+Do NOT quote it, do NOT turn it into a quiz, and do NOT copy any example wording.
+{knowledge_context}"""
 
 # ============================================================================
 # 4. SPECIALIZED PROMPTS (MONOLITHIC)
@@ -768,6 +770,9 @@ CONTEXT:
 AGE GUIDANCE:
 {age_prompt}
 
+GROUNDING (use these facts only when they directly support the child's imaginative frame):
+{knowledge_context}
+
 YOUR MISSION:
 The child is playing — meet them there FULLY. Be delightfully silly. The secret trick: find a way to make their imagination accidentally true, or magically close to something real.
 
@@ -782,6 +787,10 @@ BEAT 2 — THE SECRET CONNECTION (OPTIONAL — default: SKIP):
   Only include this beat if you can pass this test:
   Complete the sentence: "Their imagination is actually [true / close to reality]
   because [ONE fact that DIRECTLY INVOLVES what the child imagined]."
+
+  When you use Beat 2, prefer the grounded facts above over general memory.
+  If no grounded fact directly supports the imaginative link, SKIP Beat 2.
+  Do NOT quote the grounding block verbatim — turn it into natural, playful language.
 
   The fact must relate to the child's specific imaginative act, not to a different property of the object.
   BAD: "I would hide my phone in the mane" → "manes protect necks during rumbles" (FAIL — about protection, not hiding)

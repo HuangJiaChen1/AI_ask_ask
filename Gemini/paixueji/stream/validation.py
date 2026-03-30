@@ -1,12 +1,10 @@
 """
-Intent and dimension classification logic for Paixueji assistant.
-
-Classifies child utterances into one of 9 communicative intents, enabling
-the fan-out architecture where each intent routes to a dedicated response node.
+Intent and KB-mapping logic for Paixueji assistant.
 
 Functions:
     - classify_intent: Async LLM classifier → 9 intents + optional new_object extraction
-    - classify_dimension: Async LLM classifier → which exploration dimension a turn belongs to
+    - classify_dimension: Legacy dimension classifier (still exported for compatibility)
+    - map_response_to_kb_item: Debug-only best-effort mapper from response text to one KB item
 """
 import re
 import time
@@ -195,3 +193,98 @@ async def classify_dimension(
     except Exception as e:
         logger.debug(f"[DIM_CLASSIFY] Error (non-fatal): {e}")
         return None
+
+
+_STOPWORDS = {
+    "a", "an", "and", "are", "as", "at", "be", "because", "but", "by", "for",
+    "from", "has", "have", "if", "in", "is", "it", "its", "like", "of", "on",
+    "or", "so", "that", "the", "their", "them", "they", "this", "to", "very",
+    "when", "with", "you", "your",
+}
+
+
+def _stem_token(token: str) -> str:
+    token = token.lower()
+    if token.endswith("ly") and len(token) > 4:
+        token = token[:-2]
+    if token.endswith("ing") and len(token) > 5:
+        token = token[:-3]
+    if token.endswith("ed") and len(token) > 4:
+        token = token[:-2]
+    if token.endswith("es") and len(token) > 4:
+        token = token[:-2]
+    elif token.endswith("s") and len(token) > 3:
+        token = token[:-1]
+    return token
+
+
+def _tokenize(text: str) -> set[str]:
+    return {
+        _stem_token(token)
+        for token in re.findall(r"[a-zA-Z]+", (text or "").lower())
+        if _stem_token(token) and _stem_token(token) not in _STOPWORDS
+    }
+
+
+def _score_overlap(response_tokens: set[str], candidate_tokens: set[str]) -> int:
+    return len(response_tokens & candidate_tokens)
+
+
+async def map_response_to_kb_item(
+    assistant,
+    response_text: str,
+    object_name: str,
+    physical_dimensions: dict[str, dict[str, str]] | None,
+    engagement_dimensions: dict[str, list[str]] | None,
+) -> dict | None:
+    """
+    Best-effort debug mapper from finished response text to one KB item.
+
+    This is descriptive metadata only. It does not claim causal grounding.
+    """
+    del assistant  # Reserved for future LLM-backed mapping if heuristics prove insufficient.
+    del object_name
+
+    response_tokens = _tokenize(response_text)
+    if not response_tokens:
+        return None
+
+    best_score = 0
+    best_item = None
+
+    for dimension, attrs in (physical_dimensions or {}).items():
+        for attribute, value in attrs.items():
+            attribute_text = attribute.replace("_", " ")
+            candidate_tokens = (
+                _tokenize(dimension)
+                | _tokenize(attribute_text)
+                | _tokenize(value)
+            )
+            score = _score_overlap(response_tokens, candidate_tokens)
+            if attribute_text in (response_text or "").lower():
+                score += 3
+            if value.lower() in (response_text or "").lower():
+                score += 5
+            if score > best_score:
+                best_score = score
+                best_item = {
+                    "kind": "physical_attribute",
+                    "dimension": dimension,
+                    "attribute": attribute,
+                    "value": value,
+                }
+
+    for dimension, seeds in (engagement_dimensions or {}).items():
+        dimension_tokens = _tokenize(dimension)
+        for seed_text in seeds:
+            candidate_tokens = dimension_tokens | _tokenize(seed_text)
+            score = _score_overlap(response_tokens, candidate_tokens)
+            if score > best_score:
+                best_score = score
+                best_item = {
+                    "kind": "engagement_item",
+                    "dimension": dimension,
+                    "seed_text": seed_text,
+                }
+
+    return best_item if best_score > 0 else None
