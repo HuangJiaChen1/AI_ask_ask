@@ -33,7 +33,8 @@ async def ask_introduction_question_stream(
     age: int,
     config: dict,
     client: genai.Client,
-    hook_type_section: str = ""
+    hook_type_section: str = "",
+    knowledge_context: str = "",
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str, dict], None]:
     """
     Stream first question about the object.
@@ -46,6 +47,7 @@ async def ask_introduction_question_stream(
         config: Configuration dict with model settings
         client: Gemini client instance
         hook_type_section: Pre-formatted hook type block injected into Beat 4 of the prompt
+        knowledge_context: Grounded intro facts to keep the opening concrete
 
     Yields:
         Tuple of (text_chunk, token_usage_or_None, full_response_so_far, decision_info)
@@ -59,7 +61,8 @@ async def ask_introduction_question_stream(
         object_name=object_name,
         age_prompt=age_prompt,
         age=age,
-        hook_type_section=hook_type_section
+        hook_type_section=hook_type_section,
+        knowledge_context=knowledge_context,
     )
 
     # Prepare messages with introduction prompt

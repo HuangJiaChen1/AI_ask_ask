@@ -288,6 +288,30 @@ def _build_chat_kb_context(state: "PaixuejiState") -> str:
     return "\n".join(lines)
 
 
+def _build_intro_kb_context(state: "PaixuejiState") -> str:
+    """
+    Format only concrete physical facts for the introduction turn.
+
+    Intro should stay close to observable details and avoid imaginative engagement
+    seeds that can pull the opening away from the object too early.
+    """
+    physical = state.get("physical_dimensions") or {}
+    if not physical:
+        return ""
+
+    object_name = state.get("object_name", "this object")
+    lines = [f"Intro grounding for {object_name}:"]
+
+    for dimension, attrs in physical.items():
+        if not attrs:
+            continue
+        lines.append(f"[physical.{dimension}]")
+        for attribute, value in attrs.items():
+            lines.append(f"  - {attribute.replace('_', ' ')}: {value}")
+
+    return "\n".join(lines)
+
+
 def _intent_uses_grounding(intent_type: str | None) -> bool:
     """Return whether this ordinary-chat intent explicitly consumes KB context."""
     return (intent_type or "").lower() in GROUNDED_INTENTS
@@ -460,7 +484,8 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
         age=state["age"],
         config=state["config"],
         client=state["client"],
-        hook_type_section=hook_type_section
+        hook_type_section=hook_type_section,
+        knowledge_context=_build_intro_kb_context(state),
     )
 
     full_text, new_seq = await stream_generator_to_callback(

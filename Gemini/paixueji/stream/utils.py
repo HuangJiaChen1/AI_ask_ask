@@ -20,6 +20,7 @@ logger.add(
 
 # Performance thresholds for warnings (in seconds)
 SLOW_LLM_CALL_THRESHOLD = 5.0
+HIGH_IMAGINATION_HOOKS = {"想象导向", "情绪投射", "角色代入", "创意改造"}
 
 
 def safe_print(message):
@@ -125,7 +126,8 @@ def select_hook_type(age: int, messages: list, hook_types: dict) -> tuple[str, s
         (hook_type_name, hook_type_section_string) — the selected hook name and
         a formatted block ready to inject into the INTRODUCTION_PROMPT.
     """
-    age_str = str(min(max(age or 5, 3), 8))  # clamp to supported range; default 5 if None
+    resolved_age = min(max(age or 5, 3), 8)
+    age_str = str(resolved_age)  # clamp to supported range; default 5 if None
 
     pool = []
     weights = []
@@ -143,6 +145,18 @@ def select_hook_type(age: int, messages: list, hook_types: dict) -> tuple[str, s
 
         pool.append(name)
         weights.append(base_weight)
+
+    # Younger children default to concrete openings. If any low-imagination hooks
+    # are available, remove the high-imagination ones from the intro pool.
+    if resolved_age <= 6:
+        filtered = [
+            (name, weight)
+            for name, weight in zip(pool, weights)
+            if name not in HIGH_IMAGINATION_HOOKS
+        ]
+        if filtered:
+            pool = [name for name, _ in filtered]
+            weights = [weight for _, weight in filtered]
 
     if not pool:
         # Fallback: pick any hook that doesn't require history

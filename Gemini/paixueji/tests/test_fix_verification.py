@@ -85,6 +85,32 @@ class TestIntroductionPromptBeatStructure:
             f"BEATs must appear in order 1→2→3→4 (positions: {pos1}, {pos2}, {pos3}, {pos4})"
         )
 
+    def test_intro_prompt_declares_older_kid_buddy_voice(self):
+        """INTRODUCTION_PROMPT must define the assistant as an older-kid buddy, not a teacher."""
+        lower = self.prompt.lower()
+        assert "older-kid buddy" in lower or "older kid buddy" in lower, (
+            "INTRODUCTION_PROMPT must explicitly anchor the voice to an older-kid buddy"
+        )
+        assert "not a teacher" in lower, (
+            "INTRODUCTION_PROMPT must explicitly forbid teacher-like delivery"
+        )
+
+    def test_intro_prompt_bans_literary_or_magic_pivots(self):
+        """INTRODUCTION_PROMPT must forbid literary/magical pivots that drift away from the object."""
+        lower = self.prompt.lower()
+        assert "literary" in lower, (
+            "INTRODUCTION_PROMPT must explicitly ban literary-sounding language"
+        )
+        assert "magic" in lower or "magical" in lower, (
+            "INTRODUCTION_PROMPT must explicitly ban magic-style pivots unless the child starts them"
+        )
+
+    def test_intro_prompt_consumes_knowledge_context(self):
+        """INTRODUCTION_PROMPT should accept grounded intro knowledge context."""
+        assert "{knowledge_context}" in self.prompt, (
+            "INTRODUCTION_PROMPT must consume knowledge_context so intro wording can stay grounded"
+        )
+
 
 # ===========================================================================
 # Fix 2 — CORRECT_ANSWER_INTENT_PROMPT BEAT 3
@@ -139,10 +165,14 @@ class TestCorrectAnswerPromptBeat3:
             "PROHIBITIONS section must retain the 'Did you know...?' ban"
         )
 
-    def test_followup_prompt_promotes_fun_imaginative_questions(self):
-        """FOLLOWUP_QUESTION_PROMPT must promote fun/silly/imaginative questions over educational ones."""
-        assert "FUN" in self.followup or "SILLY" in self.followup or "IMAGINATIVE" in self.followup, (
-            "FOLLOWUP_QUESTION_PROMPT must promote fun/silly/imaginative questions"
+    def test_followup_prompt_prioritizes_concrete_directly_answerable_questions(self):
+        """FOLLOWUP_QUESTION_PROMPT should favor concrete, directly answerable questions."""
+        lower = self.followup.lower()
+        assert "directly answerable" in lower, (
+            "FOLLOWUP_QUESTION_PROMPT must require directly answerable questions"
+        )
+        assert "concrete" in lower, (
+            "FOLLOWUP_QUESTION_PROMPT must explicitly prefer concrete follow-up questions"
         )
 
     def test_correct_answer_prompt_handles_negative_preference_detours(self):
@@ -227,6 +257,20 @@ class TestFollowupQuestionPromptRule6:
             "FOLLOWUP_QUESTION_PROMPT must include a SENSORY INVITE fallback tier"
         )
 
+    def test_followup_prompt_requires_staying_on_same_detail(self):
+        """The follow-up prompt must stay on the same nearby detail instead of jumping sideways."""
+        lower = self.prompt.lower()
+        assert "same detail" in lower or "same attribute" in lower or "one-hop" in lower, (
+            "FOLLOWUP_QUESTION_PROMPT must explicitly keep follow-ups on the same nearby detail"
+        )
+
+    def test_followup_prompt_discourages_unprompted_fantasy(self):
+        """The follow-up prompt must not add fantasy unless the child already led there."""
+        lower = self.prompt.lower()
+        assert "unless the child" in lower and ("fantasy" in lower or "imagination" in lower), (
+            "FOLLOWUP_QUESTION_PROMPT must limit unprompted fantasy pivots"
+        )
+
     def test_followup_prompt_preserves_qualified_facts(self):
         """Qualified facts must not be flattened into contradictions."""
         lower = self.prompt.lower()
@@ -246,6 +290,39 @@ class TestFollowupQuestionPromptRule6:
         assert "must not say bananas grow on a tree" in lower, (
             "FOLLOWUP_QUESTION_PROMPT must explicitly ban the reviewed banana contradiction"
         )
+
+
+class TestIntroHookSelection:
+    """Intro hook selection should default away from high-imagination hooks for younger kids."""
+
+    def test_select_hook_type_excludes_high_imagination_hooks_for_age_five(self):
+        from stream.utils import select_hook_type
+
+        hook_types = {
+            "想象导向": {
+                "name": "想象导向",
+                "concept": "fantasy pivot",
+                "examples": ["If it were magic..."],
+                "age_weights": {"5": 10},
+                "requires_history": False,
+            },
+            "细节发现": {
+                "name": "细节发现",
+                "concept": "notice one real detail",
+                "examples": ["Look at that detail."],
+                "age_weights": {"5": 1},
+                "requires_history": False,
+            },
+        }
+
+        with patch("stream.utils.random.choices", return_value=["细节发现"]) as mock_choices:
+            selected_name, _ = select_hook_type(age=5, messages=[], hook_types=hook_types)
+
+        pool = mock_choices.call_args.args[0]
+        assert "想象导向" not in pool, (
+            "Age-5 intro hook selection should exclude high-imagination hooks by default"
+        )
+        assert selected_name == "细节发现"
 
 
 # ===========================================================================
@@ -824,6 +901,38 @@ class TestOrdinaryChatKbStreaming:
         assert "[physical.shape]" in knowledge_context
         assert "[engagement.emotions]" in knowledge_context
         assert result["full_response_text"] == "brief reaction follow-up question"
+
+    @pytest.mark.asyncio
+    async def test_intro_receives_physical_grounding_without_engagement_seeds(self):
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=0)
+        state = _build_minimal_state(
+            assistant,
+            messages=[{"role": "system", "content": "system prompt"}],
+            intent_type=None,
+        )
+        state["response_type"] = "introduction"
+        state["hook_types"] = {}
+        state["physical_dimensions"] = {
+            "function": {"blinking": "Blinking wipes and wets the eye like a quick sweep"},
+            "appearance": {"pupil_size": "A black dot that can grow big or small"},
+        }
+        state["engagement_dimensions"] = {
+            "imagination": ["Pretend your eyes have night vision mode"],
+        }
+
+        with patch("graph.ask_introduction_question_stream", return_value=object()) as mock_intro, patch(
+            "graph.stream_generator_to_callback",
+            new=AsyncMock(return_value=("intro text", 1)),
+        ):
+            result = await graph.node_generate_intro(state)
+
+        knowledge_context = mock_intro.call_args.kwargs["knowledge_context"]
+        assert "[physical.function]" in knowledge_context
+        assert "[physical.appearance]" in knowledge_context
+        assert "[engagement.imagination]" not in knowledge_context
+        assert result["response_type"] == "introduction"
 
     @pytest.mark.asyncio
     async def test_node_finalize_emits_used_kb_item_for_one_stage_paths(self):

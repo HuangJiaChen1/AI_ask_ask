@@ -1178,6 +1178,17 @@ class TestBoundaryCuriosityPromptStructure:
             "BEAT 3 should now invite a closing question, not forbid one."
         )
 
+    def test_curiosity_prompt_has_rephrase_special_case_for_confusion(self):
+        """If the child is asking what the model meant, the prompt must switch to plain rephrasing."""
+        prompt = paixueji_prompts.CURIOSITY_INTENT_PROMPT
+        lower = prompt.lower()
+        assert "rephrase" in lower or "say it again more simply" in lower, (
+            "CURIOSITY_INTENT_PROMPT must include a special-case rephrase path for confusion turns"
+        )
+        assert "do not pivot to a new wow fact" in lower or "no wow pivot" in lower, (
+            "CURIOSITY_INTENT_PROMPT must forbid wow-fact pivots when the child is confused"
+        )
+
 
 @pytest.mark.integration
 class TestBoundaryCuriosityClosingQuestionRealLLM:
@@ -1321,10 +1332,14 @@ class TestEducationToResponsesPlayToQuestions:
             "FOLLOWUP_QUESTION_PROMPT must prohibit echoing the previous assistant message"
         )
 
-    def test_followup_prompt_fun_silly_imaginative_rule(self):
+    def test_followup_prompt_prefers_concrete_buddy_questions(self):
         followup = paixueji_prompts.FOLLOWUP_QUESTION_PROMPT
-        assert "FUN" in followup or "SILLY" in followup or "IMAGINATIVE" in followup, (
-            "FOLLOWUP_QUESTION_PROMPT must emphasize fun/silly/imaginative over educational questions"
+        lower = followup.lower()
+        assert "older-kid buddy" in lower or "older kid buddy" in lower, (
+            "FOLLOWUP_QUESTION_PROMPT must anchor the follow-up voice to an older-kid buddy"
+        )
+        assert "directly answerable" in lower or "easy to answer right now" in lower, (
+            "FOLLOWUP_QUESTION_PROMPT must prefer concrete buddy-style questions over abstract flights"
         )
 
     def test_informative_prompt_has_beat2_wow_extension(self):
