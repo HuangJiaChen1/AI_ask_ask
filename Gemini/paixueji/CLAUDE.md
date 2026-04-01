@@ -69,8 +69,6 @@ All public functions are re-exported via `stream/__init__.py`. Files:
 | `validation.py` | `decide_topic_switch_with_validation()` — engagement + correctness + switch decision |
 | `focus_mode.py` | DEPTH mode state machine |
 | `fun_fact.py` | Two-step grounded fact generation (grounding → structuring) |
-| `guide_hint.py` | LLM-based scaffold hints for guide mode |
-| `theme_guide.py` | `ThemeNavigator` (System 2 planning) + `ThemeDriver` (System 1 execution) |
 | `utils.py` | Message cleaning, format conversion, `extract_previous_question()` |
 
 ---
@@ -85,12 +83,12 @@ All public functions are re-exported via `stream/__init__.py`. Files:
 analyze_input → route_logic → generate_response → generate_question → finalize
 ```
 
-**Guide-mode node path (extends chat-mode):**
+**Completion path:**
 ```
-start_guide → guide_navigator → guide_driver → [guide_hint | guide_success | guide_exit]
+correct_answer threshold → classify_theme → chat_complete → finalize
 ```
 
-Conditional edges branch on `response_type` and `guide_phase` fields in `PaixuejiState`.
+Conditional edges branch on `response_type`, `intent_type`, and the correct-answer threshold.
 
 ---
 

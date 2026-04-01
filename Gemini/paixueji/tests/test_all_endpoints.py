@@ -1,5 +1,6 @@
 import pytest
 import json
+from pathlib import Path
 
 def parse_sse(response_data):
     """Parses SSE response text into a list of event/data dicts."""
@@ -118,16 +119,29 @@ def test_critique_engine(client):
     }
     response = client.post('/api/manual-critique', json=critique_payload)
     assert response.status_code == 200
-    assert response.get_json()['success'] is True
+    body = response.get_json()
+    assert body['success'] is True
 
-def test_start_guide_direct(client):
-    """Test the testing-only direct guide entry endpoint."""
+    report_path = Path(body["report_path"])
+    report_date = report_path.parent.name
+    report_name = report_path.name
+
+    detail_response = client.get(f"/api/reports/hf/{report_date}/{report_name}")
+    assert detail_response.status_code == 200
+    detail = detail_response.get_json()
+    assert detail["meta"]["object"] == "banana"
+    assert detail["meta"]["key_concept"] in (None, "Change")
+    assert any(turn["role"] == "model" and turn["critique"] for turn in detail["transcript"])
+
+    raw_response = client.get(f"/api/reports/hf/{report_date}/{report_name}/raw")
+    assert raw_response.status_code == 200
+    assert raw_response.mimetype == "text/plain"
+
+def test_start_guide_endpoint_removed(client):
+    """Guide-only testing endpoint should no longer be exposed."""
     payload = {"object_name": "banana", "age": 6}
     response = client.post('/api/start-guide', json=payload)
-    assert response.status_code == 200
-    events = parse_sse(response.data)
-    # Check if we got a guide_bridge response type
-    assert any(e['data'].get('response_type') == 'guide_bridge' for e in events if e['event'] == 'chunk')
+    assert response.status_code == 404
 
 
 def test_handoff_uses_tmp_handoff_route(client):

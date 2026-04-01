@@ -18,14 +18,13 @@ The Critic System evaluates whether the Paixueji AI's responses **actually advan
 | **AIF** (AI Feedback) | User clicks "AI Critique" in UI | `PedagogicalCritiquePipeline` → Gemini LLM | `reports/AIF/{object}_{timestamp}.md` |
 | **HF** (Human Feedback) | User fills manual critique form in UI | No LLM — human text only | `reports/HF/{object}_{timestamp}.md` |
 
-### Two-Phase Structure
+### Conversation Structure
 
-Every conversation has up to two phases, determined by `mode` stored on each **model message** in conversation history:
+Current sessions are recorded as a single chat-phase conversation:
 
-- **Chat Phase** (`mode="chat"`) — Exploratory Q&A. Evaluated for general engagement, age-appropriateness.
-- **Guide Phase** (`mode="guide"`) — Concept-focused teaching. Evaluated for advancement toward `key_concept`.
+- **Chat Phase** (`mode="chat"`) — Exploratory Q&A that may end with theme classification and activity handoff.
 
-The critique pipeline **splits the transcript by mode**, runs separate critiques for each phase, then combines into a single report via `to_combined_markdown()`.
+Human-feedback reports are generated as a single conversation critique. Historical reports may still contain legacy guide-phase sections.
 
 ### System Diagram
 
@@ -35,12 +34,11 @@ The critique pipeline **splits the transcript by mode**, runs separate critiques
                           │                                   │
   UI (app.js)             │  POST /api/critique               │
   ─────────────────────►  │    → build transcript             │
-  "AI Critique" button    │    → split by mode (chat/guide)   │
+  "AI Critique" button    │    → build transcript             │
                           │    → spawn background thread      │
                           │                                   │
                           │  run_critique_background()        │
-                          │    ├─ chat_transcript ──► PedagogicalCritiquePipeline.critique_transcript(mode="chat")
-                          │    └─ guide_transcript ─► PedagogicalCritiquePipeline.critique_transcript(mode="guide")
+                          │    └─ transcript ───────────────► PedagogicalCritiquePipeline.critique_transcript(mode="chat")
                           │                                   │
                           │  For EACH exchange (model→child→model):
                           │    1. PedagogicalAnalyzer.analyze()   ← extract context
@@ -255,7 +253,7 @@ Full critique of an entire conversation (or phase).
 | `object_name` | `str` | required |
 | `key_concept` | `str` | required |
 | `age` | `int` (3-12) | required |
-| `guide_phase` | `str` | `"active"` |
+| `mode` | `str` | `"chat"` |
 
 **`Scenario(BaseModel)`**
 

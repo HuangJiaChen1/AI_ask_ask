@@ -18,7 +18,7 @@ from google.genai.types import HttpOptions
 from loguru import logger
 
 from paixueji_assistant import PaixuejiAssistant
-from graph import GUIDE_MODE_THRESHOLD, paixueji_graph
+from graph import paixueji_graph
 from schema import StreamChunk
 import paixueji_prompts
 import time
@@ -394,10 +394,6 @@ def start_conversation():
                             "correct_answer_count": assistant.correct_answer_count,
                             "content": introduction_content,
                             "conversation_state": assistant.state.value,
-                            "guide_phase": assistant.guide_phase,
-                            "guide_turn_count": assistant.guide_turn_count,
-                            "scaffold_level": assistant.scaffold_level,
-                            "hint_given": assistant.hint_given,
                             "ibpyp_theme_name": assistant.ibpyp_theme_name,
                             "key_concept": assistant.key_concept,
                         },
@@ -411,7 +407,7 @@ def start_conversation():
                                 "role": "assistant",
                                 "content": chunk.response,
                                 "nodes_executed": chunk.nodes_executed or [],
-                                "mode": "guide" if chunk.guide_phase else "chat",
+                                "mode": "chat",
                                 "classification_status": chunk.classification_status,
                                 "classification_failure_reason": chunk.classification_failure_reason,
                                 "_input_state_snapshot": initial_state.get("_input_state_snapshot", {}),
@@ -437,217 +433,6 @@ def start_conversation():
             print(f"[INFO] Session {session_id[:8]}... client disconnected")
         except Exception as e:
             print(f"[ERROR] Error in start_conversation: {e}")
-            import traceback
-            traceback.print_exc()
-            yield sse_event("error", build_sse_error_payload(e))
-
-    return Response(generate(), mimetype='text/event-stream')
-
-
-@app.route('/api/start-guide', methods=['POST'])
-def start_guide_test():
-    """
-    Start a direct guide mode test - skips introduction, runs theme classification,
-    and immediately enters guide phase.
-
-    This endpoint is for testing the Navigator/Driver guide flow without going
-    through the normal conversation flow.
-
-    Request body:
-        {
-            "age": 6 (optional, 3-8),
-            "object_name": "banana" (required),
-            "character": "teacher" (optional)
-        }
-
-    SSE Events:
-        - chunk: StreamChunk object (serialized as JSON)
-        - complete: Final completion marker
-        - error: Error information
-    """
-    from google.genai.types import GenerateContentConfig
-
-    data = request.get_json() or {}
-    age = data.get('age')
-    object_name = data.get('object_name')
-    model_name_override = data.get('model_name_override')
-    grounding_model_override = data.get('grounding_model_override')
-
-    # Validate required fields
-    if not object_name:
-        return jsonify({
-            "success": False,
-            "error": "object_name is required"
-        }), 400
-
-    # Validate age
-    if age is not None:
-        try:
-            age = int(age)
-            if age < 3 or age > 8:
-                print(f"[WARNING] Invalid age {age}, using 6")
-                age = 6
-        except (ValueError, TypeError):
-            print(f"[WARNING] Invalid age format {age}, using 6")
-            age = 6
-    else:
-        age = 6  # Default age for guide testing
-
-    # Create session
-    session_id = str(uuid.uuid4())
-    assistant = PaixuejiAssistant(client=GLOBAL_GEMINI_CLIENT)
-    sessions[session_id] = assistant
-
-    # Store session state
-    assistant.age = age
-    assistant.object_name = object_name
-    assistant.correct_answer_count = GUIDE_MODE_THRESHOLD  # Simulate reaching the guide threshold
-
-    # Apply backbone model overrides (validated against whitelist)
-    if model_name_override and model_name_override in ALLOWED_MODELS:
-        assistant.config["model_name"] = model_name_override
-        print(f"[INFO] conversation model overridden to: {model_name_override}")
-    if grounding_model_override and grounding_model_override in ALLOWED_MODELS:
-        assistant.config["grounding_model"] = grounding_model_override
-        print(f"[INFO] grounding model overridden to: {grounding_model_override}")
-
-    # Generate unique request ID for this stream
-    request_id = str(uuid.uuid4())
-
-    print(f"[INFO] Starting GUIDE TEST session {session_id[:8]}... | age={age}, object={object_name}, request_id={request_id[:8]}...")
-
-    def generate():
-        """Generator for SSE stream."""
-        try:
-            # Step 1: Run YAML classification
-            print(f"[GUIDE-TEST] Running YAML classification for '{object_name}'...")
-
-            _cls = assistant.load_object_context_from_yaml(object_name)
-            assistant.apply_fallback_theme()
-            print(
-                f"[GUIDE-TEST] YAML classification: theme={_cls['theme_name']}, "
-                f"concept={_cls['key_concept']}, success={_cls['success']}"
-            )
-
-            # Step 2: Enter guide mode
-            assistant.enter_guide_mode()
-            print(f"[GUIDE-TEST] Entered guide mode, phase={assistant.guide_phase}")
-
-            # Step 3: Build system prompt and initialize conversation
-            system_prompt = assistant.prompts['system_prompt']
-
-            age_prompt = assistant.get_age_prompt(age)
-            if age_prompt:
-                system_prompt += f"\n\nAGE-SPECIFIC GUIDANCE:\n{age_prompt}"
-
-            # Initialize conversation history with system prompt
-            assistant.conversation_history = [
-                {"role": "system", "content": system_prompt}
-            ]
-
-            loop = _ASYNC_LOOP
-
-            try:
-                async def stream_bridge():
-                    """Stream the bridge question as the first guide turn."""
-                    # Build prompt for introducing the bridge question naturally
-                    bridge_prompt = f"""You are a friendly teacher guiding a {age}-year-old child.
-
-The child has been learning about "{object_name}" and you want to help them discover something deeper.
-
-Your task: Introduce this question naturally and engagingly:
-"{assistant.bridge_question}"
-
-RULES:
-- Make it feel like a natural conversation transition
-- Be warm and encouraging
-- Keep it short (2-3 sentences max)
-- End with the question
-- Do NOT mention "themes" or "concepts" - just ask naturally
-"""
-
-                    # Stream the bridge question
-                    full_response = ""
-                    seq = 0
-                    start_time = time.time()
-
-                    stream = assistant.client.models.generate_content_stream(
-                        model=assistant.config["model_name"],
-                        contents=bridge_prompt,
-                        config=GenerateContentConfig(
-                            temperature=0.7,
-                            max_output_tokens=200
-                        )
-                    )
-
-                    for chunk in stream:
-                        if chunk.text:
-                            full_response += chunk.text
-                            seq += 1
-                            yield StreamChunk(
-                                session_id=session_id,
-                                request_id=request_id,
-                                sequence_number=seq,
-                                response=chunk.text,
-                                finish=False,
-                                session_finished=False,
-                                duration=0.0,
-                                timestamp=time.time(),
-                                correct_answer_count=GUIDE_MODE_THRESHOLD,
-                                response_type="guide_bridge",
-                                guide_phase=assistant.guide_phase,
-                                guide_turn_count=assistant.guide_turn_count,
-                                current_object_name=object_name
-                            )
-
-                    # Yield final chunk
-                    duration = time.time() - start_time
-                    yield StreamChunk(
-                        session_id=session_id,
-                        request_id=request_id,
-                        sequence_number=seq + 1,
-                        response=full_response,
-                        finish=True,
-                        session_finished=False,
-                        duration=duration,
-                        timestamp=time.time(),
-                        correct_answer_count=GUIDE_MODE_THRESHOLD,
-                        response_type="guide_bridge",
-                        guide_phase=assistant.guide_phase,
-                        guide_turn_count=assistant.guide_turn_count,
-                        current_object_name=object_name
-                    )
-
-                async def run_stream():
-                    async for chunk in stream_bridge():
-                        # Update conversation history with final response
-                        if chunk.finish:
-                            assistant.conversation_history.append({
-                                "role": "assistant",
-                                "content": chunk.response,
-                                "mode": "guide",
-                            })
-                            # Increment guide turn count
-                            assistant.guide_turn_count = 1
-
-                        yield sse_event("chunk", chunk)
-
-                    # Send completion event
-                    yield sse_event("complete", {"success": True})
-
-                # Stream the response
-                gen = run_stream()
-                for event in async_gen_to_sync(gen, loop):
-                    yield event
-
-                print(f"[GUIDE-TEST] Session {session_id[:8]}... bridge question streamed")
-            finally:
-                pass
-
-        except GeneratorExit:
-            print(f"[INFO] Session {session_id[:8]}... client disconnected")
-        except Exception as e:
-            print(f"[ERROR] Error in start_guide_test: {e}")
             import traceback
             traceback.print_exc()
             yield sse_event("error", build_sse_error_payload(e))
@@ -779,10 +564,6 @@ def continue_conversation():
                             "correct_answer_count": assistant.correct_answer_count,
                             "content": child_input,
                             "conversation_state": assistant.state.value,
-                            "guide_phase": assistant.guide_phase,
-                            "guide_turn_count": assistant.guide_turn_count,
-                            "scaffold_level": assistant.scaffold_level,
-                            "hint_given": assistant.hint_given,
                             "ibpyp_theme_name": assistant.ibpyp_theme_name,
                             "key_concept": assistant.key_concept,
                         },
@@ -797,7 +578,7 @@ def continue_conversation():
                                 "role": "assistant",
                                 "content": chunk.response,
                                 "nodes_executed": chunk.nodes_executed or [],
-                                "mode": "guide" if chunk.guide_phase else "chat",
+                                "mode": "chat",
                                 "classification_status": chunk.classification_status,
                                 "classification_failure_reason": chunk.classification_failure_reason,
                                 "_input_state_snapshot": initial_state.get("_input_state_snapshot", {}),
@@ -1567,7 +1348,7 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
     Generate a markdown report for human feedback critique.
 
     Structures the report into an optional Introduction Critique section,
-    then Chat Phase and Guide Phase sections.
+    then a single conversation critique section.
 
     Args:
         object_name: Object being discussed
@@ -1577,7 +1358,7 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
         all_exchanges: All extracted exchanges (list of dicts with mode)
         exchange_critiques: User-submitted critiques (list of dicts)
         global_conclusion: Overall conclusion text
-        key_concept: Key concept being taught in guide phase
+        key_concept: Session-level key concept from final theme classification
         introduction: Optional {content, nodes_executed, mode} for the first model message
         introduction_critique: Optional critique dict for the introduction (exchange_index == 0)
 
@@ -1640,47 +1421,23 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
 
     report += "---\n\n"
 
-    # Build critiqued exchange lookup: index → critique data
-    critique_by_index = {ec["exchange_index"]: ec for ec in exchange_critiques}
-
-    # Classify exchanges by mode (skip index 0 = Introduction, handled separately)
-    chat_critiqued = []
-    guide_critiqued = []
+    critiqued_exchanges = []
     for ec in exchange_critiques:
         idx = ec["exchange_index"]
         if idx < 1 or idx > total_exchanges:
             continue
         exchange = all_exchanges[idx - 1]
-        mode = exchange.get("mode", "chat")
-        if mode == "guide":
-            guide_critiqued.append((idx, exchange, ec))
-        else:
-            chat_critiqued.append((idx, exchange, ec))
+        critiqued_exchanges.append((idx, exchange, ec))
 
-    # Chat Phase section
-    if chat_critiqued:
-        report += "## Chat Phase — Human Critique\n\n"
-        report += "> Exploratory Q&A. NOT evaluated for key concept guidance.\n\n"
-        for idx, exchange, ec in chat_critiqued:
+    if critiqued_exchanges:
+        report += "## Conversation Critique\n\n"
+        if key_concept:
+            report += f"> Session Key Concept: **{key_concept}**\n\n"
+        for idx, exchange, ec in critiqued_exchanges:
             report += _render_hf_exchange(idx, exchange, ec)
         report += "\n"
-
-    # Separator between phases
-    if chat_critiqued and guide_critiqued:
-        report += "---\n\n"
-
-    # Guide Phase section
-    if guide_critiqued:
-        report += "## Guide Phase — Human Critique\n\n"
-        concept_display = key_concept or "unknown"
-        report += f"> Key Concept: **{concept_display}**. Evaluated for concept advancement.\n\n"
-        for idx, exchange, ec in guide_critiqued:
-            report += _render_hf_exchange(idx, exchange, ec)
-        report += "\n"
-
-    # Fallback: if no exchanges were critiqued in either phase, show empty section
-    if not chat_critiqued and not guide_critiqued:
-        report += "## Detailed Exchange Analysis\n\n"
+    else:
+        report += "## Conversation Critique\n\n"
         report += "*No exchanges were critiqued.*\n\n"
 
     # Global conclusion
@@ -1827,10 +1584,8 @@ def _parse_hf_report(filepath):
 
     # ── Parse critique sections ─────────────────────────────────────────────
     critiques = {}
-    for phase_label, phase_key in [("Chat Phase", "CHAT"), ("Guide Phase", "GUIDE")]:
-        sec = get_section(phase_label, "Critique")
-        if not sec:
-            continue
+
+    def parse_exchange_critique_section(sec, phase_key):
         blocks = re.split(r'\n### Exchange (\d+)\n', sec)
         it = iter(blocks[1:])
         for idx_str, block in zip(it, it):
@@ -1842,7 +1597,6 @@ def _parse_hf_report(filepath):
             crit = {"phase": phase_key, "expected": None, "problematic": None,
                     "conclusion": None, "node_trace": []}
 
-            # Node trace rows (skip header/separator rows)
             for rm in re.finditer(r'\|\s*([^|\n]+?)\s*\|\s*([^|\n]+?)\s*\|\s*([^|\n]+?)\s*\|', block):
                 nd, tm, st = rm.group(1).strip(), rm.group(2).strip(), rm.group(3).strip()
                 if nd in ("Node", "") or re.match(r'^-+$', nd):
@@ -1853,15 +1607,24 @@ def _parse_hf_report(filepath):
                     "state_changes": st if st not in ('-', '—', '') else None,
                 })
 
-            all_expected    = re.findall(r'\*What is expected:\*\s*(.+)', block)
+            all_expected = re.findall(r'\*What is expected:\*\s*(.+)', block)
             all_problematic = re.findall(r'\*Why is it problematic:\*\s*(.+)', block)
-            crit["expected"]    = all_expected[-1].strip()    if all_expected    else None
+            crit["expected"] = all_expected[-1].strip() if all_expected else None
             crit["problematic"] = all_problematic[-1].strip() if all_problematic else None
 
             cm = re.search(r'#### Conclusion\n+(.+?)(?=\n\n---|\n###|\Z)', block, re.DOTALL)
             crit["conclusion"] = cm.group(1).strip() if cm else None
             if crit["expected"] or crit["problematic"] or crit["conclusion"]:
                 critiques[eidx] = crit
+
+    for phase_label, phase_key in [("Chat Phase", "CHAT"), ("Guide Phase", "GUIDE")]:
+        sec = get_section(phase_label, "Critique")
+        if sec:
+            parse_exchange_critique_section(sec, phase_key)
+
+    conversation_sec = get_section("Conversation Critique")
+    if conversation_sec:
+        parse_exchange_critique_section(conversation_sec, "CHAT")
 
     # Parse Introduction critique (exchange_index == 0)
     intro_sec = get_section("Introduction")

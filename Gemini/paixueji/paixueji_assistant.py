@@ -63,7 +63,6 @@ class PaixuejiAssistant:
         self.key_concept = None
         self.bridge_question = None
         self.category_prompt = None  # Formatted YAML anchor block for {category_prompt} slot
-        self.guide_phase = None  # "active", "success", "exit", etc.
 
         # Dimension coverage tracking (from mappings_dev20_0318/)
         self.physical_dimensions: dict = {}    # {dim: {attr: value}}
@@ -72,14 +71,8 @@ class PaixuejiAssistant:
         self.active_dimension: Optional[str] = None
         self.active_dimension_turn_count: int = 0
 
-        # Multi-turn guide state (new Navigator/Driver integration)
-        self.guide_turn_count = 0
-        self.guide_max_turns = 6
-        self.hint_given = False  # Track if hint was given at timeout
-        self.last_navigation_state = None  # Last Navigator analysis result
-        self.consecutive_stuck_count = 0  # Track consecutive STUCK statuses (renamed from resistance)
+        # Ordinary chat struggle tracking
         self.consecutive_struggle_count = 0  # Resets on any non-struggling response (IDK or wrong)
-        self.scaffold_level = 0  # 0=original question, 1-4=progressive hint levels
 
         # Initialize Google Gemini client
         if client:
@@ -180,84 +173,4 @@ class PaixuejiAssistant:
             bool: Always False (conversation never auto-completes)
         """
         self.correct_answer_count += 1
-        return False
-
-    # =========================================================================
-    # MULTI-TURN GUIDE STATE MANAGEMENT
-    # =========================================================================
-
-    def enter_guide_mode(self):
-        """
-        Called when entering theme guide after the correct-answer threshold.
-        Initializes the multi-turn guide state.
-        """
-        self.guide_phase = "active"
-        self.guide_turn_count = 0
-        self.hint_given = False
-        self.last_navigation_state = None
-        self.consecutive_stuck_count = 0
-        self.scaffold_level = 0  # Start with no scaffolding
-        safe_print(f"[GUIDE] Entered guide mode for theme: {self.ibpyp_theme_name}")
-
-    def update_navigation_state(self, nav_state: dict):
-        """
-        Update state after Navigator analysis.
-
-        Args:
-            nav_state: Dictionary from ThemeNavigator.analyze_turn() containing:
-                - status: ON_TRACK, DRIFTING, STUCK, COMPLETED
-                - strategy: ADVANCE, PIVOT, SCAFFOLD, COMPLETE
-                - scaffold_level: 1-4 (only if SCAFFOLD)
-                - reasoning: Brief explanation
-                - instruction: Instruction for the Driver
-        """
-        self.guide_turn_count += 1
-        self.last_navigation_state = nav_state
-
-        # Track consecutive stuck and update scaffold level
-        if nav_state.get("status") == "STUCK":
-            self.consecutive_stuck_count += 1
-            # Use Navigator's suggested scaffold level, or increment our own
-            suggested_level = nav_state.get("scaffold_level", 0)
-            if suggested_level:
-                self.scaffold_level = min(suggested_level, 4)
-            else:
-                self.scaffold_level = min(self.scaffold_level + 1, 4)
-        else:
-            # Reset stuck count on progress, but keep scaffold_level for reference
-            self.consecutive_stuck_count = 0
-
-        safe_print(f"[GUIDE] Turn {self.guide_turn_count}/{self.guide_max_turns} | "
-                   f"Status: {nav_state.get('status')} | Strategy: {nav_state.get('strategy')} | "
-                   f"Scaffold: L{self.scaffold_level}")
-
-    def give_hint(self):
-        """Mark that a hint was given at timeout."""
-        self.hint_given = True
-        safe_print(f"[GUIDE] Hint given for concept: {self.key_concept}")
-
-    def exit_guide_mode(self):
-        """
-        Reset guide state after completion/exit.
-        Called when guide succeeds, times out, or child drops off.
-        """
-        self.guide_phase = None
-        self.guide_turn_count = 0
-        self.hint_given = False
-        self.last_navigation_state = None
-        self.consecutive_stuck_count = 0
-        self.scaffold_level = 0
-        safe_print(f"[GUIDE] Exited guide mode")
-
-    def should_give_hint(self) -> bool:
-        """Check if we should give a hint (max turns reached, no hint yet)."""
-        return self.guide_turn_count >= self.guide_max_turns and not self.hint_given
-
-    def should_exit_guide(self) -> bool:
-        """Check if we should exit guide (scaffold level 4 reached twice or hint already given at max turns)."""
-        # Exit if stuck at max scaffold level (gave direct answer but still stuck)
-        if self.consecutive_stuck_count >= 2 and self.scaffold_level >= 4:
-            return True
-        if self.guide_turn_count >= self.guide_max_turns and self.hint_given:
-            return True
         return False

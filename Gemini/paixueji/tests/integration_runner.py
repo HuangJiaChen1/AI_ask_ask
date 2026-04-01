@@ -132,10 +132,6 @@ async def _run_turn(assistant, user_input, session_id, request_id):
             "correct_answer_count": assistant.correct_answer_count,
             "content": user_input,
             "conversation_state": assistant.state.value,
-            "guide_phase": assistant.guide_phase,
-            "guide_turn_count": assistant.guide_turn_count,
-            "scaffold_level": assistant.scaffold_level,
-            "hint_given": assistant.hint_given,
             "ibpyp_theme_name": assistant.ibpyp_theme_name,
             "key_concept": assistant.key_concept,
             "level1_category": assistant.level1_category,
@@ -154,7 +150,7 @@ async def _run_turn(assistant, user_input, session_id, request_id):
                 "role": "assistant",
                 "content": chunk.response,
                 "nodes_executed": chunk.nodes_executed or [],
-                "mode": "guide" if chunk.guide_phase else "chat",
+                "mode": "chat",
             })
 
     return final_response

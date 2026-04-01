@@ -9,8 +9,7 @@ It is organized into several sub-modules:
 - question_generators: Question-only stream generators (intro path + followup)
 - validation: Intent classification logic
 - fun_fact: Grounded fun fact generation
-- guide_hint: LLM-based scaffold hints for guide mode
-- theme_guide: ThemeNavigator + ThemeDriver (guide mode)
+- fun_fact: Grounded fun fact generation
 
 All public functions are re-exported from this module for backward compatibility.
 """
@@ -49,9 +48,6 @@ from .validation import (
 # Fun fact (grounded)
 from .fun_fact import generate_fun_fact
 
-# Guide hint (LLM-generated)
-from .guide_hint import generate_guide_hint
-
 __all__ = [
     # Utils
     'safe_print',
@@ -78,7 +74,4 @@ __all__ = [
 
     # Fun fact (grounded)
     'generate_fun_fact',
-
-    # Guide hint (LLM-generated)
-    'generate_guide_hint',
 ]

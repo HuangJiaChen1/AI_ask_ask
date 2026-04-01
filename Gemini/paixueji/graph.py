@@ -1,7 +1,5 @@
 import asyncio
 import functools
-import json
-from pathlib import Path
 from typing import TypedDict, Annotated, List, Optional, Any
 from langgraph.graph import StateGraph, END, START
 
@@ -19,10 +17,8 @@ from stream import (
     extract_previous_response,
     map_response_to_kb_item,
     prepare_messages_for_streaming,
-    generate_guide_hint,
     select_hook_type
 )
-from stream.theme_guide import ThemeNavigator, ThemeDriver
 from schema import StreamChunk
 
 GUIDE_MODE_THRESHOLD = 2  # Correct answers required to complete chat mode
@@ -56,23 +52,6 @@ def route_from_analyze_input(state) -> str:
     if intent in ("clarifying_idk", "clarifying_wrong") and state["assistant"].consecutive_struggle_count >= 2:
         return "give_answer_idk"
     return intent
-
-
-def _load_router_overrides() -> dict:
-    """Load router_overrides.json for data-driven strategy→node routing."""
-    p = Path(__file__).parent / "router_overrides.json"
-    if p.exists():
-        try:
-            return json.loads(p.read_text(encoding="utf-8"))
-        except Exception:
-            return {}
-    return {}
-
-
-def _build_generic_bridge_question(object_name: str) -> str:
-    """Create a guide-opening question without using mapping-derived copy."""
-    return f"What is one thing about {object_name} that makes you curious right now?"
-
 
 class PaixuejiState(TypedDict):
     # --- Inputs ---
@@ -109,14 +88,6 @@ class PaixuejiState(TypedDict):
 
     response_type: Optional[str]
 
-    # --- Guide State (Multi-turn Navigator/Driver) ---
-    guide_phase: Optional[str]   # "active", "hint", "success", "exit"
-    guide_status: Optional[str]  # ON_TRACK, DRIFTING, STUCK, COMPLETED
-    guide_strategy: Optional[str]  # ADVANCE, PIVOT, SCAFFOLD, COMPLETE
-    guide_turn_count: Optional[int]
-    scaffold_level: Optional[int]  # 1-4, progressive hint levels (only if SCAFFOLD)
-    last_navigation_state: Optional[dict]  # Full Navigator result
-
     # --- Fun Fact (Grounded) ---
     fun_fact: Optional[str]
     fun_fact_hook: Optional[str]
@@ -148,8 +119,7 @@ class PaixuejiState(TypedDict):
 KEY_STATE_FIELDS = [
     "intent_type", "response_type",
     "classification_status", "classification_failure_reason",
-    "guide_phase", "guide_status", "guide_strategy",
-    "new_object_name", "scaffold_level", "guide_turn_count",
+    "new_object_name",
 ]
 
 
@@ -162,7 +132,6 @@ def trace_node(func):
     - Execution time in milliseconds
     - Key state changes (before vs after)
     - state_before: key fields snapshot before the node ran
-    - navigation_result: if returned by the node (e.g. node_guide_navigator)
     """
     @functools.wraps(func)
     async def wrapper(state: PaixuejiState) -> dict:
@@ -190,10 +159,6 @@ def trace_node(func):
             "changes": changes,
             "state_before": state_before,
         }
-
-        # Capture navigation_result if present (from node_guide_navigator)
-        if "last_navigation_state" in result and result["last_navigation_state"]:
-            trace_entry["navigation_result"] = result["last_navigation_state"]
 
         # Append to existing traces (immutable merge)
         current_traces = state.get("nodes_executed", []) or []
@@ -1230,316 +1195,6 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
     }
 
 
-# --- Guide Nodes (unchanged) ---
-
-@trace_node
-async def node_start_guide(state: PaixuejiState):
-    """
-    Start the IB PYP Guide Phase.
-    Present the Bridge Question and initialize multi-turn guide state.
-    """
-    logger.info(f"[{state['session_id']}] Node: Start Guide")
-
-    assistant = state["assistant"]
-
-    # Initialize multi-turn guide state
-    assistant.enter_guide_mode()
-
-    bridge_question = _build_generic_bridge_question(state["object_name"])
-    assistant.bridge_question = bridge_question
-    key_concept = assistant.key_concept
-    theme_name = assistant.ibpyp_theme_name
-    object_name = state["object_name"]
-
-    # 3-part combined response (zero extra LLM call — template only for TTFT-optimal delivery)
-    confirmation = "Yes, that's right! Great job! 🌟 "
-    inquiry_invitation = (
-        f"Ooh wait — I just thought of a mystery! "
-        f"Let's be explorers together and find out a secret about {object_name}... "
-    )
-    full_response = confirmation + inquiry_invitation + bridge_question
-
-    # Stream it
-    callback = state.get("stream_callback")
-    new_seq = state["sequence_number"] + 1
-    if callback:
-        chunk = StreamChunk(
-            response=full_response,
-            session_finished=(state["status"] == "over"),
-            duration=time.time() - state["start_time"],
-            finish=False,
-            sequence_number=new_seq,
-            timestamp=time.time(),
-            session_id=state["session_id"],
-            request_id=state["request_id"],
-            response_type="question",
-            guide_phase="active",
-            key_concept=key_concept,
-            ibpyp_theme_name=theme_name,
-            bridge_question=bridge_question,
-            guide_turn_count=0,
-            guide_max_turns=assistant.guide_max_turns
-        )
-        await callback(chunk)
-
-    return {
-        "guide_phase": "active",
-        "full_question_text": full_response,
-        "sequence_number": new_seq
-    }
-
-
-@trace_node
-async def node_guide_navigator(state: PaixuejiState):
-    """
-    Navigator node: Analyze child's response using the Navigator pattern.
-    Determines status (ON_TRACK, DRIFTING, RESISTANCE, COMPLETED) and strategy.
-    """
-    logger.info(f"[{state['session_id']}] Node: Guide Navigator")
-
-    assistant = state["assistant"]
-    child_input = state["content"]
-
-    target_theme = {
-        "name": assistant.ibpyp_theme_name or "Unknown Theme",
-        "description": assistant.ibpyp_theme_reason or ""
-    }
-
-    navigator = ThemeNavigator(
-        client=state["client"],
-        config=state["config"]
-    )
-
-    nav_result = await navigator.analyze_turn(
-        history=state["messages"],
-        user_input=child_input,
-        current_topic=state["object_name"],
-        target_theme=target_theme,
-        age=state["age"],
-        key_concept="",
-        bridge_question=assistant.bridge_question or "",
-        turn_count=assistant.guide_turn_count,
-        max_turns=assistant.guide_max_turns,
-    )
-
-    # Update assistant state (handles turn count, scaffold level, last_navigation_state)
-    assistant.update_navigation_state(nav_result)
-
-    return {
-        "guide_status": nav_result.get("status"),
-        "guide_strategy": nav_result.get("strategy"),
-        "guide_turn_count": assistant.guide_turn_count,
-        "last_navigation_state": nav_result
-    }
-
-
-@trace_node
-async def node_guide_driver(state: PaixuejiState):
-    """
-    Driver node: Generate response following the Navigator's instruction.
-    Streams the natural language response to the child.
-    """
-    logger.info(f"[{state['session_id']}] Node: Guide Driver")
-
-    assistant = state["assistant"]
-    nav_state = assistant.last_navigation_state
-
-    if not nav_state:
-        return {
-            "full_response_text": "That's interesting! Tell me more about what you're thinking.",
-            "sequence_number": state["sequence_number"] + 1
-        }
-
-    driver = ThemeDriver(
-        client=state["client"],
-        config=state["config"]
-    )
-
-    object_name = state["object_name"]
-    theme_name = assistant.ibpyp_theme_name or ""
-
-    full_text = ""
-    new_seq = state["sequence_number"]
-
-    async for text_chunk, usage, full_so_far in driver.generate_response_stream(
-        history=state["messages"],
-        nav_plan=nav_state,
-        age=state["age"],
-        object_name=object_name,
-        key_concept="",
-        theme_name=theme_name
-    ):
-        if text_chunk:
-            full_text = full_so_far
-            new_seq += 1
-
-            callback = state.get("stream_callback")
-            if callback:
-                chunk = StreamChunk(
-                    response=text_chunk,
-                    session_finished=(state["status"] == "over"),
-                    duration=time.time() - state["start_time"],
-                    finish=False,
-                    sequence_number=new_seq,
-                    timestamp=time.time(),
-                    session_id=state["session_id"],
-                    request_id=state["request_id"],
-                    response_type="guide_response",
-                    guide_phase="active",
-                    guide_turn_count=assistant.guide_turn_count,
-                    guide_max_turns=assistant.guide_max_turns,
-                    guide_status=nav_state.get("status"),
-                    guide_strategy=nav_state.get("strategy"),
-                    scaffold_level=assistant.scaffold_level if nav_state.get("strategy") == "SCAFFOLD" else None,
-                    key_concept=assistant.key_concept,
-                    ibpyp_theme_name=assistant.ibpyp_theme_name
-                )
-                await callback(chunk)
-
-    return {
-        "full_response_text": full_text,
-        "sequence_number": new_seq
-    }
-
-
-@trace_node
-async def node_guide_hint(state: PaixuejiState):
-    """
-    Give the child a helpful hint when max turns are reached.
-    Uses LLM to generate a concrete, age-appropriate explanation.
-    """
-    logger.info(f"[{state['session_id']}] Node: Guide Hint")
-
-    assistant = state["assistant"]
-    assistant.give_hint()
-
-    hint_message = await generate_guide_hint(
-        object_name=state["object_name"],
-        key_concept="",
-        key_concept_reason="",
-        bridge_question=assistant.bridge_question or "",
-        theme_name=assistant.ibpyp_theme_name or "",
-        age=state["age"],
-        messages=state["messages"],
-        config=state["config"],
-        client=state["client"]
-    )
-
-    callback = state.get("stream_callback")
-    new_seq = state["sequence_number"] + 1
-
-    if callback:
-        chunk = StreamChunk(
-            response=hint_message,
-            session_finished=(state["status"] == "over"),
-            duration=time.time() - state["start_time"],
-            finish=False,
-            sequence_number=new_seq,
-            timestamp=time.time(),
-            session_id=state["session_id"],
-            request_id=state["request_id"],
-            response_type="guide_hint",
-            guide_phase="hint",
-            guide_turn_count=assistant.guide_turn_count,
-            guide_max_turns=assistant.guide_max_turns,
-            key_concept=assistant.key_concept,
-            ibpyp_theme_name=assistant.ibpyp_theme_name
-        )
-        await callback(chunk)
-
-    return {
-        "full_response_text": hint_message,
-        "sequence_number": new_seq,
-        "guide_phase": "hint"
-    }
-
-
-@trace_node
-async def node_guide_exit(state: PaixuejiState):
-    """
-    Graceful exit from guide mode.
-    Triggered after 2 consecutive RESISTANCE or after hint with no success.
-    """
-    logger.info(f"[{state['session_id']}] Node: Guide Exit")
-
-    assistant = state["assistant"]
-    assistant.exit_guide_mode()
-
-    exit_message = "That's okay! Let's explore something else. What would you like to learn about next?"
-
-    callback = state.get("stream_callback")
-    new_seq = state["sequence_number"] + 1
-
-    if callback:
-        chunk = StreamChunk(
-            response=exit_message,
-            session_finished=(state["status"] == "over"),
-            duration=time.time() - state["start_time"],
-            finish=False,
-            sequence_number=new_seq,
-            timestamp=time.time(),
-            session_id=state["session_id"],
-            request_id=state["request_id"],
-            response_type="guide_exit",
-            guide_phase="exit"
-        )
-        await callback(chunk)
-
-    return {
-        "full_response_text": exit_message,
-        "sequence_number": new_seq,
-        "guide_phase": "exit"
-    }
-
-
-@trace_node
-async def node_guide_success(state: PaixuejiState):
-    """
-    Guide Success! Child has articulated understanding of the concept.
-    Celebrate their discovery and reset guide state.
-    """
-    logger.info(f"[{state['session_id']}] Node: Guide Success")
-
-    assistant = state["assistant"]
-    object_name = state["object_name"]
-    theme_name = assistant.ibpyp_theme_name or "this big idea"
-
-    msg = (
-        f"That's wonderful! You found a really interesting idea about {object_name} in {theme_name}! "
-        f"You're thinking like a real explorer now!"
-    )
-
-    assistant.guide_phase = "success"
-
-    callback = state.get("stream_callback")
-    new_seq = state["sequence_number"] + 1
-    if callback:
-        chunk = StreamChunk(
-            response=msg,
-            session_finished=(state["status"] == "over"),
-            duration=time.time() - state["start_time"],
-            finish=False,
-            sequence_number=new_seq,
-            timestamp=time.time(),
-            session_id=state["session_id"],
-            request_id=state["request_id"],
-            response_type="guide_success",
-            guide_phase="success",
-            is_guide_success=True,
-            key_concept=assistant.key_concept,
-            ibpyp_theme_name=assistant.ibpyp_theme_name,
-            guide_turn_count=assistant.guide_turn_count
-        )
-        await callback(chunk)
-
-    return {
-        "is_guide_success": True,
-        "full_response_text": msg,
-        "sequence_number": new_seq,
-        "guide_phase": "success"
-    }
-
-
 @trace_node
 async def node_finalize(state: PaixuejiState) -> dict:
     """
@@ -1561,9 +1216,8 @@ async def node_finalize(state: PaixuejiState) -> dict:
         assistant._router_traces = []
 
     # Theme should stay unset during ordinary chat, but once classification has
-    # happened we expose it even if guide mode is not entered.
-    guide_phase = state.get("guide_phase") or state["assistant"].guide_phase
-    include_theme = bool(guide_phase or state["assistant"].ibpyp_theme_name)
+    # happened we expose it on later completion/final chunks.
+    include_theme = bool(state["assistant"].ibpyp_theme_name)
 
     # Send final chunk
     final_chunk = StreamChunk(
@@ -1592,11 +1246,6 @@ async def node_finalize(state: PaixuejiState) -> dict:
         key_concept=state["assistant"].key_concept or None,
         ibpyp_theme_name=state["assistant"].ibpyp_theme_name if include_theme else None,
         theme_classification_reason=state["assistant"].ibpyp_theme_reason if include_theme else None,
-
-        # Guide Phase specific fields
-        guide_phase=guide_phase,
-        bridge_question=state["assistant"].bridge_question if include_theme else None,
-        is_guide_success=state.get("is_guide_success", False),
 
         # Node execution trace (for critique reports)
         nodes_executed=state.get("nodes_executed", []),
@@ -1733,31 +1382,15 @@ def build_paixueji_graph():
     workflow.add_node("social", node_social)
     workflow.add_node("social_acknowledgment", node_social_acknowledgment)
 
-    # --- Guide nodes ---
     workflow.add_node("classify_theme", node_classify_theme)
-    workflow.add_node("start_guide", node_start_guide)
-    workflow.add_node("guide_navigator", node_guide_navigator)
-    workflow.add_node("guide_driver", node_guide_driver)
-    workflow.add_node("guide_success", node_guide_success)
-    workflow.add_node("guide_hint", node_guide_hint)
-    workflow.add_node("guide_exit", node_guide_exit)
 
     workflow.add_node("finalize", node_finalize)
 
     # --- START router ---
-    # Guide phase active/hint → guide_navigator
     # Introduction (response_type == "introduction") → generate_intro
     # Everything else → analyze_input
-    @trace_router(["guide_phase", "response_type"])
+    @trace_router(["response_type"])
     def route_from_start(state):
-        guide_phase = state.get("guide_phase") or state["assistant"].guide_phase
-
-        if guide_phase == "active":
-            return "guide_navigator"
-
-        if guide_phase == "hint":
-            return "guide_navigator"
-
         if state.get("response_type") == "introduction":
             return "generate_intro"
 
@@ -1769,7 +1402,6 @@ def build_paixueji_graph():
         {
             "analyze_input": "analyze_input",
             "generate_intro": "generate_intro",
-            "guide_navigator": "guide_navigator"
         }
     )
 
@@ -1816,62 +1448,7 @@ def build_paixueji_graph():
                         "action", "social", "social_acknowledgment"]:
         workflow.add_edge(intent_node, "finalize")
 
-    # Guide edges
     workflow.add_edge("classify_theme", "chat_complete")
-    workflow.add_edge("start_guide", "finalize")  # First turn — present bridge question
-
-    @trace_router(["guide_strategy", "guide_status"])
-    def route_after_navigator(state):
-        """
-        Route based on Navigator's analysis result.
-
-        Routes to:
-        - guide_success: Child articulated understanding (COMPLETED)
-        - guide_hint: Max turns reached, no hint given yet
-        - guide_exit: 2 consecutive RESISTANCE or hint already given at max turns
-        - guide_driver: Continue conversation (default)
-        """
-        assistant = state["assistant"]
-        guide_strategy = state.get("guide_strategy")
-        guide_status = state.get("guide_status")
-
-        if guide_strategy == "COMPLETE" or guide_status == "COMPLETED":
-            logger.info(f"[{state['session_id']}] Guide: Child completed! Routing to success.")
-            return "guide_success"
-
-        if assistant.should_give_hint():
-            logger.info(f"[{state['session_id']}] Guide: Max turns reached, giving hint.")
-            return "guide_hint"
-
-        if assistant.should_exit_guide():
-            logger.info(f"[{state['session_id']}] Guide: Exiting (resistance or post-hint timeout).")
-            return "guide_exit"
-
-        # Data-driven strategy → node lookup (from router_overrides.json)
-        overrides = _load_router_overrides()
-        strategy_routes = overrides.get("navigator_strategy_routes", {})
-        if guide_strategy in strategy_routes:
-            target = strategy_routes[guide_strategy]
-            logger.info(f"[{state['session_id']}] Guide: Routing '{guide_strategy}' → '{target}' (from router_overrides.json).")
-            return target
-
-        return "guide_driver"
-
-    workflow.add_conditional_edges(
-        "guide_navigator",
-        route_after_navigator,
-        {
-            "guide_success": "guide_success",
-            "guide_driver": "guide_driver",
-            "guide_hint": "guide_hint",
-            "guide_exit": "guide_exit"
-        }
-    )
-
-    workflow.add_edge("guide_driver", "finalize")
-    workflow.add_edge("guide_success", "finalize")
-    workflow.add_edge("guide_hint", "finalize")
-    workflow.add_edge("guide_exit", "finalize")
     workflow.add_edge("finalize", END)
 
     return workflow.compile()

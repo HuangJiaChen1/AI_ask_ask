@@ -188,11 +188,10 @@ class TestRoutingBelowThreshold:
     """Bug fix 2: route_from_analyze_input should NOT divert to classify_theme below threshold."""
 
     @pytest.mark.asyncio
-    async def test_count_0_does_not_trigger_guide_mode(self):
+    async def test_count_0_stays_on_chat_path(self):
         """
         With correct_answer_count=0 and intent=CORRECT_ANSWER, the graph should
-        route to node_correct_answer (not classify_theme), leaving guide_phase
-        not 'active' and incrementing count to 1.
+        route to node_correct_answer (not classify_theme) and increment count to 1.
         """
         assistant = PaixuejiAssistant()
         assistant.correct_answer_count = 0
@@ -205,17 +204,14 @@ class TestRoutingBelowThreshold:
 
         final_state = await paixueji_graph.ainvoke(state)
 
-        # guide_phase must NOT become "active"
-        guide_phase = final_state.get("guide_phase") or assistant.guide_phase
-        assert guide_phase != "active", (
-            f"Expected guide_phase != 'active' with count=0, got: {guide_phase}"
-        )
+        assert "guide_phase" not in final_state
+        assert not hasattr(assistant, "guide_phase")
 
         # Count must now be 1 (incremented by node_correct_answer)
         assert assistant.correct_answer_count == 1
 
     @pytest.mark.asyncio
-    async def test_count_0_does_not_trigger_guide_mode(self):
+    async def test_count_0_does_not_emit_guide_state(self):
         """
         count=0, intent=CORRECT_ANSWER: should be a plain correct_answer turn.
         """
@@ -224,8 +220,7 @@ class TestRoutingBelowThreshold:
 
         final_state = await paixueji_graph.ainvoke(state)
 
-        guide_phase = final_state.get("guide_phase") or assistant.guide_phase
-        assert guide_phase != "active"
+        assert "guide_phase" not in final_state
         assert assistant.correct_answer_count == 1
 
     @pytest.mark.asyncio
@@ -242,8 +237,7 @@ class TestRoutingBelowThreshold:
 
         final_state = await paixueji_graph.ainvoke(state)
 
-        guide_phase = final_state.get("guide_phase") or assistant.guide_phase
-        assert guide_phase != "active"
+        assert "guide_phase" not in final_state
 
 
 # ---------------------------------------------------------------------------
@@ -254,11 +248,11 @@ class TestThresholdTriggersClassifyTheme:
     """At correct_answer_count=1, the 2nd correct answer must route to classify_theme."""
 
     @pytest.mark.asyncio
-    async def test_count_1_triggers_chat_complete_without_guide_mode(self):
+    async def test_count_1_triggers_chat_complete_without_guide_state(self):
         """
         With count=1 and intent=CORRECT_ANSWER (1+1=2 >= GUIDE_MODE_THRESHOLD):
         - assistant.correct_answer_count must become 2
-        - assistant.guide_phase must remain inactive
+        - guide runtime fields must stay absent
         - assistant.ibpyp_theme_name must be set (non-empty)
         """
         assistant = PaixuejiAssistant()
@@ -273,9 +267,8 @@ class TestThresholdTriggersClassifyTheme:
             f"Expected count=2, got {assistant.correct_answer_count}"
         )
 
-        # Chat phase should complete without entering guide mode.
-        guide_phase = final_state.get("guide_phase") or assistant.guide_phase
-        assert guide_phase != "active"
+        assert "guide_phase" not in final_state
+        assert not hasattr(assistant, "guide_phase")
 
         # Theme name must have been set (mock returns "How the World Works")
         assert assistant.ibpyp_theme_name is not None

@@ -10,7 +10,7 @@ flowchart TD
     intent_router{"route_from_analyze_input"}
     idk_gate{"idk_gate"}
     correct_gate{"correct_threshold_gate"}
-    guide_route{"route_after_navigator"}
+    theme_complete["classify_theme -> chat_complete"]
 
     %% --- ENTRY LANE -------------------------------------------------------
     subgraph INTRO ["Entry"]
@@ -41,24 +41,17 @@ flowchart TD
         social_ack["social_acknowledgment"]
     end
 
-    %% --- GUIDE LANE -------------------------------------------------------
-    subgraph GUIDE ["Guide Mode"]
+    %% --- COMPLETION LANE --------------------------------------------------
+    subgraph COMPLETE ["Completion"]
         classify["classify_theme"]
-        sg["start_guide"]
-        gn["guide_navigator"]
-        gd["guide_driver"]
-        gh["guide_hint"]
-        gs["guide_success"]
-        ge["guide_exit"]
-        classify --> sg
-        gn --> guide_route
+        chat_complete["chat_complete"]
+        classify --> chat_complete
     end
 
     fin["finalize"]
 
     %% --- ENTRY ROUTING ----------------------------------------------------
     rfs -->|"first turn"| gff
-    rfs -->|"guide_phase in {active, hint}"| gn
     rfs -->|"otherwise"| ai
 
     %% --- INTRO FLOW -------------------------------------------------------
@@ -84,21 +77,12 @@ flowchart TD
     intent_router -->|intent=action| action
     intent_router -->|intent=social| social
     intent_router -->|intent=social_acknowledgment| social_ack
-    %% --- GUIDE ENTRY ------------------------------------------------------
-    sg --> fin
-
-    %% --- GUIDE ROUTING ----------------------------------------------------
-    guide_route -->|"guide_strategy=COMPLETE OR guide_status=COMPLETED"| gs
-    guide_route -->|"guide_turn_count >= guide_max_turns AND hint_given=false"| gh
-    guide_route -->|"(consecutive_stuck_count >= 2 AND scaffold_level >= 4) OR (guide_turn_count >= guide_max_turns AND hint_given=true)"| ge
-    guide_route -->|otherwise| gd
-
     %% --- HANDLERS -> FINALIZE ---------------------------------------------
     idk -->|"response=clarifying_idk; (struggle_count tracked upstream)"| fin
     give_answer -->|"response=give_answer_idk; consecutive_struggle_count = 0 (cycle reset)"| fin
     curiosity & wrong & constraint & correct & informative & play & emotional & avoidance & boundary & action & social & social_ack --> fin
 
-    %% --- GUIDE OUTCOMES -> FINALIZE ---------------------------------------
-    gs & gh & ge & gd --> fin
+    %% --- COMPLETION -> FINALIZE -------------------------------------------
+    chat_complete --> fin
 
     fin --> FINISH

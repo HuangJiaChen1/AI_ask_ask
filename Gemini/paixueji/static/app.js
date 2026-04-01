@@ -33,8 +33,6 @@ const gameEntityNames = new Set();
 
 // UI state
 let currentObject = null;  // Current object being discussed
-let guidePhase = null;  // Guide phase (active, success, hint, exit)
-let guideTurnCount = 0;  // Current turn in guide mode
 let currentThemeName = null;  // IB PYP theme name
 let currentKeyConcept = null;  // Key concept for theme
 let currentIntentType = null;       // Last classified intent (9-node architecture)
@@ -168,26 +166,6 @@ const RESPONSE_METADATA = {
         color: '#0f766e',
         description: 'The assistant is using a natural freeform recovery response because intent classification failed.',
         descriptionZh: '因为意图分类失败，助手正在使用自然的自由恢复式回应。',
-    },
-    GUIDE_EXIT: {
-        color: '#ef4444',
-        description: 'The assistant is ending the guided discovery gracefully because it is not working right now.',
-        descriptionZh: '助手正在礼貌结束这段引导，因为现在这样聊下去效果不太好。',
-    },
-    GUIDE_HINT: {
-        color: '#f59e0b',
-        description: 'The assistant is giving a stronger, more concrete hint after the child has struggled a few times.',
-        descriptionZh: '助手正在给一个更具体、更明显的提示，因为孩子已经卡住了几次。',
-    },
-    GUIDE_RESPONSE: {
-        color: '#6366f1',
-        description: 'The assistant is giving the next guided-discovery step based on how the child is progressing.',
-        descriptionZh: '助手正在根据孩子目前的进展，给出下一步引导。',
-    },
-    GUIDE_SUCCESS: {
-        color: '#16a34a',
-        description: 'The assistant is celebrating that the child reached the bigger idea.',
-        descriptionZh: '助手正在庆祝孩子已经理解到那个更大的想法。',
     },
     INFORMATIVE: {
         color: '#3b82f6',
@@ -864,18 +842,6 @@ function handleStreamChunk(chunk) {
         updateDebugPanel();
     }
 
-    // Update guide mode state if present
-    if (chunk.guide_phase !== undefined) {
-        guidePhase = chunk.guide_phase;
-    }
-    if (chunk.guide_turn_count !== undefined) {
-        guideTurnCount = chunk.guide_turn_count;
-    }
-    // Update debug panel when guide state changes
-    if (chunk.guide_phase || chunk.guide_turn_count) {
-        updateDebugPanel();
-    }
-
     // Update intent type (9-node architecture)
     if ('intent_type' in chunk) {
         currentIntentType = chunk.intent_type;
@@ -964,26 +930,6 @@ function updateDebugPanel() {
     const keyConceptElement = document.getElementById('debugKeyConcept');
     if (keyConceptElement) {
         keyConceptElement.textContent = currentKeyConcept || '-';
-    }
-
-    // Update guide phase
-    const guidePhaseElement = document.getElementById('debugGuidePhase');
-    if (guidePhaseElement) {
-        guidePhaseElement.textContent = guidePhase || '-';
-        // Color code the phase
-        if (guidePhase === 'active') {
-            guidePhaseElement.style.color = '#f59e0b';  // Amber
-        } else if (guidePhase === 'success') {
-            guidePhaseElement.style.color = '#10b981';  // Green
-        } else if (guidePhase === 'exit') {
-            guidePhaseElement.style.color = '#ef4444';  // Red
-        }
-    }
-
-    // Update guide turn count
-    const guideTurnElement = document.getElementById('debugGuideTurn');
-    if (guideTurnElement) {
-        guideTurnElement.textContent = guideTurnCount > 0 ? `${guideTurnCount}/6` : '-';
     }
 
     // Update last intent type
@@ -1167,8 +1113,6 @@ function resetConversation() {
     correctAnswerCount = 0;
     conversationComplete = false;
     currentObject = null;
-    guidePhase = null;
-    guideTurnCount = 0;
     currentThemeName = null;
     currentKeyConcept = null;
     currentIntentType = null;
@@ -1359,7 +1303,7 @@ async function showManualCritiqueForm() {
             return;
         }
 
-        // Populate the exchange list, grouped by phase
+        // Populate the exchange list
         const exchangeList = document.getElementById('exchangeList');
         exchangeList.innerHTML = '';
 
@@ -1424,19 +1368,10 @@ async function showManualCritiqueForm() {
             exchangeList.appendChild(introWrapper);
         }
 
-        // Split exchanges into chat and guide groups
-        const chatExchanges = result.exchanges.filter(e => (e.mode || 'chat') !== 'guide');
-        const guideExchanges = result.exchanges.filter(e => (e.mode || 'chat') === 'guide');
-
         // Helper: render a single exchange card
         function renderExchangeCard(exchange) {
             const wrapper = document.createElement('div');
             wrapper.style.cssText = 'margin-bottom:16px; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden;';
-
-            // Mode badge colors
-            const mode = exchange.mode || 'chat';
-            const badgeColor = mode === 'guide' ? '#7c3aed' : '#0891b2';
-            const badgeLabel = mode.toUpperCase();
 
             // Intent badge color groups
             const intentColors = {
@@ -1466,7 +1401,7 @@ async function showManualCritiqueForm() {
                 <input type="checkbox" id="exchange_cb_${exchange.index}" data-index="${exchange.index}" style="margin-top:3px; cursor:pointer;" onchange="toggleExchangeCritique(${exchange.index})">
                 <div style="flex:1; min-width:0;">
                     <strong style="color:#1e293b;">Exchange ${exchange.index}</strong>
-                    <span style="display:inline-block; background:${badgeColor}; color:#fff; font-size:0.7em; font-weight:600; padding:1px 7px; border-radius:9px; margin-left:6px; vertical-align:middle;">${badgeLabel}</span>${intentBadge}${classifierBadge}${timeLabel}
+                    ${intentBadge}${classifierBadge}${timeLabel}
                     <div style="font-size:0.85em; color:#64748b; margin-top:4px;">
                         <div><b>A:</b> ${escapeHtml(truncate(exchange.child_response, 80))}</div>
                         <div><b>R:</b> ${escapeHtml(truncate(exchange.model_response, 80))}</div>
@@ -1491,24 +1426,7 @@ async function showManualCritiqueForm() {
             return wrapper;
         }
 
-        // Chat Phase section
-        if (chatExchanges.length > 0) {
-            const chatHeader = document.createElement('div');
-            chatHeader.style.cssText = 'background:#e0f2fe; padding:10px 14px; border-radius:8px; margin-bottom:12px; font-weight:600; color:#0c4a6e;';
-            chatHeader.innerHTML = `Chat Phase <span style="font-weight:400; font-size:0.85em; color:#0369a1;">(${chatExchanges.length} exchange${chatExchanges.length !== 1 ? 's' : ''} &mdash; exploratory Q&A)</span>`;
-            exchangeList.appendChild(chatHeader);
-            chatExchanges.forEach(ex => exchangeList.appendChild(renderExchangeCard(ex)));
-        }
-
-        // Guide Phase section
-        if (guideExchanges.length > 0) {
-            const guideHeader = document.createElement('div');
-            guideHeader.style.cssText = 'background:#ede9fe; padding:10px 14px; border-radius:8px; margin-bottom:12px; margin-top:16px; font-weight:600; color:#4c1d95;';
-            const conceptText = result.key_concept ? ` &mdash; Key Concept: <em>${escapeHtml(result.key_concept)}</em>` : '';
-            guideHeader.innerHTML = `Guide Phase <span style="font-weight:400; font-size:0.85em; color:#5b21b6;">(${guideExchanges.length} exchange${guideExchanges.length !== 1 ? 's' : ''}${conceptText})</span>`;
-            exchangeList.appendChild(guideHeader);
-            guideExchanges.forEach(ex => exchangeList.appendChild(renderExchangeCard(ex)));
-        }
+        result.exchanges.forEach(ex => exchangeList.appendChild(renderExchangeCard(ex)));
 
         // Clear global conclusion
         document.getElementById('globalConclusion').value = '';
