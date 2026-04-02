@@ -257,6 +257,81 @@ Scene: Park | Object: T-rex model | Age: 6
 → "Whoa, it's a T-Rex! It looks so powerful and fierce. Do you love dinosaurs?"
 """
 
+ANCHOR_BRIDGE_INTRO_PROMPT = """You are starting a conversation with a child who named: {surface_object_name}
+
+AGE GUIDANCE: {age_prompt}
+BRIDGE CONTEXT (this is the only allowed bridge grounding before the switch):
+{bridge_context}
+
+YOUR JOB:
+- Keep the first sentence on the child's exact object: {surface_object_name}
+- Naturally bridge toward the supported learning anchor: {anchor_object_name}
+- Make the bridge feel obvious and friendly, not corrective
+- End with exactly one easy question that stays inside the bridge context
+- Use the same voice and constraints as the normal introduction prompt
+- Do not invent a scene or pretend you can see extra things around the child
+- Do not ask about unrelated anchor features outside the bridge context
+- Do not invent unsupported sensory details about {surface_object_name}
+
+HOOK STYLE:
+{hook_type_section}
+"""
+
+ANCHOR_CONFIRMATION_INTRO_PROMPT = """You are starting a conversation with a child who named: {surface_object_name}
+
+AGE GUIDANCE: {age_prompt}
+
+YOUR JOB:
+- Acknowledge the child's object warmly
+- Ask exactly one short confirmation question about whether they want to talk about {anchor_object_name}
+- Do not switch topics yet
+- Do not mention databases, support, or system limitations
+- Keep it playful and direct for a {age}-year-old
+"""
+
+UNKNOWN_OBJECT_INTRO_PROMPT = """You are starting a conversation with a child about: {surface_object_name}
+
+AGE GUIDANCE: {age_prompt}
+
+YOUR JOB:
+- Stay with the child's exact object
+- Do not invent factual claims you cannot observe
+- Use only safe, generic openings based on noticing, using, feeling, or liking the object
+- End with exactly one easy question that the child can answer right now
+- Keep it short and natural for a {age}-year-old
+"""
+
+ANCHOR_BRIDGE_RETRY_PROMPT = """You are replying to a child who is still talking about: {surface_object_name}
+
+AGE GUIDANCE: {age_prompt}
+CHILD REPLY: {child_answer}
+BRIDGE CONTEXT:
+{bridge_context}
+
+YOUR JOB:
+- Briefly acknowledge the child's reply
+- Make exactly one final bridge attempt toward {anchor_object_name}
+- Stay inside the bridge context only
+- Do not invent a scene
+- Do not ask about unrelated anchor features
+- End with exactly one easy bridge question
+"""
+
+BRIDGE_FOLLOW_CLASSIFIER_PROMPT = """Decide whether the child followed a bridge from an unsupported object toward a supported anchor.
+
+Surface object: {surface_object_name}
+Supported anchor: {anchor_object_name}
+Relation: {relation}
+Allowed bridge focus: {allowed_focus_terms}
+Child reply: {child_answer}
+
+Return JSON:
+{{
+  "bridge_followed": true or false,
+  "reason": "<short reason>"
+}}
+"""
+
 FUN_FACT_GROUNDING_PROMPT = """Research "{object_name}" for a children's education app (child age: {age}).
 Category: {category}
 
@@ -1381,6 +1456,11 @@ def get_prompts():
     prompts = {
         'system_prompt': SYSTEM_PROMPT,
         'introduction_prompt': INTRODUCTION_PROMPT,
+        'anchor_bridge_intro_prompt': ANCHOR_BRIDGE_INTRO_PROMPT,
+        'anchor_confirmation_intro_prompt': ANCHOR_CONFIRMATION_INTRO_PROMPT,
+        'unknown_object_intro_prompt': UNKNOWN_OBJECT_INTRO_PROMPT,
+        'anchor_bridge_retry_prompt': ANCHOR_BRIDGE_RETRY_PROMPT,
+        'bridge_follow_classifier_prompt': BRIDGE_FOLLOW_CLASSIFIER_PROMPT,
         'feedback_response_prompt': FEEDBACK_RESPONSE_PROMPT,
         'explanation_response_prompt': EXPLANATION_RESPONSE_PROMPT,
         'correction_response_prompt': CORRECTION_RESPONSE_PROMPT,

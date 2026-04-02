@@ -6,10 +6,12 @@ Functions:
     - classify_dimension: Legacy dimension classifier (still exported for compatibility)
     - map_response_to_kb_item: Debug-only best-effort mapper from response text to one KB item
 """
+import json
 import re
 import time
 from loguru import logger
 import paixueji_prompts
+from bridge_context import build_bridge_context
 
 
 async def classify_intent(
@@ -165,6 +167,58 @@ async def classify_dimension(
     """
     if not available_dimensions:
         return None
+
+
+async def classify_bridge_follow(
+    assistant,
+    child_answer: str,
+    surface_object_name: str,
+    anchor_object_name: str,
+    relation: str | None,
+) -> dict:
+    """Determine whether the child followed the current bridge toward the anchor."""
+    normalized_answer = " ".join((child_answer or "").strip().lower().split())
+    normalized_anchor = " ".join((anchor_object_name or "").strip().lower().split())
+    bridge_context = build_bridge_context(
+        surface_object_name=surface_object_name,
+        anchor_object_name=anchor_object_name,
+        relation=relation,
+        attempt_number=1,
+    )
+
+    if normalized_anchor and normalized_anchor in normalized_answer:
+        return {"bridge_followed": True, "reason": "anchor mentioned explicitly"}
+
+    if bridge_context:
+        for term in bridge_context.follow_terms:
+            if term and term in normalized_answer:
+                return {"bridge_followed": True, "reason": f"matched bridge follow term: {term}"}
+
+    if not hasattr(assistant, "client") or not hasattr(assistant.client, "aio"):
+        return {"bridge_followed": False, "reason": "no model fallback available"}
+
+    prompt = paixueji_prompts.get_prompts()["bridge_follow_classifier_prompt"].format(
+        surface_object_name=surface_object_name,
+        anchor_object_name=anchor_object_name,
+        relation=relation or "unknown",
+        allowed_focus_terms=", ".join(bridge_context.allowed_focus_terms) if bridge_context else "",
+        child_answer=child_answer,
+    )
+
+    try:
+        response = await assistant.client.aio.models.generate_content(
+            model=assistant.config["model_name"],
+            contents=prompt,
+            config={"temperature": 0.0, "max_output_tokens": 80},
+        )
+        payload = json.loads(response.text or "{}")
+    except Exception:
+        return {"bridge_followed": False, "reason": "classifier fallback failed"}
+
+    return {
+        "bridge_followed": bool(payload.get("bridge_followed")),
+        "reason": payload.get("reason") or "classifier fallback",
+    }
 
     prompt = (
         f"The assistant and child are talking about: {object_name}\n"

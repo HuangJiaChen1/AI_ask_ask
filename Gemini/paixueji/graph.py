@@ -20,6 +20,7 @@ from stream import (
     select_hook_type
 )
 from schema import StreamChunk
+from bridge_context import build_bridge_context
 
 GUIDE_MODE_THRESHOLD = 2  # Correct answers required to complete chat mode
 _STRUGGLING_INTENTS = {"CLARIFYING_IDK", "CLARIFYING_WRONG"}  # Intents that share the struggle counter
@@ -58,6 +59,7 @@ def route_from_analyze_input(state) -> str:
     intent = (state.get("intent_type") or "clarifying_idk").lower()
     # Intercept the Nth correct answer to run theme classification
     if (intent == "correct_answer" and
+            state["assistant"].learning_anchor_active and
             state["assistant"].correct_answer_count + 1 >= GUIDE_MODE_THRESHOLD):
         return "classify_theme"
     # Intercept 2nd+ struggle (IDK or wrong) — route to dedicated answer-reveal node
@@ -79,7 +81,16 @@ class PaixuejiState(TypedDict):
 
     # --- Context ---
     object_name: str
+    surface_object_name: Optional[str]
+    anchor_object_name: Optional[str]
+    anchor_status: Optional[str]
+    anchor_relation: Optional[str]
+    anchor_confidence_band: Optional[str]
+    anchor_confirmation_needed: bool
+    learning_anchor_active: bool
+    bridge_attempt_count: int
     correct_answer_count: int
+    intro_mode: Optional[str]
 
     # --- Dimension Coverage ---
     physical_dimensions: dict      # {dim: {attr: value}}, loaded at session start
@@ -268,6 +279,9 @@ def _build_chat_kb_context(state: "PaixuejiState") -> str:
     This includes physical attribute/value facts plus engagement seed strings,
     and excludes themes, concepts, and physical topics.
     """
+    if state.get("learning_anchor_active") is False:
+        return ""
+
     physical = state.get("physical_dimensions") or {}
     engagement = state.get("engagement_dimensions") or {}
 
@@ -301,6 +315,9 @@ def _build_intro_kb_context(state: "PaixuejiState") -> str:
     Intro should stay close to observable details and avoid imaginative engagement
     seeds that can pull the opening away from the object too early.
     """
+    if state.get("learning_anchor_active") is False:
+        return ""
+
     physical = state.get("physical_dimensions") or {}
     if not physical:
         return ""
@@ -316,6 +333,16 @@ def _build_intro_kb_context(state: "PaixuejiState") -> str:
             lines.append(f"  - {attribute.replace('_', ' ')}: {value}")
 
     return "\n".join(lines)
+
+
+def _build_bridge_prompt_context(state: "PaixuejiState", attempt_number: int) -> str:
+    bridge_context = build_bridge_context(
+        surface_object_name=state.get("surface_object_name") or state.get("object_name", ""),
+        anchor_object_name=state.get("anchor_object_name") or "",
+        relation=state.get("anchor_relation"),
+        attempt_number=attempt_number,
+    )
+    return bridge_context.prompt_context if bridge_context else ""
 
 
 def _intent_uses_grounding(intent_type: str | None) -> bool:
@@ -372,14 +399,36 @@ async def _apply_topic_switch(state: PaixuejiState, new_obj: str) -> dict:
     Uses YAML lookup (in-memory, no LLM call needed).
     """
     from paixueji_assistant import ConversationState
+    from object_resolver import resolve_object_input
 
     assistant = state["assistant"]
-    assistant.object_name = new_obj
+    resolution = resolve_object_input(
+        raw_object_name=new_obj,
+        age=state["age"] or 6,
+        client=state["client"],
+        config=state["config"],
+    )
+    assistant.apply_resolution(resolution)
+    if resolution.anchor_status == "anchored_high" and resolution.anchor_object_name:
+        assistant.activate_anchor_topic(resolution.anchor_object_name)
+        assistant.anchor_status = "anchored_high"
+
     assistant.state = ConversationState.ASKING_QUESTION
-    assistant.load_dimension_data(new_obj)
+    if assistant.learning_anchor_active:
+        assistant.load_dimension_data(assistant.object_name)
+    else:
+        assistant.physical_dimensions = {}
+        assistant.engagement_dimensions = {}
 
     return {
-        "object_name": new_obj,
+        "object_name": assistant.object_name,
+        "surface_object_name": assistant.surface_object_name,
+        "anchor_object_name": assistant.anchor_object_name,
+        "anchor_status": assistant.anchor_status,
+        "anchor_relation": assistant.anchor_relation,
+        "anchor_confidence_band": assistant.anchor_confidence_band,
+        "anchor_confirmation_needed": assistant.anchor_confirmation_needed,
+        "learning_anchor_active": assistant.learning_anchor_active,
         "new_object_name": new_obj,
         "response_type": "topic_switch",
         "physical_dimensions": assistant.physical_dimensions,
@@ -487,12 +536,16 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
     generator = ask_introduction_question_stream(
         messages=messages,
         object_name=state["object_name"],
+        surface_object_name=state.get("surface_object_name"),
+        anchor_object_name=state.get("anchor_object_name"),
+        intro_mode=state.get("intro_mode") or "supported",
         age_prompt=state["age_prompt"],
         age=state["age"],
         config=state["config"],
         client=state["client"],
         hook_type_section=hook_type_section,
         knowledge_context=_build_intro_kb_context(state),
+        bridge_context=_build_bridge_prompt_context(state, state.get("bridge_attempt_count", 1) or 1),
     )
 
     full_text, new_seq = await stream_generator_to_callback(
@@ -507,6 +560,7 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
         "ttft": state.get("ttft"),
         "selected_hook_type": hook_type_name,
         "question_style": question_style,
+        "intro_mode": state.get("intro_mode"),
     }
 
 
@@ -568,6 +622,15 @@ async def stream_generator_to_callback(generator, state: PaixuejiState, response
                 classification_failure_reason=state.get("classification_failure_reason"),
                 new_object_name=state["new_object_name"],
                 detected_object_name=state["detected_object_name"],
+                current_object_name=state["object_name"],
+                surface_object_name=state.get("surface_object_name"),
+                anchor_object_name=state.get("anchor_object_name"),
+                anchor_status=state.get("anchor_status"),
+                anchor_relation=state.get("anchor_relation"),
+                anchor_confidence_band=state.get("anchor_confidence_band"),
+                anchor_confirmation_needed=state.get("anchor_confirmation_needed", False),
+                learning_anchor_active=state.get("learning_anchor_active", False),
+                bridge_attempt_count=state.get("bridge_attempt_count", 0),
 
                 response_type=response_type_override or state["response_type"],
                 selected_hook_type=state.get("selected_hook_type"),
@@ -886,7 +949,8 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
     )
     full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
     await _maybe_set_used_kb_item(state, "correct_answer", full_text_intent)
-    state["assistant"].increment_correct_answers()
+    if state["assistant"].learning_anchor_active:
+        state["assistant"].increment_correct_answers()
 
     # Update sequence so second generator picks up where first left off
     state["sequence_number"] = new_seq
@@ -1315,6 +1379,15 @@ async def node_finalize(state: PaixuejiState) -> dict:
         classification_failure_reason=state.get("classification_failure_reason"),
         new_object_name=state.get("new_object_name"),
         detected_object_name=state.get("detected_object_name"),
+        current_object_name=state.get("object_name"),
+        surface_object_name=state.get("surface_object_name"),
+        anchor_object_name=state.get("anchor_object_name"),
+        anchor_status=state.get("anchor_status"),
+        anchor_relation=state.get("anchor_relation"),
+        anchor_confidence_band=state.get("anchor_confidence_band"),
+        anchor_confirmation_needed=state.get("anchor_confirmation_needed", False),
+        learning_anchor_active=state.get("learning_anchor_active", False),
+        bridge_attempt_count=state.get("bridge_attempt_count", 0),
 
         response_type=state.get("response_type"),
 
@@ -1351,7 +1424,8 @@ async def node_classify_theme(state: PaixuejiState) -> dict:
     assistant = state["assistant"]
     logger.info(f"[{state['session_id']}] Node: Classify Theme (guide mode entry)")
 
-    assistant.increment_correct_answers()
+    if assistant.learning_anchor_active:
+        assistant.increment_correct_answers()
 
     if (
         not assistant.fallback_theme_id
@@ -1415,6 +1489,15 @@ async def node_chat_complete(state: PaixuejiState) -> dict:
             request_id=state["request_id"],
             response_type="correct_answer",
             correct_answer_count=assistant.correct_answer_count,
+            current_object_name=state.get("object_name"),
+            surface_object_name=state.get("surface_object_name"),
+            anchor_object_name=state.get("anchor_object_name"),
+            anchor_status=state.get("anchor_status"),
+            anchor_relation=state.get("anchor_relation"),
+            anchor_confidence_band=state.get("anchor_confidence_band"),
+            anchor_confirmation_needed=state.get("anchor_confirmation_needed", False),
+            learning_anchor_active=state.get("learning_anchor_active", False),
+            bridge_attempt_count=state.get("bridge_attempt_count", 0),
             key_concept=assistant.key_concept or None,
             ibpyp_theme_name=assistant.ibpyp_theme_name or None,
             theme_classification_reason=assistant.ibpyp_theme_reason or None,

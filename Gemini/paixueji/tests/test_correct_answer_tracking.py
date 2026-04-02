@@ -13,7 +13,13 @@ import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 
 from paixueji_assistant import PaixuejiAssistant
-from graph import node_correct_answer, node_classify_theme, paixueji_graph, GUIDE_MODE_THRESHOLD
+from graph import (
+    GUIDE_MODE_THRESHOLD,
+    node_classify_theme,
+    node_correct_answer,
+    paixueji_graph,
+    route_from_analyze_input,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -87,7 +93,8 @@ def _make_mock_client(*, stream_text="Nice work! You got it right.", theme_json=
 
 
 def _base_state(assistant, *, correct_answer_count=0, guide_phase=None,
-                intent_type="correct_answer", content="The wheels help it move!"):
+                intent_type="correct_answer", content="The wheels help it move!",
+                learning_anchor_active=True):
     """Return a fully-populated PaixuejiState dict for direct node or graph invocation."""
     received_chunks = []
 
@@ -96,6 +103,7 @@ def _base_state(assistant, *, correct_answer_count=0, guide_phase=None,
 
     client = _make_mock_client()
     assistant.client = client  # classify_intent() uses assistant.client, not state["client"]
+    assistant.learning_anchor_active = learning_anchor_active
 
     return {
         "messages": [],
@@ -104,6 +112,13 @@ def _base_state(assistant, *, correct_answer_count=0, guide_phase=None,
         "request_id": "req-1",
         "assistant": assistant,
         "object_name": "bike",
+        "surface_object_name": "bike",
+        "anchor_object_name": "bike",
+        "anchor_status": "exact_supported",
+        "anchor_relation": "exact_match",
+        "anchor_confidence_band": "exact",
+        "anchor_confirmation_needed": False,
+        "learning_anchor_active": assistant.learning_anchor_active,
         "correct_answer_count": correct_answer_count,
         "age": 6,
         "config": {"model_name": "mock-model"},
@@ -173,11 +188,24 @@ class TestNodeCorrectAnswerIncrementsCount:
     async def test_correct_answer_accumulates_across_sequential_calls(self):
         """Three sequential node calls should result in count=3."""
         assistant = PaixuejiAssistant()
+        assistant.learning_anchor_active = True
 
         for expected in range(1, 4):
             state = _base_state(assistant, correct_answer_count=assistant.correct_answer_count)
             await node_correct_answer(state)
             assert assistant.correct_answer_count == expected
+
+    @pytest.mark.asyncio
+    async def test_correct_answer_does_not_increment_before_anchor_activation(self):
+        assistant = PaixuejiAssistant()
+        assistant.learning_anchor_active = False
+
+        state = _base_state(assistant, correct_answer_count=0, learning_anchor_active=False)
+
+        result = await node_correct_answer(state)
+
+        assert assistant.correct_answer_count == 0
+        assert result["correct_answer_count"] == 0
 
 
 # ---------------------------------------------------------------------------
@@ -195,6 +223,7 @@ class TestRoutingBelowThreshold:
         """
         assistant = PaixuejiAssistant()
         assistant.correct_answer_count = 0
+        assistant.learning_anchor_active = True
 
         state = _base_state(assistant, correct_answer_count=0)
 
@@ -216,6 +245,7 @@ class TestRoutingBelowThreshold:
         count=0, intent=CORRECT_ANSWER: should be a plain correct_answer turn.
         """
         assistant = PaixuejiAssistant()
+        assistant.learning_anchor_active = True
         state = _base_state(assistant, correct_answer_count=0)
 
         final_state = await paixueji_graph.ainvoke(state)
@@ -233,11 +263,25 @@ class TestRoutingBelowThreshold:
 
         assistant = PaixuejiAssistant()
         assistant.correct_answer_count = 0
+        assistant.learning_anchor_active = True
         state = _base_state(assistant, correct_answer_count=0)
 
         final_state = await paixueji_graph.ainvoke(state)
 
         assert "guide_phase" not in final_state
+
+    def test_route_does_not_divert_to_classify_theme_when_learning_inactive(self):
+        assistant = PaixuejiAssistant()
+        assistant.correct_answer_count = 1
+        assistant.learning_anchor_active = False
+
+        route = route_from_analyze_input({
+            "classification_status": "ok",
+            "intent_type": "CORRECT_ANSWER",
+            "assistant": assistant,
+        })
+
+        assert route == "correct_answer"
 
 
 # ---------------------------------------------------------------------------
@@ -257,6 +301,7 @@ class TestThresholdTriggersClassifyTheme:
         """
         assistant = PaixuejiAssistant()
         assistant.correct_answer_count = 1
+        assistant.learning_anchor_active = True
 
         state = _base_state(assistant, correct_answer_count=1)
 
@@ -282,6 +327,7 @@ class TestThresholdTriggersClassifyTheme:
         """
         assistant = PaixuejiAssistant()
         assistant.correct_answer_count = 1
+        assistant.learning_anchor_active = True
 
         captured_chunks = []
 
@@ -304,6 +350,7 @@ class TestThresholdTriggersClassifyTheme:
         """
         assistant = PaixuejiAssistant()
         assistant.correct_answer_count = 1
+        assistant.learning_anchor_active = True
 
         state = _base_state(assistant, correct_answer_count=1)
 
@@ -323,6 +370,7 @@ class TestThresholdTriggersClassifyTheme:
         """
         assistant = PaixuejiAssistant()
         assistant.correct_answer_count = 1
+        assistant.learning_anchor_active = True
         assistant.key_concept = "function"
         assistant.bridge_question = "How does the bike move?"
         assistant.category_prompt = "CONCEPT FOCUS: function"
@@ -371,6 +419,7 @@ class TestClassifyThemeFallback:
         """
         assistant = PaixuejiAssistant()
         assistant.correct_answer_count = 1
+        assistant.learning_anchor_active = True
         assistant.key_concept = "change"
         assistant.bridge_question = "What changes when the apple gets old?"
         assistant.category_prompt = "CONCEPT FOCUS: change"
@@ -424,6 +473,7 @@ class TestClassifyThemeFallback:
         """
         assistant = PaixuejiAssistant()
         assistant.correct_answer_count = 1
+        assistant.learning_anchor_active = True
 
         object_name = "bicycle"
         state = _base_state(assistant, correct_answer_count=1, content="It rolls!")
@@ -444,6 +494,7 @@ class TestClassifyThemeFallback:
         """
         assistant = PaixuejiAssistant()
         assistant.correct_answer_count = 1
+        assistant.learning_anchor_active = True
 
         state = _base_state(assistant, correct_answer_count=1)
 
@@ -459,6 +510,7 @@ class TestClassifyThemeFallback:
         """
         assistant = PaixuejiAssistant()
         assistant.correct_answer_count = 1
+        assistant.learning_anchor_active = True
 
         state = _base_state(assistant, correct_answer_count=1)
 

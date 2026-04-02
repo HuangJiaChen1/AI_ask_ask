@@ -1,0 +1,318 @@
+import json
+from unittest.mock import AsyncMock
+
+
+def parse_sse(response_data):
+    events = []
+    text = response_data.decode("utf-8")
+    for block in text.split("\n\n"):
+        if not block.strip():
+            continue
+        event_type = None
+        data = None
+        for line in block.split("\n"):
+            if line.startswith("event: "):
+                event_type = line[7:].strip()
+            elif line.startswith("data: "):
+                data = json.loads(line[6:].strip())
+        if event_type:
+            events.append({"event": event_type, "data": data})
+    return events
+
+
+def test_start_with_high_confidence_anchor_stays_on_surface_object(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+
+    response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    assert response.status_code == 200
+
+    events = parse_sse(response.data)
+    first_chunk = next(e["data"] for e in events if e["event"] == "chunk")
+
+    assert first_chunk["surface_object_name"] == "cat food"
+    assert first_chunk["current_object_name"] == "cat food"
+    assert first_chunk["anchor_object_name"] == "cat"
+    assert first_chunk["anchor_status"] == "anchored_high"
+    assert first_chunk["learning_anchor_active"] is False
+    assert first_chunk["correct_answer_count"] == 0
+    assert first_chunk["bridge_attempt_count"] == 1
+
+
+def test_start_with_unresolved_object_stays_surface_and_disables_learning(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="spaceship fuel",
+            visible_object_name="spaceship fuel",
+            anchor_object_name=None,
+            anchor_status="unresolved",
+            anchor_relation=None,
+            anchor_confidence_band=None,
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+
+    response = client.post("/api/start", json={"age": 6, "object_name": "spaceship fuel"})
+    assert response.status_code == 200
+
+    events = parse_sse(response.data)
+    first_chunk = next(e["data"] for e in events if e["event"] == "chunk")
+
+    assert first_chunk["surface_object_name"] == "spaceship fuel"
+    assert first_chunk["current_object_name"] == "spaceship fuel"
+    assert first_chunk["anchor_object_name"] is None
+    assert first_chunk["anchor_status"] == "unresolved"
+    assert first_chunk["learning_anchor_active"] is False
+
+
+def test_medium_confidence_confirmation_accepts_anchor_and_switches(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_medium",
+            anchor_relation="food_for",
+            anchor_confidence_band="medium",
+            anchor_confirmation_needed=True,
+            learning_anchor_active=False,
+        ),
+    )
+
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    start_events = parse_sse(start_response.data)
+    session_id = next(e["data"]["session_id"] for e in start_events if e["event"] == "chunk")
+
+    continue_response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "yes, cat"},
+    )
+    assert continue_response.status_code == 200
+
+    events = parse_sse(continue_response.data)
+    first_chunk = next(e["data"] for e in events if e["event"] == "chunk")
+
+    assert first_chunk["current_object_name"] == "cat"
+    assert first_chunk["surface_object_name"] == "cat food"
+    assert first_chunk["anchor_object_name"] == "cat"
+    assert first_chunk["learning_anchor_active"] is True
+    assert first_chunk["correct_answer_count"] == 0
+
+
+def test_medium_confidence_rejection_suppresses_anchor_and_stays_surface(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_medium",
+            anchor_relation="food_for",
+            anchor_confidence_band="medium",
+            anchor_confirmation_needed=True,
+            learning_anchor_active=False,
+        ),
+    )
+
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    start_events = parse_sse(start_response.data)
+    session_id = next(e["data"]["session_id"] for e in start_events if e["event"] == "chunk")
+
+    continue_response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "no, stay with cat food"},
+    )
+    assert continue_response.status_code == 200
+
+    events = parse_sse(continue_response.data)
+    first_chunk = next(e["data"] for e in events if e["event"] == "chunk")
+
+    assert first_chunk["current_object_name"] == "cat food"
+    assert first_chunk["surface_object_name"] == "cat food"
+    assert first_chunk["anchor_object_name"] == "cat"
+    assert first_chunk["learning_anchor_active"] is False
+
+
+def test_force_switch_high_confidence_enters_pre_anchor_state(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="apple",
+            visible_object_name="apple",
+            anchor_object_name="apple",
+            anchor_status="exact_supported",
+            anchor_relation="exact_match",
+            anchor_confidence_band="exact",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=True,
+        ),
+    )
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "apple"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+
+    response = client.post(
+        "/api/force-switch",
+        json={"session_id": session_id, "new_object": "cat food"},
+    )
+    assert response.status_code == 200
+
+    payload = response.get_json()
+    assert payload["new_object"] == "cat food"
+    assert payload["learning_anchor_active"] is False
+
+
+def test_bridge_follow_switches_to_anchor_on_continue(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"bridge_followed": True, "reason": "answered smell bridge"}),
+    )
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "with its nose"},
+    )
+    assert response.status_code == 200
+
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+    assert final_chunk["current_object_name"] == "cat"
+    assert final_chunk["learning_anchor_active"] is True
+    assert final_chunk["correct_answer_count"] == 0
+
+
+def test_first_bridge_miss_emits_retry_bridge(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"bridge_followed": False, "reason": "stayed on food"}),
+    )
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "it is crunchy"},
+    )
+    assert response.status_code == 200
+
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+    assert final_chunk["current_object_name"] == "cat food"
+    assert final_chunk["learning_anchor_active"] is False
+    assert final_chunk["bridge_attempt_count"] == 2
+    assert final_chunk["response_type"] == "bridge_retry"
+
+
+def test_second_bridge_miss_suppresses_anchor_and_falls_back_to_unresolved_chat(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    start_events = parse_sse(start_response.data)
+    session_id = next(e["data"]["session_id"] for e in start_events if e["event"] == "chunk")
+
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"bridge_followed": False, "reason": "first miss"}),
+    )
+    client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "it is crunchy"},
+    )
+
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"bridge_followed": False, "reason": "second miss"}),
+    )
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "it is brown"},
+    )
+    assert response.status_code == 200
+
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+    assert final_chunk["current_object_name"] == "cat food"
+    assert final_chunk["anchor_status"] == "unresolved"
+    assert final_chunk["learning_anchor_active"] is False

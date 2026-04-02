@@ -23,6 +23,14 @@ from schema import StreamChunk
 import paixueji_prompts
 import time
 from graph_lookup import lookup_top_available_concepts
+from object_resolver import parse_anchor_confirmation, resolve_object_input
+from bridge_context import build_bridge_context
+from stream import (
+    classify_bridge_follow,
+    generate_bridge_retry_response_stream,
+    generate_topic_switch_response_stream,
+    prepare_messages_for_streaming,
+)
 from stream.errors import build_sse_error_payload
 
 app = Flask(__name__, static_folder='static')
@@ -35,6 +43,7 @@ CORS(app)
 sessions = {}
 
 ALLOWED_MODELS = {"gemini-3.1-flash-lite-preview", "gemini-2.0-flash-lite"}
+MAX_BRIDGE_ATTEMPTS = 2
 
 # Initialize global Gemini client to enable connection reuse
 def init_global_client():
@@ -121,6 +130,30 @@ def sse_event(event_type, data):
         json_data = json.dumps(data)
 
     return f"event: {event_type}\ndata: {json_data}\n\n"
+
+
+def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
+    return {
+        "current_object_name": assistant.object_name,
+        "surface_object_name": assistant.surface_object_name,
+        "anchor_object_name": assistant.anchor_object_name,
+        "anchor_status": assistant.anchor_status,
+        "anchor_relation": assistant.anchor_relation,
+        "anchor_confidence_band": assistant.anchor_confidence_band,
+        "anchor_confirmation_needed": assistant.anchor_confirmation_needed,
+        "learning_anchor_active": assistant.learning_anchor_active,
+        "bridge_attempt_count": assistant.bridge_attempt_count,
+    }
+
+
+def _intro_mode_for_assistant(assistant: PaixuejiAssistant) -> str:
+    if assistant.anchor_status == "anchored_high":
+        return "anchor_bridge"
+    if assistant.anchor_status == "anchored_medium":
+        return "anchor_confirmation"
+    if assistant.anchor_status == "unresolved":
+        return "unknown_object"
+    return "supported"
 
 # Helper to bridge Graph execution to SSE stream
 async def stream_graph_execution(initial_state):
@@ -299,11 +332,21 @@ def start_conversation():
 
     # Store session state
     assistant.age = age
-    assistant.object_name = object_name
     assistant.correct_answer_count = 0
+    resolution = resolve_object_input(
+        raw_object_name=object_name,
+        age=age or 6,
+        client=assistant.client,
+        config=assistant.config,
+    )
+    assistant.apply_resolution(resolution)
 
-    # Ordinary chat uses only age-tiered dimension KB.
-    assistant.load_dimension_data(object_name)
+    if assistant.learning_anchor_active:
+        dimensions_object_name = object_name if resolution.anchor_status == "exact_supported" else assistant.object_name
+        assistant.load_dimension_data(dimensions_object_name)
+    else:
+        assistant.physical_dimensions = {}
+        assistant.engagement_dimensions = {}
 
     # Apply backbone model overrides (validated against whitelist)
     if model_name_override and model_name_override in ALLOWED_MODELS:
@@ -317,7 +360,7 @@ def start_conversation():
     request_id = str(uuid.uuid4())
 
     print(f"[INFO] Created Paixueji session {session_id[:8]}... | age={age}, object={object_name}, "
-          f"request_id={request_id[:8]}...")
+          f"request_id={request_id[:8]}..., resolution={assistant.anchor_status}")
 
     def generate():
         """Generator for SSE stream."""
@@ -341,7 +384,7 @@ def start_conversation():
             ]
 
             # Introduction content (trigger first question)
-            introduction_content = f"Start conversation about {object_name}"
+            introduction_content = f"Start conversation about {assistant.visible_object_name or object_name}"
 
             loop = _ASYNC_LOOP
 
@@ -359,8 +402,17 @@ def start_conversation():
                         "client": assistant.client,
                         "assistant": assistant,
                         "age_prompt": age_prompt,
-                        "object_name": object_name,
+                        "object_name": assistant.object_name,
+                        "surface_object_name": assistant.surface_object_name,
+                        "anchor_object_name": assistant.anchor_object_name,
+                        "anchor_status": assistant.anchor_status,
+                        "anchor_relation": assistant.anchor_relation,
+                        "anchor_confidence_band": assistant.anchor_confidence_band,
+                        "anchor_confirmation_needed": assistant.anchor_confirmation_needed,
+                        "learning_anchor_active": assistant.learning_anchor_active,
+                        "bridge_attempt_count": 0,
                         "correct_answer_count": 0,
+                        "intro_mode": _intro_mode_for_assistant(assistant),
                         "category_prompt": assistant.category_prompt,
 
                         # Ordinary-chat KB (loaded at session start)
@@ -399,6 +451,10 @@ def start_conversation():
                             "key_concept": assistant.key_concept,
                         },
                     }
+
+                    if assistant.anchor_status == "anchored_high" and not assistant.learning_anchor_active:
+                        assistant.mark_bridge_attempt_emitted()
+                        initial_state["bridge_attempt_count"] = assistant.bridge_attempt_count
 
                     async for chunk in stream_graph_execution(initial_state):
                         # Yield StreamChunk as SSE event (pass directly for optimized serialization)
@@ -507,6 +563,264 @@ def continue_conversation():
             loop = _ASYNC_LOOP
 
             try:
+                if (
+                    assistant.anchor_status == "anchored_high"
+                    and not assistant.learning_anchor_active
+                    and assistant.anchor_object_name
+                ):
+                    bridge_follow = asyncio.run_coroutine_threadsafe(
+                        classify_bridge_follow(
+                            assistant=assistant,
+                            child_answer=child_input,
+                            surface_object_name=assistant.surface_object_name or assistant.object_name,
+                            anchor_object_name=assistant.anchor_object_name,
+                            relation=assistant.anchor_relation,
+                        ),
+                        loop,
+                    ).result()
+
+                    if bridge_follow.get("bridge_followed"):
+                        previous_object = assistant.surface_object_name or assistant.object_name
+                        assistant.activate_anchor_topic(assistant.anchor_object_name)
+                        assistant.anchor_status = "anchored_high"
+                        assistant.load_dimension_data(assistant.object_name)
+                        assistant.load_object_context_from_yaml(assistant.object_name)
+
+                        async def stream_anchor_switch():
+                            messages = prepare_messages_for_streaming(
+                                assistant.conversation_history.copy(),
+                                age_prompt,
+                            )
+                            generator = generate_topic_switch_response_stream(
+                                messages=messages,
+                                previous_object=previous_object,
+                                new_object=assistant.object_name,
+                                age=assistant.age or 6,
+                                config=assistant.config,
+                                client=assistant.client,
+                            )
+
+                            sequence_number = 0
+                            full_response = ""
+                            async for text_chunk, _token_usage, full_so_far in generator:
+                                full_response = full_so_far
+                                if not text_chunk:
+                                    continue
+                                sequence_number += 1
+                                yield sse_event("chunk", StreamChunk(
+                                    response=text_chunk,
+                                    session_finished=False,
+                                    duration=0.0,
+                                    token_usage=None,
+                                    finish=False,
+                                    sequence_number=sequence_number,
+                                    timestamp=time.time(),
+                                    session_id=session_id,
+                                    request_id=request_id,
+                                    response_type="topic_switch",
+                                    correct_answer_count=assistant.correct_answer_count,
+                                    **_assistant_stream_fields(assistant),
+                                ))
+
+                            sequence_number += 1
+                            assistant.conversation_history.append({"role": "user", "content": child_input})
+                            assistant.conversation_history.append({
+                                "role": "assistant",
+                                "content": full_response,
+                                "mode": "chat",
+                            })
+                            yield sse_event("chunk", StreamChunk(
+                                response=full_response,
+                                session_finished=False,
+                                duration=0.0,
+                                token_usage=None,
+                                finish=True,
+                                sequence_number=sequence_number,
+                                timestamp=time.time(),
+                                session_id=session_id,
+                                request_id=request_id,
+                                response_type="topic_switch",
+                                correct_answer_count=assistant.correct_answer_count,
+                                **_assistant_stream_fields(assistant),
+                            ))
+                            yield sse_event("complete", {"success": True})
+
+                        gen = stream_anchor_switch()
+                        for event in async_gen_to_sync(gen, loop):
+                            yield event
+                        print(f"[INFO] Session {session_id[:8]}... bridge followed -> {assistant.object_name}")
+                        return
+
+                    if assistant.bridge_attempt_count < MAX_BRIDGE_ATTEMPTS:
+                        next_attempt = assistant.bridge_attempt_count + 1
+                        bridge_context = build_bridge_context(
+                            surface_object_name=assistant.surface_object_name or assistant.object_name,
+                            anchor_object_name=assistant.anchor_object_name,
+                            relation=assistant.anchor_relation,
+                            attempt_number=next_attempt,
+                        )
+                        assistant.bridge_attempt_count = next_attempt
+
+                        async def stream_bridge_retry():
+                            messages = prepare_messages_for_streaming(
+                                assistant.conversation_history.copy(),
+                                age_prompt,
+                            )
+                            generator = generate_bridge_retry_response_stream(
+                                messages=messages,
+                                child_answer=child_input,
+                                surface_object_name=assistant.surface_object_name or assistant.object_name,
+                                anchor_object_name=assistant.anchor_object_name,
+                                age=assistant.age or 6,
+                                age_prompt=age_prompt,
+                                bridge_context=bridge_context.prompt_context if bridge_context else "",
+                                config=assistant.config,
+                                client=assistant.client,
+                            )
+
+                            sequence_number = 0
+                            full_response = ""
+                            async for text_chunk, _token_usage, full_so_far in generator:
+                                full_response = full_so_far
+                                if not text_chunk:
+                                    continue
+                                sequence_number += 1
+                                yield sse_event("chunk", StreamChunk(
+                                    response=text_chunk,
+                                    session_finished=False,
+                                    duration=0.0,
+                                    token_usage=None,
+                                    finish=False,
+                                    sequence_number=sequence_number,
+                                    timestamp=time.time(),
+                                    session_id=session_id,
+                                    request_id=request_id,
+                                    response_type="bridge_retry",
+                                    correct_answer_count=assistant.correct_answer_count,
+                                    **_assistant_stream_fields(assistant),
+                                ))
+
+                            sequence_number += 1
+                            assistant.conversation_history.append({"role": "user", "content": child_input})
+                            assistant.conversation_history.append({
+                                "role": "assistant",
+                                "content": full_response,
+                                "mode": "chat",
+                            })
+                            yield sse_event("chunk", StreamChunk(
+                                response=full_response,
+                                session_finished=False,
+                                duration=0.0,
+                                token_usage=None,
+                                finish=True,
+                                sequence_number=sequence_number,
+                                timestamp=time.time(),
+                                session_id=session_id,
+                                request_id=request_id,
+                                response_type="bridge_retry",
+                                correct_answer_count=assistant.correct_answer_count,
+                                **_assistant_stream_fields(assistant),
+                            ))
+                            yield sse_event("complete", {"success": True})
+
+                        gen = stream_bridge_retry()
+                        for event in async_gen_to_sync(gen, loop):
+                            yield event
+                        print(
+                            f"[INFO] Session {session_id[:8]}... bridge retry {assistant.bridge_attempt_count}/{MAX_BRIDGE_ATTEMPTS}"
+                        )
+                        return
+
+                    assistant.suppress_anchor(assistant.anchor_object_name)
+                    assistant.anchor_status = "unresolved"
+                    assistant.learning_anchor_active = False
+                    assistant.reset_bridge_state()
+
+                if assistant.anchor_confirmation_needed and assistant.anchor_object_name:
+                    decision = parse_anchor_confirmation(
+                        child_input,
+                        assistant.surface_object_name or assistant.object_name,
+                        assistant.anchor_object_name,
+                    )
+
+                    if decision == "accept":
+                        previous_object = assistant.surface_object_name or assistant.object_name
+                        assistant.activate_anchor_topic(assistant.anchor_object_name)
+                        assistant.anchor_status = "anchored_high"
+                        assistant.load_dimension_data(assistant.object_name)
+                        assistant.load_object_context_from_yaml(assistant.object_name)
+
+                        async def stream_anchor_switch():
+                            messages = prepare_messages_for_streaming(
+                                assistant.conversation_history.copy(),
+                                age_prompt,
+                            )
+                            generator = generate_topic_switch_response_stream(
+                                messages=messages,
+                                previous_object=previous_object,
+                                new_object=assistant.object_name,
+                                age=assistant.age or 6,
+                                config=assistant.config,
+                                client=assistant.client,
+                            )
+
+                            sequence_number = 0
+                            full_response = ""
+                            async for text_chunk, _token_usage, full_so_far in generator:
+                                full_response = full_so_far
+                                if not text_chunk:
+                                    continue
+                                sequence_number += 1
+                                yield sse_event("chunk", StreamChunk(
+                                    response=text_chunk,
+                                    session_finished=False,
+                                    duration=0.0,
+                                    token_usage=None,
+                                    finish=False,
+                                    sequence_number=sequence_number,
+                                    timestamp=time.time(),
+                                    session_id=session_id,
+                                    request_id=request_id,
+                                    response_type="topic_switch",
+                                    correct_answer_count=assistant.correct_answer_count,
+                                    **_assistant_stream_fields(assistant),
+                                ))
+
+                            sequence_number += 1
+                            assistant.conversation_history.append({"role": "user", "content": child_input})
+                            assistant.conversation_history.append({
+                                "role": "assistant",
+                                "content": full_response,
+                                "mode": "chat",
+                            })
+                            yield sse_event("chunk", StreamChunk(
+                                response=full_response,
+                                session_finished=False,
+                                duration=0.0,
+                                token_usage=None,
+                                finish=True,
+                                sequence_number=sequence_number,
+                                timestamp=time.time(),
+                                session_id=session_id,
+                                request_id=request_id,
+                                response_type="topic_switch",
+                                correct_answer_count=assistant.correct_answer_count,
+                                **_assistant_stream_fields(assistant),
+                            ))
+                            yield sse_event("complete", {"success": True})
+
+                        gen = stream_anchor_switch()
+                        for event in async_gen_to_sync(gen, loop):
+                            yield event
+                        print(f"[INFO] Session {session_id[:8]}... anchor accepted -> {assistant.object_name}")
+                        return
+
+                    if decision in {"reject", "unclear"}:
+                        assistant.suppress_anchor(assistant.anchor_object_name)
+                        assistant.anchor_status = "unresolved"
+                        assistant.learning_anchor_active = False
+                        assistant.reset_bridge_state()
+
                 async def stream_response():
                     # Prepare messages (append current user input)
                     # Note: We append here for the Graph execution context, but ONLY append to
@@ -527,7 +841,16 @@ def continue_conversation():
                         "assistant": assistant,
                         "age_prompt": age_prompt,
                         "object_name": assistant.object_name,
+                        "surface_object_name": assistant.surface_object_name,
+                        "anchor_object_name": assistant.anchor_object_name,
+                        "anchor_status": assistant.anchor_status,
+                        "anchor_relation": assistant.anchor_relation,
+                        "anchor_confidence_band": assistant.anchor_confidence_band,
+                        "anchor_confirmation_needed": assistant.anchor_confirmation_needed,
+                        "learning_anchor_active": assistant.learning_anchor_active,
+                        "bridge_attempt_count": assistant.bridge_attempt_count,
                         "correct_answer_count": assistant.correct_answer_count,
+                        "intro_mode": None,
                         "category_prompt": category_prompt,
 
                         # Ordinary-chat KB (persisted on assistant between turns)
@@ -843,19 +1166,27 @@ def force_switch():
         # Save previous object
         previous_object = assistant.object_name
 
-        # Update object name
-        assistant.object_name = new_object
+        resolution = resolve_object_input(
+            raw_object_name=new_object,
+            age=assistant.age or 6,
+            client=assistant.client,
+            config=assistant.config,
+        )
+        assistant.apply_resolution(resolution)
+        if assistant.learning_anchor_active:
+            assistant.load_dimension_data(assistant.object_name)
+        else:
+            assistant.physical_dimensions = {}
+            assistant.engagement_dimensions = {}
 
-        # Refresh the ordinary-chat KB inventory for the new object.
-        assistant.load_dimension_data(new_object)
-
-        print(f"[FORCE-SWITCH] User forced switch from {previous_object} to {new_object}")
+        print(f"[FORCE-SWITCH] User forced switch from {previous_object} to {assistant.object_name}")
 
         return jsonify({
             "success": True,
             "previous_object": previous_object,
-            "new_object": new_object,
-            "message": f"Switched to {new_object}"
+            "new_object": assistant.object_name,
+            "message": f"Switched to {assistant.object_name}",
+            "learning_anchor_active": assistant.learning_anchor_active,
         })
 
     except Exception as e:

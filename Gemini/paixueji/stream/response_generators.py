@@ -275,3 +275,79 @@ async def generate_topic_switch_response_stream(
     logger.info(f"generate_topic_switch_response_stream completed | duration={duration:.3f}s, length={len(full_response)}")
 
     yield ("", token_usage, full_response)
+
+
+async def generate_bridge_retry_response_stream(
+    messages: list[dict],
+    child_answer: str,
+    surface_object_name: str,
+    anchor_object_name: str,
+    age: int,
+    age_prompt: str,
+    bridge_context: str,
+    config: dict,
+    client: genai.Client,
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
+    """Generate one final relation-scoped bridge attempt before giving up."""
+    start_time = time.time()
+    logger.info(
+        f"generate_bridge_retry_response_stream started | surface={surface_object_name}, anchor={anchor_object_name}, age={age}"
+    )
+
+    prompt = paixueji_prompts.get_prompts()["anchor_bridge_retry_prompt"].format(
+        child_answer=child_answer,
+        surface_object_name=surface_object_name,
+        anchor_object_name=anchor_object_name,
+        age=age,
+        age_prompt=age_prompt,
+        bridge_context=bridge_context,
+    )
+
+    messages_to_send = messages + [{"role": "user", "content": prompt}]
+    clean_messages = clean_messages_for_api(messages_to_send)
+    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
+
+    full_response = ""
+    token_usage = None
+    stream = None
+
+    try:
+        gen_config = GenerateContentConfig(
+            temperature=config.get("temperature", 0.3),
+            max_output_tokens=config.get("max_tokens", 400),
+            system_instruction=system_instruction if system_instruction else None,
+        )
+
+        stream = await client.aio.models.generate_content_stream(
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config,
+        )
+
+        async for chunk in stream:
+            if chunk.text:
+                full_response += chunk.text
+                yield (chunk.text, None, full_response)
+    except Exception as e:
+        duration = time.time() - start_time
+        logger.error(
+            f"generate_bridge_retry_response_stream error | error={str(e)}, duration={duration:.3f}s",
+            exc_info=True,
+        )
+        raise_if_rate_limited(e)
+        if full_response:
+            yield ("", token_usage, full_response)
+        return
+    finally:
+        if stream is not None:
+            try:
+                del stream
+            except Exception:
+                pass
+
+    duration = time.time() - start_time
+    logger.info(
+        f"generate_bridge_retry_response_stream completed | duration={duration:.3f}s, length={len(full_response)}"
+    )
+
+    yield ("", token_usage, full_response)

@@ -51,6 +51,16 @@ class PaixuejiAssistant:
 
         # Paixueji-specific fields
         self.object_name = None
+        self.surface_object_name = None
+        self.visible_object_name = None
+        self.anchor_object_name = None
+        self.anchor_status = None
+        self.anchor_relation = None
+        self.anchor_confidence_band = None
+        self.anchor_confirmation_needed = False
+        self.learning_anchor_active = False
+        self.bridge_attempt_count = 0
+        self.suppressed_anchor_names = set()
         self.correct_answer_count = 0
 
         # IB PYP Theme Classification fields
@@ -129,6 +139,45 @@ class PaixuejiAssistant:
         self.ibpyp_theme = None
         self.ibpyp_theme_name = None
         self.ibpyp_theme_reason = None
+
+    def apply_resolution(self, resolution):
+        """Apply an ObjectResolutionResult to session-visible state."""
+        self.surface_object_name = resolution.surface_object_name
+        self.visible_object_name = resolution.visible_object_name
+        self.object_name = resolution.visible_object_name
+        self.anchor_object_name = resolution.anchor_object_name
+        self.anchor_status = resolution.anchor_status
+        self.anchor_relation = resolution.anchor_relation
+        self.anchor_confidence_band = resolution.anchor_confidence_band
+        self.anchor_confirmation_needed = resolution.anchor_confirmation_needed
+        self.learning_anchor_active = resolution.learning_anchor_active
+        self.bridge_attempt_count = 0
+
+    def activate_anchor_topic(self, anchor_name: str):
+        """Make the anchor object the visible/learning topic and reset progress."""
+        anchor_name = (anchor_name or "").strip().lower()
+        self.object_name = anchor_name
+        self.visible_object_name = anchor_name
+        self.anchor_object_name = anchor_name
+        self.anchor_confirmation_needed = False
+        self.learning_anchor_active = True
+        self.bridge_attempt_count = 0
+        self.correct_answer_count = 0
+
+    def suppress_anchor(self, anchor_name: str):
+        """Remember that the current surface topic should not auto-bridge to this anchor."""
+        anchor_name = (anchor_name or "").strip().lower()
+        if anchor_name:
+            self.suppressed_anchor_names.add(anchor_name)
+        self.anchor_confirmation_needed = False
+
+    def reset_bridge_state(self):
+        """Clear bridge attempts for the current topic."""
+        self.bridge_attempt_count = 0
+
+    def mark_bridge_attempt_emitted(self):
+        """Record that a pre-anchor bridge prompt has been shown."""
+        self.bridge_attempt_count += 1
 
     def _load_config(self, config_path):
         """Load configuration from JSON file."""

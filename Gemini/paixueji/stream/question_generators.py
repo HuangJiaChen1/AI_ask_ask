@@ -29,12 +29,16 @@ from .utils import (
 async def ask_introduction_question_stream(
     messages: list[dict],
     object_name: str,
+    surface_object_name: str | None,
+    anchor_object_name: str | None,
+    intro_mode: str,
     age_prompt: str,
     age: int,
     config: dict,
     client: genai.Client,
     hook_type_section: str = "",
     knowledge_context: str = "",
+    bridge_context: str = "",
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str, dict], None]:
     """
     Stream first question about the object.
@@ -57,13 +61,38 @@ async def ask_introduction_question_stream(
     logger.info(f"ask_introduction_question_stream started | object={object_name}, age={age}")
 
     prompts = paixueji_prompts.get_prompts()
-    introduction_prompt = prompts['introduction_prompt'].format(
-        object_name=object_name,
-        age_prompt=age_prompt,
-        age=age,
-        hook_type_section=hook_type_section,
-        knowledge_context=knowledge_context,
-    )
+    if intro_mode == "anchor_bridge":
+        introduction_prompt = prompts["anchor_bridge_intro_prompt"].format(
+            surface_object_name=surface_object_name or object_name,
+            anchor_object_name=anchor_object_name or object_name,
+            object_name=object_name,
+            age_prompt=age_prompt,
+            age=age,
+            hook_type_section=hook_type_section,
+            knowledge_context=knowledge_context,
+            bridge_context=bridge_context,
+        )
+    elif intro_mode == "anchor_confirmation":
+        introduction_prompt = prompts["anchor_confirmation_intro_prompt"].format(
+            surface_object_name=surface_object_name or object_name,
+            anchor_object_name=anchor_object_name or object_name,
+            age_prompt=age_prompt,
+            age=age,
+        )
+    elif intro_mode == "unknown_object":
+        introduction_prompt = prompts["unknown_object_intro_prompt"].format(
+            surface_object_name=surface_object_name or object_name,
+            age_prompt=age_prompt,
+            age=age,
+        )
+    else:
+        introduction_prompt = prompts['introduction_prompt'].format(
+            object_name=object_name,
+            age_prompt=age_prompt,
+            age=age,
+            hook_type_section=hook_type_section,
+            knowledge_context=knowledge_context,
+        )
 
     # Prepare messages with introduction prompt
     messages_to_send = messages + [{"role": "user", "content": introduction_prompt}]

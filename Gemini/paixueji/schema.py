@@ -105,6 +105,15 @@ class StreamChunk(BaseModel):
     # Topic switching fields:
     new_object_name: str | None = None
     detected_object_name: str | None = None  # Object AI detected but didn't switch to
+    current_object_name: str | None = None
+    surface_object_name: str | None = None
+    anchor_object_name: str | None = None
+    anchor_status: str | None = None
+    anchor_relation: str | None = None
+    anchor_confidence_band: str | None = None
+    anchor_confirmation_needed: bool = False
+    learning_anchor_active: bool = False
+    bridge_attempt_count: int = 0
 
     # Node execution tracing (for critique reports)
     nodes_executed: list[dict] | None = None  # Passed through final chunk

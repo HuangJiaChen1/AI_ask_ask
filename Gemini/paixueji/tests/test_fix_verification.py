@@ -111,6 +111,21 @@ class TestIntroductionPromptBeatStructure:
             "INTRODUCTION_PROMPT must consume knowledge_context so intro wording can stay grounded"
         )
 
+    def test_anchor_bridge_intro_prompt_consumes_bridge_context(self):
+        """ANCHOR_BRIDGE_INTRO_PROMPT must consume bridge_context and ban loose redirect wording."""
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.ANCHOR_BRIDGE_INTRO_PROMPT
+        assert "{bridge_context}" in prompt, (
+            "ANCHOR_BRIDGE_INTRO_PROMPT must consume bridge_context"
+        )
+        assert "Do not invent a scene" in prompt, (
+            "ANCHOR_BRIDGE_INTRO_PROMPT must ban fabricated scene-setting"
+        )
+        assert "Do not ask about unrelated anchor features" in prompt, (
+            "ANCHOR_BRIDGE_INTRO_PROMPT must ban unrelated anchor feature pivots"
+        )
+
 
 # ===========================================================================
 # Fix 2 — CORRECT_ANSWER_INTENT_PROMPT BEAT 3
@@ -530,6 +545,19 @@ class TestOrdinaryChatKbFlow:
         assert "Children notice and name emotions" not in kb_context
         assert "primary theme reasoning" not in kb_context
 
+    def test_chat_kb_context_is_empty_before_anchor_activation(self):
+        import graph
+
+        state = {
+            "object_name": "cat food",
+            "learning_anchor_active": False,
+            "physical_dimensions": {"shape": {"ears": "pointy"}},
+            "engagement_dimensions": {"emotions": ["soft and cozy"]},
+        }
+
+        assert graph._build_chat_kb_context(state) == ""
+        assert graph._build_intro_kb_context(state) == ""
+
     @pytest.mark.asyncio
     async def test_map_response_to_kb_item_returns_top_physical_item(self):
         from stream.validation import map_response_to_kb_item
@@ -932,6 +960,45 @@ class TestOrdinaryChatKbStreaming:
         assert "[physical.function]" in knowledge_context
         assert "[physical.appearance]" in knowledge_context
         assert "[engagement.imagination]" not in knowledge_context
+        assert result["response_type"] == "introduction"
+
+    @pytest.mark.asyncio
+    async def test_pre_anchor_intro_uses_bridge_context_not_full_anchor_kb(self):
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=0)
+        state = _build_minimal_state(
+            assistant,
+            messages=[{"role": "system", "content": "system prompt"}],
+            intent_type=None,
+        )
+        state["response_type"] = "introduction"
+        state["hook_types"] = {}
+        state["object_name"] = "cat food"
+        state["surface_object_name"] = "cat food"
+        state["anchor_object_name"] = "cat"
+        state["anchor_status"] = "anchored_high"
+        state["anchor_relation"] = "food_for"
+        state["anchor_confidence_band"] = "high"
+        state["learning_anchor_active"] = False
+        state["bridge_attempt_count"] = 1
+        state["intro_mode"] = "anchor_bridge"
+        state["physical_dimensions"] = {
+            "function": {"blinking": "Blinking wipes and wets the eye like a quick sweep"},
+            "appearance": {"pupil_size": "A black dot that can grow big or small"},
+        }
+        state["engagement_dimensions"] = {
+            "imagination": ["Pretend your eyes have night vision mode"],
+        }
+
+        with patch("graph.ask_introduction_question_stream", return_value=object()) as mock_intro, patch(
+            "graph.stream_generator_to_callback",
+            new=AsyncMock(return_value=("intro text", 1)),
+        ):
+            result = await graph.node_generate_intro(state)
+
+        assert mock_intro.call_args.kwargs["knowledge_context"] == ""
+        assert "smell" in mock_intro.call_args.kwargs["bridge_context"]
         assert result["response_type"] == "introduction"
 
     @pytest.mark.asyncio

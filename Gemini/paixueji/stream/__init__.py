@@ -29,6 +29,7 @@ from .utils import (
 from .response_generators import (
     generate_classification_fallback_stream,
     generate_intent_response_stream,
+    generate_bridge_retry_response_stream,
     generate_topic_switch_response_stream,
 )
 
@@ -40,6 +41,7 @@ from .question_generators import (
 
 # Intent classification (replaces decide_topic_switch_with_validation)
 from .validation import (
+    classify_bridge_follow,
     classify_intent,
     classify_dimension,
     map_response_to_kb_item,
@@ -61,6 +63,7 @@ __all__ = [
     # Response generators
     'generate_classification_fallback_stream',
     'generate_intent_response_stream',
+    'generate_bridge_retry_response_stream',
     'generate_topic_switch_response_stream',
 
     # Question generators (intro path + followup)
@@ -68,6 +71,7 @@ __all__ = [
     'ask_followup_question_stream',
 
     # Intent classification
+    'classify_bridge_follow',
     'classify_intent',
     'classify_dimension',
     'map_response_to_kb_item',

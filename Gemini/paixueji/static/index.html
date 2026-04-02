@@ -29,9 +29,8 @@
 
 <label for="objectName">What object are we learning about?</label>
             <div class="object-input-row">
-                <select id="objectName">
-                    <option value="" disabled selected>Loading objects…</option>
-                </select>
+                <input id="objectName" list="objectSuggestions" placeholder="Type an object or pick a suggestion…" autocomplete="off">
+                <datalist id="objectSuggestions"></datalist>
             </div>
 
             <!-- 最后一行是字体设置（可改） -->

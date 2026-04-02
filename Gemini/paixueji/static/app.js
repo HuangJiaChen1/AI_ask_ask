@@ -33,6 +33,7 @@ const gameEntityNames = new Set();
 
 // UI state
 let currentObject = null;  // Current object being discussed
+let learningAnchorActive = false;
 let currentThemeName = null;  // IB PYP theme name
 let currentKeyConcept = null;  // Key concept for theme
 let currentIntentType = null;       // Last classified intent (9-node architecture)
@@ -460,12 +461,13 @@ async function startConversation() {
 
     // Reset progress
     correctAnswerCount = 0;
+    learningAnchorActive = false;
     conversationComplete = false;
     updateProgressIndicator();
 
     // Hide start form, show progress indicator and messages
     startForm.style.display = 'none';
-    progressIndicator.style.display = 'flex';
+    progressIndicator.style.display = 'none';
     messagesContainer.style.display = 'flex';
     document.querySelector('.input-area').style.display = 'flex';
     document.getElementById('backBtn').style.display = 'inline-block';
@@ -755,6 +757,11 @@ function handleStreamChunk(chunk) {
     if (chunk.correct_answer_count !== undefined) {
         correctAnswerCount = chunk.correct_answer_count;
         updateProgressIndicator();
+    }
+    if ('learning_anchor_active' in chunk) {
+        learningAnchorActive = !!chunk.learning_anchor_active;
+        progressIndicator.style.display = learningAnchorActive ? 'flex' : 'none';
+        updateDebugPanel();
     }
 
     // INFINITE MODE: No conversation completion logic
@@ -1169,44 +1176,22 @@ function init() {
  * Fetch supported objects from the backend and populate the dropdown.
  */
 async function loadObjects() {
-    const select = document.getElementById('objectName');
+    const suggestions = document.getElementById('objectSuggestions');
     try {
         const res = await fetch(`${API_BASE}/objects`);
         const objects = await res.json();
 
-        // Group by domain
-        const byDomain = {};
-        for (const obj of objects) {
-            if (!byDomain[obj.domain]) byDomain[obj.domain] = { label: obj.domain_label, items: [] };
-            byDomain[obj.domain].items.push(obj);
-        }
-
-        select.innerHTML = '';
-        const placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.disabled = true;
-        placeholder.selected = true;
-        placeholder.textContent = 'Choose an object…';
-        select.appendChild(placeholder);
-
-        for (const { label, items } of Object.values(byDomain)) {
-            const group = document.createElement('optgroup');
-            group.label = label;
-            for (const item of items) {
-                const opt = document.createElement('option');
-                opt.value = item.name.toLowerCase();
-                if (item.has_game) {
-                    opt.textContent = '🎮 ' + item.name;
-                    gameEntityNames.add(item.name.toLowerCase());
-                } else {
-                    opt.textContent = item.name;
-                }
-                group.appendChild(opt);
+        suggestions.innerHTML = '';
+        for (const item of objects) {
+            const opt = document.createElement('option');
+            opt.value = item.name.toLowerCase();
+            opt.label = item.has_game ? `🎮 ${item.name} (${item.domain_label})` : `${item.name} (${item.domain_label})`;
+            suggestions.appendChild(opt);
+            if (item.has_game) {
+                gameEntityNames.add(item.name.toLowerCase());
             }
-            select.appendChild(group);
         }
     } catch (e) {
-        select.innerHTML = '<option value="" disabled selected>Failed to load objects</option>';
         console.error('[ERROR] Failed to load objects:', e);
     }
 }
