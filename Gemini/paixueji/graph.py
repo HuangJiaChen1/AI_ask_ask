@@ -31,6 +31,18 @@ GROUNDED_INTENTS = {
     "informative",
     "play",
 }
+OPEN_ENDED_QUESTION_HOOKS = {
+    "想象导向",
+    "情绪投射",
+    "角色代入",
+    "选择偏好",
+    "创意改造",
+    "意图好奇",
+}
+CONCRETE_QUESTION_HOOKS = {
+    "细节发现",
+    "经验、生活链接",
+}
 
 
 def route_from_analyze_input(state) -> str:
@@ -97,6 +109,7 @@ class PaixuejiState(TypedDict):
     # --- Hook Type Selection ---
     hook_types: dict                       # Loaded from hook_types.json at startup
     selected_hook_type: Optional[str]      # e.g. "情绪投射", "创意改造"
+    question_style: Optional[str]          # "open_ended" | "concrete"
 
     # --- Output Accumulation ---
     full_response_text: str
@@ -120,7 +133,35 @@ KEY_STATE_FIELDS = [
     "intent_type", "response_type",
     "classification_status", "classification_failure_reason",
     "new_object_name",
+    "question_style",
 ]
+
+
+def _question_style_for_hook_type(hook_type_name: Optional[str]) -> Optional[str]:
+    if hook_type_name in OPEN_ENDED_QUESTION_HOOKS:
+        return "open_ended"
+    if hook_type_name in CONCRETE_QUESTION_HOOKS:
+        return "concrete"
+    return None
+
+
+def _latest_assistant_message(messages: list[dict]) -> Optional[dict]:
+    for message in reversed(messages or []):
+        if message.get("role") == "assistant":
+            return message
+    return None
+
+
+def _previous_question_style(messages: list[dict]) -> Optional[str]:
+    latest = _latest_assistant_message(messages)
+    if not latest:
+        return None
+
+    explicit_style = latest.get("question_style")
+    if explicit_style in {"open_ended", "concrete"}:
+        return explicit_style
+
+    return _question_style_for_hook_type(latest.get("selected_hook_type"))
 
 
 def trace_node(func):
@@ -441,6 +482,7 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
     else:
         hook_type_name = None
         hook_type_section = ""
+    question_style = _question_style_for_hook_type(hook_type_name)
 
     generator = ask_introduction_question_stream(
         messages=messages,
@@ -464,6 +506,7 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
         "response_type": "introduction",
         "ttft": state.get("ttft"),
         "selected_hook_type": hook_type_name,
+        "question_style": question_style,
     }
 
 
@@ -527,6 +570,8 @@ async def stream_generator_to_callback(generator, state: PaixuejiState, response
                 detected_object_name=state["detected_object_name"],
 
                 response_type=response_type_override or state["response_type"],
+                selected_hook_type=state.get("selected_hook_type"),
+                question_style=state.get("question_style"),
                 used_kb_item=state.get("used_kb_item"),
                 kb_mapping_status=state.get("kb_mapping_status"),
             )
@@ -616,9 +661,11 @@ async def node_clarifying_idk(state: PaixuejiState) -> dict:
 
     # No counter mutation here — node_analyze_input handles it upstream.
     _mark_kb_mapping_not_applicable(state)
+    question_style = _previous_question_style(state["messages"])
+    prompt_intent = "clarifying_open_ended_idk" if question_style == "open_ended" else "clarifying_idk"
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
     generator = generate_intent_response_stream(
-        intent_type="clarifying_idk",
+        intent_type=prompt_intent,
         messages=messages,
         child_answer=state["content"],
         object_name=state["object_name"],
@@ -636,6 +683,7 @@ async def node_clarifying_idk(state: PaixuejiState) -> dict:
         "full_response_text": full_text,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "question_style": question_style if question_style == "open_ended" else None,
         "used_kb_item": state.get("used_kb_item"),
         "kb_mapping_status": state.get("kb_mapping_status"),
     }
@@ -678,7 +726,34 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
     logger.info(f"[{state['session_id']}] Node: Give Answer IDK")
 
     state["assistant"].consecutive_struggle_count = 0
+    question_style = _previous_question_style(state["messages"])
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+
+    if question_style == "open_ended":
+        _mark_kb_mapping_not_applicable(state)
+        generator = generate_intent_response_stream(
+            intent_type="give_answer_open_ended_idk",
+            messages=messages,
+            child_answer=state["content"],
+            object_name=state["object_name"],
+            age=state["age"],
+            age_prompt=state["age_prompt"],
+            last_model_response=extract_previous_response(state["messages"]),
+            config=state["config"],
+            client=state["client"],
+            knowledge_context="",
+        )
+        full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
+        logger.info(f"[{state['session_id']}] Node: Give Answer IDK finished in {time.time() - start_time:.3f}s")
+        return {
+            "response_type": "give_answer_idk",
+            "full_response_text": full_text_intent,
+            "sequence_number": new_seq,
+            "ttft": state.get("ttft"),
+            "question_style": "open_ended",
+            "used_kb_item": state.get("used_kb_item"),
+            "kb_mapping_status": state.get("kb_mapping_status"),
+        }
 
     # First call: acceptance + direct answer (no question)
     generator = generate_intent_response_stream(
@@ -718,6 +793,7 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
         "full_response_text": full_text_intent + " " + full_text_question,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "question_style": None,
         "used_kb_item": state.get("used_kb_item"),
         "kb_mapping_status": state.get("kb_mapping_status"),
     }
@@ -1252,6 +1328,7 @@ async def node_finalize(state: PaixuejiState) -> dict:
 
         # Hook type (set on introduction turns only)
         selected_hook_type=state.get("selected_hook_type"),
+        question_style=state.get("question_style"),
         used_kb_item=state.get("used_kb_item"),
         kb_mapping_status=state.get("kb_mapping_status"),
     )

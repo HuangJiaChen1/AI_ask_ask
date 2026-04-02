@@ -114,6 +114,7 @@ class StreamChunk(BaseModel):
 
     # Hook type selected for this session (set on introduction, null otherwise)
     selected_hook_type: Optional[str] = None
+    question_style: Optional[str] = None
 
     # Ordinary-chat KB debug info
     used_kb_item: dict | None = None

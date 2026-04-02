@@ -383,6 +383,7 @@ def start_conversation():
                         # Hook type selection
                         "hook_types": HOOK_TYPES,
                         "selected_hook_type": None,
+                        "question_style": None,
 
                         # Node execution tracing
                         "nodes_executed": [],
@@ -410,6 +411,8 @@ def start_conversation():
                                 "mode": "chat",
                                 "classification_status": chunk.classification_status,
                                 "classification_failure_reason": chunk.classification_failure_reason,
+                                "selected_hook_type": chunk.selected_hook_type,
+                                "question_style": chunk.question_style,
                                 "_input_state_snapshot": initial_state.get("_input_state_snapshot", {}),
                             })
 
@@ -553,6 +556,7 @@ def continue_conversation():
                         # Hook type (not used in continue turns, required by state schema)
                         "hook_types": HOOK_TYPES,
                         "selected_hook_type": None,
+                        "question_style": None,
 
                         # Node execution tracing
                         "nodes_executed": [],
@@ -581,6 +585,8 @@ def continue_conversation():
                                 "mode": "chat",
                                 "classification_status": chunk.classification_status,
                                 "classification_failure_reason": chunk.classification_failure_reason,
+                                "selected_hook_type": chunk.selected_hook_type,
+                                "question_style": chunk.question_style,
                                 "_input_state_snapshot": initial_state.get("_input_state_snapshot", {}),
                             })
 
