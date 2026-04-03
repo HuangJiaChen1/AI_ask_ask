@@ -1524,7 +1524,6 @@ function closeManualCritique() {
 
 /**
  * Collect all checked exchanges from the critique form.
- * Returns null (and shows an alert) if none are checked.
  */
 function collectExchangeCritiques() {
     const exchangeCritiques = [];
@@ -1549,11 +1548,13 @@ function collectExchangeCritiques() {
         });
     });
 
-    if (exchangeCritiques.length === 0) {
-        alert('Please select at least one exchange to critique.');
-        return null;
-    }
     return exchangeCritiques;
+}
+
+function validateManualCritiqueSubmission(exchangeCritiques, globalConclusion) {
+    if (exchangeCritiques.length > 0 || globalConclusion.trim()) return true;
+    alert('Please add at least one exchange critique or a global conclusion before submitting.');
+    return false;
 }
 
 /**
@@ -1561,9 +1562,8 @@ function collectExchangeCritiques() {
  */
 async function submitManualCritiqueToDatabase() {
     const exchangeCritiques = collectExchangeCritiques();
-    if (!exchangeCritiques) return;
-
-    const globalConclusion = document.getElementById('globalConclusion').value;
+    const globalConclusion = (document.getElementById('globalConclusion').value || '');
+    if (!validateManualCritiqueSubmission(exchangeCritiques, globalConclusion)) return;
     const submitBtn = document.getElementById('submitReportDbBtn');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Saving...';
@@ -1611,9 +1611,8 @@ async function submitManualCritiqueToDatabase() {
  */
 async function submitManualCritiqueWithEvolution() {
     const exchangeCritiques = collectExchangeCritiques();
-    if (!exchangeCritiques) return;
-
-    const globalConclusion = document.getElementById('globalConclusion').value;
+    const globalConclusion = (document.getElementById('globalConclusion').value || '');
+    if (!validateManualCritiqueSubmission(exchangeCritiques, globalConclusion)) return;
     const submitBtn = document.getElementById('submitEvolvingAgentBtn');
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting...';

@@ -85,6 +85,14 @@ def _base_critique_payload(session_id):
     }
 
 
+def _global_only_payload(session_id, global_conclusion="Overall feedback"):
+    return {
+        "session_id": session_id,
+        "exchange_critiques": [],
+        "global_conclusion": global_conclusion,
+    }
+
+
 # ===========================================================================
 # Static-analysis tests — index.html
 # ===========================================================================
@@ -281,6 +289,40 @@ class TestAppJsStructure:
         assert 'collectExchangeCritiques()' in evo_body, \
             "submitManualCritiqueWithEvolution() does not call collectExchangeCritiques()"
 
+    def test_collectExchangeCritiques_no_longer_contains_old_empty_selection_alert(self):
+        js = _read(APP_JS)
+        start = js.find('function collectExchangeCritiques()')
+        end = js.find('\nasync function ', start + 1)
+        if end == -1:
+            end = js.find('\nfunction ', start + 1)
+        func_body = js[start:end]
+        assert 'Please select at least one exchange to critique.' not in func_body, \
+            "collectExchangeCritiques() should not reject empty exchange selections"
+
+    def test_submitManualCritiqueToDatabase_validates_exchange_or_global_conclusion(self):
+        js = _read(APP_JS)
+        start = js.find('function submitManualCritiqueToDatabase()')
+        end = js.find('\nasync function ', start + 1)
+        if end == -1:
+            end = js.find('\nfunction ', start + 1)
+        func_body = js[start:end]
+        assert 'validateManualCritiqueSubmission' in func_body, \
+            "submitManualCritiqueToDatabase() should use shared submission validation"
+        assert 'globalConclusion' in func_body, \
+            "submitManualCritiqueToDatabase() should validate the global conclusion"
+
+    def test_submitManualCritiqueWithEvolution_validates_exchange_or_global_conclusion(self):
+        js = _read(APP_JS)
+        start = js.find('function submitManualCritiqueWithEvolution()')
+        end = js.find('\nasync function ', start + 1)
+        if end == -1:
+            end = js.find('\nfunction ', start + 1)
+        func_body = js[start:end] if end != -1 else js[start:]
+        assert 'validateManualCritiqueSubmission' in func_body, \
+            "submitManualCritiqueWithEvolution() should use shared submission validation"
+        assert 'globalConclusion' in func_body, \
+            "submitManualCritiqueWithEvolution() should validate the global conclusion"
+
 
 # ===========================================================================
 # Server-side tests — /api/manual-critique endpoint
@@ -400,18 +442,38 @@ class TestManualCritiqueEndpointErrorCases:
         assert response.status_code == 400
         assert response.get_json()["success"] is False
 
-    def test_missing_exchange_critiques_returns_400(self, client):
+    def test_global_only_manual_critique_returns_200(self, client):
         session_id = _setup_session(client)
-        payload = {
-            "session_id": session_id,
-            "exchange_critiques": [],
-            "global_conclusion": "test",
-        }
+        response = client.post("/api/manual-critique", json=_global_only_payload(session_id))
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["exchanges_critiqued"] == 0
+
+    def test_global_only_manual_critique_skip_traces_true_returns_empty_traces(self, client):
+        session_id = _setup_session(client)
+        payload = _global_only_payload(session_id)
+        payload["skip_traces"] = True
+        data = client.post("/api/manual-critique", json=payload).get_json()
+        assert data["success"] is True
+        assert data["traces"] == []
+
+    def test_global_only_manual_critique_full_response_has_empty_trace_results(self, client):
+        session_id = _setup_session(client)
+        data = client.post("/api/manual-critique", json=_global_only_payload(session_id)).get_json()
+        assert data["success"] is True
+        assert data["traces"] == []
+        assert data["trace_paths"] == []
+        assert data["traces_assembled"] == 0
+
+    def test_blank_manual_critique_returns_400(self, client):
+        session_id = _setup_session(client)
+        payload = _global_only_payload(session_id, "   ")
         response = client.post("/api/manual-critique", json=payload)
         assert response.status_code == 400
         data = response.get_json()
         assert data["success"] is False
-        assert "exchange" in data["error"].lower()
+        assert "global conclusion" in data["error"].lower()
 
     def test_unknown_session_returns_404(self, client):
         payload = _base_critique_payload("nonexistent-session-id")
