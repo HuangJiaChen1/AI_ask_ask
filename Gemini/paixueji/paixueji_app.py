@@ -1565,8 +1565,8 @@ def manual_critique():
         }), 400
 
     session_id = data.get('session_id')
-    exchange_critiques = data.get('exchange_critiques', [])
-    global_conclusion = data.get('global_conclusion', '')
+    exchange_critiques = data.get('exchange_critiques') or []
+    global_conclusion = data.get('global_conclusion') or ''
     skip_traces = data.get('skip_traces', False)
 
     if not session_id:
@@ -1575,10 +1575,13 @@ def manual_critique():
             "error": "Missing session_id"
         }), 400
 
-    if not exchange_critiques:
+    has_exchange_critiques = bool(exchange_critiques)
+    has_global_conclusion = bool(global_conclusion.strip())
+
+    if not has_exchange_critiques and not has_global_conclusion:
         return jsonify({
             "success": False,
-            "error": "At least one exchange must be critiqued"
+            "error": "Provide at least one exchange critique or a global conclusion"
         }), 400
 
     assistant = sessions.get(session_id)
