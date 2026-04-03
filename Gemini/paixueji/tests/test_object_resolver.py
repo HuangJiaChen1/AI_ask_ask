@@ -67,6 +67,19 @@ def test_invalid_model_relation_downgrades_to_related_to_confirmation():
     assert result.learning_anchor_active is False
 
 
+def test_model_relation_is_normalized_before_validity_check():
+    client = MagicMock()
+    client.models.generate_content.return_value.text = (
+        '{"anchor_object_name":"cat","relation":" Food_For ","confidence_band":"high"}'
+    )
+
+    result = resolve_object_input("cat food", age=6, client=client, config={"model_name": "mock"})
+
+    assert result.anchor_status == "anchored_high"
+    assert result.anchor_relation == "food_for"
+    assert result.anchor_confirmation_needed is False
+
+
 def test_unknown_object_without_match_returns_unresolved():
     result = resolve_object_input("spaceship fuel", age=6, client=None, config={})
 

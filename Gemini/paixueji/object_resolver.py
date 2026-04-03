@@ -85,8 +85,9 @@ def _model_fallback(name: str, client: Any, config: dict[str, Any]) -> ObjectRes
     anchor_name = _exact_supported_match(_normalize_object_name(payload.get("anchor_object_name")))
     confidence_band = (payload.get("confidence_band") or "low").lower()
     raw_relation = payload.get("relation")
+    normalized_raw_relation = " ".join((raw_relation or "").strip().lower().split())
     relation = normalize_relation(raw_relation) if raw_relation else None
-    relation_is_valid = raw_relation in SUPPORTED_RELATIONS
+    relation_is_valid = normalized_raw_relation in SUPPORTED_RELATIONS
 
     if not anchor_name or confidence_band == "low":
         return None

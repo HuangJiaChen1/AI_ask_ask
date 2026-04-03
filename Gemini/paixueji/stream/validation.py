@@ -11,7 +11,7 @@ import re
 import time
 from loguru import logger
 import paixueji_prompts
-from bridge_context import build_bridge_context
+from bridge_context import build_bridge_context, normalize_relation
 
 
 async def classify_intent(
@@ -179,10 +179,11 @@ async def classify_bridge_follow(
     """Determine whether the child followed the current bridge toward the anchor."""
     normalized_answer = " ".join((child_answer or "").strip().lower().split())
     normalized_anchor = " ".join((anchor_object_name or "").strip().lower().split())
+    normalized_relation = normalize_relation(relation)
     bridge_context = build_bridge_context(
         surface_object_name=surface_object_name,
         anchor_object_name=anchor_object_name,
-        relation=relation,
+        relation=normalized_relation,
         attempt_number=1,
     )
 
@@ -200,7 +201,7 @@ async def classify_bridge_follow(
     prompt = paixueji_prompts.get_prompts()["bridge_follow_classifier_prompt"].format(
         surface_object_name=surface_object_name,
         anchor_object_name=anchor_object_name,
-        relation=relation or "unknown",
+        relation=normalized_relation,
         allowed_focus_terms=", ".join(bridge_context.allowed_focus_terms) if bridge_context else "",
         child_answer=child_answer,
     )
@@ -219,34 +220,6 @@ async def classify_bridge_follow(
         "bridge_followed": bool(payload.get("bridge_followed")),
         "reason": payload.get("reason") or "classifier fallback",
     }
-
-    prompt = (
-        f"The assistant and child are talking about: {object_name}\n"
-        f"Assistant said: {last_assistant_message[-300:]}\n"
-        f"Child replied: {child_answer}\n\n"
-        f"Which ONE exploration dimension does this exchange belong to?\n"
-        f"Options: {', '.join(available_dimensions)}\n"
-        f"If none match, reply: none\n\n"
-        f"Reply with exactly one word from the options above."
-    )
-
-    try:
-        response = await assistant.client.aio.models.generate_content(
-            model=assistant.config["model_name"],
-            contents=prompt,
-            config={
-                "temperature": 0,
-                "max_output_tokens": 10,
-            },
-        )
-        text = (response.text or "").strip().lower()
-        for dim in available_dimensions:
-            if text == dim.lower():
-                return dim
-        return None
-    except Exception as e:
-        logger.debug(f"[DIM_CLASSIFY] Error (non-fatal): {e}")
-        return None
 
 
 _STOPWORDS = {

@@ -71,8 +71,9 @@ _RELATION_POLICIES: dict[str, dict[str, tuple[str, ...] | tuple[str, str]]] = {
 
 
 def normalize_relation(value: str | None) -> str:
-    if value in SUPPORTED_RELATIONS:
-        return value
+    normalized = " ".join((value or "").strip().lower().split())
+    if normalized in SUPPORTED_RELATIONS:
+        return normalized
     return "related_to"
 
 
@@ -82,10 +83,11 @@ def build_bridge_context(
     relation: str | None,
     attempt_number: int,
 ) -> BridgeContext | None:
-    if relation not in SUPPORTED_RELATIONS:
+    normalized_relation = " ".join((relation or "").strip().lower().split())
+    if normalized_relation not in SUPPORTED_RELATIONS:
         return None
 
-    policy = _RELATION_POLICIES[relation]
+    policy = _RELATION_POLICIES[normalized_relation]
     allowed_focus_terms = policy["allowed_focus_terms"]
     forbidden_anchor_terms = policy["forbidden_anchor_terms"]
     follow_terms = policy["follow_terms"]
@@ -102,7 +104,7 @@ def build_bridge_context(
     )
 
     return BridgeContext(
-        relation=relation,
+        relation=normalized_relation,
         attempt_number=attempt_number,
         surface_object_name=surface_object_name,
         anchor_object_name=anchor_object_name,

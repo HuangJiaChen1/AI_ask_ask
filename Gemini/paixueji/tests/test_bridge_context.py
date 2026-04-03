@@ -14,6 +14,7 @@ def test_supported_relations_are_fixed():
 
 def test_normalize_relation_falls_back_to_related_to():
     assert normalize_relation("food_for") == "food_for"
+    assert normalize_relation(" Food_For ") == "food_for"
     assert normalize_relation("unknown_relation") == "related_to"
     assert normalize_relation(None) == "related_to"
 
