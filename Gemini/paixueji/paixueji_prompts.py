@@ -267,6 +267,8 @@ YOUR JOB:
 - Keep the first sentence on the child's exact object: {surface_object_name}
 - Naturally bridge toward the supported learning anchor: {anchor_object_name}
 - Make the bridge feel obvious and friendly, not corrective
+- You must make the connection explicit in the intro itself
+- Do not stay entirely on the surface object
 - End with exactly one easy question that stays inside the bridge context
 - Use the same voice and constraints as the normal introduction prompt
 - Do not invent a scene or pretend you can see extra things around the child

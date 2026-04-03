@@ -204,6 +204,18 @@
                     <div style="font-size: 0.85em; color: #64748b;" id="debugUsedKbItem">none matched</div>
                 </div>
             </div>
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #94a3b8;">
+                <strong>Bridge Debug:</strong>
+                <div style="font-size: 0.85em; color: #64748b; margin-top: 4px;">Surface: <span id="debugSurfaceObject">-</span></div>
+                <div style="font-size: 0.85em; color: #64748b;">Anchor: <span id="debugAnchorObject">-</span></div>
+                <div style="font-size: 0.85em; color: #64748b;">Status: <span id="debugAnchorStatus">-</span></div>
+                <div style="font-size: 0.85em; color: #64748b;">Relation: <span id="debugAnchorRelation">-</span></div>
+                <div style="font-size: 0.85em; color: #64748b;">Confidence: <span id="debugAnchorConfidence">-</span></div>
+                <div style="font-size: 0.85em; color: #64748b;">Attempt: <span id="debugBridgeAttempt">-</span></div>
+                <div style="font-size: 0.85em; color: #64748b;">Decision: <span id="debugBridgeDecision">-</span></div>
+                <div style="font-size: 0.85em; color: #64748b;">Verdict: <span id="debugBridgeVerdict">-</span></div>
+                <div style="font-size: 0.85em; color: #64748b;">KB Mode: <span id="debugKbMode">-</span></div>
+            </div>
         </div>
 
         <!-- Action Buttons -->
@@ -407,6 +419,14 @@
                 <div class="rv-crit-panel rv-panel-blue">
                     <div class="rv-crit-panel-label">&#x1F4AC; Conclusion</div>
                     <div class="rv-crit-panel-text" id="rvPopupConclusion"></div>
+                </div>
+                <div class="rv-crit-panel rv-panel-blue">
+                    <div class="rv-crit-panel-label">&#x1F517; Bridge Verdict</div>
+                    <div class="rv-crit-panel-text" id="rvPopupBridgeVerdict"></div>
+                </div>
+                <div class="rv-crit-panel rv-panel-green">
+                    <div class="rv-crit-panel-label">&#x1F41B; Raw Bridge Debug</div>
+                    <div class="rv-crit-panel-text" id="rvPopupBridgeDebug"></div>
                 </div>
                 <details class="rv-popup-trace">
                     <summary>&#x25B8; Node Execution Trace</summary>

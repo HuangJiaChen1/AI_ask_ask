@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from bridge_context import build_bridge_context, normalize_relation
@@ -14,6 +15,7 @@ def detect_bridge_visibility(
     normalized_response = " ".join((response_text or "").strip().lower().split())
     normalized_surface = " ".join((surface_object_name or "").strip().lower().split())
     normalized_anchor = " ".join((anchor_object_name or "").strip().lower().split())
+    response_tokens = set(re.findall(r"[a-z]+", normalized_response))
 
     response_without_surface = normalized_response
     if normalized_surface:
@@ -30,8 +32,11 @@ def detect_bridge_visibility(
         attempt_number=1,
     )
     if bridge_context:
+        if normalized_surface and normalized_surface in normalized_response:
+            return False, "response stayed on the surface object without an anchor mention"
         for term in bridge_context.allowed_focus_terms:
-            if term and term in normalized_response:
+            term_tokens = tuple(re.findall(r"[a-z]+", term))
+            if term_tokens and all(token in response_tokens for token in term_tokens):
                 return True, f"matched relation focus term: {term}"
 
     return False, "response did not expose the bridge connection"
@@ -51,7 +56,7 @@ def build_bridge_debug(
     bridge_attempt_count_after: int | None,
     decision: str | None,
     decision_reason: str | None,
-    response_text: str = "",
+    response_text: str | None = None,
     response_type: str | None = None,
     bridge_followed: bool | None = None,
     bridge_follow_reason: str | None = None,
@@ -59,12 +64,15 @@ def build_bridge_debug(
     kb_mode: str | None = None,
     bridge_context_summary: str | None = None,
 ) -> dict[str, Any]:
-    bridge_visible_in_response, bridge_visibility_reason = detect_bridge_visibility(
-        response_text=response_text,
-        surface_object_name=surface_object_name,
-        anchor_object_name=anchor_object_name,
-        anchor_relation=anchor_relation,
-    )
+    bridge_visible_in_response = None
+    bridge_visibility_reason = "response not evaluated yet"
+    if response_text:
+        bridge_visible_in_response, bridge_visibility_reason = detect_bridge_visibility(
+            response_text=response_text,
+            surface_object_name=surface_object_name,
+            anchor_object_name=anchor_object_name,
+            anchor_relation=anchor_relation,
+        )
     return {
         "surface_object_name": surface_object_name,
         "anchor_object_name": anchor_object_name,

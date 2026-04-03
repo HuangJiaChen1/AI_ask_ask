@@ -283,6 +283,14 @@ function showRvCritiquePopup(exchangeIdx) {
     }
 
     document.getElementById('rvPopupConclusion').textContent = crit.conclusion || '—';
+    const bridgeVerdictLabel = 'Bridge Verdict';
+    document.getElementById('rvPopupBridgeVerdict').textContent = crit.bridge_verdict || '—';
+    const bridgeDebugEl = document.getElementById('rvPopupBridgeDebug');
+    const bridgeDebug = crit.bridge_debug || {};
+    const bridgeLines = Object.keys(bridgeDebug).length
+        ? Object.entries(bridgeDebug).map(([key, value]) => `${key}: ${value}`).join('\n')
+        : '—';
+    bridgeDebugEl.textContent = bridgeLines;
 
     const traceRows = (crit.node_trace || []).map(n =>
         `<tr>

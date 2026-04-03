@@ -25,6 +25,7 @@ import time
 from graph_lookup import lookup_top_available_concepts
 from object_resolver import parse_anchor_confirmation, resolve_object_input
 from bridge_context import build_bridge_context
+from bridge_debug import build_bridge_debug, build_bridge_trace_entry, format_bridge_log_line
 from stream import (
     classify_bridge_follow,
     generate_bridge_retry_response_stream,
@@ -154,6 +155,15 @@ def _intro_mode_for_assistant(assistant: PaixuejiAssistant) -> str:
     if assistant.anchor_status == "unresolved":
         return "unknown_object"
     return "supported"
+
+
+def _bridge_context_summary(bridge_context) -> str:
+    if not bridge_context:
+        return ""
+    return (
+        f"allowed: {', '.join(bridge_context.allowed_focus_terms)}"
+        if bridge_context.allowed_focus_terms else ""
+    )
 
 # Helper to bridge Graph execution to SSE stream
 async def stream_graph_execution(initial_state):
@@ -340,6 +350,9 @@ def start_conversation():
         config=assistant.config,
     )
     assistant.apply_resolution(resolution)
+    logger.info(
+        f"[BRIDGE] {format_bridge_log_line(session_id=session_id, request_id='start', bridge_debug=assistant.session_resolution_debug)}"
+    )
 
     if assistant.learning_anchor_active:
         dimensions_object_name = object_name if resolution.anchor_status == "exact_supported" else assistant.object_name
@@ -411,6 +424,7 @@ def start_conversation():
                         "anchor_confirmation_needed": assistant.anchor_confirmation_needed,
                         "learning_anchor_active": assistant.learning_anchor_active,
                         "bridge_attempt_count": 0,
+                        "bridge_debug": None,
                         "correct_answer_count": 0,
                         "intro_mode": _intro_mode_for_assistant(assistant),
                         "category_prompt": assistant.category_prompt,
@@ -460,11 +474,18 @@ def start_conversation():
                         # Yield StreamChunk as SSE event (pass directly for optimized serialization)
                         # Update conversation history with final response
                         if chunk.finish:
+                            if chunk.bridge_debug:
+                                assistant.set_last_bridge_debug(chunk.bridge_debug.model_dump())
+                                logger.info(
+                                    f"[BRIDGE] {format_bridge_log_line(session_id=session_id, request_id=request_id, bridge_debug=chunk.bridge_debug.model_dump())}"
+                                )
                             assistant.conversation_history.append({
                                 "role": "assistant",
                                 "content": chunk.response,
                                 "nodes_executed": chunk.nodes_executed or [],
                                 "mode": "chat",
+                                "response_type": chunk.response_type,
+                                "bridge_debug": chunk.bridge_debug.model_dump() if chunk.bridge_debug else None,
                                 "classification_status": chunk.classification_status,
                                 "classification_failure_reason": chunk.classification_failure_reason,
                                 "selected_hook_type": chunk.selected_hook_type,
@@ -568,6 +589,13 @@ def continue_conversation():
                     and not assistant.learning_anchor_active
                     and assistant.anchor_object_name
                 ):
+                    pre_anchor_state_before = {
+                        "anchor_status": assistant.anchor_status,
+                        "learning_anchor_active": assistant.learning_anchor_active,
+                        "bridge_attempt_count": assistant.bridge_attempt_count,
+                        "surface_object_name": assistant.surface_object_name or assistant.object_name,
+                        "anchor_object_name": assistant.anchor_object_name,
+                    }
                     bridge_follow = asyncio.run_coroutine_threadsafe(
                         classify_bridge_follow(
                             assistant=assistant,
@@ -578,13 +606,65 @@ def continue_conversation():
                         ),
                         loop,
                     ).result()
+                    gate_trace = build_bridge_trace_entry(
+                        node="driver:pre_anchor_gate",
+                        state_before=pre_anchor_state_before,
+                        changes={"entered": True},
+                        time_ms=0.0,
+                    )
+                    follow_trace = build_bridge_trace_entry(
+                        node="validator:bridge_follow",
+                        state_before={"child_input": child_input},
+                        changes={
+                            "bridge_followed": bridge_follow.get("bridge_followed"),
+                            "reason": bridge_follow.get("reason"),
+                        },
+                        time_ms=0.0,
+                    )
 
                     if bridge_follow.get("bridge_followed"):
                         previous_object = assistant.surface_object_name or assistant.object_name
+                        bridge_context = build_bridge_context(
+                            surface_object_name=assistant.surface_object_name or assistant.object_name,
+                            anchor_object_name=assistant.anchor_object_name,
+                            relation=assistant.anchor_relation,
+                            attempt_number=max(assistant.bridge_attempt_count, 1),
+                        )
                         assistant.activate_anchor_topic(assistant.anchor_object_name)
                         assistant.anchor_status = "anchored_high"
                         assistant.load_dimension_data(assistant.object_name)
                         assistant.load_object_context_from_yaml(assistant.object_name)
+                        bridge_debug = build_bridge_debug(
+                            surface_object_name=previous_object,
+                            anchor_object_name=assistant.anchor_object_name,
+                            anchor_status=assistant.anchor_status,
+                            anchor_relation=assistant.anchor_relation,
+                            anchor_confidence_band=assistant.anchor_confidence_band,
+                            intro_mode="anchor_bridge",
+                            learning_anchor_active_before=False,
+                            learning_anchor_active_after=True,
+                            bridge_attempt_count_before=pre_anchor_state_before["bridge_attempt_count"],
+                            bridge_attempt_count_after=assistant.bridge_attempt_count,
+                            decision="topic_switch",
+                            decision_reason="child followed bridge",
+                            response_type="topic_switch",
+                            bridge_followed=True,
+                            bridge_follow_reason=bridge_follow.get("reason"),
+                            pre_anchor_handler_entered=True,
+                            kb_mode="anchor_kb_active",
+                            bridge_context_summary=_bridge_context_summary(bridge_context),
+                        )
+                        assistant.set_last_bridge_debug(bridge_debug)
+                        logger.info(
+                            f"[BRIDGE] {format_bridge_log_line(session_id=session_id, request_id=request_id, bridge_debug=bridge_debug)}"
+                        )
+                        decision_trace = build_bridge_trace_entry(
+                            node="driver:bridge_decision",
+                            state_before=pre_anchor_state_before,
+                            changes={"decision": "topic_switch"},
+                            time_ms=0.0,
+                        )
+                        bridge_traces = [gate_trace, follow_trace, decision_trace]
 
                         async def stream_anchor_switch():
                             messages = prepare_messages_for_streaming(
@@ -619,6 +699,8 @@ def continue_conversation():
                                     request_id=request_id,
                                     response_type="topic_switch",
                                     correct_answer_count=assistant.correct_answer_count,
+                                    bridge_debug=bridge_debug,
+                                    nodes_executed=bridge_traces,
                                     **_assistant_stream_fields(assistant),
                                 ))
 
@@ -628,6 +710,9 @@ def continue_conversation():
                                 "role": "assistant",
                                 "content": full_response,
                                 "mode": "chat",
+                                "response_type": "topic_switch",
+                                "bridge_debug": bridge_debug,
+                                "nodes_executed": bridge_traces,
                             })
                             yield sse_event("chunk", StreamChunk(
                                 response=full_response,
@@ -641,6 +726,8 @@ def continue_conversation():
                                 request_id=request_id,
                                 response_type="topic_switch",
                                 correct_answer_count=assistant.correct_answer_count,
+                                bridge_debug=bridge_debug,
+                                nodes_executed=bridge_traces,
                                 **_assistant_stream_fields(assistant),
                             ))
                             yield sse_event("complete", {"success": True})
@@ -652,6 +739,7 @@ def continue_conversation():
                         return
 
                     if assistant.bridge_attempt_count < MAX_BRIDGE_ATTEMPTS:
+                        attempt_before = assistant.bridge_attempt_count
                         next_attempt = assistant.bridge_attempt_count + 1
                         bridge_context = build_bridge_context(
                             surface_object_name=assistant.surface_object_name or assistant.object_name,
@@ -660,6 +748,37 @@ def continue_conversation():
                             attempt_number=next_attempt,
                         )
                         assistant.bridge_attempt_count = next_attempt
+                        bridge_debug = build_bridge_debug(
+                            surface_object_name=assistant.surface_object_name or assistant.object_name,
+                            anchor_object_name=assistant.anchor_object_name,
+                            anchor_status=assistant.anchor_status,
+                            anchor_relation=assistant.anchor_relation,
+                            anchor_confidence_band=assistant.anchor_confidence_band,
+                            intro_mode="anchor_bridge",
+                            learning_anchor_active_before=False,
+                            learning_anchor_active_after=False,
+                            bridge_attempt_count_before=attempt_before,
+                            bridge_attempt_count_after=assistant.bridge_attempt_count,
+                            decision="bridge_retry",
+                            decision_reason="child stayed on surface object",
+                            response_type="bridge_retry",
+                            bridge_followed=False,
+                            bridge_follow_reason=bridge_follow.get("reason"),
+                            pre_anchor_handler_entered=True,
+                            kb_mode="bridge_context_only",
+                            bridge_context_summary=_bridge_context_summary(bridge_context),
+                        )
+                        assistant.set_last_bridge_debug(bridge_debug)
+                        logger.info(
+                            f"[BRIDGE] {format_bridge_log_line(session_id=session_id, request_id=request_id, bridge_debug=bridge_debug)}"
+                        )
+                        decision_trace = build_bridge_trace_entry(
+                            node="driver:bridge_decision",
+                            state_before=pre_anchor_state_before,
+                            changes={"decision": "bridge_retry"},
+                            time_ms=0.0,
+                        )
+                        bridge_traces = [gate_trace, follow_trace, decision_trace]
 
                         async def stream_bridge_retry():
                             messages = prepare_messages_for_streaming(
@@ -697,6 +816,8 @@ def continue_conversation():
                                     request_id=request_id,
                                     response_type="bridge_retry",
                                     correct_answer_count=assistant.correct_answer_count,
+                                    bridge_debug=bridge_debug,
+                                    nodes_executed=bridge_traces,
                                     **_assistant_stream_fields(assistant),
                                 ))
 
@@ -706,6 +827,9 @@ def continue_conversation():
                                 "role": "assistant",
                                 "content": full_response,
                                 "mode": "chat",
+                                "response_type": "bridge_retry",
+                                "bridge_debug": bridge_debug,
+                                "nodes_executed": bridge_traces,
                             })
                             yield sse_event("chunk", StreamChunk(
                                 response=full_response,
@@ -719,6 +843,8 @@ def continue_conversation():
                                 request_id=request_id,
                                 response_type="bridge_retry",
                                 correct_answer_count=assistant.correct_answer_count,
+                                bridge_debug=bridge_debug,
+                                nodes_executed=bridge_traces,
                                 **_assistant_stream_fields(assistant),
                             ))
                             yield sse_event("complete", {"success": True})
@@ -735,6 +861,29 @@ def continue_conversation():
                     assistant.anchor_status = "unresolved"
                     assistant.learning_anchor_active = False
                     assistant.reset_bridge_state()
+                    unresolved_debug = build_bridge_debug(
+                        surface_object_name=assistant.surface_object_name or assistant.object_name,
+                        anchor_object_name=assistant.anchor_object_name,
+                        anchor_status=assistant.anchor_status,
+                        anchor_relation=assistant.anchor_relation,
+                        anchor_confidence_band=assistant.anchor_confidence_band,
+                        intro_mode="anchor_bridge",
+                        learning_anchor_active_before=False,
+                        learning_anchor_active_after=False,
+                        bridge_attempt_count_before=MAX_BRIDGE_ATTEMPTS,
+                        bridge_attempt_count_after=0,
+                        decision="unresolved_fallback",
+                        decision_reason="bridge retry budget exhausted",
+                        response_type="unresolved_fallback",
+                        bridge_followed=False,
+                        bridge_follow_reason=bridge_follow.get("reason"),
+                        pre_anchor_handler_entered=True,
+                        kb_mode="surface_only",
+                    )
+                    assistant.set_last_bridge_debug(unresolved_debug)
+                    logger.info(
+                        f"[BRIDGE] {format_bridge_log_line(session_id=session_id, request_id=request_id, bridge_debug=unresolved_debug)}"
+                    )
 
                 if assistant.anchor_confirmation_needed and assistant.anchor_object_name:
                     decision = parse_anchor_confirmation(
@@ -792,6 +941,7 @@ def continue_conversation():
                                 "role": "assistant",
                                 "content": full_response,
                                 "mode": "chat",
+                                "response_type": "topic_switch",
                             })
                             yield sse_event("chunk", StreamChunk(
                                 response=full_response,
@@ -849,6 +999,7 @@ def continue_conversation():
                         "anchor_confirmation_needed": assistant.anchor_confirmation_needed,
                         "learning_anchor_active": assistant.learning_anchor_active,
                         "bridge_attempt_count": assistant.bridge_attempt_count,
+                        "bridge_debug": None,
                         "correct_answer_count": assistant.correct_answer_count,
                         "intro_mode": None,
                         "category_prompt": category_prompt,
@@ -899,6 +1050,11 @@ def continue_conversation():
                     async for chunk in stream_graph_execution(initial_state):
                         # Update conversation history with final response
                         if chunk.finish:
+                            if chunk.bridge_debug:
+                                assistant.set_last_bridge_debug(chunk.bridge_debug.model_dump())
+                                logger.info(
+                                    f"[BRIDGE] {format_bridge_log_line(session_id=session_id, request_id=request_id, bridge_debug=chunk.bridge_debug.model_dump())}"
+                                )
                             assistant.conversation_history.append({"role": "user", "content": child_input})
 
                             assistant.conversation_history.append({
@@ -906,6 +1062,8 @@ def continue_conversation():
                                 "content": chunk.response,
                                 "nodes_executed": chunk.nodes_executed or [],
                                 "mode": "chat",
+                                "response_type": chunk.response_type,
+                                "bridge_debug": chunk.bridge_debug.model_dump() if chunk.bridge_debug else None,
                                 "classification_status": chunk.classification_status,
                                 "classification_failure_reason": chunk.classification_failure_reason,
                                 "selected_hook_type": chunk.selected_hook_type,
@@ -1251,6 +1409,8 @@ def get_exchanges(session_id):
             if "nodes_executed" in msg:
                 entry["nodes_executed"] = msg["nodes_executed"]
             entry["mode"] = msg.get("mode", "chat")
+            entry["response_type"] = msg.get("response_type")
+            entry["bridge_debug"] = msg.get("bridge_debug")
             entry["classification_status"] = msg.get("classification_status")
             entry["classification_failure_reason"] = msg.get("classification_failure_reason")
         transcript.append(entry)
@@ -1265,6 +1425,8 @@ def get_exchanges(session_id):
                 "content": transcript[i]["content"],
                 "nodes_executed": intro_nodes,
                 "mode": transcript[i].get("mode", "chat"),
+                "response_type": transcript[i].get("response_type"),
+                "bridge_debug": transcript[i].get("bridge_debug"),
                 "classification_status": transcript[i].get("classification_status"),
                 "classification_failure_reason": transcript[i].get("classification_failure_reason"),
             }
@@ -1298,6 +1460,8 @@ def get_exchanges(session_id):
                 "model_response": transcript[i + 1]["content"],
                 "nodes_executed": nodes,
                 "mode": transcript[i + 1].get("mode", "chat"),
+                "response_type": transcript[i + 1].get("response_type"),
+                "bridge_debug": transcript[i + 1].get("bridge_debug"),
                 "intent_type": intent_type,
                 "classification_status": transcript[i + 1].get("classification_status"),
                 "classification_failure_reason": transcript[i + 1].get("classification_failure_reason"),
@@ -1311,6 +1475,7 @@ def get_exchanges(session_id):
         "success": True,
         "introduction": introduction,
         "exchanges": exchanges,
+        "session_resolution_debug": assistant.session_resolution_debug,
         "object_name": assistant.object_name,
         "age": assistant.age,
         "key_concept": assistant.key_concept,
@@ -1393,6 +1558,8 @@ def manual_critique():
             if "nodes_executed" in msg:
                 entry["nodes_executed"] = msg["nodes_executed"]
             entry["mode"] = msg.get("mode", "chat")
+            entry["response_type"] = msg.get("response_type")
+            entry["bridge_debug"] = msg.get("bridge_debug")
             entry["classification_status"] = msg.get("classification_status")
             entry["classification_failure_reason"] = msg.get("classification_failure_reason")
         transcript.append(entry)
@@ -1407,6 +1574,8 @@ def manual_critique():
                 "content": transcript[i]["content"],
                 "nodes_executed": transcript[i].get("nodes_executed", []),
                 "mode": transcript[i].get("mode", "chat"),
+                "response_type": transcript[i].get("response_type"),
+                "bridge_debug": transcript[i].get("bridge_debug"),
                 "classification_status": transcript[i].get("classification_status"),
                 "classification_failure_reason": transcript[i].get("classification_failure_reason"),
             }
@@ -1421,6 +1590,8 @@ def manual_critique():
                 "model_response": transcript[i + 1]["content"],
                 "nodes_executed": transcript[i + 1].get("nodes_executed", []),
                 "mode": transcript[i + 1].get("mode", "chat"),
+                "response_type": transcript[i + 1].get("response_type"),
+                "bridge_debug": transcript[i + 1].get("bridge_debug"),
                 "classification_status": transcript[i + 1].get("classification_status"),
                 "classification_failure_reason": transcript[i + 1].get("classification_failure_reason"),
             })
@@ -1445,6 +1616,7 @@ def manual_critique():
             key_concept=assistant.key_concept,
             introduction=introduction,
             introduction_critique=introduction_critique,
+            session_resolution_debug=assistant.session_resolution_debug,
         )
 
         # Save to reports/HF/YYYY-MM-DD/
@@ -1680,7 +1852,8 @@ def _load_config() -> dict:
 def build_human_feedback_report(object_name, age, session_id, transcript,
                                  all_exchanges, exchange_critiques,
                                  global_conclusion, key_concept=None,
-                                 introduction=None, introduction_critique=None):
+                                 introduction=None, introduction_critique=None,
+                                 session_resolution_debug=None):
     """
     Generate a markdown report for human feedback critique.
 
@@ -1721,11 +1894,30 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
     report += f"**Exchanges Critiqued:** {critiqued_count} / {total_exchanges}\n\n"
     report += "---\n\n"
 
+    if session_resolution_debug:
+        report += "## Anchor Resolution\n\n"
+        for label, key in [
+            ("Surface Object", "surface_object_name"),
+            ("Visible Object", "visible_object_name"),
+            ("Anchor Object", "anchor_object_name"),
+            ("Anchor Status", "anchor_status"),
+            ("Relation", "anchor_relation"),
+            ("Confidence", "anchor_confidence_band"),
+            ("Learning Active", "learning_anchor_active"),
+        ]:
+            value = session_resolution_debug.get(key)
+            if value is not None:
+                report += f"- {label}: `{value}`\n"
+        report += "\n---\n\n"
+
     # Introduction Critique section (if the reviewer critiqued the introduction)
     if introduction and introduction_critique:
         report += "## Introduction — Human Critique\n\n"
         intro_content = introduction.get("content", "")
         report += f"**Introduction:** \"{intro_content}\"\n\n"
+        if introduction.get("bridge_debug"):
+            report += f"**Bridge Verdict:** {_bridge_verdict_text(introduction.get('bridge_debug'))}\n\n"
+            report += _render_raw_bridge_debug(introduction.get("bridge_debug"))
         mr_expected = introduction_critique.get("model_response_expected", "").strip()
         mr_problem = introduction_critique.get("model_response_problem", "").strip()
         if mr_expected or mr_problem:
@@ -1745,14 +1937,15 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
     for msg in transcript:
         if msg["role"] == "model":
             mode_label = msg.get("mode", "chat").upper()
+            response_type = msg.get("response_type") or "unknown"
             nodes_executed = msg.get("nodes_executed", [])
             if nodes_executed:
                 node_names = [n["node"] for n in nodes_executed]
                 total_time = sum(n.get("time_ms", 0) for n in nodes_executed)
                 trace_summary = f"[{' → '.join(node_names)}] ({total_time:.0f}ms)"
-                report += f"**Model** `[{mode_label}]`**:** {trace_summary}\n{msg['content']}\n\n"
+                report += f"**Model** `[{mode_label}|{response_type}]`**:** {trace_summary}\n{msg['content']}\n\n"
             else:
-                report += f"**Model** `[{mode_label}]`**:** {msg['content']}\n\n"
+                report += f"**Model** `[{mode_label}|{response_type}]`**:** {msg['content']}\n\n"
         else:
             report += f"**Child:** {msg['content']}\n\n"
 
@@ -1789,6 +1982,9 @@ def _render_hf_exchange(idx, exchange, ec):
     report = f"### Exchange {idx}\n\n"
     report += f"**Child said:** \"{exchange['child_response']}\"\n\n"
     report += f"**Model responded:** \"{exchange['model_response']}\"\n\n"
+    if exchange.get("bridge_debug"):
+        report += f"**Bridge Verdict:** {_bridge_verdict_text(exchange.get('bridge_debug'))}\n\n"
+        report += _render_raw_bridge_debug(exchange.get("bridge_debug"))
 
     # Node execution trace
     nodes_executed = exchange.get("nodes_executed", [])
@@ -1825,6 +2021,28 @@ def _render_hf_exchange(idx, exchange, ec):
 
     report += "---\n\n"
     return report
+
+
+def _bridge_verdict_text(bridge_debug):
+    if not bridge_debug:
+        return "No bridge debug was recorded."
+    if bridge_debug.get("bridge_visible_in_response") is True:
+        return "Bridge was visible in the response."
+    if bridge_debug.get("bridge_visible_in_response") is False:
+        return "Bridge did not expose the connection."
+    return "Bridge visibility was not evaluated for this turn."
+
+
+def _render_raw_bridge_debug(bridge_debug):
+    if not bridge_debug:
+        return ""
+    lines = ["#### Raw Bridge Debug\n\n"]
+    for key, value in bridge_debug.items():
+        if value is None:
+            continue
+        lines.append(f"- {key}: `{value}`\n")
+    lines.append("\n")
+    return "".join(lines)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -1881,19 +2099,20 @@ def _parse_hf_report(filepath):
     i = 0
     while i < len(tlines):
         line = tlines[i]
-        # Model turn: **Model** `[PHASE]`**: [nodes] (Xms)
-        mm = re.match(r'\*\*Model\*\*.*?\[([A-Z]+)\].*?\[([^\]]+)\]\s+\((\d+)ms\)', line)
+        # Model turn: **Model** `[PHASE|response_type]`**: [nodes] (Xms)
+        mm = re.match(r'\*\*Model\*\*.*?\[([A-Z]+)(?:\|([^\]]+))?\].*?\[([^\]]+)\]\s+\((\d+)ms\)', line)
         if mm:
             phase   = mm.group(1)
-            nodes   = [n.strip() for n in mm.group(2).split('→')]
-            time_ms = int(mm.group(3))
+            response_type = mm.group(2)
+            nodes   = [n.strip() for n in mm.group(3).split('→')]
+            time_ms = int(mm.group(4))
             body = []
             i += 1
             while i < len(tlines) and tlines[i] and not tlines[i].startswith('**') and tlines[i] != '---':
                 body.append(tlines[i])
                 i += 1
             turns.append({"role": "model", "phase": phase, "text": " ".join(body).strip(),
-                          "nodes": nodes, "time_ms": time_ms, "exchange_index": None, "critique": None})
+                          "response_type": response_type, "nodes": nodes, "time_ms": time_ms, "exchange_index": None, "critique": None})
             continue
         # Child turn: **Child:** text
         mm = re.match(r'\*\*Child:\*\*\s*(.*)', line)
@@ -1932,7 +2151,7 @@ def _parse_hf_report(filepath):
                 continue
 
             crit = {"phase": phase_key, "expected": None, "problematic": None,
-                    "conclusion": None, "node_trace": []}
+                    "conclusion": None, "node_trace": [], "bridge_verdict": None, "bridge_debug": None}
 
             for rm in re.finditer(r'\|\s*([^|\n]+?)\s*\|\s*([^|\n]+?)\s*\|\s*([^|\n]+?)\s*\|', block):
                 nd, tm, st = rm.group(1).strip(), rm.group(2).strip(), rm.group(3).strip()
@@ -1951,6 +2170,16 @@ def _parse_hf_report(filepath):
 
             cm = re.search(r'#### Conclusion\n+(.+?)(?=\n\n---|\n###|\Z)', block, re.DOTALL)
             crit["conclusion"] = cm.group(1).strip() if cm else None
+            verdict = re.search(r'\*\*Bridge Verdict:\*\*\s*(.+)', block)
+            crit["bridge_verdict"] = verdict.group(1).strip() if verdict else None
+            raw_bridge = re.search(r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### |\n\n---|\n###|\Z)', block, re.DOTALL)
+            if raw_bridge:
+                debug = {}
+                for raw_line in raw_bridge.group(1).splitlines():
+                    m = re.match(r'-\s+([^:]+):\s+`(.+)`', raw_line.strip())
+                    if m:
+                        debug[m.group(1).strip()] = m.group(2).strip()
+                crit["bridge_debug"] = debug or None
             if crit["expected"] or crit["problematic"] or crit["conclusion"]:
                 critiques[eidx] = crit
 
@@ -1967,13 +2196,23 @@ def _parse_hf_report(filepath):
     intro_sec = get_section("Introduction")
     if intro_sec:
         crit = {"phase": "CHAT", "expected": None, "problematic": None,
-                "conclusion": None, "node_trace": []}
+                "conclusion": None, "node_trace": [], "bridge_verdict": None, "bridge_debug": None}
         all_expected    = re.findall(r'\*What is expected:\*\s*(.+)', intro_sec)
         all_problematic = re.findall(r'\*Why is it problematic:\*\s*(.+)', intro_sec)
         crit["expected"]    = all_expected[-1].strip()    if all_expected    else None
         crit["problematic"] = all_problematic[-1].strip() if all_problematic else None
         cm = re.search(r'#### Conclusion\n+(.+?)(?=\n\n---|\n###|\Z)', intro_sec, re.DOTALL)
         crit["conclusion"] = cm.group(1).strip() if cm else None
+        verdict = re.search(r'\*\*Bridge Verdict:\*\*\s*(.+)', intro_sec)
+        crit["bridge_verdict"] = verdict.group(1).strip() if verdict else None
+        raw_bridge = re.search(r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### |\n\n---|\n###|\Z)', intro_sec, re.DOTALL)
+        if raw_bridge:
+            debug = {}
+            for raw_line in raw_bridge.group(1).splitlines():
+                m = re.match(r'-\s+([^:]+):\s+`(.+)`', raw_line.strip())
+                if m:
+                    debug[m.group(1).strip()] = m.group(2).strip()
+            crit["bridge_debug"] = debug or None
         if crit["expected"] or crit["problematic"] or crit["conclusion"]:
             critiques[0] = crit
 

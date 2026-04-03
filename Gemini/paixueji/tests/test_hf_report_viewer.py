@@ -95,7 +95,62 @@ def test_frontend_assets_cover_search_critique_badges_and_none_state():
     assert "No issues ✓" in REPORTS_JS
     assert "rv-panel-green" in REPORTS_JS
     assert "showRvRawModal" in REPORTS_JS
+    assert "Bridge Verdict" in REPORTS_JS
+    assert "rvPopupBridgeDebug" in REPORTS_JS
 
     assert "@keyframes rv-critique-pulse" in STYLE_CSS
     assert ".rv-bubble-critiqued" in STYLE_CSS
     assert "#rvRawModal" in STYLE_CSS
+
+
+def test_hf_report_includes_anchor_resolution_and_bridge_debug_sections():
+    from paixueji_app import build_human_feedback_report
+
+    report = build_human_feedback_report(
+        object_name="cat food",
+        age=6,
+        session_id="sess",
+        transcript=[{
+            "role": "model",
+            "content": "Cat food is what a cat eats. What helps a cat smell food?",
+            "mode": "chat",
+            "response_type": "introduction",
+            "bridge_debug": {
+                "decision": "intro_bridge",
+                "anchor_status": "anchored_high",
+                "anchor_relation": "food_for",
+                "bridge_visible_in_response": True,
+                "decision_reason": "start high-confidence bridge",
+            },
+            "nodes_executed": [{"node": "router:route_from_start", "time_ms": 1, "changes": {}, "state_before": {}}],
+        }],
+        all_exchanges=[],
+        exchange_critiques=[],
+        global_conclusion="Test",
+        introduction={
+            "content": "Cat food is what a cat eats. What helps a cat smell food?",
+            "nodes_executed": [],
+            "mode": "chat",
+            "response_type": "introduction",
+            "bridge_debug": {"decision": "intro_bridge"},
+        },
+        introduction_critique={"exchange_index": 0, "model_response_problem": "Where is the connection?"},
+        key_concept=None,
+        session_resolution_debug={
+            "surface_object_name": "cat food",
+            "anchor_object_name": "cat",
+            "anchor_status": "anchored_high",
+        },
+    )
+    assert "## Anchor Resolution" in report
+    assert "**Bridge Verdict:**" in report
+    assert "#### Raw Bridge Debug" in report
+    assert "[CHAT|introduction]" in report
+
+
+def test_hf_report_detail_parser_preserves_response_type_and_bridge_debug(client):
+    response = client.get("/api/reports/hf/2026-04-03/cat_food_20260403_135119.md")
+    assert response.status_code == 200
+    report = response.get_json()
+    intro_turn = next(turn for turn in report["transcript"] if turn["role"] == "model" and turn["exchange_index"] == 0)
+    assert "response_type" in intro_turn

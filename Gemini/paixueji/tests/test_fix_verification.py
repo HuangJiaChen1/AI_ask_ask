@@ -125,6 +125,12 @@ class TestIntroductionPromptBeatStructure:
         assert "Do not ask about unrelated anchor features" in prompt, (
             "ANCHOR_BRIDGE_INTRO_PROMPT must ban unrelated anchor feature pivots"
         )
+        assert "must make the connection explicit" in prompt, (
+            "ANCHOR_BRIDGE_INTRO_PROMPT must require an explicit connection in the intro"
+        )
+        assert "Do not stay entirely on the surface object" in prompt, (
+            "ANCHOR_BRIDGE_INTRO_PROMPT must forbid a purely surface-object intro"
+        )
 
 
 # ===========================================================================
@@ -1000,6 +1006,37 @@ class TestOrdinaryChatKbStreaming:
         assert mock_intro.call_args.kwargs["knowledge_context"] == ""
         assert "smell" in mock_intro.call_args.kwargs["bridge_context"]
         assert result["response_type"] == "introduction"
+
+    @pytest.mark.asyncio
+    async def test_pre_anchor_intro_records_bridge_debug_with_visibility_signal(self):
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=0)
+        state = _build_minimal_state(
+            assistant,
+            messages=[{"role": "system", "content": "system prompt"}],
+            intent_type=None,
+        )
+        state["response_type"] = "introduction"
+        state["hook_types"] = {}
+        state["object_name"] = "cat food"
+        state["surface_object_name"] = "cat food"
+        state["anchor_object_name"] = "cat"
+        state["anchor_status"] = "anchored_high"
+        state["anchor_relation"] = "food_for"
+        state["anchor_confidence_band"] = "high"
+        state["learning_anchor_active"] = False
+        state["bridge_attempt_count"] = 1
+        state["intro_mode"] = "anchor_bridge"
+
+        with patch("graph.ask_introduction_question_stream", return_value=object()), patch(
+            "graph.stream_generator_to_callback",
+            new=AsyncMock(return_value=("Hey! I see you have some cat food there. What does the cat food look like inside the bag?", 1)),
+        ):
+            result = await graph.node_generate_intro(state)
+
+        assert result["bridge_debug"]["decision"] == "intro_bridge"
+        assert result["bridge_debug"]["bridge_visible_in_response"] is False
 
     @pytest.mark.asyncio
     async def test_node_finalize_emits_used_kb_item_for_one_stage_paths(self):

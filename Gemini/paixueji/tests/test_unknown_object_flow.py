@@ -272,6 +272,43 @@ def test_first_bridge_miss_emits_retry_bridge(client, monkeypatch):
     assert final_chunk["response_type"] == "bridge_retry"
 
 
+def test_pre_anchor_surface_reply_does_not_fall_into_correct_answer_flow(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"bridge_followed": False, "reason": "surface-only description"}),
+    )
+
+    continue_response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "It looks like small cookies"},
+    )
+    assert continue_response.status_code == 200
+
+    final_chunk = [e["data"] for e in parse_sse(continue_response.data) if e["event"] == "chunk"][-1]
+    assert final_chunk["response_type"] == "bridge_retry"
+    assert final_chunk["learning_anchor_active"] is False
+    assert final_chunk["bridge_debug"]["pre_anchor_handler_entered"] is True
+    assert final_chunk["bridge_debug"]["decision"] == "bridge_retry"
+
+
 def test_second_bridge_miss_suppresses_anchor_and_falls_back_to_unresolved_chat(client, monkeypatch):
     from object_resolver import ObjectResolutionResult
 

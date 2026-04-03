@@ -21,6 +21,7 @@ from stream import (
 )
 from schema import StreamChunk
 from bridge_context import build_bridge_context
+from bridge_debug import build_bridge_debug
 
 GUIDE_MODE_THRESHOLD = 2  # Correct answers required to complete chat mode
 _STRUGGLING_INTENTS = {"CLARIFYING_IDK", "CLARIFYING_WRONG"}  # Intents that share the struggle counter
@@ -89,6 +90,7 @@ class PaixuejiState(TypedDict):
     anchor_confirmation_needed: bool
     learning_anchor_active: bool
     bridge_attempt_count: int
+    bridge_debug: Optional[dict]
     correct_answer_count: int
     intro_mode: Optional[str]
 
@@ -145,6 +147,17 @@ KEY_STATE_FIELDS = [
     "classification_status", "classification_failure_reason",
     "new_object_name",
     "question_style",
+    "object_name",
+    "surface_object_name",
+    "anchor_object_name",
+    "anchor_status",
+    "anchor_relation",
+    "anchor_confidence_band",
+    "anchor_confirmation_needed",
+    "learning_anchor_active",
+    "bridge_attempt_count",
+    "intro_mode",
+    "correct_answer_count",
 ]
 
 
@@ -551,6 +564,28 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
     full_text, new_seq = await stream_generator_to_callback(
         generator, state, response_type_override="introduction"
     )
+    bridge_debug = None
+    if state.get("intro_mode") == "anchor_bridge":
+        bridge_debug = build_bridge_debug(
+            surface_object_name=state.get("surface_object_name"),
+            anchor_object_name=state.get("anchor_object_name"),
+            anchor_status=state.get("anchor_status"),
+            anchor_relation=state.get("anchor_relation"),
+            anchor_confidence_band=state.get("anchor_confidence_band"),
+            intro_mode=state.get("intro_mode"),
+            learning_anchor_active_before=False,
+            learning_anchor_active_after=state.get("learning_anchor_active", False),
+            bridge_attempt_count_before=max((state.get("bridge_attempt_count", 1) or 1) - 1, 0),
+            bridge_attempt_count_after=state.get("bridge_attempt_count", 1),
+            decision="intro_bridge",
+            decision_reason="start high-confidence bridge",
+            response_text=full_text,
+            response_type="introduction",
+            pre_anchor_handler_entered=False,
+            kb_mode="bridge_context_only",
+            bridge_context_summary=_build_bridge_prompt_context(state, state.get("bridge_attempt_count", 1) or 1),
+        )
+        state["bridge_debug"] = bridge_debug
 
     logger.info(f"[{state['session_id']}] Node: Generate Intro finished in {time.time() - start_time:.3f}s")
     return {
@@ -561,6 +596,7 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
         "selected_hook_type": hook_type_name,
         "question_style": question_style,
         "intro_mode": state.get("intro_mode"),
+        "bridge_debug": bridge_debug,
     }
 
 
@@ -631,6 +667,7 @@ async def stream_generator_to_callback(generator, state: PaixuejiState, response
                 anchor_confirmation_needed=state.get("anchor_confirmation_needed", False),
                 learning_anchor_active=state.get("learning_anchor_active", False),
                 bridge_attempt_count=state.get("bridge_attempt_count", 0),
+                bridge_debug=state.get("bridge_debug"),
 
                 response_type=response_type_override or state["response_type"],
                 selected_hook_type=state.get("selected_hook_type"),
@@ -1388,6 +1425,7 @@ async def node_finalize(state: PaixuejiState) -> dict:
         anchor_confirmation_needed=state.get("anchor_confirmation_needed", False),
         learning_anchor_active=state.get("learning_anchor_active", False),
         bridge_attempt_count=state.get("bridge_attempt_count", 0),
+        bridge_debug=state.get("bridge_debug"),
 
         response_type=state.get("response_type"),
 

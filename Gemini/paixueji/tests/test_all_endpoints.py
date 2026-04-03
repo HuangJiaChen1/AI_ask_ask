@@ -166,3 +166,41 @@ def test_handoff_uses_tmp_handoff_route(client):
 
     old_route_response = client.get(context_path.replace("/tmp/handoff/", "/handoff/"))
     assert old_route_response.status_code == 404
+
+
+def test_exchanges_endpoint_exposes_bridge_debug_for_intro_and_turns(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+    from unittest.mock import AsyncMock
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+    start_response = client.post('/api/start', json={"object_name": "cat food", "age": 6})
+    start_events = parse_sse(start_response.data)
+    session_id = start_events[0]['data']['session_id']
+
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"bridge_followed": False, "reason": "surface-only description"}),
+    )
+    client.post('/api/continue', json={"session_id": session_id, "child_input": "It looks like small cookies"})
+
+    response = client.get(f'/api/exchanges/{session_id}')
+    assert response.status_code == 200
+    payload = response.get_json()
+
+    assert payload["session_resolution_debug"]["anchor_status"] == "anchored_high"
+    assert payload["introduction"]["response_type"] == "introduction"
+    assert payload["introduction"]["bridge_debug"]["decision"] == "intro_bridge"
+    assert payload["exchanges"][0]["response_type"] == "bridge_retry"
+    assert payload["exchanges"][0]["bridge_debug"]["decision"] == "bridge_retry"

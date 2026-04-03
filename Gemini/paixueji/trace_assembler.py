@@ -297,6 +297,10 @@ def assemble_trace_object(
 
     # Extract input state from conversation history
     input_state = extract_input_state_for_exchange(assistant, exchange_index)
+    if getattr(assistant, "session_resolution_debug", None):
+        input_state["session_resolution_debug"] = assistant.session_resolution_debug
+    if exchange_data.get("bridge_debug"):
+        input_state["bridge_debug"] = exchange_data.get("bridge_debug")
 
     # Build exchange context (model_question="" — deprecated field, kept for backward compat)
     exchange = ExchangeContext(

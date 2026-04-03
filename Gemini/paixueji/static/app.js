@@ -43,6 +43,7 @@ let currentClassificationStatus = null;
 let currentClassificationFailureReason = null;
 let currentUsedKbItem = null;
 let currentKbMappingStatus = null;
+let currentBridgeDebug = null;
 
 const INTENT_METADATA = {
     ACTION: {
@@ -878,6 +879,10 @@ function handleStreamChunk(chunk) {
         currentKbMappingStatus = chunk.kb_mapping_status;
         updateDebugPanel();
     }
+    if ('bridge_debug' in chunk) {
+        currentBridgeDebug = chunk.bridge_debug;
+        updateDebugPanel();
+    }
 
     // Update hook type (set on introduction, persists for session)
     if (chunk.selected_hook_type) {
@@ -1035,6 +1040,21 @@ function updateDebugPanel() {
     if (usedKbItemEl) {
         usedKbItemEl.textContent = formatUsedKbItem(currentUsedKbItem, currentKbMappingStatus);
     }
+
+    const bridgeDebug = currentBridgeDebug || {};
+    const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value || '-';
+    };
+    setText('debugSurfaceObject', bridgeDebug.surface_object_name);
+    setText('debugAnchorObject', bridgeDebug.anchor_object_name);
+    setText('debugAnchorStatus', bridgeDebug.anchor_status);
+    setText('debugAnchorRelation', bridgeDebug.anchor_relation);
+    setText('debugAnchorConfidence', bridgeDebug.anchor_confidence_band);
+    setText('debugBridgeAttempt', bridgeDebug.bridge_attempt_count_after != null ? String(bridgeDebug.bridge_attempt_count_after) : null);
+    setText('debugBridgeDecision', bridgeDebug.decision);
+    setText('debugBridgeVerdict', bridgeDebug.bridge_visibility_reason || bridgeDebug.decision_reason);
+    setText('debugKbMode', bridgeDebug.kb_mode);
 }
 
 /**
