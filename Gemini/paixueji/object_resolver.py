@@ -7,7 +7,8 @@ from functools import lru_cache
 from typing import Any
 
 import yaml
-from bridge_context import build_bridge_context
+from bridge_context import SUPPORTED_RELATIONS, normalize_relation
+from paixueji_prompts import OBJECT_RESOLUTION_PROMPT
 
 
 @dataclass(frozen=True)
@@ -56,58 +57,8 @@ def _load_supported_object_lookup() -> dict[str, str]:
     return lookup
 
 
-@lru_cache(maxsize=1)
-def _load_rules() -> dict[str, Any]:
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "object_resolution_rules.json")
-    with open(path, "r", encoding="utf-8") as handle:
-        return json.load(handle)
-
-
 def _exact_supported_match(name: str) -> str | None:
     return _load_supported_object_lookup().get(name)
-
-
-def _rule_alias_match(name: str) -> str | None:
-    aliases = _load_rules().get("aliases") or {}
-    alias_target = aliases.get(name)
-    if not alias_target:
-        return None
-    return _exact_supported_match(_normalize_object_name(alias_target))
-
-
-def _rule_relation_match(name: str) -> ObjectResolutionResult | None:
-    relations = _load_rules().get("relations") or []
-    for relation in relations:
-        surface_terms = {_normalize_object_name(item) for item in relation.get("surface", [])}
-        if name not in surface_terms:
-            continue
-        anchor = _exact_supported_match(_normalize_object_name(relation.get("anchor")))
-        if not anchor:
-            continue
-        anchor_relation = relation.get("relation")
-        bridge_context = build_bridge_context(name, anchor, anchor_relation, attempt_number=1)
-        if bridge_context is None:
-            return ObjectResolutionResult(
-                surface_object_name=name,
-                visible_object_name=name,
-                anchor_object_name=anchor,
-                anchor_status="anchored_medium",
-                anchor_relation=anchor_relation,
-                anchor_confidence_band="medium",
-                anchor_confirmation_needed=True,
-                learning_anchor_active=False,
-            )
-        return ObjectResolutionResult(
-            surface_object_name=name,
-            visible_object_name=name,
-            anchor_object_name=anchor,
-            anchor_status="anchored_high",
-            anchor_relation=anchor_relation,
-            anchor_confidence_band=relation.get("confidence_band", "high"),
-            anchor_confirmation_needed=False,
-            learning_anchor_active=False,
-        )
-    return None
 
 
 def _model_fallback(name: str, client: Any, config: dict[str, Any]) -> ObjectResolutionResult | None:
@@ -115,12 +66,10 @@ def _model_fallback(name: str, client: Any, config: dict[str, Any]) -> ObjectRes
         return None
 
     supported = sorted(set(_load_supported_object_lookup().values()))
-    prompt = (
-        "Resolve this child-facing object term to the best supported anchor.\n"
-        f"Input term: {name}\n"
-        f"Supported anchors: {', '.join(supported)}\n"
-        'Return JSON with keys: anchor_object_name, anchor_status, anchor_relation, anchor_confidence_band.\n'
-        'Use anchor_status "anchored_high", "anchored_medium", or "unresolved".'
+    prompt = OBJECT_RESOLUTION_PROMPT.format(
+        input_term=name,
+        supported_anchors=", ".join(supported),
+        supported_relations=", ".join(SUPPORTED_RELATIONS),
     )
 
     try:
@@ -133,23 +82,40 @@ def _model_fallback(name: str, client: Any, config: dict[str, Any]) -> ObjectRes
     except Exception:
         return None
 
-    status = payload.get("anchor_status")
     anchor_name = _exact_supported_match(_normalize_object_name(payload.get("anchor_object_name")))
-    if status not in {"anchored_high", "anchored_medium"} or not anchor_name:
+    confidence_band = (payload.get("confidence_band") or "low").lower()
+    raw_relation = payload.get("relation")
+    relation = normalize_relation(raw_relation) if raw_relation else None
+    relation_is_valid = raw_relation in SUPPORTED_RELATIONS
+
+    if not anchor_name or confidence_band == "low":
         return None
 
-    return ObjectResolutionResult(
-        surface_object_name=name,
-        visible_object_name=name,
-        anchor_object_name=anchor_name,
-        anchor_status=status,
-        anchor_relation=payload.get("anchor_relation"),
-        anchor_confidence_band=payload.get("anchor_confidence_band") or (
-            "high" if status == "anchored_high" else "medium"
-        ),
-        anchor_confirmation_needed=(status == "anchored_medium"),
-        learning_anchor_active=False,
-    )
+    if confidence_band == "high" and relation_is_valid and relation:
+        return ObjectResolutionResult(
+            surface_object_name=name,
+            visible_object_name=name,
+            anchor_object_name=anchor_name,
+            anchor_status="anchored_high",
+            anchor_relation=relation,
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        )
+
+    if confidence_band in {"high", "medium"}:
+        return ObjectResolutionResult(
+            surface_object_name=name,
+            visible_object_name=name,
+            anchor_object_name=anchor_name,
+            anchor_status="anchored_medium",
+            anchor_relation=relation or "related_to",
+            anchor_confidence_band="medium" if confidence_band == "medium" else "high",
+            anchor_confirmation_needed=True,
+            learning_anchor_active=False,
+        )
+
+    return None
 
 
 def resolve_object_input(
@@ -176,23 +142,6 @@ def resolve_object_input(
             anchor_confirmation_needed=False,
             learning_anchor_active=True,
         )
-
-    alias = _rule_alias_match(surface)
-    if alias:
-        return ObjectResolutionResult(
-            surface_object_name=surface,
-            visible_object_name=alias,
-            anchor_object_name=alias,
-            anchor_status="exact_supported",
-            anchor_relation="alias",
-            anchor_confidence_band="exact",
-            anchor_confirmation_needed=False,
-            learning_anchor_active=True,
-        )
-
-    relation = _rule_relation_match(surface)
-    if relation:
-        return relation
 
     fallback = _model_fallback(surface, client, config or {})
     if fallback:

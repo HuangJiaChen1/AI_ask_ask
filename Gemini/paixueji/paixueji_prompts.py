@@ -332,6 +332,28 @@ Return JSON:
 }}
 """
 
+OBJECT_RESOLUTION_PROMPT = """Resolve a child-provided object term to a supported anchor.
+
+Input term: {input_term}
+Supported anchors: {supported_anchors}
+Supported relations: {supported_relations}
+
+The only allowed relations are:
+- food_for
+- used_with
+- part_of
+- belongs_to
+- made_from
+- related_to
+
+Return JSON:
+{{
+  "anchor_object_name": "<supported anchor or null>",
+  "relation": "<one supported relation or null>",
+  "confidence_band": "high" | "medium" | "low"
+}}
+"""
+
 FUN_FACT_GROUNDING_PROMPT = """Research "{object_name}" for a children's education app (child age: {age}).
 Category: {category}
 
@@ -1461,6 +1483,7 @@ def get_prompts():
         'unknown_object_intro_prompt': UNKNOWN_OBJECT_INTRO_PROMPT,
         'anchor_bridge_retry_prompt': ANCHOR_BRIDGE_RETRY_PROMPT,
         'bridge_follow_classifier_prompt': BRIDGE_FOLLOW_CLASSIFIER_PROMPT,
+        'object_resolution_prompt': OBJECT_RESOLUTION_PROMPT,
         'feedback_response_prompt': FEEDBACK_RESPONSE_PROMPT,
         'explanation_response_prompt': EXPLANATION_RESPONSE_PROMPT,
         'correction_response_prompt': CORRECTION_RESPONSE_PROMPT,
