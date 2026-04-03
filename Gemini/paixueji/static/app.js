@@ -204,6 +204,11 @@ const RESPONSE_METADATA = {
         description: 'The assistant is celebrating the new object before moving the conversation there.',
         descriptionZh: '助手正在先庆祝新的物体，再把对话切换过去。',
     },
+    BRIDGE_ACTIVATION: {
+        color: '#0284c7',
+        description: 'The assistant is completing a guided bridge and asking the first anchor question in the same lane.',
+        descriptionZh: '助手正在完成引导式过渡，并沿同一条线问出第一个 anchor 问题。',
+    },
 };
 
 const HOOK_TYPE_METADATA = {

@@ -191,6 +191,47 @@ def test_hf_report_detail_parser_preserves_response_type_and_bridge_debug(client
     assert "response_type" in intro_turn
 
 
+def test_hf_report_renders_bridge_activation_label():
+    from paixueji_app import build_human_feedback_report
+    from bridge_debug import build_bridge_trace_entry
+
+    trace = build_bridge_trace_entry(
+        node="driver:bridge_decision",
+        state_before={},
+        changes={"decision": "bridge_activation"},
+        time_ms=1.0,
+    )
+
+    report = build_human_feedback_report(
+        object_name="cat",
+        age=6,
+        session_id="sess",
+        transcript=[{
+            "role": "model",
+            "content": "When a cat smells cat food, it knows food is there. Why do you think a cat's nose helps it find food?",
+            "mode": "chat",
+            "response_type": "bridge_activation",
+            "bridge_debug": {
+                "decision": "bridge_activation",
+                "bridge_visible_in_response": True,
+            },
+            "nodes_executed": [trace],
+        }],
+        all_exchanges=[],
+        exchange_critiques=[],
+        global_conclusion="Test",
+        introduction=None,
+        introduction_critique=None,
+        key_concept=None,
+        session_resolution_debug={
+            "surface_object_name": "cat food",
+            "anchor_object_name": "cat",
+            "anchor_status": "anchored_high",
+        },
+    )
+    assert "[CHAT|bridge_activation]" in report
+
+
 def test_hf_report_parser_keeps_bridge_only_intro_diagnostics(tmp_path):
     from paixueji_app import _parse_hf_report, build_human_feedback_report
     from bridge_debug import build_bridge_trace_entry

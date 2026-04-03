@@ -29,6 +29,7 @@ from .utils import (
 from .response_generators import (
     generate_classification_fallback_stream,
     generate_intent_response_stream,
+    generate_bridge_activation_response_stream,
     generate_bridge_retry_response_stream,
     generate_topic_switch_response_stream,
 )
@@ -63,6 +64,7 @@ __all__ = [
     # Response generators
     'generate_classification_fallback_stream',
     'generate_intent_response_stream',
+    'generate_bridge_activation_response_stream',
     'generate_bridge_retry_response_stream',
     'generate_topic_switch_response_stream',
 

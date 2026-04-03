@@ -20,6 +20,26 @@ def parse_sse(response_data):
     return events
 
 
+def _bridge_activation_text():
+    return "Yes, when a cat smells cat food, it knows food is there. Why do you think a cat's nose helps it find food?"
+
+
+def _install_bridge_activation_stream(monkeypatch):
+    from tests.conftest import MockChunk, MockStream
+    import paixueji_app
+
+    def side_effect_stream(model, contents, config=None):
+        response_text = _bridge_activation_text()
+        return MockStream([MockChunk(word + " ") for word in response_text.split()])
+
+    monkeypatch.setattr(
+        paixueji_app.GLOBAL_GEMINI_CLIENT.aio.models.generate_content_stream,
+        "side_effect",
+        side_effect_stream,
+        raising=False,
+    )
+
+
 def test_start_with_high_confidence_anchor_stays_on_surface_object(client, monkeypatch):
     from object_resolver import ObjectResolutionResult
 
@@ -416,3 +436,224 @@ def test_second_bridge_miss_suppresses_anchor_and_falls_back_to_unresolved_chat(
     assert final_chunk["learning_anchor_active"] is False
     assert final_chunk["bridge_debug"]["decision"] == "unresolved_fallback"
     assert any(node["node"] == "driver:bridge_decision" for node in final_chunk["nodes_executed"])
+
+
+def test_successful_bridge_follow_uses_bridge_activation_not_topic_switch(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+    _install_bridge_activation_stream(monkeypatch)
+
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"bridge_followed": True, "reason": "matched bridge follow term: smell"}),
+    )
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "maybe it smells nice, else she won't eat it"},
+    )
+    assert response.status_code == 200
+
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+    assert final_chunk["response_type"] == "bridge_activation"
+    assert final_chunk["current_object_name"] == "cat"
+    assert final_chunk["learning_anchor_active"] is True
+    assert final_chunk["bridge_debug"]["decision"] == "bridge_activation"
+
+
+def test_bridge_activation_preserves_pre_anchor_traces(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+    _install_bridge_activation_stream(monkeypatch)
+
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"bridge_followed": True, "reason": "matched bridge follow term: smell"}),
+    )
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "maybe it smells nice, else she won't eat it"},
+    )
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+
+    assert [node["node"] for node in final_chunk["nodes_executed"]] == [
+        "driver:pre_anchor_gate",
+        "validator:bridge_follow",
+        "driver:bridge_decision",
+    ]
+    assert final_chunk["nodes_executed"][-1]["changes"]["decision"] == "bridge_activation"
+
+
+def test_successful_bridge_follow_final_chunk_has_evaluated_bridge_debug(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+    _install_bridge_activation_stream(monkeypatch)
+
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"bridge_followed": True, "reason": "matched bridge follow term: smell"}),
+    )
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "maybe it smells nice, else she won't eat it"},
+    )
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+
+    assert final_chunk["bridge_debug"]["bridge_visible_in_response"] is True
+    assert final_chunk["bridge_debug"]["bridge_visibility_reason"] != "response not evaluated yet"
+
+
+def test_bridge_activation_response_mentions_surface_and_anchor_and_one_question(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+    _install_bridge_activation_stream(monkeypatch)
+
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"bridge_followed": True, "reason": "matched bridge follow term: smell"}),
+    )
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "maybe it smells nice, else she won't eat it"},
+    )
+    text = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]["response"].lower()
+
+    assert "cat food" in text
+    assert "cat" in text
+    assert text.count("?") == 1
+
+
+def test_bridge_activation_response_does_not_use_generic_filler(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+    _install_bridge_activation_stream(monkeypatch)
+
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"bridge_followed": True, "reason": "matched bridge follow term: smell"}),
+    )
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "maybe it smells nice, else she won't eat it"},
+    )
+    text = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]["response"].lower()
+
+    assert "i love cats" not in text
+    assert "that is so cool" not in text
+    assert "excited to learn more" not in text
+
+
+def test_bridge_activation_first_question_stays_in_food_for_lane(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+    _install_bridge_activation_stream(monkeypatch)
+
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"bridge_followed": True, "reason": "matched bridge follow term: smell"}),
+    )
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "maybe it smells nice, else she won't eat it"},
+    )
+    text = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]["response"].lower()
+
+    assert any(term in text for term in ["smell", "nose", "eat", "food"])
+    assert "paw" not in text
+    assert "tail" not in text

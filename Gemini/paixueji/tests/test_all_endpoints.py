@@ -25,6 +25,22 @@ def parse_sse(response_data):
             events.append({'event': event_type, 'data': data})
     return events
 
+
+def _install_bridge_activation_stream(monkeypatch):
+    from tests.conftest import MockChunk, MockStream
+    import paixueji_app
+
+    def side_effect_stream(model, contents, config=None):
+        response_text = "Yes, when a cat smells cat food, it knows food is there. Why do you think a cat's nose helps it find food?"
+        return MockStream([MockChunk(word + " ") for word in response_text.split()])
+
+    monkeypatch.setattr(
+        paixueji_app.GLOBAL_GEMINI_CLIENT.aio.models.generate_content_stream,
+        "side_effect",
+        side_effect_stream,
+        raising=False,
+    )
+
 def test_static_index(client):
     """Test that the index page is served."""
     response = client.get('/')
@@ -212,3 +228,38 @@ def test_exchanges_endpoint_exposes_bridge_debug_for_intro_and_turns(client, mon
     assert payload["introduction"]["bridge_debug"]["decision"] == "intro_bridge"
     assert payload["exchanges"][0]["response_type"] == "bridge_retry"
     assert payload["exchanges"][0]["bridge_debug"]["decision"] == "bridge_retry"
+
+
+def test_exchanges_endpoint_reports_bridge_activation_response_type(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+    from unittest.mock import AsyncMock
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+    start_response = client.post('/api/start', json={"object_name": "cat food", "age": 6})
+    start_events = parse_sse(start_response.data)
+    session_id = start_events[0]['data']['session_id']
+    _install_bridge_activation_stream(monkeypatch)
+
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"bridge_followed": True, "reason": "matched bridge follow term: smell"}),
+    )
+    continue_response = client.post('/api/continue', json={"session_id": session_id, "child_input": "maybe it smells nice"})
+    parse_sse(continue_response.data)
+
+    payload = client.get(f'/api/exchanges/{session_id}').get_json()
+    activation_turn = payload["exchanges"][0]
+    assert activation_turn["response_type"] == "bridge_activation"
+    assert activation_turn["bridge_debug"]["decision"] == "bridge_activation"

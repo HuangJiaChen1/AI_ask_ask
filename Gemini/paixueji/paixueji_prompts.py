@@ -106,6 +106,33 @@ Celebrate the transition to the new object.
 5. Respond naturally (NOT JSON)
 """
 
+BRIDGE_ACTIVATION_RESPONSE_PROMPT = """You are replying to a child who successfully followed a bridge from {surface_object_name} to {anchor_object_name}.
+
+AGE GUIDANCE: {age_prompt}
+CHILD REPLY: {child_answer}
+BRIDGE CONTEXT:
+{bridge_context}
+
+YOUR JOB:
+- Acknowledge the child's actual answer first.
+- Mention the surface object exactly once when making the connection.
+- Explicitly name the anchor object: {anchor_object_name}.
+- Complete the bridge in this same turn.
+- Ask exactly one question.
+- Keep that question easy.
+- Stay in the same relation lane as the bridge context.
+- Do not jump to unrelated anchor features or dimensions yet.
+- Do not act like this is a fresh topic introduction.
+- Do not produce generic celebration filler.
+
+Do not say things like:
+- "I love cats"
+- "That is so cool"
+- "I'm excited to learn more about your cat"
+
+Respond naturally (NOT JSON).
+"""
+
 # ============================================================================
 # 3. FOLLOW-UP QUESTION PART (DECOUPLED FOCUS STRATEGY)
 # ============================================================================
@@ -1531,6 +1558,7 @@ def get_prompts():
         'explanation_response_prompt': EXPLANATION_RESPONSE_PROMPT,
         'correction_response_prompt': CORRECTION_RESPONSE_PROMPT,
         'topic_switch_response_prompt': TOPIC_SWITCH_RESPONSE_PROMPT,
+        'bridge_activation_response_prompt': BRIDGE_ACTIVATION_RESPONSE_PROMPT,
         'followup_question_prompt': FOLLOWUP_QUESTION_PROMPT,
         'classification_prompt': CLASSIFICATION_PROMPT,
         'fun_fact_grounding_prompt': FUN_FACT_GROUNDING_PROMPT,

@@ -140,6 +140,29 @@ class TestIntroductionPromptBeatStructure:
         assert "Do not say you can see the object" in prompt
         assert "Do not invent facts from words inside the object's name" in prompt
 
+    def test_bridge_activation_prompt_requires_explicit_surface_to_anchor_connection(self):
+        """BRIDGE_ACTIVATION_RESPONSE_PROMPT must explicitly complete the bridge in one turn."""
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.BRIDGE_ACTIVATION_RESPONSE_PROMPT
+        lower = prompt.lower()
+        assert "acknowledge the child's actual answer first" in lower
+        assert "mention the surface object exactly once" in lower
+        assert "explicitly name the anchor object" in lower
+        assert "ask exactly one question" in lower
+        assert "stay in the same relation lane" in lower
+
+    def test_bridge_activation_prompt_bans_generic_topic_switch_filler(self):
+        """BRIDGE_ACTIVATION_RESPONSE_PROMPT must ban generic excitement and fresh-intro filler."""
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.BRIDGE_ACTIVATION_RESPONSE_PROMPT
+        lower = prompt.lower()
+        assert "do not say things like" in lower
+        assert "i love cats" in lower
+        assert "i'm excited to learn more" in lower
+        assert "do not act like this is a fresh topic introduction" in lower
+
 
 # ===========================================================================
 # Fix 2 — CORRECT_ANSWER_INTENT_PROMPT BEAT 3

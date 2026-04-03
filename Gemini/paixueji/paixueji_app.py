@@ -29,6 +29,7 @@ from bridge_debug import build_bridge_debug, build_bridge_trace_entry, format_br
 from resolution_debug import format_resolution_log_line
 from stream import (
     classify_bridge_follow,
+    generate_bridge_activation_response_stream,
     generate_bridge_retry_response_stream,
     generate_topic_switch_response_stream,
     prepare_messages_for_streaming,
@@ -662,7 +663,7 @@ def continue_conversation():
                         assistant.anchor_status = "anchored_high"
                         assistant.load_dimension_data(assistant.object_name)
                         assistant.load_object_context_from_yaml(assistant.object_name)
-                        bridge_debug = build_bridge_debug(
+                        interim_bridge_debug = build_bridge_debug(
                             surface_object_name=previous_object,
                             anchor_object_name=assistant.anchor_object_name,
                             anchor_status=assistant.anchor_status,
@@ -673,43 +674,43 @@ def continue_conversation():
                             learning_anchor_active_after=True,
                             bridge_attempt_count_before=pre_anchor_state_before["bridge_attempt_count"],
                             bridge_attempt_count_after=assistant.bridge_attempt_count,
-                            decision="topic_switch",
+                            decision="bridge_activation",
                             decision_reason="child followed bridge",
-                            response_type="topic_switch",
+                            response_type="bridge_activation",
                             bridge_followed=True,
                             bridge_follow_reason=bridge_follow.get("reason"),
                             pre_anchor_handler_entered=True,
                             kb_mode="anchor_kb_active",
                             bridge_context_summary=_bridge_context_summary(bridge_context),
                         )
-                        assistant.set_last_bridge_debug(bridge_debug)
-                        logger.info(
-                            f"[BRIDGE] {format_bridge_log_line(session_id=session_id, request_id=request_id, bridge_debug=bridge_debug)}"
-                        )
                         decision_trace = build_bridge_trace_entry(
                             node="driver:bridge_decision",
                             state_before=pre_anchor_state_before,
-                            changes={"decision": "topic_switch"},
+                            changes={"decision": "bridge_activation"},
                             time_ms=0.0,
                         )
                         bridge_traces = [gate_trace, follow_trace, decision_trace]
 
-                        async def stream_anchor_switch():
+                        async def stream_bridge_activation():
                             messages = prepare_messages_for_streaming(
                                 assistant.conversation_history.copy(),
                                 age_prompt,
                             )
-                            generator = generate_topic_switch_response_stream(
+                            generator = generate_bridge_activation_response_stream(
                                 messages=messages,
-                                previous_object=previous_object,
-                                new_object=assistant.object_name,
+                                child_answer=child_input,
+                                surface_object_name=previous_object,
+                                anchor_object_name=assistant.object_name,
                                 age=assistant.age or 6,
+                                age_prompt=age_prompt,
+                                bridge_context=bridge_context.prompt_context if bridge_context else "",
                                 config=assistant.config,
                                 client=assistant.client,
                             )
 
                             sequence_number = 0
                             full_response = ""
+                            final_bridge_debug = interim_bridge_debug
                             async for text_chunk, _token_usage, full_so_far in generator:
                                 full_response = full_so_far
                                 if not text_chunk:
@@ -725,21 +726,46 @@ def continue_conversation():
                                     timestamp=time.time(),
                                     session_id=session_id,
                                     request_id=request_id,
-                                    response_type="topic_switch",
+                                    response_type="bridge_activation",
                                     correct_answer_count=assistant.correct_answer_count,
-                                    bridge_debug=bridge_debug,
+                                    bridge_debug=interim_bridge_debug,
                                     nodes_executed=bridge_traces,
                                     **_assistant_stream_fields(assistant),
                                 ))
 
+                            final_bridge_debug = build_bridge_debug(
+                                surface_object_name=previous_object,
+                                anchor_object_name=assistant.object_name,
+                                anchor_status=assistant.anchor_status,
+                                anchor_relation=assistant.anchor_relation,
+                                anchor_confidence_band=assistant.anchor_confidence_band,
+                                intro_mode="anchor_bridge",
+                                learning_anchor_active_before=False,
+                                learning_anchor_active_after=True,
+                                bridge_attempt_count_before=pre_anchor_state_before["bridge_attempt_count"],
+                                bridge_attempt_count_after=assistant.bridge_attempt_count,
+                                decision="bridge_activation",
+                                decision_reason="child followed bridge",
+                                response_type="bridge_activation",
+                                bridge_followed=True,
+                                bridge_follow_reason=bridge_follow.get("reason"),
+                                pre_anchor_handler_entered=True,
+                                kb_mode="anchor_kb_active",
+                                bridge_context_summary=_bridge_context_summary(bridge_context),
+                                response_text=full_response,
+                            )
+                            assistant.set_last_bridge_debug(final_bridge_debug)
+                            logger.info(
+                                f"[BRIDGE] {format_bridge_log_line(session_id=session_id, request_id=request_id, bridge_debug=final_bridge_debug)}"
+                            )
                             sequence_number += 1
                             assistant.conversation_history.append({"role": "user", "content": child_input})
                             assistant.conversation_history.append({
                                 "role": "assistant",
                                 "content": full_response,
                                 "mode": "chat",
-                                "response_type": "topic_switch",
-                                "bridge_debug": bridge_debug,
+                                "response_type": "bridge_activation",
+                                "bridge_debug": final_bridge_debug,
                                 "nodes_executed": bridge_traces,
                             })
                             yield sse_event("chunk", StreamChunk(
@@ -752,15 +778,15 @@ def continue_conversation():
                                 timestamp=time.time(),
                                 session_id=session_id,
                                 request_id=request_id,
-                                response_type="topic_switch",
+                                response_type="bridge_activation",
                                 correct_answer_count=assistant.correct_answer_count,
-                                bridge_debug=bridge_debug,
+                                bridge_debug=final_bridge_debug,
                                 nodes_executed=bridge_traces,
                                 **_assistant_stream_fields(assistant),
                             ))
                             yield sse_event("complete", {"success": True})
 
-                        gen = stream_anchor_switch()
+                        gen = stream_bridge_activation()
                         for event in async_gen_to_sync(gen, loop):
                             yield event
                         print(f"[INFO] Session {session_id[:8]}... bridge followed -> {assistant.object_name}")

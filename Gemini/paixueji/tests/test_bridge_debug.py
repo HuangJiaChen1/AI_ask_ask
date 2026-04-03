@@ -132,6 +132,27 @@ def test_build_bridge_debug_skips_visibility_without_response_text():
     assert debug["bridge_visibility_reason"] == "response not evaluated yet"
 
 
+def test_bridge_activation_debug_evaluates_visibility_from_response_text():
+    debug = build_bridge_debug(
+        surface_object_name="cat food",
+        anchor_object_name="cat",
+        anchor_status="anchored_high",
+        anchor_relation="food_for",
+        anchor_confidence_band="high",
+        intro_mode="anchor_bridge",
+        learning_anchor_active_before=False,
+        learning_anchor_active_after=True,
+        bridge_attempt_count_before=2,
+        bridge_attempt_count_after=0,
+        decision="bridge_activation",
+        decision_reason="child followed bridge",
+        response_type="bridge_activation",
+        response_text="Yes, when a cat smells cat food, it knows food is there. Why do you think a cat's nose helps it find food?",
+    )
+    assert debug["bridge_visible_in_response"] is True
+    assert debug["bridge_visibility_reason"] != "response not evaluated yet"
+
+
 def test_apply_resolution_records_session_resolution_debug():
     assistant = PaixuejiAssistant(client=MagicMock())
     assistant.apply_resolution(
