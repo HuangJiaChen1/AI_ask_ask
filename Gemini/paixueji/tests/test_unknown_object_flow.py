@@ -102,6 +102,46 @@ def test_start_with_relation_repair_records_resolution_debug(client, monkeypatch
     assert first_chunk["resolution_debug"]["decision_source"] == "relation_repair"
 
 
+def test_cat_food_start_recovers_from_fenced_json_and_enters_anchor_bridge(client, monkeypatch):
+    client_mock = MagicMock()
+    client_mock.models.generate_content.return_value.text = """```json
+{
+  "anchor_object_name": "cat",
+  "relation": "food_for",
+  "confidence_band": "high"
+}
+```"""
+    monkeypatch.setattr("paixueji_app.GLOBAL_GEMINI_CLIENT", client_mock)
+
+    response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    assert response.status_code == 200
+
+    events = parse_sse(response.data)
+    first_chunk = next(e["data"] for e in events if e["event"] == "chunk")
+
+    assert first_chunk["anchor_status"] == "anchored_high"
+    assert first_chunk["resolution_debug"]["raw_model_payload_kind"] == "fenced_json"
+    assert first_chunk["resolution_debug"]["json_recovery_applied"] is True
+
+
+def test_unresolved_start_reports_bridge_not_started_reason(client, monkeypatch):
+    client_mock = MagicMock()
+    client_mock.models.generate_content.return_value.text = "not json"
+    monkeypatch.setattr("paixueji_app.GLOBAL_GEMINI_CLIENT", client_mock)
+    monkeypatch.setattr("object_resolver._candidate_anchor_shortlist", lambda *_args, **_kwargs: [])
+
+    response = client.post("/api/start", json={"age": 6, "object_name": "spaceship fuel"})
+    assert response.status_code == 200
+
+    events = parse_sse(response.data)
+    first_chunk = next(e["data"] for e in events if e["event"] == "chunk")
+
+    assert first_chunk["anchor_status"] == "unresolved"
+    assert first_chunk["bridge_debug"]["decision"] == "bridge_not_started"
+    assert first_chunk["bridge_debug"]["decision_reason"] == "resolution_unresolved"
+    assert first_chunk["resolution_debug"]["decision_reason"] == "invalid_json_no_candidate"
+
+
 def test_medium_confidence_confirmation_accepts_anchor_and_switches(client, monkeypatch):
     from object_resolver import ObjectResolutionResult
 

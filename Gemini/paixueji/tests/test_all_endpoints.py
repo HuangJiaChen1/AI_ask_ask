@@ -183,7 +183,11 @@ def test_exchanges_endpoint_exposes_bridge_debug_for_intro_and_turns(client, mon
             anchor_confidence_band="high",
             anchor_confirmation_needed=False,
             learning_anchor_active=False,
-            resolution_debug={"decision_source": "model_inference"},
+            resolution_debug={
+                "decision_source": "model_inference",
+                "raw_model_payload_kind": "wrapped_json",
+                "json_recovery_applied": True,
+            },
         ),
     )
     start_response = client.post('/api/start', json={"object_name": "cat food", "age": 6})
@@ -202,6 +206,8 @@ def test_exchanges_endpoint_exposes_bridge_debug_for_intro_and_turns(client, mon
 
     assert payload["session_resolution_debug"]["anchor_status"] == "anchored_high"
     assert payload["session_resolution_debug"]["decision_source"] == "model_inference"
+    assert payload["session_resolution_debug"]["raw_model_payload_kind"] == "wrapped_json"
+    assert payload["session_resolution_debug"]["json_recovery_applied"] is True
     assert payload["introduction"]["response_type"] == "introduction"
     assert payload["introduction"]["bridge_debug"]["decision"] == "intro_bridge"
     assert payload["exchanges"][0]["response_type"] == "bridge_retry"

@@ -55,11 +55,14 @@ class ResolutionDebugInfo(BaseModel):
     candidate_anchors: list[str] | None = None
     model_attempted: bool | None = None
     raw_model_response: str | None = None
+    raw_model_payload_kind: str | None = None
+    json_recovery_applied: bool = False
     parsed_anchor_raw: str | None = None
     parsed_relation_raw: str | None = None
     parsed_confidence_raw: str | None = None
     anchor_object_name: str | None = None
     anchor_status: str | None = None
+    unresolved_surface_only_mode: bool = False
 
 
 class StreamChunk(BaseModel):

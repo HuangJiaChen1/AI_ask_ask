@@ -1074,6 +1074,39 @@ class TestOrdinaryChatKbStreaming:
         assert "Do not introduce facts about related objects implied by the name" in followup_guardrails
 
     @pytest.mark.asyncio
+    async def test_unresolved_correct_answer_uses_surface_only_response_mode(self):
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=0)
+        state = _build_minimal_state(
+            assistant,
+            messages=[{"role": "assistant", "content": "What does it smell like?"}],
+            intent_type="correct_answer",
+        )
+        state["object_name"] = "cat food"
+        state["surface_object_name"] = "cat food"
+        state["anchor_status"] = "unresolved"
+        state["learning_anchor_active"] = False
+
+        with patch("graph.generate_intent_response_stream", return_value=object()) as mock_response, patch(
+            "graph.stream_generator_to_callback",
+            new=AsyncMock(side_effect=[("brief reaction", 1), ("follow-up question", 2)]),
+        ), patch("graph.ask_followup_question_stream", return_value=object()) as mock_followup:
+            await graph.node_correct_answer(state)
+
+        assert mock_response.call_args.kwargs["surface_only_mode"] is True
+        assert mock_response.call_args.kwargs["surface_object_name"] == "cat food"
+        assert mock_followup.call_args.kwargs["surface_only_mode"] is True
+        assert mock_followup.call_args.kwargs["surface_object_name"] == "cat food"
+
+    def test_unresolved_surface_only_prompt_bans_implied_anchor_facts(self):
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.UNRESOLVED_SURFACE_ONLY_PROMPT
+        assert "Do not teach facts about related objects implied by the name" in prompt
+        assert "If the object name contains another object word, ignore that implied object" in prompt
+
+    @pytest.mark.asyncio
     async def test_node_finalize_emits_used_kb_item_for_one_stage_paths(self):
         import graph
 

@@ -30,6 +30,8 @@ async def generate_intent_response_stream(
     client: genai.Client = None,
     knowledge_context: str = "",
     resolution_guardrails: str = "",
+    surface_only_mode: bool = False,
+    surface_object_name: str = "",
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
     Universal intent response generator for the 9-node architecture.
@@ -56,6 +58,9 @@ async def generate_intent_response_stream(
     start_time = time.time()
     intent_lower = intent_type.lower()
     logger.info(f"generate_intent_response_stream started | intent={intent_lower}, object={object_name}, age={age}")
+    if not surface_only_mode and "No supported anchor is active" in (resolution_guardrails or ""):
+        surface_only_mode = True
+        surface_object_name = surface_object_name or object_name
 
     prompt_key = f"{intent_lower}_intent_prompt"
     prompts = paixueji_prompts.get_prompts()
@@ -74,7 +79,12 @@ async def generate_intent_response_stream(
             last_model_response=last_model_response,
             knowledge_context=knowledge_context,
         )
-        if resolution_guardrails:
+        if surface_only_mode:
+            surface_only_prompt = paixueji_prompts.get_prompts()["unresolved_surface_only_prompt"].format(
+                surface_object_name=surface_object_name or object_name
+            )
+            prompt = f"{surface_only_prompt}\n\n{prompt}"
+        elif resolution_guardrails:
             prompt = f"{resolution_guardrails}\n\n{prompt}"
     except KeyError as e:
         logger.warning(f"Prompt template formatting error for '{prompt_key}': {e}")
@@ -136,10 +146,15 @@ async def generate_classification_fallback_stream(
     config: dict,
     client: genai.Client,
     resolution_guardrails: str = "",
+    surface_only_mode: bool = False,
+    surface_object_name: str = "",
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """Generate a natural recovery response when intent classification failed."""
     start_time = time.time()
     logger.info(f"generate_classification_fallback_stream started | object={object_name}, age={age}")
+    if not surface_only_mode and "No supported anchor is active" in (resolution_guardrails or ""):
+        surface_only_mode = True
+        surface_object_name = surface_object_name or object_name
 
     prompt_template = paixueji_prompts.get_prompts()["classification_fallback_prompt"]
     prompt = prompt_template.format(
@@ -149,7 +164,12 @@ async def generate_classification_fallback_stream(
         age_prompt=age_prompt,
         last_model_response=last_model_response,
     )
-    if resolution_guardrails:
+    if surface_only_mode:
+        surface_only_prompt = paixueji_prompts.get_prompts()["unresolved_surface_only_prompt"].format(
+            surface_object_name=surface_object_name or object_name
+        )
+        prompt = f"{surface_only_prompt}\n\n{prompt}"
+    elif resolution_guardrails:
         prompt = f"{resolution_guardrails}\n\n{prompt}"
 
     messages_to_send = messages + [{"role": "user", "content": prompt}]

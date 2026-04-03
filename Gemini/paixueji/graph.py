@@ -389,6 +389,14 @@ def _resolution_guardrails_for_state(state: "PaixuejiState") -> str:
     )
 
 
+def _surface_only_mode_for_state(state: "PaixuejiState") -> bool:
+    return bool(state.get("anchor_status") == "unresolved" and not state.get("learning_anchor_active"))
+
+
+def _surface_object_name_for_state(state: "PaixuejiState") -> str:
+    return state.get("surface_object_name") or state.get("object_name", "")
+
+
 def _mark_kb_mapping_not_applicable(state: "PaixuejiState") -> None:
     """Clear stale mapping data for turns that intentionally skip KB mapping."""
     state["used_kb_item"] = None
@@ -603,6 +611,26 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
             pre_anchor_handler_entered=False,
             kb_mode="bridge_context_only",
             bridge_context_summary=_build_bridge_prompt_context(state, state.get("bridge_attempt_count", 1) or 1),
+        )
+        state["bridge_debug"] = bridge_debug
+    elif state.get("intro_mode") == "unknown_object":
+        bridge_debug = build_bridge_debug(
+            surface_object_name=state.get("surface_object_name"),
+            anchor_object_name=state.get("anchor_object_name"),
+            anchor_status=state.get("anchor_status"),
+            anchor_relation=state.get("anchor_relation"),
+            anchor_confidence_band=state.get("anchor_confidence_band"),
+            intro_mode=state.get("intro_mode"),
+            learning_anchor_active_before=False,
+            learning_anchor_active_after=False,
+            bridge_attempt_count_before=0,
+            bridge_attempt_count_after=0,
+            decision="bridge_not_started",
+            decision_reason="resolution_unresolved",
+            response_text=full_text,
+            response_type="introduction",
+            pre_anchor_handler_entered=False,
+            kb_mode="surface_only_unresolved",
         )
         state["bridge_debug"] = bridge_debug
 
@@ -1013,6 +1041,8 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
         client=state["client"],
         knowledge_context=_grounding_context_for_intent(state, "correct_answer"),
         resolution_guardrails=_resolution_guardrails_for_state(state),
+        surface_only_mode=_surface_only_mode_for_state(state),
+        surface_object_name=_surface_object_name_for_state(state),
     )
     full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
     await _maybe_set_used_kb_item(state, "correct_answer", full_text_intent)
@@ -1033,6 +1063,8 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
         client=state["client"],
         knowledge_context=_build_chat_kb_context(state),
         resolution_guardrails=_resolution_guardrails_for_state(state),
+        surface_only_mode=_surface_only_mode_for_state(state),
+        surface_object_name=_surface_object_name_for_state(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 

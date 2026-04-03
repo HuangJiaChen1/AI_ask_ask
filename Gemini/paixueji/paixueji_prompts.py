@@ -305,6 +305,18 @@ YOUR JOB:
 - Keep it short and natural for a {age}-year-old
 """
 
+UNRESOLVED_SURFACE_ONLY_PROMPT = """No supported anchor is active for this turn.
+
+Stay on the child's exact surface object only: {surface_object_name}
+
+Rules:
+- Do not teach facts about related objects implied by the name.
+- If the object name contains another object word, ignore that implied object.
+- Do not convert the name into a bridge, analogy, or animal fact.
+- Ask only about observable details, texture, smell, sound, use, feeling, or preference.
+- If you mention the object, mean only the literal named item in front of the child.
+"""
+
 ANCHOR_BRIDGE_RETRY_PROMPT = """You are replying to a child who is still talking about: {surface_object_name}
 
 AGE GUIDANCE: {age_prompt}
@@ -351,6 +363,12 @@ The only allowed relations are:
 - made_from
 - related_to
 
+Rules:
+- Return JSON only.
+- Do not use markdown fences.
+- Do not add any explanation before or after the JSON.
+- If one candidate anchor clearly matches the input term, prefer that candidate.
+
 Return JSON:
 {{
   "anchor_object_name": "<supported anchor or null>",
@@ -364,6 +382,11 @@ RELATION_REPAIR_PROMPT = """Repair the relation for a child-provided object term
 Input term: {input_term}
 Forced anchor: {forced_anchor}
 Supported relations: {supported_relations}
+
+Rules:
+- Return JSON only.
+- Do not use markdown fences.
+- Do not add any explanation before or after the JSON.
 
 Return JSON:
 {{
@@ -1499,6 +1522,7 @@ def get_prompts():
         'anchor_bridge_intro_prompt': ANCHOR_BRIDGE_INTRO_PROMPT,
         'anchor_confirmation_intro_prompt': ANCHOR_CONFIRMATION_INTRO_PROMPT,
         'unknown_object_intro_prompt': UNKNOWN_OBJECT_INTRO_PROMPT,
+        'unresolved_surface_only_prompt': UNRESOLVED_SURFACE_ONLY_PROMPT,
         'anchor_bridge_retry_prompt': ANCHOR_BRIDGE_RETRY_PROMPT,
         'bridge_follow_classifier_prompt': BRIDGE_FOLLOW_CLASSIFIER_PROMPT,
         'object_resolution_prompt': OBJECT_RESOLUTION_PROMPT,

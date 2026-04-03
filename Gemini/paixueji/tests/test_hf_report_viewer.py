@@ -166,6 +166,8 @@ def test_hf_report_includes_anchor_resolution_and_bridge_debug_sections():
             "decision_reason": "primary_low_confidence_single_candidate",
             "candidate_anchors": ["cat"],
             "raw_model_response": '{"anchor_object_name": null, "confidence_band":"low"}',
+            "raw_model_payload_kind": "wrapped_json",
+            "json_recovery_applied": True,
         },
     )
     assert "## Anchor Resolution" in report
@@ -173,6 +175,8 @@ def test_hf_report_includes_anchor_resolution_and_bridge_debug_sections():
     assert "Decision Reason" in report
     assert "Candidate Anchors" in report
     assert "Raw Resolver Output" in report
+    assert "Raw Payload Kind" in report
+    assert "JSON Recovery Applied" in report
     assert "**Bridge Verdict:**" in report
     assert "#### Raw Bridge Debug" in report
     assert "[CHAT|introduction]" in report

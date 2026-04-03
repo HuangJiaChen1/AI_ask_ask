@@ -161,9 +161,24 @@ def test_invalid_json_returns_unresolved_with_reason():
 
     result = resolve_object_input("cat food", age=6, client=client, config={"model_name": "mock"})
 
-    assert result.anchor_status == "unresolved"
-    assert result.resolution_debug["decision_reason"] == "invalid_json"
+    assert result.anchor_status == "anchored_medium"
+    assert result.anchor_object_name == "cat"
+    assert result.anchor_relation == "related_to"
+    assert result.anchor_confirmation_needed is True
+    assert result.resolution_debug["decision_source"] == "candidate_fallback"
     assert result.resolution_debug["raw_model_response"] == "not json"
+
+
+def test_true_no_candidate_invalid_payload_stays_unresolved(monkeypatch):
+    client = MagicMock()
+    client.models.generate_content.return_value.text = "definitely not json"
+    monkeypatch.setattr("object_resolver._candidate_anchor_shortlist", lambda *_args, **_kwargs: [])
+
+    result = resolve_object_input("spaceship fuel", age=6, client=client, config={"model_name": "mock"})
+
+    assert result.anchor_status == "unresolved"
+    assert result.anchor_object_name is None
+    assert result.resolution_debug["decision_reason"] == "invalid_json_no_candidate"
 
 
 def test_unknown_object_without_match_returns_unresolved():

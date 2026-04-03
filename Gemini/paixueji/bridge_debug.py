@@ -117,6 +117,8 @@ def build_bridge_debug(
 def bridge_verdict(bridge_debug: dict[str, Any] | None) -> str:
     if not bridge_debug:
         return "No bridge debug was recorded for this turn."
+    if bridge_debug.get("decision") == "bridge_not_started":
+        return "Bridge was never started because anchor resolution ended unresolved."
     if bridge_debug.get("bridge_visible_in_response"):
         return "Bridge was visible in the response."
     return f"Bridge did not expose the connection: {bridge_debug.get('bridge_visibility_reason', 'unknown reason')}."

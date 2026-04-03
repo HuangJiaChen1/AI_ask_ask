@@ -472,6 +472,25 @@ def start_conversation():
                         },
                     }
 
+                    if assistant.anchor_status == "unresolved":
+                        initial_state["bridge_debug"] = build_bridge_debug(
+                            surface_object_name=assistant.surface_object_name,
+                            anchor_object_name=assistant.anchor_object_name,
+                            anchor_status=assistant.anchor_status,
+                            anchor_relation=assistant.anchor_relation,
+                            anchor_confidence_band=assistant.anchor_confidence_band,
+                            intro_mode="unknown_object",
+                            learning_anchor_active_before=False,
+                            learning_anchor_active_after=False,
+                            bridge_attempt_count_before=0,
+                            bridge_attempt_count_after=0,
+                            decision="bridge_not_started",
+                            decision_reason="resolution_unresolved",
+                            response_type="introduction",
+                            pre_anchor_handler_entered=False,
+                            kb_mode="surface_only_unresolved",
+                        )
+
                     if assistant.anchor_status == "anchored_high" and not assistant.learning_anchor_active:
                         assistant.mark_bridge_attempt_emitted()
                         initial_state["bridge_attempt_count"] = assistant.bridge_attempt_count
@@ -1932,6 +1951,9 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
             ("Learning Active", "learning_anchor_active"),
             ("Decision Source", "decision_source"),
             ("Decision Reason", "decision_reason"),
+            ("Raw Payload Kind", "raw_model_payload_kind"),
+            ("JSON Recovery Applied", "json_recovery_applied"),
+            ("Unresolved Surface-Only Mode", "unresolved_surface_only_mode"),
         ]:
             value = session_resolution_debug.get(key)
             if value is not None:
@@ -2061,6 +2083,8 @@ def _render_hf_exchange(idx, exchange, ec):
 def _bridge_verdict_text(bridge_debug):
     if not bridge_debug:
         return "No bridge debug was recorded."
+    if bridge_debug.get("decision") == "bridge_not_started":
+        return "Bridge was never started because anchor resolution ended unresolved."
     if bridge_debug.get("bridge_visible_in_response") is True:
         return "Bridge was visible in the response."
     if bridge_debug.get("bridge_visible_in_response") is False:

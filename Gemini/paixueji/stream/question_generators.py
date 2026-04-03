@@ -198,6 +198,8 @@ async def ask_followup_question_stream(
     client: genai.Client,
     knowledge_context: str = "",
     resolution_guardrails: str = "",
+    surface_only_mode: bool = False,
+    surface_object_name: str = "",
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
     Stream a follow-up question after the correct-answer confirmation+wow-fact burst.
@@ -210,6 +212,9 @@ async def ask_followup_question_stream(
     """
     start_time = time.time()
     logger.info(f"ask_followup_question_stream started | object={object_name}, age={age}")
+    if not surface_only_mode and "No supported anchor is active" in (resolution_guardrails or ""):
+        surface_only_mode = True
+        surface_object_name = surface_object_name or object_name
 
     prompts = paixueji_prompts.get_prompts()
     followup_prompt = prompts['followup_question_prompt'].format(
@@ -218,7 +223,12 @@ async def ask_followup_question_stream(
         age_prompt=age_prompt,
         knowledge_context=knowledge_context,
     )
-    if resolution_guardrails:
+    if surface_only_mode:
+        surface_only_prompt = prompts["unresolved_surface_only_prompt"].format(
+            surface_object_name=surface_object_name or object_name
+        )
+        followup_prompt = f"{surface_only_prompt}\n\n{followup_prompt}"
+    elif resolution_guardrails:
         followup_prompt = f"{resolution_guardrails}\n\n{followup_prompt}"
 
     messages_to_send = messages + [{"role": "user", "content": followup_prompt}]
