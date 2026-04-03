@@ -25,6 +25,29 @@ class TokenUsage(BaseModel):
     )
 
 
+class BridgeDebugInfo(BaseModel):
+    surface_object_name: str | None = None
+    anchor_object_name: str | None = None
+    anchor_status: str | None = None
+    anchor_relation: str | None = None
+    anchor_confidence_band: str | None = None
+    intro_mode: str | None = None
+    learning_anchor_active_before: bool | None = None
+    learning_anchor_active_after: bool | None = None
+    bridge_attempt_count_before: int | None = None
+    bridge_attempt_count_after: int | None = None
+    pre_anchor_handler_entered: bool = False
+    bridge_followed: bool | None = None
+    bridge_follow_reason: str | None = None
+    decision: str | None = None
+    decision_reason: str | None = None
+    response_type: str | None = None
+    kb_mode: str | None = None
+    bridge_context_summary: str | None = None
+    bridge_visible_in_response: bool | None = None
+    bridge_visibility_reason: str | None = None
+
+
 class StreamChunk(BaseModel):
     """Model representing a single streaming response chunk.
 
@@ -117,6 +140,7 @@ class StreamChunk(BaseModel):
 
     # Node execution tracing (for critique reports)
     nodes_executed: list[dict] | None = None  # Passed through final chunk
+    bridge_debug: BridgeDebugInfo | None = None
 
     # Chat phase completion signal (one-shot, sent on the threshold correct answer turn)
     chat_phase_complete: Optional[bool] = None

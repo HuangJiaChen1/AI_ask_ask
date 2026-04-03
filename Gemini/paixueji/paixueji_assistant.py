@@ -62,6 +62,8 @@ class PaixuejiAssistant:
         self.bridge_attempt_count = 0
         self.suppressed_anchor_names = set()
         self.correct_answer_count = 0
+        self.session_resolution_debug = None
+        self.last_bridge_debug = None
 
         # IB PYP Theme Classification fields
         self.ibpyp_theme = None  # Theme ID (e.g., "Category_Nature_And_Physics")
@@ -152,6 +154,15 @@ class PaixuejiAssistant:
         self.anchor_confirmation_needed = resolution.anchor_confirmation_needed
         self.learning_anchor_active = resolution.learning_anchor_active
         self.bridge_attempt_count = 0
+        self.session_resolution_debug = {
+            "surface_object_name": resolution.surface_object_name,
+            "visible_object_name": resolution.visible_object_name,
+            "anchor_object_name": resolution.anchor_object_name,
+            "anchor_status": resolution.anchor_status,
+            "anchor_relation": resolution.anchor_relation,
+            "anchor_confidence_band": resolution.anchor_confidence_band,
+            "learning_anchor_active": resolution.learning_anchor_active,
+        }
 
     def activate_anchor_topic(self, anchor_name: str):
         """Make the anchor object the visible/learning topic and reset progress."""
@@ -178,6 +189,9 @@ class PaixuejiAssistant:
     def mark_bridge_attempt_emitted(self):
         """Record that a pre-anchor bridge prompt has been shown."""
         self.bridge_attempt_count += 1
+
+    def set_last_bridge_debug(self, debug_dict):
+        self.last_bridge_debug = debug_dict
 
     def _load_config(self, config_path):
         """Load configuration from JSON file."""
