@@ -2006,7 +2006,7 @@ def _render_hf_exchange(idx, exchange, ec):
         for node in nodes_executed:
             node_name = node.get("node", "?")
             time_ms = node.get("time_ms", 0)
-            changes = node.get("state_changes", {})
+            changes = node.get("state_changes", node.get("changes", {}))
             changes_str = ", ".join(
                 f"{k}: {v}" for k, v in changes.items()
             ) if changes else "-"
@@ -2191,7 +2191,14 @@ def _parse_hf_report(filepath):
                     if m:
                         debug[m.group(1).strip()] = m.group(2).strip()
                 crit["bridge_debug"] = debug or None
-            if crit["expected"] or crit["problematic"] or crit["conclusion"]:
+            if (
+                crit["expected"]
+                or crit["problematic"]
+                or crit["conclusion"]
+                or crit["bridge_verdict"]
+                or crit["bridge_debug"]
+                or crit["node_trace"]
+            ):
                 critiques[eidx] = crit
 
     for phase_label, phase_key in [("Chat Phase", "CHAT"), ("Guide Phase", "GUIDE")]:
@@ -2224,7 +2231,14 @@ def _parse_hf_report(filepath):
                 if m:
                     debug[m.group(1).strip()] = m.group(2).strip()
             crit["bridge_debug"] = debug or None
-        if crit["expected"] or crit["problematic"] or crit["conclusion"]:
+        if (
+            crit["expected"]
+            or crit["problematic"]
+            or crit["conclusion"]
+            or crit["bridge_verdict"]
+            or crit["bridge_debug"]
+            or crit["node_trace"]
+        ):
             critiques[0] = crit
 
     # Attach critiques to matching model turns

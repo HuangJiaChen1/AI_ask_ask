@@ -459,6 +459,7 @@ async function startConversation() {
     currentUsedKbItem = null;
     currentKbMappingStatus = null;
     currentKbMappingStatus = null;
+    currentBridgeDebug = null;
 
     // Reset progress
     correctAnswerCount = 0;

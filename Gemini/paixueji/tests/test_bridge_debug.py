@@ -62,6 +62,28 @@ def test_detect_bridge_visibility_uses_relation_focus_terms():
     assert "focus term" in reason.lower()
 
 
+def test_detect_bridge_visibility_allows_surface_object_plus_focus_terms():
+    visible, reason = detect_bridge_visibility(
+        response_text="Cat food smells strong. What helps it notice that smell first?",
+        surface_object_name="cat food",
+        anchor_object_name="cat",
+        anchor_relation="food_for",
+    )
+    assert visible is True
+    assert "focus term" in reason.lower()
+
+
+def test_detect_bridge_visibility_avoids_anchor_substring_false_positive():
+    visible, reason = detect_bridge_visibility(
+        response_text="These categories look funny.",
+        surface_object_name="cat food",
+        anchor_object_name="cat",
+        anchor_relation="food_for",
+    )
+    assert visible is False
+    assert "did not expose" in reason.lower()
+
+
 def test_build_bridge_trace_entry_uses_node_trace_shape():
     entry = build_bridge_trace_entry(
         node="driver:pre_anchor_gate",
@@ -71,6 +93,7 @@ def test_build_bridge_trace_entry_uses_node_trace_shape():
     )
     assert entry["node"] == "driver:pre_anchor_gate"
     assert entry["changes"]["decision"] == "bridge_retry"
+    assert entry["state_changes"]["decision"] == "bridge_retry"
     assert entry["state_before"]["anchor_status"] == "anchored_high"
     assert entry["phase"] == "response"
 

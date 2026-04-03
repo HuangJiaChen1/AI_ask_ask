@@ -6,6 +6,20 @@ from typing import Any
 from bridge_context import build_bridge_context, normalize_relation
 
 
+def _tokenize(text: str) -> list[str]:
+    return re.findall(r"[a-z]+", text)
+
+
+def _contains_token_sequence(tokens: list[str], phrase_tokens: list[str]) -> bool:
+    if not tokens or not phrase_tokens or len(phrase_tokens) > len(tokens):
+        return False
+    window = len(phrase_tokens)
+    for index in range(len(tokens) - window + 1):
+        if tokens[index:index + window] == phrase_tokens:
+            return True
+    return False
+
+
 def detect_bridge_visibility(
     response_text: str,
     surface_object_name: str | None,
@@ -15,14 +29,16 @@ def detect_bridge_visibility(
     normalized_response = " ".join((response_text or "").strip().lower().split())
     normalized_surface = " ".join((surface_object_name or "").strip().lower().split())
     normalized_anchor = " ".join((anchor_object_name or "").strip().lower().split())
-    response_tokens = set(re.findall(r"[a-z]+", normalized_response))
+    response_tokens = _tokenize(normalized_response)
 
     response_without_surface = normalized_response
     if normalized_surface:
         response_without_surface = response_without_surface.replace(normalized_surface, " ")
         response_without_surface = " ".join(response_without_surface.split())
+    response_without_surface_tokens = _tokenize(response_without_surface)
+    anchor_tokens = _tokenize(normalized_anchor)
 
-    if normalized_anchor and normalized_anchor in response_without_surface:
+    if anchor_tokens and _contains_token_sequence(response_without_surface_tokens, anchor_tokens):
         return True, "explicit anchor mention outside surface object"
 
     bridge_context = build_bridge_context(
@@ -32,12 +48,13 @@ def detect_bridge_visibility(
         attempt_number=1,
     )
     if bridge_context:
-        if normalized_surface and normalized_surface in normalized_response:
-            return False, "response stayed on the surface object without an anchor mention"
         for term in bridge_context.allowed_focus_terms:
-            term_tokens = tuple(re.findall(r"[a-z]+", term))
-            if term_tokens and all(token in response_tokens for token in term_tokens):
+            term_tokens = _tokenize(term)
+            if _contains_token_sequence(response_tokens, term_tokens):
                 return True, f"matched relation focus term: {term}"
+
+    if normalized_surface and normalized_surface in normalized_response:
+        return False, "response stayed on the surface object without an anchor mention"
 
     return False, "response did not expose the bridge connection"
 
@@ -117,6 +134,7 @@ def build_bridge_trace_entry(
         "node": node,
         "time_ms": time_ms,
         "changes": changes,
+        "state_changes": changes,
         "state_before": state_before,
         "phase": phase,
     }

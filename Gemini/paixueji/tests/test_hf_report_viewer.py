@@ -5,6 +5,7 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 HF_DIR = REPO_ROOT / "reports" / "HF"
 REPORTS_JS = (REPO_ROOT / "static" / "reports.js").read_text(encoding="utf-8")
 STYLE_CSS = (REPO_ROOT / "static" / "style.css").read_text(encoding="utf-8")
+APP_JS = (REPO_ROOT / "static" / "app.js").read_text(encoding="utf-8")
 
 
 def test_report_viewer_shell_is_wired_into_index(client):
@@ -97,6 +98,9 @@ def test_frontend_assets_cover_search_critique_badges_and_none_state():
     assert "showRvRawModal" in REPORTS_JS
     assert "Bridge Verdict" in REPORTS_JS
     assert "rvPopupBridgeDebug" in REPORTS_JS
+    assert "crit.bridge_verdict" in REPORTS_JS
+    assert "crit.bridge_debug" in REPORTS_JS
+    assert "currentBridgeDebug = null;" in APP_JS
 
     assert "@keyframes rv-critique-pulse" in STYLE_CSS
     assert ".rv-bubble-critiqued" in STYLE_CSS
@@ -105,6 +109,14 @@ def test_frontend_assets_cover_search_critique_badges_and_none_state():
 
 def test_hf_report_includes_anchor_resolution_and_bridge_debug_sections():
     from paixueji_app import build_human_feedback_report
+    from bridge_debug import build_bridge_trace_entry
+
+    exchange_trace = build_bridge_trace_entry(
+        node="driver:bridge_decision",
+        state_before={},
+        changes={"decision": "bridge_retry"},
+        time_ms=1.0,
+    )
 
     report = build_human_feedback_report(
         object_name="cat food",
@@ -122,14 +134,24 @@ def test_hf_report_includes_anchor_resolution_and_bridge_debug_sections():
                 "bridge_visible_in_response": True,
                 "decision_reason": "start high-confidence bridge",
             },
-            "nodes_executed": [{"node": "router:route_from_start", "time_ms": 1, "changes": {}, "state_before": {}}],
+            "nodes_executed": [exchange_trace],
         }],
-        all_exchanges=[],
-        exchange_critiques=[],
+        all_exchanges=[{
+            "child_response": "It looks like small cookies",
+            "model_response": "Cat food is what a cat eats. What helps a cat smell food?",
+            "nodes_executed": [exchange_trace],
+            "bridge_debug": {
+                "decision": "bridge_retry",
+                "anchor_status": "anchored_high",
+                "anchor_relation": "food_for",
+                "bridge_visible_in_response": False,
+            },
+        }],
+        exchange_critiques=[{"exchange_index": 1}],
         global_conclusion="Test",
         introduction={
             "content": "Cat food is what a cat eats. What helps a cat smell food?",
-            "nodes_executed": [],
+            "nodes_executed": [exchange_trace],
             "mode": "chat",
             "response_type": "introduction",
             "bridge_debug": {"decision": "intro_bridge"},
@@ -146,6 +168,7 @@ def test_hf_report_includes_anchor_resolution_and_bridge_debug_sections():
     assert "**Bridge Verdict:**" in report
     assert "#### Raw Bridge Debug" in report
     assert "[CHAT|introduction]" in report
+    assert "decision: bridge_retry" in report
 
 
 def test_hf_report_detail_parser_preserves_response_type_and_bridge_debug(client):
@@ -154,3 +177,65 @@ def test_hf_report_detail_parser_preserves_response_type_and_bridge_debug(client
     report = response.get_json()
     intro_turn = next(turn for turn in report["transcript"] if turn["role"] == "model" and turn["exchange_index"] == 0)
     assert "response_type" in intro_turn
+
+
+def test_hf_report_parser_keeps_bridge_only_intro_diagnostics(tmp_path):
+    from paixueji_app import _parse_hf_report, build_human_feedback_report
+    from bridge_debug import build_bridge_trace_entry
+
+    intro_trace = build_bridge_trace_entry(
+        node="driver:bridge_decision",
+        state_before={},
+        changes={"decision": "intro_bridge"},
+        time_ms=1.0,
+    )
+
+    report = build_human_feedback_report(
+        object_name="cat food",
+        age=6,
+        session_id="sess",
+        transcript=[{
+            "role": "model",
+            "content": "Cat food is what a cat eats. What helps a cat smell food?",
+            "mode": "chat",
+            "response_type": "introduction",
+            "bridge_debug": {
+                "decision": "intro_bridge",
+                "anchor_status": "anchored_high",
+                "anchor_relation": "food_for",
+                "bridge_visible_in_response": True,
+            },
+            "nodes_executed": [intro_trace],
+        }],
+        all_exchanges=[],
+        exchange_critiques=[],
+        global_conclusion="Test",
+        introduction={
+            "content": "Cat food is what a cat eats. What helps a cat smell food?",
+            "nodes_executed": [intro_trace],
+            "mode": "chat",
+            "response_type": "introduction",
+            "bridge_debug": {
+                "decision": "intro_bridge",
+                "anchor_status": "anchored_high",
+                "anchor_relation": "food_for",
+                "bridge_visible_in_response": True,
+            },
+        },
+        introduction_critique={"exchange_index": 0},
+        key_concept=None,
+        session_resolution_debug={
+            "surface_object_name": "cat food",
+            "anchor_object_name": "cat",
+            "anchor_status": "anchored_high",
+        },
+    )
+    report_path = tmp_path / "bridge_only.md"
+    report_path.write_text(report, encoding="utf-8")
+
+    parsed = _parse_hf_report(report_path)
+    intro_turn = next(turn for turn in parsed["transcript"] if turn["role"] == "model")
+
+    assert intro_turn["critique"] is not None
+    assert intro_turn["critique"]["bridge_verdict"] is not None
+    assert intro_turn["critique"]["bridge_debug"]["decision"] == "intro_bridge"
