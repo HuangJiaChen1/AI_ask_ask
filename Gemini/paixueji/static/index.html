@@ -27,9 +27,25 @@
                 <option value="8">8 years</option>
             </select>
 
-<label for="objectName">What object are we learning about?</label>
-            <div class="object-input-row">
-                <input id="objectName" list="objectSuggestions" placeholder="Type an object or pick a suggestion…" autocomplete="off">
+            <div class="object-card">
+                <div class="object-card-header">
+                    <div class="object-card-icon" aria-hidden="true">?</div>
+                    <div class="object-card-copy">
+                        <div class="object-card-label">Topic</div>
+                        <label for="objectName" class="object-card-title">What object are we learning about?</label>
+                    </div>
+                </div>
+                <div class="object-input-shell">
+                    <div class="object-input-row">
+                        <span class="object-input-icon" aria-hidden="true">&#128269;</span>
+                        <input id="objectName" list="objectSuggestions" placeholder="Type an object or pick a suggestion…" autocomplete="off">
+                    </div>
+                </div>
+                <div class="object-example-list" aria-hidden="true">
+                    <span class="object-example-chip">apple</span>
+                    <span class="object-example-chip">butterfly</span>
+                    <span class="object-example-chip">bicycle</span>
+                </div>
                 <datalist id="objectSuggestions"></datalist>
             </div>
 
