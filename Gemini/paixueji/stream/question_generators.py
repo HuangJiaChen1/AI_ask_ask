@@ -197,6 +197,7 @@ async def ask_followup_question_stream(
     config: dict,
     client: genai.Client,
     knowledge_context: str = "",
+    resolution_guardrails: str = "",
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
     Stream a follow-up question after the correct-answer confirmation+wow-fact burst.
@@ -217,6 +218,8 @@ async def ask_followup_question_stream(
         age_prompt=age_prompt,
         knowledge_context=knowledge_context,
     )
+    if resolution_guardrails:
+        followup_prompt = f"{resolution_guardrails}\n\n{followup_prompt}"
 
     messages_to_send = messages + [{"role": "user", "content": followup_prompt}]
     clean_messages = clean_messages_for_api(messages_to_send)

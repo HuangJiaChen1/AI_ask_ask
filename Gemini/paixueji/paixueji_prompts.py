@@ -298,6 +298,8 @@ AGE GUIDANCE: {age_prompt}
 YOUR JOB:
 - Stay with the child's exact object
 - Do not invent factual claims you cannot observe
+- Do not say you can see the object unless the child already established that
+- Do not invent facts from words inside the object's name
 - Use only safe, generic openings based on noticing, using, feeling, or liking the object
 - End with exactly one easy question that the child can answer right now
 - Keep it short and natural for a {age}-year-old
@@ -338,6 +340,7 @@ OBJECT_RESOLUTION_PROMPT = """Resolve a child-provided object term to a supporte
 
 Input term: {input_term}
 Supported anchors: {supported_anchors}
+Candidate anchors: {candidate_anchors}
 Supported relations: {supported_relations}
 
 The only allowed relations are:
@@ -351,6 +354,19 @@ The only allowed relations are:
 Return JSON:
 {{
   "anchor_object_name": "<supported anchor or null>",
+  "relation": "<one supported relation or null>",
+  "confidence_band": "high" | "medium" | "low"
+}}
+"""
+
+RELATION_REPAIR_PROMPT = """Repair the relation for a child-provided object term when the anchor is already known.
+
+Input term: {input_term}
+Forced anchor: {forced_anchor}
+Supported relations: {supported_relations}
+
+Return JSON:
+{{
   "relation": "<one supported relation or null>",
   "confidence_band": "high" | "medium" | "low"
 }}
@@ -1486,6 +1502,7 @@ def get_prompts():
         'anchor_bridge_retry_prompt': ANCHOR_BRIDGE_RETRY_PROMPT,
         'bridge_follow_classifier_prompt': BRIDGE_FOLLOW_CLASSIFIER_PROMPT,
         'object_resolution_prompt': OBJECT_RESOLUTION_PROMPT,
+        'relation_repair_prompt': RELATION_REPAIR_PROMPT,
         'feedback_response_prompt': FEEDBACK_RESPONSE_PROMPT,
         'explanation_response_prompt': EXPLANATION_RESPONSE_PROMPT,
         'correction_response_prompt': CORRECTION_RESPONSE_PROMPT,

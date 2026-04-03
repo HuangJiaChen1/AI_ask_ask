@@ -91,6 +91,7 @@ class PaixuejiState(TypedDict):
     learning_anchor_active: bool
     bridge_attempt_count: int
     bridge_debug: Optional[dict]
+    resolution_debug: Optional[dict]
     correct_answer_count: int
     intro_mode: Optional[str]
 
@@ -156,6 +157,7 @@ KEY_STATE_FIELDS = [
     "anchor_confirmation_needed",
     "learning_anchor_active",
     "bridge_attempt_count",
+    "resolution_debug",
     "intro_mode",
     "correct_answer_count",
 ]
@@ -368,6 +370,23 @@ def _grounding_context_for_intent(state: "PaixuejiState", intent_type: str | Non
     if not _intent_uses_grounding(intent_type):
         return ""
     return _build_chat_kb_context(state)
+
+
+def _resolution_guardrails_for_state(state: "PaixuejiState") -> str:
+    if state.get("learning_anchor_active"):
+        return ""
+    if state.get("anchor_status") != "unresolved":
+        return ""
+    surface = state.get("surface_object_name") or state.get("object_name", "this object")
+    return "\n".join(
+        [
+            "No supported anchor is active for this turn.",
+            f"Stay on the surface object only: {surface}.",
+            "Do not introduce facts about related objects implied by the name.",
+            "Do not turn words inside the object name into teaching facts.",
+            "Prefer observable, use-based, texture, smell, feeling, and preference questions only.",
+        ]
+    )
 
 
 def _mark_kb_mapping_not_applicable(state: "PaixuejiState") -> None:
@@ -668,6 +687,7 @@ async def stream_generator_to_callback(generator, state: PaixuejiState, response
                 learning_anchor_active=state.get("learning_anchor_active", False),
                 bridge_attempt_count=state.get("bridge_attempt_count", 0),
                 bridge_debug=state.get("bridge_debug"),
+                resolution_debug=state.get("resolution_debug"),
 
                 response_type=response_type_override or state["response_type"],
                 selected_hook_type=state.get("selected_hook_type"),
@@ -707,6 +727,7 @@ async def node_curiosity(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
         knowledge_context=_grounding_context_for_intent(state, "curiosity"),
+        resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     await _maybe_set_used_kb_item(state, "curiosity", full_text)
@@ -740,6 +761,7 @@ async def node_concept_confusion(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
         knowledge_context=_grounding_context_for_intent(state, "concept_confusion"),
+        resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     logger.info(f"[{state['session_id']}] Node: Concept Confusion finished in {time.time() - start_time:.3f}s")
@@ -775,6 +797,7 @@ async def node_clarifying_idk(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
         knowledge_context=_grounding_context_for_intent(state, "clarifying_idk"),
+        resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     logger.info(f"[{state['session_id']}] Node: Clarifying IDK finished in {time.time() - start_time:.3f}s")
@@ -806,6 +829,7 @@ async def node_fallback_freeform(state: PaixuejiState) -> dict:
         last_model_response=extract_previous_response(state["messages"]),
         config=state["config"],
         client=state["client"],
+        resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     logger.info(f"[{state['session_id']}] Node: Fallback Freeform finished in {time.time() - start_time:.3f}s")
@@ -842,6 +866,7 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
             config=state["config"],
             client=state["client"],
             knowledge_context="",
+            resolution_guardrails=_resolution_guardrails_for_state(state),
         )
         full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
         logger.info(f"[{state['session_id']}] Node: Give Answer IDK finished in {time.time() - start_time:.3f}s")
@@ -867,6 +892,7 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
         knowledge_context=_grounding_context_for_intent(state, "give_answer_idk"),
+        resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
     await _maybe_set_used_kb_item(state, "give_answer_idk", full_text_intent)
@@ -884,6 +910,7 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
         knowledge_context=_build_chat_kb_context(state),
+        resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 
@@ -917,6 +944,7 @@ async def node_clarifying_wrong(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
         knowledge_context=_grounding_context_for_intent(state, "clarifying_wrong"),
+        resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     await _maybe_set_used_kb_item(state, "clarifying_wrong", full_text)
@@ -950,6 +978,7 @@ async def node_clarifying_constraint(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
         knowledge_context=_grounding_context_for_intent(state, "clarifying_constraint"),
+        resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     logger.info(f"[{state['session_id']}] Node: Clarifying Constraint finished in {time.time() - start_time:.3f}s")
@@ -983,6 +1012,7 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
         knowledge_context=_grounding_context_for_intent(state, "correct_answer"),
+        resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
     await _maybe_set_used_kb_item(state, "correct_answer", full_text_intent)
@@ -1002,6 +1032,7 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
         knowledge_context=_build_chat_kb_context(state),
+        resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 
@@ -1037,6 +1068,7 @@ async def node_informative(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
         knowledge_context=_grounding_context_for_intent(state, "informative"),
+        resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
     await _maybe_set_used_kb_item(state, "informative", full_text_intent)
@@ -1054,6 +1086,7 @@ async def node_informative(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
         knowledge_context=_build_chat_kb_context(state),
+        resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 
@@ -1086,6 +1119,7 @@ async def node_play(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
         knowledge_context=_grounding_context_for_intent(state, "play"),
+        resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     await _maybe_set_used_kb_item(state, "play", full_text)
@@ -1119,6 +1153,7 @@ async def node_emotional(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
         knowledge_context=_grounding_context_for_intent(state, "emotional"),
+        resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     logger.info(f"[{state['session_id']}] Node: Emotional finished in {time.time() - start_time:.3f}s")
@@ -1170,6 +1205,7 @@ async def node_avoidance(state: PaixuejiState) -> dict:
             config=state["config"],
             client=state["client"],
             knowledge_context=_grounding_context_for_intent(state, "avoidance"),
+            resolution_guardrails=_resolution_guardrails_for_state(state),
         )
 
     full_text, new_seq = await stream_generator_to_callback(generator, state)
@@ -1204,6 +1240,7 @@ async def node_boundary(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
         knowledge_context=_grounding_context_for_intent(state, "boundary"),
+        resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text, new_seq = await stream_generator_to_callback(generator, state)
     logger.info(f"[{state['session_id']}] Node: Boundary finished in {time.time() - start_time:.3f}s")
@@ -1255,6 +1292,7 @@ async def node_action(state: PaixuejiState) -> dict:
             config=state["config"],
             client=state["client"],
             knowledge_context=_grounding_context_for_intent(state, "action"),
+            resolution_guardrails=_resolution_guardrails_for_state(state),
         )
 
     full_text, new_seq = await stream_generator_to_callback(generator, state)
@@ -1291,6 +1329,7 @@ async def node_social(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
         knowledge_context=_grounding_context_for_intent(state, "social"),
+        resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
 
@@ -1307,6 +1346,7 @@ async def node_social(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
         knowledge_context=_build_chat_kb_context(state),
+        resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 
@@ -1342,6 +1382,7 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
         knowledge_context=_grounding_context_for_intent(state, "social_acknowledgment"),
+        resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
 
@@ -1358,6 +1399,7 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
         config=state["config"],
         client=state["client"],
         knowledge_context=_build_chat_kb_context(state),
+        resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
 
@@ -1426,6 +1468,7 @@ async def node_finalize(state: PaixuejiState) -> dict:
         learning_anchor_active=state.get("learning_anchor_active", False),
         bridge_attempt_count=state.get("bridge_attempt_count", 0),
         bridge_debug=state.get("bridge_debug"),
+        resolution_debug=state.get("resolution_debug"),
 
         response_type=state.get("response_type"),
 
@@ -1536,6 +1579,7 @@ async def node_chat_complete(state: PaixuejiState) -> dict:
             anchor_confirmation_needed=state.get("anchor_confirmation_needed", False),
             learning_anchor_active=state.get("learning_anchor_active", False),
             bridge_attempt_count=state.get("bridge_attempt_count", 0),
+            resolution_debug=state.get("resolution_debug"),
             key_concept=assistant.key_concept or None,
             ibpyp_theme_name=assistant.ibpyp_theme_name or None,
             theme_classification_reason=assistant.ibpyp_theme_reason or None,

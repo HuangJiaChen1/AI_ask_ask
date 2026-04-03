@@ -8,7 +8,8 @@ from typing import Any
 
 import yaml
 from bridge_context import SUPPORTED_RELATIONS, normalize_relation
-from paixueji_prompts import OBJECT_RESOLUTION_PROMPT
+from resolution_debug import build_resolution_debug
+from paixueji_prompts import OBJECT_RESOLUTION_PROMPT, RELATION_REPAIR_PROMPT
 
 
 @dataclass(frozen=True)
@@ -22,6 +23,7 @@ class ObjectResolutionResult:
     anchor_confirmation_needed: bool
     learning_anchor_active: bool
     anchor_suppressed: bool = False
+    resolution_debug: dict[str, Any] | None = None
 
 
 def _normalize_object_name(value: str | None) -> str:
@@ -61,16 +63,54 @@ def _exact_supported_match(name: str) -> str | None:
     return _load_supported_object_lookup().get(name)
 
 
-def _model_fallback(name: str, client: Any, config: dict[str, Any]) -> ObjectResolutionResult | None:
-    if client is None or not hasattr(client, "models") or not hasattr(client.models, "generate_content"):
-        return None
+def _tokenize(value: str) -> list[str]:
+    return [token for token in _normalize_object_name(value).split() if token]
 
-    supported = sorted(set(_load_supported_object_lookup().values()))
-    prompt = OBJECT_RESOLUTION_PROMPT.format(
-        input_term=name,
-        supported_anchors=", ".join(supported),
-        supported_relations=", ".join(SUPPORTED_RELATIONS),
-    )
+
+def _contains_token_sequence(tokens: list[str], phrase_tokens: list[str]) -> bool:
+    if not tokens or not phrase_tokens or len(phrase_tokens) > len(tokens):
+        return False
+    window = len(phrase_tokens)
+    for index in range(len(tokens) - window + 1):
+        if tokens[index:index + window] == phrase_tokens:
+            return True
+    return False
+
+
+@lru_cache(maxsize=1)
+def _supported_anchor_names() -> tuple[str, ...]:
+    return tuple(sorted(set(_load_supported_object_lookup().values())))
+
+
+def _candidate_anchor_shortlist(name: str) -> list[str]:
+    surface_tokens = _tokenize(name)
+    if not surface_tokens:
+        return []
+
+    scored: list[tuple[int, str]] = []
+    seen: set[str] = set()
+    for anchor in _supported_anchor_names():
+        if anchor in seen:
+            continue
+        anchor_tokens = _tokenize(anchor)
+        if not anchor_tokens:
+            continue
+        score = 0
+        if _contains_token_sequence(surface_tokens, anchor_tokens):
+            score = 3
+        elif set(surface_tokens) & set(anchor_tokens):
+            score = 2
+        if score:
+            scored.append((score, anchor))
+            seen.add(anchor)
+
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    return [anchor for _score, anchor in scored[:5]]
+
+
+def _invoke_model(prompt: str, client: Any, config: dict[str, Any]) -> tuple[dict[str, Any] | None, str | None]:
+    if client is None or not hasattr(client, "models") or not hasattr(client.models, "generate_content"):
+        return None, None
 
     try:
         response = client.models.generate_content(
@@ -78,21 +118,69 @@ def _model_fallback(name: str, client: Any, config: dict[str, Any]) -> ObjectRes
             contents=prompt,
             config={"temperature": 0},
         )
-        payload = json.loads(response.text or "{}")
+        raw_text = response.text or ""
+        payload = json.loads(raw_text or "{}")
+        if not isinstance(payload, dict):
+            return None, raw_text
+        return payload, raw_text
     except Exception:
+        try:
+            raw_text = response.text or ""  # type: ignore[has-type]
+        except Exception:
+            raw_text = None
+        return None, raw_text
+
+
+def _relation_repair(name: str, anchor_name: str, client: Any, config: dict[str, Any]) -> tuple[dict[str, Any] | None, str | None]:
+    prompt = RELATION_REPAIR_PROMPT.format(
+        input_term=name,
+        forced_anchor=anchor_name,
+        supported_relations=", ".join(SUPPORTED_RELATIONS),
+    )
+    return _invoke_model(prompt, client, config)
+
+
+def _model_fallback(name: str, client: Any, config: dict[str, Any]) -> ObjectResolutionResult | None:
+    candidate_anchors = _candidate_anchor_shortlist(name)
+    prompt = OBJECT_RESOLUTION_PROMPT.format(
+        input_term=name,
+        supported_anchors=", ".join(_supported_anchor_names()),
+        supported_relations=", ".join(SUPPORTED_RELATIONS),
+        candidate_anchors=", ".join(candidate_anchors) or "none",
+    )
+
+    payload, raw_text = _invoke_model(prompt, client, config)
+    if payload is None:
+        if raw_text is not None:
+            return ObjectResolutionResult(
+                surface_object_name=name,
+                visible_object_name=name,
+                anchor_object_name=None,
+                anchor_status="unresolved",
+                anchor_relation=None,
+                anchor_confidence_band=None,
+                anchor_confirmation_needed=False,
+                learning_anchor_active=False,
+                resolution_debug=build_resolution_debug(
+                    surface_object_name=name,
+                    decision_source="unresolved",
+                    decision_reason="invalid_json",
+                    candidate_anchors=candidate_anchors,
+                    model_attempted=True,
+                    raw_model_response=raw_text,
+                ),
+            )
         return None
 
-    anchor_name = _exact_supported_match(_normalize_object_name(payload.get("anchor_object_name")))
-    confidence_band = (payload.get("confidence_band") or "low").lower()
-    raw_relation = payload.get("relation")
-    normalized_raw_relation = " ".join((raw_relation or "").strip().lower().split())
-    relation = normalize_relation(raw_relation) if raw_relation else None
-    relation_is_valid = normalized_raw_relation in SUPPORTED_RELATIONS
+    parsed_anchor_raw = payload.get("anchor_object_name")
+    parsed_relation_raw = payload.get("relation")
+    parsed_confidence_raw = payload.get("confidence_band")
+    confidence_band = _normalize_object_name(parsed_confidence_raw).replace(" ", "") or "low"
+    relation = normalize_relation(parsed_relation_raw) if parsed_relation_raw else None
+    relation_is_valid = _normalize_object_name(parsed_relation_raw) in SUPPORTED_RELATIONS
+    anchor_name = _exact_supported_match(_normalize_object_name(parsed_anchor_raw))
 
-    if not anchor_name or confidence_band == "low":
-        return None
-
-    if confidence_band == "high" and relation_is_valid and relation:
+    if anchor_name and confidence_band == "high" and relation_is_valid and relation:
         return ObjectResolutionResult(
             surface_object_name=name,
             visible_object_name=name,
@@ -102,21 +190,147 @@ def _model_fallback(name: str, client: Any, config: dict[str, Any]) -> ObjectRes
             anchor_confidence_band="high",
             anchor_confirmation_needed=False,
             learning_anchor_active=False,
+            resolution_debug=build_resolution_debug(
+                surface_object_name=name,
+                decision_source="model_inference",
+                decision_reason="high_confidence_valid_anchor",
+                candidate_anchors=candidate_anchors,
+                model_attempted=True,
+                raw_model_response=raw_text,
+                parsed_anchor_raw=parsed_anchor_raw,
+                parsed_relation_raw=parsed_relation_raw,
+                parsed_confidence_raw=parsed_confidence_raw,
+                anchor_object_name=anchor_name,
+                anchor_status="anchored_high",
+            ),
         )
 
-    if confidence_band in {"high", "medium"}:
+    if anchor_name and confidence_band == "medium" and relation_is_valid and relation:
         return ObjectResolutionResult(
             surface_object_name=name,
             visible_object_name=name,
             anchor_object_name=anchor_name,
             anchor_status="anchored_medium",
-            anchor_relation=relation or "related_to",
-            anchor_confidence_band="medium" if confidence_band == "medium" else "high",
+            anchor_relation=relation,
+            anchor_confidence_band="medium",
             anchor_confirmation_needed=True,
             learning_anchor_active=False,
+            resolution_debug=build_resolution_debug(
+                surface_object_name=name,
+                decision_source="model_inference",
+                decision_reason="medium_confidence_valid_anchor",
+                candidate_anchors=candidate_anchors,
+                model_attempted=True,
+                raw_model_response=raw_text,
+                parsed_anchor_raw=parsed_anchor_raw,
+                parsed_relation_raw=parsed_relation_raw,
+                parsed_confidence_raw=parsed_confidence_raw,
+                anchor_object_name=anchor_name,
+                anchor_status="anchored_medium",
+            ),
         )
 
-    return None
+    if len(candidate_anchors) == 1:
+        forced_anchor = candidate_anchors[0]
+        repair_payload, repair_raw = _relation_repair(name, forced_anchor, client, config)
+        if isinstance(repair_payload, dict):
+            repair_confidence = _normalize_object_name(repair_payload.get("confidence_band")).replace(" ", "")
+            repair_relation_raw = repair_payload.get("relation")
+            repair_relation = normalize_relation(repair_relation_raw) if repair_relation_raw else None
+            repair_relation_is_valid = _normalize_object_name(repair_relation_raw) in SUPPORTED_RELATIONS
+            if repair_confidence == "high" and repair_relation_is_valid and repair_relation:
+                return ObjectResolutionResult(
+                    surface_object_name=name,
+                    visible_object_name=name,
+                    anchor_object_name=forced_anchor,
+                    anchor_status="anchored_high",
+                    anchor_relation=repair_relation,
+                    anchor_confidence_band="high",
+                    anchor_confirmation_needed=False,
+                    learning_anchor_active=False,
+                    resolution_debug=build_resolution_debug(
+                        surface_object_name=name,
+                        decision_source="relation_repair",
+                        decision_reason="primary_low_confidence_single_candidate",
+                        candidate_anchors=candidate_anchors,
+                        model_attempted=True,
+                        raw_model_response=repair_raw,
+                        parsed_anchor_raw=forced_anchor,
+                        parsed_relation_raw=repair_relation_raw,
+                        parsed_confidence_raw=repair_payload.get("confidence_band"),
+                        anchor_object_name=forced_anchor,
+                        anchor_status="anchored_high",
+                    ),
+                )
+
+        return ObjectResolutionResult(
+            surface_object_name=name,
+            visible_object_name=name,
+            anchor_object_name=forced_anchor,
+            anchor_status="anchored_medium",
+            anchor_relation="related_to",
+            anchor_confidence_band="medium",
+            anchor_confirmation_needed=True,
+            learning_anchor_active=False,
+            resolution_debug=build_resolution_debug(
+                surface_object_name=name,
+                decision_source="candidate_fallback",
+                decision_reason="relation_repair_failed",
+                candidate_anchors=candidate_anchors,
+                model_attempted=True,
+                raw_model_response=raw_text,
+                parsed_anchor_raw=parsed_anchor_raw,
+                parsed_relation_raw=parsed_relation_raw,
+                parsed_confidence_raw=parsed_confidence_raw,
+                anchor_object_name=forced_anchor,
+                anchor_status="anchored_medium",
+            ),
+        )
+
+    if len(candidate_anchors) > 1:
+        return ObjectResolutionResult(
+            surface_object_name=name,
+            visible_object_name=name,
+            anchor_object_name=None,
+            anchor_status="unresolved",
+            anchor_relation=None,
+            anchor_confidence_band=None,
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+            resolution_debug=build_resolution_debug(
+                surface_object_name=name,
+                decision_source="unresolved",
+                decision_reason="multiple_candidate_anchors",
+                candidate_anchors=candidate_anchors,
+                model_attempted=True,
+                raw_model_response=raw_text,
+                parsed_anchor_raw=parsed_anchor_raw,
+                parsed_relation_raw=parsed_relation_raw,
+                parsed_confidence_raw=parsed_confidence_raw,
+            ),
+        )
+
+    return ObjectResolutionResult(
+        surface_object_name=name,
+        visible_object_name=name,
+        anchor_object_name=None,
+        anchor_status="unresolved",
+        anchor_relation=None,
+        anchor_confidence_band=None,
+        anchor_confirmation_needed=False,
+        learning_anchor_active=False,
+        resolution_debug=build_resolution_debug(
+            surface_object_name=name,
+            decision_source="unresolved",
+            decision_reason="model_low_confidence",
+            candidate_anchors=candidate_anchors,
+            model_attempted=True,
+            raw_model_response=raw_text,
+            parsed_anchor_raw=parsed_anchor_raw,
+            parsed_relation_raw=parsed_relation_raw,
+            parsed_confidence_raw=parsed_confidence_raw,
+        ),
+    )
 
 
 def resolve_object_input(
@@ -142,6 +356,15 @@ def resolve_object_input(
             anchor_confidence_band="exact",
             anchor_confirmation_needed=False,
             learning_anchor_active=True,
+            resolution_debug=build_resolution_debug(
+                surface_object_name=surface,
+                decision_source="exact_supported",
+                decision_reason="exact_match",
+                candidate_anchors=[exact],
+                model_attempted=False,
+                anchor_object_name=exact,
+                anchor_status="exact_supported",
+            ),
         )
 
     fallback = _model_fallback(surface, client, config or {})
@@ -157,6 +380,13 @@ def resolve_object_input(
         anchor_confidence_band=None,
         anchor_confirmation_needed=False,
         learning_anchor_active=False,
+        resolution_debug=build_resolution_debug(
+            surface_object_name=surface,
+            decision_source="unresolved",
+            decision_reason="no_model_client",
+            candidate_anchors=_candidate_anchor_shortlist(surface),
+            model_attempted=False,
+        ),
     )
 
 

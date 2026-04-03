@@ -26,6 +26,7 @@ from graph_lookup import lookup_top_available_concepts
 from object_resolver import parse_anchor_confirmation, resolve_object_input
 from bridge_context import build_bridge_context
 from bridge_debug import build_bridge_debug, build_bridge_trace_entry, format_bridge_log_line
+from resolution_debug import format_resolution_log_line
 from stream import (
     classify_bridge_follow,
     generate_bridge_retry_response_stream,
@@ -144,6 +145,7 @@ def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
         "anchor_confirmation_needed": assistant.anchor_confirmation_needed,
         "learning_anchor_active": assistant.learning_anchor_active,
         "bridge_attempt_count": assistant.bridge_attempt_count,
+        "resolution_debug": assistant.session_resolution_debug,
     }
 
 
@@ -351,6 +353,9 @@ def start_conversation():
     )
     assistant.apply_resolution(resolution)
     logger.info(
+        f"[RESOLUTION] {format_resolution_log_line(session_id=session_id, request_id='start', resolution_debug=assistant.session_resolution_debug)}"
+    )
+    logger.info(
         f"[BRIDGE] {format_bridge_log_line(session_id=session_id, request_id='start', bridge_debug=assistant.session_resolution_debug)}"
     )
 
@@ -425,6 +430,7 @@ def start_conversation():
                         "learning_anchor_active": assistant.learning_anchor_active,
                         "bridge_attempt_count": 0,
                         "bridge_debug": None,
+                        "resolution_debug": assistant.session_resolution_debug,
                         "correct_answer_count": 0,
                         "intro_mode": _intro_mode_for_assistant(assistant),
                         "category_prompt": assistant.category_prompt,
@@ -486,6 +492,7 @@ def start_conversation():
                                 "mode": "chat",
                                 "response_type": chunk.response_type,
                                 "bridge_debug": chunk.bridge_debug.model_dump() if chunk.bridge_debug else None,
+                                "resolution_debug": chunk.resolution_debug.model_dump() if chunk.resolution_debug else assistant.session_resolution_debug,
                                 "classification_status": chunk.classification_status,
                                 "classification_failure_reason": chunk.classification_failure_reason,
                                 "selected_hook_type": chunk.selected_hook_type,
@@ -1011,6 +1018,7 @@ def continue_conversation():
                         "learning_anchor_active": assistant.learning_anchor_active,
                         "bridge_attempt_count": assistant.bridge_attempt_count,
                         "bridge_debug": turn_bridge_debug,
+                        "resolution_debug": assistant.session_resolution_debug,
                         "correct_answer_count": assistant.correct_answer_count,
                         "intro_mode": None,
                         "category_prompt": category_prompt,
@@ -1075,6 +1083,7 @@ def continue_conversation():
                                 "mode": "chat",
                                 "response_type": chunk.response_type,
                                 "bridge_debug": chunk.bridge_debug.model_dump() if chunk.bridge_debug else None,
+                                "resolution_debug": chunk.resolution_debug.model_dump() if chunk.resolution_debug else assistant.session_resolution_debug,
                                 "classification_status": chunk.classification_status,
                                 "classification_failure_reason": chunk.classification_failure_reason,
                                 "selected_hook_type": chunk.selected_hook_type,
@@ -1422,6 +1431,7 @@ def get_exchanges(session_id):
             entry["mode"] = msg.get("mode", "chat")
             entry["response_type"] = msg.get("response_type")
             entry["bridge_debug"] = msg.get("bridge_debug")
+            entry["resolution_debug"] = msg.get("resolution_debug")
             entry["classification_status"] = msg.get("classification_status")
             entry["classification_failure_reason"] = msg.get("classification_failure_reason")
         transcript.append(entry)
@@ -1438,6 +1448,7 @@ def get_exchanges(session_id):
                 "mode": transcript[i].get("mode", "chat"),
                 "response_type": transcript[i].get("response_type"),
                 "bridge_debug": transcript[i].get("bridge_debug"),
+                "resolution_debug": transcript[i].get("resolution_debug"),
                 "classification_status": transcript[i].get("classification_status"),
                 "classification_failure_reason": transcript[i].get("classification_failure_reason"),
             }
@@ -1473,6 +1484,7 @@ def get_exchanges(session_id):
                 "mode": transcript[i + 1].get("mode", "chat"),
                 "response_type": transcript[i + 1].get("response_type"),
                 "bridge_debug": transcript[i + 1].get("bridge_debug"),
+                "resolution_debug": transcript[i + 1].get("resolution_debug"),
                 "intent_type": intent_type,
                 "classification_status": transcript[i + 1].get("classification_status"),
                 "classification_failure_reason": transcript[i + 1].get("classification_failure_reason"),
@@ -1571,6 +1583,7 @@ def manual_critique():
             entry["mode"] = msg.get("mode", "chat")
             entry["response_type"] = msg.get("response_type")
             entry["bridge_debug"] = msg.get("bridge_debug")
+            entry["resolution_debug"] = msg.get("resolution_debug")
             entry["classification_status"] = msg.get("classification_status")
             entry["classification_failure_reason"] = msg.get("classification_failure_reason")
         transcript.append(entry)
@@ -1587,6 +1600,7 @@ def manual_critique():
                 "mode": transcript[i].get("mode", "chat"),
                 "response_type": transcript[i].get("response_type"),
                 "bridge_debug": transcript[i].get("bridge_debug"),
+                "resolution_debug": transcript[i].get("resolution_debug"),
                 "classification_status": transcript[i].get("classification_status"),
                 "classification_failure_reason": transcript[i].get("classification_failure_reason"),
             }
@@ -1603,6 +1617,7 @@ def manual_critique():
                 "mode": transcript[i + 1].get("mode", "chat"),
                 "response_type": transcript[i + 1].get("response_type"),
                 "bridge_debug": transcript[i + 1].get("bridge_debug"),
+                "resolution_debug": transcript[i + 1].get("resolution_debug"),
                 "classification_status": transcript[i + 1].get("classification_status"),
                 "classification_failure_reason": transcript[i + 1].get("classification_failure_reason"),
             })
@@ -1915,10 +1930,19 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
             ("Relation", "anchor_relation"),
             ("Confidence", "anchor_confidence_band"),
             ("Learning Active", "learning_anchor_active"),
+            ("Decision Source", "decision_source"),
+            ("Decision Reason", "decision_reason"),
         ]:
             value = session_resolution_debug.get(key)
             if value is not None:
                 report += f"- {label}: `{value}`\n"
+        candidates = session_resolution_debug.get("candidate_anchors")
+        if candidates is not None:
+            report += f"- Candidate Anchors: `{', '.join(candidates) if candidates else 'none'}`\n"
+        raw_model_response = session_resolution_debug.get("raw_model_response")
+        if raw_model_response:
+            raw_excerpt = raw_model_response if len(raw_model_response) <= 200 else raw_model_response[:197] + "..."
+            report += f"- Raw Resolver Output: `{raw_excerpt}`\n"
         report += "\n---\n\n"
 
     # Introduction Critique section (if the reviewer critiqued the introduction)

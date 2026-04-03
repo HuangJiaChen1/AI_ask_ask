@@ -1,5 +1,5 @@
 import json
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 
 def parse_sse(response_data):
@@ -66,6 +66,7 @@ def test_start_with_unresolved_object_stays_surface_and_disables_learning(client
             anchor_confidence_band=None,
             anchor_confirmation_needed=False,
             learning_anchor_active=False,
+            resolution_debug={"decision_reason": "no_model_client", "decision_source": "unresolved"},
         ),
     )
 
@@ -80,6 +81,25 @@ def test_start_with_unresolved_object_stays_surface_and_disables_learning(client
     assert first_chunk["anchor_object_name"] is None
     assert first_chunk["anchor_status"] == "unresolved"
     assert first_chunk["learning_anchor_active"] is False
+    assert first_chunk["resolution_debug"]["decision_reason"] == "no_model_client"
+
+
+def test_start_with_relation_repair_records_resolution_debug(client, monkeypatch):
+    client_mock = MagicMock()
+    client_mock.models.generate_content.side_effect = [
+        MagicMock(text='{"anchor_object_name": null, "relation": null, "confidence_band": "low"}'),
+        MagicMock(text='{"relation": "food_for", "confidence_band": "high"}'),
+    ]
+    monkeypatch.setattr("paixueji_app.GLOBAL_GEMINI_CLIENT", client_mock)
+
+    response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    assert response.status_code == 200
+
+    events = parse_sse(response.data)
+    first_chunk = next(e["data"] for e in events if e["event"] == "chunk")
+
+    assert first_chunk["anchor_status"] == "anchored_high"
+    assert first_chunk["resolution_debug"]["decision_source"] == "relation_repair"
 
 
 def test_medium_confidence_confirmation_accepts_anchor_and_switches(client, monkeypatch):
@@ -185,6 +205,7 @@ def test_force_switch_high_confidence_enters_pre_anchor_state(client, monkeypatc
             anchor_confidence_band="high",
             anchor_confirmation_needed=False,
             learning_anchor_active=False,
+            resolution_debug={"decision_source": "model_inference"},
         ),
     )
 

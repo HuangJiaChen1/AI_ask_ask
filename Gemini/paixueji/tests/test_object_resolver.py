@@ -4,6 +4,7 @@ from paixueji_assistant import PaixuejiAssistant
 
 from object_resolver import (
     ObjectResolutionResult,
+    _candidate_anchor_shortlist,
     parse_anchor_confirmation,
     resolve_object_input,
 )
@@ -30,6 +31,10 @@ def test_unsupported_object_uses_model_inference_when_not_exact(monkeypatch):
         anchor_confidence_band="high",
         anchor_confirmation_needed=False,
         learning_anchor_active=False,
+        resolution_debug={
+            "decision_source": "model_inference",
+            "decision_reason": "mocked",
+        },
     )
 
     monkeypatch.setattr("object_resolver._model_fallback", lambda *args, **kwargs: expected)
@@ -37,6 +42,7 @@ def test_unsupported_object_uses_model_inference_when_not_exact(monkeypatch):
     result = resolve_object_input("cat food", age=6, client=MagicMock(), config={})
 
     assert result == expected
+    assert result.resolution_debug["decision_source"] == "model_inference"
 
 
 def test_model_inference_medium_confidence_requires_confirmation():
@@ -80,20 +86,95 @@ def test_model_relation_is_normalized_before_validity_check():
     assert result.anchor_confirmation_needed is False
 
 
+def test_candidate_anchor_shortlist_prefers_token_matches():
+    assert _candidate_anchor_shortlist("cat food")[:1] == ["cat"]
+
+
+def test_candidate_anchor_shortlist_rejects_substring_only_matches():
+    assert _candidate_anchor_shortlist("categories") == []
+
+
+def test_relation_repair_uses_single_strong_candidate_when_primary_misses():
+    client = MagicMock()
+    client.models.generate_content.side_effect = [
+        MagicMock(text='{"anchor_object_name": null, "relation": null, "confidence_band": "low"}'),
+        MagicMock(text='{"relation": "food_for", "confidence_band": "high"}'),
+    ]
+
+    result = resolve_object_input("cat food", age=6, client=client, config={"model_name": "mock"})
+
+    assert result.anchor_status == "anchored_high"
+    assert result.anchor_object_name == "cat"
+    assert result.anchor_relation == "food_for"
+    assert result.resolution_debug["decision_source"] == "relation_repair"
+    assert result.resolution_debug["decision_reason"] == "primary_low_confidence_single_candidate"
+
+
+def test_relation_repair_failure_falls_back_to_medium_confirmation():
+    client = MagicMock()
+    client.models.generate_content.side_effect = [
+        MagicMock(text='{"anchor_object_name": null, "relation": null, "confidence_band": "low"}'),
+        MagicMock(text='{"relation": null, "confidence_band": "low"}'),
+    ]
+
+    result = resolve_object_input("cat food", age=6, client=client, config={"model_name": "mock"})
+
+    assert result.anchor_status == "anchored_medium"
+    assert result.anchor_object_name == "cat"
+    assert result.anchor_relation == "related_to"
+    assert result.anchor_confirmation_needed is True
+    assert result.resolution_debug["decision_source"] == "candidate_fallback"
+    assert result.resolution_debug["decision_reason"] == "relation_repair_failed"
+
+
+def test_multiple_candidates_do_not_force_first_anchor_on_fallback(monkeypatch):
+    client = MagicMock()
+    client.models.generate_content.return_value.text = (
+        '{"anchor_object_name": null, "relation": null, "confidence_band": "low"}'
+    )
+    monkeypatch.setattr("object_resolver._candidate_anchor_shortlist", lambda *_args, **_kwargs: ["cat", "dog"])
+
+    result = resolve_object_input("cat dog thing", age=6, client=client, config={"model_name": "mock"})
+
+    assert result.anchor_status == "unresolved"
+    assert result.anchor_object_name is None
+    assert result.resolution_debug["decision_reason"] == "multiple_candidate_anchors"
+
+
+def test_model_low_confidence_without_candidates_is_not_reported_as_no_model_client(monkeypatch):
+    client = MagicMock()
+    client.models.generate_content.return_value.text = (
+        '{"anchor_object_name": null, "relation": null, "confidence_band": "low"}'
+    )
+    monkeypatch.setattr("object_resolver._candidate_anchor_shortlist", lambda *_args, **_kwargs: [])
+
+    result = resolve_object_input("mystery object", age=6, client=client, config={"model_name": "mock"})
+
+    assert result.anchor_status == "unresolved"
+    assert result.resolution_debug["decision_reason"] == "model_low_confidence"
+    assert result.resolution_debug["model_attempted"] is True
+
+
+def test_invalid_json_returns_unresolved_with_reason():
+    client = MagicMock()
+    client.models.generate_content.return_value.text = "not json"
+
+    result = resolve_object_input("cat food", age=6, client=client, config={"model_name": "mock"})
+
+    assert result.anchor_status == "unresolved"
+    assert result.resolution_debug["decision_reason"] == "invalid_json"
+    assert result.resolution_debug["raw_model_response"] == "not json"
+
+
 def test_unknown_object_without_match_returns_unresolved():
     result = resolve_object_input("spaceship fuel", age=6, client=None, config={})
 
-    assert result == ObjectResolutionResult(
-        surface_object_name="spaceship fuel",
-        visible_object_name="spaceship fuel",
-        anchor_object_name=None,
-        anchor_status="unresolved",
-        anchor_relation=None,
-        anchor_confidence_band=None,
-        anchor_confirmation_needed=False,
-        learning_anchor_active=False,
-        anchor_suppressed=False,
-    )
+    assert result.anchor_status == "unresolved"
+    assert result.surface_object_name == "spaceship fuel"
+    assert result.visible_object_name == "spaceship fuel"
+    assert result.anchor_object_name is None
+    assert result.resolution_debug["decision_source"] == "unresolved"
+    assert result.resolution_debug["decision_reason"] == "no_model_client"
 
 
 def test_confirmation_parser_accepts_anchor_and_rejects_surface():

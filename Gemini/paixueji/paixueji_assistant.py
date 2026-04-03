@@ -163,6 +163,8 @@ class PaixuejiAssistant:
             "anchor_confidence_band": resolution.anchor_confidence_band,
             "learning_anchor_active": resolution.learning_anchor_active,
         }
+        if resolution.resolution_debug:
+            self.session_resolution_debug.update(resolution.resolution_debug)
 
     def activate_anchor_topic(self, anchor_name: str):
         """Make the anchor object the visible/learning topic and reset progress."""

@@ -48,6 +48,20 @@ class BridgeDebugInfo(BaseModel):
     bridge_visibility_reason: str | None = None
 
 
+class ResolutionDebugInfo(BaseModel):
+    surface_object_name: str | None = None
+    decision_source: str | None = None
+    decision_reason: str | None = None
+    candidate_anchors: list[str] | None = None
+    model_attempted: bool | None = None
+    raw_model_response: str | None = None
+    parsed_anchor_raw: str | None = None
+    parsed_relation_raw: str | None = None
+    parsed_confidence_raw: str | None = None
+    anchor_object_name: str | None = None
+    anchor_status: str | None = None
+
+
 class StreamChunk(BaseModel):
     """Model representing a single streaming response chunk.
 
@@ -141,6 +155,7 @@ class StreamChunk(BaseModel):
     # Node execution tracing (for critique reports)
     nodes_executed: list[dict] | None = None  # Passed through final chunk
     bridge_debug: BridgeDebugInfo | None = None
+    resolution_debug: ResolutionDebugInfo | None = None
 
     # Chat phase completion signal (one-shot, sent on the threshold correct answer turn)
     chat_phase_complete: Optional[bool] = None

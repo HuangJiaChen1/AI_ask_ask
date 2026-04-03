@@ -132,6 +132,14 @@ class TestIntroductionPromptBeatStructure:
             "ANCHOR_BRIDGE_INTRO_PROMPT must forbid a purely surface-object intro"
         )
 
+    def test_unknown_object_intro_prompt_bans_fake_observation_language(self):
+        """UNKNOWN_OBJECT_INTRO_PROMPT must ban fake observation and name-implied facts."""
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.UNKNOWN_OBJECT_INTRO_PROMPT
+        assert "Do not say you can see the object" in prompt
+        assert "Do not invent facts from words inside the object's name" in prompt
+
 
 # ===========================================================================
 # Fix 2 — CORRECT_ANSWER_INTENT_PROMPT BEAT 3
@@ -1037,6 +1045,33 @@ class TestOrdinaryChatKbStreaming:
 
         assert result["bridge_debug"]["decision"] == "intro_bridge"
         assert result["bridge_debug"]["bridge_visible_in_response"] is False
+
+    @pytest.mark.asyncio
+    async def test_unresolved_correct_answer_passes_surface_only_guardrails(self):
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=0)
+        state = _build_minimal_state(
+            assistant,
+            messages=[{"role": "assistant", "content": "What does it smell like?"}],
+            intent_type="correct_answer",
+        )
+        state["object_name"] = "cat food"
+        state["surface_object_name"] = "cat food"
+        state["anchor_status"] = "unresolved"
+        state["learning_anchor_active"] = False
+
+        with patch("graph.generate_intent_response_stream", return_value=object()) as mock_response, patch(
+            "graph.stream_generator_to_callback",
+            new=AsyncMock(side_effect=[("brief reaction", 1), ("follow-up question", 2)]),
+        ), patch("graph.ask_followup_question_stream", return_value=object()) as mock_followup:
+            await graph.node_correct_answer(state)
+
+        response_guardrails = mock_response.call_args.kwargs["resolution_guardrails"]
+        followup_guardrails = mock_followup.call_args.kwargs["resolution_guardrails"]
+        assert "No supported anchor is active" in response_guardrails
+        assert "Do not introduce facts about related objects implied by the name" in response_guardrails
+        assert "Do not introduce facts about related objects implied by the name" in followup_guardrails
 
     @pytest.mark.asyncio
     async def test_node_finalize_emits_used_kb_item_for_one_stage_paths(self):

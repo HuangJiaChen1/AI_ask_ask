@@ -162,9 +162,17 @@ def test_hf_report_includes_anchor_resolution_and_bridge_debug_sections():
             "surface_object_name": "cat food",
             "anchor_object_name": "cat",
             "anchor_status": "anchored_high",
+            "decision_source": "relation_repair",
+            "decision_reason": "primary_low_confidence_single_candidate",
+            "candidate_anchors": ["cat"],
+            "raw_model_response": '{"anchor_object_name": null, "confidence_band":"low"}',
         },
     )
     assert "## Anchor Resolution" in report
+    assert "Decision Source" in report
+    assert "Decision Reason" in report
+    assert "Candidate Anchors" in report
+    assert "Raw Resolver Output" in report
     assert "**Bridge Verdict:**" in report
     assert "#### Raw Bridge Debug" in report
     assert "[CHAT|introduction]" in report
