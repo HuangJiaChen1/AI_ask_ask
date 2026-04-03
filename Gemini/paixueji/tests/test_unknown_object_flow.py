@@ -353,3 +353,5 @@ def test_second_bridge_miss_suppresses_anchor_and_falls_back_to_unresolved_chat(
     assert final_chunk["current_object_name"] == "cat food"
     assert final_chunk["anchor_status"] == "unresolved"
     assert final_chunk["learning_anchor_active"] is False
+    assert final_chunk["bridge_debug"]["decision"] == "unresolved_fallback"
+    assert any(node["node"] == "driver:bridge_decision" for node in final_chunk["nodes_executed"])

@@ -570,6 +570,8 @@ def continue_conversation():
     def generate():
         """Generator for SSE stream."""
         try:
+            turn_bridge_debug = None
+            turn_bridge_traces = []
 
             # Get age prompt if age is set
             age_prompt = ""
@@ -857,6 +859,13 @@ def continue_conversation():
                         )
                         return
 
+                    decision_trace = build_bridge_trace_entry(
+                        node="driver:bridge_decision",
+                        state_before=pre_anchor_state_before,
+                        changes={"decision": "unresolved_fallback"},
+                        time_ms=0.0,
+                    )
+                    bridge_traces = [gate_trace, follow_trace, decision_trace]
                     assistant.suppress_anchor(assistant.anchor_object_name)
                     assistant.anchor_status = "unresolved"
                     assistant.learning_anchor_active = False
@@ -881,6 +890,8 @@ def continue_conversation():
                         kb_mode="surface_only",
                     )
                     assistant.set_last_bridge_debug(unresolved_debug)
+                    turn_bridge_debug = unresolved_debug
+                    turn_bridge_traces = bridge_traces
                     logger.info(
                         f"[BRIDGE] {format_bridge_log_line(session_id=session_id, request_id=request_id, bridge_debug=unresolved_debug)}"
                     )
@@ -999,7 +1010,7 @@ def continue_conversation():
                         "anchor_confirmation_needed": assistant.anchor_confirmation_needed,
                         "learning_anchor_active": assistant.learning_anchor_active,
                         "bridge_attempt_count": assistant.bridge_attempt_count,
-                        "bridge_debug": None,
+                        "bridge_debug": turn_bridge_debug,
                         "correct_answer_count": assistant.correct_answer_count,
                         "intro_mode": None,
                         "category_prompt": category_prompt,
@@ -1033,7 +1044,7 @@ def continue_conversation():
                         "question_style": None,
 
                         # Node execution tracing
-                        "nodes_executed": [],
+                        "nodes_executed": turn_bridge_traces,
 
                         # Input state snapshot for TraceObject assembly
                         "_input_state_snapshot": {
