@@ -115,6 +115,7 @@ async def classify_pre_anchor_reply(
     anchor_object_name: str,
     relation: str | None,
     previous_bridge_question: str | None = None,
+    bridge_follow_classifier=classify_bridge_follow,
 ) -> PreAnchorReplyDecision:
     normalized_answer = _normalize(child_answer)
 
@@ -136,7 +137,7 @@ async def classify_pre_anchor_reply(
             support_action="scaffold",
         )
 
-    bridge_follow = await classify_bridge_follow(
+    bridge_follow = await bridge_follow_classifier(
         assistant=assistant,
         child_answer=child_answer,
         surface_object_name=surface_object_name,

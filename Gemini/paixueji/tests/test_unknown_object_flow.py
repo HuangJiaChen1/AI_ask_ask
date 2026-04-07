@@ -718,3 +718,155 @@ def test_affirmative_reply_to_retry_bridge_activates_anchor_instead_of_correct_a
     assert second_final["nodes_executed"][-1]["changes"]["decision"] == "bridge_activation"
     assert not any(node["node"] == "analyze_input" for node in second_final["nodes_executed"])
     assert not any(node["node"] == "correct_answer" for node in second_final["nodes_executed"])
+
+
+def test_pre_anchor_clarification_request_uses_bridge_support_without_attempt_increment(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+    from tests.conftest import MockChunk, MockStream
+    import paixueji_app
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+
+    streamed_responses = iter([
+        "Cat food is interesting. What is the most important part of cat food for a cat to eat?",
+        "I mean, a cat can notice cat food in simple ways. What might its nose smell first?",
+    ])
+
+    def side_effect_stream(model, contents, config=None):
+        response_text = next(streamed_responses)
+        return MockStream([MockChunk(word + " ") for word in response_text.split()])
+
+    monkeypatch.setattr(
+        paixueji_app.GLOBAL_GEMINI_CLIENT.aio.models.generate_content_stream,
+        "side_effect",
+        side_effect_stream,
+        raising=False,
+    )
+
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+
+    response = client.post("/api/continue", json={"session_id": session_id, "child_input": "what do you mean?"})
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+
+    assert final_chunk["response_type"] == "bridge_support"
+    assert final_chunk["bridge_attempt_count"] == 1
+    assert final_chunk["pre_anchor_support_count"] == 1
+    assert final_chunk["bridge_debug"]["pre_anchor_reply_type"] == "clarification_request"
+    assert final_chunk["bridge_debug"]["support_action"] == "clarify"
+    assert not any(node["node"] == "correct_answer" for node in final_chunk["nodes_executed"])
+
+
+def test_pre_anchor_idk_uses_bridge_support_without_attempt_increment(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+    from tests.conftest import MockChunk, MockStream
+    import paixueji_app
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+
+    streamed_responses = iter([
+        "Cat food is interesting. Does she use her nose to sniff it?",
+        "It could smell strong or fishy to her. Which one do you think her nose notices?",
+    ])
+
+    def side_effect_stream(model, contents, config=None):
+        response_text = next(streamed_responses)
+        return MockStream([MockChunk(word + " ") for word in response_text.split()])
+
+    monkeypatch.setattr(
+        paixueji_app.GLOBAL_GEMINI_CLIENT.aio.models.generate_content_stream,
+        "side_effect",
+        side_effect_stream,
+        raising=False,
+    )
+
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+
+    response = client.post("/api/continue", json={"session_id": session_id, "child_input": "I don't know"})
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+
+    assert final_chunk["response_type"] == "bridge_support"
+    assert final_chunk["bridge_attempt_count"] == 1
+    assert final_chunk["pre_anchor_support_count"] == 1
+    assert final_chunk["bridge_debug"]["pre_anchor_reply_type"] == "idk_or_stuck"
+    assert final_chunk["bridge_debug"]["support_action"] == "scaffold"
+
+
+def test_valid_out_of_lane_answer_after_support_soft_activates_without_correct_answer_fallthrough(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+    from tests.conftest import MockChunk, MockStream
+    import paixueji_app
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+
+    streamed_responses = iter([
+        "Cat food is interesting. What is the most important part of cat food for a cat to eat?",
+        "I mean, a cat can notice cat food in simple ways. What might its nose smell first?",
+        _bridge_activation_text(),
+    ])
+
+    def side_effect_stream(model, contents, config=None):
+        response_text = next(streamed_responses)
+        return MockStream([MockChunk(word + " ") for word in response_text.split()])
+
+    monkeypatch.setattr(
+        paixueji_app.GLOBAL_GEMINI_CLIENT.aio.models.generate_content_stream,
+        "side_effect",
+        side_effect_stream,
+        raising=False,
+    )
+
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+
+    first = client.post("/api/continue", json={"session_id": session_id, "child_input": "what do you mean?"})
+    first_final = [e["data"] for e in parse_sse(first.data) if e["event"] == "chunk"][-1]
+    assert first_final["response_type"] == "bridge_support"
+
+    second = client.post("/api/continue", json={"session_id": session_id, "child_input": "they can see it"})
+    second_final = [e["data"] for e in parse_sse(second.data) if e["event"] == "chunk"][-1]
+
+    assert second_final["response_type"] == "bridge_activation"
+    assert second_final["current_object_name"] == "cat"
+    assert second_final["learning_anchor_active"] is True
+    assert second_final["bridge_debug"]["decision"] == "bridge_activation"
+    assert second_final["bridge_debug"]["pre_anchor_reply_type"] == "valid_out_of_lane_anchor_related"
+    assert not any(node["node"] == "analyze_input" for node in second_final["nodes_executed"])
+    assert not any(node["node"] == "correct_answer" for node in second_final["nodes_executed"])

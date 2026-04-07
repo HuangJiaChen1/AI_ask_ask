@@ -31,6 +31,7 @@ from .response_generators import (
     generate_intent_response_stream,
     generate_bridge_activation_response_stream,
     generate_bridge_retry_response_stream,
+    generate_bridge_support_response_stream,
     generate_topic_switch_response_stream,
 )
 
@@ -66,6 +67,7 @@ __all__ = [
     'generate_intent_response_stream',
     'generate_bridge_activation_response_stream',
     'generate_bridge_retry_response_stream',
+    'generate_bridge_support_response_stream',
     'generate_topic_switch_response_stream',
 
     # Question generators (intro path + followup)

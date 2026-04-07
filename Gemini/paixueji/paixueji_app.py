@@ -26,11 +26,13 @@ from graph_lookup import lookup_top_available_concepts
 from object_resolver import parse_anchor_confirmation, resolve_object_input
 from bridge_context import build_bridge_context
 from bridge_debug import build_bridge_debug, build_bridge_trace_entry, format_bridge_log_line
+from pre_anchor_policy import classify_pre_anchor_reply
 from resolution_debug import format_resolution_log_line
 from stream import (
     classify_bridge_follow,
     generate_bridge_activation_response_stream,
     generate_bridge_retry_response_stream,
+    generate_bridge_support_response_stream,
     generate_topic_switch_response_stream,
     prepare_messages_for_streaming,
 )
@@ -47,6 +49,7 @@ sessions = {}
 
 ALLOWED_MODELS = {"gemini-3.1-flash-lite-preview", "gemini-2.0-flash-lite"}
 MAX_BRIDGE_ATTEMPTS = 2
+MAX_PRE_ANCHOR_SUPPORT_TURNS = 2
 
 # Initialize global Gemini client to enable connection reuse
 def init_global_client():
@@ -146,6 +149,7 @@ def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
         "anchor_confirmation_needed": assistant.anchor_confirmation_needed,
         "learning_anchor_active": assistant.learning_anchor_active,
         "bridge_attempt_count": assistant.bridge_attempt_count,
+        "pre_anchor_support_count": assistant.pre_anchor_support_count,
         "resolution_debug": assistant.session_resolution_debug,
     }
 
@@ -640,21 +644,27 @@ def continue_conversation():
                         "anchor_status": assistant.anchor_status,
                         "learning_anchor_active": assistant.learning_anchor_active,
                         "bridge_attempt_count": assistant.bridge_attempt_count,
+                        "pre_anchor_support_count": assistant.pre_anchor_support_count,
                         "surface_object_name": assistant.surface_object_name or assistant.object_name,
                         "anchor_object_name": assistant.anchor_object_name,
                     }
                     previous_bridge_question = _latest_bridge_question(assistant.conversation_history)
-                    bridge_follow = asyncio.run_coroutine_threadsafe(
-                        classify_bridge_follow(
+                    pre_anchor_decision = asyncio.run_coroutine_threadsafe(
+                        classify_pre_anchor_reply(
                             assistant=assistant,
                             child_answer=child_input,
                             surface_object_name=assistant.surface_object_name or assistant.object_name,
                             anchor_object_name=assistant.anchor_object_name,
                             relation=assistant.anchor_relation,
                             previous_bridge_question=previous_bridge_question,
+                            bridge_follow_classifier=classify_bridge_follow,
                         ),
                         loop,
                     ).result()
+                    bridge_follow = {
+                        "bridge_followed": pre_anchor_decision.bridge_followed,
+                        "reason": pre_anchor_decision.bridge_follow_reason or pre_anchor_decision.reason,
+                    }
                     gate_trace = build_bridge_trace_entry(
                         node="driver:pre_anchor_gate",
                         state_before=pre_anchor_state_before,
@@ -670,12 +680,24 @@ def continue_conversation():
                         changes={
                             "bridge_followed": bridge_follow.get("bridge_followed"),
                             "reason": bridge_follow.get("reason"),
+                            "reply_type": pre_anchor_decision.reply_type,
+                            "support_action": pre_anchor_decision.support_action,
                         },
                         time_ms=0.0,
                     )
 
-                    if bridge_follow.get("bridge_followed"):
+                    should_soft_activate = (
+                        pre_anchor_decision.reply_type == "valid_out_of_lane_anchor_related"
+                        and assistant.pre_anchor_support_count + 1 >= MAX_PRE_ANCHOR_SUPPORT_TURNS
+                    )
+
+                    if bridge_follow.get("bridge_followed") or should_soft_activate:
                         previous_object = assistant.surface_object_name or assistant.object_name
+                        activation_reason = (
+                            "soft activation after anchor-related support"
+                            if should_soft_activate
+                            else "child followed bridge"
+                        )
                         bridge_context = build_bridge_context(
                             surface_object_name=assistant.surface_object_name or assistant.object_name,
                             anchor_object_name=assistant.anchor_object_name,
@@ -698,13 +720,17 @@ def continue_conversation():
                             bridge_attempt_count_before=pre_anchor_state_before["bridge_attempt_count"],
                             bridge_attempt_count_after=assistant.bridge_attempt_count,
                             decision="bridge_activation",
-                            decision_reason="child followed bridge",
+                            decision_reason=activation_reason,
                             response_type="bridge_activation",
                             bridge_followed=True,
                             bridge_follow_reason=bridge_follow.get("reason"),
                             pre_anchor_handler_entered=True,
                             kb_mode="anchor_kb_active",
                             bridge_context_summary=_bridge_context_summary(bridge_context),
+                            pre_anchor_reply_type=pre_anchor_decision.reply_type,
+                            support_action=pre_anchor_decision.support_action,
+                            pre_anchor_support_count_before=pre_anchor_state_before["pre_anchor_support_count"],
+                            pre_anchor_support_count_after=assistant.pre_anchor_support_count,
                         )
                         decision_trace = build_bridge_trace_entry(
                             node="driver:bridge_decision",
@@ -768,7 +794,7 @@ def continue_conversation():
                                 bridge_attempt_count_before=pre_anchor_state_before["bridge_attempt_count"],
                                 bridge_attempt_count_after=assistant.bridge_attempt_count,
                                 decision="bridge_activation",
-                                decision_reason="child followed bridge",
+                                decision_reason=activation_reason,
                                 response_type="bridge_activation",
                                 bridge_followed=True,
                                 bridge_follow_reason=bridge_follow.get("reason"),
@@ -776,6 +802,10 @@ def continue_conversation():
                                 kb_mode="anchor_kb_active",
                                 bridge_context_summary=_bridge_context_summary(bridge_context),
                                 response_text=full_response,
+                                pre_anchor_reply_type=pre_anchor_decision.reply_type,
+                                support_action=pre_anchor_decision.support_action,
+                                pre_anchor_support_count_before=pre_anchor_state_before["pre_anchor_support_count"],
+                                pre_anchor_support_count_after=assistant.pre_anchor_support_count,
                             )
                             assistant.set_last_bridge_debug(final_bridge_debug)
                             logger.info(
@@ -815,7 +845,138 @@ def continue_conversation():
                         print(f"[INFO] Session {session_id[:8]}... bridge followed -> {assistant.object_name}")
                         return
 
-                    if assistant.bridge_attempt_count < MAX_BRIDGE_ATTEMPTS:
+                    if (
+                        pre_anchor_decision.reply_type in {
+                            "clarification_request",
+                            "idk_or_stuck",
+                            "valid_out_of_lane_anchor_related",
+                        }
+                        and assistant.pre_anchor_support_count < MAX_PRE_ANCHOR_SUPPORT_TURNS
+                    ):
+                        support_before = assistant.pre_anchor_support_count
+                        assistant.pre_anchor_support_count += 1
+                        bridge_context = build_bridge_context(
+                            surface_object_name=assistant.surface_object_name or assistant.object_name,
+                            anchor_object_name=assistant.anchor_object_name,
+                            relation=assistant.anchor_relation,
+                            attempt_number=max(assistant.bridge_attempt_count, 1),
+                        )
+                        bridge_debug = build_bridge_debug(
+                            surface_object_name=assistant.surface_object_name or assistant.object_name,
+                            anchor_object_name=assistant.anchor_object_name,
+                            anchor_status=assistant.anchor_status,
+                            anchor_relation=assistant.anchor_relation,
+                            anchor_confidence_band=assistant.anchor_confidence_band,
+                            intro_mode="anchor_bridge",
+                            learning_anchor_active_before=False,
+                            learning_anchor_active_after=False,
+                            bridge_attempt_count_before=pre_anchor_state_before["bridge_attempt_count"],
+                            bridge_attempt_count_after=assistant.bridge_attempt_count,
+                            decision="bridge_support",
+                            decision_reason=pre_anchor_decision.reason,
+                            response_type="bridge_support",
+                            bridge_followed=False,
+                            bridge_follow_reason=pre_anchor_decision.bridge_follow_reason,
+                            pre_anchor_handler_entered=True,
+                            kb_mode="bridge_context_only",
+                            bridge_context_summary=_bridge_context_summary(bridge_context),
+                            pre_anchor_reply_type=pre_anchor_decision.reply_type,
+                            support_action=pre_anchor_decision.support_action,
+                            pre_anchor_support_count_before=support_before,
+                            pre_anchor_support_count_after=assistant.pre_anchor_support_count,
+                        )
+                        assistant.set_last_bridge_debug(bridge_debug)
+                        logger.info(
+                            f"[BRIDGE] {format_bridge_log_line(session_id=session_id, request_id=request_id, bridge_debug=bridge_debug)}"
+                        )
+                        decision_trace = build_bridge_trace_entry(
+                            node="driver:bridge_decision",
+                            state_before=pre_anchor_state_before,
+                            changes={"decision": "bridge_support"},
+                            time_ms=0.0,
+                        )
+                        bridge_traces = [gate_trace, follow_trace, decision_trace]
+
+                        async def stream_bridge_support():
+                            messages = prepare_messages_for_streaming(
+                                assistant.conversation_history.copy(),
+                                age_prompt,
+                            )
+                            generator = generate_bridge_support_response_stream(
+                                messages=messages,
+                                child_answer=child_input,
+                                surface_object_name=assistant.surface_object_name or assistant.object_name,
+                                anchor_object_name=assistant.anchor_object_name,
+                                age=assistant.age or 6,
+                                age_prompt=age_prompt,
+                                bridge_context=bridge_context.prompt_context if bridge_context else "",
+                                previous_bridge_question=previous_bridge_question or "",
+                                support_action=pre_anchor_decision.support_action or "clarify",
+                                config=assistant.config,
+                                client=assistant.client,
+                            )
+
+                            sequence_number = 0
+                            full_response = ""
+                            async for text_chunk, _token_usage, full_so_far in generator:
+                                full_response = full_so_far
+                                if not text_chunk:
+                                    continue
+                                sequence_number += 1
+                                yield sse_event("chunk", StreamChunk(
+                                    response=text_chunk,
+                                    session_finished=False,
+                                    duration=0.0,
+                                    token_usage=None,
+                                    finish=False,
+                                    sequence_number=sequence_number,
+                                    timestamp=time.time(),
+                                    session_id=session_id,
+                                    request_id=request_id,
+                                    response_type="bridge_support",
+                                    correct_answer_count=assistant.correct_answer_count,
+                                    bridge_debug=bridge_debug,
+                                    nodes_executed=bridge_traces,
+                                    **_assistant_stream_fields(assistant),
+                                ))
+
+                            sequence_number += 1
+                            assistant.conversation_history.append({"role": "user", "content": child_input})
+                            assistant.conversation_history.append({
+                                "role": "assistant",
+                                "content": full_response,
+                                "mode": "chat",
+                                "response_type": "bridge_support",
+                                "bridge_debug": bridge_debug,
+                                "nodes_executed": bridge_traces,
+                            })
+                            yield sse_event("chunk", StreamChunk(
+                                response=full_response,
+                                session_finished=False,
+                                duration=0.0,
+                                token_usage=None,
+                                finish=True,
+                                sequence_number=sequence_number,
+                                timestamp=time.time(),
+                                session_id=session_id,
+                                request_id=request_id,
+                                response_type="bridge_support",
+                                correct_answer_count=assistant.correct_answer_count,
+                                bridge_debug=bridge_debug,
+                                nodes_executed=bridge_traces,
+                                **_assistant_stream_fields(assistant),
+                            ))
+                            yield sse_event("complete", {"success": True})
+
+                        gen = stream_bridge_support()
+                        for event in async_gen_to_sync(gen, loop):
+                            yield event
+                        print(
+                            f"[INFO] Session {session_id[:8]}... bridge support {assistant.pre_anchor_support_count}/{MAX_PRE_ANCHOR_SUPPORT_TURNS}"
+                        )
+                        return
+
+                    if pre_anchor_decision.consume_bridge_attempt and assistant.bridge_attempt_count < MAX_BRIDGE_ATTEMPTS:
                         attempt_before = assistant.bridge_attempt_count
                         next_attempt = assistant.bridge_attempt_count + 1
                         bridge_context = build_bridge_context(
@@ -844,6 +1005,10 @@ def continue_conversation():
                             pre_anchor_handler_entered=True,
                             kb_mode="bridge_context_only",
                             bridge_context_summary=_bridge_context_summary(bridge_context),
+                            pre_anchor_reply_type=pre_anchor_decision.reply_type,
+                            support_action=pre_anchor_decision.support_action,
+                            pre_anchor_support_count_before=pre_anchor_state_before["pre_anchor_support_count"],
+                            pre_anchor_support_count_after=assistant.pre_anchor_support_count,
                         )
                         assistant.set_last_bridge_debug(bridge_debug)
                         logger.info(
@@ -963,6 +1128,10 @@ def continue_conversation():
                         bridge_follow_reason=bridge_follow.get("reason"),
                         pre_anchor_handler_entered=True,
                         kb_mode="surface_only",
+                        pre_anchor_reply_type=pre_anchor_decision.reply_type,
+                        support_action=pre_anchor_decision.support_action,
+                        pre_anchor_support_count_before=pre_anchor_state_before["pre_anchor_support_count"],
+                        pre_anchor_support_count_after=0,
                     )
                     assistant.set_last_bridge_debug(unresolved_debug)
                     turn_bridge_debug = unresolved_debug
