@@ -291,6 +291,23 @@ class TestRoutingBelowThreshold:
 class TestThresholdTriggersClassifyTheme:
     """At correct_answer_count=1, the 2nd correct answer must route to classify_theme."""
 
+    def test_threshold_route_records_completion_reason_metadata(self):
+        assistant = PaixuejiAssistant()
+        assistant.correct_answer_count = 1
+        assistant.learning_anchor_active = True
+
+        route = route_from_analyze_input({
+            "classification_status": "ok",
+            "intent_type": "CORRECT_ANSWER",
+            "assistant": assistant,
+        })
+
+        assert route == "classify_theme"
+        assert assistant._last_route_debug["route_reason"] == "correct_answer_threshold_reached"
+        assert assistant._last_route_debug["correct_answer_count_before"] == 1
+        assert assistant._last_route_debug["correct_answer_count_after_if_accepted"] == 2
+        assert assistant._last_route_debug["guide_mode_threshold"] == GUIDE_MODE_THRESHOLD
+
     @pytest.mark.asyncio
     async def test_count_1_triggers_chat_complete_without_guide_state(self):
         """

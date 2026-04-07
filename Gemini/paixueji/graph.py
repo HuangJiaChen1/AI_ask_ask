@@ -54,17 +54,37 @@ def route_from_analyze_input(state) -> str:
     Extracted to module level for testability (LangGraph requires nested decorated
     functions for wiring, but the pure logic should be testable without building the graph).
     """
+    assistant = state.get("assistant")
+    if assistant and hasattr(assistant, "_last_route_debug"):
+        assistant._last_route_debug = None
+
     if state.get("classification_status") == "failed":
         return "fallback_freeform"
 
     intent = (state.get("intent_type") or "clarifying_idk").lower()
     # Intercept the Nth correct answer to run theme classification
     if (intent == "correct_answer" and
-            state["assistant"].learning_anchor_active and
-            state["assistant"].correct_answer_count + 1 >= GUIDE_MODE_THRESHOLD):
+            assistant and
+            assistant.learning_anchor_active and
+            assistant.correct_answer_count + 1 >= GUIDE_MODE_THRESHOLD):
+        assistant._last_route_debug = {
+            "route_reason": "correct_answer_threshold_reached",
+            "correct_answer_count_before": assistant.correct_answer_count,
+            "correct_answer_count_after_if_accepted": assistant.correct_answer_count + 1,
+            "guide_mode_threshold": GUIDE_MODE_THRESHOLD,
+            "learning_anchor_active": assistant.learning_anchor_active,
+        }
         return "classify_theme"
+    if intent == "correct_answer" and assistant:
+        assistant._last_route_debug = {
+            "route_reason": "below_correct_answer_threshold",
+            "correct_answer_count_before": assistant.correct_answer_count,
+            "correct_answer_count_after_if_accepted": assistant.correct_answer_count + 1,
+            "guide_mode_threshold": GUIDE_MODE_THRESHOLD,
+            "learning_anchor_active": assistant.learning_anchor_active,
+        }
     # Intercept 2nd+ struggle (IDK or wrong) — route to dedicated answer-reveal node
-    if intent in ("clarifying_idk", "clarifying_wrong") and state["assistant"].consecutive_struggle_count >= 2:
+    if intent in ("clarifying_idk", "clarifying_wrong") and assistant and assistant.consecutive_struggle_count >= 2:
         return "give_answer_idk"
     return intent
 
@@ -264,11 +284,17 @@ def trace_router(capture_fields):
             # Execute the router function
             destination = func(state)
 
+            route_debug = getattr(assistant, "_last_route_debug", None) if assistant else None
+            changes = {"destination": destination}
+            if route_debug:
+                changes.update(route_debug)
+                assistant._last_route_debug = None
+
             # Build router trace entry
             trace_entry = {
                 "node": f"router:{func.__name__}",
                 "time_ms": round((time.time() - start_time) * 1000, 1),
-                "changes": {"destination": destination},
+                "changes": changes,
                 "state_before": state_before,
             }
 
