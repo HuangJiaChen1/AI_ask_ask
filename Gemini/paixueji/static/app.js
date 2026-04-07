@@ -672,9 +672,13 @@ async function startConversation() {
 
         // Re-enable send button
         isStreaming = false;
-        sendBtn.disabled = false;
+        if (!conversationComplete) {
+            sendBtn.disabled = false;
+            userInput.focus();
+        } else {
+            disableCompletedChatInput();
+        }
         updateStopButton();
-        userInput.focus();
     }
 }
 
@@ -776,9 +780,13 @@ async function continueConversation(childInput) {
     } finally {
         currentStreamController = null;
         isStreaming = false;
-        sendBtn.disabled = false;
+        if (!conversationComplete) {
+            sendBtn.disabled = false;
+            userInput.focus();
+        } else {
+            disableCompletedChatInput();
+        }
         updateStopButton();
-        userInput.focus();
     }
 }
 
@@ -995,6 +1003,7 @@ function handleStreamChunk(chunk) {
 
     // Chat phase complete: show modal and disable input after close
     if (chunk.chat_phase_complete) {
+        conversationComplete = true;
         showChatPhaseCompleteModal();
     }
 }
@@ -1160,16 +1169,36 @@ function updateDebugPanel() {
     setText('debugKbMode', bridgeDebug.kb_mode);
 }
 
+function isCurrentObjectGameEligible() {
+    return !!currentObject && gameEntityNames.has(currentObject.toLowerCase());
+}
+
+function setChatPhaseCompleteModalVisible(visible) {
+    const modal = document.getElementById('chatPhaseCompleteModal');
+    if (modal) modal.style.display = visible ? 'flex' : 'none';
+}
+
+function setActivitiesMiniLauncherVisible(visible) {
+    const launcher = document.getElementById('activitiesMiniLauncher');
+    if (launcher) launcher.style.display = visible ? 'flex' : 'none';
+}
+
+function disableCompletedChatInput() {
+    document.getElementById('userInput').disabled = true;
+    document.getElementById('sendBtn').disabled = true;
+}
+
 /**
  * Show the "chat phase complete" modal once the correct-answer threshold is reached.
  * For game-eligible entities the button becomes "Let's Play!" and triggers handoff.
  */
 function showChatPhaseCompleteModal() {
-    const modal = document.getElementById('chatPhaseCompleteModal');
-    modal.style.display = 'flex';
+    setActivitiesMiniLauncherVisible(false);
+    setChatPhaseCompleteModalVisible(true);
 
-    const btn = modal.querySelector('button');
-    if (currentObject && gameEntityNames.has(currentObject)) {
+    const btn = document.getElementById('chatCompletePrimaryBtn');
+    if (!btn) return;
+    if (isCurrentObjectGameEligible()) {
         btn.textContent = "Let's Play!";
         btn.onclick = handoff;
     } else {
@@ -1179,13 +1208,28 @@ function showChatPhaseCompleteModal() {
 }
 
 function closeChatPhaseCompleteModal() {
-    document.getElementById('chatPhaseCompleteModal').style.display = 'none';
-    document.getElementById('userInput').disabled = true;
-    document.getElementById('sendBtn').disabled = true;
+    setChatPhaseCompleteModalVisible(false);
+    setActivitiesMiniLauncherVisible(false);
+    disableCompletedChatInput();
+}
+
+function minimizeChatPhaseCompleteModal() {
+    setChatPhaseCompleteModalVisible(false);
+    if (isCurrentObjectGameEligible()) {
+        setActivitiesMiniLauncherVisible(true);
+    } else {
+        setActivitiesMiniLauncherVisible(false);
+    }
+    disableCompletedChatInput();
+}
+
+function restoreChatPhaseCompleteModal() {
+    setActivitiesMiniLauncherVisible(false);
+    showChatPhaseCompleteModal();
 }
 
 /**
- * Save conversation history and redirect to WonderLens.
+ * Save conversation history and redirect to activities.
  */
 async function handoff() {
     try {
@@ -1258,6 +1302,8 @@ function resetConversation() {
     window.paixuejiUi.setLearningAnchorVisible(false);
     window.paixuejiUi.setManualSwitchVisible(false);
     window.paixuejiUi.setObjectSelectionVisible(false);
+    setChatPhaseCompleteModalVisible(false);
+    setActivitiesMiniLauncherVisible(false);
     window.paixuejiUi.showMainPage();
 
     // Re-enable input
