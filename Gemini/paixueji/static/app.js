@@ -267,6 +267,105 @@ const sendBtn = document.getElementById('sendBtn');
 const startForm = document.getElementById('startForm');
 const progressIndicator = document.getElementById('progressIndicator');
 const thinkingTimeDisplay = document.getElementById('thinking-time');
+const reportViewer = document.getElementById('reportViewer');
+const inputArea = document.querySelector('.input-area');
+const backBtn = document.getElementById('backBtn');
+const manualSwitchPanel = document.getElementById('manualSwitchPanel');
+const objectSelectionPanel = document.getElementById('objectSelectionPanel');
+
+window.paixuejiUi = {
+    state: {
+        primaryView: 'main',
+        reportsReturnView: 'main',
+        learningAnchorVisible: false,
+        manualSwitchVisible: false,
+        objectSelectionVisible: false,
+    },
+
+    renderPrimaryView() {
+        const { primaryView } = this.state;
+        const isMain = primaryView === 'main';
+        const isChat = primaryView === 'chat';
+        const isReports = primaryView === 'reports';
+
+        startForm.style.display = isMain ? 'flex' : 'none';
+        reportViewer.style.display = isReports ? 'flex' : 'none';
+        messagesContainer.style.display = isChat ? 'flex' : 'none';
+        inputArea.style.display = isChat ? 'flex' : 'none';
+
+        this.renderChatPanels();
+        this.renderBackButton();
+    },
+
+    renderChatPanels() {
+        const isChat = this.state.primaryView === 'chat';
+
+        progressIndicator.style.display =
+            isChat && this.state.learningAnchorVisible ? 'flex' : 'none';
+        manualSwitchPanel.style.display =
+            isChat && this.state.manualSwitchVisible ? 'block' : 'none';
+        objectSelectionPanel.style.display =
+            isChat && this.state.objectSelectionVisible ? 'block' : 'none';
+    },
+
+    renderBackButton() {
+        if (this.state.primaryView === 'chat') {
+            backBtn.style.display = 'inline-block';
+            backBtn.onclick = goBack;
+            return;
+        }
+
+        if (this.state.primaryView === 'reports') {
+            backBtn.style.display = 'inline-block';
+            backBtn.onclick = typeof closeReportsViewer === 'function' ? closeReportsViewer : null;
+            return;
+        }
+
+        backBtn.style.display = 'none';
+        backBtn.onclick = null;
+    },
+
+    showMainPage() {
+        this.state.primaryView = 'main';
+        this.renderPrimaryView();
+    },
+
+    showChatPage() {
+        this.state.primaryView = 'chat';
+        this.renderPrimaryView();
+    },
+
+    showReportsPage() {
+        if (this.state.primaryView !== 'reports') {
+            this.state.reportsReturnView = this.state.primaryView === 'chat' ? 'chat' : 'main';
+        }
+        this.state.primaryView = 'reports';
+        this.renderPrimaryView();
+    },
+
+    leaveReportsPage() {
+        if (this.state.reportsReturnView === 'chat') {
+            this.showChatPage();
+            return;
+        }
+        this.showMainPage();
+    },
+
+    setLearningAnchorVisible(visible) {
+        this.state.learningAnchorVisible = visible;
+        this.renderChatPanels();
+    },
+
+    setManualSwitchVisible(visible) {
+        this.state.manualSwitchVisible = visible;
+        this.renderChatPanels();
+    },
+
+    setObjectSelectionVisible(visible) {
+        this.state.objectSelectionVisible = visible;
+        this.renderChatPanels();
+    },
+};
 
 /**
  * Add a message to the chat interface
@@ -472,12 +571,10 @@ async function startConversation() {
     conversationComplete = false;
     updateProgressIndicator();
 
-    // Hide start form, show progress indicator and messages
-    startForm.style.display = 'none';
-    progressIndicator.style.display = 'none';
-    messagesContainer.style.display = 'flex';
-    document.querySelector('.input-area').style.display = 'flex';
-    document.getElementById('backBtn').style.display = 'inline-block';
+    window.paixuejiUi.setLearningAnchorVisible(false);
+    window.paixuejiUi.setManualSwitchVisible(false);
+    window.paixuejiUi.setObjectSelectionVisible(false);
+    window.paixuejiUi.showChatPage();
 
     // Tutorial hook — advance from setup steps to chat steps
     if (window.tutorialAdvanceToChat) window.tutorialAdvanceToChat();
@@ -767,7 +864,7 @@ function handleStreamChunk(chunk) {
     }
     if ('learning_anchor_active' in chunk) {
         learningAnchorActive = !!chunk.learning_anchor_active;
-        progressIndicator.style.display = learningAnchorActive ? 'flex' : 'none';
+        window.paixuejiUi.setLearningAnchorVisible(learningAnchorActive);
         updateDebugPanel();
     }
 
@@ -834,7 +931,7 @@ function handleStreamChunk(chunk) {
         document.getElementById('detectedObjectName').textContent = detectedObject;
         document.getElementById('switchToObjectName').textContent = detectedObject;
         document.getElementById('switchReasoning').textContent = '';
-        document.getElementById('manualSwitchPanel').style.display = 'block';
+        window.paixuejiUi.setManualSwitchVisible(true);
         console.log('[INFO] Object detected but not switching:', detectedObject);
     }
 
@@ -1115,7 +1212,6 @@ function showCompletionUI() {
     sendBtn.disabled = true;
 
     // Add restart button
-    const inputArea = document.querySelector('.input-area');
     const restartBtn = document.createElement('button');
     restartBtn.className = 'restart-btn';
     restartBtn.textContent = 'Start New Conversation';
@@ -1158,11 +1254,11 @@ function resetConversation() {
     // Clear messages
     messagesContainer.innerHTML = '';
 
-    // Show start form again, hide messages and progress
-    startForm.style.display = 'block';
-    progressIndicator.style.display = 'none';
-    messagesContainer.style.display = 'none';
-    document.getElementById('backBtn').style.display = 'none';
+    learningAnchorActive = false;
+    window.paixuejiUi.setLearningAnchorVisible(false);
+    window.paixuejiUi.setManualSwitchVisible(false);
+    window.paixuejiUi.setObjectSelectionVisible(false);
+    window.paixuejiUi.showMainPage();
 
     // Re-enable input
     userInput.disabled = false;
@@ -1183,6 +1279,7 @@ function resetConversation() {
  */
 function init() {
     console.log('[INFO] Paixueji Streaming Chat initialized');
+    window.paixuejiUi.showMainPage();
 
     // Show empty state
     if (messagesContainer.children.length === 0) {
@@ -1278,7 +1375,7 @@ async function forceSwitch() {
  * Dismiss the manual switch panel
  */
 function dismissSwitchPanel() {
-    document.getElementById('manualSwitchPanel').style.display = 'none';
+    window.paixuejiUi.setManualSwitchVisible(false);
     detectedObject = null;
     console.log('[INFO] Manual switch panel dismissed');
 }

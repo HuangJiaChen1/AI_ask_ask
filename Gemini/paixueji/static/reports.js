@@ -47,25 +47,18 @@ let _rvFilterText   = '';
 // ─── Entry / Exit ─────────────────────────────────────────────────────────────
 
 function openReportsViewer() {
-    document.getElementById('startForm').style.display = 'none';
-    const rv = document.getElementById('reportViewer');
-    rv.style.display = 'flex';
-    const backBtn = document.getElementById('backBtn');
-    backBtn.style.display = '';
-    backBtn.onclick = closeReportsViewer;
+    window.paixuejiUi.showReportsPage();
     _rvFilterText = '';
     loadReportGallery();
 }
 
 function closeReportsViewer() {
-    document.getElementById('reportViewer').style.display = 'none';
-    document.getElementById('startForm').style.display = 'flex';
-    const backBtn = document.getElementById('backBtn');
-    backBtn.style.display = 'none';
-    backBtn.onclick = goBack;   // goBack is defined in app.js
+    closeRvCritiquePopup();
+    closeRvRawModal();
     _rvCurrentDate = '';
     _rvCurrentFile = '';
     _rvCritiques   = {};
+    window.paixuejiUi.leaveReportsPage();
 }
 
 // ─── Gallery ──────────────────────────────────────────────────────────────────
