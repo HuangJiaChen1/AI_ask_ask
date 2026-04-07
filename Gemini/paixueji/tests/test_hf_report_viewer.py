@@ -145,6 +145,9 @@ def test_hf_report_includes_anchor_resolution_and_bridge_debug_sections():
                 "anchor_status": "anchored_high",
                 "anchor_relation": "food_for",
                 "bridge_visible_in_response": False,
+                "pre_anchor_reply_type": "clarification_request",
+                "support_action": "clarify",
+                "pre_anchor_support_count_after": 1,
             },
         }],
         exchange_critiques=[{"exchange_index": 1}],
@@ -181,6 +184,9 @@ def test_hf_report_includes_anchor_resolution_and_bridge_debug_sections():
     assert "#### Raw Bridge Debug" in report
     assert "[CHAT|introduction]" in report
     assert "decision: bridge_retry" in report
+    assert "pre_anchor_reply_type: `clarification_request`" in report
+    assert "support_action: `clarify`" in report
+    assert "pre_anchor_support_count_after: `1`" in report
 
 
 def test_hf_report_detail_parser_preserves_response_type_and_bridge_debug(client):

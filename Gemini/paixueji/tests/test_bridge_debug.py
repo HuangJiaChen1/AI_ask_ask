@@ -104,13 +104,34 @@ def test_format_bridge_log_line_includes_ids_and_decision():
         request_id="req",
         bridge_debug={
             "decision": "bridge_retry",
+            "response_type": "bridge_retry",
             "anchor_status": "anchored_high",
+            "bridge_attempt_count_before": 1,
             "bridge_attempt_count_after": 2,
+            "pre_anchor_reply_type": "true_miss",
+            "support_action": None,
+            "pre_anchor_support_count_before": 0,
+            "pre_anchor_support_count_after": 0,
+            "bridge_followed": False,
+            "bridge_follow_reason": "no lane term",
+            "kb_mode": "bridge_context_only",
+            "bridge_visible_in_response": False,
         },
     )
     assert "session=abc" in line
     assert "request=req" in line
     assert "decision=bridge_retry" in line
+    assert "response_type=bridge_retry" in line
+    assert "reply_type=true_miss" in line
+    assert "support_action=None" in line
+    assert "attempt_before=1" in line
+    assert "attempt_after=2" in line
+    assert "support_before=0" in line
+    assert "support_after=0" in line
+    assert "bridge_followed=False" in line
+    assert "follow_reason='no lane term'" in line
+    assert "kb_mode=bridge_context_only" in line
+    assert "visibility=False" in line
 
 
 def test_build_bridge_debug_skips_visibility_without_response_text():

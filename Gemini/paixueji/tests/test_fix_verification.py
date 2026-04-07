@@ -1277,6 +1277,32 @@ def test_bridge_follow_classifier_prompt_includes_previous_bridge_question():
     assert "{previous_bridge_question}" in prompt
 
 
+def test_live_debug_panel_exposes_pre_anchor_support_fields():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    html = (root / "static" / "index.html").read_text(encoding="utf-8")
+    app_js = (root / "static" / "app.js").read_text(encoding="utf-8")
+
+    for element_id in [
+        "debugPreAnchorReplyType",
+        "debugSupportAction",
+        "debugSupportCount",
+        "debugBridgeFollowReason",
+    ]:
+        assert f'id="{element_id}"' in html
+
+    assert "debugPreAnchorReplyType" in app_js
+    assert "bridgeDebug.pre_anchor_reply_type" in app_js
+    assert "debugSupportAction" in app_js
+    assert "bridgeDebug.support_action" in app_js
+    assert "debugSupportCount" in app_js
+    assert "pre_anchor_support_count_before" in app_js
+    assert "pre_anchor_support_count_after" in app_js
+    assert "debugBridgeFollowReason" in app_js
+    assert "bridgeDebug.bridge_follow_reason" in app_js
+
+
 @pytest.mark.asyncio
 async def test_bridge_support_generator_exists(monkeypatch):
     import stream.response_generators as rg

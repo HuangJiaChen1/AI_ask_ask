@@ -766,6 +766,7 @@ def test_pre_anchor_clarification_request_uses_bridge_support_without_attempt_in
     assert final_chunk["pre_anchor_support_count"] == 1
     assert final_chunk["bridge_debug"]["pre_anchor_reply_type"] == "clarification_request"
     assert final_chunk["bridge_debug"]["support_action"] == "clarify"
+    assert final_chunk["bridge_debug"]["bridge_visibility_reason"] != "response not evaluated yet"
     assert not any(node["node"] == "correct_answer" for node in final_chunk["nodes_executed"])
 
 

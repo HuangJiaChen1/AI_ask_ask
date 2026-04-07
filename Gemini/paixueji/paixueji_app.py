@@ -885,10 +885,6 @@ def continue_conversation():
                             pre_anchor_support_count_before=support_before,
                             pre_anchor_support_count_after=assistant.pre_anchor_support_count,
                         )
-                        assistant.set_last_bridge_debug(bridge_debug)
-                        logger.info(
-                            f"[BRIDGE] {format_bridge_log_line(session_id=session_id, request_id=request_id, bridge_debug=bridge_debug)}"
-                        )
                         decision_trace = build_bridge_trace_entry(
                             node="driver:bridge_decision",
                             state_before=pre_anchor_state_before,
@@ -941,13 +937,42 @@ def continue_conversation():
                                 ))
 
                             sequence_number += 1
+                            final_bridge_debug = build_bridge_debug(
+                                surface_object_name=assistant.surface_object_name or assistant.object_name,
+                                anchor_object_name=assistant.anchor_object_name,
+                                anchor_status=assistant.anchor_status,
+                                anchor_relation=assistant.anchor_relation,
+                                anchor_confidence_band=assistant.anchor_confidence_band,
+                                intro_mode="anchor_bridge",
+                                learning_anchor_active_before=False,
+                                learning_anchor_active_after=False,
+                                bridge_attempt_count_before=pre_anchor_state_before["bridge_attempt_count"],
+                                bridge_attempt_count_after=assistant.bridge_attempt_count,
+                                decision="bridge_support",
+                                decision_reason=pre_anchor_decision.reason,
+                                response_type="bridge_support",
+                                bridge_followed=False,
+                                bridge_follow_reason=pre_anchor_decision.bridge_follow_reason,
+                                pre_anchor_handler_entered=True,
+                                kb_mode="bridge_context_only",
+                                bridge_context_summary=_bridge_context_summary(bridge_context),
+                                response_text=full_response,
+                                pre_anchor_reply_type=pre_anchor_decision.reply_type,
+                                support_action=pre_anchor_decision.support_action,
+                                pre_anchor_support_count_before=support_before,
+                                pre_anchor_support_count_after=assistant.pre_anchor_support_count,
+                            )
+                            assistant.set_last_bridge_debug(final_bridge_debug)
+                            logger.info(
+                                f"[BRIDGE] {format_bridge_log_line(session_id=session_id, request_id=request_id, bridge_debug=final_bridge_debug)}"
+                            )
                             assistant.conversation_history.append({"role": "user", "content": child_input})
                             assistant.conversation_history.append({
                                 "role": "assistant",
                                 "content": full_response,
                                 "mode": "chat",
                                 "response_type": "bridge_support",
-                                "bridge_debug": bridge_debug,
+                                "bridge_debug": final_bridge_debug,
                                 "nodes_executed": bridge_traces,
                             })
                             yield sse_event("chunk", StreamChunk(
@@ -962,7 +987,7 @@ def continue_conversation():
                                 request_id=request_id,
                                 response_type="bridge_support",
                                 correct_answer_count=assistant.correct_answer_count,
-                                bridge_debug=bridge_debug,
+                                bridge_debug=final_bridge_debug,
                                 nodes_executed=bridge_traces,
                                 **_assistant_stream_fields(assistant),
                             ))

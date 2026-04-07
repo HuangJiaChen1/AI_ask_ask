@@ -1164,7 +1164,16 @@ function updateDebugPanel() {
     setText('debugAnchorRelation', bridgeDebug.anchor_relation);
     setText('debugAnchorConfidence', bridgeDebug.anchor_confidence_band);
     setText('debugBridgeAttempt', bridgeDebug.bridge_attempt_count_after != null ? String(bridgeDebug.bridge_attempt_count_after) : null);
+    const supportBefore = bridgeDebug.pre_anchor_support_count_before;
+    const supportAfter = bridgeDebug.pre_anchor_support_count_after;
+    const supportCount = supportAfter != null
+        ? (supportBefore != null ? `${supportBefore} → ${supportAfter}` : String(supportAfter))
+        : null;
+    setText('debugSupportCount', supportCount);
     setText('debugBridgeDecision', bridgeDebug.decision);
+    setText('debugPreAnchorReplyType', bridgeDebug.pre_anchor_reply_type);
+    setText('debugSupportAction', bridgeDebug.support_action);
+    setText('debugBridgeFollowReason', bridgeDebug.bridge_follow_reason);
     setText('debugBridgeVerdict', bridgeDebug.bridge_visibility_reason || bridgeDebug.decision_reason);
     setText('debugKbMode', bridgeDebug.kb_mode);
 }
