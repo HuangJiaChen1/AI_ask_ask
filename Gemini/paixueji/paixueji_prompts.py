@@ -284,53 +284,7 @@ Scene: Park | Object: T-rex model | Age: 6
 → "Whoa, it's a T-Rex! It looks so powerful and fierce. Do you love dinosaurs?"
 """
 
-ANCHOR_BRIDGE_INTRO_PROMPT = """You are starting a conversation with a child who named: {surface_object_name}
-
-AGE GUIDANCE: {age_prompt}
-BRIDGE CONTEXT (this is the only allowed bridge grounding before the switch):
-{bridge_context}
-
-VOICE CONTRACT:
-- Sound like an older-kid buddy, not a teacher
-- Use plain spoken language, not literary language
-- Make the bridge feel obvious and friendly, not corrective
-- Keep the intro short: 1-2 short statements plus 1 short concrete question
-- Do not invent a scene or pretend you can see extra things around the child
-
-TASK — Write ONE short bridge greeting using this formula:
-
-STRUCTURE: Emotional Opening → Object Confirmation → Feature Description (optional) → Engagement Hook
-
-BEAT 1 — EMOTIONAL OPENING
-  Lead with a warm, natural opening that matches the child's energy and stays on {surface_object_name}.
-  Do NOT open with a generic "Hey there!" — jump straight into the object.
-  Do NOT sound literary or dramatic.
-
-BEAT 2 — OBJECT CONFIRMATION
-  Name the child's exact object clearly in the opening sentence: {surface_object_name}.
-  Keep that first sentence on the child's exact object: {surface_object_name}.
-
-BEAT 3 — FEATURE DESCRIPTION (OPTIONAL)
-  Naturally bridge toward the supported learning anchor: {anchor_object_name}.
-  You must make the connection explicit in the intro itself.
-  Do not stay entirely on the surface object.
-  Use only the bridge context above for grounding.
-  Do not ask about unrelated anchor features outside the bridge context.
-  Do not invent unsupported sensory details about {surface_object_name}.
-  Use concrete food_for angles when relation is food_for: smell, nose, eat, mouth.
-
-BEAT 4 — ENGAGEMENT HOOK
-  End with exactly ONE easy question using this specific hook style:
-  {hook_type_section}
-
-  Use the selected hook style naturally.
-  Do not force the final question to complete the bridge.
-  The intro may lightly point toward {anchor_object_name}, but the next model response is where the real bridge attempt begins.
-  The question must stay inside the bridge context.
-  The child should be able to answer without asking what you mean.
-  Do not ask vague questions like "what is the most important part" or "why is it interesting".
-  ABSOLUTE RULE: Never ask a knowledge-testing question of any kind.
-"""
+ANCHOR_BRIDGE_INTRO_PROMPT = INTRODUCTION_PROMPT
 
 ANCHOR_CONFIRMATION_INTRO_PROMPT = """You are starting a conversation with a child who named: {surface_object_name}
 

@@ -111,26 +111,11 @@ class TestIntroductionPromptBeatStructure:
             "INTRODUCTION_PROMPT must consume knowledge_context so intro wording can stay grounded"
         )
 
-    def test_anchor_bridge_intro_prompt_consumes_bridge_context(self):
-        """ANCHOR_BRIDGE_INTRO_PROMPT must consume bridge_context and ban loose redirect wording."""
+    def test_anchor_bridge_intro_prompt_aliases_general_intro_prompt(self):
+        """ANCHOR_BRIDGE_INTRO_PROMPT is a compatibility alias for the normal intro prompt."""
         import paixueji_prompts
 
-        prompt = paixueji_prompts.ANCHOR_BRIDGE_INTRO_PROMPT
-        assert "{bridge_context}" in prompt, (
-            "ANCHOR_BRIDGE_INTRO_PROMPT must consume bridge_context"
-        )
-        assert "Do not invent a scene" in prompt, (
-            "ANCHOR_BRIDGE_INTRO_PROMPT must ban fabricated scene-setting"
-        )
-        assert "Do not ask about unrelated anchor features" in prompt, (
-            "ANCHOR_BRIDGE_INTRO_PROMPT must ban unrelated anchor feature pivots"
-        )
-        assert "must make the connection explicit" in prompt, (
-            "ANCHOR_BRIDGE_INTRO_PROMPT must require an explicit connection in the intro"
-        )
-        assert "Do not stay entirely on the surface object" in prompt, (
-            "ANCHOR_BRIDGE_INTRO_PROMPT must forbid a purely surface-object intro"
-        )
+        assert paixueji_prompts.ANCHOR_BRIDGE_INTRO_PROMPT is paixueji_prompts.INTRODUCTION_PROMPT
 
     def test_anchor_bridge_intro_uses_general_intro_beat_headings(self):
         """ANCHOR_BRIDGE_INTRO_PROMPT must use the normal intro beat structure."""
@@ -159,18 +144,16 @@ class TestIntroductionPromptBeatStructure:
         assert all(pos != -1 for pos in positions)
         assert positions == sorted(positions)
 
-    def test_anchor_bridge_intro_keeps_bridge_specific_constraints(self):
-        """ANCHOR_BRIDGE_INTRO_PROMPT must keep bridge guardrails inside the beat structure."""
+    def test_anchor_bridge_intro_omits_bridge_specific_prompt_constraints(self):
+        """Anchor-bridge intros should not carry bridge-attempt instructions."""
         import paixueji_prompts
 
         prompt = paixueji_prompts.ANCHOR_BRIDGE_INTRO_PROMPT
         lower = prompt.lower()
-        assert "{bridge_context}" in prompt
-        assert "must make the connection explicit" in prompt
-        assert "do not stay entirely on the surface object" in lower
-        assert "Do not invent a scene" in prompt
-        assert "Do not ask about unrelated anchor features" in prompt
-        assert "do not add an example script" not in lower
+        assert "{bridge_context}" not in prompt
+        assert "must make the connection explicit" not in prompt
+        assert "do not stay entirely on the surface object" not in lower
+        assert "do not ask about unrelated anchor features" not in prompt
 
     def test_anchor_bridge_intro_omits_internal_attempt_accounting_language(self):
         """ANCHOR_BRIDGE_INTRO_PROMPT must not expose bridge-budget mechanics."""
@@ -180,15 +163,14 @@ class TestIntroductionPromptBeatStructure:
         assert "does not spend a bridge attempt" not in prompt
         assert "first real bridge attempt starts after the child replies" not in prompt
 
-    def test_anchor_bridge_intro_preserves_hook_style_without_forcing_final_question(self):
-        """ANCHOR_BRIDGE_INTRO_PROMPT should keep polished hooks for pre-anchor intros."""
+    def test_anchor_bridge_intro_preserves_normal_intro_hook_style(self):
+        """ANCHOR_BRIDGE_INTRO_PROMPT should keep the normal polished hook system."""
         import paixueji_prompts
 
         prompt = paixueji_prompts.ANCHOR_BRIDGE_INTRO_PROMPT
         lower = prompt.lower()
         assert "{hook_type_section}" in prompt
-        assert "do not force the final question to complete the bridge" in lower
-        assert "use the selected hook style naturally" in lower
+        assert "end with exactly one question using this specific hook style" in lower
 
     def test_unknown_object_intro_prompt_bans_fake_observation_language(self):
         """UNKNOWN_OBJECT_INTRO_PROMPT must ban fake observation and name-implied facts."""
@@ -235,17 +217,13 @@ class TestIntroductionPromptBeatStructure:
         assert "ask a different, more concrete bridge question" in lower
 
     def test_anchor_bridge_intro_rejects_vague_food_for_questions(self):
-        """ANCHOR_BRIDGE_INTRO_PROMPT should reject vague bridge questions."""
+        """Bridge retry prompt should reject vague food_for bridge questions."""
         import paixueji_prompts
 
-        prompt = paixueji_prompts.ANCHOR_BRIDGE_INTRO_PROMPT.lower()
-        assert "do not ask vague questions like" in prompt
-        assert "most important part" in prompt
-        assert "use concrete food_for angles" in prompt
-        assert "smell" in prompt
-        assert "nose" in prompt
-        assert "eat" in prompt
-        assert "mouth" in prompt
+        prompt = paixueji_prompts.ANCHOR_BRIDGE_RETRY_PROMPT.lower()
+        assert "{bridge_context}" in prompt
+        assert "stay inside the bridge context only" in prompt
+        assert "end with exactly one easy bridge question" in prompt
 
     def test_bridge_support_prompt_requires_answer_then_different_question(self):
         """Bridge support should answer/explain before asking a different question."""
@@ -275,6 +253,52 @@ def test_latest_bridge_question_ignores_intro_and_uses_support_question():
     ]
 
     assert paixueji_app._latest_bridge_question(history) == "I mean, what might a cat smell first?"
+
+
+@pytest.mark.asyncio
+async def test_anchor_bridge_intro_generator_uses_normal_intro_prompt_for_surface_object():
+    import stream.question_generators as qg
+
+    captured = {}
+
+    class Chunk:
+        text = "intro text"
+
+    async def fake_stream(*args, **kwargs):
+        captured.update(kwargs)
+
+        async def agen():
+            yield Chunk()
+
+        return agen()
+
+    client = MagicMock()
+    client.aio.models.generate_content_stream = fake_stream
+
+    generator = qg.ask_introduction_question_stream(
+        messages=[],
+        object_name="cat food",
+        surface_object_name="cat food",
+        anchor_object_name="cat",
+        intro_mode="anchor_bridge",
+        age_prompt="Use short sentences.",
+        age=6,
+        config={"model_name": "mock", "temperature": 0.3, "max_tokens": 200},
+        client=client,
+        hook_type_section="Hook style: test hook\n  Concept: use a polished hook\n  Examples:\n    \"What do you notice?\"",
+        knowledge_context="GROUNDING SENTINEL",
+        bridge_context="BRIDGE SENTINEL",
+    )
+
+    async for _chunk, _usage, _full, _decision in generator:
+        pass
+
+    prompt = captured["contents"][-1]["parts"][0]["text"]
+    assert "You are starting a conversation with a child about: cat food" in prompt
+    assert "Hook style: test hook" in prompt
+    assert "GROUNDING SENTINEL" in prompt
+    assert "BRIDGE SENTINEL" not in prompt
+    assert "You are starting a conversation with a child who named" not in prompt
 
 
 # ===========================================================================
@@ -1113,7 +1137,7 @@ class TestOrdinaryChatKbStreaming:
         assert result["response_type"] == "introduction"
 
     @pytest.mark.asyncio
-    async def test_pre_anchor_intro_uses_bridge_context_not_full_anchor_kb(self):
+    async def test_pre_anchor_intro_uses_normal_intro_without_bridge_context(self):
         import graph
 
         assistant = _make_mock_assistant(struggle_count=0)
@@ -1148,8 +1172,11 @@ class TestOrdinaryChatKbStreaming:
             result = await graph.node_generate_intro(state)
 
         assert mock_intro.call_args.kwargs["knowledge_context"] == ""
-        assert "smell" in mock_intro.call_args.kwargs["bridge_context"]
+        assert mock_intro.call_args.kwargs["bridge_context"] == ""
         assert result["response_type"] == "introduction"
+        assert result["bridge_debug"]["decision"] == "intro_bridge"
+        assert "First bridge attempt" not in result["bridge_debug"]["bridge_context_summary"]
+        assert "Post-intro bridge context preview" in result["bridge_debug"]["bridge_context_summary"]
 
     @pytest.mark.asyncio
     async def test_pre_anchor_intro_records_bridge_debug_with_visibility_signal(self):

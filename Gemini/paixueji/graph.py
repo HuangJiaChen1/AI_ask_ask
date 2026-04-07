@@ -360,6 +360,15 @@ def _build_bridge_prompt_context(state: "PaixuejiState", attempt_number: int) ->
     return bridge_context.prompt_context if bridge_context else ""
 
 
+def _build_post_intro_bridge_context_preview(state: "PaixuejiState", attempt_number: int) -> str:
+    context = _build_bridge_prompt_context(state, attempt_number)
+    if not context:
+        return ""
+    lines = context.splitlines()
+    lines[0] = "Post-intro bridge context preview."
+    return "\n".join(lines)
+
+
 def _intent_uses_grounding(intent_type: str | None) -> bool:
     """Return whether this ordinary-chat intent explicitly consumes KB context."""
     return (intent_type or "").lower() in GROUNDED_INTENTS
@@ -574,20 +583,22 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
         hook_type_name = None
         hook_type_section = ""
     question_style = _question_style_for_hook_type(hook_type_name)
+    intro_mode = state.get("intro_mode") or "supported"
+    intro_bridge_context = "" if intro_mode == "anchor_bridge" else _build_bridge_prompt_context(state, bridge_context_attempt)
 
     generator = ask_introduction_question_stream(
         messages=messages,
         object_name=state["object_name"],
         surface_object_name=state.get("surface_object_name"),
         anchor_object_name=state.get("anchor_object_name"),
-        intro_mode=state.get("intro_mode") or "supported",
+        intro_mode=intro_mode,
         age_prompt=state["age_prompt"],
         age=state["age"],
         config=state["config"],
         client=state["client"],
         hook_type_section=hook_type_section,
         knowledge_context=_build_intro_kb_context(state),
-        bridge_context=_build_bridge_prompt_context(state, bridge_context_attempt),
+        bridge_context=intro_bridge_context,
     )
 
     full_text, new_seq = await stream_generator_to_callback(
@@ -612,7 +623,7 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
             response_type="introduction",
             pre_anchor_handler_entered=False,
             kb_mode="bridge_context_only",
-            bridge_context_summary=_build_bridge_prompt_context(state, bridge_context_attempt),
+            bridge_context_summary=_build_post_intro_bridge_context_preview(state, bridge_context_attempt),
         )
         state["bridge_debug"] = bridge_debug
     elif state.get("intro_mode") == "unknown_object":
