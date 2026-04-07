@@ -46,6 +46,10 @@ class BridgeDebugInfo(BaseModel):
     bridge_context_summary: str | None = None
     bridge_visible_in_response: bool | None = None
     bridge_visibility_reason: str | None = None
+    pre_anchor_reply_type: str | None = None
+    support_action: str | None = None
+    pre_anchor_support_count_before: int | None = None
+    pre_anchor_support_count_after: int | None = None
 
 
 class ResolutionDebugInfo(BaseModel):
@@ -154,6 +158,7 @@ class StreamChunk(BaseModel):
     anchor_confirmation_needed: bool = False
     learning_anchor_active: bool = False
     bridge_attempt_count: int = 0
+    pre_anchor_support_count: int = 0
 
     # Node execution tracing (for critique reports)
     nodes_executed: list[dict] | None = None  # Passed through final chunk

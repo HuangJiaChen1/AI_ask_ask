@@ -60,6 +60,7 @@ class PaixuejiAssistant:
         self.anchor_confirmation_needed = False
         self.learning_anchor_active = False
         self.bridge_attempt_count = 0
+        self.pre_anchor_support_count = 0
         self.suppressed_anchor_names = set()
         self.correct_answer_count = 0
         self.session_resolution_debug = None
@@ -154,6 +155,7 @@ class PaixuejiAssistant:
         self.anchor_confirmation_needed = resolution.anchor_confirmation_needed
         self.learning_anchor_active = resolution.learning_anchor_active
         self.bridge_attempt_count = 0
+        self.pre_anchor_support_count = 0
         self.session_resolution_debug = {
             "surface_object_name": resolution.surface_object_name,
             "visible_object_name": resolution.visible_object_name,
@@ -175,6 +177,7 @@ class PaixuejiAssistant:
         self.anchor_confirmation_needed = False
         self.learning_anchor_active = True
         self.bridge_attempt_count = 0
+        self.pre_anchor_support_count = 0
         self.correct_answer_count = 0
 
     def suppress_anchor(self, anchor_name: str):
@@ -187,6 +190,7 @@ class PaixuejiAssistant:
     def reset_bridge_state(self):
         """Clear bridge attempts for the current topic."""
         self.bridge_attempt_count = 0
+        self.pre_anchor_support_count = 0
 
     def mark_bridge_attempt_emitted(self):
         """Record that a pre-anchor bridge prompt has been shown."""

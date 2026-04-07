@@ -80,6 +80,10 @@ def build_bridge_debug(
     pre_anchor_handler_entered: bool = False,
     kb_mode: str | None = None,
     bridge_context_summary: str | None = None,
+    pre_anchor_reply_type: str | None = None,
+    support_action: str | None = None,
+    pre_anchor_support_count_before: int | None = None,
+    pre_anchor_support_count_after: int | None = None,
 ) -> dict[str, Any]:
     bridge_visible_in_response = None
     bridge_visibility_reason = "response not evaluated yet"
@@ -111,6 +115,10 @@ def build_bridge_debug(
         "bridge_context_summary": bridge_context_summary,
         "bridge_visible_in_response": bridge_visible_in_response,
         "bridge_visibility_reason": bridge_visibility_reason,
+        "pre_anchor_reply_type": pre_anchor_reply_type,
+        "support_action": support_action,
+        "pre_anchor_support_count_before": pre_anchor_support_count_before,
+        "pre_anchor_support_count_after": pre_anchor_support_count_after,
     }
 
 
