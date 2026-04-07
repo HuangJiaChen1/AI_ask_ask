@@ -203,6 +203,23 @@ class TestIntroductionPromptBeatStructure:
         assert "i'm excited to learn more" in lower
         assert "do not act like this is a fresh topic introduction" in lower
 
+    def test_bridge_activation_prompt_bans_answer_then_reask_pattern(self):
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.BRIDGE_ACTIVATION_RESPONSE_PROMPT
+        lower = prompt.lower()
+        assert "do not state the answer and then ask the child to supply that same answer" in lower
+        assert "do not ask a question whose answer you already gave" in lower
+
+    def test_bridge_activation_prompt_uses_allowed_bridge_terms_exclusively(self):
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.BRIDGE_ACTIVATION_RESPONSE_PROMPT
+        lower = prompt.lower()
+        assert "use the allowed focus terms from bridge context" in lower
+        assert "do not introduce a new cue outside the bridge context" in lower
+        assert "for food_for, do not pivot to hearing or sound unless the child explicitly mentioned it" in lower
+
     def test_bridge_support_prompt_clarifies_without_switching(self):
         """BRIDGE_SUPPORT_RESPONSE_PROMPT must support without activating the anchor."""
         import paixueji_prompts

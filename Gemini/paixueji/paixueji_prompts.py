@@ -121,6 +121,11 @@ YOUR JOB:
 - Ask exactly one question.
 - Keep that question easy.
 - Stay in the same relation lane as the bridge context.
+- Use the allowed focus terms from BRIDGE CONTEXT when choosing the question.
+- Do not introduce a new cue outside the bridge context.
+- Do not state the answer and then ask the child to supply that same answer.
+- Do not ask a question whose answer you already gave.
+- For food_for, do not pivot to hearing or sound unless the child explicitly mentioned it.
 - Do not jump to unrelated anchor features or dimensions yet.
 - Do not act like this is a fresh topic introduction.
 - Do not produce generic celebration filler.
