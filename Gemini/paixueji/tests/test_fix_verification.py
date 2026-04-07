@@ -172,6 +172,24 @@ class TestIntroductionPromptBeatStructure:
         assert "Do not ask about unrelated anchor features" in prompt
         assert "do not add an example script" not in lower
 
+    def test_anchor_bridge_intro_omits_internal_attempt_accounting_language(self):
+        """ANCHOR_BRIDGE_INTRO_PROMPT must not expose bridge-budget mechanics."""
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.ANCHOR_BRIDGE_INTRO_PROMPT.lower()
+        assert "does not spend a bridge attempt" not in prompt
+        assert "first real bridge attempt starts after the child replies" not in prompt
+
+    def test_anchor_bridge_intro_preserves_hook_style_without_forcing_final_question(self):
+        """ANCHOR_BRIDGE_INTRO_PROMPT should keep polished hooks for pre-anchor intros."""
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.ANCHOR_BRIDGE_INTRO_PROMPT
+        lower = prompt.lower()
+        assert "{hook_type_section}" in prompt
+        assert "do not force the final question to complete the bridge" in lower
+        assert "use the selected hook style naturally" in lower
+
     def test_unknown_object_intro_prompt_bans_fake_observation_language(self):
         """UNKNOWN_OBJECT_INTRO_PROMPT must ban fake observation and name-implied facts."""
         import paixueji_prompts
@@ -236,6 +254,27 @@ class TestIntroductionPromptBeatStructure:
         prompt = paixueji_prompts.BRIDGE_SUPPORT_RESPONSE_PROMPT.lower()
         assert "answer or explain first" in prompt
         assert "ask a different, more concrete bridge question" in prompt
+
+
+def test_latest_bridge_question_ignores_intro_and_uses_support_question():
+    import paixueji_app
+
+    history = [
+        {
+            "role": "assistant",
+            "content": "Cat food is interesting. What do the little pieces look like?",
+            "response_type": "introduction",
+            "bridge_debug": {"decision": "intro_bridge"},
+        },
+        {
+            "role": "assistant",
+            "content": "I mean, what might a cat smell first?",
+            "response_type": "bridge_support",
+            "bridge_debug": {"decision": "bridge_support"},
+        },
+    ]
+
+    assert paixueji_app._latest_bridge_question(history) == "I mean, what might a cat smell first?"
 
 
 # ===========================================================================

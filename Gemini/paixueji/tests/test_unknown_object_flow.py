@@ -69,7 +69,7 @@ def test_start_with_high_confidence_anchor_stays_on_surface_object(client, monke
     assert first_chunk["anchor_status"] == "anchored_high"
     assert first_chunk["learning_anchor_active"] is False
     assert first_chunk["correct_answer_count"] == 0
-    assert first_chunk["bridge_attempt_count"] == 1
+    assert first_chunk["bridge_attempt_count"] == 0
 
 
 def test_start_with_unresolved_object_stays_surface_and_disables_learning(client, monkeypatch):
@@ -349,7 +349,7 @@ def test_first_bridge_miss_emits_retry_bridge(client, monkeypatch):
     final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
     assert final_chunk["current_object_name"] == "cat food"
     assert final_chunk["learning_anchor_active"] is False
-    assert final_chunk["bridge_attempt_count"] == 2
+    assert final_chunk["bridge_attempt_count"] == 1
     assert final_chunk["response_type"] == "bridge_retry"
 
 
@@ -390,7 +390,7 @@ def test_pre_anchor_surface_reply_does_not_fall_into_correct_answer_flow(client,
     assert final_chunk["bridge_debug"]["decision"] == "bridge_retry"
 
 
-def test_second_bridge_miss_suppresses_anchor_and_falls_back_to_unresolved_chat(client, monkeypatch):
+def test_third_bridge_miss_suppresses_anchor_and_falls_back_to_unresolved_chat(client, monkeypatch):
     from object_resolver import ObjectResolutionResult
 
     monkeypatch.setattr(
@@ -414,19 +414,28 @@ def test_second_bridge_miss_suppresses_anchor_and_falls_back_to_unresolved_chat(
         "paixueji_app.classify_bridge_follow",
         AsyncMock(return_value={"bridge_followed": False, "reason": "first miss"}),
     )
-    client.post(
+    first_retry = client.post(
         "/api/continue",
         json={"session_id": session_id, "child_input": "it is crunchy"},
     )
+    [e["data"] for e in parse_sse(first_retry.data) if e["event"] == "chunk"]
 
     monkeypatch.setattr(
         "paixueji_app.classify_bridge_follow",
         AsyncMock(return_value={"bridge_followed": False, "reason": "second miss"}),
     )
 
-    response = client.post(
+    second_retry = client.post(
         "/api/continue",
         json={"session_id": session_id, "child_input": "it is brown"},
+    )
+    second_final = [e["data"] for e in parse_sse(second_retry.data) if e["event"] == "chunk"][-1]
+    assert second_final["response_type"] == "bridge_retry"
+    assert second_final["bridge_attempt_count"] == 2
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "it is tiny"},
     )
     assert response.status_code == 200
 
@@ -762,7 +771,7 @@ def test_pre_anchor_clarification_request_uses_bridge_support_without_attempt_in
     final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
 
     assert final_chunk["response_type"] == "bridge_support"
-    assert final_chunk["bridge_attempt_count"] == 1
+    assert final_chunk["bridge_attempt_count"] == 0
     assert final_chunk["pre_anchor_support_count"] == 1
     assert final_chunk["bridge_debug"]["pre_anchor_reply_type"] == "clarification_request"
     assert final_chunk["bridge_debug"]["support_action"] == "clarify"
@@ -812,7 +821,7 @@ def test_pre_anchor_idk_uses_bridge_support_without_attempt_increment(client, mo
     final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
 
     assert final_chunk["response_type"] == "bridge_support"
-    assert final_chunk["bridge_attempt_count"] == 1
+    assert final_chunk["bridge_attempt_count"] == 0
     assert final_chunk["pre_anchor_support_count"] == 1
     assert final_chunk["bridge_debug"]["pre_anchor_reply_type"] == "idk_or_stuck"
     assert final_chunk["bridge_debug"]["support_action"] == "scaffold"

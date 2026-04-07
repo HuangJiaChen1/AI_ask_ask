@@ -179,13 +179,7 @@ def _latest_bridge_question(conversation_history: list[dict]) -> str | None:
             continue
 
         response_type = message.get("response_type")
-        bridge_debug = message.get("bridge_debug") or {}
-        bridge_decision = bridge_debug.get("decision") if isinstance(bridge_debug, dict) else None
-
-        if response_type == "bridge_retry":
-            return message.get("content") or ""
-
-        if response_type == "introduction" and bridge_decision == "intro_bridge":
+        if response_type in {"bridge_retry", "bridge_support"}:
             return message.get("content") or ""
 
     return None
@@ -513,10 +507,6 @@ def start_conversation():
                             pre_anchor_handler_entered=False,
                             kb_mode="surface_only_unresolved",
                         )
-
-                    if assistant.anchor_status == "anchored_high" and not assistant.learning_anchor_active:
-                        assistant.mark_bridge_attempt_emitted()
-                        initial_state["bridge_attempt_count"] = assistant.bridge_attempt_count
 
                     async for chunk in stream_graph_execution(initial_state):
                         # Yield StreamChunk as SSE event (pass directly for optimized serialization)

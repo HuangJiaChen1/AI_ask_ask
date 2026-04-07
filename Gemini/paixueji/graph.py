@@ -560,6 +560,8 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
     logger.info(f"[{state['session_id']}] Node: Generate Intro for '{state['object_name']}'")
 
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
+    bridge_attempt_count = state.get("bridge_attempt_count", 0) or 0
+    bridge_context_attempt = max(bridge_attempt_count, 1)
 
     # Select a hook type for this session using age-weighted sampling
     hook_types = state.get("hook_types") or {}
@@ -585,7 +587,7 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
         client=state["client"],
         hook_type_section=hook_type_section,
         knowledge_context=_build_intro_kb_context(state),
-        bridge_context=_build_bridge_prompt_context(state, state.get("bridge_attempt_count", 1) or 1),
+        bridge_context=_build_bridge_prompt_context(state, bridge_context_attempt),
     )
 
     full_text, new_seq = await stream_generator_to_callback(
@@ -602,15 +604,15 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
             intro_mode=state.get("intro_mode"),
             learning_anchor_active_before=False,
             learning_anchor_active_after=state.get("learning_anchor_active", False),
-            bridge_attempt_count_before=max((state.get("bridge_attempt_count", 1) or 1) - 1, 0),
-            bridge_attempt_count_after=state.get("bridge_attempt_count", 1),
+            bridge_attempt_count_before=bridge_attempt_count,
+            bridge_attempt_count_after=bridge_attempt_count,
             decision="intro_bridge",
-            decision_reason="start high-confidence bridge",
+            decision_reason="pre-anchor intro; bridge attempt budget not consumed",
             response_text=full_text,
             response_type="introduction",
             pre_anchor_handler_entered=False,
             kb_mode="bridge_context_only",
-            bridge_context_summary=_build_bridge_prompt_context(state, state.get("bridge_attempt_count", 1) or 1),
+            bridge_context_summary=_build_bridge_prompt_context(state, bridge_context_attempt),
         )
         state["bridge_debug"] = bridge_debug
     elif state.get("intro_mode") == "unknown_object":

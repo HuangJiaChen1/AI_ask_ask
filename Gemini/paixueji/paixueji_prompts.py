@@ -323,6 +323,9 @@ BEAT 4 — ENGAGEMENT HOOK
   End with exactly ONE easy question using this specific hook style:
   {hook_type_section}
 
+  Use the selected hook style naturally.
+  Do not force the final question to complete the bridge.
+  The intro may lightly point toward {anchor_object_name}, but the next model response is where the real bridge attempt begins.
   The question must stay inside the bridge context.
   The child should be able to answer without asking what you mean.
   Do not ask vague questions like "what is the most important part" or "why is it interesting".
