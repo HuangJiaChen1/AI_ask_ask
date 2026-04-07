@@ -132,6 +132,46 @@ class TestIntroductionPromptBeatStructure:
             "ANCHOR_BRIDGE_INTRO_PROMPT must forbid a purely surface-object intro"
         )
 
+    def test_anchor_bridge_intro_uses_general_intro_beat_headings(self):
+        """ANCHOR_BRIDGE_INTRO_PROMPT must use the normal intro beat structure."""
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.ANCHOR_BRIDGE_INTRO_PROMPT
+        for heading in (
+            "BEAT 1 — EMOTIONAL OPENING",
+            "BEAT 2 — OBJECT CONFIRMATION",
+            "BEAT 3 — FEATURE DESCRIPTION",
+            "BEAT 4 — ENGAGEMENT HOOK",
+        ):
+            assert heading in prompt
+
+    def test_anchor_bridge_intro_beat_ordering_matches_general_intro(self):
+        """ANCHOR_BRIDGE_INTRO_PROMPT beats must appear in normal intro order."""
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.ANCHOR_BRIDGE_INTRO_PROMPT
+        positions = [
+            prompt.find("BEAT 1 — EMOTIONAL OPENING"),
+            prompt.find("BEAT 2 — OBJECT CONFIRMATION"),
+            prompt.find("BEAT 3 — FEATURE DESCRIPTION"),
+            prompt.find("BEAT 4 — ENGAGEMENT HOOK"),
+        ]
+        assert all(pos != -1 for pos in positions)
+        assert positions == sorted(positions)
+
+    def test_anchor_bridge_intro_keeps_bridge_specific_constraints(self):
+        """ANCHOR_BRIDGE_INTRO_PROMPT must keep bridge guardrails inside the beat structure."""
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.ANCHOR_BRIDGE_INTRO_PROMPT
+        lower = prompt.lower()
+        assert "{bridge_context}" in prompt
+        assert "must make the connection explicit" in prompt
+        assert "do not stay entirely on the surface object" in lower
+        assert "Do not invent a scene" in prompt
+        assert "Do not ask about unrelated anchor features" in prompt
+        assert "do not add an example script" not in lower
+
     def test_unknown_object_intro_prompt_bans_fake_observation_language(self):
         """UNKNOWN_OBJECT_INTRO_PROMPT must ban fake observation and name-implied facts."""
         import paixueji_prompts
