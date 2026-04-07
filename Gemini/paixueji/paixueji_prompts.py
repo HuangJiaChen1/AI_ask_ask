@@ -301,6 +301,9 @@ YOUR JOB:
 - Do not invent a scene or pretend you can see extra things around the child
 - Do not ask about unrelated anchor features outside the bridge context
 - Do not invent unsupported sensory details about {surface_object_name}
+- Use concrete food_for angles when relation is food_for: smell, nose, eat, mouth
+- Do not ask vague questions like "what is the most important part" or "why is it interesting"
+- The child should be able to answer without asking what you mean
 
 HOOK STYLE:
 {hook_type_section}
@@ -358,6 +361,30 @@ YOUR JOB:
 - Do not invent a scene
 - Do not ask about unrelated anchor features
 - End with exactly one easy bridge question
+"""
+
+BRIDGE_SUPPORT_RESPONSE_PROMPT = """You are helping a child during a pre-anchor bridge from {surface_object_name} to {anchor_object_name}.
+
+AGE GUIDANCE: {age_prompt}
+CHILD REPLY: {child_answer}
+PREVIOUS BRIDGE QUESTION: {previous_bridge_question}
+SUPPORT ACTION: {support_action}
+BRIDGE CONTEXT:
+{bridge_context}
+
+YOUR JOB:
+- Do not activate the anchor yet.
+- Do not count this as a failed bridge attempt.
+- Answer or explain first before asking the next question.
+- If support action is clarify, explain what the previous bridge question meant in simpler words.
+- If support action is scaffold, give two simple choices or one concrete example inside the bridge lane.
+- If support action is steer, acknowledge the child's answer as reasonable, then steer to the bridge lane.
+- Ask a different, more concrete bridge question.
+- Stay inside the bridge context.
+- End with exactly one easy question.
+- Do not repeat the same wording from the previous bridge question.
+
+Respond naturally, not as JSON.
 """
 
 BRIDGE_FOLLOW_CLASSIFIER_PROMPT = """Decide whether the child followed a bridge from an unsupported object toward a supported anchor.
@@ -1557,6 +1584,7 @@ def get_prompts():
         'unknown_object_intro_prompt': UNKNOWN_OBJECT_INTRO_PROMPT,
         'unresolved_surface_only_prompt': UNRESOLVED_SURFACE_ONLY_PROMPT,
         'anchor_bridge_retry_prompt': ANCHOR_BRIDGE_RETRY_PROMPT,
+        'bridge_support_response_prompt': BRIDGE_SUPPORT_RESPONSE_PROMPT,
         'bridge_follow_classifier_prompt': BRIDGE_FOLLOW_CLASSIFIER_PROMPT,
         'object_resolution_prompt': OBJECT_RESOLUTION_PROMPT,
         'relation_repair_prompt': RELATION_REPAIR_PROMPT,

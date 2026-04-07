@@ -163,6 +163,40 @@ class TestIntroductionPromptBeatStructure:
         assert "i'm excited to learn more" in lower
         assert "do not act like this is a fresh topic introduction" in lower
 
+    def test_bridge_support_prompt_clarifies_without_switching(self):
+        """BRIDGE_SUPPORT_RESPONSE_PROMPT must support without activating the anchor."""
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.BRIDGE_SUPPORT_RESPONSE_PROMPT
+        lower = prompt.lower()
+        assert "do not activate the anchor yet" in lower
+        assert "support action" in lower
+        assert "clarify" in lower
+        assert "scaffold" in lower
+        assert "steer" in lower
+        assert "ask a different, more concrete bridge question" in lower
+
+    def test_anchor_bridge_intro_rejects_vague_food_for_questions(self):
+        """ANCHOR_BRIDGE_INTRO_PROMPT should reject vague bridge questions."""
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.ANCHOR_BRIDGE_INTRO_PROMPT.lower()
+        assert "do not ask vague questions like" in prompt
+        assert "most important part" in prompt
+        assert "use concrete food_for angles" in prompt
+        assert "smell" in prompt
+        assert "nose" in prompt
+        assert "eat" in prompt
+        assert "mouth" in prompt
+
+    def test_bridge_support_prompt_requires_answer_then_different_question(self):
+        """Bridge support should answer/explain before asking a different question."""
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.BRIDGE_SUPPORT_RESPONSE_PROMPT.lower()
+        assert "answer or explain first" in prompt
+        assert "ask a different, more concrete bridge question" in prompt
+
 
 # ===========================================================================
 # Fix 2 — CORRECT_ANSWER_INTENT_PROMPT BEAT 3
@@ -1241,3 +1275,39 @@ def test_bridge_follow_classifier_prompt_includes_previous_bridge_question():
     prompt = paixueji_prompts.BRIDGE_FOLLOW_CLASSIFIER_PROMPT
     assert "Previous bridge question" in prompt
     assert "{previous_bridge_question}" in prompt
+
+
+@pytest.mark.asyncio
+async def test_bridge_support_generator_exists(monkeypatch):
+    import stream.response_generators as rg
+
+    class Chunk:
+        text = "I mean, a cat can notice food in different ways. What might its nose smell first?"
+
+    async def fake_stream(*args, **kwargs):
+        async def agen():
+            yield Chunk()
+        return agen()
+
+    client = MagicMock()
+    client.aio.models.generate_content_stream = fake_stream
+
+    generator = rg.generate_bridge_support_response_stream(
+        messages=[],
+        child_answer="what do you mean?",
+        surface_object_name="cat food",
+        anchor_object_name="cat",
+        age=6,
+        age_prompt="Use short sentences.",
+        bridge_context="allowed: smell, eat, mouth, nose",
+        previous_bridge_question="What is the most important part?",
+        support_action="clarify",
+        config={"model_name": "mock", "temperature": 0.3, "max_tokens": 200},
+        client=client,
+    )
+
+    full = ""
+    async for _chunk, _usage, full_so_far in generator:
+        full = full_so_far
+
+    assert "cat" in full.lower()
