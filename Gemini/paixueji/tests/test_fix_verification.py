@@ -1179,6 +1179,39 @@ class TestOrdinaryChatKbStreaming:
         assert "Post-intro bridge context preview" in result["bridge_debug"]["bridge_context_summary"]
 
     @pytest.mark.asyncio
+    async def test_pre_anchor_intro_does_not_use_intro_kb_helper(self):
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=0)
+        state = _build_minimal_state(
+            assistant,
+            messages=[{"role": "system", "content": "system prompt"}],
+            intent_type=None,
+        )
+        state["response_type"] = "introduction"
+        state["hook_types"] = {}
+        state["object_name"] = "cat food"
+        state["surface_object_name"] = "cat food"
+        state["anchor_object_name"] = "cat"
+        state["anchor_status"] = "anchored_high"
+        state["anchor_relation"] = "food_for"
+        state["anchor_confidence_band"] = "high"
+        state["learning_anchor_active"] = False
+        state["bridge_attempt_count"] = 0
+        state["intro_mode"] = "anchor_bridge"
+
+        with patch("graph._build_intro_kb_context", return_value="GROUNDING SENTINEL"), patch(
+            "graph.ask_introduction_question_stream",
+            return_value=object(),
+        ) as mock_intro, patch(
+            "graph.stream_generator_to_callback",
+            new=AsyncMock(return_value=("intro text", 1)),
+        ):
+            await graph.node_generate_intro(state)
+
+        assert mock_intro.call_args.kwargs["knowledge_context"] == ""
+
+    @pytest.mark.asyncio
     async def test_pre_anchor_intro_records_bridge_debug_with_visibility_signal(self):
         import graph
 
