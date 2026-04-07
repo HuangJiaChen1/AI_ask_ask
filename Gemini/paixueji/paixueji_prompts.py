@@ -366,7 +366,13 @@ Surface object: {surface_object_name}
 Supported anchor: {anchor_object_name}
 Relation: {relation}
 Allowed bridge focus: {allowed_focus_terms}
+Previous bridge question: {previous_bridge_question}
 Child reply: {child_answer}
+
+Rules:
+- If the child clearly answers yes/maybe/probably to a previous bridge question that was inside the allowed bridge focus, treat it as followed.
+- If the child says no, not really, or I don't know, treat it as not followed.
+- Do not mark vague unrelated replies as followed.
 
 Return JSON:
 {{

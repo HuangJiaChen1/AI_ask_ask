@@ -168,6 +168,24 @@ def _bridge_context_summary(bridge_context) -> str:
         if bridge_context.allowed_focus_terms else ""
     )
 
+
+def _latest_bridge_question(conversation_history: list[dict]) -> str | None:
+    for message in reversed(conversation_history or []):
+        if message.get("role") != "assistant":
+            continue
+
+        response_type = message.get("response_type")
+        bridge_debug = message.get("bridge_debug") or {}
+        bridge_decision = bridge_debug.get("decision") if isinstance(bridge_debug, dict) else None
+
+        if response_type == "bridge_retry":
+            return message.get("content") or ""
+
+        if response_type == "introduction" and bridge_decision == "intro_bridge":
+            return message.get("content") or ""
+
+    return None
+
 # Helper to bridge Graph execution to SSE stream
 async def stream_graph_execution(initial_state):
     """
@@ -625,6 +643,7 @@ def continue_conversation():
                         "surface_object_name": assistant.surface_object_name or assistant.object_name,
                         "anchor_object_name": assistant.anchor_object_name,
                     }
+                    previous_bridge_question = _latest_bridge_question(assistant.conversation_history)
                     bridge_follow = asyncio.run_coroutine_threadsafe(
                         classify_bridge_follow(
                             assistant=assistant,
@@ -632,6 +651,7 @@ def continue_conversation():
                             surface_object_name=assistant.surface_object_name or assistant.object_name,
                             anchor_object_name=assistant.anchor_object_name,
                             relation=assistant.anchor_relation,
+                            previous_bridge_question=previous_bridge_question,
                         ),
                         loop,
                     ).result()
@@ -643,7 +663,10 @@ def continue_conversation():
                     )
                     follow_trace = build_bridge_trace_entry(
                         node="validator:bridge_follow",
-                        state_before={"child_input": child_input},
+                        state_before={
+                            "child_input": child_input,
+                            "previous_bridge_question": previous_bridge_question,
+                        },
                         changes={
                             "bridge_followed": bridge_follow.get("bridge_followed"),
                             "reason": bridge_follow.get("reason"),

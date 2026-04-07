@@ -1233,3 +1233,11 @@ class TestOrdinaryChatKbStreaming:
         mock_set_used_kb_item.assert_not_awaited()
         assert result["used_kb_item"] is None
         assert result["kb_mapping_status"] == "not_applicable"
+
+
+def test_bridge_follow_classifier_prompt_includes_previous_bridge_question():
+    import paixueji_prompts
+
+    prompt = paixueji_prompts.BRIDGE_FOLLOW_CLASSIFIER_PROMPT
+    assert "Previous bridge question" in prompt
+    assert "{previous_bridge_question}" in prompt

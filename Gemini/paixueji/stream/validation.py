@@ -13,6 +13,61 @@ from loguru import logger
 import paixueji_prompts
 from bridge_context import build_bridge_context, normalize_relation
 
+_AFFIRMATIVE_REPLY_PATTERNS = (
+    "yes",
+    "yeah",
+    "yep",
+    "yup",
+    "sure",
+    "i think so",
+    "probably",
+    "maybe",
+    "might",
+)
+
+_NEGATIVE_OR_NONANSWER_PATTERNS = (
+    "no",
+    "nope",
+    "nah",
+    "not really",
+    "maybe not",
+    "i don't know",
+    "i dont know",
+    "don't know",
+    "dont know",
+    "idk",
+    "not sure",
+)
+
+
+def _normalize_bridge_text(text: str | None) -> str:
+    return " ".join(re.sub(r"[^a-zA-Z']+", " ", text or "").strip().lower().split())
+
+
+def _contains_phrase(text: str, phrase: str) -> bool:
+    return phrase in f" {text} "
+
+
+def _is_negative_or_nonanswer(answer: str) -> bool:
+    normalized = _normalize_bridge_text(answer)
+    return any(_contains_phrase(normalized, pattern) for pattern in _NEGATIVE_OR_NONANSWER_PATTERNS)
+
+
+def _is_affirmative_or_hedged_affirmative(answer: str) -> bool:
+    normalized = _normalize_bridge_text(answer)
+    if not normalized or _is_negative_or_nonanswer(normalized):
+        return False
+    return any(_contains_phrase(normalized, pattern) for pattern in _AFFIRMATIVE_REPLY_PATTERNS)
+
+
+def _previous_question_is_in_bridge_lane(previous_question: str | None, bridge_context) -> bool:
+    normalized = _normalize_bridge_text(previous_question)
+    if not normalized or not bridge_context:
+        return False
+
+    lane_terms = set(bridge_context.allowed_focus_terms) | set(bridge_context.follow_terms)
+    return any(_contains_phrase(normalized, term) for term in lane_terms if term)
+
 
 async def classify_intent(
     assistant,
@@ -175,6 +230,7 @@ async def classify_bridge_follow(
     surface_object_name: str,
     anchor_object_name: str,
     relation: str | None,
+    previous_bridge_question: str | None = None,
 ) -> dict:
     """Determine whether the child followed the current bridge toward the anchor."""
     normalized_answer = " ".join((child_answer or "").strip().lower().split())
@@ -195,6 +251,15 @@ async def classify_bridge_follow(
             if term and term in normalized_answer:
                 return {"bridge_followed": True, "reason": f"matched bridge follow term: {term}"}
 
+    if (
+        _is_affirmative_or_hedged_affirmative(normalized_answer)
+        and _previous_question_is_in_bridge_lane(previous_bridge_question, bridge_context)
+    ):
+        return {"bridge_followed": True, "reason": "affirmed previous bridge question"}
+
+    if _is_negative_or_nonanswer(normalized_answer):
+        return {"bridge_followed": False, "reason": "negative or non-answer to bridge question"}
+
     if not hasattr(assistant, "client") or not hasattr(assistant.client, "aio"):
         return {"bridge_followed": False, "reason": "no model fallback available"}
 
@@ -203,6 +268,7 @@ async def classify_bridge_follow(
         anchor_object_name=anchor_object_name,
         relation=normalized_relation,
         allowed_focus_terms=", ".join(bridge_context.allowed_focus_terms) if bridge_context else "",
+        previous_bridge_question=previous_bridge_question or "",
         child_answer=child_answer,
     )
 

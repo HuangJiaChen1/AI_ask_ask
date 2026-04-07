@@ -657,3 +657,64 @@ def test_bridge_activation_first_question_stays_in_food_for_lane(client, monkeyp
     assert any(term in text for term in ["smell", "nose", "eat", "food"])
     assert "paw" not in text
     assert "tail" not in text
+
+
+def test_affirmative_reply_to_retry_bridge_activates_anchor_instead_of_correct_answer(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+    from tests.conftest import MockChunk, MockStream
+    import paixueji_app
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+
+    streamed_responses = iter([
+        "Cat food is interesting. What does the cat food look like inside the bag?",
+        "That makes sense. When you put the food in her bowl, does she use her nose to sniff it before she starts to eat?",
+        _bridge_activation_text(),
+    ])
+
+    def side_effect_stream(model, contents, config=None):
+        response_text = next(streamed_responses)
+        return MockStream([MockChunk(word + " ") for word in response_text.split()])
+
+    monkeypatch.setattr(
+        paixueji_app.GLOBAL_GEMINI_CLIENT.aio.models.generate_content_stream,
+        "side_effect",
+        side_effect_stream,
+        raising=False,
+    )
+
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+
+    first_continue = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "she might"},
+    )
+    first_final = [e["data"] for e in parse_sse(first_continue.data) if e["event"] == "chunk"][-1]
+    assert first_final["response_type"] == "bridge_retry"
+
+    second_continue = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "yep"},
+    )
+    second_final = [e["data"] for e in parse_sse(second_continue.data) if e["event"] == "chunk"][-1]
+
+    assert second_final["response_type"] == "bridge_activation"
+    assert second_final["current_object_name"] == "cat"
+    assert second_final["learning_anchor_active"] is True
+    assert second_final["bridge_debug"]["decision"] == "bridge_activation"
+    assert second_final["nodes_executed"][-1]["changes"]["decision"] == "bridge_activation"
+    assert not any(node["node"] == "analyze_input" for node in second_final["nodes_executed"])
+    assert not any(node["node"] == "correct_answer" for node in second_final["nodes_executed"])
