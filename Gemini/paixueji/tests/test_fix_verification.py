@@ -401,6 +401,16 @@ class TestCorrectAnswerPromptBeat3:
             "CORRECT_ANSWER_INTENT_PROMPT must preserve explicit topic switching as the only exception"
         )
 
+    def test_correct_answer_prompt_requires_grounded_wow_fact_only(self):
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.CORRECT_ANSWER_INTENT_PROMPT
+        lower = prompt.lower()
+        assert "beat 2 must use only facts from grounding" in lower
+        assert "conversation text is not a fact source" in lower
+        assert "do not add outside-memory biology facts" in lower
+        assert "use your best judgment if none fit" not in lower
+
 
 # ===========================================================================
 # Fix 3 — FOLLOWUP_QUESTION_PROMPT rule 6
@@ -496,6 +506,13 @@ class TestFollowupQuestionPromptRule6:
         assert "must not say bananas grow on a tree" in lower, (
             "FOLLOWUP_QUESTION_PROMPT must explicitly ban the reviewed banana contradiction"
         )
+
+    def test_followup_prompt_must_not_amplify_ungrounded_previous_fact(self):
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.FOLLOWUP_QUESTION_PROMPT
+        lower = prompt.lower()
+        assert "do not amplify a factual detail from the last assistant message unless it is supported by the current object kb context" in lower
 
 
 class TestIntroHookSelection:

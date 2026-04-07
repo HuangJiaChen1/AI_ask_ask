@@ -168,6 +168,8 @@ If the last assistant message contains a qualified fact or contrastive fact
 such as "looks like X but is Y", "not X", "technically", or "actually",
 preserve that qualification in your thinking.
 You may grow from the vivid part of the idea, but you must not restate the surface comparison as literal fact.
+Do not amplify a factual detail from the last assistant message unless it is supported by the CURRENT OBJECT KB CONTEXT.
+If the last assistant message contains a factual detail that is not supported by the KB context, ask a simpler concrete question about {object_name} instead.
 
 Banana example:
 Last response: bananas grow on giant plants that look like trees, but they
@@ -964,7 +966,7 @@ CONTEXT:
 AGE GUIDANCE:
 {age_prompt}
 
-GROUNDING (prefer these facts over memory for BEAT 2 — use your best judgment if none fit):
+GROUNDING (BEAT 2 must use only facts from this block):
 {knowledge_context}
 
 VOICE CONTRACT:
@@ -977,6 +979,15 @@ YOUR MISSION:
 The child answered your question — confirm it, then reward them with one surprising related fact.
 
 STRUCTURE (2 sentences, 2 beats):
+
+FACT SOURCE RULE:
+  BEAT 2 must use only facts from GROUNDING.
+  Conversation text is not a fact source.
+  You may acknowledge what the child said, but do not teach a new biological,
+    mechanical, or scientific detail unless it appears in GROUNDING.
+  If no grounding fact fits the child's answer, use a simple anchored observation
+    from the conversation instead of an outside-memory fact.
+  Do not add outside-memory biology facts.
 
 STEP 0 — FIND THE HOOK:
   Read the child's answer. Identify the most specific or emotionally loaded element.
