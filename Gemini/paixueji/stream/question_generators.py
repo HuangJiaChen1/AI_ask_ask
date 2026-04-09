@@ -62,12 +62,15 @@ async def ask_introduction_question_stream(
 
     prompts = paixueji_prompts.get_prompts()
     if intro_mode == "anchor_bridge":
-        introduction_prompt = prompts["introduction_prompt"].format(
+        base_prompt = prompts["introduction_prompt"].format(
             object_name=surface_object_name or object_name,
             age_prompt=age_prompt,
             age=age,
             hook_type_section=hook_type_section,
             knowledge_context=knowledge_context,
+        )
+        introduction_prompt = (
+            f"{base_prompt}\n\n{paixueji_prompts.ANCHOR_BRIDGE_INTRO_GUARDRAIL_PROMPT}"
         )
     elif intro_mode == "anchor_confirmation":
         introduction_prompt = prompts["anchor_confirmation_intro_prompt"].format(

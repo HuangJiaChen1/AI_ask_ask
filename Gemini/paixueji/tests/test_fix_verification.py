@@ -260,6 +260,20 @@ class TestIntroductionPromptBeatStructure:
         assert "answer or explain first" in prompt
         assert "ask a different, more concrete bridge question" in prompt
 
+    def test_bridge_support_prompt_does_not_praise_uncertainty_as_guess(self):
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.BRIDGE_SUPPORT_RESPONSE_PROMPT.lower()
+        assert "do not call uncertainty a guess" in prompt
+        assert "only praise a guess when the child actually gave a concrete guess" in prompt
+
+    def test_bridge_support_prompt_requires_semantically_valid_choices(self):
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.BRIDGE_SUPPORT_RESPONSE_PROMPT.lower()
+        assert "physically and semantically valid" in prompt
+        assert "never use mouth as a way to smell" in prompt
+
 
 def test_latest_bridge_question_ignores_intro_and_uses_support_question():
     import paixueji_app
@@ -326,6 +340,60 @@ async def test_anchor_bridge_intro_generator_uses_normal_intro_prompt_for_surfac
     assert "GROUNDING SENTINEL" in prompt
     assert "BRIDGE SENTINEL" not in prompt
     assert "You are starting a conversation with a child who named" not in prompt
+
+
+def test_anchor_bridge_intro_guardrail_prompt_forbids_fake_visual_grounding():
+    import paixueji_prompts
+
+    prompt = paixueji_prompts.ANCHOR_BRIDGE_INTRO_GUARDRAIL_PROMPT.lower()
+    assert "do not say you can see the object" in prompt
+    assert "do not invent packaging" in prompt
+    assert "inside-the-bag" in prompt
+
+
+@pytest.mark.asyncio
+async def test_anchor_bridge_intro_generator_appends_runtime_guardrail():
+    import stream.question_generators as qg
+
+    captured = {}
+
+    class Chunk:
+        text = "intro text"
+
+    async def fake_stream(*args, **kwargs):
+        captured.update(kwargs)
+
+        async def agen():
+            yield Chunk()
+
+        return agen()
+
+    client = MagicMock()
+    client.aio.models.generate_content_stream = fake_stream
+
+    generator = qg.ask_introduction_question_stream(
+        messages=[],
+        object_name="cat food",
+        surface_object_name="cat food",
+        anchor_object_name="cat",
+        intro_mode="anchor_bridge",
+        age_prompt="Use short sentences.",
+        age=6,
+        config={"model_name": "mock", "temperature": 0.3, "max_tokens": 200},
+        client=client,
+        hook_type_section="Hook style: test hook",
+        knowledge_context="GROUNDING SENTINEL",
+        bridge_context="BRIDGE SENTINEL",
+    )
+
+    async for _chunk, _usage, _full, _decision in generator:
+        pass
+
+    prompt = captured["contents"][-1]["parts"][0]["text"]
+    assert "Hook style: test hook" in prompt
+    assert "GROUNDING SENTINEL" in prompt
+    assert "Do not say you can see the object" in prompt
+    assert "Do not invent packaging or inside-the-bag details" in prompt
 
 
 # ===========================================================================

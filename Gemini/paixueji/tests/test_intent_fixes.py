@@ -595,6 +595,11 @@ class TestDecoupledClarifyingSubIntents:
             "CLARIFYING_IDK_INTENT_PROMPT must not contain CASE C — it handles IDK only"
         )
 
+    def test_clarifying_idk_removes_take_a_guess_language(self):
+        prompt = paixueji_prompts.CLARIFYING_IDK_INTENT_PROMPT
+        assert "Take a guess!" not in prompt
+        assert "LOW-PRESSURE" in prompt or "low-pressure" in prompt
+
     # --- CLARIFYING_CONSTRAINT prompt content ---
 
     def test_clarifying_constraint_has_object_anchor(self):

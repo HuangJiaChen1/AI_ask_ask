@@ -288,6 +288,13 @@ Scene: Park | Object: T-rex model | Age: 6
 
 ANCHOR_BRIDGE_INTRO_PROMPT = INTRODUCTION_PROMPT
 
+ANCHOR_BRIDGE_INTRO_GUARDRAIL_PROMPT = """PRE-ANCHOR BRIDGE GUARDRAILS:
+- Keep the normal intro beat structure and hook style.
+- Do not say you can see the object unless the child already established that.
+- Do not invent packaging or inside-the-bag details.
+- Stay generic and surface-level when no grounding is available.
+"""
+
 ANCHOR_CONFIRMATION_INTRO_PROMPT = """You are starting a conversation with a child who named: {surface_object_name}
 
 AGE GUIDANCE: {age_prompt}
@@ -356,7 +363,12 @@ YOUR JOB:
 - Do not count this as a failed bridge attempt.
 - Answer or explain first before asking the next question.
 - If support action is clarify, explain what the previous bridge question meant in simpler words.
-- If support action is scaffold, give two simple choices or one concrete example inside the bridge lane.
+- If the child only sounds uncertain ("I don't know", "not sure", bare "maybe"), acknowledge the uncertainty directly.
+- Do not call uncertainty a guess.
+- Only praise a guess when the child actually gave a concrete guess.
+- If support action is scaffold, simplify the question, give one tiny example, or offer one natural either/or inside the bridge lane.
+- Any either/or choices must be physically and semantically valid.
+- Never use mouth as a way to smell.
 - If support action is steer, acknowledge the child's answer as reasonable, then steer to the bridge lane.
 - Ask a different, more concrete bridge question.
 - Stay inside the bridge context.
@@ -731,8 +743,8 @@ BEAT 2 — SCAFFOLD CLUE: One concrete, sensory clue that opens the answer — N
     NEVER pivot to an unrelated sense (e.g., switching from color to texture).
     Changing dimension makes the child feel lost, not helped.
 
-BEAT 3 — SHORT INVITATION (3-5 words max, NOT a full question):
-  "Give it a try!" / "What do you think?" / "Take a guess!"
+BEAT 3 — LOW-PRESSURE HANDOFF (3-7 words max, NOT a full question):
+  "You can try." / "Tell me what you notice." / "We can figure it out together."
 
 PROHIBITIONS:
 - Do NOT rephrase "{last_model_response}" in any form — that's re-asking
