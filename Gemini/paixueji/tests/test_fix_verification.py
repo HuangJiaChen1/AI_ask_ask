@@ -180,17 +180,16 @@ class TestIntroductionPromptBeatStructure:
         assert "Do not say you can see the object" in prompt
         assert "Do not invent facts from words inside the object's name" in prompt
 
-    def test_bridge_activation_prompt_requires_explicit_surface_to_anchor_connection(self):
-        """BRIDGE_ACTIVATION_RESPONSE_PROMPT must explicitly complete the bridge in one turn."""
+    def test_bridge_activation_prompt_treats_turn_as_post_switch_anchor_followup(self):
         import paixueji_prompts
 
         prompt = paixueji_prompts.BRIDGE_ACTIVATION_RESPONSE_PROMPT
         lower = prompt.lower()
+        assert "first anchor-side follow-up" in lower
+        assert "not as a bridge-completion turn" in lower
         assert "acknowledge the child's actual answer first" in lower
-        assert "mention the surface object exactly once" in lower
-        assert "explicitly name the anchor object" in lower
-        assert "ask exactly one question" in lower
-        assert "stay in the same relation lane" in lower
+        assert "stay close to the child's stated detail" in lower
+        assert "ask exactly one natural follow-up question about {anchor_object_name}" in prompt
 
     def test_bridge_activation_prompt_bans_generic_topic_switch_filler(self):
         """BRIDGE_ACTIVATION_RESPONSE_PROMPT must ban generic excitement and fresh-intro filler."""
@@ -211,14 +210,25 @@ class TestIntroductionPromptBeatStructure:
         assert "do not state the answer and then ask the child to supply that same answer" in lower
         assert "do not ask a question whose answer you already gave" in lower
 
-    def test_bridge_activation_prompt_uses_allowed_bridge_terms_exclusively(self):
+    def test_bridge_activation_prompt_drops_old_bridge_completion_rules(self):
         import paixueji_prompts
 
         prompt = paixueji_prompts.BRIDGE_ACTIVATION_RESPONSE_PROMPT
         lower = prompt.lower()
-        assert "use the allowed focus terms from bridge context" in lower
-        assert "do not introduce a new cue outside the bridge context" in lower
-        assert "for food_for, do not pivot to hearing or sound unless the child explicitly mentioned it" in lower
+        assert "complete the bridge in this same turn" not in lower
+        assert "mention the surface object exactly once" not in lower
+        assert "explicitly name the anchor object" not in lower
+        assert "use the allowed focus terms from bridge context" not in lower
+        assert "do not introduce a new cue outside the bridge context" not in lower
+
+    def test_bridge_activation_prompt_allows_surface_reference_only_if_natural(self):
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.BRIDGE_ACTIVATION_RESPONSE_PROMPT
+        lower = prompt.lower()
+        assert "you may mention {surface_object_name} if it helps naturally" in prompt
+        assert "do not force a surface-to-anchor linking sentence" in lower
+        assert "do not act like you are still trying to prove the bridge" in lower
 
     def test_bridge_support_prompt_clarifies_without_switching(self):
         """BRIDGE_SUPPORT_RESPONSE_PROMPT must support without activating the anchor."""

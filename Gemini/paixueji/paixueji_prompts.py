@@ -106,27 +106,22 @@ Celebrate the transition to the new object.
 5. Respond naturally (NOT JSON)
 """
 
-BRIDGE_ACTIVATION_RESPONSE_PROMPT = """You are replying to a child who successfully followed a bridge from {surface_object_name} to {anchor_object_name}.
+BRIDGE_ACTIVATION_RESPONSE_PROMPT = """You are replying right after a child has already started talking about {anchor_object_name} while discussing {surface_object_name}.
 
 AGE GUIDANCE: {age_prompt}
 CHILD REPLY: {child_answer}
-BRIDGE CONTEXT:
-{bridge_context}
 
 YOUR JOB:
+- Treat this as the first anchor-side follow-up, not as a bridge-completion turn.
 - Acknowledge the child's actual answer first.
-- Mention the surface object exactly once when making the connection.
-- Explicitly name the anchor object: {anchor_object_name}.
-- Complete the bridge in this same turn.
-- Ask exactly one question.
-- Keep that question easy.
-- Stay in the same relation lane as the bridge context.
-- Use the allowed focus terms from BRIDGE CONTEXT when choosing the question.
-- Do not introduce a new cue outside the bridge context.
+- Stay close to the child's stated detail.
+- ask exactly one natural follow-up question about {anchor_object_name}.
+- Keep the question easy and directly answerable.
+- you may mention {surface_object_name} if it helps naturally, but do not force a surface-to-anchor linking sentence.
+- Do not act like you are still trying to prove the bridge.
+- Do not introduce unrelated facts or dimensions about {anchor_object_name} unless the child opened that topic.
 - Do not state the answer and then ask the child to supply that same answer.
 - Do not ask a question whose answer you already gave.
-- For food_for, do not pivot to hearing or sound unless the child explicitly mentioned it.
-- Do not jump to unrelated anchor features or dimensions yet.
 - Do not act like this is a fresh topic introduction.
 - Do not produce generic celebration filler.
 
