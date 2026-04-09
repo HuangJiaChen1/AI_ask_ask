@@ -867,7 +867,7 @@ def test_pre_anchor_idk_uses_bridge_support_without_attempt_increment(client, mo
 
     streamed_responses = iter([
         "Cat food is interesting. Does she use her nose to sniff it?",
-        "It could smell strong or fishy to her. Which one do you think her nose notices?",
+        "That's okay. Cats often sniff food before they eat. What might a cat do first?",
     ])
 
     def side_effect_stream(model, contents, config=None):
@@ -892,6 +892,61 @@ def test_pre_anchor_idk_uses_bridge_support_without_attempt_increment(client, mo
     assert final_chunk["pre_anchor_support_count"] == 1
     assert final_chunk["bridge_debug"]["pre_anchor_reply_type"] == "idk_or_stuck"
     assert final_chunk["bridge_debug"]["support_action"] == "scaffold"
+
+
+def test_first_pre_anchor_idk_support_receives_intro_bridge_question(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+    from tests.conftest import MockChunk, MockStream
+    import paixueji_app
+
+    captured = {}
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+
+    def side_effect_stream(model, contents, config=None):
+        response_text = "Cat food is interesting. What might a cat do first when it gets near the food?"
+        return MockStream([MockChunk(word + " ") for word in response_text.split()])
+
+    async def fake_bridge_support_response_stream(**kwargs):
+        captured["previous_bridge_question"] = kwargs["previous_bridge_question"]
+        full = "That's okay. Cats often sniff food before they eat. What might a cat do first?"
+        yield (full, None, full)
+
+    monkeypatch.setattr(
+        paixueji_app.GLOBAL_GEMINI_CLIENT.aio.models.generate_content_stream,
+        "side_effect",
+        side_effect_stream,
+        raising=False,
+    )
+    monkeypatch.setattr(
+        paixueji_app,
+        "generate_bridge_support_response_stream",
+        fake_bridge_support_response_stream,
+    )
+
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+
+    response = client.post("/api/continue", json={"session_id": session_id, "child_input": "I'm not sure, maybe?"})
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+
+    assert captured["previous_bridge_question"] == (
+        "Cat food is interesting. What might a cat do first when it gets near the food?"
+    )
+    assert final_chunk["response_type"] == "bridge_support"
+    assert final_chunk["bridge_debug"]["pre_anchor_reply_type"] == "idk_or_stuck"
 
 
 def test_valid_out_of_lane_answer_after_support_soft_activates_without_correct_answer_fallthrough(client, monkeypatch):

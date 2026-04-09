@@ -296,6 +296,38 @@ def test_latest_bridge_question_ignores_intro_and_uses_support_question():
     assert paixueji_app._latest_bridge_question(history) == "I mean, what might a cat smell first?"
 
 
+def test_latest_bridge_question_falls_back_to_intro_bridge_question():
+    import paixueji_app
+
+    history = [
+        {
+            "role": "assistant",
+            "content": "Cat food is interesting. What might a cat do first when it gets near the food?",
+            "response_type": "introduction",
+            "bridge_debug": {"decision": "intro_bridge"},
+        }
+    ]
+
+    assert paixueji_app._latest_bridge_question(history) == (
+        "Cat food is interesting. What might a cat do first when it gets near the food?"
+    )
+
+
+def test_latest_bridge_question_ignores_non_bridge_intro():
+    import paixueji_app
+
+    history = [
+        {
+            "role": "assistant",
+            "content": "Let's talk about flowers.",
+            "response_type": "introduction",
+            "bridge_debug": {"decision": "bridge_not_started"},
+        }
+    ]
+
+    assert paixueji_app._latest_bridge_question(history) is None
+
+
 @pytest.mark.asyncio
 async def test_anchor_bridge_intro_generator_uses_normal_intro_prompt_for_surface_object():
     import stream.question_generators as qg

@@ -174,15 +174,22 @@ def _bridge_context_summary(bridge_context) -> str:
 
 
 def _latest_bridge_question(conversation_history: list[dict]) -> str | None:
+    intro_bridge_fallback = None
+
     for message in reversed(conversation_history or []):
         if message.get("role") != "assistant":
             continue
 
         response_type = message.get("response_type")
         if response_type in {"bridge_retry", "bridge_support"}:
-            return message.get("content") or ""
+            return (message.get("content") or "").strip()
 
-    return None
+        if response_type == "introduction":
+            bridge_debug = message.get("bridge_debug") or {}
+            if bridge_debug.get("decision") == "intro_bridge" and intro_bridge_fallback is None:
+                intro_bridge_fallback = (message.get("content") or "").strip()
+
+    return intro_bridge_fallback
 
 # Helper to bridge Graph execution to SSE stream
 async def stream_graph_execution(initial_state):
