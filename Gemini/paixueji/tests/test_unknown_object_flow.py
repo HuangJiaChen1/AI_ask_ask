@@ -21,7 +21,7 @@ def parse_sse(response_data):
 
 
 def _bridge_activation_text():
-    return "Yes, when a cat smells cat food, it knows food is there. Why do you think a cat's nose helps it find food?"
+    return "Your cat really likes wet food. What does your cat do when dinner is ready?"
 
 
 def _install_bridge_activation_stream(monkeypatch):
@@ -560,7 +560,74 @@ def test_successful_bridge_follow_final_chunk_has_evaluated_bridge_debug(client,
     assert final_chunk["bridge_debug"]["bridge_visibility_reason"] != "response not evaluated yet"
 
 
-def test_bridge_activation_response_mentions_surface_and_anchor_and_one_question(client, monkeypatch):
+def test_bridge_activation_does_not_pass_bridge_context_to_generator(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+    import paixueji_app
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+
+    captured = {}
+
+    async def fake_generator(
+        messages,
+        child_answer,
+        surface_object_name,
+        anchor_object_name,
+        age,
+        age_prompt,
+        bridge_context,
+        config,
+        client,
+    ):
+        captured["messages"] = messages
+        captured["child_answer"] = child_answer
+        captured["surface_object_name"] = surface_object_name
+        captured["anchor_object_name"] = anchor_object_name
+        captured["bridge_context"] = bridge_context
+        full = _bridge_activation_text()
+        yield ("Your ", None, "Your ")
+        yield ("cat really likes wet food. What does your cat do when dinner is ready?", None, full)
+        yield ("", None, full)
+
+    monkeypatch.setattr(
+        "paixueji_app.generate_bridge_activation_response_stream",
+        fake_generator,
+    )
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"bridge_followed": True, "reason": "anchor mentioned explicitly"}),
+    )
+
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "my cat likes wet food a lot"},
+    )
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+
+    assert captured["anchor_object_name"] == "cat"
+    assert captured["surface_object_name"] == "cat food"
+    assert captured["bridge_context"] == ""
+    assert final_chunk["response_type"] == "bridge_activation"
+    assert final_chunk["current_object_name"] == "cat"
+    assert final_chunk["learning_anchor_active"] is True
+
+
+def test_bridge_activation_response_can_be_anchor_focused_without_surface_link_sentence(client, monkeypatch):
     from object_resolver import ObjectResolutionResult
 
     monkeypatch.setattr(
@@ -591,8 +658,8 @@ def test_bridge_activation_response_mentions_surface_and_anchor_and_one_question
     )
     text = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]["response"].lower()
 
-    assert "cat food" in text
-    assert "cat" in text
+    assert "your cat" in text
+    assert "cat food" not in text
     assert text.count("?") == 1
 
 
@@ -632,7 +699,7 @@ def test_bridge_activation_response_does_not_use_generic_filler(client, monkeypa
     assert "excited to learn more" not in text
 
 
-def test_bridge_activation_first_question_stays_in_food_for_lane(client, monkeypatch):
+def test_bridge_activation_response_does_not_drift_to_unopened_cat_dimensions(client, monkeypatch):
     from object_resolver import ObjectResolutionResult
 
     monkeypatch.setattr(
@@ -663,9 +730,9 @@ def test_bridge_activation_first_question_stays_in_food_for_lane(client, monkeyp
     )
     text = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]["response"].lower()
 
-    assert any(term in text for term in ["smell", "nose", "eat", "food"])
     assert "paw" not in text
     assert "tail" not in text
+    assert "whisker" not in text
 
 
 def test_affirmative_reply_to_retry_bridge_activates_anchor_instead_of_correct_answer(client, monkeypatch):

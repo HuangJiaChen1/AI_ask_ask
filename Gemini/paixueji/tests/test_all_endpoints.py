@@ -31,7 +31,7 @@ def _install_bridge_activation_stream(monkeypatch):
     import paixueji_app
 
     def side_effect_stream(model, contents, config=None):
-        response_text = "Yes, when a cat smells cat food, it knows food is there. Why do you think a cat's nose helps it find food?"
+        response_text = "Your cat really likes wet food. What does your cat do when dinner is ready?"
         return MockStream([MockChunk(word + " ") for word in response_text.split()])
 
     monkeypatch.setattr(

@@ -742,7 +742,7 @@ def continue_conversation():
                                 anchor_object_name=assistant.object_name,
                                 age=assistant.age or 6,
                                 age_prompt=age_prompt,
-                                bridge_context=bridge_context.prompt_context if bridge_context else "",
+                                bridge_context="",
                                 config=assistant.config,
                                 client=assistant.client,
                             )

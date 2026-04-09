@@ -398,7 +398,7 @@ async def generate_bridge_activation_response_stream(
     config: dict,
     client: genai.Client,
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
-    """Generate the successful bridge-completion turn that lands on the anchor in-lane."""
+    """Generate the first anchor-side follow-up after a successful pre-anchor switch."""
     start_time = time.time()
     logger.info(
         "generate_bridge_activation_response_stream started | "

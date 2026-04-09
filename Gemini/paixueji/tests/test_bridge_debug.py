@@ -168,7 +168,7 @@ def test_bridge_activation_debug_evaluates_visibility_from_response_text():
         decision="bridge_activation",
         decision_reason="child followed bridge",
         response_type="bridge_activation",
-        response_text="Yes, when a cat smells cat food, it knows food is there. Why do you think a cat's nose helps it find food?",
+        response_text="Your cat really likes wet food. What does your cat do when dinner is ready?",
     )
     assert debug["bridge_visible_in_response"] is True
     assert debug["bridge_visibility_reason"] != "response not evaluated yet"

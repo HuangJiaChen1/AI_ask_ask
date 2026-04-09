@@ -214,7 +214,7 @@ def test_hf_report_renders_bridge_activation_label():
         session_id="sess",
         transcript=[{
             "role": "model",
-            "content": "When a cat smells cat food, it knows food is there. Why do you think a cat's nose helps it find food?",
+            "content": "Your cat really likes wet food. What does your cat do when dinner is ready?",
             "mode": "chat",
             "response_type": "bridge_activation",
             "bridge_debug": {
