@@ -43,9 +43,8 @@ async def test_idk_reply_scaffolds_without_consuming_bridge_attempt():
 
 @pytest.mark.asyncio
 async def test_in_lane_follow_still_activates_anchor(monkeypatch):
-    monkeypatch.setattr(
-        "pre_anchor_policy.classify_bridge_follow",
-        AsyncMock(return_value={"bridge_followed": True, "reason": "matched bridge follow term: smell"}),
+    bridge_follow_classifier = AsyncMock(
+        return_value={"bridge_followed": True, "reason": "matched bridge follow term: smell"}
     )
 
     result = await classify_pre_anchor_reply(
@@ -55,6 +54,7 @@ async def test_in_lane_follow_still_activates_anchor(monkeypatch):
         anchor_object_name="cat",
         relation="food_for",
         previous_bridge_question="How does it smell to her?",
+        bridge_follow_classifier=bridge_follow_classifier,
     )
 
     assert result.reply_type == "in_lane_follow"
@@ -64,9 +64,8 @@ async def test_in_lane_follow_still_activates_anchor(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_valid_out_of_lane_answer_is_not_a_true_miss(monkeypatch):
-    monkeypatch.setattr(
-        "pre_anchor_policy.classify_bridge_follow",
-        AsyncMock(return_value={"bridge_followed": False, "reason": "no lane term"}),
+    bridge_follow_classifier = AsyncMock(
+        return_value={"bridge_followed": False, "reason": "no lane term"}
     )
 
     result = await classify_pre_anchor_reply(
@@ -76,6 +75,7 @@ async def test_valid_out_of_lane_answer_is_not_a_true_miss(monkeypatch):
         anchor_object_name="cat",
         relation="food_for",
         previous_bridge_question="How do you think they know the food is there before they take a bite?",
+        bridge_follow_classifier=bridge_follow_classifier,
     )
 
     assert result.reply_type == "valid_out_of_lane_anchor_related"
@@ -85,9 +85,8 @@ async def test_valid_out_of_lane_answer_is_not_a_true_miss(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_unrelated_answer_is_true_miss(monkeypatch):
-    monkeypatch.setattr(
-        "pre_anchor_policy.classify_bridge_follow",
-        AsyncMock(return_value={"bridge_followed": False, "reason": "no lane term"}),
+    bridge_follow_classifier = AsyncMock(
+        return_value={"bridge_followed": False, "reason": "no lane term"}
     )
 
     result = await classify_pre_anchor_reply(
@@ -97,6 +96,7 @@ async def test_unrelated_answer_is_true_miss(monkeypatch):
         anchor_object_name="cat",
         relation="food_for",
         previous_bridge_question="Does she use her nose to sniff it?",
+        bridge_follow_classifier=bridge_follow_classifier,
     )
 
     assert result.reply_type == "true_miss"

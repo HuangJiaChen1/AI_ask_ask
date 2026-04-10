@@ -395,9 +395,21 @@ Previous bridge question: {previous_bridge_question}
 Child reply: {child_answer}
 
 Rules:
-- If the child clearly answers yes/maybe/probably to a previous bridge question that was inside the allowed bridge focus, treat it as followed.
-- If the child says no, not really, or I don't know, treat it as not followed.
+- Judge the child reply together with the previous bridge question. Do not decide from keywords alone.
+- Count replies about how the supported anchor smells, notices, mouths, bites, chews, crunches, licks, or uses teeth on the surface object as followed when they answer the bridge question.
+- Count no, refusal, or "I don't know" as not followed when they reject or avoid the bridge question.
+- Do not treat naming the anchor by itself as enough to count as followed.
 - Do not mark vague unrelated replies as followed.
+
+Example 1:
+- Previous bridge question: "When your cat eats, does she crunch it with her teeth or lick it instead?"
+- Child reply: "I think just with her teeth"
+- Output: {{"bridge_followed": true, "reason": "answered how the cat eats the food"}}
+
+Example 2:
+- Previous bridge question: "Does she use her nose to sniff it before she starts to eat?"
+- Child reply: "not really"
+- Output: {{"bridge_followed": false, "reason": "child declined the bridge"}}
 
 Return JSON:
 {{

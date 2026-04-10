@@ -486,6 +486,71 @@ def test_successful_bridge_follow_uses_bridge_activation_not_topic_switch(client
     assert final_chunk["bridge_debug"]["decision"] == "bridge_activation"
 
 
+def test_model_only_bridge_classifier_promotes_teeth_reply_to_bridge_activation(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+    import paixueji_app
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+
+    _install_bridge_activation_stream(monkeypatch)
+
+    def classify_side_effect(*args, **kwargs):
+        prompt = kwargs["contents"]
+        if 'Child reply: not really' in prompt:
+            return MagicMock(text='{"bridge_followed": false, "reason": "child declined the bridge"}')
+        if 'Child reply: I think just with her teeth' in prompt:
+            return MagicMock(text='{"bridge_followed": true, "reason": "answered how the cat eats the food"}')
+        raise AssertionError(prompt)
+
+    mock_generate_content = AsyncMock(side_effect=classify_side_effect)
+    monkeypatch.setattr(
+        paixueji_app.GLOBAL_GEMINI_CLIENT.aio.models,
+        "generate_content",
+        mock_generate_content,
+    )
+
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+
+    first_retry = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "not really"},
+    )
+    first_final = [e["data"] for e in parse_sse(first_retry.data) if e["event"] == "chunk"][-1]
+    assert first_final["response_type"] == "bridge_retry"
+
+    second_retry = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "not really"},
+    )
+    second_final = [e["data"] for e in parse_sse(second_retry.data) if e["event"] == "chunk"][-1]
+    assert second_final["response_type"] == "bridge_retry"
+
+    activation = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "I think just with her teeth"},
+    )
+    final_chunk = [e["data"] for e in parse_sse(activation.data) if e["event"] == "chunk"][-1]
+
+    assert mock_generate_content.await_count == 3
+    assert final_chunk["response_type"] == "bridge_activation"
+    assert final_chunk["current_object_name"] == "cat"
+    assert final_chunk["learning_anchor_active"] is True
+    assert final_chunk["bridge_debug"]["decision"] == "bridge_activation"
+
+
 def test_bridge_activation_preserves_pre_anchor_traces(client, monkeypatch):
     from object_resolver import ObjectResolutionResult
 
@@ -769,6 +834,20 @@ def test_affirmative_reply_to_retry_bridge_activates_anchor_instead_of_correct_a
         "side_effect",
         side_effect_stream,
         raising=False,
+    )
+
+    def classify_side_effect(*args, **kwargs):
+        prompt = kwargs["contents"]
+        if 'Child reply: she might' in prompt:
+            return MagicMock(text='{"bridge_followed": false, "reason": "hedged reply did not commit to the bridge"}')
+        if 'Child reply: yep' in prompt:
+            return MagicMock(text='{"bridge_followed": true, "reason": "affirmed the prior bridge question"}')
+        raise AssertionError(prompt)
+
+    monkeypatch.setattr(
+        paixueji_app.GLOBAL_GEMINI_CLIENT.aio.models,
+        "generate_content",
+        AsyncMock(side_effect=classify_side_effect),
     )
 
     start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
