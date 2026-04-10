@@ -2,6 +2,65 @@ import pytest
 from unittest.mock import MagicMock, AsyncMock
 import json
 import asyncio
+import sys
+import types
+
+if "flask_cors" not in sys.modules:
+    flask_cors_module = types.ModuleType("flask_cors")
+
+    def CORS(*args, **kwargs):
+        return None
+
+    flask_cors_module.CORS = CORS
+    sys.modules["flask_cors"] = flask_cors_module
+
+if "loguru" not in sys.modules:
+    loguru_module = types.ModuleType("loguru")
+    loguru_module.logger = MagicMock()
+    sys.modules["loguru"] = loguru_module
+
+google_module = sys.modules.get("google")
+if google_module is None:
+    google_module = types.ModuleType("google")
+    sys.modules["google"] = google_module
+
+genai_module = types.ModuleType("google.genai")
+genai_types_module = types.ModuleType("google.genai.types")
+
+
+class HttpOptions:
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+
+
+class GenerateContentConfig:
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+
+
+class Tool:
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+
+
+class GoogleSearch:
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+
+
+genai_types_module.HttpOptions = HttpOptions
+genai_types_module.GenerateContentConfig = GenerateContentConfig
+genai_types_module.Tool = Tool
+genai_types_module.GoogleSearch = GoogleSearch
+genai_module.types = genai_types_module
+genai_module.Client = MagicMock
+google_module.genai = genai_module
+sys.modules["google.genai"] = genai_module
+sys.modules["google.genai.types"] = genai_types_module
 
 # Mock classes to simulate Gemini API behavior
 

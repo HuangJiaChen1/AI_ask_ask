@@ -653,6 +653,8 @@ def test_bridge_activation_does_not_pass_bridge_context_to_generator(client, mon
         age,
         age_prompt,
         bridge_context,
+        activation_grounding_mode,
+        activation_grounding_context,
         config,
         client,
     ):
@@ -661,6 +663,8 @@ def test_bridge_activation_does_not_pass_bridge_context_to_generator(client, mon
         captured["surface_object_name"] = surface_object_name
         captured["anchor_object_name"] = anchor_object_name
         captured["bridge_context"] = bridge_context
+        captured["activation_grounding_mode"] = activation_grounding_mode
+        captured["activation_grounding_context"] = activation_grounding_context
         full = _bridge_activation_text()
         yield ("Your ", None, "Your ")
         yield ("cat really likes wet food. What does your cat do when dinner is ready?", None, full)
@@ -687,9 +691,153 @@ def test_bridge_activation_does_not_pass_bridge_context_to_generator(client, mon
     assert captured["anchor_object_name"] == "cat"
     assert captured["surface_object_name"] == "cat food"
     assert captured["bridge_context"] == ""
+    assert captured["activation_grounding_mode"] == "none"
+    assert captured["activation_grounding_context"] == ""
     assert final_chunk["response_type"] == "bridge_activation"
     assert final_chunk["current_object_name"] == "cat"
     assert final_chunk["learning_anchor_active"] is True
+
+
+def test_bridge_activation_physical_only_passes_only_physical_grounding(client, monkeypatch):
+    from kb_context import build_bridge_activation_grounding_context
+    from object_resolver import ObjectResolutionResult
+    import paixueji_app
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+
+    captured = {}
+
+    async def fake_generator(
+        messages,
+        child_answer,
+        surface_object_name,
+        anchor_object_name,
+        age,
+        age_prompt,
+        bridge_context,
+        activation_grounding_mode,
+        activation_grounding_context,
+        config,
+        client,
+    ):
+        captured["activation_grounding_mode"] = activation_grounding_mode
+        captured["activation_grounding_context"] = activation_grounding_context
+        full = _bridge_activation_text()
+        yield (full, None, full)
+        yield ("", None, full)
+
+    monkeypatch.setattr(
+        "paixueji_app.generate_bridge_activation_response_stream",
+        fake_generator,
+    )
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"bridge_followed": True, "reason": "anchor mentioned explicitly"}),
+    )
+
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+    paixueji_app.sessions[session_id].config["bridge_activation_grounding_mode"] = "physical_only"
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "my cat likes wet food a lot"},
+    )
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+    assistant = paixueji_app.sessions[session_id]
+
+    assert captured["activation_grounding_mode"] == "physical_only"
+    assert captured["activation_grounding_context"] == build_bridge_activation_grounding_context(
+        mode="physical_only",
+        object_name="cat",
+        physical_dimensions=assistant.physical_dimensions,
+        engagement_dimensions=assistant.engagement_dimensions,
+    )
+    assert "[physical." in captured["activation_grounding_context"]
+    assert "[engagement." not in captured["activation_grounding_context"]
+    assert final_chunk["response_type"] == "bridge_activation"
+
+
+def test_bridge_activation_full_chat_kb_passes_full_anchor_grounding(client, monkeypatch):
+    from kb_context import build_chat_kb_context
+    from object_resolver import ObjectResolutionResult
+    import paixueji_app
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+
+    captured = {}
+
+    async def fake_generator(
+        messages,
+        child_answer,
+        surface_object_name,
+        anchor_object_name,
+        age,
+        age_prompt,
+        bridge_context,
+        activation_grounding_mode,
+        activation_grounding_context,
+        config,
+        client,
+    ):
+        captured["activation_grounding_mode"] = activation_grounding_mode
+        captured["activation_grounding_context"] = activation_grounding_context
+        full = _bridge_activation_text()
+        yield (full, None, full)
+        yield ("", None, full)
+
+    monkeypatch.setattr(
+        "paixueji_app.generate_bridge_activation_response_stream",
+        fake_generator,
+    )
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"bridge_followed": True, "reason": "anchor mentioned explicitly"}),
+    )
+
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+    paixueji_app.sessions[session_id].config["bridge_activation_grounding_mode"] = "full_chat_kb"
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "my cat likes wet food a lot"},
+    )
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+    assistant = paixueji_app.sessions[session_id]
+
+    assert captured["activation_grounding_mode"] == "full_chat_kb"
+    assert captured["activation_grounding_context"] == build_chat_kb_context(
+        object_name="cat",
+        physical_dimensions=assistant.physical_dimensions,
+        engagement_dimensions=assistant.engagement_dimensions,
+    )
+    assert "[engagement." in captured["activation_grounding_context"]
+    assert final_chunk["response_type"] == "bridge_activation"
 
 
 def test_bridge_activation_response_can_be_anchor_focused_without_surface_link_sentence(client, monkeypatch):

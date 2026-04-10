@@ -44,6 +44,8 @@ class BridgeDebugInfo(BaseModel):
     response_type: str | None = None
     kb_mode: str | None = None
     bridge_context_summary: str | None = None
+    activation_grounding_mode: str | None = None
+    activation_grounding_summary: str | None = None
     bridge_visible_in_response: bool | None = None
     bridge_visibility_reason: str | None = None
     pre_anchor_reply_type: str | None = None

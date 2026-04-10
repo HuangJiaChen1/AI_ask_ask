@@ -22,6 +22,8 @@ from stream import (
 from schema import StreamChunk
 from bridge_context import build_bridge_context
 from bridge_debug import build_bridge_debug
+from kb_context import build_chat_kb_context as format_chat_kb_context
+from kb_context import build_intro_kb_context as format_intro_kb_context
 
 GUIDE_MODE_THRESHOLD = 2  # Correct answers required to complete chat mode
 _STRUGGLING_INTENTS = {"CLARIFYING_IDK", "CLARIFYING_WRONG"}  # Intents that share the struggle counter
@@ -323,30 +325,11 @@ def _build_chat_kb_context(state: "PaixuejiState") -> str:
     if state.get("learning_anchor_active") is False:
         return ""
 
-    physical = state.get("physical_dimensions") or {}
-    engagement = state.get("engagement_dimensions") or {}
-
-    if not physical and not engagement:
-        return ""
-
-    object_name = state.get("object_name", "this object")
-    lines = [f"Current-object KB for {object_name}:"]
-
-    for dimension, attrs in physical.items():
-        if not attrs:
-            continue
-        lines.append(f"[physical.{dimension}]")
-        for attribute, value in attrs.items():
-            lines.append(f"  - {attribute.replace('_', ' ')}: {value}")
-
-    for dimension, seeds in engagement.items():
-        if not seeds:
-            continue
-        lines.append(f"[engagement.{dimension}]")
-        for seed_text in seeds:
-            lines.append(f"  - {seed_text}")
-
-    return "\n".join(lines)
+    return format_chat_kb_context(
+        object_name=state.get("object_name", "this object"),
+        physical_dimensions=state.get("physical_dimensions") or {},
+        engagement_dimensions=state.get("engagement_dimensions") or {},
+    )
 
 
 def _build_intro_kb_context(state: "PaixuejiState") -> str:
@@ -359,21 +342,10 @@ def _build_intro_kb_context(state: "PaixuejiState") -> str:
     if state.get("learning_anchor_active") is False:
         return ""
 
-    physical = state.get("physical_dimensions") or {}
-    if not physical:
-        return ""
-
-    object_name = state.get("object_name", "this object")
-    lines = [f"Intro grounding for {object_name}:"]
-
-    for dimension, attrs in physical.items():
-        if not attrs:
-            continue
-        lines.append(f"[physical.{dimension}]")
-        for attribute, value in attrs.items():
-            lines.append(f"  - {attribute.replace('_', ' ')}: {value}")
-
-    return "\n".join(lines)
+    return format_intro_kb_context(
+        object_name=state.get("object_name", "this object"),
+        physical_dimensions=state.get("physical_dimensions") or {},
+    )
 
 
 def _build_bridge_prompt_context(state: "PaixuejiState", attempt_number: int) -> str:

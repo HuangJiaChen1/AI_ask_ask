@@ -110,11 +110,15 @@ BRIDGE_ACTIVATION_RESPONSE_PROMPT = """You are replying right after a child has 
 
 AGE GUIDANCE: {age_prompt}
 CHILD REPLY: {child_answer}
+{latent_grounding_section}
 
 YOUR JOB:
 - Treat this as the first anchor-side follow-up, not as a bridge-completion turn.
 - Acknowledge the child's actual answer first.
 - Stay close to the child's stated detail.
+- The child's stated detail stays primary.
+- If latent grounding is present, use it only as hidden support for continuity.
+- Do not quote, dump, or enumerate the hidden support block.
 - ask exactly one natural follow-up question about {anchor_object_name}.
 - Keep the question easy and directly answerable.
 - you may mention {surface_object_name} if it helps naturally, but do not force a surface-to-anchor linking sentence.

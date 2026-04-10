@@ -230,6 +230,15 @@ class TestIntroductionPromptBeatStructure:
         assert "do not force a surface-to-anchor linking sentence" in lower
         assert "do not act like you are still trying to prove the bridge" in lower
 
+    def test_bridge_activation_prompt_treats_latent_grounding_as_hidden_support(self):
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.BRIDGE_ACTIVATION_RESPONSE_PROMPT
+        lower = prompt.lower()
+        assert "{latent_grounding_section}" in prompt
+        assert "hidden support" in lower
+        assert "child's stated detail stays primary" in lower
+
     def test_bridge_support_prompt_clarifies_without_switching(self):
         """BRIDGE_SUPPORT_RESPONSE_PROMPT must support without activating the anchor."""
         import paixueji_prompts

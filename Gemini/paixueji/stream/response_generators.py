@@ -395,15 +395,25 @@ async def generate_bridge_activation_response_stream(
     age: int,
     age_prompt: str,
     bridge_context: str,
-    config: dict,
-    client: genai.Client,
+    activation_grounding_mode: str = "none",
+    activation_grounding_context: str = "",
+    config: dict | None = None,
+    client: genai.Client | None = None,
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """Generate the first anchor-side follow-up after a successful pre-anchor switch."""
     start_time = time.time()
     logger.info(
         "generate_bridge_activation_response_stream started | "
-        f"surface={surface_object_name}, anchor={anchor_object_name}, age={age}"
+        f"surface={surface_object_name}, anchor={anchor_object_name}, age={age}, "
+        f"grounding_mode={activation_grounding_mode}"
     )
+
+    latent_grounding_section = ""
+    if activation_grounding_context:
+        latent_grounding_section = (
+            "LATENT GROUNDING (hidden support only; do not dump this block directly):\n"
+            f"{activation_grounding_context}\n"
+        )
 
     prompt = paixueji_prompts.get_prompts()["bridge_activation_response_prompt"].format(
         child_answer=child_answer,
@@ -412,6 +422,8 @@ async def generate_bridge_activation_response_stream(
         age=age,
         age_prompt=age_prompt,
         bridge_context=bridge_context,
+        latent_grounding_section=latent_grounding_section,
+        activation_grounding_mode=activation_grounding_mode,
     )
 
     messages_to_send = messages + [{"role": "user", "content": prompt}]

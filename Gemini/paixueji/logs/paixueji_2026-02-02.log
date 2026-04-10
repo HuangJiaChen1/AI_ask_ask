@@ -1,9 +1,0 @@
-2026-02-02 11:14:06.390 | INFO     | stream.main:call_paixueji_stream:71 | [sim_session] KG Context: MISSING for 'Daffodils' - using general knowledge
-2026-02-02 11:14:06.390 | INFO     | stream.main:call_paixueji_stream:79 | [sim_session] call_paixueji_stream started | session_id=sim_session, age=6, object=Daffodils, level1=, level2=, level3=, correct_count=0, status=normal, content_length=34, message_history=1
-2026-02-02 11:14:06.390 | INFO     | stream.main:call_paixueji_stream:139 | [sim_session] THEME GUIDE ACTIVE: Indoor Activities
-2026-02-02 11:14:36.270 | INFO     | stream.main:call_paixueji_stream:71 | [sim_session] KG Context: MISSING for 'Daffodils' - using general knowledge
-2026-02-02 11:14:36.271 | INFO     | stream.main:call_paixueji_stream:79 | [sim_session] call_paixueji_stream started | session_id=sim_session, age=6, object=Daffodils, level1=, level2=, level3=, correct_count=0, status=normal, content_length=16, message_history=3
-2026-02-02 11:14:36.271 | INFO     | stream.main:call_paixueji_stream:139 | [sim_session] THEME GUIDE ACTIVE: Indoor Activities
-2026-02-02 11:14:52.447 | INFO     | stream.main:call_paixueji_stream:71 | [sim_session] KG Context: MISSING for 'Daffodils' - using general knowledge
-2026-02-02 11:14:52.447 | INFO     | stream.main:call_paixueji_stream:79 | [sim_session] call_paixueji_stream started | session_id=sim_session, age=6, object=Daffodils, level1=, level2=, level3=, correct_count=0, status=normal, content_length=3, message_history=5
-2026-02-02 11:14:52.447 | INFO     | stream.main:call_paixueji_stream:139 | [sim_session] THEME GUIDE ACTIVE: Indoor Activities

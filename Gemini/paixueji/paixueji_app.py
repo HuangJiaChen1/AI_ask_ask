@@ -26,6 +26,10 @@ from graph_lookup import lookup_top_available_concepts
 from object_resolver import parse_anchor_confirmation, resolve_object_input
 from bridge_context import build_bridge_context
 from bridge_debug import build_bridge_debug, build_bridge_trace_entry, format_bridge_log_line
+from kb_context import (
+    build_bridge_activation_grounding_context,
+    normalize_bridge_activation_grounding_mode,
+)
 from pre_anchor_policy import classify_pre_anchor_reply
 from resolution_debug import format_resolution_log_line
 from stream import (
@@ -171,6 +175,13 @@ def _bridge_context_summary(bridge_context) -> str:
         f"allowed: {', '.join(bridge_context.allowed_focus_terms)}"
         if bridge_context.allowed_focus_terms else ""
     )
+
+
+def _activation_grounding_summary(mode: str, activation_grounding_context: str) -> str:
+    if not activation_grounding_context:
+        return ""
+    line_count = len([line for line in activation_grounding_context.splitlines() if line.strip()])
+    return f"{mode}: {line_count} non-empty grounding lines"
 
 
 def _latest_bridge_question(conversation_history: list[dict]) -> str | None:
@@ -705,6 +716,15 @@ def continue_conversation():
                         assistant.anchor_status = "anchored_high"
                         assistant.load_dimension_data(assistant.object_name)
                         assistant.load_object_context_from_yaml(assistant.object_name)
+                        activation_grounding_mode = normalize_bridge_activation_grounding_mode(
+                            assistant.config.get("bridge_activation_grounding_mode")
+                        )
+                        activation_grounding_context = build_bridge_activation_grounding_context(
+                            mode=activation_grounding_mode,
+                            object_name=assistant.object_name,
+                            physical_dimensions=assistant.physical_dimensions,
+                            engagement_dimensions=assistant.engagement_dimensions,
+                        )
                         interim_bridge_debug = build_bridge_debug(
                             surface_object_name=previous_object,
                             anchor_object_name=assistant.anchor_object_name,
@@ -724,6 +744,11 @@ def continue_conversation():
                             pre_anchor_handler_entered=True,
                             kb_mode="anchor_kb_active",
                             bridge_context_summary=_bridge_context_summary(bridge_context),
+                            activation_grounding_mode=activation_grounding_mode,
+                            activation_grounding_summary=_activation_grounding_summary(
+                                activation_grounding_mode,
+                                activation_grounding_context,
+                            ),
                             pre_anchor_reply_type=pre_anchor_decision.reply_type,
                             support_action=pre_anchor_decision.support_action,
                             pre_anchor_support_count_before=pre_anchor_state_before["pre_anchor_support_count"],
@@ -750,6 +775,8 @@ def continue_conversation():
                                 age=assistant.age or 6,
                                 age_prompt=age_prompt,
                                 bridge_context="",
+                                activation_grounding_mode=activation_grounding_mode,
+                                activation_grounding_context=activation_grounding_context,
                                 config=assistant.config,
                                 client=assistant.client,
                             )
@@ -798,6 +825,11 @@ def continue_conversation():
                                 pre_anchor_handler_entered=True,
                                 kb_mode="anchor_kb_active",
                                 bridge_context_summary=_bridge_context_summary(bridge_context),
+                                activation_grounding_mode=activation_grounding_mode,
+                                activation_grounding_summary=_activation_grounding_summary(
+                                    activation_grounding_mode,
+                                    activation_grounding_context,
+                                ),
                                 response_text=full_response,
                                 pre_anchor_reply_type=pre_anchor_decision.reply_type,
                                 support_action=pre_anchor_decision.support_action,
