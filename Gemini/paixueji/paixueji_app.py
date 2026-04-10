@@ -2221,7 +2221,7 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
         mr_expected = introduction_critique.get("model_response_expected", "").strip()
         mr_problem = introduction_critique.get("model_response_problem", "").strip()
         if mr_expected or mr_problem:
-            report += "**Introduction Content:**\n"
+            report += "**Feedback on the introduction:**\n"
             if mr_expected:
                 report += f"- *What is expected:* {mr_expected}\n"
             if mr_problem:
@@ -2277,6 +2277,14 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
     return report
 
 
+def _markdown_blockquote(text):
+    """Render text as a markdown blockquote while preserving paragraph breaks."""
+    lines = text.splitlines()
+    if not lines:
+        return "> "
+    return "\n".join("> " + line if line else ">" for line in lines)
+
+
 def _render_hf_exchange(idx, exchange, ec):
     """Render a single HF exchange critique as markdown."""
     report = f"### Exchange {idx}\n\n"
@@ -2304,11 +2312,13 @@ def _render_hf_exchange(idx, exchange, ec):
 
     # Human critique sections
     report += "#### Human Critique\n\n"
+    report += "**Critiqued Model Response:**\n"
+    report += f"{_markdown_blockquote(exchange['model_response'])}\n\n"
 
     mr_expected = ec.get("model_response_expected", "").strip()
     mr_problem = ec.get("model_response_problem", "").strip()
     if mr_expected or mr_problem:
-        report += "**Model Response:**\n"
+        report += "**Feedback on the model response:**\n"
         if mr_expected:
             report += f"- *What is expected:* {mr_expected}\n"
         if mr_problem:
@@ -2410,10 +2420,15 @@ def _parse_hf_report(filepath):
             time_ms = int(mm.group(4))
             body = []
             i += 1
-            while i < len(tlines) and tlines[i] and not tlines[i].startswith('**') and tlines[i] != '---':
+            while (
+                i < len(tlines)
+                and tlines[i] != '---'
+                and not tlines[i].startswith('**Child:**')
+                and not tlines[i].startswith('**Model**')
+            ):
                 body.append(tlines[i])
                 i += 1
-            turns.append({"role": "model", "phase": phase, "text": " ".join(body).strip(),
+            turns.append({"role": "model", "phase": phase, "text": "\n".join(body).strip(),
                           "response_type": response_type, "nodes": nodes, "time_ms": time_ms, "exchange_index": None, "critique": None})
             continue
         # Child turn: **Child:** text
