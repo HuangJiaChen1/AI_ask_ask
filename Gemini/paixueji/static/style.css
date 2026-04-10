@@ -1321,7 +1321,12 @@ body {
     margin-bottom: 4px;
     text-transform: uppercase;
 }
-.rv-crit-panel-text { font-size: 13px; color: #374151; }
+.rv-crit-panel-text {
+    font-size: 13px;
+    color: #374151;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
 
 /* Node trace in critique popup */
 .rv-popup-trace { margin-top: 4px; }

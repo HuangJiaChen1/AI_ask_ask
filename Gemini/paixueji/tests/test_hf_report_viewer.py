@@ -3,6 +3,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 HF_DIR = REPO_ROOT / "reports" / "HF"
+INDEX_HTML = (REPO_ROOT / "static" / "index.html").read_text(encoding="utf-8")
 REPORTS_JS = (REPO_ROOT / "static" / "reports.js").read_text(encoding="utf-8")
 STYLE_CSS = (REPO_ROOT / "static" / "style.css").read_text(encoding="utf-8")
 APP_JS = (REPO_ROOT / "static" / "app.js").read_text(encoding="utf-8")
@@ -107,6 +108,13 @@ def test_frontend_assets_cover_search_critique_badges_and_none_state():
     assert "#rvRawModal" in STYLE_CSS
 
 
+def test_frontend_assets_cover_critiqued_response_panel_and_pre_wrap():
+    assert "rvPopupCritiquedResponse" in INDEX_HTML
+    assert "Critiqued Model Response" in INDEX_HTML
+    assert "rvPopupCritiquedResponse" in REPORTS_JS
+    assert "white-space: pre-wrap" in STYLE_CSS
+
+
 def test_hf_report_includes_anchor_resolution_and_bridge_debug_sections():
     from paixueji_app import build_human_feedback_report
     from bridge_debug import build_bridge_trace_entry
@@ -187,6 +195,53 @@ def test_hf_report_includes_anchor_resolution_and_bridge_debug_sections():
     assert "pre_anchor_reply_type: `clarification_request`" in report
     assert "support_action: `clarify`" in report
     assert "pre_anchor_support_count_after: `1`" in report
+
+
+def test_hf_report_exchange_critique_labels_are_unambiguous():
+    from paixueji_app import build_human_feedback_report
+
+    model_response = (
+        "That's okay! Sometimes it's hard to know if you haven't seen it happen before.\n\n"
+        "When you open a bag of food, it has a really strong smell. Do you think the cat "
+        "uses its nose to find the food, or does it use its eyes to look for it?"
+    )
+
+    report = build_human_feedback_report(
+        object_name="cat food",
+        age=6,
+        session_id="sess",
+        transcript=[{
+            "role": "model",
+            "content": "Intro",
+            "mode": "chat",
+            "response_type": "introduction",
+            "nodes_executed": [],
+        }],
+        all_exchanges=[{
+            "child_response": "I don't know",
+            "model_response": model_response,
+            "nodes_executed": [],
+        }],
+        exchange_critiques=[{
+            "exchange_index": 1,
+            "model_response_problem": "This asks a new question instead of scaffolding the original one.",
+        }],
+        global_conclusion="",
+        introduction=None,
+        introduction_critique=None,
+        key_concept="function",
+        session_resolution_debug={
+            "surface_object_name": "cat food",
+            "anchor_object_name": "cat",
+            "anchor_status": "anchored_high",
+        },
+    )
+
+    assert "**Critiqued Model Response:**" in report
+    assert "**Feedback on the model response:**" in report
+    assert "**Model Response:**" not in report
+    assert '> That\'s okay! Sometimes it\'s hard to know if you haven\'t seen it happen before.' in report
+    assert "> When you open a bag of food, it has a really strong smell." in report
 
 
 def test_hf_report_detail_parser_preserves_response_type_and_bridge_debug(client):
@@ -298,3 +353,88 @@ def test_hf_report_parser_keeps_bridge_only_intro_diagnostics(tmp_path):
     assert intro_turn["critique"] is not None
     assert intro_turn["critique"]["bridge_verdict"] is not None
     assert intro_turn["critique"]["bridge_debug"]["decision"] == "intro_bridge"
+
+
+def test_parse_hf_report_preserves_multiline_model_reply(tmp_path):
+    from paixueji_app import _parse_hf_report
+
+    report_text = """# Human Feedback Critique Report: cat food
+
+**Session:** sess
+**Age:** 6
+**Date:** 2026-04-10T00:00:00
+**Feedback Type:** Manual (Human)
+**Exchanges Critiqued:** 0 / 1
+
+---
+
+## Conversation Transcript
+
+**Model** `[CHAT|bridge_support]`**:** [driver:bridge_decision] (1ms)
+That's okay! Sometimes it's hard to know if you haven't seen it happen before.
+
+When you open a bag of food, it has a really strong smell.
+
+**Child:** maybe both
+
+---
+
+## Conversation Critique
+
+*No exchanges were critiqued.*
+"""
+    path = tmp_path / "report.md"
+    path.write_text(report_text, encoding="utf-8")
+
+    parsed = _parse_hf_report(path)
+
+    assert parsed["transcript"][0]["text"] == (
+        "That's okay! Sometimes it's hard to know if you haven't seen it happen before.\n\n"
+        "When you open a bag of food, it has a really strong smell."
+    )
+
+
+def test_hf_report_parser_keeps_second_paragraph_in_model_turn(tmp_path):
+    from paixueji_app import _parse_hf_report, build_human_feedback_report
+    from bridge_debug import build_bridge_trace_entry
+
+    trace = build_bridge_trace_entry(
+        node="driver:bridge_decision",
+        state_before={},
+        changes={"decision": "bridge_support"},
+        time_ms=1.0,
+    )
+
+    report = build_human_feedback_report(
+        object_name="cat food",
+        age=6,
+        session_id="sess",
+        transcript=[{
+            "role": "model",
+            "content": (
+                "That's okay! Sometimes it's hard to know if you haven't seen it happen before.\n\n"
+                "When you open a bag of food, it has a really strong smell."
+            ),
+            "mode": "chat",
+            "response_type": "bridge_support",
+            "nodes_executed": [trace],
+        }],
+        all_exchanges=[],
+        exchange_critiques=[],
+        global_conclusion="",
+        introduction=None,
+        introduction_critique=None,
+        key_concept="function",
+        session_resolution_debug={
+            "surface_object_name": "cat food",
+            "anchor_object_name": "cat",
+            "anchor_status": "anchored_high",
+        },
+    )
+    path = tmp_path / "hf.md"
+    path.write_text(report, encoding="utf-8")
+
+    parsed = _parse_hf_report(path)
+    intro_turn = next(turn for turn in parsed["transcript"] if turn["role"] == "model")
+
+    assert "\n\nWhen you open a bag of food" in intro_turn["text"]

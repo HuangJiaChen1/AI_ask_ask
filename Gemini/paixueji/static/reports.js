@@ -42,6 +42,7 @@ let _rvAllReports   = [];
 let _rvCurrentDate  = '';
 let _rvCurrentFile  = '';
 let _rvCritiques    = {};   // exchangeIdx → critique object
+let _rvTurnsByExchange = {}; // exchangeIdx → model turn
 let _rvFilterText   = '';
 
 // ─── Entry / Exit ─────────────────────────────────────────────────────────────
@@ -58,6 +59,7 @@ function closeReportsViewer() {
     _rvCurrentDate = '';
     _rvCurrentFile = '';
     _rvCritiques   = {};
+    _rvTurnsByExchange = {};
     window.paixuejiUi.leaveReportsPage();
 }
 
@@ -156,7 +158,11 @@ function renderDetail(report) {
 
     // Build critiques lookup for popup access
     _rvCritiques = {};
+    _rvTurnsByExchange = {};
     for (const turn of report.transcript || []) {
+        if (turn.role === 'model' && turn.exchange_index != null) {
+            _rvTurnsByExchange[turn.exchange_index] = turn;
+        }
         if (turn.critique && turn.exchange_index != null) {
             _rvCritiques[turn.exchange_index] = turn.critique;
         }
@@ -255,6 +261,7 @@ function renderDetail(report) {
 
 function showRvCritiquePopup(exchangeIdx) {
     const crit = _rvCritiques[exchangeIdx];
+    const turn = _rvTurnsByExchange[exchangeIdx];
     if (!crit) return;
 
     const isProblematic = crit.problematic
@@ -264,6 +271,8 @@ function showRvCritiquePopup(exchangeIdx) {
     document.getElementById('rvPopupTitle').textContent =
         `Exchange ${exchangeIdx} — ${crit.phase || 'CHAT'} Phase`;
 
+    document.getElementById('rvPopupCritiquedResponse').textContent =
+        turn && turn.text ? turn.text : '—';
     document.getElementById('rvPopupExpected').textContent = crit.expected || '—';
 
     const probPanel = document.getElementById('rvPopupProbPanel');
