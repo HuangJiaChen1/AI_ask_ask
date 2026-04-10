@@ -290,6 +290,10 @@ ANCHOR_BRIDGE_INTRO_PROMPT = INTRODUCTION_PROMPT
 
 ANCHOR_BRIDGE_INTRO_GUARDRAIL_PROMPT = """PRE-ANCHOR BRIDGE GUARDRAILS:
 - Keep the normal intro beat structure and hook style.
+- The final question must already stay inside the bridge lane below.
+- Do not ask a lane-external question that later support would need to replace.
+- Use this bridge context to choose the final question:
+{bridge_context}
 - Do not say you can see the object unless the child already established that.
 - Do not invent packaging or inside-the-bag details.
 - Stay generic and surface-level when no grounding is available.
@@ -362,18 +366,21 @@ YOUR JOB:
 - Do not activate the anchor yet.
 - Do not count this as a failed bridge attempt.
 - Answer or explain first before asking the next question.
-- If support action is clarify, explain what the previous bridge question meant in simpler words.
+- Help the child answer the previous bridge question.
+- If support action is clarify, explain what the previous bridge question meant in simpler words without changing its core event, action, or observation.
 - If the child only sounds uncertain ("I don't know", "not sure", bare "maybe"), acknowledge the uncertainty directly.
 - Do not call uncertainty a guess.
 - Only praise a guess when the child actually gave a concrete guess.
-- If support action is scaffold, simplify the question, give one tiny example, or offer one natural either/or inside the bridge lane.
+- If support action is scaffold, give one tiny hint, one simpler rewording, one tiny example, or one smaller sub-question that directly helps with the previous bridge question.
+- Keep the same core event, action, or observation from the previous bridge question.
+- Do not replace the previous bridge question with a different bridge angle.
 - Any either/or choices must be physically and semantically valid.
 - Never use mouth as a way to smell.
-- If support action is steer, acknowledge the child's answer as reasonable, then steer to the bridge lane.
-- Ask a different, more concrete bridge question.
+- If support action is steer, acknowledge the child's answer as reasonable, then steer back to the bridge lane without introducing an unrelated new bridge angle.
 - Stay inside the bridge context.
-- End with exactly one easy question.
+- End with exactly one easy question that still helps with the previous bridge question.
 - Do not repeat the same wording from the previous bridge question.
+- If PREVIOUS BRIDGE QUESTION is empty, ask one easy bridge-lane question.
 
 Respond naturally, not as JSON.
 """

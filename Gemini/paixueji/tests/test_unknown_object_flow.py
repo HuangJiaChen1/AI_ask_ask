@@ -949,6 +949,51 @@ def test_first_pre_anchor_idk_support_receives_intro_bridge_question(client, mon
     assert final_chunk["bridge_debug"]["pre_anchor_reply_type"] == "idk_or_stuck"
 
 
+def test_pre_anchor_idk_support_stays_in_same_question_family(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+    from tests.conftest import MockChunk, MockStream
+    import paixueji_app
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+
+    streamed_responses = iter([
+        "Cat food is here. What might a cat do first when it notices the food?",
+        "That's okay. A cat might sniff the food first. What might it do when it notices the food?",
+    ])
+
+    def side_effect_stream(model, contents, config=None):
+        response_text = next(streamed_responses)
+        return MockStream([MockChunk(word + " ") for word in response_text.split()])
+
+    monkeypatch.setattr(
+        paixueji_app.GLOBAL_GEMINI_CLIENT.aio.models.generate_content_stream,
+        "side_effect",
+        side_effect_stream,
+        raising=False,
+    )
+
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+
+    response = client.post("/api/continue", json={"session_id": session_id, "child_input": "I don't know"})
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+
+    assert final_chunk["response_type"] == "bridge_support"
+    assert final_chunk["bridge_debug"]["pre_anchor_reply_type"] == "idk_or_stuck"
+
+
 def test_valid_out_of_lane_answer_after_support_soft_activates_without_correct_answer_fallthrough(client, monkeypatch):
     from object_resolver import ObjectResolutionResult
     from tests.conftest import MockChunk, MockStream

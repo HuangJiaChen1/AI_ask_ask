@@ -241,7 +241,8 @@ class TestIntroductionPromptBeatStructure:
         assert "clarify" in lower
         assert "scaffold" in lower
         assert "steer" in lower
-        assert "ask a different, more concrete bridge question" in lower
+        assert "help the child answer the previous bridge question" in lower
+        assert "do not replace the previous bridge question with a different bridge angle" in lower
 
     def test_anchor_bridge_intro_rejects_vague_food_for_questions(self):
         """Bridge retry prompt should reject vague food_for bridge questions."""
@@ -252,13 +253,15 @@ class TestIntroductionPromptBeatStructure:
         assert "stay inside the bridge context only" in prompt
         assert "end with exactly one easy bridge question" in prompt
 
-    def test_bridge_support_prompt_requires_answer_then_different_question(self):
-        """Bridge support should answer/explain before asking a different question."""
+    def test_bridge_support_prompt_requires_answer_then_same_question_family(self):
+        """Bridge support should answer/explain before helping with the same question family."""
         import paixueji_prompts
 
         prompt = paixueji_prompts.BRIDGE_SUPPORT_RESPONSE_PROMPT.lower()
         assert "answer or explain first" in prompt
-        assert "ask a different, more concrete bridge question" in prompt
+        assert "keep the same core event, action, or observation" in prompt
+        assert "do not replace the previous bridge question with a different bridge angle" in prompt
+        assert "if previous bridge question is empty" in prompt
 
     def test_bridge_support_prompt_does_not_praise_uncertainty_as_guess(self):
         import paixueji_prompts
@@ -370,7 +373,7 @@ async def test_anchor_bridge_intro_generator_uses_normal_intro_prompt_for_surfac
     assert "You are starting a conversation with a child about: cat food" in prompt
     assert "Hook style: test hook" in prompt
     assert "GROUNDING SENTINEL" in prompt
-    assert "BRIDGE SENTINEL" not in prompt
+    assert "BRIDGE SENTINEL" in prompt
     assert "You are starting a conversation with a child who named" not in prompt
 
 
@@ -381,6 +384,15 @@ def test_anchor_bridge_intro_guardrail_prompt_forbids_fake_visual_grounding():
     assert "do not say you can see the object" in prompt
     assert "do not invent packaging" in prompt
     assert "inside-the-bag" in prompt
+
+
+def test_anchor_bridge_intro_guardrail_requires_lane_aligned_final_question():
+    import paixueji_prompts
+
+    prompt = paixueji_prompts.ANCHOR_BRIDGE_INTRO_GUARDRAIL_PROMPT.lower()
+    assert "final question must already stay inside the bridge lane" in prompt
+    assert "do not ask a lane-external question" in prompt
+    assert "{bridge_context}" in paixueji_prompts.ANCHOR_BRIDGE_INTRO_GUARDRAIL_PROMPT
 
 
 @pytest.mark.asyncio
