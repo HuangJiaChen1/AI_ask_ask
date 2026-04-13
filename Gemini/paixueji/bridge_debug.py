@@ -20,6 +20,42 @@ def _contains_token_sequence(tokens: list[str], phrase_tokens: list[str]) -> boo
     return False
 
 
+def build_activation_continuity_anchor(kb_item: dict | None) -> str | None:
+    if not kb_item:
+        return None
+    kind = kb_item.get("kind")
+    dimension = (kb_item.get("dimension") or "").strip()
+    if kind == "physical_attribute":
+        attribute = (kb_item.get("attribute") or "").strip()
+        if dimension and attribute:
+            return f"physical.{dimension}.{attribute}"
+    if kind == "engagement_item":
+        seed_text = (kb_item.get("seed_text") or "").strip()
+        if dimension and seed_text:
+            return f"engagement.{dimension}:{seed_text}"
+    return None
+
+
+def build_activation_transition_debug(
+    *,
+    before_state: dict[str, Any] | None = None,
+    question_validation: dict[str, Any] | None = None,
+    answer_validation: dict[str, Any] | None = None,
+    outcome: dict[str, Any] | None = None,
+    turn_interpretation: dict[str, Any] | None = None,
+    continuity: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    transition = {
+        "before_state": before_state,
+        "question_validation": question_validation,
+        "answer_validation": answer_validation,
+        "outcome": outcome,
+        "turn_interpretation": turn_interpretation,
+        "continuity": continuity,
+    }
+    return {key: value for key, value in transition.items() if value is not None}
+
+
 def detect_bridge_visibility(
     response_text: str,
     surface_object_name: str | None,
@@ -82,6 +118,14 @@ def build_bridge_debug(
     bridge_context_summary: str | None = None,
     activation_grounding_mode: str | None = None,
     activation_grounding_summary: str | None = None,
+    bridge_phase_before: str | None = None,
+    bridge_phase_after: str | None = None,
+    activation_turn_count_before: int | None = None,
+    activation_turn_count_after: int | None = None,
+    activation_handoff_ready_after: bool | None = None,
+    activation_last_question: str | None = None,
+    activation_last_question_kb_item: dict | None = None,
+    activation_transition: dict[str, Any] | None = None,
     pre_anchor_reply_type: str | None = None,
     support_action: str | None = None,
     pre_anchor_support_count_before: int | None = None,
@@ -117,6 +161,14 @@ def build_bridge_debug(
         "bridge_context_summary": bridge_context_summary,
         "activation_grounding_mode": activation_grounding_mode,
         "activation_grounding_summary": activation_grounding_summary,
+        "bridge_phase_before": bridge_phase_before,
+        "bridge_phase_after": bridge_phase_after,
+        "activation_turn_count_before": activation_turn_count_before,
+        "activation_turn_count_after": activation_turn_count_after,
+        "activation_handoff_ready_after": activation_handoff_ready_after,
+        "activation_last_question": activation_last_question,
+        "activation_last_question_kb_item": activation_last_question_kb_item,
+        "activation_transition": activation_transition,
         "bridge_visible_in_response": bridge_visible_in_response,
         "bridge_visibility_reason": bridge_visibility_reason,
         "pre_anchor_reply_type": pre_anchor_reply_type,

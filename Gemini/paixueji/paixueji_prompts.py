@@ -106,27 +106,27 @@ Celebrate the transition to the new object.
 5. Respond naturally (NOT JSON)
 """
 
-BRIDGE_ACTIVATION_RESPONSE_PROMPT = """You are replying right after a child has already started talking about {anchor_object_name} while discussing {surface_object_name}.
+BRIDGE_ACTIVATION_RESPONSE_PROMPT = """You are still in BridgeActivation between {surface_object_name} and {anchor_object_name}.
 
 AGE GUIDANCE: {age_prompt}
 CHILD REPLY: {child_answer}
 {latent_grounding_section}
 
 YOUR JOB:
-- Treat this as the first anchor-side follow-up, not as a bridge-completion turn.
+- This is still BridgeActivation, not ordinary anchor chat yet.
 - Acknowledge the child's actual answer first.
-- Stay close to the child's stated detail.
-- The child's stated detail stays primary.
+- Stay close to the child's opened detail.
+- If latent grounding fits naturally, use it.
+- If it does not fit naturally yet, staying on the child's opened detail is acceptable.
 - If latent grounding is present, use it only as hidden support for continuity.
 - Do not quote, dump, or enumerate the hidden support block.
-- ask exactly one natural follow-up question about {anchor_object_name}.
+- Ask exactly one natural follow-up question.
 - Keep the question easy and directly answerable.
-- you may mention {surface_object_name} if it helps naturally, but do not force a surface-to-anchor linking sentence.
-- Do not act like you are still trying to prove the bridge.
+- Keep only a natural tether to {surface_object_name}; do not force a surface-to-anchor linking sentence.
+- Do not act like the handoff is already complete.
 - Do not introduce unrelated facts or dimensions about {anchor_object_name} unless the child opened that topic.
 - Do not state the answer and then ask the child to supply that same answer.
 - Do not ask a question whose answer you already gave.
-- Do not act like this is a fresh topic introduction.
 - Do not produce generic celebration filler.
 
 Do not say things like:
@@ -418,6 +418,51 @@ Example 2:
 Return JSON:
 {{
   "bridge_followed": true or false,
+  "reason": "<short reason>"
+}}
+"""
+
+BRIDGE_ACTIVATION_KB_QUESTION_VALIDATOR_PROMPT = """Decide whether the final assistant question is asking about a KB-backed anchor detail.
+
+Anchor object: {anchor_object_name}
+Final assistant question: {final_question}
+Anchor physical KB:
+{physical_kb}
+Anchor engagement KB:
+{engagement_kb}
+
+Rules:
+- Judge only the final assistant question.
+- Return false if the question stays on a surface-only detail that is not represented in the anchor KB.
+- Return true only if the question is clearly about a detail or engagement seed supported by the anchor KB.
+- Return JSON only.
+
+Return JSON:
+{{
+  "kb_backed_question": true or false,
+  "reason": "<short reason>"
+}}
+"""
+
+BRIDGE_ACTIVATION_ANSWER_VALIDATOR_PROMPT = """Decide whether the child answered the immediately previous KB-backed activation question.
+
+Anchor object: {anchor_object_name}
+Previous assistant question: {previous_question}
+Child reply: {child_answer}
+Anchor physical KB:
+{physical_kb}
+Anchor engagement KB:
+{engagement_kb}
+
+Rules:
+- Judge only whether the child answered the immediately previous assistant question.
+- Do not consider older activation turns.
+- Short direct answers like yes/no/maybe may count if they clearly answer the previous question.
+- Return JSON only.
+
+Return JSON:
+{{
+  "answered_previous_kb_question": true or false,
   "reason": "<short reason>"
 }}
 """
@@ -1609,6 +1654,8 @@ def get_prompts():
         'anchor_bridge_retry_prompt': ANCHOR_BRIDGE_RETRY_PROMPT,
         'bridge_support_response_prompt': BRIDGE_SUPPORT_RESPONSE_PROMPT,
         'bridge_follow_classifier_prompt': BRIDGE_FOLLOW_CLASSIFIER_PROMPT,
+        'bridge_activation_kb_question_validator_prompt': BRIDGE_ACTIVATION_KB_QUESTION_VALIDATOR_PROMPT,
+        'bridge_activation_answer_validator_prompt': BRIDGE_ACTIVATION_ANSWER_VALIDATOR_PROMPT,
         'object_resolution_prompt': OBJECT_RESOLUTION_PROMPT,
         'relation_repair_prompt': RELATION_REPAIR_PROMPT,
         'feedback_response_prompt': FEEDBACK_RESPONSE_PROMPT,

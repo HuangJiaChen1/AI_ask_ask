@@ -99,6 +99,8 @@ def test_frontend_assets_cover_search_critique_badges_and_none_state():
     assert "showRvRawModal" in REPORTS_JS
     assert "Bridge Verdict" in REPORTS_JS
     assert "rvPopupBridgeDebug" in REPORTS_JS
+    assert "rvFormatBridgeDebug" in REPORTS_JS
+    assert "Activation Transition" in REPORTS_JS
     assert "crit.bridge_verdict" in REPORTS_JS
     assert "crit.bridge_debug" in REPORTS_JS
     assert "currentBridgeDebug = null;" in APP_JS
@@ -135,13 +137,6 @@ def test_hf_report_includes_anchor_resolution_and_bridge_debug_sections():
             "content": "Cat food is what a cat eats. What helps a cat smell food?",
             "mode": "chat",
             "response_type": "introduction",
-            "bridge_debug": {
-                "decision": "intro_bridge",
-                "anchor_status": "anchored_high",
-                "anchor_relation": "food_for",
-                "bridge_visible_in_response": True,
-                "decision_reason": "start high-confidence bridge",
-            },
             "nodes_executed": [exchange_trace],
         }],
         all_exchanges=[{
@@ -165,7 +160,22 @@ def test_hf_report_includes_anchor_resolution_and_bridge_debug_sections():
             "nodes_executed": [exchange_trace],
             "mode": "chat",
             "response_type": "introduction",
-            "bridge_debug": {"decision": "intro_bridge"},
+            "bridge_debug": {
+                "decision": "intro_bridge",
+                "anchor_status": "anchored_high",
+                "anchor_relation": "food_for",
+                "bridge_visible_in_response": True,
+                "decision_reason": "start high-confidence bridge",
+                "activation_transition": {
+                    "before_state": {
+                        "activation_handoff_ready_before": False,
+                    },
+                    "question_validation": {
+                        "source": "deterministic",
+                        "confidence": "high",
+                    },
+                },
+            },
         },
         introduction_critique={"exchange_index": 0, "model_response_problem": "Where is the connection?"},
         key_concept=None,
@@ -195,6 +205,88 @@ def test_hf_report_includes_anchor_resolution_and_bridge_debug_sections():
     assert "pre_anchor_reply_type: `clarification_request`" in report
     assert "support_action: `clarify`" in report
     assert "pre_anchor_support_count_after: `1`" in report
+    assert "Activation Transition" in report
+    assert "Before State" in report
+
+
+def test_hf_report_parser_round_trips_nested_activation_debug(tmp_path):
+    from paixueji_app import _parse_hf_report, build_human_feedback_report
+    from bridge_debug import build_bridge_trace_entry
+
+    trace = build_bridge_trace_entry(
+        node="driver:bridge_decision",
+        state_before={},
+        changes={"decision": "bridge_activation"},
+        time_ms=1.0,
+    )
+
+    report = build_human_feedback_report(
+        object_name="cat food",
+        age=6,
+        session_id="sess",
+        transcript=[{
+            "role": "model",
+            "content": "Your cat really likes wet food. What does your cat do when dinner is ready?",
+            "mode": "chat",
+            "response_type": "bridge_activation",
+            "nodes_executed": [trace],
+        }],
+        all_exchanges=[],
+        exchange_critiques=[],
+        global_conclusion="Test",
+        introduction={
+            "content": "Your cat really likes wet food. What does your cat do when dinner is ready?",
+            "nodes_executed": [trace],
+            "mode": "chat",
+            "response_type": "bridge_activation",
+            "bridge_debug": {
+                "decision": "bridge_activation",
+                "activation_transition": {
+                    "before_state": {
+                        "activation_handoff_ready_before": True,
+                    },
+                    "question_validation": {
+                        "source": "deterministic",
+                        "confidence": "high",
+                        "reason": "clear match",
+                    },
+                    "answer_validation": {
+                        "handoff_check_attempted": True,
+                        "source": "deterministic",
+                        "reason": "heuristic",
+                        "answered_previous_kb_question": True,
+                    },
+                    "outcome": {
+                        "handoff_result": "committed_to_anchor_general",
+                    },
+                    "turn_interpretation": {
+                        "activation_child_reply_type": "handoff_answer",
+                        "counted_turn": False,
+                    },
+                    "continuity": {
+                        "continuity_anchor_before": "physical.appearance.paw_pads",
+                        "continuity_anchor_after": "physical.appearance.paw_pads",
+                        "continuity_preserved": True,
+                    },
+                },
+            },
+        },
+        introduction_critique={"exchange_index": 0},
+        key_concept=None,
+        session_resolution_debug={
+            "surface_object_name": "cat food",
+            "anchor_object_name": "cat",
+            "anchor_status": "anchored_high",
+        },
+    )
+    path = tmp_path / "nested_activation.md"
+    path.write_text(report, encoding="utf-8")
+
+    parsed = _parse_hf_report(path)
+    model_turn = next(turn for turn in parsed["transcript"] if turn["role"] == "model")
+
+    assert model_turn["critique"]["bridge_debug"]["activation_transition"]["before_state"]["activation_handoff_ready_before"] == "True"
+    assert model_turn["critique"]["bridge_debug"]["activation_transition"]["question_validation"]["confidence"] == "high"
 
 
 def test_hf_report_exchange_critique_labels_are_unambiguous():

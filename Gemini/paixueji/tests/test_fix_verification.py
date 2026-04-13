@@ -180,16 +180,17 @@ class TestIntroductionPromptBeatStructure:
         assert "Do not say you can see the object" in prompt
         assert "Do not invent facts from words inside the object's name" in prompt
 
-    def test_bridge_activation_prompt_treats_turn_as_post_switch_anchor_followup(self):
+    def test_bridge_activation_prompt_declares_continuous_transition_lane(self):
         import paixueji_prompts
 
         prompt = paixueji_prompts.BRIDGE_ACTIVATION_RESPONSE_PROMPT
         lower = prompt.lower()
-        assert "first anchor-side follow-up" in lower
-        assert "not as a bridge-completion turn" in lower
+        assert "still in bridgeactivation" in lower
+        assert "not ordinary anchor chat yet" in lower
         assert "acknowledge the child's actual answer first" in lower
-        assert "stay close to the child's stated detail" in lower
-        assert "ask exactly one natural follow-up question about {anchor_object_name}" in prompt
+        assert "stay close to the child's opened detail" in lower
+        assert "if latent grounding fits naturally, use it" in lower
+        assert "if it does not fit naturally yet, staying on the child's opened detail is acceptable" in lower
 
     def test_bridge_activation_prompt_bans_generic_topic_switch_filler(self):
         """BRIDGE_ACTIVATION_RESPONSE_PROMPT must ban generic excitement and fresh-intro filler."""
@@ -200,7 +201,7 @@ class TestIntroductionPromptBeatStructure:
         assert "do not say things like" in lower
         assert "i love cats" in lower
         assert "i'm excited to learn more" in lower
-        assert "do not act like this is a fresh topic introduction" in lower
+        assert "do not act like the handoff is already complete" in lower
 
     def test_bridge_activation_prompt_bans_answer_then_reask_pattern(self):
         import paixueji_prompts
@@ -226,9 +227,9 @@ class TestIntroductionPromptBeatStructure:
 
         prompt = paixueji_prompts.BRIDGE_ACTIVATION_RESPONSE_PROMPT
         lower = prompt.lower()
-        assert "you may mention {surface_object_name} if it helps naturally" in prompt
+        assert "natural tether to {surface_object_name}" in prompt
         assert "do not force a surface-to-anchor linking sentence" in lower
-        assert "do not act like you are still trying to prove the bridge" in lower
+        assert "not ordinary anchor chat yet" in lower
 
     def test_bridge_activation_prompt_treats_latent_grounding_as_hidden_support(self):
         import paixueji_prompts
@@ -237,7 +238,7 @@ class TestIntroductionPromptBeatStructure:
         lower = prompt.lower()
         assert "{latent_grounding_section}" in prompt
         assert "hidden support" in lower
-        assert "child's stated detail stays primary" in lower
+        assert "do not quote, dump, or enumerate" in lower
 
     def test_bridge_support_prompt_clarifies_without_switching(self):
         """BRIDGE_SUPPORT_RESPONSE_PROMPT must support without activating the anchor."""
@@ -896,6 +897,19 @@ class TestOrdinaryChatKbFlow:
 
         assert graph._build_chat_kb_context(state) == ""
         assert graph._build_intro_kb_context(state) == ""
+
+    def test_chat_kb_context_requires_anchor_general_phase(self):
+        import graph
+
+        state = {
+            "object_name": "cat",
+            "bridge_phase": "activation",
+            "learning_anchor_active": False,
+            "physical_dimensions": {"appearance": {"paw_pads": "Soft pads underneath the paws"}},
+            "engagement_dimensions": {"behavior": ["Cats may sniff food before eating."]},
+        }
+
+        assert graph._build_chat_kb_context(state) == ""
 
     @pytest.mark.asyncio
     async def test_map_response_to_kb_item_returns_top_physical_item(self):

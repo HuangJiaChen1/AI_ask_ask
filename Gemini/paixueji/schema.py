@@ -25,6 +25,63 @@ class TokenUsage(BaseModel):
     )
 
 
+class ActivationTransitionBeforeState(BaseModel):
+    activation_handoff_ready_before: bool | None = None
+    activation_last_question_before: str | None = None
+    activation_last_question_kb_item_before: dict | None = None
+    activation_last_question_validation_source_before: str | None = None
+    activation_last_question_validation_confidence_before: str | None = None
+    activation_last_question_validation_reason_before: str | None = None
+    activation_last_question_continuity_anchor_before: str | None = None
+    bridge_phase_before: str | None = None
+    activation_turn_count_before: int | None = None
+
+
+class ActivationTransitionQuestionValidation(BaseModel):
+    source: str | None = None
+    confidence: str | None = None
+    reason: str | None = None
+    kb_backed_question: bool | None = None
+    kb_item: dict | None = None
+    activation_last_question_after: str | None = None
+    activation_last_question_kb_item_after: dict | None = None
+    activation_last_question_continuity_anchor_after: str | None = None
+
+
+class ActivationTransitionAnswerValidation(BaseModel):
+    handoff_check_attempted: bool | None = None
+    source: str | None = None
+    reason: str | None = None
+    answered_previous_kb_question: bool | None = None
+
+
+class ActivationTransitionOutcome(BaseModel):
+    handoff_result: str | None = None
+    handoff_block_reason: str | None = None
+
+
+class ActivationTransitionTurnInterpretation(BaseModel):
+    activation_child_reply_type: str | None = None
+    counted_turn: bool | None = None
+    counted_turn_reason: str | None = None
+
+
+class ActivationTransitionContinuity(BaseModel):
+    continuity_anchor_before: str | None = None
+    continuity_anchor_after: str | None = None
+    continuity_preserved: bool | None = None
+    continuity_break_reason: str | None = None
+
+
+class ActivationTransitionDebugInfo(BaseModel):
+    before_state: ActivationTransitionBeforeState | None = None
+    question_validation: ActivationTransitionQuestionValidation | None = None
+    answer_validation: ActivationTransitionAnswerValidation | None = None
+    outcome: ActivationTransitionOutcome | None = None
+    turn_interpretation: ActivationTransitionTurnInterpretation | None = None
+    continuity: ActivationTransitionContinuity | None = None
+
+
 class BridgeDebugInfo(BaseModel):
     surface_object_name: str | None = None
     anchor_object_name: str | None = None
@@ -46,6 +103,14 @@ class BridgeDebugInfo(BaseModel):
     bridge_context_summary: str | None = None
     activation_grounding_mode: str | None = None
     activation_grounding_summary: str | None = None
+    bridge_phase_before: str | None = None
+    bridge_phase_after: str | None = None
+    activation_turn_count_before: int | None = None
+    activation_turn_count_after: int | None = None
+    activation_handoff_ready_after: bool | None = None
+    activation_last_question: str | None = None
+    activation_last_question_kb_item: dict | None = None
+    activation_transition: ActivationTransitionDebugInfo | None = None
     bridge_visible_in_response: bool | None = None
     bridge_visibility_reason: str | None = None
     pre_anchor_reply_type: str | None = None
@@ -159,8 +224,14 @@ class StreamChunk(BaseModel):
     anchor_confidence_band: str | None = None
     anchor_confirmation_needed: bool = False
     learning_anchor_active: bool = False
+    bridge_phase: str | None = None
     bridge_attempt_count: int = 0
     pre_anchor_support_count: int = 0
+    activation_turn_count: int = 0
+    activation_handoff_ready: bool = False
+    activation_child_reply_type: str | None = None
+    counted_turn: bool | None = None
+    counted_turn_reason: str | None = None
 
     # Node execution tracing (for critique reports)
     nodes_executed: list[dict] | None = None  # Passed through final chunk

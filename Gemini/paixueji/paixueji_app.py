@@ -19,13 +19,26 @@ from loguru import logger
 
 from paixueji_assistant import PaixuejiAssistant
 from graph import paixueji_graph
-from schema import StreamChunk
+from schema import BridgeDebugInfo, StreamChunk
 import paixueji_prompts
 import time
 from graph_lookup import lookup_top_available_concepts
 from object_resolver import parse_anchor_confirmation, resolve_object_input
 from bridge_context import build_bridge_context
-from bridge_debug import build_bridge_debug, build_bridge_trace_entry, format_bridge_log_line
+from bridge_debug import (
+    build_activation_continuity_anchor,
+    build_activation_transition_debug,
+    build_bridge_debug,
+    build_bridge_trace_entry,
+    format_bridge_log_line,
+)
+from bridge_activation_policy import (
+    BRIDGE_PHASE_ACTIVATION,
+    BRIDGE_PHASE_ANCHOR_GENERAL,
+    BRIDGE_PHASE_PRE_ANCHOR,
+    classify_activation_reopen_signal,
+    extract_final_question,
+)
 from kb_context import (
     build_bridge_activation_grounding_context,
 )
@@ -40,6 +53,10 @@ from stream import (
     prepare_messages_for_streaming,
 )
 from stream.errors import build_sse_error_payload
+from stream.validation import (
+    validate_bridge_activation_answer,
+    validate_bridge_activation_kb_question,
+)
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
@@ -53,6 +70,7 @@ sessions = {}
 ALLOWED_MODELS = {"gemini-3.1-flash-lite-preview", "gemini-2.0-flash-lite"}
 MAX_BRIDGE_ATTEMPTS = 2
 MAX_PRE_ANCHOR_SUPPORT_TURNS = 2
+MAX_BRIDGE_ACTIVATION_TURNS = 4
 
 # Initialize global Gemini client to enable connection reuse
 def init_global_client():
@@ -151,10 +169,28 @@ def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
         "anchor_confidence_band": assistant.anchor_confidence_band,
         "anchor_confirmation_needed": assistant.anchor_confirmation_needed,
         "learning_anchor_active": assistant.learning_anchor_active,
+        "bridge_phase": getattr(assistant, "bridge_phase", None),
         "bridge_attempt_count": assistant.bridge_attempt_count,
         "pre_anchor_support_count": assistant.pre_anchor_support_count,
+        "activation_turn_count": getattr(assistant, "activation_turn_count", 0),
+        "activation_handoff_ready": getattr(assistant, "activation_handoff_ready", False),
         "resolution_debug": assistant.session_resolution_debug,
     }
+
+
+def _apply_activation_stream_fields(chunk: StreamChunk, initial_state: dict) -> StreamChunk:
+    update = {}
+    for field in ("activation_child_reply_type", "counted_turn", "counted_turn_reason"):
+        value = getattr(chunk, field, None)
+        if value is None:
+            value = initial_state.get(field)
+        update[field] = value
+    if getattr(chunk, "bridge_debug", None) is None and initial_state.get("bridge_debug") is not None:
+        bridge_debug = initial_state.get("bridge_debug")
+        if isinstance(bridge_debug, dict):
+            bridge_debug = BridgeDebugInfo.model_validate(bridge_debug)
+        update["bridge_debug"] = bridge_debug
+    return chunk.model_copy(update=update)
 
 
 def _intro_mode_for_assistant(assistant: PaixuejiAssistant) -> str:
@@ -181,6 +217,147 @@ def _activation_grounding_summary(mode: str, activation_grounding_context: str) 
         return ""
     line_count = len([line for line in activation_grounding_context.splitlines() if line.strip()])
     return f"{mode}: {line_count} non-empty grounding lines"
+
+
+def _activation_transition_before_state(assistant: PaixuejiAssistant) -> dict:
+    return {
+        "activation_handoff_ready_before": getattr(assistant, "activation_handoff_ready", False),
+        "activation_last_question_before": getattr(assistant, "activation_last_question", None),
+        "activation_last_question_kb_item_before": getattr(assistant, "activation_last_question_kb_item", None),
+        "activation_last_question_validation_source_before": getattr(assistant, "activation_last_question_validation_source", None),
+        "activation_last_question_validation_confidence_before": getattr(assistant, "activation_last_question_validation_confidence", None),
+        "activation_last_question_validation_reason_before": getattr(assistant, "activation_last_question_validation_reason", None),
+        "activation_last_question_continuity_anchor_before": getattr(assistant, "activation_last_question_continuity_anchor", None),
+        "bridge_phase_before": getattr(assistant, "bridge_phase", None),
+        "activation_turn_count_before": getattr(assistant, "activation_turn_count", 0),
+    }
+
+
+def _activation_question_validation_state(kb_result: dict | None, final_question: str | None) -> dict:
+    kb_item = (kb_result or {}).get("kb_item")
+    return {
+        "source": (kb_result or {}).get("source"),
+        "confidence": (kb_result or {}).get("confidence"),
+        "reason": (kb_result or {}).get("reason"),
+        "kb_backed_question": (kb_result or {}).get("kb_backed_question"),
+        "kb_item": kb_item,
+        "activation_last_question_after": final_question,
+        "activation_last_question_kb_item_after": kb_item,
+        "activation_last_question_continuity_anchor_after": build_activation_continuity_anchor(kb_item),
+    }
+
+
+def _activation_answer_validation_state(answer_result: dict | None, *, attempted: bool) -> dict:
+    answer_result = answer_result or {}
+    return {
+        "handoff_check_attempted": attempted,
+        "source": answer_result.get("source"),
+        "reason": answer_result.get("reason"),
+        "answered_previous_kb_question": answer_result.get("answered_previous_kb_question"),
+    }
+
+
+def _activation_outcome_state(*, handoff_result: str | None, handoff_block_reason: str | None = None) -> dict:
+    return {
+        "handoff_result": handoff_result,
+        "handoff_block_reason": handoff_block_reason,
+    }
+
+
+def _activation_turn_interpretation_state(*, activation_child_reply_type: str | None, counted_turn: bool | None, counted_turn_reason: str | None) -> dict:
+    return {
+        "activation_child_reply_type": activation_child_reply_type,
+        "counted_turn": counted_turn,
+        "counted_turn_reason": counted_turn_reason,
+    }
+
+
+def _activation_continuity_state(*, before_anchor: str | None, after_anchor: str | None, handoff_result: str | None) -> dict:
+    if handoff_result == "committed_to_anchor_general":
+        continuity_preserved = before_anchor is not None
+        continuity_break_reason = None
+        after_anchor = after_anchor or before_anchor
+    elif before_anchor and after_anchor:
+        continuity_preserved = before_anchor == after_anchor
+        continuity_break_reason = None if continuity_preserved else "local_focus_changed"
+    elif before_anchor and not after_anchor:
+        continuity_preserved = False
+        continuity_break_reason = "new_question_not_kb_backed"
+    elif not before_anchor and after_anchor:
+        continuity_preserved = False
+        continuity_break_reason = "previous_question_not_kb_backed"
+    else:
+        continuity_preserved = None
+        continuity_break_reason = None
+    return {
+        "continuity_anchor_before": before_anchor,
+        "continuity_anchor_after": after_anchor,
+        "continuity_preserved": continuity_preserved,
+        "continuity_break_reason": continuity_break_reason,
+    }
+
+
+def _build_activation_transition_payload(
+    *,
+    assistant: PaixuejiAssistant,
+    before_state: dict | None = None,
+    kb_result: dict | None,
+    final_question: str | None,
+    answer_result: dict | None,
+    handoff_check_attempted: bool,
+    handoff_result: str | None,
+    handoff_block_reason: str | None,
+    activation_child_reply_type: str | None,
+    counted_turn: bool | None,
+    counted_turn_reason: str | None,
+    continuity: dict | None = None,
+) -> dict:
+    before_state = before_state or _activation_transition_before_state(assistant)
+    question_validation = _activation_question_validation_state(kb_result, final_question)
+    answer_validation = _activation_answer_validation_state(answer_result, attempted=handoff_check_attempted)
+    continuity = continuity or _activation_continuity_state(
+        before_anchor=before_state.get("activation_last_question_continuity_anchor_before"),
+        after_anchor=question_validation.get("activation_last_question_continuity_anchor_after"),
+        handoff_result=handoff_result,
+    )
+    return build_activation_transition_debug(
+        before_state=before_state,
+        question_validation=question_validation,
+        answer_validation=answer_validation,
+        outcome=_activation_outcome_state(
+            handoff_result=handoff_result,
+            handoff_block_reason=handoff_block_reason,
+        ),
+        turn_interpretation=_activation_turn_interpretation_state(
+            activation_child_reply_type=activation_child_reply_type,
+            counted_turn=counted_turn,
+            counted_turn_reason=counted_turn_reason,
+        ),
+        continuity=continuity,
+    )
+
+
+def _is_activation_free_support(child_answer: str) -> bool:
+    normalized = " ".join((child_answer or "").strip().lower().split())
+    if not normalized:
+        return True
+    clarification_patterns = {
+        "what do you mean",
+        "whay do you mean",
+        "what you mean",
+        "i don't understand",
+        "i dont understand",
+        "huh",
+    }
+    idk_patterns = {
+        "i don't know",
+        "i dont know",
+        "don't know",
+        "dont know",
+        "idk",
+        "not sure",
+    }
+    return normalized in clarification_patterns or normalized in idk_patterns
 
 
 def _latest_bridge_question(conversation_history: list[dict]) -> str | None:
@@ -462,6 +639,7 @@ def start_conversation():
                         "anchor_confidence_band": assistant.anchor_confidence_band,
                         "anchor_confirmation_needed": assistant.anchor_confirmation_needed,
                         "learning_anchor_active": assistant.learning_anchor_active,
+                        "bridge_phase": assistant.bridge_phase,
                         "bridge_attempt_count": 0,
                         "bridge_debug": None,
                         "resolution_debug": assistant.session_resolution_debug,
@@ -528,6 +706,7 @@ def start_conversation():
                     async for chunk in stream_graph_execution(initial_state):
                         # Yield StreamChunk as SSE event (pass directly for optimized serialization)
                         # Update conversation history with final response
+                        chunk = _apply_activation_stream_fields(chunk, initial_state)
                         if chunk.finish:
                             if chunk.bridge_debug:
                                 assistant.set_last_bridge_debug(chunk.bridge_debug.model_dump())
@@ -628,6 +807,9 @@ def continue_conversation():
         try:
             turn_bridge_debug = None
             turn_bridge_traces = []
+            activation_child_reply_type = None
+            counted_turn = None
+            counted_turn_reason = None
 
             # Get age prompt if age is set
             age_prompt = ""
@@ -642,9 +824,523 @@ def continue_conversation():
             loop = _ASYNC_LOOP
 
             try:
+                if assistant.bridge_phase == "none" and not assistant.learning_anchor_active and assistant.anchor_object_name:
+                    from stream.db_loader import load_engagement_dimensions, load_physical_dimensions
+
+                    anchor_name = assistant.anchor_object_name
+                    activation_physical_dimensions = load_physical_dimensions(anchor_name, assistant.age or 6)
+                    activation_engagement_dimensions = load_engagement_dimensions(anchor_name, assistant.age or 6)
+                    if not classify_activation_reopen_signal(
+                        child_answer=child_input,
+                        anchor_object_name=anchor_name,
+                        physical_dimensions=activation_physical_dimensions,
+                        engagement_dimensions=activation_engagement_dimensions,
+                    ):
+                        activation_physical_dimensions = None
+                    else:
+                        activation_grounding_context = build_bridge_activation_grounding_context(
+                            object_name=anchor_name,
+                            physical_dimensions=activation_physical_dimensions,
+                            engagement_dimensions=activation_engagement_dimensions,
+                        )
+                        assistant.begin_bridge_activation(
+                            anchor_name=anchor_name,
+                            physical_dimensions=activation_physical_dimensions,
+                            engagement_dimensions=activation_engagement_dimensions,
+                            grounding_context=activation_grounding_context,
+                        )
+                        assistant.anchor_status = "anchored_high"
+                        activation_before_state = _activation_transition_before_state(assistant)
+
+                    async def stream_reopened_bridge_activation():
+                        messages = prepare_messages_for_streaming(
+                            assistant.conversation_history.copy(),
+                            age_prompt,
+                        )
+                        generator = generate_bridge_activation_response_stream(
+                            messages=messages,
+                            child_answer=child_input,
+                            surface_object_name=assistant.surface_object_name or assistant.object_name,
+                            anchor_object_name=anchor_name,
+                            age=assistant.age or 6,
+                            age_prompt=age_prompt,
+                            bridge_context="",
+                            activation_grounding_context=activation_grounding_context,
+                            config=assistant.config,
+                            client=assistant.client,
+                        )
+
+                        sequence_number = 0
+                        full_response = ""
+                        async for text_chunk, _token_usage, full_so_far in generator:
+                            full_response = full_so_far
+                            if not text_chunk:
+                                continue
+                            sequence_number += 1
+                            yield sse_event("chunk", StreamChunk(
+                                response=text_chunk,
+                                session_finished=False,
+                                duration=0.0,
+                                token_usage=None,
+                                finish=False,
+                                sequence_number=sequence_number,
+                                timestamp=time.time(),
+                                session_id=session_id,
+                                request_id=request_id,
+                                response_type="bridge_activation",
+                                correct_answer_count=assistant.correct_answer_count,
+                                activation_child_reply_type="counted_continue",
+                                counted_turn=True,
+                                counted_turn_reason="activation_continuation",
+                                **_assistant_stream_fields(assistant),
+                            ))
+
+                        final_question = extract_final_question(full_response)
+                        kb_result = await validate_bridge_activation_kb_question(
+                            assistant=assistant,
+                            final_question=final_question,
+                            anchor_object_name=anchor_name,
+                            physical_dimensions=assistant.activation_physical_dimensions,
+                            engagement_dimensions=assistant.activation_engagement_dimensions,
+                        )
+                        assistant.activation_last_question = final_question
+                        assistant.activation_last_question_kb_item = kb_result.get("kb_item")
+                        assistant.activation_handoff_ready = bool(kb_result.get("kb_backed_question"))
+                        assistant.activation_last_question_validation_source = kb_result.get("source")
+                        assistant.activation_last_question_validation_confidence = kb_result.get("confidence")
+                        assistant.activation_last_question_validation_reason = kb_result.get("reason")
+                        assistant.activation_last_question_continuity_anchor = build_activation_continuity_anchor(
+                            kb_result.get("kb_item")
+                        )
+                        activation_child_reply_type = "counted_continue"
+                        counted_turn = True
+                        counted_turn_reason = "activation_continuation"
+                        activation_transition = _build_activation_transition_payload(
+                            assistant=assistant,
+                            before_state=activation_before_state,
+                            kb_result=kb_result,
+                            final_question=final_question,
+                            answer_result=None,
+                            handoff_check_attempted=False,
+                            handoff_result="stayed_in_activation",
+                            handoff_block_reason=None,
+                            activation_child_reply_type="counted_continue",
+                            counted_turn=True,
+                            counted_turn_reason="activation_continuation",
+                            continuity=_activation_continuity_state(
+                                before_anchor=activation_before_state.get("activation_last_question_continuity_anchor_before"),
+                                after_anchor=build_activation_continuity_anchor(kb_result.get("kb_item")),
+                                handoff_result="stayed_in_activation",
+                            ),
+                        )
+
+                        sequence_number += 1
+                        assistant.conversation_history.append({"role": "user", "content": child_input})
+                        assistant.conversation_history.append({
+                            "role": "assistant",
+                            "content": full_response,
+                            "mode": "chat",
+                            "response_type": "bridge_activation",
+                        })
+                        yield sse_event("chunk", StreamChunk(
+                            response=full_response,
+                            session_finished=False,
+                            duration=0.0,
+                            token_usage=None,
+                            finish=True,
+                            sequence_number=sequence_number,
+                            timestamp=time.time(),
+                            session_id=session_id,
+                            request_id=request_id,
+                            response_type="bridge_activation",
+                            correct_answer_count=assistant.correct_answer_count,
+                            bridge_debug=build_bridge_debug(
+                                surface_object_name=assistant.surface_object_name or assistant.object_name,
+                                anchor_object_name=anchor_name,
+                                anchor_status=assistant.anchor_status,
+                                anchor_relation=assistant.anchor_relation,
+                                anchor_confidence_band=assistant.anchor_confidence_band,
+                                intro_mode="anchor_bridge",
+                                learning_anchor_active_before=False,
+                                learning_anchor_active_after=False,
+                                bridge_attempt_count_before=assistant.bridge_attempt_count,
+                                bridge_attempt_count_after=assistant.bridge_attempt_count,
+                                decision="bridge_activation",
+                                decision_reason="activation_continue",
+                                response_type="bridge_activation",
+                                kb_mode="activation_latent_kb",
+                                activation_grounding_mode="full_chat_kb",
+                                activation_grounding_summary=_activation_grounding_summary(
+                                    "full_chat_kb",
+                                    assistant.activation_grounding_context,
+                                ),
+                                bridge_phase_before=BRIDGE_PHASE_ACTIVATION,
+                                bridge_phase_after=BRIDGE_PHASE_ACTIVATION,
+                                activation_turn_count_before=assistant.activation_turn_count,
+                                activation_turn_count_after=assistant.activation_turn_count,
+                                activation_handoff_ready_after=assistant.activation_handoff_ready,
+                                activation_last_question=assistant.activation_last_question,
+                                activation_last_question_kb_item=assistant.activation_last_question_kb_item,
+                                activation_transition=activation_transition,
+                                response_text=full_response,
+                            ),
+                            activation_child_reply_type=activation_child_reply_type,
+                            counted_turn=counted_turn,
+                            counted_turn_reason=counted_turn_reason,
+                            **_assistant_stream_fields(assistant),
+                        ))
+                        yield sse_event("complete", {"success": True})
+
+                    if activation_physical_dimensions is not None:
+                        gen = stream_reopened_bridge_activation()
+                        for event in async_gen_to_sync(gen, loop):
+                            yield event
+                        return
+
+                if assistant.bridge_phase == BRIDGE_PHASE_ACTIVATION:
+                    activation_before_state = _activation_transition_before_state(assistant)
+                    answer_result = None
+                    handoff_check_attempted = False
+                    handoff_result = "stayed_in_activation"
+                    handoff_block_reason = "previous_question_not_handoff_ready"
+                    activation_child_reply_type = None
+                    counted_turn = None
+                    counted_turn_reason = None
+
+                    if assistant.activation_handoff_ready:
+                        if not assistant.activation_last_question:
+                            handoff_block_reason = "missing_previous_question"
+                            assistant.activation_handoff_ready = False
+                        else:
+                            handoff_check_attempted = True
+                            answer_result = asyncio.run_coroutine_threadsafe(
+                                validate_bridge_activation_answer(
+                                    assistant=assistant,
+                                    child_answer=child_input,
+                                    previous_question=assistant.activation_last_question,
+                                    anchor_object_name=assistant.activation_anchor_object_name or assistant.anchor_object_name or "",
+                                    physical_dimensions=assistant.activation_physical_dimensions,
+                                    engagement_dimensions=assistant.activation_engagement_dimensions,
+                                ),
+                                loop,
+                            ).result()
+                            if answer_result["answered_previous_kb_question"]:
+                                handoff_result = "committed_to_anchor_general"
+                                handoff_block_reason = None
+                                activation_transition = _build_activation_transition_payload(
+                                    assistant=assistant,
+                                    before_state=activation_before_state,
+                                    kb_result={
+                                        "source": assistant.activation_last_question_validation_source,
+                                        "confidence": assistant.activation_last_question_validation_confidence,
+                                        "reason": assistant.activation_last_question_validation_reason,
+                                        "kb_backed_question": assistant.activation_handoff_ready,
+                                        "kb_item": assistant.activation_last_question_kb_item,
+                                    },
+                                    final_question=assistant.activation_last_question,
+                                    answer_result=answer_result,
+                                    handoff_check_attempted=True,
+                                    handoff_result=handoff_result,
+                                    handoff_block_reason=handoff_block_reason,
+                                    activation_child_reply_type="handoff_answer",
+                                    counted_turn=False,
+                                    counted_turn_reason="handoff_committed",
+                                    continuity=_activation_continuity_state(
+                                        before_anchor=activation_before_state.get("activation_last_question_continuity_anchor_before"),
+                                        after_anchor=assistant.activation_last_question_continuity_anchor,
+                                        handoff_result=handoff_result,
+                                    ),
+                                )
+                                turn_bridge_debug = build_bridge_debug(
+                                    surface_object_name=assistant.surface_object_name or assistant.object_name,
+                                    anchor_object_name=assistant.activation_anchor_object_name or assistant.anchor_object_name,
+                                    anchor_status=assistant.anchor_status,
+                                    anchor_relation=assistant.anchor_relation,
+                                    anchor_confidence_band=assistant.anchor_confidence_band,
+                                    intro_mode="anchor_bridge",
+                                    learning_anchor_active_before=False,
+                                    learning_anchor_active_after=False,
+                                    bridge_attempt_count_before=assistant.bridge_attempt_count,
+                                    bridge_attempt_count_after=assistant.bridge_attempt_count,
+                                    decision="bridge_activation",
+                                    decision_reason="activation_handoff_committed",
+                                    response_type="correct_answer",
+                                    kb_mode="activation_latent_kb",
+                                    activation_grounding_mode="full_chat_kb",
+                                    activation_grounding_summary=_activation_grounding_summary(
+                                        "full_chat_kb",
+                                        assistant.activation_grounding_context,
+                                    ),
+                                    bridge_phase_before=BRIDGE_PHASE_ACTIVATION,
+                                    bridge_phase_after=BRIDGE_PHASE_ANCHOR_GENERAL,
+                                    activation_turn_count_before=assistant.activation_turn_count,
+                                    activation_turn_count_after=assistant.activation_turn_count,
+                                    activation_handoff_ready_after=False,
+                                    activation_last_question=assistant.activation_last_question,
+                                    activation_last_question_kb_item=assistant.activation_last_question_kb_item,
+                                    activation_transition=activation_transition,
+                                )
+                                assistant.set_last_bridge_debug(turn_bridge_debug)
+                                activation_child_reply_type = "handoff_answer"
+                                counted_turn = False
+                                counted_turn_reason = "handoff_committed"
+                                assistant.commit_bridge_activation()
+                            else:
+                                handoff_block_reason = "child_did_not_answer_previous_question"
+                                assistant.activation_handoff_ready = False
+
+                    if assistant.bridge_phase == BRIDGE_PHASE_ACTIVATION:
+                        if assistant.activation_turn_count >= MAX_BRIDGE_ACTIVATION_TURNS:
+                            activation_transition = _build_activation_transition_payload(
+                                assistant=assistant,
+                                before_state=activation_before_state,
+                                kb_result={
+                                    "source": assistant.activation_last_question_validation_source,
+                                    "confidence": assistant.activation_last_question_validation_confidence,
+                                    "reason": assistant.activation_last_question_validation_reason,
+                                    "kb_backed_question": assistant.activation_handoff_ready,
+                                    "kb_item": assistant.activation_last_question_kb_item,
+                                },
+                                final_question=assistant.activation_last_question,
+                                answer_result=answer_result,
+                                handoff_check_attempted=handoff_check_attempted,
+                                handoff_result="timeout_fallback",
+                                handoff_block_reason="timeout",
+                                activation_child_reply_type="timeout",
+                                counted_turn=False,
+                                counted_turn_reason="activation_timeout",
+                                continuity=_activation_continuity_state(
+                                    before_anchor=activation_before_state.get("activation_last_question_continuity_anchor_before"),
+                                    after_anchor=activation_before_state.get("activation_last_question_continuity_anchor_before"),
+                                    handoff_result="timeout_fallback",
+                                ),
+                            )
+                            previous_object = assistant.surface_object_name or assistant.object_name
+                            previous_question = assistant.activation_last_question
+                            previous_question_kb_item = assistant.activation_last_question_kb_item
+                            assistant.clear_bridge_activation()
+                            assistant.anchor_status = "unresolved"
+                            unresolved_debug = build_bridge_debug(
+                                surface_object_name=previous_object,
+                                anchor_object_name=assistant.anchor_object_name,
+                                anchor_status=assistant.anchor_status,
+                                anchor_relation=assistant.anchor_relation,
+                                anchor_confidence_band=assistant.anchor_confidence_band,
+                                intro_mode="anchor_bridge",
+                                learning_anchor_active_before=False,
+                                learning_anchor_active_after=False,
+                                bridge_attempt_count_before=assistant.bridge_attempt_count,
+                                bridge_attempt_count_after=assistant.bridge_attempt_count,
+                                decision="unresolved_fallback",
+                                decision_reason="activation retry budget exhausted",
+                                response_type="unresolved_fallback",
+                                bridge_followed=False,
+                                bridge_follow_reason=None,
+                                pre_anchor_handler_entered=True,
+                                kb_mode="surface_only",
+                                activation_transition=activation_transition,
+                                activation_handoff_ready_after=False,
+                                activation_last_question=previous_question,
+                                activation_last_question_kb_item=previous_question_kb_item,
+                            )
+                            assistant.set_last_bridge_debug(unresolved_debug)
+                            turn_bridge_debug = unresolved_debug
+                            turn_bridge_traces = []
+                            activation_child_reply_type = "timeout"
+                            counted_turn = False
+                            counted_turn_reason = "activation_timeout"
+                        else:
+                            counted_turn = not _is_activation_free_support(child_input)
+                            if counted_turn:
+                                assistant.activation_turn_count += 1
+                                activation_child_reply_type = "counted_continue"
+                                counted_turn_reason = "activation_continuation"
+                            else:
+                                activation_child_reply_type = "free_support"
+                                counted_turn_reason = "free_support_exempt"
+
+                            previous_object = assistant.surface_object_name or assistant.object_name
+                            interim_bridge_debug = build_bridge_debug(
+                                surface_object_name=previous_object,
+                                anchor_object_name=assistant.activation_anchor_object_name or assistant.anchor_object_name,
+                                anchor_status=assistant.anchor_status,
+                                anchor_relation=assistant.anchor_relation,
+                                anchor_confidence_band=assistant.anchor_confidence_band,
+                                intro_mode="anchor_bridge",
+                                learning_anchor_active_before=False,
+                                learning_anchor_active_after=False,
+                                bridge_attempt_count_before=assistant.bridge_attempt_count,
+                                bridge_attempt_count_after=assistant.bridge_attempt_count,
+                                decision="bridge_activation",
+                                decision_reason="activation_continue",
+                                response_type="bridge_activation",
+                                kb_mode="activation_latent_kb",
+                                activation_grounding_mode="full_chat_kb",
+                                activation_grounding_summary=_activation_grounding_summary(
+                                    "full_chat_kb",
+                                    assistant.activation_grounding_context,
+                                ),
+                                bridge_phase_before=BRIDGE_PHASE_ACTIVATION,
+                                bridge_phase_after=BRIDGE_PHASE_ACTIVATION,
+                                activation_turn_count_before=assistant.activation_turn_count,
+                                activation_turn_count_after=assistant.activation_turn_count,
+                            )
+
+                            async def stream_bridge_activation_continuation():
+                                messages = prepare_messages_for_streaming(
+                                    assistant.conversation_history.copy(),
+                                    age_prompt,
+                                )
+                                generator = generate_bridge_activation_response_stream(
+                                    messages=messages,
+                                    child_answer=child_input,
+                                    surface_object_name=previous_object,
+                                    anchor_object_name=assistant.activation_anchor_object_name or assistant.anchor_object_name or "",
+                                    age=assistant.age or 6,
+                                    age_prompt=age_prompt,
+                                    bridge_context="",
+                                    activation_grounding_context=assistant.activation_grounding_context,
+                                    config=assistant.config,
+                                    client=assistant.client,
+                                )
+
+                                sequence_number = 0
+                                full_response = ""
+                                async for text_chunk, _token_usage, full_so_far in generator:
+                                    full_response = full_so_far
+                                    if not text_chunk:
+                                        continue
+                                    sequence_number += 1
+                                    yield sse_event("chunk", StreamChunk(
+                                        response=text_chunk,
+                                        session_finished=False,
+                                        duration=0.0,
+                                        token_usage=None,
+                                        finish=False,
+                                        sequence_number=sequence_number,
+                                        timestamp=time.time(),
+                                        session_id=session_id,
+                                        request_id=request_id,
+                                        response_type="bridge_activation",
+                                        correct_answer_count=assistant.correct_answer_count,
+                                        bridge_debug=interim_bridge_debug,
+                                        **_assistant_stream_fields(assistant),
+                                    ))
+
+                                final_question = extract_final_question(full_response)
+                                kb_result = await validate_bridge_activation_kb_question(
+                                    assistant=assistant,
+                                    final_question=final_question,
+                                    anchor_object_name=assistant.activation_anchor_object_name or assistant.anchor_object_name or "",
+                                    physical_dimensions=assistant.activation_physical_dimensions,
+                                    engagement_dimensions=assistant.activation_engagement_dimensions,
+                                )
+                                assistant.activation_last_question = final_question
+                                assistant.activation_last_question_kb_item = kb_result.get("kb_item")
+                                assistant.activation_handoff_ready = bool(kb_result.get("kb_backed_question"))
+                                assistant.activation_last_question_validation_source = kb_result.get("source")
+                                assistant.activation_last_question_validation_confidence = kb_result.get("confidence")
+                                assistant.activation_last_question_validation_reason = kb_result.get("reason")
+                                assistant.activation_last_question_continuity_anchor = build_activation_continuity_anchor(
+                                    kb_result.get("kb_item")
+                                )
+
+                                activation_continuity = _activation_continuity_state(
+                                    before_anchor=activation_before_state.get("activation_last_question_continuity_anchor_before"),
+                                    after_anchor=assistant.activation_last_question_continuity_anchor,
+                                    handoff_result="stayed_in_activation",
+                                )
+                                activation_child_reply_type = (
+                                    "free_support"
+                                    if not counted_turn
+                                    else (
+                                        "recoverable_drift"
+                                        if activation_continuity.get("continuity_break_reason") == "local_focus_changed"
+                                        else "counted_continue"
+                                    )
+                                )
+                                activation_transition = _build_activation_transition_payload(
+                                    assistant=assistant,
+                                    before_state=activation_before_state,
+                                    kb_result=kb_result,
+                                    final_question=final_question,
+                                    answer_result=answer_result,
+                                    handoff_check_attempted=handoff_check_attempted,
+                                    handoff_result="stayed_in_activation",
+                                    handoff_block_reason=handoff_block_reason,
+                                    activation_child_reply_type=activation_child_reply_type,
+                                    counted_turn=counted_turn,
+                                    counted_turn_reason="free_support_exempt" if not counted_turn else "activation_continuation",
+                                    continuity=activation_continuity,
+                                )
+
+                                final_bridge_debug = build_bridge_debug(
+                                    surface_object_name=previous_object,
+                                    anchor_object_name=assistant.activation_anchor_object_name or assistant.anchor_object_name,
+                                    anchor_status=assistant.anchor_status,
+                                    anchor_relation=assistant.anchor_relation,
+                                    anchor_confidence_band=assistant.anchor_confidence_band,
+                                    intro_mode="anchor_bridge",
+                                    learning_anchor_active_before=False,
+                                    learning_anchor_active_after=False,
+                                    bridge_attempt_count_before=assistant.bridge_attempt_count,
+                                    bridge_attempt_count_after=assistant.bridge_attempt_count,
+                                    decision="bridge_activation",
+                                    decision_reason="activation_continue",
+                                    response_type="bridge_activation",
+                                    kb_mode="activation_latent_kb",
+                                    activation_grounding_mode="full_chat_kb",
+                                    activation_grounding_summary=_activation_grounding_summary(
+                                        "full_chat_kb",
+                                        assistant.activation_grounding_context,
+                                    ),
+                                    bridge_phase_before=BRIDGE_PHASE_ACTIVATION,
+                                    bridge_phase_after=BRIDGE_PHASE_ACTIVATION,
+                                    activation_turn_count_before=assistant.activation_turn_count,
+                                    activation_turn_count_after=assistant.activation_turn_count,
+                                    activation_handoff_ready_after=assistant.activation_handoff_ready,
+                                    activation_last_question=assistant.activation_last_question,
+                                    activation_last_question_kb_item=assistant.activation_last_question_kb_item,
+                                    activation_transition=activation_transition,
+                                    response_text=full_response,
+                                )
+                                assistant.set_last_bridge_debug(final_bridge_debug)
+                                sequence_number += 1
+                                assistant.conversation_history.append({"role": "user", "content": child_input})
+                                assistant.conversation_history.append({
+                                    "role": "assistant",
+                                    "content": full_response,
+                                    "mode": "chat",
+                                    "response_type": "bridge_activation",
+                                    "bridge_debug": final_bridge_debug,
+                                })
+                                yield sse_event("chunk", StreamChunk(
+                                    response=full_response,
+                                    session_finished=False,
+                                    duration=0.0,
+                                    token_usage=None,
+                                    finish=True,
+                                    sequence_number=sequence_number,
+                                    timestamp=time.time(),
+                                    session_id=session_id,
+                                    request_id=request_id,
+                                    response_type="bridge_activation",
+                                    correct_answer_count=assistant.correct_answer_count,
+                                    bridge_debug=final_bridge_debug,
+                                    activation_child_reply_type=activation_child_reply_type,
+                                    counted_turn=counted_turn,
+                                    counted_turn_reason=counted_turn_reason,
+                                    **_assistant_stream_fields(assistant),
+                                ))
+                                yield sse_event("complete", {"success": True})
+
+                            gen = stream_bridge_activation_continuation()
+                            for event in async_gen_to_sync(gen, loop):
+                                yield event
+                            return
+
                 if (
-                    assistant.anchor_status == "anchored_high"
-                    and not assistant.learning_anchor_active
+                    assistant.bridge_phase == BRIDGE_PHASE_PRE_ANCHOR
                     and assistant.anchor_object_name
                 ):
                     pre_anchor_state_before = {
@@ -699,6 +1395,7 @@ def continue_conversation():
                     )
 
                     if bridge_follow.get("bridge_followed") or should_soft_activate:
+                        activation_before_state = _activation_transition_before_state(assistant)
                         previous_object = assistant.surface_object_name or assistant.object_name
                         activation_reason = (
                             "soft activation after anchor-related support"
@@ -711,24 +1408,32 @@ def continue_conversation():
                             relation=assistant.anchor_relation,
                             attempt_number=max(assistant.bridge_attempt_count, 1),
                         )
-                        assistant.activate_anchor_topic(assistant.anchor_object_name)
-                        assistant.anchor_status = "anchored_high"
-                        assistant.load_dimension_data(assistant.object_name)
-                        assistant.load_object_context_from_yaml(assistant.object_name)
+                        from stream.db_loader import load_engagement_dimensions, load_physical_dimensions
+
+                        anchor_name = assistant.anchor_object_name
+                        activation_physical_dimensions = load_physical_dimensions(anchor_name, assistant.age or 6)
+                        activation_engagement_dimensions = load_engagement_dimensions(anchor_name, assistant.age or 6)
                         activation_grounding_context = build_bridge_activation_grounding_context(
-                            object_name=assistant.object_name,
-                            physical_dimensions=assistant.physical_dimensions,
-                            engagement_dimensions=assistant.engagement_dimensions,
+                            object_name=anchor_name,
+                            physical_dimensions=activation_physical_dimensions,
+                            engagement_dimensions=activation_engagement_dimensions,
                         )
+                        assistant.begin_bridge_activation(
+                            anchor_name=anchor_name,
+                            physical_dimensions=activation_physical_dimensions,
+                            engagement_dimensions=activation_engagement_dimensions,
+                            grounding_context=activation_grounding_context,
+                        )
+                        counted_turn = not _is_activation_free_support(child_input)
                         interim_bridge_debug = build_bridge_debug(
                             surface_object_name=previous_object,
-                            anchor_object_name=assistant.anchor_object_name,
+                            anchor_object_name=anchor_name,
                             anchor_status=assistant.anchor_status,
                             anchor_relation=assistant.anchor_relation,
                             anchor_confidence_band=assistant.anchor_confidence_band,
                             intro_mode="anchor_bridge",
                             learning_anchor_active_before=False,
-                            learning_anchor_active_after=True,
+                            learning_anchor_active_after=False,
                             bridge_attempt_count_before=pre_anchor_state_before["bridge_attempt_count"],
                             bridge_attempt_count_after=assistant.bridge_attempt_count,
                             decision="bridge_activation",
@@ -737,13 +1442,17 @@ def continue_conversation():
                             bridge_followed=True,
                             bridge_follow_reason=bridge_follow.get("reason"),
                             pre_anchor_handler_entered=True,
-                            kb_mode="anchor_kb_active",
+                            kb_mode="activation_latent_kb",
                             bridge_context_summary=_bridge_context_summary(bridge_context),
                             activation_grounding_mode="full_chat_kb",
                             activation_grounding_summary=_activation_grounding_summary(
                                 "full_chat_kb",
                                 activation_grounding_context,
                             ),
+                            bridge_phase_before=BRIDGE_PHASE_PRE_ANCHOR,
+                            bridge_phase_after=BRIDGE_PHASE_ACTIVATION,
+                            activation_turn_count_before=0,
+                            activation_turn_count_after=0,
                             pre_anchor_reply_type=pre_anchor_decision.reply_type,
                             support_action=pre_anchor_decision.support_action,
                             pre_anchor_support_count_before=pre_anchor_state_before["pre_anchor_support_count"],
@@ -766,7 +1475,7 @@ def continue_conversation():
                                 messages=messages,
                                 child_answer=child_input,
                                 surface_object_name=previous_object,
-                                anchor_object_name=assistant.object_name,
+                                anchor_object_name=anchor_name,
                                 age=assistant.age or 6,
                                 age_prompt=age_prompt,
                                 bridge_context="",
@@ -800,15 +1509,61 @@ def continue_conversation():
                                     **_assistant_stream_fields(assistant),
                                 ))
 
+                            final_question = extract_final_question(full_response)
+                            kb_result = await validate_bridge_activation_kb_question(
+                                assistant=assistant,
+                                final_question=final_question,
+                                anchor_object_name=anchor_name,
+                                physical_dimensions=assistant.activation_physical_dimensions,
+                                engagement_dimensions=assistant.activation_engagement_dimensions,
+                            )
+                            assistant.activation_last_question = final_question
+                            assistant.activation_last_question_kb_item = kb_result.get("kb_item")
+                            assistant.activation_handoff_ready = bool(kb_result.get("kb_backed_question"))
+                            assistant.activation_last_question_validation_source = kb_result.get("source")
+                            assistant.activation_last_question_validation_confidence = kb_result.get("confidence")
+                            assistant.activation_last_question_validation_reason = kb_result.get("reason")
+                            assistant.activation_last_question_continuity_anchor = build_activation_continuity_anchor(
+                                kb_result.get("kb_item")
+                            )
+                            activation_continuity = _activation_continuity_state(
+                                before_anchor=activation_before_state.get("activation_last_question_continuity_anchor_before"),
+                                after_anchor=assistant.activation_last_question_continuity_anchor,
+                                handoff_result="stayed_in_activation",
+                            )
+                            activation_child_reply_type = (
+                                "free_support"
+                                if not counted_turn
+                                else (
+                                    "recoverable_drift"
+                                    if activation_continuity.get("continuity_break_reason") == "local_focus_changed"
+                                    else "counted_continue"
+                                )
+                            )
+                            activation_transition = _build_activation_transition_payload(
+                                assistant=assistant,
+                                before_state=activation_before_state,
+                                kb_result=kb_result,
+                                final_question=final_question,
+                                answer_result=None,
+                                handoff_check_attempted=False,
+                                handoff_result="stayed_in_activation",
+                                handoff_block_reason=None,
+                                activation_child_reply_type=activation_child_reply_type,
+                                counted_turn=counted_turn,
+                                counted_turn_reason="free_support_exempt" if not counted_turn else "activation_continuation",
+                                continuity=activation_continuity,
+                            )
+
                             final_bridge_debug = build_bridge_debug(
                                 surface_object_name=previous_object,
-                                anchor_object_name=assistant.object_name,
+                                anchor_object_name=anchor_name,
                                 anchor_status=assistant.anchor_status,
                                 anchor_relation=assistant.anchor_relation,
                                 anchor_confidence_band=assistant.anchor_confidence_band,
                                 intro_mode="anchor_bridge",
                                 learning_anchor_active_before=False,
-                                learning_anchor_active_after=True,
+                                learning_anchor_active_after=False,
                                 bridge_attempt_count_before=pre_anchor_state_before["bridge_attempt_count"],
                                 bridge_attempt_count_after=assistant.bridge_attempt_count,
                                 decision="bridge_activation",
@@ -817,13 +1572,21 @@ def continue_conversation():
                                 bridge_followed=True,
                                 bridge_follow_reason=bridge_follow.get("reason"),
                                 pre_anchor_handler_entered=True,
-                                kb_mode="anchor_kb_active",
+                                kb_mode="activation_latent_kb",
                                 bridge_context_summary=_bridge_context_summary(bridge_context),
                                 activation_grounding_mode="full_chat_kb",
                                 activation_grounding_summary=_activation_grounding_summary(
                                     "full_chat_kb",
                                     activation_grounding_context,
                                 ),
+                                bridge_phase_before=BRIDGE_PHASE_PRE_ANCHOR,
+                                bridge_phase_after=BRIDGE_PHASE_ACTIVATION,
+                                activation_turn_count_before=0,
+                                activation_turn_count_after=0,
+                                activation_handoff_ready_after=assistant.activation_handoff_ready,
+                                activation_last_question=assistant.activation_last_question,
+                                activation_last_question_kb_item=assistant.activation_last_question_kb_item,
+                                activation_transition=activation_transition,
                                 response_text=full_response,
                                 pre_anchor_reply_type=pre_anchor_decision.reply_type,
                                 support_action=pre_anchor_decision.support_action,
@@ -851,21 +1614,24 @@ def continue_conversation():
                                 token_usage=None,
                                 finish=True,
                                 sequence_number=sequence_number,
-                                timestamp=time.time(),
-                                session_id=session_id,
-                                request_id=request_id,
-                                response_type="bridge_activation",
-                                correct_answer_count=assistant.correct_answer_count,
-                                bridge_debug=final_bridge_debug,
-                                nodes_executed=bridge_traces,
-                                **_assistant_stream_fields(assistant),
-                            ))
+                                    timestamp=time.time(),
+                                    session_id=session_id,
+                                    request_id=request_id,
+                                    response_type="bridge_activation",
+                                    correct_answer_count=assistant.correct_answer_count,
+                                    bridge_debug=final_bridge_debug,
+                                    activation_child_reply_type=activation_child_reply_type,
+                                    counted_turn=counted_turn,
+                                    counted_turn_reason="free_support_exempt" if not counted_turn else "activation_continuation",
+                                    nodes_executed=bridge_traces,
+                                    **_assistant_stream_fields(assistant),
+                                ))
                             yield sse_event("complete", {"success": True})
 
                         gen = stream_bridge_activation()
                         for event in async_gen_to_sync(gen, loop):
                             yield event
-                        print(f"[INFO] Session {session_id[:8]}... bridge followed -> {assistant.object_name}")
+                        print(f"[INFO] Session {session_id[:8]}... bridge followed -> activation")
                         return
 
                     if (
@@ -1301,8 +2067,12 @@ def continue_conversation():
                         "anchor_confidence_band": assistant.anchor_confidence_band,
                         "anchor_confirmation_needed": assistant.anchor_confirmation_needed,
                         "learning_anchor_active": assistant.learning_anchor_active,
+                        "bridge_phase": assistant.bridge_phase,
                         "bridge_attempt_count": assistant.bridge_attempt_count,
                         "bridge_debug": turn_bridge_debug,
+                        "activation_child_reply_type": activation_child_reply_type,
+                        "counted_turn": counted_turn,
+                        "counted_turn_reason": counted_turn_reason,
                         "resolution_debug": assistant.session_resolution_debug,
                         "correct_answer_count": assistant.correct_answer_count,
                         "intro_mode": None,
@@ -1353,6 +2123,7 @@ def continue_conversation():
 
                     async for chunk in stream_graph_execution(initial_state):
                         # Update conversation history with final response
+                        chunk = _apply_activation_stream_fields(chunk, initial_state)
                         if chunk.finish:
                             if chunk.bridge_debug:
                                 assistant.set_last_bridge_debug(chunk.bridge_debug.model_dump())
@@ -2376,9 +3147,30 @@ def _render_raw_bridge_debug(bridge_debug):
         return ""
     lines = ["#### Raw Bridge Debug\n\n"]
     for key, value in bridge_debug.items():
-        if value is None:
+        if value is None or key == "activation_transition":
             continue
         lines.append(f"- {key}: `{value}`\n")
+    activation_transition = bridge_debug.get("activation_transition") or {}
+    if activation_transition:
+        lines.append("\n##### Activation Transition\n\n")
+        ordered_groups = [
+            ("before_state", "Before State"),
+            ("question_validation", "Question Validation"),
+            ("answer_validation", "Answer Validation"),
+            ("outcome", "Outcome"),
+            ("turn_interpretation", "Turn Interpretation"),
+            ("continuity", "Continuity"),
+        ]
+        for group_key, group_label in ordered_groups:
+            group_value = activation_transition.get(group_key) or {}
+            if not group_value:
+                continue
+            lines.append(f"###### {group_label}\n\n")
+            for key, value in group_value.items():
+                if value is None:
+                    continue
+                lines.append(f"- {key}: `{value}`\n")
+            lines.append("\n")
     lines.append("\n")
     return "".join(lines)
 
@@ -2430,6 +3222,38 @@ def _parse_hf_report(filepath):
             if all(kw in k for kw in keywords):
                 return v
         return ""
+
+    def parse_raw_bridge_debug(raw_text):
+        debug = {}
+        activation_transition = {}
+        current_activation_group = None
+        in_activation_transition = False
+
+        for raw_line in raw_text.splitlines():
+            line = raw_line.strip()
+            if not line:
+                continue
+            if line == "##### Activation Transition":
+                in_activation_transition = True
+                current_activation_group = None
+                continue
+            if line.startswith("###### "):
+                label = line[7:].strip().lower().replace(" ", "_")
+                current_activation_group = label
+                activation_transition.setdefault(current_activation_group, {})
+                continue
+            m = re.match(r'-\s+([^:]+):\s+`(.+)`', line)
+            if m:
+                key = m.group(1).strip()
+                value = m.group(2).strip()
+                if in_activation_transition and current_activation_group:
+                    activation_transition.setdefault(current_activation_group, {})[key] = value
+                else:
+                    debug[key] = value
+
+        if activation_transition:
+            debug["activation_transition"] = activation_transition
+        return debug or None
 
     # ── Parse transcript ────────────────────────────────────────────────────
     tlines = get_section("Conversation Transcript").splitlines()
@@ -2515,14 +3339,9 @@ def _parse_hf_report(filepath):
             crit["conclusion"] = cm.group(1).strip() if cm else None
             verdict = re.search(r'\*\*Bridge Verdict:\*\*\s*(.+)', block)
             crit["bridge_verdict"] = verdict.group(1).strip() if verdict else None
-            raw_bridge = re.search(r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### |\n\n---|\n###|\Z)', block, re.DOTALL)
+            raw_bridge = re.search(r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### (?!#)|\n\n---|\Z)', block, re.DOTALL)
             if raw_bridge:
-                debug = {}
-                for raw_line in raw_bridge.group(1).splitlines():
-                    m = re.match(r'-\s+([^:]+):\s+`(.+)`', raw_line.strip())
-                    if m:
-                        debug[m.group(1).strip()] = m.group(2).strip()
-                crit["bridge_debug"] = debug or None
+                crit["bridge_debug"] = parse_raw_bridge_debug(raw_bridge.group(1))
             if (
                 crit["expected"]
                 or crit["problematic"]
@@ -2555,14 +3374,9 @@ def _parse_hf_report(filepath):
         crit["conclusion"] = cm.group(1).strip() if cm else None
         verdict = re.search(r'\*\*Bridge Verdict:\*\*\s*(.+)', intro_sec)
         crit["bridge_verdict"] = verdict.group(1).strip() if verdict else None
-        raw_bridge = re.search(r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### |\n\n---|\n###|\Z)', intro_sec, re.DOTALL)
+        raw_bridge = re.search(r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### (?!#)|\n\n---|\Z)', intro_sec, re.DOTALL)
         if raw_bridge:
-            debug = {}
-            for raw_line in raw_bridge.group(1).splitlines():
-                m = re.match(r'-\s+([^:]+):\s+`(.+)`', raw_line.strip())
-                if m:
-                    debug[m.group(1).strip()] = m.group(2).strip()
-            crit["bridge_debug"] = debug or None
+            crit["bridge_debug"] = parse_raw_bridge_debug(raw_bridge.group(1))
         if (
             crit["expected"]
             or crit["problematic"]

@@ -22,6 +22,7 @@ from stream import (
 from schema import StreamChunk
 from bridge_context import build_bridge_context
 from bridge_debug import build_bridge_debug
+from bridge_activation_policy import BRIDGE_PHASE_ANCHOR_GENERAL
 from kb_context import build_chat_kb_context as format_chat_kb_context
 from kb_context import build_intro_kb_context as format_intro_kb_context
 
@@ -111,6 +112,7 @@ class PaixuejiState(TypedDict):
     anchor_confidence_band: Optional[str]
     anchor_confirmation_needed: bool
     learning_anchor_active: bool
+    bridge_phase: Optional[str]
     bridge_attempt_count: int
     bridge_debug: Optional[dict]
     resolution_debug: Optional[dict]
@@ -322,7 +324,10 @@ def _build_chat_kb_context(state: "PaixuejiState") -> str:
     This includes physical attribute/value facts plus engagement seed strings,
     and excludes themes, concepts, and physical topics.
     """
-    if state.get("learning_anchor_active") is False:
+    bridge_phase = state.get("bridge_phase")
+    if bridge_phase is not None and bridge_phase != BRIDGE_PHASE_ANCHOR_GENERAL:
+        return ""
+    if bridge_phase is None and state.get("learning_anchor_active") is False:
         return ""
 
     return format_chat_kb_context(
@@ -339,7 +344,10 @@ def _build_intro_kb_context(state: "PaixuejiState") -> str:
     Intro should stay close to observable details and avoid imaginative engagement
     seeds that can pull the opening away from the object too early.
     """
-    if state.get("learning_anchor_active") is False:
+    bridge_phase = state.get("bridge_phase")
+    if bridge_phase is not None and bridge_phase != BRIDGE_PHASE_ANCHOR_GENERAL:
+        return ""
+    if bridge_phase is None and state.get("learning_anchor_active") is False:
         return ""
 
     return format_intro_kb_context(
@@ -725,7 +733,13 @@ async def stream_generator_to_callback(generator, state: PaixuejiState, response
                 anchor_confidence_band=state.get("anchor_confidence_band"),
                 anchor_confirmation_needed=state.get("anchor_confirmation_needed", False),
                 learning_anchor_active=state.get("learning_anchor_active", False),
+                bridge_phase=state.get("bridge_phase"),
                 bridge_attempt_count=state.get("bridge_attempt_count", 0),
+                activation_turn_count=getattr(state.get("assistant"), "activation_turn_count", 0),
+                activation_handoff_ready=getattr(state.get("assistant"), "activation_handoff_ready", False),
+                activation_child_reply_type=state.get("activation_child_reply_type"),
+                counted_turn=state.get("counted_turn"),
+                counted_turn_reason=state.get("counted_turn_reason"),
                 bridge_debug=state.get("bridge_debug"),
                 resolution_debug=state.get("resolution_debug"),
 
@@ -1510,7 +1524,13 @@ async def node_finalize(state: PaixuejiState) -> dict:
         anchor_confidence_band=state.get("anchor_confidence_band"),
         anchor_confirmation_needed=state.get("anchor_confirmation_needed", False),
         learning_anchor_active=state.get("learning_anchor_active", False),
+        bridge_phase=state.get("bridge_phase"),
         bridge_attempt_count=state.get("bridge_attempt_count", 0),
+        activation_turn_count=getattr(state.get("assistant"), "activation_turn_count", 0),
+        activation_handoff_ready=getattr(state.get("assistant"), "activation_handoff_ready", False),
+        activation_child_reply_type=state.get("activation_child_reply_type"),
+        counted_turn=state.get("counted_turn"),
+        counted_turn_reason=state.get("counted_turn_reason"),
         bridge_debug=state.get("bridge_debug"),
         resolution_debug=state.get("resolution_debug"),
 
@@ -1622,7 +1642,10 @@ async def node_chat_complete(state: PaixuejiState) -> dict:
             anchor_confidence_band=state.get("anchor_confidence_band"),
             anchor_confirmation_needed=state.get("anchor_confirmation_needed", False),
             learning_anchor_active=state.get("learning_anchor_active", False),
+            bridge_phase=state.get("bridge_phase"),
             bridge_attempt_count=state.get("bridge_attempt_count", 0),
+            activation_turn_count=getattr(state.get("assistant"), "activation_turn_count", 0),
+            activation_handoff_ready=getattr(state.get("assistant"), "activation_handoff_ready", False),
             resolution_debug=state.get("resolution_debug"),
             key_concept=assistant.key_concept or None,
             ibpyp_theme_name=assistant.ibpyp_theme_name or None,

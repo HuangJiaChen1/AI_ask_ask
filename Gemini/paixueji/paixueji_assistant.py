@@ -11,6 +11,12 @@ from typing import Optional
 
 from google import genai
 from google.genai.types import HttpOptions
+from bridge_activation_policy import (
+    BRIDGE_PHASE_ACTIVATION,
+    BRIDGE_PHASE_ANCHOR_GENERAL,
+    BRIDGE_PHASE_NONE,
+    BRIDGE_PHASE_PRE_ANCHOR,
+)
 
 
 def safe_print(message):
@@ -59,12 +65,25 @@ class PaixuejiAssistant:
         self.anchor_confidence_band = None
         self.anchor_confirmation_needed = False
         self.learning_anchor_active = False
+        self.bridge_phase = BRIDGE_PHASE_NONE
         self.bridge_attempt_count = 0
         self.pre_anchor_support_count = 0
         self.suppressed_anchor_names = set()
         self.correct_answer_count = 0
         self.session_resolution_debug = None
         self.last_bridge_debug = None
+        self.activation_anchor_object_name = None
+        self.activation_physical_dimensions: dict = {}
+        self.activation_engagement_dimensions: dict = {}
+        self.activation_grounding_context = ""
+        self.activation_turn_count = 0
+        self.activation_handoff_ready = False
+        self.activation_last_question = None
+        self.activation_last_question_kb_item = None
+        self.activation_last_question_validation_source = None
+        self.activation_last_question_validation_confidence = None
+        self.activation_last_question_validation_reason = None
+        self.activation_last_question_continuity_anchor = None
 
         # IB PYP Theme Classification fields
         self.ibpyp_theme = None  # Theme ID (e.g., "Category_Nature_And_Physics")
@@ -154,8 +173,15 @@ class PaixuejiAssistant:
         self.anchor_confidence_band = resolution.anchor_confidence_band
         self.anchor_confirmation_needed = resolution.anchor_confirmation_needed
         self.learning_anchor_active = resolution.learning_anchor_active
+        if resolution.learning_anchor_active:
+            self.bridge_phase = BRIDGE_PHASE_ANCHOR_GENERAL
+        elif resolution.anchor_status == "anchored_high" and resolution.anchor_object_name:
+            self.bridge_phase = BRIDGE_PHASE_PRE_ANCHOR
+        else:
+            self.bridge_phase = BRIDGE_PHASE_NONE
         self.bridge_attempt_count = 0
         self.pre_anchor_support_count = 0
+        self.clear_bridge_activation()
         self.session_resolution_debug = {
             "surface_object_name": resolution.surface_object_name,
             "visible_object_name": resolution.visible_object_name,
@@ -176,9 +202,11 @@ class PaixuejiAssistant:
         self.anchor_object_name = anchor_name
         self.anchor_confirmation_needed = False
         self.learning_anchor_active = True
+        self.bridge_phase = BRIDGE_PHASE_ANCHOR_GENERAL
         self.bridge_attempt_count = 0
         self.pre_anchor_support_count = 0
         self.correct_answer_count = 0
+        self.clear_bridge_activation()
 
     def suppress_anchor(self, anchor_name: str):
         """Remember that the current surface topic should not auto-bridge to this anchor."""
@@ -191,6 +219,52 @@ class PaixuejiAssistant:
         """Clear bridge attempts for the current topic."""
         self.bridge_attempt_count = 0
         self.pre_anchor_support_count = 0
+
+    def begin_bridge_activation(
+        self,
+        *,
+        anchor_name: str,
+        physical_dimensions: dict | None,
+        engagement_dimensions: dict | None,
+        grounding_context: str,
+    ):
+        self.bridge_phase = BRIDGE_PHASE_ACTIVATION
+        self.activation_anchor_object_name = (anchor_name or "").strip().lower()
+        self.activation_physical_dimensions = dict(physical_dimensions or {})
+        self.activation_engagement_dimensions = dict(engagement_dimensions or {})
+        self.activation_grounding_context = grounding_context or ""
+        self.activation_turn_count = 0
+        self.activation_handoff_ready = False
+        self.activation_last_question = None
+        self.activation_last_question_kb_item = None
+        self.activation_last_question_validation_source = None
+        self.activation_last_question_validation_confidence = None
+        self.activation_last_question_validation_reason = None
+        self.activation_last_question_continuity_anchor = None
+        self.learning_anchor_active = False
+
+    def commit_bridge_activation(self):
+        self.activate_anchor_topic(self.activation_anchor_object_name)
+        self.physical_dimensions = dict(self.activation_physical_dimensions)
+        self.engagement_dimensions = dict(self.activation_engagement_dimensions)
+        if self.activation_anchor_object_name:
+            self.load_object_context_from_yaml(self.activation_anchor_object_name)
+        self.bridge_phase = BRIDGE_PHASE_ANCHOR_GENERAL
+        self.clear_bridge_activation()
+
+    def clear_bridge_activation(self):
+        self.activation_anchor_object_name = None
+        self.activation_physical_dimensions = {}
+        self.activation_engagement_dimensions = {}
+        self.activation_grounding_context = ""
+        self.activation_turn_count = 0
+        self.activation_handoff_ready = False
+        self.activation_last_question = None
+        self.activation_last_question_kb_item = None
+        self.activation_last_question_validation_source = None
+        self.activation_last_question_validation_confidence = None
+        self.activation_last_question_validation_reason = None
+        self.activation_last_question_continuity_anchor = None
 
     def mark_bridge_attempt_emitted(self):
         """Record that a pre-anchor bridge prompt has been shown."""

@@ -11,6 +11,10 @@ import re
 import time
 from loguru import logger
 import paixueji_prompts
+from bridge_activation_policy import (
+    detect_activation_answer_heuristic,
+    match_activation_question_to_kb_deterministic,
+)
 from bridge_context import build_bridge_context, normalize_relation
 
 async def classify_intent(
@@ -213,6 +217,116 @@ async def classify_bridge_follow(
     return {
         "bridge_followed": bool(payload.get("bridge_followed")),
         "reason": payload.get("reason") or "classifier fallback",
+    }
+
+
+def _format_activation_kb_block(dimensions: dict | None) -> str:
+    if not dimensions:
+        return "none"
+    return json.dumps(dimensions, ensure_ascii=False, indent=2, sort_keys=True)
+
+
+async def validate_bridge_activation_kb_question(
+    assistant,
+    final_question: str | None,
+    anchor_object_name: str,
+    physical_dimensions: dict[str, dict[str, str]] | None,
+    engagement_dimensions: dict[str, list[str]] | None,
+) -> dict:
+    deterministic = match_activation_question_to_kb_deterministic(
+        final_question,
+        physical_dimensions,
+        engagement_dimensions,
+    )
+    if deterministic.confidence != "inconclusive":
+        return {
+            "kb_backed_question": deterministic.matched,
+            "reason": "deterministic match",
+            "source": "deterministic",
+            "confidence": deterministic.confidence,
+            "kb_item": deterministic.kb_item,
+        }
+
+    if not hasattr(assistant, "client") or not hasattr(assistant.client, "aio"):
+        return {
+            "kb_backed_question": bool(deterministic.matched),
+            "reason": "no validator available",
+            "source": "deterministic_fallback",
+            "confidence": "inconclusive",
+            "kb_item": deterministic.kb_item,
+        }
+
+    prompt = paixueji_prompts.get_prompts()["bridge_activation_kb_question_validator_prompt"].format(
+        anchor_object_name=anchor_object_name,
+        final_question=final_question or "",
+        physical_kb=_format_activation_kb_block(physical_dimensions),
+        engagement_kb=_format_activation_kb_block(engagement_dimensions),
+    )
+
+    try:
+        response = await assistant.client.aio.models.generate_content(
+            model=assistant.config["model_name"],
+            contents=prompt,
+            config={"temperature": 0.0, "max_output_tokens": 80},
+        )
+        payload = json.loads(response.text or "{}")
+    except Exception:
+        payload = {}
+
+    return {
+        "kb_backed_question": bool(payload.get("kb_backed_question")),
+        "reason": payload.get("reason") or "validator fallback",
+        "source": "validator",
+        "confidence": "inconclusive",
+        "kb_item": deterministic.kb_item if payload.get("kb_backed_question") else None,
+    }
+
+
+async def validate_bridge_activation_answer(
+    assistant,
+    child_answer: str,
+    previous_question: str | None,
+    anchor_object_name: str,
+    physical_dimensions: dict[str, dict[str, str]] | None,
+    engagement_dimensions: dict[str, list[str]] | None,
+) -> dict:
+    heuristic = detect_activation_answer_heuristic(child_answer, previous_question)
+    if heuristic in {"yes", "no"}:
+        return {
+            "answered_previous_kb_question": heuristic == "yes",
+            "reason": "heuristic",
+            "source": "deterministic",
+        }
+
+    if not hasattr(assistant, "client") or not hasattr(assistant.client, "aio"):
+        return {
+            "answered_previous_kb_question": False,
+            "reason": "no validator available",
+            "source": "deterministic_fallback",
+        }
+
+    prompt = paixueji_prompts.get_prompts()["bridge_activation_answer_validator_prompt"].format(
+        anchor_object_name=anchor_object_name,
+        previous_question=previous_question or "",
+        child_answer=child_answer,
+        physical_kb=_format_activation_kb_block(physical_dimensions),
+        engagement_kb=_format_activation_kb_block(engagement_dimensions),
+    )
+
+    try:
+        response = await assistant.client.aio.models.generate_content(
+            model=assistant.config["model_name"],
+            contents=prompt,
+            config={"temperature": 0.0, "max_output_tokens": 80},
+        )
+        payload = json.loads(response.text or "{}")
+    except Exception:
+        payload = {}
+
+    return {
+        "answered_previous_kb_question": bool(payload.get("answered_previous_kb_question")),
+        "reason": payload.get("reason") or "validator fallback",
+        "source": "validator",
     }
 
 

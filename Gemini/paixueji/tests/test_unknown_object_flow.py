@@ -1,4 +1,5 @@
 import json
+import time
 from unittest.mock import AsyncMock, MagicMock
 
 
@@ -481,8 +482,9 @@ def test_successful_bridge_follow_uses_bridge_activation_not_topic_switch(client
 
     final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
     assert final_chunk["response_type"] == "bridge_activation"
-    assert final_chunk["current_object_name"] == "cat"
-    assert final_chunk["learning_anchor_active"] is True
+    assert final_chunk["current_object_name"] == "cat food"
+    assert final_chunk["learning_anchor_active"] is False
+    assert final_chunk["bridge_phase"] == "activation"
     assert final_chunk["bridge_debug"]["decision"] == "bridge_activation"
 
 
@@ -544,10 +546,11 @@ def test_model_only_bridge_classifier_promotes_teeth_reply_to_bridge_activation(
     )
     final_chunk = [e["data"] for e in parse_sse(activation.data) if e["event"] == "chunk"][-1]
 
-    assert mock_generate_content.await_count == 3
+    assert mock_generate_content.await_count == 4
     assert final_chunk["response_type"] == "bridge_activation"
-    assert final_chunk["current_object_name"] == "cat"
-    assert final_chunk["learning_anchor_active"] is True
+    assert final_chunk["current_object_name"] == "cat food"
+    assert final_chunk["learning_anchor_active"] is False
+    assert final_chunk["bridge_phase"] == "activation"
     assert final_chunk["bridge_debug"]["decision"] == "bridge_activation"
 
 
@@ -693,13 +696,14 @@ def test_bridge_activation_does_not_pass_bridge_context_to_generator(client, mon
     assert captured["bridge_context"] == ""
     assert captured["activation_grounding_context"] == build_chat_kb_context(
         object_name="cat",
-        physical_dimensions=assistant.physical_dimensions,
-        engagement_dimensions=assistant.engagement_dimensions,
+        physical_dimensions=assistant.activation_physical_dimensions,
+        engagement_dimensions=assistant.activation_engagement_dimensions,
     )
     assert final_chunk["response_type"] == "bridge_activation"
     assert final_chunk["bridge_debug"]["activation_grounding_mode"] == "full_chat_kb"
-    assert final_chunk["current_object_name"] == "cat"
-    assert final_chunk["learning_anchor_active"] is True
+    assert final_chunk["current_object_name"] == "cat food"
+    assert final_chunk["learning_anchor_active"] is False
+    assert final_chunk["bridge_phase"] == "activation"
 
 
 def test_bridge_activation_passes_full_anchor_grounding(client, monkeypatch):
@@ -761,12 +765,308 @@ def test_bridge_activation_passes_full_anchor_grounding(client, monkeypatch):
 
     assert captured["activation_grounding_context"] == build_chat_kb_context(
         object_name="cat",
-        physical_dimensions=assistant.physical_dimensions,
-        engagement_dimensions=assistant.engagement_dimensions,
+        physical_dimensions=assistant.activation_physical_dimensions,
+        engagement_dimensions=assistant.activation_engagement_dimensions,
     )
     assert "[engagement." in captured["activation_grounding_context"]
     assert final_chunk["response_type"] == "bridge_activation"
     assert final_chunk["bridge_debug"]["activation_grounding_mode"] == "full_chat_kb"
+    assert final_chunk["bridge_phase"] == "activation"
+
+
+def test_bridge_activation_non_kb_followup_stays_in_activation(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+        ),
+    )
+
+    async def fake_generator(*args, **kwargs):
+        full = "That makes sense, she uses her teeth to crunch it up! Does she make a loud crunching sound when she bites into the food?"
+        yield (full, None, full)
+        yield ("", None, full)
+
+    monkeypatch.setattr("paixueji_app.generate_bridge_activation_response_stream", fake_generator)
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"bridge_followed": True, "reason": "child followed bridge"}),
+    )
+    monkeypatch.setattr(
+        "paixueji_app.validate_bridge_activation_kb_question",
+        AsyncMock(return_value={"kb_backed_question": False, "reason": "sound only", "source": "deterministic", "kb_item": None}),
+    )
+
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "my cat likes wet food a lot"},
+    )
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+
+    assert final_chunk["bridge_phase"] == "activation"
+    assert final_chunk["activation_handoff_ready"] is False
+    assert final_chunk["current_object_name"] == "cat food"
+    assert final_chunk["bridge_debug"]["activation_transition"]["before_state"]["activation_handoff_ready_before"] is False
+    assert final_chunk["bridge_debug"]["activation_transition"]["question_validation"]["source"] == "deterministic"
+    assert final_chunk["bridge_debug"]["activation_transition"]["outcome"]["handoff_result"] == "stayed_in_activation"
+    assert final_chunk["activation_child_reply_type"] == "counted_continue"
+
+
+def test_bridge_activation_idk_turn_is_free(client, monkeypatch):
+    import paixueji_app
+
+    assistant = paixueji_app.PaixuejiAssistant(client=object())
+    assistant.object_name = "cat food"
+    assistant.surface_object_name = "cat food"
+    assistant.anchor_object_name = "cat"
+    assistant.anchor_status = "anchored_high"
+    assistant.anchor_relation = "food_for"
+    assistant.anchor_confidence_band = "high"
+    assistant.begin_bridge_activation(
+        anchor_name="cat",
+        physical_dimensions={"appearance": {"paw_pads": "Soft pads underneath the paws"}},
+        engagement_dimensions={},
+        grounding_context="Current-object KB for cat:\n[physical.appearance]\n  - paw pads: Soft pads underneath the paws",
+    )
+    paixueji_app.sessions["activation-idk"] = assistant
+
+    async def fake_generator(*args, **kwargs):
+        full = "That's okay. After she eats, does she lick her paw pads?"
+        yield (full, None, full)
+        yield ("", None, full)
+
+    monkeypatch.setattr("paixueji_app.generate_bridge_activation_response_stream", fake_generator)
+    monkeypatch.setattr(
+        "paixueji_app.validate_bridge_activation_kb_question",
+        AsyncMock(return_value={"kb_backed_question": True, "reason": "paw pads", "source": "deterministic", "kb_item": {"attribute": "paw_pads"}}),
+    )
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": "activation-idk", "child_input": "i don't know"},
+    )
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+
+    assert final_chunk["bridge_phase"] == "activation"
+    assert final_chunk["activation_turn_count"] == 0
+    assert final_chunk["activation_child_reply_type"] == "free_support"
+    assert final_chunk["bridge_debug"]["activation_transition"]["turn_interpretation"]["counted_turn"] is False
+
+
+def test_bridge_activation_drift_turn_consumes_budget(client, monkeypatch):
+    import paixueji_app
+
+    assistant = paixueji_app.PaixuejiAssistant(client=object())
+    assistant.object_name = "cat food"
+    assistant.surface_object_name = "cat food"
+    assistant.anchor_object_name = "cat"
+    assistant.anchor_status = "anchored_high"
+    assistant.anchor_relation = "food_for"
+    assistant.anchor_confidence_band = "high"
+    assistant.begin_bridge_activation(
+        anchor_name="cat",
+        physical_dimensions={"appearance": {"paw_pads": "Soft pads underneath the paws"}},
+        engagement_dimensions={},
+        grounding_context="Current-object KB for cat:\n[physical.appearance]\n  - paw pads: Soft pads underneath the paws",
+    )
+    assistant.activation_last_question = "After she eats, does she lick her paw pads?"
+    assistant.activation_last_question_continuity_anchor = "physical.appearance.paw_pads"
+    paixueji_app.sessions["activation-drift"] = assistant
+
+    async def fake_generator(*args, **kwargs):
+        full = "That makes sense. When she is sleeping, have you ever noticed her whiskers twitching?"
+        yield (full, None, full)
+        yield ("", None, full)
+
+    monkeypatch.setattr("paixueji_app.generate_bridge_activation_response_stream", fake_generator)
+    monkeypatch.setattr(
+        "paixueji_app.validate_bridge_activation_kb_question",
+        AsyncMock(return_value={
+            "kb_backed_question": True,
+            "reason": "whiskers",
+            "source": "deterministic",
+            "confidence": "high",
+            "kb_item": {
+                "kind": "physical_attribute",
+                "dimension": "senses",
+                "attribute": "whisker_twitch",
+            },
+        }),
+    )
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": "activation-drift", "child_input": "it crunches loud"},
+    )
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+
+    assert final_chunk["bridge_phase"] == "activation"
+    assert final_chunk["activation_turn_count"] == 1
+    assert final_chunk["activation_child_reply_type"] == "recoverable_drift"
+    assert final_chunk["bridge_debug"]["activation_transition"]["continuity"]["continuity_preserved"] is False
+
+
+def test_bridge_activation_kb_answer_hands_off_same_turn_to_anchor_general(client, monkeypatch):
+    import paixueji_app
+    from schema import StreamChunk
+
+    assistant = paixueji_app.PaixuejiAssistant(client=object())
+    assistant.object_name = "cat food"
+    assistant.surface_object_name = "cat food"
+    assistant.anchor_object_name = "cat"
+    assistant.anchor_status = "anchored_high"
+    assistant.anchor_relation = "food_for"
+    assistant.anchor_confidence_band = "high"
+    assistant.begin_bridge_activation(
+        anchor_name="cat",
+        physical_dimensions={"appearance": {"paw_pads": "Soft pads underneath the paws"}},
+        engagement_dimensions={},
+        grounding_context="Current-object KB for cat:\n[physical.appearance]\n  - paw pads: Soft pads underneath the paws",
+    )
+    assistant.activation_handoff_ready = True
+    assistant.activation_last_question = "After she eats, does she lick her paw pads?"
+    paixueji_app.sessions["activation-handoff"] = assistant
+
+    monkeypatch.setattr(
+        "paixueji_app.validate_bridge_activation_answer",
+        AsyncMock(return_value={"answered_previous_kb_question": True, "reason": "answered", "source": "deterministic"}),
+    )
+
+    async def fake_graph_execution(initial_state):
+        yield StreamChunk(
+            response="Yes, cats often do that. Their paw pads are soft and squishy.",
+            session_finished=False,
+            duration=0.0,
+            token_usage=None,
+            finish=True,
+            sequence_number=1,
+            timestamp=time.time(),
+            session_id=initial_state["session_id"],
+            request_id=initial_state["request_id"],
+            response_type="correct_answer",
+            current_object_name="cat",
+            surface_object_name="cat food",
+            anchor_object_name="cat",
+            learning_anchor_active=True,
+            bridge_phase="anchor_general",
+            activation_turn_count=0,
+            activation_handoff_ready=False,
+        )
+
+    monkeypatch.setattr("paixueji_app.stream_graph_execution", fake_graph_execution)
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": "activation-handoff", "child_input": "yes"},
+    )
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+
+    assert final_chunk["bridge_phase"] == "anchor_general"
+    assert final_chunk["current_object_name"] == "cat"
+    assert final_chunk["learning_anchor_active"] is True
+    assert final_chunk["response_type"] == "correct_answer"
+    assert final_chunk["activation_child_reply_type"] == "handoff_answer"
+    assert final_chunk["bridge_debug"]["activation_transition"]["outcome"]["handoff_result"] == "committed_to_anchor_general"
+
+
+def test_bridge_activation_timeout_falls_back_to_surface_only(client, monkeypatch):
+    import paixueji_app
+    from schema import StreamChunk
+
+    assistant = paixueji_app.PaixuejiAssistant(client=object())
+    assistant.object_name = "cat food"
+    assistant.surface_object_name = "cat food"
+    assistant.anchor_object_name = "cat"
+    assistant.anchor_status = "anchored_high"
+    assistant.bridge_phase = "activation"
+    assistant.activation_turn_count = 4
+    paixueji_app.sessions["activation-timeout"] = assistant
+
+    async def fake_graph_execution(initial_state):
+        yield StreamChunk(
+            response="It smells strong. What color is the cat food bag?",
+            session_finished=False,
+            duration=0.0,
+            token_usage=None,
+            finish=True,
+            sequence_number=1,
+            timestamp=time.time(),
+            session_id=initial_state["session_id"],
+            request_id=initial_state["request_id"],
+            response_type="curiosity",
+            current_object_name="cat food",
+            surface_object_name="cat food",
+            anchor_object_name="cat",
+            learning_anchor_active=False,
+            bridge_phase="none",
+            activation_turn_count=0,
+            activation_handoff_ready=False,
+        )
+
+    monkeypatch.setattr("paixueji_app.stream_graph_execution", fake_graph_execution)
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": "activation-timeout", "child_input": "it crunches loud"},
+    )
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+
+    assert final_chunk["bridge_phase"] == "none"
+    assert final_chunk["current_object_name"] == "cat food"
+    assert final_chunk["learning_anchor_active"] is False
+    assert final_chunk["activation_child_reply_type"] == "timeout"
+    assert final_chunk["bridge_debug"]["activation_transition"]["outcome"]["handoff_block_reason"] == "timeout"
+
+
+def test_failed_activation_reopens_from_spontaneous_anchor_signal(client, monkeypatch):
+    import paixueji_app
+
+    assistant = paixueji_app.PaixuejiAssistant(client=object())
+    assistant.object_name = "cat food"
+    assistant.surface_object_name = "cat food"
+    assistant.anchor_object_name = "cat"
+    assistant.anchor_status = "unresolved"
+    assistant.anchor_relation = "food_for"
+    assistant.anchor_confidence_band = "high"
+    assistant.bridge_phase = "none"
+    assistant.learning_anchor_active = False
+    paixueji_app.sessions["activation-reopen"] = assistant
+
+    async def fake_generator(*args, **kwargs):
+        full = "That fits. After she eats, does she lick her paw pads?"
+        yield (full, None, full)
+        yield ("", None, full)
+
+    monkeypatch.setattr("paixueji_app.generate_bridge_activation_response_stream", fake_generator)
+    monkeypatch.setattr(
+        "paixueji_app.classify_activation_reopen_signal",
+        lambda *args, **kwargs: True,
+    )
+    monkeypatch.setattr(
+        "paixueji_app.validate_bridge_activation_kb_question",
+        AsyncMock(return_value={"kb_backed_question": True, "reason": "paw pads", "source": "deterministic", "kb_item": {"attribute": "paw_pads"}}),
+    )
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": "activation-reopen", "child_input": "she licks her paw pads"},
+    )
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+
+    assert final_chunk["response_type"] == "bridge_activation"
+    assert final_chunk["bridge_phase"] == "activation"
+    assert final_chunk["current_object_name"] == "cat food"
 
 
 def test_bridge_activation_response_can_be_anchor_focused_without_surface_link_sentence(client, monkeypatch):

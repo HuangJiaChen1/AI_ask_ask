@@ -37,6 +37,38 @@ function rvEsc(str) {
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+function rvFormatBridgeDebug(debug) {
+    if (!debug || Object.keys(debug).length === 0) return '—';
+    const lines = [];
+    for (const [key, value] of Object.entries(debug)) {
+        if (value == null || key === 'activation_transition') continue;
+        lines.push(`${key}: ${String(value)}`);
+    }
+    const transition = debug.activation_transition || {};
+    if (Object.keys(transition).length) {
+        lines.push('');
+        lines.push('Activation Transition');
+        const groups = [
+            ['before_state', 'Before State'],
+            ['question_validation', 'Question Validation'],
+            ['answer_validation', 'Answer Validation'],
+            ['outcome', 'Outcome'],
+            ['turn_interpretation', 'Turn Interpretation'],
+            ['continuity', 'Continuity'],
+        ];
+        for (const [groupKey, groupLabel] of groups) {
+            const group = transition[groupKey] || {};
+            if (!Object.keys(group).length) continue;
+            lines.push(`  ${groupLabel}`);
+            for (const [key, value] of Object.entries(group)) {
+                if (value == null) continue;
+                lines.push(`    ${key}: ${String(value)}`);
+            }
+        }
+    }
+    return lines.length ? lines.join('\n') : '—';
+}
+
 // ─── Module state ─────────────────────────────────────────────────────────────
 let _rvAllReports   = [];
 let _rvCurrentDate  = '';
@@ -292,11 +324,7 @@ function showRvCritiquePopup(exchangeIdx) {
     const bridgeVerdictLabel = 'Bridge Verdict';
     document.getElementById('rvPopupBridgeVerdict').textContent = crit.bridge_verdict || '—';
     const bridgeDebugEl = document.getElementById('rvPopupBridgeDebug');
-    const bridgeDebug = crit.bridge_debug || {};
-    const bridgeLines = Object.keys(bridgeDebug).length
-        ? Object.entries(bridgeDebug).map(([key, value]) => `${key}: ${value}`).join('\n')
-        : '—';
-    bridgeDebugEl.textContent = bridgeLines;
+    bridgeDebugEl.textContent = rvFormatBridgeDebug(crit.bridge_debug || {});
 
     const traceRows = (crit.node_trace || []).map(n =>
         `<tr>

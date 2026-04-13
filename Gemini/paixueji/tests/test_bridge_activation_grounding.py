@@ -49,7 +49,8 @@ def test_bridge_activation_prompt_declares_hidden_latent_grounding_contract():
 
     assert "{latent_grounding_section}" in prompt
     assert "hidden support" in lower
-    assert "child's stated detail stays primary" in lower
+    assert "acknowledge the child's actual answer first" in lower
+    assert "stay close to the child's opened detail" in lower
 
 
 def test_bridge_debug_info_exposes_activation_grounding_fields():

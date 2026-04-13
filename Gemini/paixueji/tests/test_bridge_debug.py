@@ -1,4 +1,5 @@
 from bridge_debug import (
+    build_activation_continuity_anchor,
     build_bridge_debug,
     build_bridge_trace_entry,
     bridge_verdict,
@@ -199,6 +200,46 @@ def test_bridge_debug_includes_pre_anchor_reply_policy_fields():
     assert debug["support_action"] == "clarify"
     assert debug["pre_anchor_support_count_before"] == 0
     assert debug["pre_anchor_support_count_after"] == 1
+
+
+def test_build_activation_continuity_anchor_normalizes_kb_items():
+    assert build_activation_continuity_anchor(
+        {"kind": "physical_attribute", "dimension": "appearance", "attribute": "paw_pads"}
+    ) == "physical.appearance.paw_pads"
+    assert build_activation_continuity_anchor(
+        {"kind": "engagement_item", "dimension": "behavior", "seed_text": "sniff the food"}
+    ) == "engagement.behavior:sniff the food"
+
+
+def test_build_bridge_debug_preserves_nested_activation_transition_payload():
+    debug = build_bridge_debug(
+        surface_object_name="cat food",
+        anchor_object_name="cat",
+        anchor_status="anchored_high",
+        anchor_relation="food_for",
+        anchor_confidence_band="high",
+        intro_mode="anchor_bridge",
+        learning_anchor_active_before=False,
+        learning_anchor_active_after=False,
+        bridge_attempt_count_before=1,
+        bridge_attempt_count_after=1,
+        decision="bridge_activation",
+        decision_reason="activation continue",
+        activation_transition={
+            "before_state": {
+                "activation_handoff_ready_before": True,
+                "activation_last_question_before": "After she eats, does she lick her paw pads?",
+            },
+            "question_validation": {
+                "source": "deterministic",
+                "confidence": "high",
+                "reason": "clear match",
+            },
+        },
+    )
+
+    assert debug["activation_transition"]["before_state"]["activation_handoff_ready_before"] is True
+    assert debug["activation_transition"]["question_validation"]["confidence"] == "high"
 
 
 def test_apply_resolution_records_session_resolution_debug():
