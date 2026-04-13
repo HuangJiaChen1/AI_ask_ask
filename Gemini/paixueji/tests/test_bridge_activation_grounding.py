@@ -1,9 +1,11 @@
+import json
+from pathlib import Path
+
 import paixueji_prompts
 from bridge_debug import build_bridge_debug
 from kb_context import (
     build_bridge_activation_grounding_context,
     build_chat_kb_context,
-    normalize_bridge_activation_grounding_mode,
 )
 
 
@@ -20,37 +22,25 @@ ENGAGEMENT = {
 }
 
 
-def test_normalize_bridge_activation_grounding_mode_defaults_to_none():
-    assert normalize_bridge_activation_grounding_mode(None) == "none"
-    assert normalize_bridge_activation_grounding_mode("bogus") == "none"
-
-
-def test_physical_only_excludes_engagement_lines():
-    text = build_bridge_activation_grounding_context(
-        mode="physical_only",
-        object_name="cat",
-        physical_dimensions=PHYSICAL,
-        engagement_dimensions=ENGAGEMENT,
-    )
-
-    assert "[physical.eating]" in text
-    assert "[engagement.behavior]" not in text
-
-
-def test_full_chat_kb_matches_ordinary_chat_builder_exactly():
+def test_bridge_activation_grounding_context_matches_chat_kb_exactly():
     expected = build_chat_kb_context(
         object_name="cat",
         physical_dimensions=PHYSICAL,
         engagement_dimensions=ENGAGEMENT,
     )
     actual = build_bridge_activation_grounding_context(
-        mode="full_chat_kb",
         object_name="cat",
         physical_dimensions=PHYSICAL,
         engagement_dimensions=ENGAGEMENT,
     )
 
     assert actual == expected
+
+
+def test_config_no_longer_exposes_bridge_activation_grounding_mode():
+    config = json.loads(Path("config.json").read_text(encoding="utf-8"))
+
+    assert "bridge_activation_grounding_mode" not in config
 
 
 def test_bridge_activation_prompt_declares_hidden_latent_grounding_contract():
@@ -76,20 +66,14 @@ def test_bridge_debug_info_exposes_activation_grounding_fields():
         bridge_attempt_count_after=0,
         decision="bridge_activation",
         decision_reason="child followed bridge",
-        activation_grounding_mode="physical_only",
-        activation_grounding_summary="physical only",
+        activation_grounding_mode="full_chat_kb",
+        activation_grounding_summary="full_chat_kb: 2 non-empty grounding lines",
     )
 
-    assert debug["activation_grounding_mode"] == "physical_only"
-    assert debug["activation_grounding_summary"] == "physical only"
+    assert debug["activation_grounding_mode"] == "full_chat_kb"
+    assert debug["activation_grounding_summary"] == "full_chat_kb: 2 non-empty grounding lines"
 
+def test_compare_runner_module_is_removed():
+    compare_runner = Path("tests/integration_scenarios/bridge_activation_grounding_compare.py")
 
-def test_build_run_matrix_expands_each_scenario_across_three_modes():
-    from tests.integration_scenarios.bridge_activation_grounding_compare import build_run_matrix
-
-    matrix = build_run_matrix()
-    pairs = {(row["scenario_id"], row["mode"]) for row in matrix}
-
-    assert ("cat_food_smell_follow", "none") in pairs
-    assert ("cat_food_smell_follow", "physical_only") in pairs
-    assert ("cat_food_smell_follow", "full_chat_kb") in pairs
+    assert not compare_runner.exists()

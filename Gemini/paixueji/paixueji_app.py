@@ -28,7 +28,6 @@ from bridge_context import build_bridge_context
 from bridge_debug import build_bridge_debug, build_bridge_trace_entry, format_bridge_log_line
 from kb_context import (
     build_bridge_activation_grounding_context,
-    normalize_bridge_activation_grounding_mode,
 )
 from pre_anchor_policy import classify_pre_anchor_reply
 from resolution_debug import format_resolution_log_line
@@ -716,11 +715,7 @@ def continue_conversation():
                         assistant.anchor_status = "anchored_high"
                         assistant.load_dimension_data(assistant.object_name)
                         assistant.load_object_context_from_yaml(assistant.object_name)
-                        activation_grounding_mode = normalize_bridge_activation_grounding_mode(
-                            assistant.config.get("bridge_activation_grounding_mode")
-                        )
                         activation_grounding_context = build_bridge_activation_grounding_context(
-                            mode=activation_grounding_mode,
                             object_name=assistant.object_name,
                             physical_dimensions=assistant.physical_dimensions,
                             engagement_dimensions=assistant.engagement_dimensions,
@@ -744,9 +739,9 @@ def continue_conversation():
                             pre_anchor_handler_entered=True,
                             kb_mode="anchor_kb_active",
                             bridge_context_summary=_bridge_context_summary(bridge_context),
-                            activation_grounding_mode=activation_grounding_mode,
+                            activation_grounding_mode="full_chat_kb",
                             activation_grounding_summary=_activation_grounding_summary(
-                                activation_grounding_mode,
+                                "full_chat_kb",
                                 activation_grounding_context,
                             ),
                             pre_anchor_reply_type=pre_anchor_decision.reply_type,
@@ -775,7 +770,6 @@ def continue_conversation():
                                 age=assistant.age or 6,
                                 age_prompt=age_prompt,
                                 bridge_context="",
-                                activation_grounding_mode=activation_grounding_mode,
                                 activation_grounding_context=activation_grounding_context,
                                 config=assistant.config,
                                 client=assistant.client,
@@ -825,9 +819,9 @@ def continue_conversation():
                                 pre_anchor_handler_entered=True,
                                 kb_mode="anchor_kb_active",
                                 bridge_context_summary=_bridge_context_summary(bridge_context),
-                                activation_grounding_mode=activation_grounding_mode,
+                                activation_grounding_mode="full_chat_kb",
                                 activation_grounding_summary=_activation_grounding_summary(
-                                    activation_grounding_mode,
+                                    "full_chat_kb",
                                     activation_grounding_context,
                                 ),
                                 response_text=full_response,

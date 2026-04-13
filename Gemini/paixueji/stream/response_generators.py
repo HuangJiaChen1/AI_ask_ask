@@ -395,7 +395,6 @@ async def generate_bridge_activation_response_stream(
     age: int,
     age_prompt: str,
     bridge_context: str,
-    activation_grounding_mode: str = "none",
     activation_grounding_context: str = "",
     config: dict | None = None,
     client: genai.Client | None = None,
@@ -405,7 +404,7 @@ async def generate_bridge_activation_response_stream(
     logger.info(
         "generate_bridge_activation_response_stream started | "
         f"surface={surface_object_name}, anchor={anchor_object_name}, age={age}, "
-        f"grounding_mode={activation_grounding_mode}"
+        "grounding_mode=full_chat_kb"
     )
 
     latent_grounding_section = ""
@@ -423,7 +422,6 @@ async def generate_bridge_activation_response_stream(
         age_prompt=age_prompt,
         bridge_context=bridge_context,
         latent_grounding_section=latent_grounding_section,
-        activation_grounding_mode=activation_grounding_mode,
     )
 
     messages_to_send = messages + [{"role": "user", "content": prompt}]

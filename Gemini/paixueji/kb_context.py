@@ -1,18 +1,5 @@
 from __future__ import annotations
 
-VALID_BRIDGE_ACTIVATION_GROUNDING_MODES = {
-    "none",
-    "physical_only",
-    "full_chat_kb",
-}
-
-
-def normalize_bridge_activation_grounding_mode(raw_mode: str | None) -> str:
-    mode = " ".join((raw_mode or "none").strip().lower().split())
-    if mode in VALID_BRIDGE_ACTIVATION_GROUNDING_MODES:
-        return mode
-    return "none"
-
 
 def build_chat_kb_context(
     object_name: str,
@@ -65,20 +52,10 @@ def build_intro_kb_context(
 
 
 def build_bridge_activation_grounding_context(
-    mode: str | None,
     object_name: str,
     physical_dimensions: dict | None,
     engagement_dimensions: dict | None,
 ) -> str:
-    normalized_mode = normalize_bridge_activation_grounding_mode(mode)
-    if normalized_mode == "none":
-        return ""
-    if normalized_mode == "physical_only":
-        return build_chat_kb_context(
-            object_name=object_name,
-            physical_dimensions=physical_dimensions,
-            engagement_dimensions={},
-        )
     return build_chat_kb_context(
         object_name=object_name,
         physical_dimensions=physical_dimensions,
