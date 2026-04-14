@@ -3035,14 +3035,23 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
         if msg["role"] == "model":
             mode_label = msg.get("mode", "chat").upper()
             response_type = msg.get("response_type") or "unknown"
+            turn_diagnostics = _render_turn_diagnostics(msg.get("bridge_debug"))
             nodes_executed = msg.get("nodes_executed", [])
             if nodes_executed:
                 node_names = [n["node"] for n in nodes_executed]
                 total_time = sum(n.get("time_ms", 0) for n in nodes_executed)
                 trace_summary = f"[{' → '.join(node_names)}] ({total_time:.0f}ms)"
-                report += f"**Model** `[{mode_label}|{response_type}]`**:** {trace_summary}\n{msg['content']}\n\n"
+                report += (
+                    f"**Model** `[{mode_label}|{response_type}]`**:** {trace_summary}\n"
+                    f"{msg['content']}\n\n"
+                )
             else:
-                report += f"**Model** `[{mode_label}|{response_type}]`**:** {msg['content']}\n\n"
+                report += (
+                    f"**Model** `[{mode_label}|{response_type}]`**:** {msg['content']}\n\n"
+                )
+            if turn_diagnostics:
+                report += turn_diagnostics
+            report += "\n"
         else:
             report += f"**Child:** {msg['content']}\n\n"
 
@@ -3175,6 +3184,16 @@ def _render_raw_bridge_debug(bridge_debug):
     return "".join(lines)
 
 
+def _render_turn_diagnostics(bridge_debug):
+    if not bridge_debug:
+        return ""
+    return (
+        "#### Turn Diagnostics\n\n"
+        f"**Bridge Verdict:** {_bridge_verdict_text(bridge_debug)}\n\n"
+        f"{_render_raw_bridge_debug(bridge_debug)}"
+    )
+
+
 # ═══════════════════════════════════════════════════════════════════════════
 # HF Report Viewer API
 # ═══════════════════════════════════════════════════════════════════════════
@@ -3255,20 +3274,41 @@ def _parse_hf_report(filepath):
             debug["activation_transition"] = activation_transition
         return debug or None
 
+    def parse_turn_diagnostics(turn_text):
+        verdict = None
+        bridge_debug = None
+        text_part, marker, diagnostics_part = turn_text.partition("\n#### Turn Diagnostics\n\n")
+        if marker:
+            cleaned_text = text_part.strip()
+            vm = re.search(r'\*\*Bridge Verdict:\*\*\s*(.+)', diagnostics_part)
+            verdict = vm.group(1).strip() if vm else None
+            raw_bridge = re.search(
+                r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### (?!#)|\Z)',
+                diagnostics_part,
+                re.DOTALL,
+            )
+            if raw_bridge:
+                bridge_debug = parse_raw_bridge_debug(raw_bridge.group(1))
+            return cleaned_text, verdict, bridge_debug
+        return turn_text.strip(), None, None
+
     # ── Parse transcript ────────────────────────────────────────────────────
     tlines = get_section("Conversation Transcript").splitlines()
     turns = []
     i = 0
     while i < len(tlines):
         line = tlines[i]
-        # Model turn: **Model** `[PHASE|response_type]`**: [nodes] (Xms)
-        mm = re.match(r'\*\*Model\*\*.*?\[([A-Z]+)(?:\|([^\]]+))?\].*?\[([^\]]+)\]\s+\((\d+)ms\)', line)
+        # Model turn: **Model** `[PHASE|response_type]`**:** [nodes] (Xms)
+        # or:         **Model** `[PHASE|response_type]`**:** inline content
+        mm = re.match(r'\*\*Model\*\*\s*`\[([A-Z]+)(?:\|([^\]]+))?\]`\*\*:\*\*\s*(.*)', line)
         if mm:
             phase   = mm.group(1)
             response_type = mm.group(2)
-            nodes   = [n.strip() for n in mm.group(3).split('→')]
-            time_ms = int(mm.group(4))
-            body = []
+            line_tail = mm.group(3)
+            trace_match = re.fullmatch(r'\[([^\]]+)\]\s+\((\d+)ms\)', line_tail)
+            nodes = [n.strip() for n in trace_match.group(1).split('→')] if trace_match else []
+            time_ms = int(trace_match.group(2)) if trace_match else 0
+            body = [line_tail] if line_tail and not trace_match else []
             i += 1
             while (
                 i < len(tlines)
@@ -3278,8 +3318,19 @@ def _parse_hf_report(filepath):
             ):
                 body.append(tlines[i])
                 i += 1
-            turns.append({"role": "model", "phase": phase, "text": "\n".join(body).strip(),
-                          "response_type": response_type, "nodes": nodes, "time_ms": time_ms, "exchange_index": None, "critique": None})
+            turn_text, bridge_verdict, bridge_debug = parse_turn_diagnostics("\n".join(body).strip())
+            turns.append({
+                "role": "model",
+                "phase": phase,
+                "text": turn_text,
+                "response_type": response_type,
+                "nodes": nodes,
+                "time_ms": time_ms,
+                "exchange_index": None,
+                "bridge_verdict": bridge_verdict,
+                "bridge_debug": bridge_debug,
+                "critique": None,
+            })
             continue
         # Child turn: **Child:** text
         mm = re.match(r'\*\*Child:\*\*\s*(.*)', line)

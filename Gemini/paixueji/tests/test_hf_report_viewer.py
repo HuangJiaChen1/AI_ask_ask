@@ -93,7 +93,11 @@ def test_frontend_assets_cover_search_critique_badges_and_none_state():
     assert "fetch('/api/reports/hf')" in REPORTS_JS
     assert "data-exchange-idx" in REPORTS_JS
     assert "rv-crit-badge" in REPORTS_JS
+    assert "rv-debug-badge" in REPORTS_JS
     assert "crit.problematic.toLowerCase() !== 'none'" in REPORTS_JS
+    assert "turn.bridge_verdict" in REPORTS_JS
+    assert "turn.bridge_debug" in REPORTS_JS
+    assert "No human critique" in REPORTS_JS
     assert "No issues ✓" in REPORTS_JS
     assert "rv-panel-green" in REPORTS_JS
     assert "showRvRawModal" in REPORTS_JS
@@ -107,11 +111,13 @@ def test_frontend_assets_cover_search_critique_badges_and_none_state():
 
     assert "@keyframes rv-critique-pulse" in STYLE_CSS
     assert ".rv-bubble-critiqued" in STYLE_CSS
+    assert ".rv-bubble-debug" in STYLE_CSS
     assert "#rvRawModal" in STYLE_CSS
 
 
 def test_frontend_assets_cover_critiqued_response_panel_and_pre_wrap():
     assert "rvPopupCritiquedResponse" in INDEX_HTML
+    assert "rvPopupResponseLabel" in INDEX_HTML
     assert "Critiqued Model Response" in INDEX_HTML
     assert "rvPopupCritiquedResponse" in REPORTS_JS
     assert "white-space: pre-wrap" in STYLE_CSS
@@ -385,6 +391,56 @@ def test_hf_report_renders_bridge_activation_label():
     assert "[CHAT|bridge_activation]" in report
 
 
+def test_hf_report_writes_turn_diagnostics_for_uncritiqued_model_turn():
+    from paixueji_app import build_human_feedback_report
+    from bridge_debug import build_bridge_trace_entry
+
+    trace = build_bridge_trace_entry(
+        node="driver:bridge_decision",
+        state_before={},
+        changes={"decision": "bridge_activation"},
+        time_ms=1.0,
+    )
+
+    report = build_human_feedback_report(
+        object_name="cat",
+        age=6,
+        session_id="sess",
+        transcript=[{
+            "role": "model",
+            "content": "Your cat really likes wet food.",
+            "mode": "chat",
+            "response_type": "bridge_activation",
+            "bridge_debug": {
+                "decision": "bridge_activation",
+                "bridge_visible_in_response": True,
+                "activation_transition": {
+                    "question_validation": {
+                        "confidence": "high",
+                    },
+                },
+            },
+            "nodes_executed": [trace],
+        }],
+        all_exchanges=[],
+        exchange_critiques=[],
+        global_conclusion="",
+        introduction=None,
+        introduction_critique=None,
+        key_concept=None,
+        session_resolution_debug={
+            "surface_object_name": "cat food",
+            "anchor_object_name": "cat",
+            "anchor_status": "anchored_high",
+        },
+    )
+
+    assert "#### Turn Diagnostics" in report
+    assert "**Bridge Verdict:**" in report
+    assert "#### Raw Bridge Debug" in report
+    assert "##### Activation Transition" in report
+
+
 def test_hf_report_parser_keeps_bridge_only_intro_diagnostics(tmp_path):
     from paixueji_app import _parse_hf_report, build_human_feedback_report
     from bridge_debug import build_bridge_trace_entry
@@ -445,6 +501,132 @@ def test_hf_report_parser_keeps_bridge_only_intro_diagnostics(tmp_path):
     assert intro_turn["critique"] is not None
     assert intro_turn["critique"]["bridge_verdict"] is not None
     assert intro_turn["critique"]["bridge_debug"]["decision"] == "intro_bridge"
+
+
+def test_hf_report_parser_puts_turn_diagnostics_on_model_turn(tmp_path):
+    from paixueji_app import _parse_hf_report, build_human_feedback_report
+    from bridge_debug import build_bridge_trace_entry
+
+    trace = build_bridge_trace_entry(
+        node="driver:bridge_decision",
+        state_before={},
+        changes={"decision": "bridge_activation"},
+        time_ms=1.0,
+    )
+
+    report = build_human_feedback_report(
+        object_name="cat food",
+        age=6,
+        session_id="sess",
+        transcript=[{
+            "role": "model",
+            "content": "Your cat really likes wet food. What does your cat do when dinner is ready?",
+            "mode": "chat",
+            "response_type": "bridge_activation",
+            "bridge_debug": {
+                "decision": "bridge_activation",
+                "bridge_visible_in_response": True,
+                "activation_transition": {
+                    "before_state": {
+                        "activation_handoff_ready_before": True,
+                    },
+                    "question_validation": {
+                        "confidence": "high",
+                    },
+                },
+            },
+            "nodes_executed": [trace],
+        }],
+        all_exchanges=[],
+        exchange_critiques=[],
+        global_conclusion="",
+        introduction=None,
+        introduction_critique=None,
+        key_concept=None,
+        session_resolution_debug={
+            "surface_object_name": "cat food",
+            "anchor_object_name": "cat",
+            "anchor_status": "anchored_high",
+        },
+    )
+    path = tmp_path / "turn_diagnostics.md"
+    path.write_text(report, encoding="utf-8")
+
+    parsed = _parse_hf_report(path)
+    model_turn = next(turn for turn in parsed["transcript"] if turn["role"] == "model")
+
+    assert model_turn["bridge_verdict"] is not None
+    assert model_turn["bridge_debug"]["decision"] == "bridge_activation"
+    assert model_turn["bridge_debug"]["activation_transition"]["question_validation"]["confidence"] == "high"
+    assert model_turn["critique"] is None
+
+
+def test_parse_hf_report_keeps_inline_model_turn_with_diagnostics(tmp_path):
+    from paixueji_app import _parse_hf_report
+
+    report_text = """# Human Feedback Critique Report: cat food
+
+**Session:** sess
+**Age:** 6
+**Date:** 2026-04-14T00:00:00
+**Feedback Type:** Manual (Human)
+**Exchanges Critiqued:** 0 / 1
+
+---
+
+## Conversation Transcript
+
+**Model** `[CHAT|bridge_activation]`**:** That's okay! It's hard to see inside a cat's mouth when they are eating.
+
+#### Turn Diagnostics
+
+**Bridge Verdict:** Bridge was visible in the response.
+
+#### Raw Bridge Debug
+
+- decision: `bridge_activation`
+- bridge_visible_in_response: `True`
+
+**Child:** no
+
+---
+
+## Conversation Critique
+
+*No exchanges were critiqued.*
+"""
+    path = tmp_path / "inline_turn.md"
+    path.write_text(report_text, encoding="utf-8")
+
+    parsed = _parse_hf_report(path)
+
+    assert len(parsed["transcript"]) == 2
+    model_turn = parsed["transcript"][0]
+    assert model_turn["role"] == "model"
+    assert model_turn["text"] == "That's okay! It's hard to see inside a cat's mouth when they are eating."
+    assert model_turn["nodes"] == []
+    assert model_turn["time_ms"] == 0
+    assert model_turn["bridge_verdict"] == "Bridge was visible in the response."
+    assert model_turn["bridge_debug"]["decision"] == "bridge_activation"
+
+
+def test_hf_report_detail_preserves_all_model_turns_for_cat_report(client):
+    response = client.get("/api/reports/hf/2026-04-14/cat_20260414_144814.md")
+
+    assert response.status_code == 200
+
+    report = response.get_json()
+    model_turns = [turn for turn in report["transcript"] if turn["role"] == "model"]
+
+    assert len(model_turns) == 10
+    assert any(
+        turn["text"].startswith("That's okay! It's hard to see inside a cat's mouth")
+        for turn in model_turns
+    )
+    assert any(
+        turn["text"].startswith("That sounds like a funny sound!")
+        for turn in model_turns
+    )
 
 
 def test_parse_hf_report_preserves_multiline_model_reply(tmp_path):

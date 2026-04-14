@@ -69,6 +69,37 @@ function rvFormatBridgeDebug(debug) {
     return lines.length ? lines.join('\n') : '—';
 }
 
+function rvTurnBridgeVerdict(turn) {
+    return turn.bridge_verdict || turn.critique?.bridge_verdict || null;
+}
+
+function rvTurnBridgeDebug(turn) {
+    return turn.bridge_debug || turn.critique?.bridge_debug || null;
+}
+
+function rvTurnHasHumanCritique(turn) {
+    const crit = turn.critique;
+    if (!crit) return false;
+    const hasBridgeDebug = !!(
+        crit.bridge_verdict
+        || (crit.bridge_debug && Object.keys(crit.bridge_debug).length)
+    );
+    return !!(
+        crit.expected
+        || crit.problematic
+        || crit.conclusion
+        || hasBridgeDebug
+        || (crit.node_trace && crit.node_trace.length)
+    );
+}
+
+function rvTurnHasDiagnostics(turn) {
+    return !!(
+        turn.bridge_verdict
+        || (turn.bridge_debug && Object.keys(turn.bridge_debug).length)
+    );
+}
+
 // ─── Module state ─────────────────────────────────────────────────────────────
 let _rvAllReports   = [];
 let _rvCurrentDate  = '';
@@ -199,7 +230,9 @@ function renderDetail(report) {
             _rvCritiques[turn.exchange_index] = turn.critique;
         }
     }
-    const hasCritique = Object.keys(_rvCritiques).length > 0;
+    const hasInteractiveTurns = (report.transcript || []).some(turn =>
+        turn.role === 'model' && (rvTurnHasHumanCritique(turn) || rvTurnHasDiagnostics(turn))
+    );
 
     // Build conversation bubbles
     let lastPhase = null;
@@ -216,22 +249,24 @@ function renderDetail(report) {
                 sep = `<div class="rv-phase-sep">── ${rvEsc(turn.phase)} PHASE ──</div>`;
                 lastPhase = turn.phase;
             }
-            const hasBridgeDebug = !!(turn.critique && (
-                turn.critique.bridge_verdict
-                || (turn.critique.bridge_debug && Object.keys(turn.critique.bridge_debug).length)
-            ));
-            const isCrit   = !!(turn.critique &&
-                (turn.critique.expected || turn.critique.problematic || turn.critique.conclusion || hasBridgeDebug));
-            const critClass = isCrit ? ' rv-bubble-critiqued' : '';
-            const critBadge = isCrit ? '<span class="rv-crit-badge">📝 Critique</span>' : '';
-            const dataAttr  = isCrit ? ` data-exchange-idx="${turn.exchange_index}"` : '';
+            const isCrit = rvTurnHasHumanCritique(turn);
+            const hasDiagnostics = rvTurnHasDiagnostics(turn);
+            const bubbleClass = isCrit
+                ? ' rv-bubble-critiqued'
+                : hasDiagnostics ? ' rv-bubble-debug' : '';
+            const badge = isCrit
+                ? '<span class="rv-crit-badge">📝 Critique</span>'
+                : hasDiagnostics ? '<span class="rv-debug-badge">🔎 Diagnostics</span>' : '';
+            const dataAttr  = (isCrit || hasDiagnostics)
+                ? ` data-exchange-idx="${turn.exchange_index}"`
+                : '';
             const nodesLabel = (turn.nodes || []).length
                 ? `[${turn.nodes.join(' → ')}] (${turn.time_ms}ms)` : '';
             return `
                 ${sep}
                 <div class="rv-msg rv-msg-model">
-                    <div class="rv-bubble rv-bubble-model${critClass}"${dataAttr}>
-                        ${critBadge}
+                    <div class="rv-bubble rv-bubble-model${bubbleClass}"${dataAttr}>
+                        ${badge}
                         <div class="rv-bubble-text">${rvEsc(turn.text)}</div>
                     </div>
                     ${nodesLabel
@@ -250,9 +285,9 @@ function renderDetail(report) {
                <div class="rv-gc-text">${rvEsc(report.global_conclusion)}</div>
            </div>` : '';
 
-    const hintBanner = hasCritique
+    const hintBanner = hasInteractiveTurns
         ? `<div class="rv-hint-banner" id="rvHintBanner">
-               💡 Highlighted bubbles have critique notes — click to view
+               💡 Highlighted bubbles have critique notes or turn diagnostics — click to view
                <button class="rv-hint-dismiss"
                        onclick="document.getElementById('rvHintBanner').style.display='none'">✕</button>
            </div>` : '';
@@ -282,7 +317,7 @@ function renderDetail(report) {
             </div>
         </div>`;
 
-    // Event delegation — handles clicks on critiqued bubbles
+    // Event delegation — handles clicks on critiqued or diagnostics bubbles
     document.getElementById('rvConversation').addEventListener('click', function (e) {
         const bubble = e.target.closest('[data-exchange-idx]');
         if (bubble) showRvCritiquePopup(parseInt(bubble.dataset.exchangeIdx, 10));
@@ -294,39 +329,56 @@ function renderDetail(report) {
 function showRvCritiquePopup(exchangeIdx) {
     const crit = _rvCritiques[exchangeIdx];
     const turn = _rvTurnsByExchange[exchangeIdx];
-    if (!crit) return;
+    const bridgeVerdict = turn ? rvTurnBridgeVerdict(turn) : (crit?.bridge_verdict || null);
+    const bridgeDebug = turn ? (rvTurnBridgeDebug(turn) || {}) : (crit?.bridge_debug || {});
+    if (!turn || (!crit && !bridgeVerdict && !Object.keys(bridgeDebug).length)) return;
 
-    const isProblematic = crit.problematic
+    const isProblematic = crit && crit.problematic
         && crit.problematic.toLowerCase() !== 'none'
         && crit.problematic.trim() !== '';
 
     document.getElementById('rvPopupTitle').textContent =
-        `Exchange ${exchangeIdx} — ${crit.phase || 'CHAT'} Phase`;
+        `Exchange ${exchangeIdx} — ${(crit && crit.phase) || turn.phase || 'CHAT'} Phase`;
+
+    document.getElementById('rvPopupResponseLabel').textContent = crit
+        ? '📝 Critiqued Model Response'
+        : '🤖 Model Response';
+    document.getElementById('rvPopupExpectedLabel').textContent = crit
+        ? '✅ Expected'
+        : '📝 Expected';
+    document.getElementById('rvPopupProblemLabel').innerHTML = crit
+        ? '<span id="rvPopupProbIcon">&#x26A0;&#xFE0F;</span> Why Problematic'
+        : '<span id="rvPopupProbIcon">&#x2139;&#xFE0F;</span> Review Status';
+    document.getElementById('rvPopupConclusionLabel').textContent = crit
+        ? '💬 Conclusion'
+        : '📝 Conclusion';
 
     document.getElementById('rvPopupCritiquedResponse').textContent =
         turn && turn.text ? turn.text : '—';
-    document.getElementById('rvPopupExpected').textContent = crit.expected || '—';
+    document.getElementById('rvPopupExpected').textContent = crit ? (crit.expected || '—') : 'No human critique';
 
     const probPanel = document.getElementById('rvPopupProbPanel');
-    const probIcon  = document.getElementById('rvPopupProbIcon');
     const probText  = document.getElementById('rvPopupProblematic');
     if (isProblematic) {
         probText.textContent  = crit.problematic;
         probPanel.className   = 'rv-crit-panel rv-panel-red';
-        probIcon.textContent  = '⚠️';
-    } else {
+    } else if (crit) {
         probText.textContent  = 'No issues ✓';
         probPanel.className   = 'rv-crit-panel rv-panel-green';
-        probIcon.textContent  = '✅';
+    } else {
+        probText.textContent  = 'No human critique';
+        probPanel.className   = 'rv-crit-panel rv-panel-blue';
     }
 
-    document.getElementById('rvPopupConclusion').textContent = crit.conclusion || '—';
+    document.getElementById('rvPopupConclusion').textContent = crit ? (crit.conclusion || '—') : 'No human critique';
     const bridgeVerdictLabel = 'Bridge Verdict';
-    document.getElementById('rvPopupBridgeVerdict').textContent = crit.bridge_verdict || '—';
+    const bridgeVerdictEl = document.getElementById('rvPopupBridgeVerdict');
+    bridgeVerdictEl.setAttribute('aria-label', bridgeVerdictLabel);
+    bridgeVerdictEl.textContent = bridgeVerdict || '—';
     const bridgeDebugEl = document.getElementById('rvPopupBridgeDebug');
-    bridgeDebugEl.textContent = rvFormatBridgeDebug(crit.bridge_debug || {});
+    bridgeDebugEl.textContent = rvFormatBridgeDebug(bridgeDebug);
 
-    const traceRows = (crit.node_trace || []).map(n =>
+    const traceRows = ((crit && crit.node_trace) || []).map(n =>
         `<tr>
             <td class="rv-trace-td">${rvEsc(n.node)}</td>
             <td class="rv-trace-td">${n.time_ms}ms</td>

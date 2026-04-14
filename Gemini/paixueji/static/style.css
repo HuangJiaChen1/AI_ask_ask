@@ -1223,12 +1223,32 @@ body {
     box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.45);
 }
 
+.rv-bubble-debug {
+    border-left: 3px solid #3b82f6;
+    cursor: pointer;
+}
+.rv-bubble-debug:hover {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
 /* Critique badge pill */
 .rv-crit-badge {
     position: absolute;
     top: -9px;
     right: 10px;
     background: #f59e0b;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 7px;
+    border-radius: 8px;
+    white-space: nowrap;
+}
+.rv-debug-badge {
+    position: absolute;
+    top: -9px;
+    right: 10px;
+    background: #3b82f6;
     color: white;
     font-size: 10px;
     font-weight: 700;
