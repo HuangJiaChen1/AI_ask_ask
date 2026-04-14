@@ -79,6 +79,8 @@ class PaixuejiAssistant:
         self.activation_turn_count = 0
         self.activation_handoff_ready = False
         self.activation_last_question = None
+        self.activation_last_question_kb_backed = False
+        self.activation_last_question_handoff_ready = False
         self.activation_last_question_kb_item = None
         self.activation_last_question_validation_source = None
         self.activation_last_question_validation_confidence = None
@@ -236,6 +238,8 @@ class PaixuejiAssistant:
         self.activation_turn_count = 0
         self.activation_handoff_ready = False
         self.activation_last_question = None
+        self.activation_last_question_kb_backed = False
+        self.activation_last_question_handoff_ready = False
         self.activation_last_question_kb_item = None
         self.activation_last_question_validation_source = None
         self.activation_last_question_validation_confidence = None
@@ -260,6 +264,8 @@ class PaixuejiAssistant:
         self.activation_turn_count = 0
         self.activation_handoff_ready = False
         self.activation_last_question = None
+        self.activation_last_question_kb_backed = False
+        self.activation_last_question_handoff_ready = False
         self.activation_last_question_kb_item = None
         self.activation_last_question_validation_source = None
         self.activation_last_question_validation_confidence = None

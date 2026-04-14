@@ -590,7 +590,7 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
         hook_type_section = ""
     question_style = _question_style_for_hook_type(hook_type_name)
     intro_mode = state.get("intro_mode") or "supported"
-    intro_bridge_context = _build_bridge_prompt_context(state, bridge_context_attempt)
+    intro_bridge_context = "" if intro_mode == "anchor_bridge" else _build_bridge_prompt_context(state, bridge_context_attempt)
     intro_knowledge_context = "" if intro_mode == "anchor_bridge" else _build_intro_kb_context(state)
 
     generator = ask_introduction_question_stream(

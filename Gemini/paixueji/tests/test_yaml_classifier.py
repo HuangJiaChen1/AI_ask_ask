@@ -86,8 +86,8 @@ from graph_lookup import classify_object_yaml
 
 
 def test_classify_object_yaml_known_object():
-    """sunflower is in the YAML mappings."""
-    result = classify_object_yaml("sunflower", 5)
+    """green apple is in the YAML mappings."""
+    result = classify_object_yaml("green apple", 5)
     assert result["success"] is True
     assert result["theme_id"] in {
         "how_world_works", "sharing_planet", "who_we_are",

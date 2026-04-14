@@ -241,6 +241,7 @@ async def validate_bridge_activation_kb_question(
     if deterministic.confidence != "inconclusive":
         return {
             "kb_backed_question": deterministic.matched,
+            "handoff_ready_question": deterministic.handoff_ready,
             "reason": "deterministic match",
             "source": "deterministic",
             "confidence": deterministic.confidence,
@@ -250,6 +251,7 @@ async def validate_bridge_activation_kb_question(
     if not hasattr(assistant, "client") or not hasattr(assistant.client, "aio"):
         return {
             "kb_backed_question": bool(deterministic.matched),
+            "handoff_ready_question": bool(deterministic.handoff_ready),
             "reason": "no validator available",
             "source": "deterministic_fallback",
             "confidence": "inconclusive",
@@ -275,10 +277,11 @@ async def validate_bridge_activation_kb_question(
 
     return {
         "kb_backed_question": bool(payload.get("kb_backed_question")),
+        "handoff_ready_question": bool(payload.get("handoff_ready_question") or payload.get("kb_backed_question")),
         "reason": payload.get("reason") or "validator fallback",
         "source": "validator",
         "confidence": "inconclusive",
-        "kb_item": deterministic.kb_item if payload.get("kb_backed_question") else None,
+        "kb_item": deterministic.kb_item if (payload.get("handoff_ready_question") or payload.get("kb_backed_question")) else None,
     }
 
 
@@ -291,16 +294,20 @@ async def validate_bridge_activation_answer(
     engagement_dimensions: dict[str, list[str]] | None,
 ) -> dict:
     heuristic = detect_activation_answer_heuristic(child_answer, previous_question)
-    if heuristic in {"yes", "no"}:
+    if heuristic["answered_previous_question"] is not None:
         return {
-            "answered_previous_kb_question": heuristic == "yes",
-            "reason": "heuristic",
+            "answered_previous_question": bool(heuristic["answered_previous_question"]),
+            "answered_previous_kb_question": bool(heuristic["answered_previous_question"]),
+            "answer_polarity": heuristic["answer_polarity"],
+            "reason": heuristic["reason"],
             "source": "deterministic",
         }
 
     if not hasattr(assistant, "client") or not hasattr(assistant.client, "aio"):
         return {
+            "answered_previous_question": False,
             "answered_previous_kb_question": False,
+            "answer_polarity": None,
             "reason": "no validator available",
             "source": "deterministic_fallback",
         }
@@ -324,7 +331,13 @@ async def validate_bridge_activation_answer(
         payload = {}
 
     return {
-        "answered_previous_kb_question": bool(payload.get("answered_previous_kb_question")),
+        "answered_previous_question": bool(
+            payload.get("answered_previous_question", payload.get("answered_previous_kb_question"))
+        ),
+        "answered_previous_kb_question": bool(
+            payload.get("answered_previous_question", payload.get("answered_previous_kb_question"))
+        ),
+        "answer_polarity": payload.get("answer_polarity"),
         "reason": payload.get("reason") or "validator fallback",
         "source": "validator",
     }

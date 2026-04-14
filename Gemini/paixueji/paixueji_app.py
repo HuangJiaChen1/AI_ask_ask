@@ -240,6 +240,7 @@ def _activation_question_validation_state(kb_result: dict | None, final_question
         "confidence": (kb_result or {}).get("confidence"),
         "reason": (kb_result or {}).get("reason"),
         "kb_backed_question": (kb_result or {}).get("kb_backed_question"),
+        "handoff_ready_question": (kb_result or {}).get("handoff_ready_question"),
         "kb_item": kb_item,
         "activation_last_question_after": final_question,
         "activation_last_question_kb_item_after": kb_item,
@@ -249,11 +250,17 @@ def _activation_question_validation_state(kb_result: dict | None, final_question
 
 def _activation_answer_validation_state(answer_result: dict | None, *, attempted: bool) -> dict:
     answer_result = answer_result or {}
+    answered_previous_question = answer_result.get(
+        "answered_previous_question",
+        answer_result.get("answered_previous_kb_question"),
+    )
     return {
         "handoff_check_attempted": attempted,
         "source": answer_result.get("source"),
         "reason": answer_result.get("reason"),
+        "answered_previous_question": answered_previous_question,
         "answered_previous_kb_question": answer_result.get("answered_previous_kb_question"),
+        "answer_polarity": answer_result.get("answer_polarity"),
     }
 
 
@@ -261,6 +268,7 @@ def _activation_outcome_state(*, handoff_result: str | None, handoff_block_reaso
     return {
         "handoff_result": handoff_result,
         "handoff_block_reason": handoff_block_reason,
+        "bridge_success": handoff_result == "committed_to_anchor_general",
     }
 
 
@@ -824,7 +832,12 @@ def continue_conversation():
             loop = _ASYNC_LOOP
 
             try:
-                if assistant.bridge_phase == "none" and not assistant.learning_anchor_active and assistant.anchor_object_name:
+                if (
+                    assistant.bridge_phase == "none"
+                    and not assistant.learning_anchor_active
+                    and assistant.anchor_object_name
+                    and not assistant.anchor_confirmation_needed
+                ):
                     from stream.db_loader import load_engagement_dimensions, load_physical_dimensions
 
                     anchor_name = assistant.anchor_object_name
@@ -904,8 +917,10 @@ def continue_conversation():
                             engagement_dimensions=assistant.activation_engagement_dimensions,
                         )
                         assistant.activation_last_question = final_question
+                        assistant.activation_last_question_kb_backed = bool(kb_result.get("kb_backed_question"))
+                        assistant.activation_last_question_handoff_ready = bool(kb_result.get("handoff_ready_question"))
                         assistant.activation_last_question_kb_item = kb_result.get("kb_item")
-                        assistant.activation_handoff_ready = bool(kb_result.get("kb_backed_question"))
+                        assistant.activation_handoff_ready = assistant.activation_last_question_handoff_ready
                         assistant.activation_last_question_validation_source = kb_result.get("source")
                         assistant.activation_last_question_validation_confidence = kb_result.get("confidence")
                         assistant.activation_last_question_validation_reason = kb_result.get("reason")
@@ -1024,7 +1039,11 @@ def continue_conversation():
                                 ),
                                 loop,
                             ).result()
-                            if answer_result["answered_previous_kb_question"]:
+                            answered_previous_question = answer_result.get(
+                                "answered_previous_question",
+                                answer_result.get("answered_previous_kb_question"),
+                            )
+                            if answered_previous_question:
                                 handoff_result = "committed_to_anchor_general"
                                 handoff_block_reason = None
                                 activation_transition = _build_activation_transition_payload(
@@ -1034,7 +1053,8 @@ def continue_conversation():
                                         "source": assistant.activation_last_question_validation_source,
                                         "confidence": assistant.activation_last_question_validation_confidence,
                                         "reason": assistant.activation_last_question_validation_reason,
-                                        "kb_backed_question": assistant.activation_handoff_ready,
+                                        "kb_backed_question": assistant.activation_last_question_kb_backed,
+                                        "handoff_ready_question": assistant.activation_last_question_handoff_ready,
                                         "kb_item": assistant.activation_last_question_kb_item,
                                     },
                                     final_question=assistant.activation_last_question,
@@ -1098,7 +1118,8 @@ def continue_conversation():
                                     "source": assistant.activation_last_question_validation_source,
                                     "confidence": assistant.activation_last_question_validation_confidence,
                                     "reason": assistant.activation_last_question_validation_reason,
-                                    "kb_backed_question": assistant.activation_handoff_ready,
+                                    "kb_backed_question": assistant.activation_last_question_kb_backed,
+                                    "handoff_ready_question": assistant.activation_last_question_handoff_ready,
                                     "kb_item": assistant.activation_last_question_kb_item,
                                 },
                                 final_question=assistant.activation_last_question,
@@ -1236,8 +1257,10 @@ def continue_conversation():
                                     engagement_dimensions=assistant.activation_engagement_dimensions,
                                 )
                                 assistant.activation_last_question = final_question
+                                assistant.activation_last_question_kb_backed = bool(kb_result.get("kb_backed_question"))
+                                assistant.activation_last_question_handoff_ready = bool(kb_result.get("handoff_ready_question"))
                                 assistant.activation_last_question_kb_item = kb_result.get("kb_item")
-                                assistant.activation_handoff_ready = bool(kb_result.get("kb_backed_question"))
+                                assistant.activation_handoff_ready = assistant.activation_last_question_handoff_ready
                                 assistant.activation_last_question_validation_source = kb_result.get("source")
                                 assistant.activation_last_question_validation_confidence = kb_result.get("confidence")
                                 assistant.activation_last_question_validation_reason = kb_result.get("reason")
@@ -1518,8 +1541,10 @@ def continue_conversation():
                                 engagement_dimensions=assistant.activation_engagement_dimensions,
                             )
                             assistant.activation_last_question = final_question
+                            assistant.activation_last_question_kb_backed = bool(kb_result.get("kb_backed_question"))
+                            assistant.activation_last_question_handoff_ready = bool(kb_result.get("handoff_ready_question"))
                             assistant.activation_last_question_kb_item = kb_result.get("kb_item")
-                            assistant.activation_handoff_ready = bool(kb_result.get("kb_backed_question"))
+                            assistant.activation_handoff_ready = assistant.activation_last_question_handoff_ready
                             assistant.activation_last_question_validation_source = kb_result.get("source")
                             assistant.activation_last_question_validation_confidence = kb_result.get("confidence")
                             assistant.activation_last_question_validation_reason = kb_result.get("reason")

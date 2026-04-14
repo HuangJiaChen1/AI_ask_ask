@@ -20,6 +20,37 @@ _YES_NO_ANSWER_PATTERNS = {
     "not really",
 }
 
+_POSITIVE_ANSWER_PATTERNS = {
+    "yes",
+    "yeah",
+    "yep",
+    "maybe",
+}
+
+_NEGATIVE_ANSWER_PATTERNS = {
+    "no",
+    "nope",
+    "nah",
+    "not really",
+}
+
+_ANSWER_PIVOT_PATTERNS = (
+    "yes but",
+    "yes, but",
+    "no but",
+    "no, but",
+    "not really but",
+    "not really, but",
+    "yep but",
+    "yep, but",
+    "yeah but",
+    "yeah, but",
+)
+
+_HANDOFF_READY_ATTRIBUTE_ALIASES = {
+    "paw_pads": {"paw", "paws"},
+}
+
 _STOPWORDS = {
     "a", "an", "and", "are", "as", "at", "be", "because", "but", "by", "do",
     "does", "for", "from", "has", "have", "her", "if", "in", "into", "is",
@@ -34,6 +65,7 @@ class ActivationQuestionMatch:
     matched: bool
     confidence: str
     kb_item: dict | None = None
+    handoff_ready: bool = False
 
 
 def _stem_token(token: str) -> str:
@@ -80,6 +112,7 @@ def match_activation_question_to_kb_deterministic(
     question_tokens = _tokenize(question_text)
     best_item = None
     best_score = 0
+    handoff_ready_item = None
 
     for dimension, attrs in (physical_dimensions or {}).items():
         for attribute, value in (attrs or {}).items():
@@ -94,6 +127,14 @@ def match_activation_question_to_kb_deterministic(
             if score > best_score:
                 best_score = score
                 best_item = {
+                    "kind": "physical_attribute",
+                    "dimension": dimension,
+                    "attribute": attribute,
+                    "value": value,
+                }
+            aliases = _HANDOFF_READY_ATTRIBUTE_ALIASES.get(attribute, set())
+            if aliases and question_tokens & aliases:
+                handoff_ready_item = {
                     "kind": "physical_attribute",
                     "dimension": dimension,
                     "attribute": attribute,
@@ -116,22 +157,67 @@ def match_activation_question_to_kb_deterministic(
                 }
 
     if best_score >= 4:
-        return ActivationQuestionMatch(matched=True, confidence="high", kb_item=best_item)
+        return ActivationQuestionMatch(
+            matched=True,
+            confidence="high",
+            kb_item=best_item,
+            handoff_ready=True,
+        )
+    if handoff_ready_item:
+        return ActivationQuestionMatch(
+            matched=False,
+            confidence="high",
+            kb_item=handoff_ready_item,
+            handoff_ready=True,
+        )
     if best_score > 0:
-        return ActivationQuestionMatch(matched=True, confidence="inconclusive", kb_item=best_item)
-    return ActivationQuestionMatch(matched=False, confidence="high", kb_item=None)
+        return ActivationQuestionMatch(
+            matched=True,
+            confidence="inconclusive",
+            kb_item=best_item,
+            handoff_ready=False,
+        )
+    return ActivationQuestionMatch(matched=False, confidence="high", kb_item=None, handoff_ready=False)
 
 
-def detect_activation_answer_heuristic(child_answer: str, previous_question: str | None) -> str:
+def detect_activation_answer_heuristic(child_answer: str, previous_question: str | None) -> dict:
     if not previous_question:
-        return "inconclusive"
+        return {
+            "answered_previous_question": None,
+            "answer_polarity": None,
+            "reason": "missing_previous_question",
+        }
 
     normalized = " ".join((child_answer or "").strip().lower().split())
     if not normalized:
-        return "inconclusive"
-    if normalized in _YES_NO_ANSWER_PATTERNS:
-        return "yes"
-    return "inconclusive"
+        return {
+            "answered_previous_question": None,
+            "answer_polarity": None,
+            "reason": "empty_answer",
+        }
+    if normalized.startswith(_ANSWER_PIVOT_PATTERNS):
+        return {
+            "answered_previous_question": False,
+            "answer_polarity": None,
+            "reason": "pivot_reply",
+        }
+    if normalized in _POSITIVE_ANSWER_PATTERNS:
+        return {
+            "answered_previous_question": True,
+            "answer_polarity": "yes",
+            "reason": "direct_yes_no",
+        }
+    if normalized in _NEGATIVE_ANSWER_PATTERNS:
+        return {
+            "answered_previous_question": True,
+            "answer_polarity": "no",
+            "reason": "direct_yes_no",
+        }
+    return {
+        "answered_previous_question": None,
+        "answer_polarity": None,
+        "reason": "inconclusive",
+    }
 
 
 def classify_activation_reopen_signal(

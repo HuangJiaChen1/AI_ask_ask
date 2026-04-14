@@ -312,8 +312,9 @@ def test_bridge_follow_switches_to_anchor_on_continue(client, monkeypatch):
     assert response.status_code == 200
 
     final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
-    assert final_chunk["current_object_name"] == "cat"
-    assert final_chunk["learning_anchor_active"] is True
+    assert final_chunk["current_object_name"] == "cat food"
+    assert final_chunk["bridge_phase"] == "activation"
+    assert final_chunk["learning_anchor_active"] is False
     assert final_chunk["correct_answer_count"] == 0
 
 
@@ -940,7 +941,13 @@ def test_bridge_activation_kb_answer_hands_off_same_turn_to_anchor_general(clien
 
     monkeypatch.setattr(
         "paixueji_app.validate_bridge_activation_answer",
-        AsyncMock(return_value={"answered_previous_kb_question": True, "reason": "answered", "source": "deterministic"}),
+        AsyncMock(return_value={
+            "answered_previous_question": True,
+            "answered_previous_kb_question": True,
+            "answer_polarity": "yes",
+            "reason": "answered",
+            "source": "deterministic",
+        }),
     )
 
     async def fake_graph_execution(initial_state):
@@ -978,6 +985,142 @@ def test_bridge_activation_kb_answer_hands_off_same_turn_to_anchor_general(clien
     assert final_chunk["response_type"] == "correct_answer"
     assert final_chunk["activation_child_reply_type"] == "handoff_answer"
     assert final_chunk["bridge_debug"]["activation_transition"]["outcome"]["handoff_result"] == "committed_to_anchor_general"
+
+
+def test_bridge_activation_handoff_ready_pivot_stays_in_activation(client, monkeypatch):
+    import paixueji_app
+
+    assistant = paixueji_app.PaixuejiAssistant(client=object())
+    assistant.object_name = "cat food"
+    assistant.surface_object_name = "cat food"
+    assistant.anchor_object_name = "cat"
+    assistant.anchor_status = "anchored_high"
+    assistant.anchor_relation = "food_for"
+    assistant.anchor_confidence_band = "high"
+    assistant.begin_bridge_activation(
+        anchor_name="cat",
+        physical_dimensions={"appearance": {"paw_pads": "Soft pads underneath the paws"}},
+        engagement_dimensions={},
+        grounding_context="Current-object KB for cat:\n[physical.appearance]\n  - paw pads: Soft pads underneath the paws",
+    )
+    assistant.activation_handoff_ready = True
+    assistant.activation_last_question = "Does she ever use her tongue to clean her paws or her face?"
+    paixueji_app.sessions["activation-pivot"] = assistant
+
+    async def fake_generator(*args, **kwargs):
+        full = "That is funny that she tries to bury it! Does she use her paws to push at the floor around the bowl like she is trying to cover it up?"
+        yield (full, None, full)
+        yield ("", None, full)
+
+    monkeypatch.setattr("paixueji_app.generate_bridge_activation_response_stream", fake_generator)
+    monkeypatch.setattr(
+        "paixueji_app.validate_bridge_activation_answer",
+        AsyncMock(return_value={
+            "answered_previous_question": False,
+            "answered_previous_kb_question": False,
+            "answer_polarity": None,
+            "reason": "pivoted to related behavior",
+            "source": "deterministic",
+        }),
+    )
+    monkeypatch.setattr(
+        "paixueji_app.validate_bridge_activation_kb_question",
+        AsyncMock(return_value={
+            "kb_backed_question": False,
+            "handoff_ready_question": True,
+            "reason": "paws alias matched paw pads",
+            "source": "deterministic",
+            "confidence": "high",
+            "kb_item": {
+                "kind": "physical_attribute",
+                "dimension": "appearance",
+                "attribute": "paw_pads",
+                "value": "Soft pads underneath the paws",
+            },
+        }),
+    )
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": "activation-pivot", "child_input": "No, but she like to bury the food"},
+    )
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+
+    assert final_chunk["response_type"] == "bridge_activation"
+    assert final_chunk["bridge_phase"] == "activation"
+    assert final_chunk["current_object_name"] == "cat food"
+    assert final_chunk["activation_handoff_ready"] is True
+    assert final_chunk["bridge_debug"]["activation_transition"]["question_validation"]["handoff_ready_question"] is True
+    assert final_chunk["bridge_debug"]["activation_transition"]["answer_validation"]["answered_previous_question"] is False
+    assert final_chunk["bridge_debug"]["activation_transition"]["outcome"]["bridge_success"] is False
+
+
+def test_bridge_activation_paws_cover_yes_commits_bridge_success(client, monkeypatch):
+    import paixueji_app
+    from schema import StreamChunk
+
+    assistant = paixueji_app.PaixuejiAssistant(client=object())
+    assistant.object_name = "cat food"
+    assistant.surface_object_name = "cat food"
+    assistant.anchor_object_name = "cat"
+    assistant.anchor_status = "anchored_high"
+    assistant.anchor_relation = "food_for"
+    assistant.anchor_confidence_band = "high"
+    assistant.begin_bridge_activation(
+        anchor_name="cat",
+        physical_dimensions={"appearance": {"paw_pads": "Soft pads underneath the paws"}},
+        engagement_dimensions={},
+        grounding_context="Current-object KB for cat:\n[physical.appearance]\n  - paw pads: Soft pads underneath the paws",
+    )
+    assistant.activation_handoff_ready = True
+    assistant.activation_last_question = "Does she use her paws to push at the floor around the bowl like she is trying to cover it up?"
+    paixueji_app.sessions["activation-paws-success"] = assistant
+
+    monkeypatch.setattr(
+        "paixueji_app.validate_bridge_activation_answer",
+        AsyncMock(return_value={
+            "answered_previous_question": True,
+            "answered_previous_kb_question": True,
+            "answer_polarity": "yes",
+            "reason": "direct yes answer",
+            "source": "deterministic",
+        }),
+    )
+
+    async def fake_graph_execution(initial_state):
+        yield StreamChunk(
+            response="She does use her paws to cover the food! Cats have soft paw pads that help them move quietly.",
+            session_finished=False,
+            duration=0.0,
+            token_usage=None,
+            finish=True,
+            sequence_number=1,
+            timestamp=time.time(),
+            session_id=initial_state["session_id"],
+            request_id=initial_state["request_id"],
+            response_type="correct_answer",
+            current_object_name="cat",
+            surface_object_name="cat food",
+            anchor_object_name="cat",
+            learning_anchor_active=True,
+            bridge_phase="anchor_general",
+            activation_turn_count=0,
+            activation_handoff_ready=False,
+        )
+
+    monkeypatch.setattr("paixueji_app.stream_graph_execution", fake_graph_execution)
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": "activation-paws-success", "child_input": "yep"},
+    )
+    final_chunk = [e["data"] for e in parse_sse(response.data) if e["event"] == "chunk"][-1]
+
+    assert final_chunk["response_type"] == "correct_answer"
+    assert final_chunk["bridge_phase"] == "anchor_general"
+    assert final_chunk["current_object_name"] == "cat"
+    assert final_chunk["learning_anchor_active"] is True
+    assert final_chunk["bridge_debug"]["activation_transition"]["outcome"]["bridge_success"] is True
 
 
 def test_bridge_activation_timeout_falls_back_to_surface_only(client, monkeypatch):
@@ -1244,8 +1387,9 @@ def test_affirmative_reply_to_retry_bridge_activates_anchor_instead_of_correct_a
     second_final = [e["data"] for e in parse_sse(second_continue.data) if e["event"] == "chunk"][-1]
 
     assert second_final["response_type"] == "bridge_activation"
-    assert second_final["current_object_name"] == "cat"
-    assert second_final["learning_anchor_active"] is True
+    assert second_final["current_object_name"] == "cat food"
+    assert second_final["bridge_phase"] == "activation"
+    assert second_final["learning_anchor_active"] is False
     assert second_final["bridge_debug"]["decision"] == "bridge_activation"
     assert second_final["nodes_executed"][-1]["changes"]["decision"] == "bridge_activation"
     assert not any(node["node"] == "analyze_input" for node in second_final["nodes_executed"])
@@ -1497,8 +1641,9 @@ def test_valid_out_of_lane_answer_after_support_soft_activates_without_correct_a
     second_final = [e["data"] for e in parse_sse(second.data) if e["event"] == "chunk"][-1]
 
     assert second_final["response_type"] == "bridge_activation"
-    assert second_final["current_object_name"] == "cat"
-    assert second_final["learning_anchor_active"] is True
+    assert second_final["current_object_name"] == "cat food"
+    assert second_final["bridge_phase"] == "activation"
+    assert second_final["learning_anchor_active"] is False
     assert second_final["bridge_debug"]["decision"] == "bridge_activation"
     assert second_final["bridge_debug"]["pre_anchor_reply_type"] == "valid_out_of_lane_anchor_related"
     assert not any(node["node"] == "analyze_input" for node in second_final["nodes_executed"])

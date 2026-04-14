@@ -504,8 +504,49 @@ def classify_object_yaml(object_name: str, age: int) -> Dict[str, Any]:
     age_tier = _age_to_tier(age)
     lookup = lookup_top_available_concepts(object_name, age_tier)
 
+    matched_entity: Dict[str, Any] | None = None
     if not lookup.get("success"):
-        return _fallback
+        for entity in _load_entities_from_mappings_folder(DEFAULT_MAPPINGS_DIR):
+            if _entity_matches_query(entity, object_name):
+                matched_entity = entity
+                break
+        if matched_entity is None:
+            return _fallback
+
+        primary_theme = matched_entity.get("primary_theme") or {}
+        primary_theme_id = str(primary_theme.get("theme_id", "") or "")
+        if not primary_theme_id:
+            return _fallback
+
+        theme_name = _THEME_ID_TO_NAME.get(primary_theme_id, primary_theme_id)
+        theme_reasoning = str(primary_theme.get("reasoning", "") or "")
+
+        concepts = list(matched_entity.get("primary_key_concepts") or [])
+        if not concepts:
+            return _fallback
+        concept = max(
+            (c for c in concepts if isinstance(c, dict) and c.get("concept_id")),
+            key=lambda c: float(c.get("relevance", 0) or 0),
+            default=None,
+        )
+        if concept is None:
+            return _fallback
+
+        key_concept = str(concept.get("concept_id", "function"))
+        bridge_question = (
+            f"I wonder about the {key_concept} of {object_name}. What do you think?"
+        )
+        category_prompt = _format_concept_anchors(concept, object_name)
+
+        return {
+            "success": True,
+            "theme_id": primary_theme_id,
+            "theme_name": theme_name,
+            "theme_reasoning": theme_reasoning,
+            "key_concept": key_concept,
+            "bridge_question": bridge_question,
+            "category_prompt": category_prompt,
+        }
 
     # --- Theme ---
     themes = lookup.get("themes") or {}

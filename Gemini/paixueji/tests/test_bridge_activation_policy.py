@@ -60,28 +60,65 @@ def test_match_activation_question_to_kb_deterministic_accepts_clear_kb_match():
     }
 
 
+def test_match_activation_question_to_kb_deterministic_marks_paws_covering_handoff_ready_without_exact_kb():
+    result = match_activation_question_to_kb_deterministic(
+        question="Does she use her paws to push at the floor around the bowl like she is trying to cover it up?",
+        physical_dimensions={"appearance": {"paw_pads": "Soft pads underneath the paws"}},
+        engagement_dimensions={},
+    )
+    assert result.matched is False
+    assert result.handoff_ready is True
+    assert result.kb_item == {
+        "kind": "physical_attribute",
+        "dimension": "appearance",
+        "attribute": "paw_pads",
+        "value": "Soft pads underneath the paws",
+    }
+
+
 def test_detect_activation_answer_heuristic_accepts_direct_yes_no():
-    assert (
-        detect_activation_answer_heuristic(
-            child_answer="yes",
-            previous_question="After she eats, does she lick her paw pads?",
-        )
-        == "yes"
+    result = detect_activation_answer_heuristic(
+        child_answer="yes",
+        previous_question="After she eats, does she lick her paw pads?",
     )
-    assert (
-        detect_activation_answer_heuristic(
-            child_answer="not really",
-            previous_question="After she eats, does she lick her paw pads?",
-        )
-        == "yes"
+    assert result["answered_previous_question"] is True
+    assert result["answer_polarity"] == "yes"
+
+    result = detect_activation_answer_heuristic(
+        child_answer="not really",
+        previous_question="After she eats, does she lick her paw pads?",
     )
+    assert result["answered_previous_question"] is True
+    assert result["answer_polarity"] == "no"
+
+
+def test_detect_activation_answer_heuristic_accepts_yep_for_covering_question():
+    result = detect_activation_answer_heuristic(
+        child_answer="yep",
+        previous_question="Does she use her paws to push at the floor around the bowl like she is trying to cover it up?",
+    )
+    assert result["answered_previous_question"] is True
+    assert result["answer_polarity"] == "yes"
+
+
+def test_detect_activation_answer_heuristic_rejects_pivot_reply():
+    result = detect_activation_answer_heuristic(
+        child_answer="No, but she likes to bury the food",
+        previous_question="Does she ever use her tongue to clean her paws or her face?",
+    )
+    assert result["answered_previous_question"] is False
+    assert result["answer_polarity"] is None
 
 
 def test_detect_activation_answer_heuristic_returns_inconclusive_when_no_previous_question():
     assert detect_activation_answer_heuristic(
         child_answer="yes",
         previous_question=None,
-    ) == "inconclusive"
+    ) == {
+        "answered_previous_question": None,
+        "answer_polarity": None,
+        "reason": "missing_previous_question",
+    }
 
 
 def test_classify_activation_reopen_signal_accepts_clean_anchor_side_attribute():
@@ -170,14 +207,15 @@ async def test_validate_bridge_activation_kb_question_short_circuits_on_clear_ma
     )
 
     assert result["kb_backed_question"] is True
+    assert result["handoff_ready_question"] is True
     assert result["source"] == "deterministic"
     assert result["confidence"] == "high"
 
 
 @pytest.mark.asyncio
-async def test_validate_bridge_activation_kb_question_reports_inconclusive_confidence_for_validator_path():
+async def test_validate_bridge_activation_kb_question_treats_paws_alias_as_deterministic_handoff_ready():
     response = SimpleNamespace(
-        text='{"kb_backed_question": true, "reason": "validator matched"}'
+        text='{"kb_backed_question": false, "handoff_ready_question": true, "reason": "validator matched paws alias"}'
     )
     assistant = SimpleNamespace(
         client=SimpleNamespace(
@@ -196,14 +234,34 @@ async def test_validate_bridge_activation_kb_question_reports_inconclusive_confi
         engagement_dimensions={},
     )
 
-    assert result["source"] == "validator"
-    assert result["confidence"] == "inconclusive"
+    assert result["source"] == "deterministic"
+    assert result["confidence"] == "high"
+    assert result["kb_backed_question"] is False
+    assert result["handoff_ready_question"] is True
+
+
+@pytest.mark.asyncio
+async def test_validate_bridge_activation_question_marks_paws_covering_handoff_ready_without_exact_kb():
+    assistant = PaixuejiAssistant(client=SimpleNamespace())
+
+    result = await validate_bridge_activation_kb_question(
+        assistant=assistant,
+        final_question="Does she use her paws to push at the floor around the bowl like she is trying to cover it up?",
+        anchor_object_name="cat",
+        physical_dimensions={"appearance": {"paw_pads": "Soft pads underneath the paws"}},
+        engagement_dimensions={},
+    )
+
+    assert result["kb_backed_question"] is False
+    assert result["handoff_ready_question"] is True
+    assert result["source"] == "deterministic"
+    assert result["kb_item"]["attribute"] == "paw_pads"
 
 
 @pytest.mark.asyncio
 async def test_validate_bridge_activation_answer_uses_validator_for_ambiguous_reply():
     response = SimpleNamespace(
-        text='{"answered_previous_kb_question": true, "reason": "child answered softly"}'
+        text='{"answered_previous_question": true, "reason": "child answered softly"}'
     )
     assistant = SimpleNamespace(
         client=SimpleNamespace(
@@ -223,5 +281,5 @@ async def test_validate_bridge_activation_answer_uses_validator_for_ambiguous_re
         engagement_dimensions={},
     )
 
-    assert result["answered_previous_kb_question"] is True
+    assert result["answered_previous_question"] is True
     assert result["source"] == "validator"

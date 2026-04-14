@@ -434,12 +434,14 @@ Anchor engagement KB:
 Rules:
 - Judge only the final assistant question.
 - Return false if the question stays on a surface-only detail that is not represented in the anchor KB.
-- Return true only if the question is clearly about a detail or engagement seed supported by the anchor KB.
+- Return true for handoff_ready_question when the question is clearly anchor-side, even if it is an alias-like body-part question such as paws -> paw pads.
+- Return true for kb_backed_question only if the question is clearly about a detail or engagement seed supported by the anchor KB.
 - Return JSON only.
 
 Return JSON:
 {{
   "kb_backed_question": true or false,
+  "handoff_ready_question": true or false,
   "reason": "<short reason>"
 }}
 """
@@ -455,14 +457,16 @@ Anchor engagement KB:
 {engagement_kb}
 
 Rules:
-- Judge only whether the child answered the immediately previous assistant question.
+- Judge only whether the child directly answered the immediately previous assistant question.
 - Do not consider older activation turns.
 - Short direct answers like yes/no/maybe may count if they clearly answer the previous question.
+- Related pivots like "No, but she likes to bury the food" do not count unless they directly answer the question first.
 - Return JSON only.
 
 Return JSON:
 {{
-  "answered_previous_kb_question": true or false,
+  "answered_previous_question": true or false,
+  "answer_polarity": "yes" | "no" | null,
   "reason": "<short reason>"
 }}
 """

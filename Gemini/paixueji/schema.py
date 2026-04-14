@@ -42,6 +42,7 @@ class ActivationTransitionQuestionValidation(BaseModel):
     confidence: str | None = None
     reason: str | None = None
     kb_backed_question: bool | None = None
+    handoff_ready_question: bool | None = None
     kb_item: dict | None = None
     activation_last_question_after: str | None = None
     activation_last_question_kb_item_after: dict | None = None
@@ -52,12 +53,15 @@ class ActivationTransitionAnswerValidation(BaseModel):
     handoff_check_attempted: bool | None = None
     source: str | None = None
     reason: str | None = None
+    answered_previous_question: bool | None = None
     answered_previous_kb_question: bool | None = None
+    answer_polarity: str | None = None
 
 
 class ActivationTransitionOutcome(BaseModel):
     handoff_result: str | None = None
     handoff_block_reason: str | None = None
+    bridge_success: bool | None = None
 
 
 class ActivationTransitionTurnInterpretation(BaseModel):

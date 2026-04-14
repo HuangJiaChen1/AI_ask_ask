@@ -234,12 +234,24 @@ def test_build_bridge_debug_preserves_nested_activation_transition_payload():
                 "source": "deterministic",
                 "confidence": "high",
                 "reason": "clear match",
+                "handoff_ready_question": True,
+            },
+            "answer_validation": {
+                "handoff_check_attempted": True,
+                "answered_previous_question": False,
+            },
+            "outcome": {
+                "handoff_result": "stayed_in_activation",
+                "bridge_success": False,
             },
         },
     )
 
     assert debug["activation_transition"]["before_state"]["activation_handoff_ready_before"] is True
     assert debug["activation_transition"]["question_validation"]["confidence"] == "high"
+    assert debug["activation_transition"]["question_validation"]["handoff_ready_question"] is True
+    assert debug["activation_transition"]["answer_validation"]["answered_previous_question"] is False
+    assert debug["activation_transition"]["outcome"]["bridge_success"] is False
 
 
 def test_apply_resolution_records_session_resolution_debug():

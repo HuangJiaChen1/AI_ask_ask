@@ -1000,9 +1000,14 @@ class TestClassificationFailureFallback:
 
 def _get_real_client():
     """Build a real Gemini client from config.json for integration tests."""
+    import os
     import json
     from pathlib import Path
     from google import genai
+
+    if os.environ.get("RUN_LIVE_LLM_TESTS") != "1":
+        pytest.skip("Set RUN_LIVE_LLM_TESTS=1 to run live Gemini integration tests")
+
     config_path = Path(__file__).parent.parent / "config.json"
     with open(config_path) as f:
         cfg = json.load(f)
