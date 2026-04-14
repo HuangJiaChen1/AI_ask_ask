@@ -387,6 +387,11 @@ function showRvCritiquePopup(exchangeIdx) {
     ).join('') || '<tr><td class="rv-trace-td" colspan="3" style="color:#94a3b8">No trace data</td></tr>';
     document.getElementById('rvPopupTraceBody').innerHTML = traceRows;
 
+    const popupBody = document.getElementById('rvPopupBody');
+    if (popupBody) popupBody.scrollTop = 0;
+    const popupTrace = document.getElementById('rvPopupTrace');
+    if (popupTrace) popupTrace.open = false;
+
     document.getElementById('rvCritiquePopup').style.display = 'flex';
 }
 

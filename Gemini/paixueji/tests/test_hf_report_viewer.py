@@ -123,6 +123,27 @@ def test_frontend_assets_cover_critiqued_response_panel_and_pre_wrap():
     assert "white-space: pre-wrap" in STYLE_CSS
 
 
+def test_frontend_assets_cover_scrollable_critique_popup():
+    assert 'id="rvPopupBody"' in INDEX_HTML
+    assert "#rvCritiquePopup" in STYLE_CSS
+    assert ".rv-popup-inner" in STYLE_CSS
+    assert ".rv-popup-body" in STYLE_CSS
+    assert "max-height: min(88vh, 900px);" in STYLE_CSS
+    assert "overflow-y: auto;" in STYLE_CSS
+    assert "min-height: 0;" in STYLE_CSS
+    assert "flex-direction: column;" in STYLE_CSS
+    assert "overflow-wrap: anywhere;" in STYLE_CSS
+    assert "@media (max-width: 640px)" in STYLE_CSS
+
+
+def test_frontend_assets_reset_popup_scroll_and_trace_state():
+    assert 'id="rvPopupTrace"' in INDEX_HTML
+    assert "document.getElementById('rvPopupBody')" in REPORTS_JS
+    assert "scrollTop = 0;" in REPORTS_JS
+    assert "document.getElementById('rvPopupTrace')" in REPORTS_JS
+    assert "popupTrace.open = false;" in REPORTS_JS
+
+
 def test_hf_report_includes_anchor_resolution_and_bridge_debug_sections():
     from paixueji_app import build_human_feedback_report
     from bridge_debug import build_bridge_trace_entry
