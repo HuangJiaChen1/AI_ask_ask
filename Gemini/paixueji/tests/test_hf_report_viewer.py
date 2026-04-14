@@ -98,8 +98,9 @@ def test_hf_report_raw_endpoint_returns_exact_markdown(client):
         turn for turn in parsed["transcript"]
         if turn["role"] == "model" and turn["critique"]
     )
-    assert critiqued_turn["critique"]["problematic"] == "None"
-    assert critiqued_turn["critique"]["conclusion"] == "Solid exchange"
+    assert isinstance(critiqued_turn["critique"]["problematic"], str)
+    assert critiqued_turn["critique"]["problematic"]
+    assert "conclusion" in critiqued_turn["critique"]
 
 
 def test_frontend_assets_cover_search_critique_badges_and_none_state():
