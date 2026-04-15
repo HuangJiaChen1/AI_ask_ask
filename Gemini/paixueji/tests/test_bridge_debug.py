@@ -6,9 +6,23 @@ from bridge_debug import (
     detect_bridge_visibility,
     format_bridge_log_line,
 )
+from bridge_profile import BridgeProfile
 from object_resolver import ObjectResolutionResult
 from paixueji_assistant import PaixuejiAssistant
 from unittest.mock import MagicMock
+
+
+def _profile() -> BridgeProfile:
+    return BridgeProfile(
+        surface_object_name="cat food",
+        anchor_object_name="cat",
+        relation="food_for",
+        bridge_intent="bridge from the food to how the cat notices and eats it.",
+        good_question_angles=("how the cat smells it", "how the cat starts eating it"),
+        avoid_angles=("unrelated cat body parts",),
+        steer_back_rule="acknowledge briefly, then return to noticing or eating.",
+        focus_cues=("smell", "notice"),
+    )
 
 
 def test_detect_bridge_visibility_flags_missing_connection_for_cat_food_intro():
@@ -18,6 +32,7 @@ def test_detect_bridge_visibility_flags_missing_connection_for_cat_food_intro():
         anchor_status="anchored_high",
         anchor_relation="food_for",
         anchor_confidence_band="high",
+        bridge_profile=_profile(),
         intro_mode="anchor_bridge",
         learning_anchor_active_before=False,
         learning_anchor_active_after=False,
@@ -39,6 +54,7 @@ def test_detect_bridge_visibility_accepts_explicit_relation_lane():
         anchor_status="anchored_high",
         anchor_relation="food_for",
         anchor_confidence_band="high",
+        bridge_profile=_profile(),
         intro_mode="anchor_bridge",
         learning_anchor_active_before=False,
         learning_anchor_active_after=False,
@@ -52,26 +68,28 @@ def test_detect_bridge_visibility_accepts_explicit_relation_lane():
     assert debug["bridge_visible_in_response"] is True
 
 
-def test_detect_bridge_visibility_uses_relation_focus_terms():
+def test_detect_bridge_visibility_uses_profile_focus_cues():
     visible, reason = detect_bridge_visibility(
         response_text="What helps it notice that yummy smell first?",
         surface_object_name="cat food",
         anchor_object_name="cat",
         anchor_relation="food_for",
+        bridge_profile=_profile(),
     )
     assert visible is True
-    assert "focus term" in reason.lower()
+    assert "focus cue" in reason.lower()
 
 
-def test_detect_bridge_visibility_allows_surface_object_plus_focus_terms():
+def test_detect_bridge_visibility_allows_surface_object_plus_focus_cues():
     visible, reason = detect_bridge_visibility(
         response_text="Cat food smells strong. What helps it notice that smell first?",
         surface_object_name="cat food",
         anchor_object_name="cat",
         anchor_relation="food_for",
+        bridge_profile=_profile(),
     )
     assert visible is True
-    assert "focus term" in reason.lower()
+    assert "focus cue" in reason.lower()
 
 
 def test_detect_bridge_visibility_avoids_anchor_substring_false_positive():

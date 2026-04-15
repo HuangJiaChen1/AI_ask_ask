@@ -3,9 +3,23 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from bridge_profile import BridgeProfile
 from object_resolver import ObjectResolutionResult
 from paixueji_assistant import PaixuejiAssistant
 from pre_anchor_policy import classify_pre_anchor_reply
+
+
+def _profile() -> BridgeProfile:
+    return BridgeProfile(
+        surface_object_name="cat food",
+        anchor_object_name="cat",
+        relation="food_for",
+        bridge_intent="bridge from the food to how the cat notices and eats it.",
+        good_question_angles=("how the cat smells it", "how the cat starts eating it"),
+        avoid_angles=("unrelated cat body parts",),
+        steer_back_rule="acknowledge briefly, then return to noticing or eating.",
+        focus_cues=("smell", "eat"),
+    )
 
 
 @pytest.mark.asyncio
@@ -16,6 +30,7 @@ async def test_clarification_request_does_not_consume_bridge_attempt(monkeypatch
         surface_object_name="cat food",
         anchor_object_name="cat",
         relation="food_for",
+        bridge_profile=_profile(),
         previous_bridge_question="What is the most important part of cat food for a cat to eat?",
     )
 
@@ -33,6 +48,7 @@ async def test_idk_reply_scaffolds_without_consuming_bridge_attempt():
         surface_object_name="cat food",
         anchor_object_name="cat",
         relation="food_for",
+        bridge_profile=_profile(),
         previous_bridge_question="Does she use her nose to sniff it?",
     )
 
@@ -42,9 +58,9 @@ async def test_idk_reply_scaffolds_without_consuming_bridge_attempt():
 
 
 @pytest.mark.asyncio
-async def test_in_lane_follow_still_activates_anchor(monkeypatch):
-    bridge_follow_classifier = AsyncMock(
-        return_value={"bridge_followed": True, "reason": "matched bridge follow term: smell"}
+async def test_followed_reply_activates_anchor(monkeypatch):
+    semantic_reply_classifier = AsyncMock(
+        return_value={"reply_type": "followed", "reason": "child answered the bridge question"}
     )
 
     result = await classify_pre_anchor_reply(
@@ -53,8 +69,9 @@ async def test_in_lane_follow_still_activates_anchor(monkeypatch):
         surface_object_name="cat food",
         anchor_object_name="cat",
         relation="food_for",
+        bridge_profile=_profile(),
         previous_bridge_question="How does it smell to her?",
-        bridge_follow_classifier=bridge_follow_classifier,
+        semantic_reply_classifier=semantic_reply_classifier,
     )
 
     assert result.reply_type == "in_lane_follow"
@@ -63,9 +80,12 @@ async def test_in_lane_follow_still_activates_anchor(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_valid_out_of_lane_answer_is_not_a_true_miss(monkeypatch):
-    bridge_follow_classifier = AsyncMock(
-        return_value={"bridge_followed": False, "reason": "no lane term"}
+async def test_anchor_related_but_off_lane_answer_is_not_a_true_miss(monkeypatch):
+    semantic_reply_classifier = AsyncMock(
+        return_value={
+            "reply_type": "anchor_related_but_off_lane",
+            "reason": "child stayed on the anchor but answered a different angle",
+        }
     )
 
     result = await classify_pre_anchor_reply(
@@ -74,19 +94,20 @@ async def test_valid_out_of_lane_answer_is_not_a_true_miss(monkeypatch):
         surface_object_name="cat food",
         anchor_object_name="cat",
         relation="food_for",
+        bridge_profile=_profile(),
         previous_bridge_question="How do you think they know the food is there before they take a bite?",
-        bridge_follow_classifier=bridge_follow_classifier,
+        semantic_reply_classifier=semantic_reply_classifier,
     )
 
-    assert result.reply_type == "valid_out_of_lane_anchor_related"
+    assert result.reply_type == "anchor_related_but_off_lane"
     assert result.consume_bridge_attempt is False
     assert result.support_action == "steer"
 
 
 @pytest.mark.asyncio
 async def test_unrelated_answer_is_true_miss(monkeypatch):
-    bridge_follow_classifier = AsyncMock(
-        return_value={"bridge_followed": False, "reason": "no lane term"}
+    semantic_reply_classifier = AsyncMock(
+        return_value={"reply_type": "true_miss", "reason": "child did not engage the bridge"}
     )
 
     result = await classify_pre_anchor_reply(
@@ -95,12 +116,33 @@ async def test_unrelated_answer_is_true_miss(monkeypatch):
         surface_object_name="cat food",
         anchor_object_name="cat",
         relation="food_for",
+        bridge_profile=_profile(),
         previous_bridge_question="Does she use her nose to sniff it?",
-        bridge_follow_classifier=bridge_follow_classifier,
+        semantic_reply_classifier=semantic_reply_classifier,
     )
 
     assert result.reply_type == "true_miss"
     assert result.consume_bridge_attempt is True
+
+
+@pytest.mark.asyncio
+async def test_negative_reply_short_circuits_without_semantic_model():
+    semantic_reply_classifier = AsyncMock()
+
+    result = await classify_pre_anchor_reply(
+        assistant=SimpleNamespace(),
+        child_answer="no",
+        surface_object_name="cat food",
+        anchor_object_name="cat",
+        relation="food_for",
+        bridge_profile=_profile(),
+        previous_bridge_question="Does she use her nose to sniff it?",
+        semantic_reply_classifier=semantic_reply_classifier,
+    )
+
+    assert result.reply_type == "negative_or_refusal"
+    assert result.consume_bridge_attempt is True
+    semantic_reply_classifier.assert_not_awaited()
 
 
 def test_assistant_resets_pre_anchor_support_count_with_bridge_state():
@@ -125,6 +167,7 @@ def test_apply_resolution_initializes_pre_anchor_support_count():
         anchor_confidence_band="high",
         anchor_confirmation_needed=False,
         learning_anchor_active=False,
+        bridge_profile=_profile(),
     ))
 
     assert assistant.pre_anchor_support_count == 0

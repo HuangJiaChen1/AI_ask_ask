@@ -18,6 +18,8 @@ def build_resolution_debug(
     parsed_confidence_raw: str | None = None,
     anchor_object_name: str | None = None,
     anchor_status: str | None = None,
+    bridge_profile_status: str | None = None,
+    bridge_profile_reason: str | None = None,
     unresolved_surface_only_mode: bool = False,
 ) -> dict[str, Any]:
     return {
@@ -34,6 +36,8 @@ def build_resolution_debug(
         "parsed_confidence_raw": parsed_confidence_raw,
         "anchor_object_name": anchor_object_name,
         "anchor_status": anchor_status,
+        "bridge_profile_status": bridge_profile_status,
+        "bridge_profile_reason": bridge_profile_reason,
         "unresolved_surface_only_mode": unresolved_surface_only_mode,
     }
 

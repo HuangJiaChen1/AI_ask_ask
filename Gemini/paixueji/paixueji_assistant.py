@@ -62,6 +62,7 @@ class PaixuejiAssistant:
         self.anchor_object_name = None
         self.anchor_status = None
         self.anchor_relation = None
+        self.bridge_profile = None
         self.anchor_confidence_band = None
         self.anchor_confirmation_needed = False
         self.learning_anchor_active = False
@@ -172,6 +173,7 @@ class PaixuejiAssistant:
         self.anchor_object_name = resolution.anchor_object_name
         self.anchor_status = resolution.anchor_status
         self.anchor_relation = resolution.anchor_relation
+        self.bridge_profile = resolution.bridge_profile
         self.anchor_confidence_band = resolution.anchor_confidence_band
         self.anchor_confirmation_needed = resolution.anchor_confirmation_needed
         self.learning_anchor_active = resolution.learning_anchor_active
@@ -190,6 +192,7 @@ class PaixuejiAssistant:
             "anchor_object_name": resolution.anchor_object_name,
             "anchor_status": resolution.anchor_status,
             "anchor_relation": resolution.anchor_relation,
+            "bridge_profile": resolution.bridge_profile.__dict__ if resolution.bridge_profile else None,
             "anchor_confidence_band": resolution.anchor_confidence_band,
             "learning_anchor_active": resolution.learning_anchor_active,
         }
@@ -204,6 +207,7 @@ class PaixuejiAssistant:
         self.anchor_object_name = anchor_name
         self.anchor_confirmation_needed = False
         self.learning_anchor_active = True
+        self.bridge_profile = None
         self.bridge_phase = BRIDGE_PHASE_ANCHOR_GENERAL
         self.bridge_attempt_count = 0
         self.pre_anchor_support_count = 0

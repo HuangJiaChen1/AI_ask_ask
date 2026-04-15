@@ -8,7 +8,9 @@ from functools import lru_cache
 from typing import Any
 
 import yaml
+from bridge_profile import infer_bridge_profile
 from bridge_context import SUPPORTED_RELATIONS, normalize_relation
+from model_json import extract_json_object
 from resolution_debug import build_resolution_debug
 from paixueji_prompts import OBJECT_RESOLUTION_PROMPT, RELATION_REPAIR_PROMPT
 
@@ -23,6 +25,7 @@ class ObjectResolutionResult:
     anchor_confidence_band: str | None
     anchor_confirmation_needed: bool
     learning_anchor_active: bool
+    bridge_profile: Any = None
     anchor_suppressed: bool = False
     resolution_debug: dict[str, Any] | None = None
 
@@ -109,36 +112,6 @@ def _candidate_anchor_shortlist(name: str) -> list[str]:
     return [anchor for _score, anchor in scored[:5]]
 
 
-def _extract_json_object(raw_text: str | None) -> tuple[dict[str, Any] | None, str | None, bool]:
-    normalized = (raw_text or "").strip()
-    if not normalized:
-        return None, "empty", False
-
-    try:
-        payload = json.loads(normalized)
-        return (payload if isinstance(payload, dict) else None), "plain_json", False
-    except Exception:
-        pass
-
-    fenced_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", normalized, re.DOTALL | re.IGNORECASE)
-    if fenced_match:
-        try:
-            payload = json.loads(fenced_match.group(1))
-            return (payload if isinstance(payload, dict) else None), "fenced_json", True
-        except Exception:
-            pass
-
-    wrapped_match = re.search(r"(\{.*\})", normalized, re.DOTALL)
-    if wrapped_match:
-        try:
-            payload = json.loads(wrapped_match.group(1))
-            return (payload if isinstance(payload, dict) else None), "wrapped_json", True
-        except Exception:
-            pass
-
-    return None, "invalid_json", False
-
-
 def _invoke_model(prompt: str, client: Any, config: dict[str, Any]) -> tuple[dict[str, Any] | None, str | None, str | None, bool]:
     if client is None or not hasattr(client, "models") or not hasattr(client.models, "generate_content"):
         return None, None, None, False
@@ -150,15 +123,82 @@ def _invoke_model(prompt: str, client: Any, config: dict[str, Any]) -> tuple[dic
             config={"temperature": 0},
         )
         raw_text = response.text or ""
-        payload, payload_kind, recovery_applied = _extract_json_object(raw_text)
+        payload, payload_kind, recovery_applied = extract_json_object(raw_text)
         return payload, raw_text, payload_kind, recovery_applied
     except Exception:
         try:
             raw_text = response.text or ""  # type: ignore[has-type]
         except Exception:
             raw_text = None
-        _payload, payload_kind, recovery_applied = _extract_json_object(raw_text)
+        _payload, payload_kind, recovery_applied = extract_json_object(raw_text)
         return None, raw_text, payload_kind, recovery_applied
+
+
+def _with_bridge_profile(
+    result: ObjectResolutionResult,
+    client: Any,
+    config: dict[str, Any],
+) -> ObjectResolutionResult:
+    if (
+        result.anchor_status != "anchored_high"
+        or not result.anchor_object_name
+        or not result.anchor_relation
+        or result.anchor_relation == "exact_match"
+    ):
+        return result
+
+    profile, profile_debug = infer_bridge_profile(
+        result.surface_object_name,
+        result.anchor_object_name,
+        result.anchor_relation,
+        client,
+        config,
+    )
+    if profile is None:
+        return ObjectResolutionResult(
+            surface_object_name=result.surface_object_name,
+            visible_object_name=result.visible_object_name,
+            anchor_object_name=None,
+            anchor_status="unresolved",
+            anchor_relation=None,
+            anchor_confidence_band=None,
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+            bridge_profile=None,
+            resolution_debug=build_resolution_debug(
+                surface_object_name=result.surface_object_name,
+                decision_source="bridge_profile_inference",
+                decision_reason=profile_debug.get("decision_reason") or "profile_generation_failed",
+                candidate_anchors=[result.anchor_object_name] if result.anchor_object_name else [],
+                model_attempted=True,
+                raw_model_response=profile_debug.get("raw_model_response"),
+                raw_model_payload_kind=profile_debug.get("raw_model_payload_kind"),
+                json_recovery_applied=bool(profile_debug.get("json_recovery_applied")),
+                parsed_anchor_raw=result.anchor_object_name,
+                parsed_relation_raw=result.anchor_relation,
+                parsed_confidence_raw=result.anchor_confidence_band,
+                bridge_profile_status="failed",
+                bridge_profile_reason=profile_debug.get("decision_reason"),
+                unresolved_surface_only_mode=True,
+            ),
+        )
+
+    debug = dict(result.resolution_debug or {})
+    debug["bridge_profile_status"] = "ready"
+    debug["bridge_profile_reason"] = profile_debug.get("decision_reason")
+    return ObjectResolutionResult(
+        surface_object_name=result.surface_object_name,
+        visible_object_name=result.visible_object_name,
+        anchor_object_name=result.anchor_object_name,
+        anchor_status=result.anchor_status,
+        anchor_relation=result.anchor_relation,
+        anchor_confidence_band=result.anchor_confidence_band,
+        anchor_confirmation_needed=result.anchor_confirmation_needed,
+        learning_anchor_active=result.learning_anchor_active,
+        bridge_profile=profile,
+        anchor_suppressed=result.anchor_suppressed,
+        resolution_debug=debug,
+    )
 
 
 def _relation_repair(name: str, anchor_name: str, client: Any, config: dict[str, Any]) -> tuple[dict[str, Any] | None, str | None, str | None, bool]:
@@ -199,6 +239,7 @@ def _model_fallback(name: str, client: Any, config: dict[str, Any]) -> ObjectRes
                         anchor_confidence_band="high",
                         anchor_confirmation_needed=False,
                         learning_anchor_active=False,
+                        bridge_profile=None,
                         resolution_debug=build_resolution_debug(
                             surface_object_name=name,
                             decision_source="relation_repair",
@@ -225,6 +266,7 @@ def _model_fallback(name: str, client: Any, config: dict[str, Any]) -> ObjectRes
                 anchor_confidence_band="medium",
                 anchor_confirmation_needed=True,
                 learning_anchor_active=False,
+                bridge_profile=None,
                 resolution_debug=build_resolution_debug(
                     surface_object_name=name,
                     decision_source="candidate_fallback",
@@ -248,6 +290,7 @@ def _model_fallback(name: str, client: Any, config: dict[str, Any]) -> ObjectRes
                 anchor_confidence_band=None,
                 anchor_confirmation_needed=False,
                 learning_anchor_active=False,
+                bridge_profile=None,
                 resolution_debug=build_resolution_debug(
                     surface_object_name=name,
                     decision_source="unresolved",
@@ -280,6 +323,7 @@ def _model_fallback(name: str, client: Any, config: dict[str, Any]) -> ObjectRes
             anchor_confidence_band="high",
             anchor_confirmation_needed=False,
             learning_anchor_active=False,
+            bridge_profile=None,
             resolution_debug=build_resolution_debug(
                 surface_object_name=name,
                 decision_source="model_inference",
@@ -307,6 +351,7 @@ def _model_fallback(name: str, client: Any, config: dict[str, Any]) -> ObjectRes
             anchor_confidence_band="medium",
             anchor_confirmation_needed=True,
             learning_anchor_active=False,
+            bridge_profile=None,
             resolution_debug=build_resolution_debug(
                 surface_object_name=name,
                 decision_source="model_inference",
@@ -342,6 +387,7 @@ def _model_fallback(name: str, client: Any, config: dict[str, Any]) -> ObjectRes
                     anchor_confidence_band="high",
                     anchor_confirmation_needed=False,
                     learning_anchor_active=False,
+                    bridge_profile=None,
                     resolution_debug=build_resolution_debug(
                         surface_object_name=name,
                         decision_source="relation_repair",
@@ -368,6 +414,7 @@ def _model_fallback(name: str, client: Any, config: dict[str, Any]) -> ObjectRes
             anchor_confidence_band="medium",
             anchor_confirmation_needed=True,
             learning_anchor_active=False,
+            bridge_profile=None,
             resolution_debug=build_resolution_debug(
                 surface_object_name=name,
                 decision_source="candidate_fallback",
@@ -395,6 +442,7 @@ def _model_fallback(name: str, client: Any, config: dict[str, Any]) -> ObjectRes
             anchor_confidence_band=None,
             anchor_confirmation_needed=False,
             learning_anchor_active=False,
+            bridge_profile=None,
             resolution_debug=build_resolution_debug(
                 surface_object_name=name,
                 decision_source="unresolved",
@@ -420,6 +468,7 @@ def _model_fallback(name: str, client: Any, config: dict[str, Any]) -> ObjectRes
         anchor_confidence_band=None,
         anchor_confirmation_needed=False,
         learning_anchor_active=False,
+        bridge_profile=None,
         resolution_debug=build_resolution_debug(
             surface_object_name=name,
             decision_source="unresolved",
@@ -460,6 +509,7 @@ def resolve_object_input(
             anchor_confidence_band="exact",
             anchor_confirmation_needed=False,
             learning_anchor_active=True,
+            bridge_profile=None,
             resolution_debug=build_resolution_debug(
                 surface_object_name=surface,
                 decision_source="exact_supported",
@@ -473,7 +523,7 @@ def resolve_object_input(
 
     fallback = _model_fallback(surface, client, config or {})
     if fallback:
-        return fallback
+        return _with_bridge_profile(fallback, client, config or {})
 
     return ObjectResolutionResult(
         surface_object_name=surface,
@@ -484,6 +534,7 @@ def resolve_object_input(
         anchor_confidence_band=None,
         anchor_confirmation_needed=False,
         learning_anchor_active=False,
+        bridge_profile=None,
         resolution_debug=build_resolution_debug(
             surface_object_name=surface,
             decision_source="unresolved",

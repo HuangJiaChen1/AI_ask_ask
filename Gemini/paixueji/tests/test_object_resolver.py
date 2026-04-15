@@ -2,6 +2,7 @@ from unittest.mock import MagicMock
 
 from paixueji_assistant import PaixuejiAssistant
 
+from bridge_profile import BridgeProfile
 from object_resolver import (
     ObjectResolutionResult,
     _candidate_anchor_shortlist,
@@ -38,10 +39,28 @@ def test_unsupported_object_uses_model_inference_when_not_exact(monkeypatch):
     )
 
     monkeypatch.setattr("object_resolver._model_fallback", lambda *args, **kwargs: expected)
+    monkeypatch.setattr(
+        "object_resolver.infer_bridge_profile",
+        lambda *args, **kwargs: (
+            BridgeProfile(
+                surface_object_name="cat food",
+                anchor_object_name="cat",
+                relation="food_for",
+                bridge_intent="bridge from food to cat eating.",
+                good_question_angles=("how the cat smells it",),
+                avoid_angles=("unrelated body parts",),
+                steer_back_rule="return to noticing or eating.",
+                focus_cues=("smell",),
+            ),
+            {"decision_reason": "bridge_profile_inferred"},
+        ),
+    )
 
     result = resolve_object_input("cat food", age=6, client=MagicMock(), config={})
 
-    assert result == expected
+    assert result.anchor_status == expected.anchor_status
+    assert result.anchor_relation == expected.anchor_relation
+    assert result.bridge_profile is not None
     assert result.resolution_debug["decision_source"] == "model_inference"
 
 
@@ -75,15 +94,18 @@ def test_invalid_model_relation_downgrades_to_related_to_confirmation():
 
 def test_model_relation_is_normalized_before_validity_check():
     client = MagicMock()
-    client.models.generate_content.return_value.text = (
-        '{"anchor_object_name":"cat","relation":" Food_For ","confidence_band":"high"}'
-    )
+    client.models.generate_content.side_effect = [
+        MagicMock(text='{"anchor_object_name":"cat","relation":" Food_For ","confidence_band":"high"}'),
+        MagicMock(text='{"bridge_intent":"Bridge from food to cat eating.","good_question_angles":["how the cat smells it"],"avoid_angles":["unrelated body parts"],"steer_back_rule":"Return to noticing or eating.","focus_cues":["smell"]}'),
+    ]
 
     result = resolve_object_input("cat food", age=6, client=client, config={"model_name": "mock"})
 
     assert result.anchor_status == "anchored_high"
     assert result.anchor_relation == "food_for"
     assert result.anchor_confirmation_needed is False
+    assert result.bridge_profile is not None
+    assert result.bridge_profile.relation == "food_for"
 
 
 def test_candidate_anchor_shortlist_prefers_token_matches():
@@ -99,6 +121,7 @@ def test_relation_repair_uses_single_strong_candidate_when_primary_misses():
     client.models.generate_content.side_effect = [
         MagicMock(text='{"anchor_object_name": null, "relation": null, "confidence_band": "low"}'),
         MagicMock(text='{"relation": "food_for", "confidence_band": "high"}'),
+        MagicMock(text='{"bridge_intent":"Bridge from food to cat eating.","good_question_angles":["how the cat smells it"],"avoid_angles":["unrelated body parts"],"steer_back_rule":"Return to noticing or eating.","focus_cues":["smell"]}'),
     ]
 
     result = resolve_object_input("cat food", age=6, client=client, config={"model_name": "mock"})
@@ -202,6 +225,27 @@ def test_object_resolution_prompt_lists_supported_relation_enum():
     assert "food_for" in OBJECT_RESOLUTION_PROMPT
     assert "used_with" in OBJECT_RESOLUTION_PROMPT
     assert "related_to" in OBJECT_RESOLUTION_PROMPT
+
+
+def test_bridge_profile_failure_downgrades_to_unresolved_surface_only(monkeypatch):
+    client = MagicMock()
+    client.models.generate_content.return_value.text = (
+        '{"anchor_object_name":"cat","relation":"food_for","confidence_band":"high"}'
+    )
+    monkeypatch.setattr(
+        "object_resolver.infer_bridge_profile",
+        lambda *args, **kwargs: (None, {"decision_reason": "profile_generation_failed"}),
+    )
+
+    result = resolve_object_input("cat food", age=6, client=client, config={"model_name": "mock"})
+
+    assert result.anchor_status == "unresolved"
+    assert result.anchor_object_name is None
+    assert result.anchor_relation is None
+    assert result.bridge_profile is None
+    assert result.resolution_debug["decision_source"] == "bridge_profile_inference"
+    assert result.resolution_debug["decision_reason"] == "profile_generation_failed"
+    assert result.resolution_debug["unresolved_surface_only_mode"] is True
 
 
 def test_activate_anchor_topic_resets_learning_count():

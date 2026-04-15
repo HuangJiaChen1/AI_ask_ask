@@ -6,16 +6,19 @@ Functions:
     - classify_dimension: Legacy dimension classifier (still exported for compatibility)
     - map_response_to_kb_item: Debug-only best-effort mapper from response text to one KB item
 """
+import inspect
 import json
 import re
 import time
+from unittest.mock import AsyncMock
 from loguru import logger
 import paixueji_prompts
 from bridge_activation_policy import (
     detect_activation_answer_heuristic,
     match_activation_question_to_kb_deterministic,
 )
-from bridge_context import build_bridge_context, normalize_relation
+from bridge_context import normalize_relation
+from model_json import extract_json_object
 
 async def classify_intent(
     assistant,
@@ -172,6 +175,65 @@ async def classify_dimension(
         return None
 
 
+async def classify_pre_anchor_semantic_reply(
+    assistant,
+    child_answer: str,
+    bridge_profile,
+    previous_bridge_question: str | None = None,
+) -> dict:
+    """Judge whether a pre-anchor reply followed the semantic bridge lane."""
+    if bridge_profile is None:
+        return {"reply_type": "true_miss", "reason": "no bridge profile"}
+
+    client = getattr(assistant, "client", None)
+    config = getattr(assistant, "config", None)
+    generate_content = getattr(getattr(getattr(client, "aio", None), "models", None), "generate_content", None)
+    if (
+        client is None
+        or config is None
+        or not isinstance(config, dict)
+        or not config.get("model_name")
+        or generate_content is None
+        or not (inspect.iscoroutinefunction(generate_content) or isinstance(generate_content, AsyncMock))
+    ):
+        return {"reply_type": "true_miss", "reason": "no semantic reply classifier available"}
+
+    prompt = paixueji_prompts.get_prompts()["bridge_follow_classifier_prompt"].format(
+        surface_object_name=bridge_profile.surface_object_name,
+        anchor_object_name=bridge_profile.anchor_object_name,
+        relation=normalize_relation(bridge_profile.relation),
+        bridge_intent=bridge_profile.bridge_intent,
+        good_question_angles=", ".join(bridge_profile.good_question_angles),
+        avoid_angles=", ".join(bridge_profile.avoid_angles),
+        steer_back_rule=bridge_profile.steer_back_rule,
+        focus_cues=", ".join(bridge_profile.focus_cues),
+        previous_bridge_question=previous_bridge_question or "",
+        child_answer=child_answer,
+    )
+
+    try:
+        response = await generate_content(
+            model=config["model_name"],
+            contents=prompt,
+            config={"temperature": 0.0, "max_output_tokens": 80},
+        )
+        payload, _, _ = extract_json_object(response.text or "")
+    except Exception:
+        payload = None
+
+    if not isinstance(payload, dict):
+        return {"reply_type": "true_miss", "reason": "semantic reply classifier failed"}
+
+    reply_type = str(payload.get("reply_type") or "").strip()
+    if reply_type not in {"followed", "anchor_related_but_off_lane", "true_miss"}:
+        return {"reply_type": "true_miss", "reason": "semantic reply classifier failed"}
+
+    return {
+        "reply_type": reply_type,
+        "reason": payload.get("reason") or "semantic reply classifier returned no reason",
+    }
+
+
 async def classify_bridge_follow(
     assistant,
     child_answer: str,
@@ -179,44 +241,18 @@ async def classify_bridge_follow(
     anchor_object_name: str,
     relation: str | None,
     previous_bridge_question: str | None = None,
+    bridge_profile=None,
 ) -> dict:
-    """Determine whether the child followed the current bridge toward the anchor."""
-    normalized_relation = normalize_relation(relation)
-    bridge_context = build_bridge_context(
-        surface_object_name=surface_object_name,
-        anchor_object_name=anchor_object_name,
-        relation=normalized_relation,
-        attempt_number=1,
-    )
-
-    if not bridge_context:
-        return {"bridge_followed": False, "reason": "no bridge context"}
-
-    if not hasattr(assistant, "client") or not hasattr(assistant.client, "aio"):
-        return {"bridge_followed": False, "reason": "no model fallback available"}
-
-    prompt = paixueji_prompts.get_prompts()["bridge_follow_classifier_prompt"].format(
-        surface_object_name=surface_object_name,
-        anchor_object_name=anchor_object_name,
-        relation=normalized_relation,
-        allowed_focus_terms=", ".join(bridge_context.allowed_focus_terms) if bridge_context else "",
-        previous_bridge_question=previous_bridge_question or "",
+    """Backward-compatible bridge follow wrapper."""
+    semantic_result = await classify_pre_anchor_semantic_reply(
+        assistant=assistant,
         child_answer=child_answer,
+        bridge_profile=bridge_profile,
+        previous_bridge_question=previous_bridge_question,
     )
-
-    try:
-        response = await assistant.client.aio.models.generate_content(
-            model=assistant.config["model_name"],
-            contents=prompt,
-            config={"temperature": 0.0, "max_output_tokens": 80},
-        )
-        payload = json.loads(response.text or "{}")
-    except Exception:
-        return {"bridge_followed": False, "reason": "classifier fallback failed"}
-
     return {
-        "bridge_followed": bool(payload.get("bridge_followed")),
-        "reason": payload.get("reason") or "classifier fallback",
+        "bridge_followed": semantic_result.get("reply_type") == "followed",
+        "reason": semantic_result.get("reason"),
     }
 
 

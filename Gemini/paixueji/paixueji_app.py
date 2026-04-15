@@ -45,7 +45,7 @@ from kb_context import (
 from pre_anchor_policy import classify_pre_anchor_reply
 from resolution_debug import format_resolution_log_line
 from stream import (
-    classify_bridge_follow,
+    classify_pre_anchor_semantic_reply,
     generate_bridge_activation_response_stream,
     generate_bridge_retry_response_stream,
     generate_bridge_support_response_stream,
@@ -57,6 +57,8 @@ from stream.validation import (
     validate_bridge_activation_answer,
     validate_bridge_activation_kb_question,
 )
+
+classify_bridge_follow = classify_pre_anchor_semantic_reply
 
 app = Flask(__name__, static_folder='static')
 CORS(app)
@@ -168,6 +170,7 @@ def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
         "anchor_relation": assistant.anchor_relation,
         "anchor_confidence_band": assistant.anchor_confidence_band,
         "anchor_confirmation_needed": assistant.anchor_confirmation_needed,
+        "bridge_profile": assistant.bridge_profile.__dict__ if assistant.bridge_profile else None,
         "learning_anchor_active": assistant.learning_anchor_active,
         "bridge_phase": getattr(assistant, "bridge_phase", None),
         "bridge_attempt_count": assistant.bridge_attempt_count,
@@ -206,10 +209,12 @@ def _intro_mode_for_assistant(assistant: PaixuejiAssistant) -> str:
 def _bridge_context_summary(bridge_context) -> str:
     if not bridge_context:
         return ""
-    return (
-        f"allowed: {', '.join(bridge_context.allowed_focus_terms)}"
-        if bridge_context.allowed_focus_terms else ""
-    )
+    summary_lines = [f"intent: {bridge_context.bridge_intent}"]
+    if bridge_context.good_question_angles:
+        summary_lines.append(f"angles: {', '.join(bridge_context.good_question_angles)}")
+    if bridge_context.focus_cues:
+        summary_lines.append(f"focus cues: {', '.join(bridge_context.focus_cues)}")
+    return " | ".join(summary_lines)
 
 
 def _activation_grounding_summary(mode: str, activation_grounding_context: str) -> str:
@@ -646,6 +651,7 @@ def start_conversation():
                         "anchor_relation": assistant.anchor_relation,
                         "anchor_confidence_band": assistant.anchor_confidence_band,
                         "anchor_confirmation_needed": assistant.anchor_confirmation_needed,
+                        "bridge_profile": assistant.bridge_profile,
                         "learning_anchor_active": assistant.learning_anchor_active,
                         "bridge_phase": assistant.bridge_phase,
                         "bridge_attempt_count": 0,
@@ -1382,8 +1388,9 @@ def continue_conversation():
                             surface_object_name=assistant.surface_object_name or assistant.object_name,
                             anchor_object_name=assistant.anchor_object_name,
                             relation=assistant.anchor_relation,
+                            bridge_profile=assistant.bridge_profile,
                             previous_bridge_question=previous_bridge_question,
-                            bridge_follow_classifier=classify_bridge_follow,
+                            semantic_reply_classifier=classify_bridge_follow,
                         ),
                         loop,
                     ).result()
@@ -1413,7 +1420,7 @@ def continue_conversation():
                     )
 
                     should_soft_activate = (
-                        pre_anchor_decision.reply_type == "valid_out_of_lane_anchor_related"
+                        pre_anchor_decision.reply_type == "anchor_related_but_off_lane"
                         and assistant.pre_anchor_support_count + 1 >= MAX_PRE_ANCHOR_SUPPORT_TURNS
                     )
 
@@ -1426,10 +1433,8 @@ def continue_conversation():
                             else "child followed bridge"
                         )
                         bridge_context = build_bridge_context(
-                            surface_object_name=assistant.surface_object_name or assistant.object_name,
-                            anchor_object_name=assistant.anchor_object_name,
-                            relation=assistant.anchor_relation,
-                            attempt_number=max(assistant.bridge_attempt_count, 1),
+                            assistant.bridge_profile,
+                            max(assistant.bridge_attempt_count, 1),
                         )
                         from stream.db_loader import load_engagement_dimensions, load_physical_dimensions
 
@@ -1454,6 +1459,7 @@ def continue_conversation():
                             anchor_status=assistant.anchor_status,
                             anchor_relation=assistant.anchor_relation,
                             anchor_confidence_band=assistant.anchor_confidence_band,
+                            bridge_profile=assistant.bridge_profile,
                             intro_mode="anchor_bridge",
                             learning_anchor_active_before=False,
                             learning_anchor_active_after=False,
@@ -1586,6 +1592,7 @@ def continue_conversation():
                                 anchor_status=assistant.anchor_status,
                                 anchor_relation=assistant.anchor_relation,
                                 anchor_confidence_band=assistant.anchor_confidence_band,
+                                bridge_profile=assistant.bridge_profile,
                                 intro_mode="anchor_bridge",
                                 learning_anchor_active_before=False,
                                 learning_anchor_active_after=False,
@@ -1663,17 +1670,15 @@ def continue_conversation():
                         pre_anchor_decision.reply_type in {
                             "clarification_request",
                             "idk_or_stuck",
-                            "valid_out_of_lane_anchor_related",
+                            "anchor_related_but_off_lane",
                         }
                         and assistant.pre_anchor_support_count < MAX_PRE_ANCHOR_SUPPORT_TURNS
                     ):
                         support_before = assistant.pre_anchor_support_count
                         assistant.pre_anchor_support_count += 1
                         bridge_context = build_bridge_context(
-                            surface_object_name=assistant.surface_object_name or assistant.object_name,
-                            anchor_object_name=assistant.anchor_object_name,
-                            relation=assistant.anchor_relation,
-                            attempt_number=max(assistant.bridge_attempt_count, 1),
+                            assistant.bridge_profile,
+                            max(assistant.bridge_attempt_count, 1),
                         )
                         bridge_debug = build_bridge_debug(
                             surface_object_name=assistant.surface_object_name or assistant.object_name,
@@ -1681,6 +1686,7 @@ def continue_conversation():
                             anchor_status=assistant.anchor_status,
                             anchor_relation=assistant.anchor_relation,
                             anchor_confidence_band=assistant.anchor_confidence_band,
+                            bridge_profile=assistant.bridge_profile,
                             intro_mode="anchor_bridge",
                             learning_anchor_active_before=False,
                             learning_anchor_active_after=False,
@@ -1757,6 +1763,7 @@ def continue_conversation():
                                 anchor_status=assistant.anchor_status,
                                 anchor_relation=assistant.anchor_relation,
                                 anchor_confidence_band=assistant.anchor_confidence_band,
+                                bridge_profile=assistant.bridge_profile,
                                 intro_mode="anchor_bridge",
                                 learning_anchor_active_before=False,
                                 learning_anchor_active_after=False,
@@ -1819,10 +1826,8 @@ def continue_conversation():
                         attempt_before = assistant.bridge_attempt_count
                         next_attempt = assistant.bridge_attempt_count + 1
                         bridge_context = build_bridge_context(
-                            surface_object_name=assistant.surface_object_name or assistant.object_name,
-                            anchor_object_name=assistant.anchor_object_name,
-                            relation=assistant.anchor_relation,
-                            attempt_number=next_attempt,
+                            assistant.bridge_profile,
+                            next_attempt,
                         )
                         assistant.bridge_attempt_count = next_attempt
                         bridge_debug = build_bridge_debug(
@@ -1831,6 +1836,7 @@ def continue_conversation():
                             anchor_status=assistant.anchor_status,
                             anchor_relation=assistant.anchor_relation,
                             anchor_confidence_band=assistant.anchor_confidence_band,
+                            bridge_profile=assistant.bridge_profile,
                             intro_mode="anchor_bridge",
                             learning_anchor_active_before=False,
                             learning_anchor_active_after=False,
@@ -2091,6 +2097,7 @@ def continue_conversation():
                         "anchor_relation": assistant.anchor_relation,
                         "anchor_confidence_band": assistant.anchor_confidence_band,
                         "anchor_confirmation_needed": assistant.anchor_confirmation_needed,
+                        "bridge_profile": assistant.bridge_profile,
                         "learning_anchor_active": assistant.learning_anchor_active,
                         "bridge_phase": assistant.bridge_phase,
                         "bridge_attempt_count": assistant.bridge_attempt_count,

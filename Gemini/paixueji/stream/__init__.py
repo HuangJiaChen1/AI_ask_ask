@@ -43,6 +43,7 @@ from .question_generators import (
 
 # Intent classification (replaces decide_topic_switch_with_validation)
 from .validation import (
+    classify_pre_anchor_semantic_reply,
     classify_bridge_follow,
     classify_intent,
     classify_dimension,
@@ -75,6 +76,7 @@ __all__ = [
     'ask_followup_question_stream',
 
     # Intent classification
+    'classify_pre_anchor_semantic_reply',
     'classify_bridge_follow',
     'classify_intent',
     'classify_dimension',

@@ -2,277 +2,91 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from stream.validation import classify_bridge_follow
+from bridge_profile import BridgeProfile
+from stream.validation import classify_pre_anchor_semantic_reply
 
 
-@pytest.mark.asyncio
-async def test_food_for_follow_detects_clear_bridge_lane_via_model():
-    assistant = MagicMock()
-    assistant.config = {"model_name": "mock"}
-    assistant.client.aio.models.generate_content = AsyncMock(
-        return_value=MagicMock(text='{"bridge_followed": true, "reason": "answered in the food_for lane"}')
-    )
-
-    result = await classify_bridge_follow(
-        assistant=assistant,
-        child_answer="with its nose",
+def _profile() -> BridgeProfile:
+    return BridgeProfile(
         surface_object_name="cat food",
         anchor_object_name="cat",
         relation="food_for",
+        bridge_intent="bridge from the food to how the cat notices and eats it.",
+        good_question_angles=("how the cat smells it", "how the cat starts eating it"),
+        avoid_angles=("unrelated cat body parts",),
+        steer_back_rule="acknowledge briefly, then return to noticing or eating.",
+        focus_cues=("smell", "eat"),
     )
-
-    assert result == {"bridge_followed": True, "reason": "answered in the food_for lane"}
-    assert assistant.client.aio.models.generate_content.await_count == 1
 
 
 @pytest.mark.asyncio
-async def test_used_with_follow_detects_use_lane_via_model():
+async def test_semantic_reply_classifier_returns_followed():
     assistant = MagicMock()
     assistant.config = {"model_name": "mock"}
     assistant.client.aio.models.generate_content = AsyncMock(
-        return_value=MagicMock(text='{"bridge_followed": true, "reason": "answered how the leash is used"}')
+        return_value=MagicMock(text='{"reply_type": "followed", "reason": "child answered how the cat eats it"}')
     )
 
-    result = await classify_bridge_follow(
+    result = await classify_pre_anchor_semantic_reply(
         assistant=assistant,
-        child_answer="you hold it",
-        surface_object_name="dog leash",
-        anchor_object_name="dog",
-        relation="used_with",
+        child_answer="with its mouth",
+        previous_bridge_question="How does the cat start eating it?",
+        bridge_profile=_profile(),
     )
 
-    assert result == {"bridge_followed": True, "reason": "answered how the leash is used"}
-    assert assistant.client.aio.models.generate_content.await_count == 1
+    assert result == {"reply_type": "followed", "reason": "child answered how the cat eats it"}
 
 
 @pytest.mark.asyncio
-async def test_related_to_is_conservative_without_explicit_anchor():
+async def test_semantic_reply_classifier_returns_anchor_related_but_off_lane():
     assistant = MagicMock()
     assistant.config = {"model_name": "mock"}
     assistant.client.aio.models.generate_content = AsyncMock(
-        return_value=MagicMock(text='{"bridge_followed": false, "reason": "reply stayed vague"}')
+        return_value=MagicMock(text='{"reply_type": "anchor_related_but_off_lane", "reason": "child mentioned the bowl instead of the asked angle"}')
     )
 
-    result = await classify_bridge_follow(
+    result = await classify_pre_anchor_semantic_reply(
         assistant=assistant,
-        child_answer="it is brown",
-        surface_object_name="cat thing",
-        anchor_object_name="cat",
-        relation="related_to",
-    )
-
-    assert result == {"bridge_followed": False, "reason": "reply stayed vague"}
-    assert assistant.client.aio.models.generate_content.await_count == 1
-
-
-@pytest.mark.asyncio
-async def test_model_fallback_handles_ambiguous_bridge_reply():
-    assistant = MagicMock()
-    assistant.config = {"model_name": "mock"}
-    assistant.client.aio.models.generate_content = AsyncMock(
-        return_value=MagicMock(text='{"bridge_followed": true, "reason": "model saw a valid bridge"}')
-    )
-
-    result = await classify_bridge_follow(
-        assistant=assistant,
-        child_answer="it helps at dinner time",
-        surface_object_name="cat food",
-        anchor_object_name="cat",
-        relation="food_for",
-    )
-
-    assert result == {"bridge_followed": True, "reason": "model saw a valid bridge"}
-
-
-@pytest.mark.asyncio
-async def test_model_fallback_receives_previous_bridge_question():
-    assistant = MagicMock()
-    assistant.config = {"model_name": "mock"}
-    assistant.client.aio.models.generate_content = AsyncMock(
-        return_value=MagicMock(text='{"bridge_followed": true, "reason": "model used previous question"}')
-    )
-
-    result = await classify_bridge_follow(
-        assistant=assistant,
-        child_answer="that is what she does",
-        surface_object_name="cat food",
-        anchor_object_name="cat",
-        relation="food_for",
-        previous_bridge_question="Does she use her nose to sniff it before she starts to eat?",
-    )
-
-    assert result == {"bridge_followed": True, "reason": "model used previous question"}
-    prompt = assistant.client.aio.models.generate_content.call_args.kwargs["contents"]
-    assert "Previous bridge question" in prompt
-    assert "Does she use her nose" in prompt
-
-
-@pytest.mark.asyncio
-async def test_explicit_anchor_mention_defers_to_model_verdict():
-    assistant = MagicMock()
-    assistant.config = {"model_name": "mock"}
-    assistant.client.aio.models.generate_content = AsyncMock(
-        return_value=MagicMock(text='{"bridge_followed": false, "reason": "mentioning cat alone did not answer the bridge"}')
-    )
-
-    result = await classify_bridge_follow(
-        assistant=assistant,
-        child_answer="cat",
-        surface_object_name="cat food",
-        anchor_object_name="cat",
-        relation="food_for",
-        previous_bridge_question="Does she use her nose to sniff it before she starts to eat?",
+        child_answer="she goes to the bowl",
+        previous_bridge_question="Does the cat sniff it before eating?",
+        bridge_profile=_profile(),
     )
 
     assert result == {
-        "bridge_followed": False,
-        "reason": "mentioning cat alone did not answer the bridge",
+        "reply_type": "anchor_related_but_off_lane",
+        "reason": "child mentioned the bowl instead of the asked angle",
     }
-    assert assistant.client.aio.models.generate_content.await_count == 1
 
 
 @pytest.mark.asyncio
-async def test_teeth_reply_uses_model_only_and_can_follow():
+async def test_semantic_reply_classifier_passes_previous_question_and_profile():
     assistant = MagicMock()
     assistant.config = {"model_name": "mock"}
     assistant.client.aio.models.generate_content = AsyncMock(
-        return_value=MagicMock(text='{"bridge_followed": true, "reason": "answered how the cat eats the food"}')
+        return_value=MagicMock(text='{"reply_type": "true_miss", "reason": "reply did not engage the bridge"}')
     )
 
-    result = await classify_bridge_follow(
+    await classify_pre_anchor_semantic_reply(
         assistant=assistant,
-        child_answer="I think just with her teeth",
-        surface_object_name="cat food",
-        anchor_object_name="cat",
-        relation="food_for",
-        previous_bridge_question="When your cat eats, does she crunch it with her teeth or lick it instead?",
+        child_answer="my shoes are blue",
+        previous_bridge_question="Does the cat sniff it before eating?",
+        bridge_profile=_profile(),
     )
 
-    assert result == {"bridge_followed": True, "reason": "answered how the cat eats the food"}
-    assert assistant.client.aio.models.generate_content.await_count == 1
+    prompt = assistant.client.aio.models.generate_content.call_args.kwargs["contents"]
+    assert "Previous bridge question" in prompt
+    assert "Bridge intent" in prompt
+    assert "Good question angles" in prompt
+    assert "Steer-back rule" in prompt
 
 
 @pytest.mark.asyncio
-async def test_affirmative_reply_defers_to_model_for_previous_food_for_bridge_question():
-    assistant = MagicMock()
-    assistant.config = {"model_name": "mock"}
-    assistant.client.aio.models.generate_content = AsyncMock(
-        return_value=MagicMock(text='{"bridge_followed": true, "reason": "affirmed the prior bridge question"}')
+async def test_semantic_reply_classifier_handles_missing_client():
+    result = await classify_pre_anchor_semantic_reply(
+        assistant=MagicMock(),
+        child_answer="with its mouth",
+        previous_bridge_question="How does the cat start eating it?",
+        bridge_profile=_profile(),
     )
 
-    result = await classify_bridge_follow(
-        assistant=assistant,
-        child_answer="yep",
-        surface_object_name="cat food",
-        anchor_object_name="cat",
-        relation="food_for",
-        previous_bridge_question="When she gets to the bowl, does she use her nose to sniff it before she starts to eat?",
-    )
-
-    assert result == {"bridge_followed": True, "reason": "affirmed the prior bridge question"}
-    assert assistant.client.aio.models.generate_content.await_count == 1
-
-
-@pytest.mark.asyncio
-async def test_hedged_affirmative_reply_defers_to_model():
-    assistant = MagicMock()
-    assistant.config = {"model_name": "mock"}
-    assistant.client.aio.models.generate_content = AsyncMock(
-        return_value=MagicMock(text='{"bridge_followed": true, "reason": "hedged yes still answered the bridge"}')
-    )
-
-    result = await classify_bridge_follow(
-        assistant=assistant,
-        child_answer="she might",
-        surface_object_name="cat food",
-        anchor_object_name="cat",
-        relation="food_for",
-        previous_bridge_question="Do you think your cat likes the smell of it when you open the bag?",
-    )
-
-    assert result == {"bridge_followed": True, "reason": "hedged yes still answered the bridge"}
-    assert assistant.client.aio.models.generate_content.await_count == 1
-
-
-@pytest.mark.asyncio
-async def test_affirmative_reply_without_previous_bridge_question_does_not_auto_follow():
-    assistant = MagicMock()
-    assistant.config = {"model_name": "mock"}
-    assistant.client.aio.models.generate_content = AsyncMock(
-        return_value=MagicMock(text='{"bridge_followed": false, "reason": "bare yes without context is not enough"}')
-    )
-
-    result = await classify_bridge_follow(
-        assistant=assistant,
-        child_answer="yep",
-        surface_object_name="cat food",
-        anchor_object_name="cat",
-        relation="food_for",
-        previous_bridge_question=None,
-    )
-
-    assert result == {"bridge_followed": False, "reason": "bare yes without context is not enough"}
-    assert assistant.client.aio.models.generate_content.await_count == 1
-
-
-@pytest.mark.asyncio
-async def test_negative_reply_to_previous_bridge_question_defers_to_model():
-    assistant = MagicMock()
-    assistant.config = {"model_name": "mock"}
-    assistant.client.aio.models.generate_content = AsyncMock(
-        return_value=MagicMock(text='{"bridge_followed": false, "reason": "child declined the bridge"}')
-    )
-
-    result = await classify_bridge_follow(
-        assistant=assistant,
-        child_answer="not really",
-        surface_object_name="cat food",
-        anchor_object_name="cat",
-        relation="food_for",
-        previous_bridge_question="Does she use her nose to sniff it before she starts to eat?",
-    )
-
-    assert result == {"bridge_followed": False, "reason": "child declined the bridge"}
-    assert assistant.client.aio.models.generate_content.await_count == 1
-
-
-@pytest.mark.asyncio
-async def test_idk_reply_to_previous_bridge_question_defers_to_model():
-    assistant = MagicMock()
-    assistant.config = {"model_name": "mock"}
-    assistant.client.aio.models.generate_content = AsyncMock(
-        return_value=MagicMock(text='{"bridge_followed": false, "reason": "child did not answer the bridge"}')
-    )
-
-    result = await classify_bridge_follow(
-        assistant=assistant,
-        child_answer="I don't know",
-        surface_object_name="cat food",
-        anchor_object_name="cat",
-        relation="food_for",
-        previous_bridge_question="Does she use her nose to sniff it before she starts to eat?",
-    )
-
-    assert result == {"bridge_followed": False, "reason": "child did not answer the bridge"}
-    assert assistant.client.aio.models.generate_content.await_count == 1
-
-
-@pytest.mark.asyncio
-async def test_affirmative_reply_to_unrelated_previous_question_defers_to_model():
-    assistant = MagicMock()
-    assistant.config = {"model_name": "mock"}
-    assistant.client.aio.models.generate_content = AsyncMock(
-        return_value=MagicMock(text='{"bridge_followed": false, "reason": "surface-only question was not a bridge"}')
-    )
-
-    result = await classify_bridge_follow(
-        assistant=assistant,
-        child_answer="yep",
-        surface_object_name="cat food",
-        anchor_object_name="cat",
-        relation="food_for",
-        previous_bridge_question="What does the cat food look like inside the bag?",
-    )
-
-    assert result == {"bridge_followed": False, "reason": "surface-only question was not a bridge"}
-    assert assistant.client.aio.models.generate_content.await_count == 1
+    assert result == {"reply_type": "true_miss", "reason": "no semantic reply classifier available"}

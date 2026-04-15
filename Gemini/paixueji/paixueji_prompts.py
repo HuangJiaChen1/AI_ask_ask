@@ -389,35 +389,40 @@ YOUR JOB:
 Respond naturally, not as JSON.
 """
 
-BRIDGE_FOLLOW_CLASSIFIER_PROMPT = """Decide whether the child followed a bridge from an unsupported object toward a supported anchor.
+BRIDGE_FOLLOW_CLASSIFIER_PROMPT = """Decide whether the child followed a semantic pre-anchor bridge from an unsupported object toward a supported anchor.
 
 Surface object: {surface_object_name}
 Supported anchor: {anchor_object_name}
 Relation: {relation}
-Allowed bridge focus: {allowed_focus_terms}
+Bridge intent: {bridge_intent}
+Good question angles: {good_question_angles}
+Avoid angles: {avoid_angles}
+Steer-back rule: {steer_back_rule}
+Focus cues: {focus_cues}
 Previous bridge question: {previous_bridge_question}
 Child reply: {child_answer}
 
 Rules:
-- Judge the child reply together with the previous bridge question. Do not decide from keywords alone.
-- Count replies about how the supported anchor smells, notices, mouths, bites, chews, crunches, licks, or uses teeth on the surface object as followed when they answer the bridge question.
-- Count no, refusal, or "I don't know" as not followed when they reject or avoid the bridge question.
+- Judge the child reply together with the previous bridge question and the semantic bridge profile. Do not decide from keywords alone.
+- Return "followed" when the child directly engages the intended bridge lane or answers the previous bridge question in-lane.
+- Return "anchor_related_but_off_lane" when the child stays meaningfully on the supported anchor but answers a different angle than the bridge lane.
+- Return "true_miss" when the child does not engage the bridge at all.
+- Clarification, refusal, and "I don't know" are handled elsewhere; do not assume them here unless the child answer clearly behaves like a miss.
 - Do not treat naming the anchor by itself as enough to count as followed.
-- Do not mark vague unrelated replies as followed.
 
 Example 1:
 - Previous bridge question: "When your cat eats, does she crunch it with her teeth or lick it instead?"
 - Child reply: "I think just with her teeth"
-- Output: {{"bridge_followed": true, "reason": "answered how the cat eats the food"}}
+- Output: {{"reply_type": "followed", "reason": "answered how the cat eats the food"}}
 
 Example 2:
 - Previous bridge question: "Does she use her nose to sniff it before she starts to eat?"
-- Child reply: "not really"
-- Output: {{"bridge_followed": false, "reason": "child declined the bridge"}}
+- Child reply: "she goes to the bowl"
+- Output: {{"reply_type": "anchor_related_but_off_lane", "reason": "child mentioned the anchor but answered a different angle"}}
 
 Return JSON:
 {{
-  "bridge_followed": true or false,
+  "reply_type": "followed" or "anchor_related_but_off_lane" or "true_miss",
   "reason": "<short reason>"
 }}
 """
@@ -515,6 +520,32 @@ Return JSON:
 {{
   "relation": "<one supported relation or null>",
   "confidence_band": "high" | "medium" | "low"
+}}
+"""
+
+BRIDGE_PROFILE_PROMPT = """Infer a semantic bridge profile for a child education app.
+
+Surface object: {surface_object_name}
+Supported anchor: {anchor_object_name}
+Relation: {relation}
+
+Rules:
+- Return JSON only.
+- Do not use markdown fences.
+- Do not add explanation before or after the JSON.
+- Keep the bridge specific to this surface-anchor pair.
+- good_question_angles should be short concrete question directions.
+- avoid_angles should name directions that would confuse or derail the bridge.
+- steer_back_rule should be one short sentence.
+- focus_cues is optional and should stay short.
+
+Return JSON:
+{{
+  "bridge_intent": "<one short sentence>",
+  "good_question_angles": ["<angle 1>", "<angle 2>"],
+  "avoid_angles": ["<avoid 1>"],
+  "steer_back_rule": "<one short sentence>",
+  "focus_cues": ["<cue 1>", "<cue 2>"]
 }}
 """
 
@@ -1662,6 +1693,7 @@ def get_prompts():
         'bridge_activation_answer_validator_prompt': BRIDGE_ACTIVATION_ANSWER_VALIDATOR_PROMPT,
         'object_resolution_prompt': OBJECT_RESOLUTION_PROMPT,
         'relation_repair_prompt': RELATION_REPAIR_PROMPT,
+        'bridge_profile_prompt': BRIDGE_PROFILE_PROMPT,
         'feedback_response_prompt': FEEDBACK_RESPONSE_PROMPT,
         'explanation_response_prompt': EXPLANATION_RESPONSE_PROMPT,
         'correction_response_prompt': CORRECTION_RESPONSE_PROMPT,

@@ -111,6 +111,7 @@ class PaixuejiState(TypedDict):
     anchor_relation: Optional[str]
     anchor_confidence_band: Optional[str]
     anchor_confirmation_needed: bool
+    bridge_profile: Optional[Any]
     learning_anchor_active: bool
     bridge_phase: Optional[str]
     bridge_attempt_count: int
@@ -357,12 +358,7 @@ def _build_intro_kb_context(state: "PaixuejiState") -> str:
 
 
 def _build_bridge_prompt_context(state: "PaixuejiState", attempt_number: int) -> str:
-    bridge_context = build_bridge_context(
-        surface_object_name=state.get("surface_object_name") or state.get("object_name", ""),
-        anchor_object_name=state.get("anchor_object_name") or "",
-        relation=state.get("anchor_relation"),
-        attempt_number=attempt_number,
-    )
+    bridge_context = build_bridge_context(state.get("bridge_profile"), attempt_number)
     return bridge_context.prompt_context if bridge_context else ""
 
 
@@ -619,6 +615,7 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
             anchor_status=state.get("anchor_status"),
             anchor_relation=state.get("anchor_relation"),
             anchor_confidence_band=state.get("anchor_confidence_band"),
+            bridge_profile=state.get("bridge_profile"),
             intro_mode=state.get("intro_mode"),
             learning_anchor_active_before=False,
             learning_anchor_active_after=state.get("learning_anchor_active", False),
@@ -640,6 +637,7 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
             anchor_status=state.get("anchor_status"),
             anchor_relation=state.get("anchor_relation"),
             anchor_confidence_band=state.get("anchor_confidence_band"),
+            bridge_profile=state.get("bridge_profile"),
             intro_mode=state.get("intro_mode"),
             learning_anchor_active_before=False,
             learning_anchor_active_after=False,

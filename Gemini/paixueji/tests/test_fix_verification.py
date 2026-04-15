@@ -11,6 +11,8 @@ import asyncio
 import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 
+from bridge_profile import BridgeProfile
+
 
 # ===========================================================================
 # Fix 1 — INTRODUCTION_PROMPT 4-beat structure
@@ -1335,6 +1337,16 @@ class TestOrdinaryChatKbStreaming:
         state["anchor_confidence_band"] = "high"
         state["learning_anchor_active"] = False
         state["bridge_attempt_count"] = 1
+        state["bridge_profile"] = BridgeProfile(
+            surface_object_name="cat food",
+            anchor_object_name="cat",
+            relation="food_for",
+            bridge_intent="bridge from the food to how the cat notices and eats it.",
+            good_question_angles=("how the cat smells it", "how the cat starts eating it"),
+            avoid_angles=("unrelated cat body parts",),
+            steer_back_rule="acknowledge briefly, then return to noticing or eating.",
+            focus_cues=("smell", "eat"),
+        )
         state["intro_mode"] = "anchor_bridge"
         state["physical_dimensions"] = {
             "function": {"blinking": "Blinking wipes and wets the eye like a quick sweep"},

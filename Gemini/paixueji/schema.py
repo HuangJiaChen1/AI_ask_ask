@@ -92,6 +92,9 @@ class BridgeDebugInfo(BaseModel):
     anchor_status: str | None = None
     anchor_relation: str | None = None
     anchor_confidence_band: str | None = None
+    bridge_profile: dict | None = None
+    bridge_profile_status: str | None = None
+    bridge_profile_reason: str | None = None
     intro_mode: str | None = None
     learning_anchor_active_before: bool | None = None
     learning_anchor_active_after: bool | None = None

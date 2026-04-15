@@ -40,9 +40,23 @@ function rvEsc(str) {
 function rvFormatBridgeDebug(debug) {
     if (!debug || Object.keys(debug).length === 0) return '—';
     const lines = [];
+    const formatValue = (value) => {
+        if (value == null) return null;
+        if (typeof value === 'object') {
+            return JSON.stringify(value, null, 2);
+        }
+        return String(value);
+    };
     for (const [key, value] of Object.entries(debug)) {
         if (value == null || key === 'activation_transition') continue;
-        lines.push(`${key}: ${String(value)}`);
+        const formatted = formatValue(value);
+        if (formatted == null) continue;
+        if (typeof value === 'object') {
+            lines.push(`${key}:`);
+            lines.push(formatted);
+            continue;
+        }
+        lines.push(`${key}: ${formatted}`);
     }
     const transition = debug.activation_transition || {};
     if (Object.keys(transition).length) {
@@ -62,7 +76,14 @@ function rvFormatBridgeDebug(debug) {
             lines.push(`  ${groupLabel}`);
             for (const [key, value] of Object.entries(group)) {
                 if (value == null) continue;
-                lines.push(`    ${key}: ${String(value)}`);
+                const formatted = formatValue(value);
+                if (formatted == null) continue;
+                if (typeof value === 'object') {
+                    lines.push(`    ${key}:`);
+                    lines.push(formatted.split('\n').map((line) => `    ${line}`).join('\n'));
+                    continue;
+                }
+                lines.push(`    ${key}: ${formatted}`);
             }
         }
     }

@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from bridge_context import build_bridge_context, normalize_relation
+from bridge_context import normalize_relation
 
 
 def _tokenize(text: str) -> list[str]:
@@ -61,6 +61,7 @@ def detect_bridge_visibility(
     surface_object_name: str | None,
     anchor_object_name: str | None,
     anchor_relation: str | None,
+    bridge_profile=None,
 ) -> tuple[bool, str]:
     normalized_response = " ".join((response_text or "").strip().lower().split())
     normalized_surface = " ".join((surface_object_name or "").strip().lower().split())
@@ -77,17 +78,11 @@ def detect_bridge_visibility(
     if anchor_tokens and _contains_token_sequence(response_without_surface_tokens, anchor_tokens):
         return True, "explicit anchor mention outside surface object"
 
-    bridge_context = build_bridge_context(
-        surface_object_name=surface_object_name or "",
-        anchor_object_name=anchor_object_name or "",
-        relation=normalize_relation(anchor_relation),
-        attempt_number=1,
-    )
-    if bridge_context:
-        for term in bridge_context.allowed_focus_terms:
+    if bridge_profile:
+        for term in getattr(bridge_profile, "focus_cues", ()) or ():
             term_tokens = _tokenize(term)
             if _contains_token_sequence(response_tokens, term_tokens):
-                return True, f"matched relation focus term: {term}"
+                return True, f"matched bridge focus cue: {term}"
 
     if normalized_surface and normalized_surface in normalized_response:
         return False, "response stayed on the surface object without an anchor mention"
@@ -102,6 +97,9 @@ def build_bridge_debug(
     anchor_status: str | None,
     anchor_relation: str | None,
     anchor_confidence_band: str | None,
+    bridge_profile=None,
+    bridge_profile_status: str | None = None,
+    bridge_profile_reason: str | None = None,
     intro_mode: str | None,
     learning_anchor_active_before: bool | None,
     learning_anchor_active_after: bool | None,
@@ -133,12 +131,17 @@ def build_bridge_debug(
 ) -> dict[str, Any]:
     bridge_visible_in_response = None
     bridge_visibility_reason = "response not evaluated yet"
+    if bridge_profile_status is None and bridge_profile is not None:
+        bridge_profile_status = "ready"
+    if bridge_profile_reason is None and bridge_profile is not None:
+        bridge_profile_reason = "bridge_profile_inferred"
     if response_text:
         bridge_visible_in_response, bridge_visibility_reason = detect_bridge_visibility(
             response_text=response_text,
             surface_object_name=surface_object_name,
             anchor_object_name=anchor_object_name,
             anchor_relation=anchor_relation,
+            bridge_profile=bridge_profile,
         )
     return {
         "surface_object_name": surface_object_name,
@@ -146,6 +149,9 @@ def build_bridge_debug(
         "anchor_status": anchor_status,
         "anchor_relation": normalize_relation(anchor_relation) if anchor_relation else None,
         "anchor_confidence_band": anchor_confidence_band,
+        "bridge_profile": bridge_profile.__dict__ if bridge_profile else None,
+        "bridge_profile_status": bridge_profile_status,
+        "bridge_profile_reason": bridge_profile_reason,
         "intro_mode": intro_mode,
         "learning_anchor_active_before": learning_anchor_active_before,
         "learning_anchor_active_after": learning_anchor_active_after,

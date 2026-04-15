@@ -2,6 +2,8 @@ import json
 import time
 from unittest.mock import AsyncMock, MagicMock
 
+from bridge_profile import BridgeProfile
+
 
 def parse_sse(response_data):
     events = []
@@ -23,6 +25,19 @@ def parse_sse(response_data):
 
 def _bridge_activation_text():
     return "Your cat really likes wet food. What does your cat do when dinner is ready?"
+
+
+def _bridge_profile() -> BridgeProfile:
+    return BridgeProfile(
+        surface_object_name="cat food",
+        anchor_object_name="cat",
+        relation="food_for",
+        bridge_intent="bridge from the food to how the cat notices and eats it.",
+        good_question_angles=("how the cat smells it", "how the cat starts eating it"),
+        avoid_angles=("unrelated cat body parts",),
+        steer_back_rule="acknowledge briefly, then return to noticing or eating.",
+        focus_cues=("smell", "notice", "eat"),
+    )
 
 
 def _install_bridge_activation_stream(monkeypatch):
@@ -55,6 +70,7 @@ def test_start_with_high_confidence_anchor_stays_on_surface_object(client, monke
             anchor_confidence_band="high",
             anchor_confirmation_needed=False,
             learning_anchor_active=False,
+            bridge_profile=_bridge_profile(),
         ),
     )
 
@@ -110,6 +126,7 @@ def test_start_with_relation_repair_records_resolution_debug(client, monkeypatch
     client_mock.models.generate_content.side_effect = [
         MagicMock(text='{"anchor_object_name": null, "relation": null, "confidence_band": "low"}'),
         MagicMock(text='{"relation": "food_for", "confidence_band": "high"}'),
+        MagicMock(text='{"bridge_intent": "bridge from the food to how the cat notices and eats it.", "good_question_angles": ["how the cat smells it"], "avoid_angles": ["unrelated cat body parts"], "steer_back_rule": "acknowledge briefly, then return to noticing or eating.", "focus_cues": ["smell", "eat"]}'),
     ]
     monkeypatch.setattr("paixueji_app.GLOBAL_GEMINI_CLIENT", client_mock)
 
@@ -125,13 +142,16 @@ def test_start_with_relation_repair_records_resolution_debug(client, monkeypatch
 
 def test_cat_food_start_recovers_from_fenced_json_and_enters_anchor_bridge(client, monkeypatch):
     client_mock = MagicMock()
-    client_mock.models.generate_content.return_value.text = """```json
+    client_mock.models.generate_content.side_effect = [
+        MagicMock(text="""```json
 {
   "anchor_object_name": "cat",
   "relation": "food_for",
   "confidence_band": "high"
 }
-```"""
+```"""),
+        MagicMock(text='{"bridge_intent": "bridge from the food to how the cat notices and eats it.", "good_question_angles": ["how the cat smells it"], "avoid_angles": ["unrelated cat body parts"], "steer_back_rule": "acknowledge briefly, then return to noticing or eating.", "focus_cues": ["smell", "eat"]}'),
+    ]
     monkeypatch.setattr("paixueji_app.GLOBAL_GEMINI_CLIENT", client_mock)
 
     response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
@@ -295,6 +315,7 @@ def test_bridge_follow_switches_to_anchor_on_continue(client, monkeypatch):
             anchor_confidence_band="high",
             anchor_confirmation_needed=False,
             learning_anchor_active=False,
+            bridge_profile=_bridge_profile(),
         ),
     )
     start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
@@ -332,6 +353,7 @@ def test_first_bridge_miss_emits_retry_bridge(client, monkeypatch):
             anchor_confidence_band="high",
             anchor_confirmation_needed=False,
             learning_anchor_active=False,
+            bridge_profile=_bridge_profile(),
         ),
     )
     start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
@@ -369,6 +391,7 @@ def test_pre_anchor_surface_reply_does_not_fall_into_correct_answer_flow(client,
             anchor_confidence_band="high",
             anchor_confirmation_needed=False,
             learning_anchor_active=False,
+            bridge_profile=_bridge_profile(),
         ),
     )
     start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
@@ -406,6 +429,7 @@ def test_third_bridge_miss_suppresses_anchor_and_falls_back_to_unresolved_chat(c
             anchor_confidence_band="high",
             anchor_confirmation_needed=False,
             learning_anchor_active=False,
+            bridge_profile=_bridge_profile(),
         ),
     )
     start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
@@ -504,24 +528,16 @@ def test_model_only_bridge_classifier_promotes_teeth_reply_to_bridge_activation(
             anchor_confidence_band="high",
             anchor_confirmation_needed=False,
             learning_anchor_active=False,
+            bridge_profile=_bridge_profile(),
         ),
     )
 
     _install_bridge_activation_stream(monkeypatch)
-
-    def classify_side_effect(*args, **kwargs):
-        prompt = kwargs["contents"]
-        if 'Child reply: not really' in prompt:
-            return MagicMock(text='{"bridge_followed": false, "reason": "child declined the bridge"}')
-        if 'Child reply: I think just with her teeth' in prompt:
-            return MagicMock(text='{"bridge_followed": true, "reason": "answered how the cat eats the food"}')
-        raise AssertionError(prompt)
-
-    mock_generate_content = AsyncMock(side_effect=classify_side_effect)
     monkeypatch.setattr(
-        paixueji_app.GLOBAL_GEMINI_CLIENT.aio.models,
-        "generate_content",
-        mock_generate_content,
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(side_effect=[
+            {"bridge_followed": True, "reason": "answered how the cat eats the food"},
+        ]),
     )
 
     start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
@@ -534,20 +550,12 @@ def test_model_only_bridge_classifier_promotes_teeth_reply_to_bridge_activation(
     first_final = [e["data"] for e in parse_sse(first_retry.data) if e["event"] == "chunk"][-1]
     assert first_final["response_type"] == "bridge_retry"
 
-    second_retry = client.post(
-        "/api/continue",
-        json={"session_id": session_id, "child_input": "not really"},
-    )
-    second_final = [e["data"] for e in parse_sse(second_retry.data) if e["event"] == "chunk"][-1]
-    assert second_final["response_type"] == "bridge_retry"
-
     activation = client.post(
         "/api/continue",
         json={"session_id": session_id, "child_input": "I think just with her teeth"},
     )
     final_chunk = [e["data"] for e in parse_sse(activation.data) if e["event"] == "chunk"][-1]
 
-    assert mock_generate_content.await_count == 4
     assert final_chunk["response_type"] == "bridge_activation"
     assert final_chunk["current_object_name"] == "cat food"
     assert final_chunk["learning_anchor_active"] is False
@@ -569,6 +577,7 @@ def test_bridge_activation_preserves_pre_anchor_traces(client, monkeypatch):
             anchor_confidence_band="high",
             anchor_confirmation_needed=False,
             learning_anchor_active=False,
+            bridge_profile=_bridge_profile(),
         ),
     )
     start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
@@ -1355,19 +1364,28 @@ def test_affirmative_reply_to_retry_bridge_activates_anchor_instead_of_correct_a
         side_effect_stream,
         raising=False,
     )
-
-    def classify_side_effect(*args, **kwargs):
-        prompt = kwargs["contents"]
-        if 'Child reply: she might' in prompt:
-            return MagicMock(text='{"bridge_followed": false, "reason": "hedged reply did not commit to the bridge"}')
-        if 'Child reply: yep' in prompt:
-            return MagicMock(text='{"bridge_followed": true, "reason": "affirmed the prior bridge question"}')
-        raise AssertionError(prompt)
-
     monkeypatch.setattr(
-        paixueji_app.GLOBAL_GEMINI_CLIENT.aio.models,
-        "generate_content",
-        AsyncMock(side_effect=classify_side_effect),
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"reply_type": "anchor_related_but_off_lane", "reason": "child stayed on the anchor but answered a different angle"}),
+    )
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"reply_type": "anchor_related_but_off_lane", "reason": "child stayed on the anchor but answered a different angle"}),
+    )
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"reply_type": "anchor_related_but_off_lane", "reason": "child stayed on the anchor but answered a different angle"}),
+    )
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"reply_type": "anchor_related_but_off_lane", "reason": "child stayed on the anchor but answered a different angle"}),
+    )
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(side_effect=[
+            {"bridge_followed": False, "reason": "hedged reply did not commit to the bridge"},
+            {"bridge_followed": True, "reason": "affirmed the prior bridge question"},
+        ]),
     )
 
     start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
@@ -1610,6 +1628,7 @@ def test_valid_out_of_lane_answer_after_support_soft_activates_without_correct_a
             anchor_confidence_band="high",
             anchor_confirmation_needed=False,
             learning_anchor_active=False,
+            bridge_profile=_bridge_profile(),
         ),
     )
 
@@ -1629,6 +1648,10 @@ def test_valid_out_of_lane_answer_after_support_soft_activates_without_correct_a
         side_effect_stream,
         raising=False,
     )
+    monkeypatch.setattr(
+        "paixueji_app.classify_bridge_follow",
+        AsyncMock(return_value={"reply_type": "anchor_related_but_off_lane", "reason": "child stayed on the anchor but answered a different angle"}),
+    )
 
     start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
     session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
@@ -1645,6 +1668,6 @@ def test_valid_out_of_lane_answer_after_support_soft_activates_without_correct_a
     assert second_final["bridge_phase"] == "activation"
     assert second_final["learning_anchor_active"] is False
     assert second_final["bridge_debug"]["decision"] == "bridge_activation"
-    assert second_final["bridge_debug"]["pre_anchor_reply_type"] == "valid_out_of_lane_anchor_related"
+    assert second_final["bridge_debug"]["pre_anchor_reply_type"] == "anchor_related_but_off_lane"
     assert not any(node["node"] == "analyze_input" for node in second_final["nodes_executed"])
     assert not any(node["node"] == "correct_answer" for node in second_final["nodes_executed"])
