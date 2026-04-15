@@ -251,6 +251,7 @@ async def classify_bridge_follow(
         previous_bridge_question=previous_bridge_question,
     )
     return {
+        "reply_type": semantic_result.get("reply_type"),
         "bridge_followed": semantic_result.get("reply_type") == "followed",
         "reason": semantic_result.get("reason"),
     }

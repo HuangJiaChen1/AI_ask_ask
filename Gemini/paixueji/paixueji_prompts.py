@@ -376,13 +376,14 @@ YOUR JOB:
 - Do not call uncertainty a guess.
 - Only praise a guess when the child actually gave a concrete guess.
 - If support action is scaffold, give one tiny hint, one simpler rewording, one tiny example, or one smaller sub-question that directly helps with the previous bridge question.
-- Keep the same core event, action, or observation from the previous bridge question.
-- Do not replace the previous bridge question with a different bridge angle.
+- For clarify or scaffold, keep the same core event, action, or observation from the previous bridge question.
+- For clarify or scaffold, do not replace the previous bridge question with a different bridge angle.
 - Any either/or choices must be physically and semantically valid.
 - Never use mouth as a way to smell.
-- If support action is steer, acknowledge the child's answer as reasonable, then steer back to the bridge lane without introducing an unrelated new bridge angle.
+- If support action is steer, acknowledge the child's correction or answer as reasonable first.
+- If support action is steer, stay inside the same semantic bridge profile and pivot to another valid angle from the bridge context when the previous premise was corrected.
 - Stay inside the bridge context.
-- End with exactly one easy question that still helps with the previous bridge question.
+- End with exactly one easy question that still helps with the bridge.
 - Do not repeat the same wording from the previous bridge question.
 - If PREVIOUS BRIDGE QUESTION is empty, ask one easy bridge-lane question.
 
@@ -408,6 +409,7 @@ Rules:
 - Return "anchor_related_but_off_lane" when the child stays meaningfully on the supported anchor but answers a different angle than the bridge lane.
 - Return "true_miss" when the child does not engage the bridge at all.
 - Clarification, refusal, and "I don't know" are handled elsewhere; do not assume them here unless the child answer clearly behaves like a miss.
+- A negative lead-in does not make the reply a refusal when the child continues with substantive anchor-related content.
 - Do not treat naming the anchor by itself as enough to count as followed.
 
 Example 1:
@@ -419,6 +421,11 @@ Example 2:
 - Previous bridge question: "Does she use her nose to sniff it before she starts to eat?"
 - Child reply: "she goes to the bowl"
 - Output: {{"reply_type": "anchor_related_but_off_lane", "reason": "child mentioned the anchor but answered a different angle"}}
+
+Example 3:
+- Previous bridge question: "Does she use her nose to sniff it before she starts to eat?"
+- Child reply: "she does not really use her nose, she is used to where the food is"
+- Output: {{"reply_type": "anchor_related_but_off_lane", "reason": "negative lead-in but substantive anchor-related correction stayed engaged"}}
 
 Return JSON:
 {{

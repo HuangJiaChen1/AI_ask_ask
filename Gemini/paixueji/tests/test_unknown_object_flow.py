@@ -1671,3 +1671,90 @@ def test_valid_out_of_lane_answer_after_support_soft_activates_without_correct_a
     assert second_final["bridge_debug"]["pre_anchor_reply_type"] == "anchor_related_but_off_lane"
     assert not any(node["node"] == "analyze_input" for node in second_final["nodes_executed"])
     assert not any(node["node"] == "correct_answer" for node in second_final["nodes_executed"])
+
+
+def test_content_bearing_premise_rejection_after_retry_budget_uses_bridge_support(client, monkeypatch):
+    from object_resolver import ObjectResolutionResult
+    from tests.conftest import MockChunk, MockStream
+    import paixueji_app
+
+    monkeypatch.setattr(
+        "paixueji_app.resolve_object_input",
+        lambda *args, **kwargs: ObjectResolutionResult(
+            surface_object_name="cat food",
+            visible_object_name="cat food",
+            anchor_object_name="cat",
+            anchor_status="anchored_high",
+            anchor_relation="food_for",
+            anchor_confidence_band="high",
+            anchor_confirmation_needed=False,
+            learning_anchor_active=False,
+            bridge_profile=_bridge_profile(),
+        ),
+    )
+
+    streamed_responses = iter([
+        "Cat food is interesting. Does she use her nose to sniff it before she starts to eat?",
+        "Maybe not that. When she gets to the bowl, what does she do first with the food?",
+        "One more thought. When she gets there, does she start eating right away or pause first?",
+        "That makes sense. She remembers where the bowl is. When she gets there, what does she do first with the food?",
+    ])
+
+    semantic_results = iter([
+        MagicMock(text='{"reply_type": "true_miss", "reason": "first surface-only miss"}'),
+        MagicMock(text='{"reply_type": "true_miss", "reason": "second surface-only miss"}'),
+        MagicMock(text='{"reply_type": "anchor_related_but_off_lane", "reason": "child corrected the premise and gave anchor context"}'),
+    ])
+
+    def side_effect_stream(model, contents, config=None):
+        response_text = next(streamed_responses)
+        return MockStream([MockChunk(word + " ") for word in response_text.split()])
+
+    async def side_effect_generate_content(*args, **kwargs):
+        return next(semantic_results)
+
+    monkeypatch.setattr(
+        paixueji_app.GLOBAL_GEMINI_CLIENT.aio.models.generate_content_stream,
+        "side_effect",
+        side_effect_stream,
+        raising=False,
+    )
+    monkeypatch.setattr(
+        paixueji_app.GLOBAL_GEMINI_CLIENT.aio.models.generate_content,
+        "side_effect",
+        side_effect_generate_content,
+        raising=False,
+    )
+
+    start_response = client.post("/api/start", json={"age": 6, "object_name": "cat food"})
+    session_id = next(e["data"]["session_id"] for e in parse_sse(start_response.data) if e["event"] == "chunk")
+
+    first_retry = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "it is crunchy"},
+    )
+    first_final = [e["data"] for e in parse_sse(first_retry.data) if e["event"] == "chunk"][-1]
+    assert first_final["response_type"] == "bridge_retry"
+
+    second_retry = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "it is brown"},
+    )
+    second_final = [e["data"] for e in parse_sse(second_retry.data) if e["event"] == "chunk"][-1]
+    assert second_final["response_type"] == "bridge_retry"
+    assert second_final["bridge_attempt_count"] == 2
+
+    rescued = client.post(
+        "/api/continue",
+        json={
+            "session_id": session_id,
+            "child_input": "she does not really use her nose, she is used to where the food is",
+        },
+    )
+    final_chunk = [e["data"] for e in parse_sse(rescued.data) if e["event"] == "chunk"][-1]
+
+    assert final_chunk["response_type"] == "bridge_support"
+    assert final_chunk["bridge_debug"]["pre_anchor_reply_type"] == "anchor_related_but_off_lane"
+    assert final_chunk["bridge_attempt_count"] == 2
+    assert final_chunk["anchor_status"] == "anchored_high"
+    assert final_chunk["learning_anchor_active"] is False

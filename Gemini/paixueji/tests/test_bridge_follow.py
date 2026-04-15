@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from bridge_profile import BridgeProfile
-from stream.validation import classify_pre_anchor_semantic_reply
+from stream.validation import classify_bridge_follow, classify_pre_anchor_semantic_reply
 
 
 def _profile() -> BridgeProfile:
@@ -55,6 +55,33 @@ async def test_semantic_reply_classifier_returns_anchor_related_but_off_lane():
     assert result == {
         "reply_type": "anchor_related_but_off_lane",
         "reason": "child mentioned the bowl instead of the asked angle",
+    }
+
+
+@pytest.mark.asyncio
+async def test_classify_bridge_follow_preserves_off_lane_reply_type():
+    assistant = MagicMock()
+    assistant.config = {"model_name": "mock"}
+    assistant.client.aio.models.generate_content = AsyncMock(
+        return_value=MagicMock(
+            text='{"reply_type": "anchor_related_but_off_lane", "reason": "content-bearing premise correction"}'
+        )
+    )
+
+    result = await classify_bridge_follow(
+        assistant=assistant,
+        child_answer="she does not really use her nose, she is used to where the food is",
+        surface_object_name="cat food",
+        anchor_object_name="cat",
+        relation="food_for",
+        previous_bridge_question="Does she use her nose to sniff it before she starts to eat?",
+        bridge_profile=_profile(),
+    )
+
+    assert result == {
+        "reply_type": "anchor_related_but_off_lane",
+        "bridge_followed": False,
+        "reason": "content-bearing premise correction",
     }
 
 
