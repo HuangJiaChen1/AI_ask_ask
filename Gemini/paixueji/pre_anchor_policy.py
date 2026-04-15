@@ -63,6 +63,10 @@ def _matches_any(text: str, patterns: tuple[str, ...]) -> bool:
     return any(_contains_phrase(text, pattern) for pattern in patterns)
 
 
+def _is_standalone_phrase(text: str, patterns: tuple[str, ...]) -> bool:
+    return any(text == _normalize(pattern) for pattern in patterns)
+
+
 async def classify_pre_anchor_reply(
     *,
     assistant,
@@ -94,7 +98,7 @@ async def classify_pre_anchor_reply(
             support_action="scaffold",
         )
 
-    if _matches_any(normalized_answer, _NEGATIVE_OR_REFUSAL_PATTERNS):
+    if _is_standalone_phrase(normalized_answer, _NEGATIVE_OR_REFUSAL_PATTERNS):
         return PreAnchorReplyDecision(
             reply_type="negative_or_refusal",
             bridge_followed=False,

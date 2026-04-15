@@ -254,7 +254,8 @@ class TestIntroductionPromptBeatStructure:
         assert "scaffold" in lower
         assert "steer" in lower
         assert "help the child answer the previous bridge question" in lower
-        assert "do not replace the previous bridge question with a different bridge angle" in lower
+        assert "another valid angle" in lower
+        assert "same semantic bridge profile" in lower
 
     def test_anchor_bridge_intro_rejects_vague_food_for_questions(self):
         """Bridge retry prompt should reject vague food_for bridge questions."""
@@ -266,14 +267,23 @@ class TestIntroductionPromptBeatStructure:
         assert "end with exactly one easy bridge question" in prompt
 
     def test_bridge_support_prompt_requires_answer_then_same_question_family(self):
-        """Bridge support should answer/explain before helping with the same question family."""
+        """Clarify/scaffold support should answer first and keep the same question family."""
         import paixueji_prompts
 
         prompt = paixueji_prompts.BRIDGE_SUPPORT_RESPONSE_PROMPT.lower()
         assert "answer or explain first" in prompt
         assert "keep the same core event, action, or observation" in prompt
-        assert "do not replace the previous bridge question with a different bridge angle" in prompt
+        assert "for clarify or scaffold" in prompt
         assert "if previous bridge question is empty" in prompt
+
+    def test_bridge_support_prompt_allows_steer_to_pivot_within_profile(self):
+        import paixueji_prompts
+
+        prompt = paixueji_prompts.BRIDGE_SUPPORT_RESPONSE_PROMPT.lower()
+        assert "if support action is steer" in prompt
+        assert "another valid angle" in prompt
+        assert "same semantic bridge profile" in prompt
+        assert "acknowledge the child's correction" in prompt
 
     def test_bridge_support_prompt_does_not_praise_uncertainty_as_guess(self):
         import paixueji_prompts
@@ -1605,6 +1615,8 @@ def test_bridge_follow_classifier_prompt_includes_previous_bridge_question():
     prompt = paixueji_prompts.BRIDGE_FOLLOW_CLASSIFIER_PROMPT
     assert "Previous bridge question" in prompt
     assert "{previous_bridge_question}" in prompt
+    assert "negative lead-in" in prompt.lower()
+    assert "she does not really use her nose, she is used to where the food is" in prompt
 
 
 def test_live_debug_panel_exposes_pre_anchor_support_fields():

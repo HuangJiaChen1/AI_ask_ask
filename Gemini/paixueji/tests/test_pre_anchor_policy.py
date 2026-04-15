@@ -145,6 +145,74 @@ async def test_negative_reply_short_circuits_without_semantic_model():
     semantic_reply_classifier.assert_not_awaited()
 
 
+@pytest.mark.asyncio
+async def test_content_bearing_negative_runs_semantic_classifier_and_can_steer():
+    semantic_reply_classifier = AsyncMock(
+        return_value={
+            "reply_type": "anchor_related_but_off_lane",
+            "reason": "child corrected the premise and added anchor context",
+        }
+    )
+
+    result = await classify_pre_anchor_reply(
+        assistant=SimpleNamespace(),
+        child_answer="she does not really use her nose, she is used to where the food is",
+        surface_object_name="cat food",
+        anchor_object_name="cat",
+        relation="food_for",
+        bridge_profile=_profile(),
+        previous_bridge_question="Does she use her nose to sniff it before she starts to eat?",
+        semantic_reply_classifier=semantic_reply_classifier,
+    )
+
+    assert result.reply_type == "anchor_related_but_off_lane"
+    assert result.consume_bridge_attempt is False
+    assert result.support_action == "steer"
+    semantic_reply_classifier.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_bare_not_really_still_short_circuits_without_semantic_model():
+    semantic_reply_classifier = AsyncMock()
+
+    result = await classify_pre_anchor_reply(
+        assistant=SimpleNamespace(),
+        child_answer="not really",
+        surface_object_name="cat food",
+        anchor_object_name="cat",
+        relation="food_for",
+        bridge_profile=_profile(),
+        previous_bridge_question="Does she use her nose to sniff it before she starts to eat?",
+        semantic_reply_classifier=semantic_reply_classifier,
+    )
+
+    assert result.reply_type == "negative_or_refusal"
+    assert result.consume_bridge_attempt is True
+    semantic_reply_classifier.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_content_bearing_negative_can_still_be_true_miss():
+    semantic_reply_classifier = AsyncMock(
+        return_value={"reply_type": "true_miss", "reason": "child did not engage the bridge"}
+    )
+
+    result = await classify_pre_anchor_reply(
+        assistant=SimpleNamespace(),
+        child_answer="not really, my shoes are blue",
+        surface_object_name="cat food",
+        anchor_object_name="cat",
+        relation="food_for",
+        bridge_profile=_profile(),
+        previous_bridge_question="Does she use her nose to sniff it before she starts to eat?",
+        semantic_reply_classifier=semantic_reply_classifier,
+    )
+
+    assert result.reply_type == "true_miss"
+    assert result.consume_bridge_attempt is True
+    semantic_reply_classifier.assert_awaited_once()
+
+
 def test_assistant_resets_pre_anchor_support_count_with_bridge_state():
     assistant = PaixuejiAssistant(client=MagicMock())
     assistant.pre_anchor_support_count = 2
