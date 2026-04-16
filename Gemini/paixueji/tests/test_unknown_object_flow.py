@@ -993,6 +993,9 @@ def test_bridge_activation_kb_answer_hands_off_same_turn_to_anchor_general(clien
     assert final_chunk["learning_anchor_active"] is True
     assert final_chunk["response_type"] == "correct_answer"
     assert final_chunk["activation_child_reply_type"] == "handoff_answer"
+    assert final_chunk["bridge_debug"]["decision"] == "activation_handoff_committed"
+    assert final_chunk["bridge_debug"]["kb_mode"] is None
+    assert final_chunk["bridge_debug"]["activation_grounding_mode"] is None
     assert final_chunk["bridge_debug"]["activation_transition"]["outcome"]["handoff_result"] == "committed_to_anchor_general"
 
 
