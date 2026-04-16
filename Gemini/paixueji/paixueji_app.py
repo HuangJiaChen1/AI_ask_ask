@@ -196,6 +196,25 @@ def _apply_activation_stream_fields(chunk: StreamChunk, initial_state: dict) -> 
     return chunk.model_copy(update=update)
 
 
+def _normalize_post_handoff_bridge_debug(bridge_debug: dict | BridgeDebugInfo | None) -> dict | None:
+    """Rewrite activation debug into provenance for the first ordinary-chat post-handoff turn."""
+    if not bridge_debug:
+        return None
+
+    if isinstance(bridge_debug, BridgeDebugInfo):
+        normalized = bridge_debug.model_dump()
+    else:
+        normalized = dict(bridge_debug)
+
+    normalized["decision"] = "activation_handoff_committed"
+    normalized["decision_reason"] = "post-handoff provenance attached to ordinary chat turn"
+    normalized["response_type"] = "correct_answer"
+    normalized["kb_mode"] = None
+    normalized["activation_grounding_mode"] = None
+    normalized["activation_grounding_summary"] = None
+    return normalized
+
+
 def _intro_mode_for_assistant(assistant: PaixuejiAssistant) -> str:
     if assistant.anchor_status == "anchored_high":
         return "anchor_bridge"
@@ -1111,6 +1130,7 @@ def continue_conversation():
                                 counted_turn = False
                                 counted_turn_reason = "handoff_committed"
                                 assistant.commit_bridge_activation()
+                                turn_bridge_debug = _normalize_post_handoff_bridge_debug(turn_bridge_debug)
                             else:
                                 handoff_block_reason = "child_did_not_answer_previous_question"
                                 assistant.activation_handoff_ready = False

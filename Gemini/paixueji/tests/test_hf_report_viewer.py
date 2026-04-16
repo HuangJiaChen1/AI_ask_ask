@@ -788,7 +788,7 @@ def test_hf_report_parser_reads_appendix_backed_diagnostics(tmp_path):
 
 #### Raw Bridge Debug
 
-- decision: `bridge_activation`
+- decision: `activation_handoff_committed`
 - response_type: `correct_answer`
 - bridge_phase_after: `anchor_general`
 - bridge_followed: `True`
@@ -812,9 +812,55 @@ def test_hf_report_parser_reads_appendix_backed_diagnostics(tmp_path):
     assert model_turn["bridge_evidence"] == "child followed bridge"
     assert model_turn["activation_outcome"] == "committed_to_anchor_general"
     assert model_turn["diagnostics_ref"] == "D0"
-    assert model_turn["bridge_debug"]["decision"] == "bridge_activation"
+    assert model_turn["bridge_debug"]["decision"] == "activation_handoff_committed"
     assert model_turn["bridge_debug"]["response_type"] == "correct_answer"
     assert model_turn["bridge_debug"]["activation_transition"]["outcome"]["handoff_result"] == "committed_to_anchor_general"
+
+
+def test_hf_report_appendix_omits_activation_kb_mode_for_post_handoff_turn(tmp_path):
+    from paixueji_app import build_human_feedback_report
+
+    report = build_human_feedback_report(
+        "cat food",
+        6,
+        "sess",
+        [
+            {
+                "role": "model",
+                "content": "Using just their mouth helps them pick up the food.",
+                "response_type": "correct_answer",
+                "mode": "chat",
+                "bridge_debug": {
+                    "decision": "activation_handoff_committed",
+                    "decision_reason": "post-handoff provenance attached to ordinary chat turn",
+                    "response_type": "correct_answer",
+                    "bridge_phase_after": "anchor_general",
+                    "bridge_followed": True,
+                    "bridge_follow_reason": "child followed bridge",
+                    "kb_mode": None,
+                    "activation_grounding_mode": None,
+                    "activation_grounding_summary": None,
+                    "activation_transition": {
+                        "outcome": {
+                            "handoff_result": "committed_to_anchor_general",
+                            "bridge_success": True,
+                        }
+                    },
+                },
+            },
+            {
+                "role": "child",
+                "content": "she just use her mouth",
+            },
+        ],
+        [],
+        [],
+        "",
+    )
+
+    assert "- Bridge State: `activation_handoff_committed`" in report
+    assert "- Output Node: `correct_answer`" in report
+    assert "- kb_mode: `activation_latent_kb`" not in report
 
 
 def test_hf_report_detail_preserves_all_model_turns_for_cat_report(client):
