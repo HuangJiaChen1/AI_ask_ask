@@ -10,7 +10,7 @@ flowchart TD
     intent_router{"route_from_analyze_input"}
     idk_gate{"idk_gate"}
     correct_gate{"correct_threshold_gate"}
-    theme_complete["classify_theme -> chat_complete"]
+    theme_complete["classify_theme -> correct_answer"]
 
     %% --- ENTRY LANE -------------------------------------------------------
     subgraph INTRO ["Entry"]
@@ -44,8 +44,7 @@ flowchart TD
     %% --- COMPLETION LANE --------------------------------------------------
     subgraph COMPLETE ["Completion"]
         classify["classify_theme"]
-        chat_complete["chat_complete"]
-        classify --> chat_complete
+        classify --> correct
     end
 
     fin["finalize"]
@@ -83,6 +82,5 @@ flowchart TD
     curiosity & wrong & constraint & correct & informative & play & emotional & avoidance & boundary & action & social & social_ack --> fin
 
     %% --- COMPLETION -> FINALIZE -------------------------------------------
-    chat_complete --> fin
 
     fin --> FINISH

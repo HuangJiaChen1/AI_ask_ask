@@ -1001,8 +1001,8 @@ function handleStreamChunk(chunk) {
         updateDebugPanel();
     }
 
-    // Chat phase complete: show modal and disable input after close
-    if (chunk.chat_phase_complete) {
+    // Chat phase complete: only trigger after the final response chunk lands
+    if (chunk.finish && chunk.chat_phase_complete) {
         conversationComplete = true;
         showChatPhaseCompleteModal();
     }

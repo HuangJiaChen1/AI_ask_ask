@@ -71,6 +71,7 @@ def test_chat_complete_keeps_input_disabled_after_stream_finally():
     app_js = APP_JS.read_text(encoding="utf-8")
 
     assert "conversationComplete = true;" in app_js
+    assert "if (chunk.finish && chunk.chat_phase_complete) {" in app_js
     assert app_js.count("if (!conversationComplete) {") >= 2
     assert app_js.count("disableCompletedChatInput();") >= 4
 

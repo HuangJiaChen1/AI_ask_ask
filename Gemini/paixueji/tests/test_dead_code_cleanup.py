@@ -1,6 +1,11 @@
+from pathlib import Path
+
 import schema
 import stream
 from paixueji_assistant import ConversationState, PaixuejiAssistant
+
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 def test_dead_topic_selection_api_removed():
@@ -49,3 +54,17 @@ def test_guide_runtime_schema_removed():
 
 def test_guide_modules_removed():
     assert not hasattr(stream, "generate_guide_hint")
+
+
+def test_chat_complete_workflow_removed_from_graph():
+    graph_source = (PROJECT_ROOT / "graph.py").read_text(encoding="utf-8")
+
+    assert "async def node_chat_complete" not in graph_source
+    assert 'workflow.add_node("chat_complete"' not in graph_source
+    assert 'workflow.add_edge("classify_theme", "chat_complete")' not in graph_source
+
+
+def test_trace_assembler_no_longer_lists_chat_complete_node():
+    trace_source = (PROJECT_ROOT / "trace_assembler.py").read_text(encoding="utf-8")
+
+    assert "- chat_complete:" not in trace_source

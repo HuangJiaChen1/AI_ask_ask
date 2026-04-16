@@ -39,7 +39,7 @@ _NODE_GLOSSARY = """Graph node roles:
 - action: Child issues command — execute or redirect; uses 'action_intent_prompt'
 - social: Child asks about AI — warm direct answer; uses 'social_intent_prompt'
 - social_acknowledgment: Child asks about AI/social — warm acknowledgment; uses 'social_acknowledgment_intent_prompt'
-- chat_complete: Ends chat phase after the threshold correct answer; signals frontend to disable input
+- classify_theme: Classifies the final theme on the threshold correct-answer turn before reusing the normal correct-answer reply path
 - finalize: Sends final StreamChunk and closes the turn"""
 
 
@@ -133,7 +133,7 @@ Output a single JSON object with EXACTLY these fields:
   "culprit_name": "<exact node or component name from the glossary above>",
   "confidence_level": "LOW" | "MODERATE" | "CONFIDENT" | "VERY_CONFIDENT",
   "reasoning": "<2-4 sentences referencing the actual exchange content and why this component is responsible>",
-  "prompt_template_name": "<exact key — pick from: fun_fact_structuring_prompt, fun_fact_grounding_prompt, introduction_prompt, user_intent_prompt (analyze_input), curiosity_intent_prompt, clarifying_idk_intent_prompt, clarifying_wrong_intent_prompt, clarifying_constraint_intent_prompt, give_answer_idk_intent_prompt, correct_answer_intent_prompt, informative_intent_prompt, play_intent_prompt, emotional_intent_prompt, avoidance_intent_prompt, boundary_intent_prompt, action_intent_prompt, social_intent_prompt, social_acknowledgment_intent_prompt, topic_switch_response_prompt, followup_question_prompt, completion_prompt, classification_prompt. Use null ONLY for pure routers (router:*), finalize, generate_intro, chat_complete.>",
+  "prompt_template_name": "<exact key — pick from: fun_fact_structuring_prompt, fun_fact_grounding_prompt, introduction_prompt, user_intent_prompt (analyze_input), curiosity_intent_prompt, clarifying_idk_intent_prompt, clarifying_wrong_intent_prompt, clarifying_constraint_intent_prompt, give_answer_idk_intent_prompt, correct_answer_intent_prompt, informative_intent_prompt, play_intent_prompt, emotional_intent_prompt, avoidance_intent_prompt, boundary_intent_prompt, action_intent_prompt, social_intent_prompt, social_acknowledgment_intent_prompt, topic_switch_response_prompt, followup_question_prompt, classification_prompt. Use null ONLY for pure routers (router:*), finalize, generate_intro, classify_theme.>",
   "culprit_phase": "question" | "response" | null
 }}
 """

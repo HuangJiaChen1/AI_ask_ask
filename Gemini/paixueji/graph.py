@@ -138,6 +138,7 @@ class PaixuejiState(TypedDict):
     detected_object_name: Optional[str]
 
     response_type: Optional[str]
+    chat_phase_complete: Optional[bool]
 
     # --- Fun Fact (Grounded) ---
     fun_fact: Optional[str]
@@ -1070,8 +1071,21 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
     )
     full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
     await _maybe_set_used_kb_item(state, "correct_answer", full_text_intent)
-    if state["assistant"].learning_anchor_active:
+    if state["assistant"].learning_anchor_active and not state.get("chat_phase_complete"):
         state["assistant"].increment_correct_answers()
+
+    if state.get("chat_phase_complete"):
+        logger.info(f"[{state['session_id']}] Node: Correct Answer finished in {time.time() - start_time:.3f}s")
+        return {
+            "response_type": "correct_answer",
+            "full_response_text": full_text_intent,
+            "sequence_number": new_seq,
+            "ttft": state.get("ttft"),
+            "correct_answer_count": state["assistant"].correct_answer_count,
+            "used_kb_item": state.get("used_kb_item"),
+            "kb_mapping_status": state.get("kb_mapping_status"),
+            "chat_phase_complete": True,
+        }
 
     # Update sequence so second generator picks up where first left off
     state["sequence_number"] = new_seq
@@ -1101,6 +1115,7 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
         "correct_answer_count": state["assistant"].correct_answer_count,
         "used_kb_item": state.get("used_kb_item"),
         "kb_mapping_status": state.get("kb_mapping_status"),
+        "chat_phase_complete": state.get("chat_phase_complete"),
     }
 
 
@@ -1531,6 +1546,7 @@ async def node_finalize(state: PaixuejiState) -> dict:
         counted_turn_reason=state.get("counted_turn_reason"),
         bridge_debug=state.get("bridge_debug"),
         resolution_debug=state.get("resolution_debug"),
+        chat_phase_complete=state.get("chat_phase_complete") or None,
 
         response_type=state.get("response_type"),
 
@@ -1554,7 +1570,6 @@ async def node_finalize(state: PaixuejiState) -> dict:
     return {}
 
 
-@trace_node
 @trace_node
 async def node_classify_theme(state: PaixuejiState) -> dict:
     """
@@ -1599,64 +1614,9 @@ async def node_classify_theme(state: PaixuejiState) -> dict:
             f"'{state['object_name']}', using fallback theme"
         )
 
-    return {"correct_answer_count": assistant.correct_answer_count}
-
-
-@trace_node
-async def node_chat_complete(state: PaixuejiState) -> dict:
-    """
-    Chat phase completion: acknowledge and signal that the chat phase is complete.
-    Template-based — no LLM call. Assumes the threshold turn already updated the
-    correct-answer count and sets chat_phase_complete=True for the frontend modal.
-    """
-    logger.info(f"[{state['session_id']}] Node: Chat Complete")
-
-    assistant = state["assistant"]
-
-    celebration = (
-        "Yes, that's right! Wonderful work — you've been such a great explorer today! 🎉 "
-        "You've answered all the questions so well. Now it's time to switch to activities!"
-    )
-
-    callback = state.get("stream_callback")
-    new_seq = state["sequence_number"] + 1
-    if callback:
-        chunk = StreamChunk(
-            response=celebration,
-            session_finished=(state["status"] == "over"),
-            duration=time.time() - state["start_time"],
-            finish=False,
-            sequence_number=new_seq,
-            timestamp=time.time(),
-            session_id=state["session_id"],
-            request_id=state["request_id"],
-            response_type="correct_answer",
-            correct_answer_count=assistant.correct_answer_count,
-            current_object_name=state.get("object_name"),
-            surface_object_name=state.get("surface_object_name"),
-            anchor_object_name=state.get("anchor_object_name"),
-            anchor_status=state.get("anchor_status"),
-            anchor_relation=state.get("anchor_relation"),
-            anchor_confidence_band=state.get("anchor_confidence_band"),
-            anchor_confirmation_needed=state.get("anchor_confirmation_needed", False),
-            learning_anchor_active=state.get("learning_anchor_active", False),
-            bridge_phase=state.get("bridge_phase"),
-            bridge_attempt_count=state.get("bridge_attempt_count", 0),
-            activation_turn_count=getattr(state.get("assistant"), "activation_turn_count", 0),
-            activation_handoff_ready=getattr(state.get("assistant"), "activation_handoff_ready", False),
-            resolution_debug=state.get("resolution_debug"),
-            key_concept=assistant.key_concept or None,
-            ibpyp_theme_name=assistant.ibpyp_theme_name or None,
-            theme_classification_reason=assistant.ibpyp_theme_reason or None,
-            chat_phase_complete=True,
-        )
-        await callback(chunk)
-
     return {
-        "response_type": "correct_answer",
-        "full_response_text": celebration,
-        "sequence_number": new_seq,
         "correct_answer_count": assistant.correct_answer_count,
+        "chat_phase_complete": True,
     }
 
 
@@ -1741,12 +1701,8 @@ def build_paixueji_graph():
             "social": "social",
             "social_acknowledgment": "social_acknowledgment",
             "classify_theme": "classify_theme",
-            "chat_complete": "chat_complete",
         }
     )
-
-    workflow.add_node("chat_complete", node_chat_complete)
-    workflow.add_edge("chat_complete", "finalize")
 
     # All 15 intent nodes → finalize
     for intent_node in ["curiosity", "concept_confusion", "clarifying_idk", "fallback_freeform", "give_answer_idk",
@@ -1755,7 +1711,7 @@ def build_paixueji_graph():
                         "action", "social", "social_acknowledgment"]:
         workflow.add_edge(intent_node, "finalize")
 
-    workflow.add_edge("classify_theme", "chat_complete")
+    workflow.add_edge("classify_theme", "correct_answer")
     workflow.add_edge("finalize", END)
 
     return workflow.compile()

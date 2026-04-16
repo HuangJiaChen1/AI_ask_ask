@@ -285,7 +285,7 @@ class TestRoutingBelowThreshold:
 
 
 # ---------------------------------------------------------------------------
-# Test 3 — threshold triggers classify_theme → chat_complete
+# Test 3 — threshold triggers classify_theme → correct_answer completion
 # ---------------------------------------------------------------------------
 
 class TestThresholdTriggersClassifyTheme:
@@ -309,7 +309,7 @@ class TestThresholdTriggersClassifyTheme:
         assert assistant._last_route_debug["guide_mode_threshold"] == GUIDE_MODE_THRESHOLD
 
     @pytest.mark.asyncio
-    async def test_count_1_triggers_chat_complete_without_guide_state(self):
+    async def test_count_1_triggers_completion_without_guide_state(self):
         """
         With count=1 and intent=CORRECT_ANSWER (1+1=2 >= GUIDE_MODE_THRESHOLD):
         - assistant.correct_answer_count must become 2
@@ -356,9 +356,30 @@ class TestThresholdTriggersClassifyTheme:
 
         await paixueji_graph.ainvoke(state)
 
-        assert len(captured_chunks) >= 2
-        assert any(chunk.chat_phase_complete for chunk in captured_chunks)
+        assert captured_chunks[-1].finish is True
+        assert captured_chunks[-1].chat_phase_complete is True
+        assert all(not chunk.chat_phase_complete for chunk in captured_chunks[:-1])
         assert any(chunk.ibpyp_theme_name for chunk in captured_chunks)
+        assert captured_chunks[-1].response_type == "correct_answer"
+
+    @pytest.mark.asyncio
+    async def test_count_1_skips_followup_question_and_uses_correct_answer_reply(self):
+        assistant = PaixuejiAssistant()
+        assistant.correct_answer_count = 1
+        assistant.learning_anchor_active = True
+
+        state = _base_state(assistant, correct_answer_count=1)
+
+        async def _unexpected_followup(**kwargs):
+            if False:
+                yield None
+
+        with patch("graph.ask_followup_question_stream", side_effect=_unexpected_followup) as followup_mock:
+            final_state = await paixueji_graph.ainvoke(state)
+
+        followup_mock.assert_not_called()
+        assert final_state["response_type"] == "correct_answer"
+        assert final_state["chat_phase_complete"] is True
 
     @pytest.mark.asyncio
     async def test_count_1_sets_theme_fields(self):

@@ -85,7 +85,7 @@ analyze_input → route_logic → generate_response → generate_question → fi
 
 **Completion path:**
 ```
-correct_answer threshold → classify_theme → chat_complete → finalize
+correct_answer threshold → classify_theme → correct_answer → finalize
 ```
 
 Conditional edges branch on `response_type`, `intent_type`, and the correct-answer threshold.
