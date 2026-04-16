@@ -213,10 +213,10 @@
                 <div style="font-size: 0.85em; color: #64748b;">Confidence: <span id="debugAnchorConfidence">-</span></div>
                 <div style="font-size: 0.85em; color: #64748b;">Attempt: <span id="debugBridgeAttempt">-</span></div>
                 <div style="font-size: 0.85em; color: #64748b;">Support Count: <span id="debugSupportCount">-</span></div>
-                <div style="font-size: 0.85em; color: #64748b;">Decision: <span id="debugBridgeDecision">-</span></div>
+                <div style="font-size: 0.85em; color: #64748b;">Bridge State: <span id="debugBridgeDecision">-</span></div>
                 <div style="font-size: 0.85em; color: #64748b;">Reply Type: <span id="debugPreAnchorReplyType">-</span></div>
                 <div style="font-size: 0.85em; color: #64748b;">Support Action: <span id="debugSupportAction">-</span></div>
-                <div style="font-size: 0.85em; color: #64748b;">Follow Reason: <span id="debugBridgeFollowReason">-</span></div>
+                <div style="font-size: 0.85em; color: #64748b;">Bridge Evidence: <span id="debugBridgeFollowReason">-</span></div>
                 <div style="font-size: 0.85em; color: #64748b;">Verdict: <span id="debugBridgeVerdict">-</span></div>
                 <div style="font-size: 0.85em; color: #64748b;">KB Mode: <span id="debugKbMode">-</span></div>
             </div>
@@ -437,12 +437,30 @@
                     <div class="rv-crit-panel-text" id="rvPopupConclusion"></div>
                 </div>
                 <div class="rv-crit-panel rv-panel-blue">
-                    <div class="rv-crit-panel-label">&#x1F517; Bridge Verdict</div>
+                    <div class="rv-crit-panel-label">&#x1F517; Bridge State</div>
                     <div class="rv-crit-panel-text" id="rvPopupBridgeVerdict"></div>
                 </div>
+                <div class="rv-crit-panel rv-panel-blue">
+                    <div class="rv-crit-panel-label">&#x1F9ED; Output Node</div>
+                    <div class="rv-crit-panel-text" id="rvPopupOutputNode"></div>
+                </div>
+                <div class="rv-crit-panel rv-panel-blue">
+                    <div class="rv-crit-panel-label">&#x1F50E; Bridge Evidence</div>
+                    <div class="rv-crit-panel-text" id="rvPopupBridgeEvidence"></div>
+                </div>
+                <div class="rv-crit-panel rv-panel-blue">
+                    <div class="rv-crit-panel-label">&#x2699;&#xFE0F; Activation Outcome</div>
+                    <div class="rv-crit-panel-text" id="rvPopupActivationOutcome"></div>
+                </div>
+                <div class="rv-crit-panel rv-panel-blue">
+                    <div class="rv-crit-panel-label">&#x1F4CE; Diagnostics Ref</div>
+                    <div class="rv-crit-panel-text" id="rvPopupDiagnosticsRef"></div>
+                </div>
                 <div class="rv-crit-panel rv-panel-green">
-                    <div class="rv-crit-panel-label">&#x1F41B; Raw Bridge Debug</div>
-                    <div class="rv-crit-panel-text" id="rvPopupBridgeDebug"></div>
+                    <details class="rv-popup-trace">
+                        <summary>Raw Diagnostics</summary>
+                        <div class="rv-crit-panel-text" id="rvPopupBridgeDebug"></div>
+                    </details>
                 </div>
                 <details class="rv-popup-trace" id="rvPopupTrace">
                     <summary>&#x25B8; Node Execution Trace</summary>

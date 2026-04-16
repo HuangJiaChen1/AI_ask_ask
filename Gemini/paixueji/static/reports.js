@@ -37,6 +37,57 @@ function rvEsc(str) {
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+function rvBridgeStateSummary(debug) {
+    if (!debug || Object.keys(debug).length === 0) return [];
+    const lines = [];
+    const bridgeState = rvDeriveBridgeState(debug);
+    if (bridgeState) {
+        lines.push(`Bridge State: ${bridgeState}`);
+    }
+    const bridgeEvidence = rvDeriveBridgeEvidence(debug);
+    if (bridgeEvidence) {
+        lines.push(`Bridge Evidence: ${bridgeEvidence}`);
+    }
+    const outputNode = rvDeriveOutputNode(debug);
+    if (outputNode) {
+        lines.push(`Output Node: ${outputNode}`);
+    }
+    const activationOutcome = rvDeriveActivationOutcome(debug);
+    if (activationOutcome) {
+        lines.push(`Activation Outcome: ${activationOutcome}`);
+    }
+    return lines;
+}
+
+function rvDeriveBridgeState(debug) {
+    if (!debug || Object.keys(debug).length === 0) return null;
+    if (
+        debug.decision === 'bridge_activation'
+        && (
+            debug.bridge_phase_after === 'anchor_general'
+            || debug.activation_transition?.outcome?.handoff_result === 'committed_to_anchor_general'
+        )
+    ) {
+        return 'activation_handoff_committed';
+    }
+    return debug.decision || debug.response_type || null;
+}
+
+function rvDeriveOutputNode(debug) {
+    return debug?.response_type || null;
+}
+
+function rvDeriveBridgeEvidence(debug) {
+    if (!debug || Object.keys(debug).length === 0) return null;
+    if (debug.bridge_follow_reason) return debug.bridge_follow_reason;
+    if (debug.support_action) return debug.support_action;
+    return null;
+}
+
+function rvDeriveActivationOutcome(debug) {
+    return debug?.activation_transition?.outcome?.handoff_result || null;
+}
+
 function rvFormatBridgeDebug(debug) {
     if (!debug || Object.keys(debug).length === 0) return '—';
     const lines = [];
@@ -47,8 +98,14 @@ function rvFormatBridgeDebug(debug) {
         }
         return String(value);
     };
+    lines.push(...rvBridgeStateSummary(debug));
     for (const [key, value] of Object.entries(debug)) {
-        if (value == null || key === 'activation_transition') continue;
+        if (
+            value == null
+            || key === 'activation_transition'
+            || key === 'bridge_followed'
+            || key === 'bridge_follow_reason'
+        ) continue;
         const formatted = formatValue(value);
         if (formatted == null) continue;
         if (typeof value === 'object') {
@@ -96,6 +153,32 @@ function rvTurnBridgeVerdict(turn) {
 
 function rvTurnBridgeDebug(turn) {
     return turn.bridge_debug || turn.critique?.bridge_debug || null;
+}
+
+function rvTurnBridgeState(turn) {
+    const debug = rvTurnBridgeDebug(turn) || {};
+    return turn.bridge_state || rvDeriveBridgeState(debug) || turn.response_type || turn.bridge_verdict || turn.critique?.bridge_verdict || null;
+}
+
+function rvTurnOutputNode(turn) {
+    const debug = rvTurnBridgeDebug(turn) || {};
+    return turn.output_node || turn.response_type || rvDeriveOutputNode(debug) || null;
+}
+
+function rvTurnBridgeEvidence(turn) {
+    const debug = rvTurnBridgeDebug(turn) || {};
+    return turn.bridge_evidence || rvDeriveBridgeEvidence(debug) || null;
+}
+
+function rvTurnActivationOutcome(turn) {
+    const debug = rvTurnBridgeDebug(turn) || {};
+    return turn.activation_outcome || rvDeriveActivationOutcome(debug) || null;
+}
+
+function rvTurnDiagnosticsRef(turn) {
+    if (turn.diagnostics_ref) return turn.diagnostics_ref;
+    if (typeof turn.exchange_index === 'number') return `D${turn.exchange_index}`;
+    return null;
 }
 
 function rvTurnHasHumanCritique(turn) {
@@ -350,8 +433,13 @@ function renderDetail(report) {
 function showRvCritiquePopup(exchangeIdx) {
     const crit = _rvCritiques[exchangeIdx];
     const turn = _rvTurnsByExchange[exchangeIdx];
+    const bridgeState = turn ? rvTurnBridgeState(turn) : rvDeriveBridgeState(crit?.bridge_debug || {});
     const bridgeVerdict = turn ? rvTurnBridgeVerdict(turn) : (crit?.bridge_verdict || null);
     const bridgeDebug = turn ? (rvTurnBridgeDebug(turn) || {}) : (crit?.bridge_debug || {});
+    const outputNode = turn ? rvTurnOutputNode(turn) : (crit?.bridge_debug?.response_type || null);
+    const bridgeEvidence = turn ? rvTurnBridgeEvidence(turn) : rvDeriveBridgeEvidence(crit?.bridge_debug || {});
+    const activationOutcome = turn ? rvTurnActivationOutcome(turn) : rvDeriveActivationOutcome(crit?.bridge_debug || {});
+    const diagnosticsRef = turn ? rvTurnDiagnosticsRef(turn) : (typeof exchangeIdx === 'number' ? `D${exchangeIdx}` : null);
     if (!turn || (!crit && !bridgeVerdict && !Object.keys(bridgeDebug).length)) return;
 
     const isProblematic = crit && crit.problematic
@@ -392,10 +480,21 @@ function showRvCritiquePopup(exchangeIdx) {
     }
 
     document.getElementById('rvPopupConclusion').textContent = crit ? (crit.conclusion || '—') : 'No human critique';
-    const bridgeVerdictLabel = 'Bridge Verdict';
     const bridgeVerdictEl = document.getElementById('rvPopupBridgeVerdict');
-    bridgeVerdictEl.setAttribute('aria-label', bridgeVerdictLabel);
-    bridgeVerdictEl.textContent = bridgeVerdict || '—';
+    bridgeVerdictEl.setAttribute('aria-label', 'Bridge State');
+    bridgeVerdictEl.textContent = bridgeState || '—';
+    const outputNodeEl = document.getElementById('rvPopupOutputNode');
+    outputNodeEl.setAttribute('aria-label', 'Output Node');
+    outputNodeEl.textContent = outputNode || '—';
+    const bridgeEvidenceEl = document.getElementById('rvPopupBridgeEvidence');
+    bridgeEvidenceEl.setAttribute('aria-label', 'Bridge Evidence');
+    bridgeEvidenceEl.textContent = bridgeEvidence || '—';
+    const activationOutcomeEl = document.getElementById('rvPopupActivationOutcome');
+    activationOutcomeEl.setAttribute('aria-label', 'Activation Outcome');
+    activationOutcomeEl.textContent = activationOutcome || '—';
+    const diagnosticsRefEl = document.getElementById('rvPopupDiagnosticsRef');
+    diagnosticsRefEl.setAttribute('aria-label', 'Diagnostics Ref');
+    diagnosticsRefEl.textContent = diagnosticsRef || '—';
     const bridgeDebugEl = document.getElementById('rvPopupBridgeDebug');
     bridgeDebugEl.textContent = rvFormatBridgeDebug(bridgeDebug);
 

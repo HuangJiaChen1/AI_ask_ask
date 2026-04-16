@@ -1170,10 +1170,15 @@ function updateDebugPanel() {
         ? (supportBefore != null ? `${supportBefore} → ${supportAfter}` : String(supportAfter))
         : null;
     setText('debugSupportCount', supportCount);
-    setText('debugBridgeDecision', bridgeDebug.decision);
+    setText('debugBridgeDecision', bridgeDebug.decision || bridgeDebug.response_type);
     setText('debugPreAnchorReplyType', bridgeDebug.pre_anchor_reply_type);
     setText('debugSupportAction', bridgeDebug.support_action);
-    setText('debugBridgeFollowReason', bridgeDebug.bridge_follow_reason);
+    setText(
+        'debugBridgeFollowReason',
+        bridgeDebug.bridge_followed === true
+            ? (bridgeDebug.bridge_follow_reason || 'child followed bridge')
+            : null
+    );
     setText('debugBridgeVerdict', bridgeDebug.bridge_visibility_reason || bridgeDebug.decision_reason);
     setText('debugKbMode', bridgeDebug.kb_mode);
 }

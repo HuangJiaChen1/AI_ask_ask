@@ -3039,14 +3039,37 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
             report += f"- Raw Resolver Output: `{raw_excerpt}`\n"
         report += "\n---\n\n"
 
+    diagnostics_entries = {}
+
+    def register_diagnostics(exchange_index, source_label, response_type, bridge_debug):
+        if bridge_debug:
+            diagnostics_entries[exchange_index] = {
+                "exchange_index": exchange_index,
+                "source_label": source_label,
+                "response_type": response_type,
+                "bridge_debug": bridge_debug,
+            }
+
+    register_diagnostics(
+        0,
+        "introduction",
+        introduction.get("response_type") if introduction else None,
+        introduction.get("bridge_debug") if introduction else None,
+    )
+    for idx, exchange in enumerate(all_exchanges, start=1):
+        register_diagnostics(idx, f"exchange {idx}", exchange.get("response_type"), exchange.get("bridge_debug"))
+
     # Introduction Critique section (if the reviewer critiqued the introduction)
     if introduction and introduction_critique:
         report += "## Introduction — Human Critique\n\n"
         intro_content = introduction.get("content", "")
         report += f"**Introduction:** \"{intro_content}\"\n\n"
         if introduction.get("bridge_debug"):
-            report += f"**Bridge Verdict:** {_bridge_verdict_text(introduction.get('bridge_debug'))}\n\n"
-            report += _render_raw_bridge_debug(introduction.get("bridge_debug"))
+            report += _render_turn_summary(
+                introduction.get("bridge_debug"),
+                introduction.get("response_type"),
+                diagnostics_ref="D0",
+            )
         mr_expected = introduction_critique.get("model_response_expected", "").strip()
         mr_problem = introduction_critique.get("model_response_problem", "").strip()
         if mr_expected or mr_problem:
@@ -3063,11 +3086,29 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
 
     # Conversation transcript (with mode labels)
     report += "## Conversation Transcript\n\n"
+    child_count = 0
+    waiting_for_model = False
     for msg in transcript:
         if msg["role"] == "model":
             mode_label = msg.get("mode", "chat").upper()
             response_type = msg.get("response_type") or "unknown"
-            turn_diagnostics = _render_turn_diagnostics(msg.get("bridge_debug"))
+            if child_count == 0:
+                exchange_index = 0
+            elif waiting_for_model:
+                exchange_index = child_count
+                waiting_for_model = False
+            else:
+                exchange_index = child_count
+            register_diagnostics(
+                exchange_index,
+                "introduction" if exchange_index == 0 else f"exchange {exchange_index}",
+                response_type,
+                msg.get("bridge_debug"),
+            )
+            diagnostics = diagnostics_entries.get(exchange_index) or {}
+            bridge_debug = msg.get("bridge_debug") or diagnostics.get("bridge_debug")
+            diagnostics_ref = f"D{exchange_index}" if bridge_debug else None
+            turn_diagnostics = _render_turn_summary(bridge_debug, response_type, diagnostics_ref=diagnostics_ref)
             nodes_executed = msg.get("nodes_executed", [])
             if nodes_executed:
                 node_names = [n["node"] for n in nodes_executed]
@@ -3085,6 +3126,8 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
                 report += turn_diagnostics
             report += "\n"
         else:
+            child_count += 1
+            waiting_for_model = True
             report += f"**Child:** {msg['content']}\n\n"
 
     report += "---\n\n"
@@ -3108,6 +3151,17 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
         report += "## Conversation Critique\n\n"
         report += "*No exchanges were critiqued.*\n\n"
 
+    if diagnostics_entries:
+        report += "## Raw Diagnostics Appendix\n\n"
+        for exchange_index in sorted(diagnostics_entries):
+            entry = diagnostics_entries[exchange_index]
+            report += _render_raw_diagnostics_entry(
+                exchange_index=exchange_index,
+                source_label=entry.get("source_label"),
+                response_type=entry.get("response_type"),
+                bridge_debug=entry.get("bridge_debug"),
+            )
+
     # Global conclusion
     if global_conclusion and global_conclusion.strip():
         report += f"## Global Conclusion\n\n{global_conclusion.strip()}\n"
@@ -3129,8 +3183,11 @@ def _render_hf_exchange(idx, exchange, ec):
     report += f"**Child said:** \"{exchange['child_response']}\"\n\n"
     report += f"**Model responded:** \"{exchange['model_response']}\"\n\n"
     if exchange.get("bridge_debug"):
-        report += f"**Bridge Verdict:** {_bridge_verdict_text(exchange.get('bridge_debug'))}\n\n"
-        report += _render_raw_bridge_debug(exchange.get("bridge_debug"))
+        report += _render_turn_summary(
+            exchange.get("bridge_debug"),
+            exchange.get("response_type"),
+            diagnostics_ref=f"D{idx}",
+        )
 
     # Node execution trace
     nodes_executed = exchange.get("nodes_executed", [])
@@ -3183,6 +3240,78 @@ def _bridge_verdict_text(bridge_debug):
     return "Bridge visibility was not evaluated for this turn."
 
 
+def _bridge_state_summary(bridge_debug):
+    if not bridge_debug:
+        return ""
+
+    bridge_state = _derive_report_bridge_state(bridge_debug)
+    if not bridge_state:
+        return ""
+
+    report = f"**Bridge State:** {bridge_state}\n\n"
+    bridge_evidence = _derive_report_bridge_evidence(bridge_debug)
+    if bridge_evidence:
+        report += f"**Bridge Evidence:** {bridge_evidence}\n\n"
+    return report
+
+
+def _derive_report_bridge_state(bridge_debug):
+    if not bridge_debug:
+        return None
+    decision = bridge_debug.get("decision")
+    phase_after = bridge_debug.get("bridge_phase_after")
+    activation_outcome = _derive_report_activation_outcome(bridge_debug)
+    response_type = bridge_debug.get("response_type")
+    if decision == "bridge_activation" and (
+        phase_after == "anchor_general" or activation_outcome == "committed_to_anchor_general"
+    ):
+        return "activation_handoff_committed"
+    return decision or response_type
+
+
+def _derive_report_output_node(bridge_debug, response_type=None):
+    return (bridge_debug or {}).get("response_type") or response_type
+
+
+def _derive_report_bridge_evidence(bridge_debug):
+    if not bridge_debug:
+        return None
+    if bridge_debug.get("bridge_follow_reason"):
+        return bridge_debug["bridge_follow_reason"]
+    if bridge_debug.get("support_action"):
+        return bridge_debug["support_action"]
+    return None
+
+
+def _derive_report_activation_outcome(bridge_debug):
+    transition = (bridge_debug or {}).get("activation_transition") or {}
+    outcome = transition.get("outcome") or {}
+    return outcome.get("handoff_result")
+
+
+def _render_turn_summary(bridge_debug, response_type=None, diagnostics_ref=None):
+    if not bridge_debug:
+        return ""
+    lines = ["#### Turn Summary\n\n"]
+    bridge_state = _derive_report_bridge_state(bridge_debug)
+    output_node = _derive_report_output_node(bridge_debug, response_type=response_type)
+    bridge_evidence = _derive_report_bridge_evidence(bridge_debug)
+    activation_outcome = _derive_report_activation_outcome(bridge_debug)
+    if bridge_state:
+        lines.append(f"- Bridge State: `{bridge_state}`\n")
+    if output_node:
+        lines.append(f"- Output Node: `{output_node}`\n")
+    lines.append(f"- Bridge Verdict: `{_bridge_verdict_text(bridge_debug)}`\n")
+    if bridge_evidence:
+        lines.append(f"- Bridge Evidence: `{bridge_evidence}`\n")
+    if activation_outcome:
+        lines.append(f"- Activation Outcome: `{activation_outcome}`\n")
+    if diagnostics_ref:
+        lines.append(f"- Diagnostics Ref: `{diagnostics_ref}`\n")
+    lines.append("\n")
+    return "".join(lines)
+
+
 def _render_raw_bridge_debug(bridge_debug):
     if not bridge_debug:
         return ""
@@ -3216,14 +3345,28 @@ def _render_raw_bridge_debug(bridge_debug):
     return "".join(lines)
 
 
-def _render_turn_diagnostics(bridge_debug):
+def _render_raw_diagnostics_entry(exchange_index, source_label, response_type, bridge_debug):
     if not bridge_debug:
         return ""
-    return (
-        "#### Turn Diagnostics\n\n"
-        f"**Bridge Verdict:** {_bridge_verdict_text(bridge_debug)}\n\n"
-        f"{_render_raw_bridge_debug(bridge_debug)}"
-    )
+    lines = [
+        f"### Diagnostics D{exchange_index} — {source_label}\n",
+        f"**Exchange Index:** {exchange_index}\n",
+    ]
+    bridge_state = _derive_report_bridge_state(bridge_debug)
+    output_node = _derive_report_output_node(bridge_debug, response_type=response_type)
+    bridge_evidence = _derive_report_bridge_evidence(bridge_debug)
+    activation_outcome = _derive_report_activation_outcome(bridge_debug)
+    if bridge_state:
+        lines.append(f"**Bridge State:** {bridge_state}\n")
+    if output_node:
+        lines.append(f"**Output Node:** {output_node}\n")
+    if bridge_evidence:
+        lines.append(f"**Bridge Evidence:** {bridge_evidence}\n")
+    if activation_outcome:
+        lines.append(f"**Activation Outcome:** {activation_outcome}\n")
+    lines.append("\n")
+    lines.append(_render_raw_bridge_debug(bridge_debug))
+    return "".join(lines)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -3306,12 +3449,52 @@ def _parse_hf_report(filepath):
             debug["activation_transition"] = activation_transition
         return debug or None
 
+    def parse_summary_block(block_text):
+        summary = {
+            "bridge_state": None,
+            "output_node": None,
+            "bridge_verdict": None,
+            "bridge_evidence": None,
+            "activation_outcome": None,
+            "diagnostics_ref": None,
+        }
+        sm = re.search(r'#### Turn Summary\n+(.+?)(?=\n\n#### |\n\n---|\n\*\*|\n### |\n## |\Z)', block_text, re.DOTALL)
+        if not sm:
+            return summary
+        summary_text = sm.group(1)
+        for label, key in [
+            ("Bridge State", "bridge_state"),
+            ("Output Node", "output_node"),
+            ("Bridge Verdict", "bridge_verdict"),
+            ("Bridge Evidence", "bridge_evidence"),
+            ("Activation Outcome", "activation_outcome"),
+            ("Diagnostics Ref", "diagnostics_ref"),
+        ]:
+            lm = re.search(rf'- {re.escape(label)}:\s+`(.+?)`', summary_text)
+            if lm:
+                summary[key] = lm.group(1).strip()
+        return summary
+
     def parse_turn_diagnostics(turn_text):
-        verdict = None
-        bridge_debug = None
+        text_part, marker, diagnostics_part = turn_text.partition("\n#### Turn Summary\n\n")
+        if marker:
+            cleaned_text = text_part.strip()
+            summary = parse_summary_block(marker + diagnostics_part)
+            return {
+                "text": cleaned_text,
+                "bridge_verdict": summary["bridge_verdict"],
+                "bridge_debug": None,
+                "bridge_state": summary["bridge_state"],
+                "output_node": summary["output_node"],
+                "bridge_evidence": summary["bridge_evidence"],
+                "activation_outcome": summary["activation_outcome"],
+                "diagnostics_ref": summary["diagnostics_ref"],
+            }
+
         text_part, marker, diagnostics_part = turn_text.partition("\n#### Turn Diagnostics\n\n")
         if marker:
             cleaned_text = text_part.strip()
+            bridge_debug = None
             vm = re.search(r'\*\*Bridge Verdict:\*\*\s*(.+)', diagnostics_part)
             verdict = vm.group(1).strip() if vm else None
             raw_bridge = re.search(
@@ -3321,8 +3504,56 @@ def _parse_hf_report(filepath):
             )
             if raw_bridge:
                 bridge_debug = parse_raw_bridge_debug(raw_bridge.group(1))
-            return cleaned_text, verdict, bridge_debug
-        return turn_text.strip(), None, None
+            return {
+                "text": cleaned_text,
+                "bridge_verdict": verdict,
+                "bridge_debug": bridge_debug,
+                "bridge_state": (bridge_debug or {}).get("decision") or (bridge_debug or {}).get("response_type"),
+                "output_node": None,
+                "bridge_evidence": (bridge_debug or {}).get("bridge_follow_reason"),
+                "activation_outcome": (((bridge_debug or {}).get("activation_transition") or {}).get("outcome") or {}).get("handoff_result"),
+                "diagnostics_ref": None,
+            }
+        return {
+            "text": turn_text.strip(),
+            "bridge_verdict": None,
+            "bridge_debug": None,
+            "bridge_state": None,
+            "output_node": None,
+            "bridge_evidence": None,
+            "activation_outcome": None,
+            "diagnostics_ref": None,
+        }
+
+    def parse_raw_diagnostics_appendix(sec):
+        appendix = {}
+        blocks = re.split(r'\n### Diagnostics D(\d+)\s+[—-]\s+([^\n]+)\n', sec)
+        it = iter(blocks[1:])
+        for idx_str, source_label, block in zip(it, it, it):
+            exchange_index = int(idx_str)
+            entry = {
+                "exchange_index": exchange_index,
+                "source_label": source_label.strip(),
+                "bridge_state": None,
+                "output_node": None,
+                "bridge_evidence": None,
+                "activation_outcome": None,
+                "bridge_debug": None,
+            }
+            for label, key in [
+                ("Bridge State", "bridge_state"),
+                ("Output Node", "output_node"),
+                ("Bridge Evidence", "bridge_evidence"),
+                ("Activation Outcome", "activation_outcome"),
+            ]:
+                sm = re.search(rf'\*\*{re.escape(label)}:\*\*\s+(.+)', block)
+                if sm:
+                    entry[key] = sm.group(1).strip()
+            raw_bridge = re.search(r'#### Raw Bridge Debug\n+(.+?)(?=\n\n### |\n## |\Z)', block, re.DOTALL)
+            if raw_bridge:
+                entry["bridge_debug"] = parse_raw_bridge_debug(raw_bridge.group(1))
+            appendix[exchange_index] = entry
+        return appendix
 
     # ── Parse transcript ────────────────────────────────────────────────────
     tlines = get_section("Conversation Transcript").splitlines()
@@ -3350,17 +3581,22 @@ def _parse_hf_report(filepath):
             ):
                 body.append(tlines[i])
                 i += 1
-            turn_text, bridge_verdict, bridge_debug = parse_turn_diagnostics("\n".join(body).strip())
+            turn_meta = parse_turn_diagnostics("\n".join(body).strip())
             turns.append({
                 "role": "model",
                 "phase": phase,
-                "text": turn_text,
+                "text": turn_meta["text"],
                 "response_type": response_type,
                 "nodes": nodes,
                 "time_ms": time_ms,
                 "exchange_index": None,
-                "bridge_verdict": bridge_verdict,
-                "bridge_debug": bridge_debug,
+                "bridge_verdict": turn_meta["bridge_verdict"],
+                "bridge_debug": turn_meta["bridge_debug"],
+                "bridge_state": turn_meta["bridge_state"],
+                "output_node": turn_meta["output_node"],
+                "bridge_evidence": turn_meta["bridge_evidence"],
+                "activation_outcome": turn_meta["activation_outcome"],
+                "diagnostics_ref": turn_meta["diagnostics_ref"],
                 "critique": None,
             })
             continue
@@ -3387,6 +3623,20 @@ def _parse_hf_report(filepath):
                 waiting_for_model = False
 
     result["transcript"] = turns
+
+    appendix = parse_raw_diagnostics_appendix(get_section("Raw Diagnostics Appendix"))
+    for turn in result["transcript"]:
+        if turn["role"] != "model":
+            continue
+        entry = appendix.get(turn.get("exchange_index"))
+        if not entry:
+            continue
+        turn["bridge_state"] = entry.get("bridge_state") or turn.get("bridge_state")
+        turn["output_node"] = entry.get("output_node") or turn.get("output_node")
+        turn["bridge_evidence"] = entry.get("bridge_evidence") or turn.get("bridge_evidence")
+        turn["activation_outcome"] = entry.get("activation_outcome") or turn.get("activation_outcome")
+        turn["diagnostics_ref"] = f"D{turn['exchange_index']}"
+        turn["bridge_debug"] = entry.get("bridge_debug") or turn.get("bridge_debug")
 
     # ── Parse critique sections ─────────────────────────────────────────────
     critiques = {}
@@ -3422,6 +3672,9 @@ def _parse_hf_report(filepath):
             crit["conclusion"] = cm.group(1).strip() if cm else None
             verdict = re.search(r'\*\*Bridge Verdict:\*\*\s*(.+)', block)
             crit["bridge_verdict"] = verdict.group(1).strip() if verdict else None
+            summary = parse_summary_block(block)
+            if crit["bridge_verdict"] is None:
+                crit["bridge_verdict"] = summary["bridge_verdict"]
             raw_bridge = re.search(r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### (?!#)|\n\n---|\Z)', block, re.DOTALL)
             if raw_bridge:
                 crit["bridge_debug"] = parse_raw_bridge_debug(raw_bridge.group(1))
@@ -3457,6 +3710,9 @@ def _parse_hf_report(filepath):
         crit["conclusion"] = cm.group(1).strip() if cm else None
         verdict = re.search(r'\*\*Bridge Verdict:\*\*\s*(.+)', intro_sec)
         crit["bridge_verdict"] = verdict.group(1).strip() if verdict else None
+        summary = parse_summary_block(intro_sec)
+        if crit["bridge_verdict"] is None:
+            crit["bridge_verdict"] = summary["bridge_verdict"]
         raw_bridge = re.search(r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### (?!#)|\n\n---|\Z)', intro_sec, re.DOTALL)
         if raw_bridge:
             crit["bridge_debug"] = parse_raw_bridge_debug(raw_bridge.group(1))
@@ -3467,6 +3723,7 @@ def _parse_hf_report(filepath):
             or crit["bridge_verdict"]
             or crit["bridge_debug"]
             or crit["node_trace"]
+            or appendix.get(0)
         ):
             critiques[0] = crit
 
@@ -3474,6 +3731,14 @@ def _parse_hf_report(filepath):
     for turn in result["transcript"]:
         if turn["role"] == "model" and turn.get("exchange_index") in critiques:
             turn["critique"] = critiques[turn["exchange_index"]]
+            if turn["bridge_debug"] is None and turn["critique"].get("bridge_debug") is not None:
+                turn["bridge_debug"] = turn["critique"]["bridge_debug"]
+            if turn["bridge_verdict"] is None and turn["critique"].get("bridge_verdict") is not None:
+                turn["bridge_verdict"] = turn["critique"]["bridge_verdict"]
+            if turn["critique"].get("bridge_debug") is None and turn.get("bridge_debug") is not None:
+                turn["critique"]["bridge_debug"] = turn["bridge_debug"]
+            if turn["critique"].get("bridge_verdict") is None and turn.get("bridge_verdict") is not None:
+                turn["critique"]["bridge_verdict"] = turn["bridge_verdict"]
 
     # ── Global conclusion ────────────────────────────────────────────────────
     gc_sec = get_section("Global Conclusion")

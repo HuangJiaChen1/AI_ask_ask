@@ -116,13 +116,23 @@ def test_frontend_assets_cover_search_critique_badges_and_none_state():
     assert "No issues ✓" in REPORTS_JS
     assert "rv-panel-green" in REPORTS_JS
     assert "showRvRawModal" in REPORTS_JS
-    assert "Bridge Verdict" in REPORTS_JS
+    assert "Bridge State" in REPORTS_JS
+    assert "Bridge Evidence" in REPORTS_JS
+    assert "Output Node" in REPORTS_JS
+    assert "Activation Outcome" in REPORTS_JS
+    assert "Diagnostics Ref" in REPORTS_JS
     assert "rvPopupBridgeDebug" in REPORTS_JS
     assert "rvFormatBridgeDebug" in REPORTS_JS
     assert "Activation Transition" in REPORTS_JS
     assert "crit.bridge_verdict" in REPORTS_JS
     assert "crit.bridge_debug" in REPORTS_JS
     assert "currentBridgeDebug = null;" in APP_JS
+    assert "Bridge State" in INDEX_HTML
+    assert "Bridge Evidence" in INDEX_HTML
+    assert "Output Node" in INDEX_HTML
+    assert "Activation Outcome" in INDEX_HTML
+    assert "Diagnostics Ref" in INDEX_HTML
+    assert "Raw Diagnostics" in INDEX_HTML
 
     assert "@keyframes rv-critique-pulse" in STYLE_CSS
     assert ".rv-bubble-critiqued" in STYLE_CSS
@@ -159,7 +169,7 @@ def test_frontend_assets_reset_popup_scroll_and_trace_state():
     assert "popupTrace.open = false;" in REPORTS_JS
 
 
-def test_hf_report_includes_anchor_resolution_and_bridge_debug_sections():
+def test_hf_report_uses_layered_diagnostics_layout():
     from paixueji_app import build_human_feedback_report
     from bridge_debug import build_bridge_trace_entry
 
@@ -240,15 +250,69 @@ def test_hf_report_includes_anchor_resolution_and_bridge_debug_sections():
     assert "Raw Resolver Output" in report
     assert "Raw Payload Kind" in report
     assert "JSON Recovery Applied" in report
-    assert "**Bridge Verdict:**" in report
-    assert "#### Raw Bridge Debug" in report
+    assert "#### Turn Summary" in report
+    assert "- Bridge State: `intro_bridge`" in report
+    assert "- Output Node: `introduction`" in report
+    assert "- Bridge Verdict: `Bridge was visible in the response.`" in report
+    assert "- Diagnostics Ref: `D0`" in report
     assert "[CHAT|introduction]" in report
-    assert "decision: bridge_retry" in report
+    assert "#### Raw Bridge Debug" not in report.split("## Raw Diagnostics Appendix", 1)[0]
+    assert "## Raw Diagnostics Appendix" in report
+    assert "### Diagnostics D0" in report
+    assert "### Diagnostics D1" in report
+    assert "decision: `bridge_retry`" in report
     assert "pre_anchor_reply_type: `clarification_request`" in report
     assert "support_action: `clarify`" in report
     assert "pre_anchor_support_count_after: `1`" in report
-    assert "Activation Transition" in report
-    assert "Before State" in report
+    appendix = report.split("## Raw Diagnostics Appendix", 1)[1]
+    assert "Activation Transition" in appendix
+    assert "Before State" in appendix
+
+
+def test_hf_report_includes_bridge_state_summary_for_activation_turns():
+    from paixueji_app import build_human_feedback_report
+
+    report = build_human_feedback_report(
+        object_name="cat food",
+        age=6,
+        session_id="sess",
+        transcript=[{
+            "role": "model",
+            "content": "Your cat really likes wet food. What does your cat do when dinner is ready?",
+            "mode": "chat",
+            "response_type": "bridge_activation",
+            "nodes_executed": [],
+        }],
+        all_exchanges=[],
+        exchange_critiques=[],
+        global_conclusion="Test",
+        introduction={
+            "content": "Your cat really likes wet food. What does your cat do when dinner is ready?",
+            "nodes_executed": [],
+            "mode": "chat",
+            "response_type": "bridge_activation",
+            "bridge_debug": {
+                "decision": "bridge_activation",
+                "response_type": "bridge_activation",
+                "bridge_followed": True,
+                "bridge_follow_reason": "child followed bridge",
+            },
+        },
+        introduction_critique={"exchange_index": 0},
+        key_concept=None,
+        session_resolution_debug={
+            "surface_object_name": "cat food",
+            "anchor_object_name": "cat",
+            "anchor_status": "anchored_high",
+        },
+    )
+
+    assert "#### Turn Summary" in report
+    assert "- Bridge State: `bridge_activation`" in report
+    assert "- Output Node: `bridge_activation`" in report
+    assert "- Bridge Evidence: `child followed bridge`" in report
+    assert "- Diagnostics Ref: `D0`" in report
+    assert "## Raw Diagnostics Appendix" in report
 
 
 def test_hf_report_parser_round_trips_nested_activation_debug(tmp_path):
@@ -283,6 +347,9 @@ def test_hf_report_parser_round_trips_nested_activation_debug(tmp_path):
             "response_type": "bridge_activation",
             "bridge_debug": {
                 "decision": "bridge_activation",
+                "response_type": "bridge_activation",
+                "bridge_followed": True,
+                "bridge_follow_reason": "child followed bridge",
                 "activation_transition": {
                     "before_state": {
                         "activation_handoff_ready_before": True,
@@ -325,12 +392,22 @@ def test_hf_report_parser_round_trips_nested_activation_debug(tmp_path):
             "anchor_status": "anchored_high",
         },
     )
+    assert "- Bridge State: `activation_handoff_committed`" in report
+    assert "- Output Node: `bridge_activation`" in report
+    assert "- Bridge Evidence: `child followed bridge`" in report
+    assert "- Activation Outcome: `committed_to_anchor_general`" in report
+    assert "- Diagnostics Ref: `D0`" in report
     path = tmp_path / "nested_activation.md"
     path.write_text(report, encoding="utf-8")
 
     parsed = _parse_hf_report(path)
     model_turn = next(turn for turn in parsed["transcript"] if turn["role"] == "model")
 
+    assert model_turn["bridge_state"] == "activation_handoff_committed"
+    assert model_turn["output_node"] == "bridge_activation"
+    assert model_turn["bridge_evidence"] == "child followed bridge"
+    assert model_turn["activation_outcome"] == "committed_to_anchor_general"
+    assert model_turn["diagnostics_ref"] == "D0"
     assert model_turn["critique"]["bridge_debug"]["activation_transition"]["before_state"]["activation_handoff_ready_before"] == "True"
     assert model_turn["critique"]["bridge_debug"]["activation_transition"]["question_validation"]["confidence"] == "high"
     assert model_turn["critique"]["bridge_debug"]["activation_transition"]["question_validation"]["handoff_ready_question"] == "True"
@@ -478,10 +555,15 @@ def test_hf_report_writes_turn_diagnostics_for_uncritiqued_model_turn():
         },
     )
 
-    assert "#### Turn Diagnostics" in report
-    assert "**Bridge Verdict:**" in report
-    assert "#### Raw Bridge Debug" in report
-    assert "##### Activation Transition" in report
+    assert "#### Turn Summary" in report
+    assert "- Bridge State: `bridge_activation`" in report
+    assert "- Output Node: `bridge_activation`" in report
+    assert "- Bridge Verdict: `Bridge was visible in the response.`" in report
+    assert "- Diagnostics Ref: `D0`" in report
+    body, appendix = report.split("## Raw Diagnostics Appendix", 1)
+    assert "#### Raw Bridge Debug" not in body
+    assert "#### Raw Bridge Debug" in appendix
+    assert "##### Activation Transition" in appendix
 
 
 def test_hf_report_parser_keeps_bridge_only_intro_diagnostics(tmp_path):
@@ -544,6 +626,9 @@ def test_hf_report_parser_keeps_bridge_only_intro_diagnostics(tmp_path):
     assert intro_turn["critique"] is not None
     assert intro_turn["critique"]["bridge_verdict"] is not None
     assert intro_turn["critique"]["bridge_debug"]["decision"] == "intro_bridge"
+    assert intro_turn["bridge_state"] == "intro_bridge"
+    assert intro_turn["output_node"] == "introduction"
+    assert intro_turn["diagnostics_ref"] == "D0"
 
 
 def test_hf_report_parser_puts_turn_diagnostics_on_model_turn(tmp_path):
@@ -601,6 +686,9 @@ def test_hf_report_parser_puts_turn_diagnostics_on_model_turn(tmp_path):
     assert model_turn["bridge_verdict"] is not None
     assert model_turn["bridge_debug"]["decision"] == "bridge_activation"
     assert model_turn["bridge_debug"]["activation_transition"]["question_validation"]["confidence"] == "high"
+    assert model_turn["bridge_state"] == "bridge_activation"
+    assert model_turn["output_node"] == "bridge_activation"
+    assert model_turn["diagnostics_ref"] == "D0"
     assert model_turn["critique"] is None
 
 
@@ -651,6 +739,82 @@ def test_parse_hf_report_keeps_inline_model_turn_with_diagnostics(tmp_path):
     assert model_turn["time_ms"] == 0
     assert model_turn["bridge_verdict"] == "Bridge was visible in the response."
     assert model_turn["bridge_debug"]["decision"] == "bridge_activation"
+    assert model_turn["bridge_state"] == "bridge_activation"
+    assert model_turn["output_node"] is None
+
+
+def test_hf_report_parser_reads_appendix_backed_diagnostics(tmp_path):
+    from paixueji_app import _parse_hf_report
+
+    report_text = """# Human Feedback Critique Report: cat food
+
+**Session:** sess
+**Age:** 6
+**Date:** 2026-04-16T00:00:00
+**Feedback Type:** Manual (Human)
+**Exchanges Critiqued:** 1 / 1
+
+---
+
+## Conversation Transcript
+
+**Model** `[CHAT|correct_answer]`**:** Using just their mouth helps them pick up the food.
+
+#### Turn Summary
+
+- Bridge State: `activation_handoff_committed`
+- Output Node: `correct_answer`
+- Bridge Verdict: `Bridge visibility was not evaluated for this turn.`
+- Bridge Evidence: `child followed bridge`
+- Activation Outcome: `committed_to_anchor_general`
+- Diagnostics Ref: `D0`
+
+**Child:** she just use her mouth
+
+---
+
+## Conversation Critique
+
+*No exchanges were critiqued.*
+
+## Raw Diagnostics Appendix
+
+### Diagnostics D0 — introduction
+**Exchange Index:** 0
+**Bridge State:** activation_handoff_committed
+**Output Node:** correct_answer
+**Bridge Evidence:** child followed bridge
+**Activation Outcome:** committed_to_anchor_general
+
+#### Raw Bridge Debug
+
+- decision: `bridge_activation`
+- response_type: `correct_answer`
+- bridge_phase_after: `anchor_general`
+- bridge_followed: `True`
+- bridge_follow_reason: `child followed bridge`
+
+##### Activation Transition
+
+###### Outcome
+
+- handoff_result: `committed_to_anchor_general`
+- bridge_success: `True`
+"""
+    path = tmp_path / "appendix.md"
+    path.write_text(report_text, encoding="utf-8")
+
+    parsed = _parse_hf_report(path)
+    model_turn = parsed["transcript"][0]
+
+    assert model_turn["bridge_state"] == "activation_handoff_committed"
+    assert model_turn["output_node"] == "correct_answer"
+    assert model_turn["bridge_evidence"] == "child followed bridge"
+    assert model_turn["activation_outcome"] == "committed_to_anchor_general"
+    assert model_turn["diagnostics_ref"] == "D0"
+    assert model_turn["bridge_debug"]["decision"] == "bridge_activation"
+    assert model_turn["bridge_debug"]["response_type"] == "correct_answer"
+    assert model_turn["bridge_debug"]["activation_transition"]["outcome"]["handoff_result"] == "committed_to_anchor_general"
 
 
 def test_hf_report_detail_preserves_all_model_turns_for_cat_report(client):

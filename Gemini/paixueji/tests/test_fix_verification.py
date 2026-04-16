@@ -1630,10 +1630,14 @@ def test_live_debug_panel_exposes_pre_anchor_support_fields():
         "debugPreAnchorReplyType",
         "debugSupportAction",
         "debugSupportCount",
+        "debugBridgeDecision",
         "debugBridgeFollowReason",
+        "debugBridgeVerdict",
     ]:
         assert f'id="{element_id}"' in html
 
+    assert "Bridge State:" in html
+    assert "Bridge Evidence:" in html
     assert "debugPreAnchorReplyType" in app_js
     assert "bridgeDebug.pre_anchor_reply_type" in app_js
     assert "debugSupportAction" in app_js
@@ -1642,7 +1646,9 @@ def test_live_debug_panel_exposes_pre_anchor_support_fields():
     assert "pre_anchor_support_count_before" in app_js
     assert "pre_anchor_support_count_after" in app_js
     assert "debugBridgeFollowReason" in app_js
-    assert "bridgeDebug.bridge_follow_reason" in app_js
+    assert "bridgeDebug.decision || bridgeDebug.response_type" in app_js
+    assert "bridgeDebug.bridge_followed === true" in app_js
+    assert "child followed bridge" in app_js
 
 
 @pytest.mark.asyncio
