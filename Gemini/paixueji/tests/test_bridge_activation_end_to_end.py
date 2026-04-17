@@ -1,3 +1,5 @@
+import time
+
 from tests.bridge_activation_worktree_helper import (
     ANCHOR_GENERAL_RESPONSE,
     PAWS_COVER_QUESTION,
@@ -71,3 +73,49 @@ def test_seeded_bridge_activation_pivot_then_success_commits_and_is_visible_in_t
     assert second_exchange["response_type"] == "correct_answer"
     assert second_exchange["bridge_debug"]["activation_transition"]["outcome"]["handoff_result"] == "committed_to_anchor_general"
     assert second_exchange["bridge_debug"]["activation_transition"]["outcome"]["bridge_success"] is True
+
+
+def test_bridge_handoff_correct_answer_persists_open_ended_question_style(client, monkeypatch):
+    from schema import StreamChunk
+
+    session_id = "handoff-open-ended-style"
+    seed_bridge_activation_session(session_id)
+
+    async def fake_graph_execution(initial_state):
+        yield StreamChunk(
+            response=(
+                "It sounds like she finds a cozy spot to settle down after her meal. "
+                "What does she do when she wakes up from her nap?"
+            ),
+            session_finished=False,
+            duration=0.0,
+            token_usage=None,
+            finish=True,
+            sequence_number=1,
+            timestamp=time.time(),
+            session_id=initial_state["session_id"],
+            request_id=initial_state["request_id"],
+            response_type="correct_answer",
+            current_object_name="cat",
+            surface_object_name="cat food",
+            anchor_object_name="cat",
+            learning_anchor_active=True,
+            bridge_phase="anchor_general",
+            question_style="open_ended",
+        )
+
+    monkeypatch.setattr("paixueji_app.stream_graph_execution", fake_graph_execution)
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": SUCCESS_CHILD_REPLY},
+    )
+    final_chunk = final_chunk_from_response(response)
+
+    assert final_chunk["question_style"] == "open_ended"
+
+    import paixueji_app
+
+    saved_turn = paixueji_app.sessions[session_id].conversation_history[-1]
+    assert saved_turn["response_type"] == "correct_answer"
+    assert saved_turn["question_style"] == "open_ended"

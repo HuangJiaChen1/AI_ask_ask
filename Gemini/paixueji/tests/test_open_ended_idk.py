@@ -76,6 +76,36 @@ def _build_state(assistant, messages=None):
     }
 
 
+def test_previous_question_style_falls_back_to_open_ended_question_text():
+    import graph
+
+    messages = [
+        {
+            "role": "assistant",
+            "content": "What does she do when she wakes up from her nap?",
+            "question_style": None,
+            "selected_hook_type": None,
+        }
+    ]
+
+    assert graph._previous_question_style(messages) == "open_ended"
+
+
+def test_previous_question_style_leaves_concrete_question_untyped():
+    import graph
+
+    messages = [
+        {
+            "role": "assistant",
+            "content": "What color is the bowl?",
+            "question_style": None,
+            "selected_hook_type": None,
+        }
+    ]
+
+    assert graph._previous_question_style(messages) is None
+
+
 class TestOpenEndedIdkFlow:
     @pytest.mark.asyncio
     async def test_node_generate_intro_marks_open_ended_question_style(self):
@@ -157,6 +187,96 @@ class TestOpenEndedIdkFlow:
 
         assert result["response_type"] == "give_answer_idk"
         assert result["full_response_text"] == "I think it might say blub blub hello."
+        assert mock_gen.call_args.kwargs["intent_type"] == "give_answer_open_ended_idk"
+        mock_followup.assert_not_called()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("node_name", "intent_type", "content"),
+        [
+            ("node_correct_answer", "correct_answer", "she curls up"),
+            ("node_give_answer_idk", "clarifying_idk", "I don't know"),
+            ("node_informative", "informative", "cats sleep a lot"),
+            ("node_social", "social", "are you real"),
+            ("node_social_acknowledgment", "social_acknowledgment", "wow"),
+        ],
+    )
+    async def test_followup_generating_nodes_mark_open_ended_question_style(
+        self,
+        node_name,
+        intent_type,
+        content,
+    ):
+        import graph
+
+        assistant = _make_mock_assistant()
+        state = _build_state(
+            assistant,
+            messages=[{"role": "assistant", "content": "previous question"}],
+        )
+        state["intent_type"] = intent_type
+        state["content"] = content
+
+        with patch("graph.generate_intent_response_stream", return_value=object()), patch(
+            "graph.ask_followup_question_stream",
+            return_value=object(),
+        ), patch(
+            "graph.stream_generator_to_callback",
+            new=AsyncMock(
+                side_effect=[
+                    ("stub fact", 1),
+                    ("What does she do when she wakes up from her nap?", 2),
+                ]
+            ),
+        ):
+            result = await getattr(graph, node_name)(state)
+
+        assert result["question_style"] == "open_ended"
+
+    @pytest.mark.asyncio
+    async def test_clarifying_idk_uses_open_ended_prompt_after_metadata_free_followup(self):
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=1)
+        state = _build_state(
+            assistant,
+            messages=[
+                {
+                    "role": "assistant",
+                    "content": "What does she do when she wakes up from her nap?",
+                }
+            ],
+        )
+
+        with patch("graph.generate_intent_response_stream", return_value=object()) as mock_gen, patch(
+            "graph.stream_generator_to_callback",
+            new=AsyncMock(return_value=("starter", 1)),
+        ):
+            await graph.node_clarifying_idk(state)
+
+        assert mock_gen.call_args.kwargs["intent_type"] == "clarifying_open_ended_idk"
+
+    @pytest.mark.asyncio
+    async def test_give_answer_idk_uses_open_ended_prompt_after_metadata_free_followup(self):
+        import graph
+
+        assistant = _make_mock_assistant(struggle_count=2)
+        state = _build_state(
+            assistant,
+            messages=[
+                {
+                    "role": "assistant",
+                    "content": "What does she do when she wakes up from her nap?",
+                }
+            ],
+        )
+
+        with patch("graph.generate_intent_response_stream", return_value=object()) as mock_gen, patch(
+            "graph.stream_generator_to_callback",
+            new=AsyncMock(return_value=("starter", 1)),
+        ), patch("graph.ask_followup_question_stream", return_value=object()) as mock_followup:
+            await graph.node_give_answer_idk(state)
+
         assert mock_gen.call_args.kwargs["intent_type"] == "give_answer_open_ended_idk"
         mock_followup.assert_not_called()
 

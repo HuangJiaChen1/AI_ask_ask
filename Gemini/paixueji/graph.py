@@ -1,5 +1,6 @@
 import asyncio
 import functools
+import re
 from typing import TypedDict, Annotated, List, Optional, Any
 from langgraph.graph import StateGraph, END, START
 
@@ -48,6 +49,15 @@ CONCRETE_QUESTION_HOOKS = {
     "细节发现",
     "经验、生活链接",
 }
+_OPEN_ENDED_QUESTION_PATTERNS = (
+    re.compile(r"\bwhat do you think\b"),
+    re.compile(r"\bwhat would\b"),
+    re.compile(r"\bwhat might\b"),
+    re.compile(r"\bcan you imagine\b"),
+    re.compile(r"^if\b"),
+    re.compile(r"^what does .+ do when\b"),
+    re.compile(r"^what do .+ do when\b"),
+)
 
 
 def route_from_analyze_input(state) -> str:
@@ -213,7 +223,22 @@ def _previous_question_style(messages: list[dict]) -> Optional[str]:
     if explicit_style in {"open_ended", "concrete"}:
         return explicit_style
 
-    return _question_style_for_hook_type(latest.get("selected_hook_type"))
+    hook_style = _question_style_for_hook_type(latest.get("selected_hook_type"))
+    if hook_style:
+        return hook_style
+
+    return _infer_question_style_from_text(latest.get("content"))
+
+
+def _infer_question_style_from_text(text: Optional[str]) -> Optional[str]:
+    question = (text or "").strip().lower()
+    if not question.endswith("?"):
+        return None
+
+    if any(pattern.search(question) for pattern in _OPEN_ENDED_QUESTION_PATTERNS):
+        return "open_ended"
+
+    return None
 
 
 def trace_node(func):
@@ -966,6 +991,7 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
         resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
+    followup_question_style = _infer_question_style_from_text(full_text_question)
 
     logger.info(f"[{state['session_id']}] Node: Give Answer IDK finished in {time.time() - start_time:.3f}s")
     return {
@@ -973,7 +999,7 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
         "full_response_text": full_text_intent + " " + full_text_question,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
-        "question_style": None,
+        "question_style": followup_question_style,
         "used_kb_item": state.get("used_kb_item"),
         "kb_mapping_status": state.get("kb_mapping_status"),
     }
@@ -1105,6 +1131,7 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
         surface_object_name=_surface_object_name_for_state(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
+    followup_question_style = _infer_question_style_from_text(full_text_question)
 
     logger.info(f"[{state['session_id']}] Node: Correct Answer finished in {time.time() - start_time:.3f}s")
     return {
@@ -1112,6 +1139,7 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
         "full_response_text": full_text_intent + " " + full_text_question,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "question_style": followup_question_style,
         "correct_answer_count": state["assistant"].correct_answer_count,
         "used_kb_item": state.get("used_kb_item"),
         "kb_mapping_status": state.get("kb_mapping_status"),
@@ -1160,6 +1188,7 @@ async def node_informative(state: PaixuejiState) -> dict:
         resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
+    followup_question_style = _infer_question_style_from_text(full_text_question)
 
     logger.info(f"[{state['session_id']}] Node: Informative finished in {time.time() - start_time:.3f}s")
     return {
@@ -1167,6 +1196,7 @@ async def node_informative(state: PaixuejiState) -> dict:
         "full_response_text": full_text_intent + " " + full_text_question,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "question_style": followup_question_style,
         "used_kb_item": state.get("used_kb_item"),
         "kb_mapping_status": state.get("kb_mapping_status"),
     }
@@ -1420,6 +1450,7 @@ async def node_social(state: PaixuejiState) -> dict:
         resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
+    followup_question_style = _infer_question_style_from_text(full_text_question)
 
     logger.info(f"[{state['session_id']}] Node: Social finished in {time.time() - start_time:.3f}s")
     return {
@@ -1427,6 +1458,7 @@ async def node_social(state: PaixuejiState) -> dict:
         "full_response_text": full_text_intent + " " + full_text_question,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "question_style": followup_question_style,
         "used_kb_item": state.get("used_kb_item"),
         "kb_mapping_status": state.get("kb_mapping_status"),
     }
@@ -1473,6 +1505,7 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
         resolution_guardrails=_resolution_guardrails_for_state(state),
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
+    followup_question_style = _infer_question_style_from_text(full_text_question)
 
     logger.info(f"[{state['session_id']}] Node: Social Acknowledgment finished in {time.time() - start_time:.3f}s")
     return {
@@ -1480,6 +1513,7 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
         "full_response_text": full_text_intent + " " + full_text_question,
         "sequence_number": new_seq,
         "ttft": state.get("ttft"),
+        "question_style": followup_question_style,
         "used_kb_item": state.get("used_kb_item"),
         "kb_mapping_status": state.get("kb_mapping_status"),
     }
