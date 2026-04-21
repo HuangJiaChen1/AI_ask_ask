@@ -119,7 +119,7 @@ async def generate_intent_response_stream(
 
     except Exception as e:
         duration = time.time() - start_time
-        logger.error(f"generate_intent_response_stream error | intent={intent_lower}, error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        logger.error("generate_intent_response_stream error | intent={} error={} duration={:.3f}s", intent_lower, str(e), duration, exc_info=True)
         raise_if_rate_limited(e)
         if full_response:
             yield ("", token_usage, full_response)
@@ -271,7 +271,7 @@ async def generate_attribute_activation_response_stream(
                 full_response += chunk.text
                 yield (chunk.text, None, full_response)
     except Exception as e:
-        logger.error(f"generate_attribute_activation_response_stream error | error={str(e)}", exc_info=True)
+        logger.error("generate_attribute_activation_response_stream error | error={}", str(e), exc_info=True)
         raise_if_rate_limited(e)
         if full_response:
             yield ("", token_usage, full_response)
@@ -348,7 +348,7 @@ async def generate_topic_switch_response_stream(
 
     except Exception as e:
         duration = time.time() - start_time
-        logger.error(f"generate_topic_switch_response_stream error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        logger.error("generate_topic_switch_response_stream error | error={} duration={:.3f}s", str(e), duration, exc_info=True)
         raise_if_rate_limited(e)
         if full_response:
             yield ("", token_usage, full_response)

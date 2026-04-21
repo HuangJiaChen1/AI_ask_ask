@@ -154,7 +154,7 @@ async def ask_introduction_question_stream(
 
     except Exception as e:
         duration = time.time() - start_time
-        logger.error(f"answer_question_stream LLM error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        logger.error("answer_question_stream LLM error | error={} duration={:.3f}s", str(e), duration, exc_info=True)
         raise_if_rate_limited(e)
         # Still yield what we have so far (even if incomplete)
         if full_response:
@@ -258,7 +258,7 @@ async def ask_followup_question_stream(
                 yield (chunk.text, None, full_response)
     except Exception as e:
         duration = time.time() - start_time
-        logger.error(f"ask_followup_question_stream LLM error | error={str(e)}, duration={duration:.3f}s", exc_info=True)
+        logger.error("ask_followup_question_stream LLM error | error={} duration={:.3f}s", str(e), duration, exc_info=True)
         raise_if_rate_limited(e)
         if full_response:
             yield ("", token_usage, full_response)
@@ -330,7 +330,7 @@ async def ask_attribute_intro_stream(
                 full_response += chunk.text
                 yield (chunk.text, None, full_response, decision_info)
     except Exception as e:
-        logger.error(f"ask_attribute_intro_stream error | error={str(e)}", exc_info=True)
+        logger.error("ask_attribute_intro_stream error | error={}", str(e), exc_info=True)
         raise_if_rate_limited(e)
         if full_response:
             yield ("", token_usage, full_response, {})

@@ -69,7 +69,7 @@ Scoring guidance:
 
 def evaluate_transcript(client: genai.Client, config: dict, scenario: dict, transcript: list[dict]) -> dict:
     response = client.models.generate_content(
-        model=config["model_name"],
+        model=config.get("live_eval_model", config["model_name"]),
         contents=build_evaluator_prompt(scenario, transcript),
         config={"temperature": 0.0, "max_output_tokens": 400},
     )
@@ -92,6 +92,7 @@ def run_scenario(flask_client, scenario: dict) -> dict:
             "age": scenario["age"],
             "object_name": scenario["object_name"],
             "attribute_pipeline_enabled": True,
+            "model_name_override": scenario["model_name"],
         },
     )
     start_events = parse_sse(start_response.data)
@@ -105,6 +106,7 @@ def run_scenario(flask_client, scenario: dict) -> dict:
     })
 
     for child_turn in scenario["child_turns"]:
+        time.sleep(scenario.get("turn_delay_seconds", 0))
         transcript.append({"role": "child", "text": child_turn})
         continue_response = flask_client.post(
             "/api/continue",
@@ -139,12 +141,10 @@ def assert_evaluator_pass(evaluation: dict):
 
 
 def main():
-    if not os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
-        print("GOOGLE_APPLICATION_CREDENTIALS is not set; live Gemini run cannot start.", file=sys.stderr)
-        return 2
-
     config_path = REPO_ROOT / "config.json"
     config = json.loads(config_path.read_text(encoding="utf-8"))
+    live_model = os.environ.get("ATTRIBUTE_ACTIVITY_REAL_MODEL", "gemini-2.0-flash-lite")
+    config["live_eval_model"] = live_model
     evaluator_client = genai.Client(
         vertexai=True,
         project=config["project"],
@@ -159,7 +159,9 @@ def main():
             "id": "in_kb_same_attribute_drift",
             "age": 6,
             "object_name": "apple",
+            "model_name": live_model,
             "expected_attribute": "surface_shiny_smooth",
+            "turn_delay_seconds": 3,
             "child_turns": [
                 "It is shiny and smooth.",
                 "My spoon is shiny too.",
@@ -170,7 +172,9 @@ def main():
             "id": "unresolved_not_in_kb_attribute_lane",
             "age": 6,
             "object_name": "spaceship fuel",
+            "model_name": live_model,
             "expected_attribute": "sparkle_glow",
+            "turn_delay_seconds": 3,
             "child_turns": [
                 "It glows blue.",
                 "A flashlight glows too.",
