@@ -341,6 +341,24 @@ Rules:
 - If you mention the object, mean only the literal named item in front of the child.
 """
 
+ATTRIBUTE_SELECTION_PROMPT = """Choose one supported activity attribute for a child chat.
+
+OBJECT: {object_name}
+CHILD AGE: {age}
+
+SUPPORTED ATTRIBUTES:
+{supported_attributes}
+
+Return JSON only:
+{{
+  "attribute_id": "one supported attribute id, or null",
+  "confidence": "high|medium|low|none",
+  "reason": "short reason"
+}}
+
+Choose the attribute that can be discussed naturally from the object name without needing a KB anchor.
+"""
+
 ANCHOR_BRIDGE_RETRY_PROMPT = """You are replying to a child who is still talking about: {surface_object_name}
 
 AGE GUIDANCE: {age_prompt}
@@ -1698,6 +1716,7 @@ def get_prompts():
         'bridge_follow_classifier_prompt': BRIDGE_FOLLOW_CLASSIFIER_PROMPT,
         'bridge_activation_kb_question_validator_prompt': BRIDGE_ACTIVATION_KB_QUESTION_VALIDATOR_PROMPT,
         'bridge_activation_answer_validator_prompt': BRIDGE_ACTIVATION_ANSWER_VALIDATOR_PROMPT,
+        'attribute_selection_prompt': ATTRIBUTE_SELECTION_PROMPT,
         'object_resolution_prompt': OBJECT_RESOLUTION_PROMPT,
         'relation_repair_prompt': RELATION_REPAIR_PROMPT,
         'bridge_profile_prompt': BRIDGE_PROFILE_PROMPT,

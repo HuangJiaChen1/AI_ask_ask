@@ -1,10 +1,13 @@
 import pytest
+from unittest.mock import AsyncMock, MagicMock
 
 from attribute_activity import (
     AttributeProfile,
     AttributeSessionState,
     build_attribute_debug,
+    classify_attribute_reply,
     find_mock_attribute_profile,
+    select_attribute_profile,
     start_attribute_session,
 )
 
@@ -63,3 +66,75 @@ def test_build_attribute_debug_includes_profile_state_and_reason():
     assert debug["profile"]["attribute_id"] == "surface_shiny_smooth"
     assert debug["state"]["profile"]["label"] == "shiny smooth skin"
     assert debug["reason"] == "selected by test"
+
+
+@pytest.mark.asyncio
+async def test_select_attribute_profile_uses_gemini_json_choice():
+    client = MagicMock()
+    client.aio.models.generate_content = AsyncMock()
+    response = MagicMock()
+    response.text = '{"attribute_id":"strong_smell","confidence":"high","reason":"smell is salient"}'
+    client.aio.models.generate_content.return_value = response
+
+    profile, debug = await select_attribute_profile(
+        object_name="cat food",
+        age=6,
+        client=client,
+        config={"model_name": "gemini-test"},
+    )
+
+    assert profile.attribute_id == "strong_smell"
+    assert debug["decision"] == "attribute_selected"
+    assert debug["source"] == "gemini"
+    assert debug["confidence"] == "high"
+    client.aio.models.generate_content.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_select_attribute_profile_falls_back_to_mock_profile_on_invalid_json():
+    client = MagicMock()
+    client.aio.models.generate_content = AsyncMock()
+    response = MagicMock()
+    response.text = "not json"
+    client.aio.models.generate_content.return_value = response
+
+    profile, debug = await select_attribute_profile(
+        object_name="apple",
+        age=6,
+        client=client,
+        config={"model_name": "gemini-test"},
+    )
+
+    assert profile.attribute_id == "surface_shiny_smooth"
+    assert debug["decision"] == "attribute_selected"
+    assert debug["source"] == "mock_fallback"
+    assert "invalid" in debug["reason"]
+
+
+@pytest.mark.parametrize(
+    ("child_reply", "reply_type", "counted_turn", "activity_ready"),
+    [
+        ("I don't know", "uncertainty", False, False),
+        ("The apple is crunchy too", "same_object_feature_drift", True, False),
+        ("My spoon is shiny too", "new_object_same_attribute_drift", True, False),
+        ("Why is it shiny?", "curiosity", True, False),
+        ("I can't smell it", "constraint_avoidance", False, False),
+        ("Let's play a shiny game", "activity_ready", True, True),
+        ("It feels smooth", "aligned", True, False),
+    ],
+)
+def test_classify_attribute_reply_preserves_selected_attribute(
+    child_reply,
+    reply_type,
+    counted_turn,
+    activity_ready,
+):
+    profile = find_mock_attribute_profile("apple")
+    state = start_attribute_session(object_name="apple", profile=profile, age=6)
+
+    decision = classify_attribute_reply(state, child_reply)
+
+    assert decision.reply_type == reply_type
+    assert decision.attribute_id == profile.attribute_id
+    assert decision.counted_turn is counted_turn
+    assert decision.activity_ready is activity_ready
