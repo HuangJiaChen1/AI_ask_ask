@@ -87,6 +87,12 @@ class PaixuejiAssistant:
         self.activation_last_question_validation_confidence = None
         self.activation_last_question_validation_reason = None
         self.activation_last_question_continuity_anchor = None
+        self.attribute_pipeline_enabled = False
+        self.attribute_lane_active = False
+        self.attribute_state = None
+        self.attribute_profile = None
+        self.last_attribute_debug = None
+        self.attribute_activity_ready = False
 
         # IB PYP Theme Classification fields
         self.ibpyp_theme = None  # Theme ID (e.g., "Category_Nature_And_Physics")
@@ -282,6 +288,34 @@ class PaixuejiAssistant:
 
     def set_last_bridge_debug(self, debug_dict):
         self.last_bridge_debug = debug_dict
+
+    def start_attribute_lane(self, attribute_state, attribute_profile):
+        self.attribute_pipeline_enabled = True
+        self.attribute_lane_active = True
+        self.attribute_state = attribute_state
+        self.attribute_profile = attribute_profile
+        self.attribute_activity_ready = False
+        self.last_attribute_debug = None
+
+    def clear_attribute_lane(self):
+        self.attribute_lane_active = False
+        self.attribute_state = None
+        self.attribute_profile = None
+        self.attribute_activity_ready = False
+
+    def set_last_attribute_debug(self, debug_dict):
+        self.last_attribute_debug = debug_dict
+
+    def attribute_activity_target(self):
+        if not self.attribute_profile:
+            return None
+        return {
+            "activity_source": "attribute",
+            "attribute_id": self.attribute_profile.attribute_id,
+            "attribute_label": self.attribute_profile.label,
+            "activity_target": self.attribute_profile.activity_target,
+            "redirect_entity": self.attribute_profile.redirect_entity,
+        }
 
     def _load_config(self, config_path):
         """Load configuration from JSON file."""

@@ -45,7 +45,9 @@ from kb_context import (
 from pre_anchor_policy import classify_pre_anchor_reply
 from resolution_debug import format_resolution_log_line
 from stream import (
+    ask_attribute_intro_stream,
     classify_pre_anchor_semantic_reply,
+    generate_attribute_activation_response_stream,
     generate_bridge_activation_response_stream,
     generate_bridge_retry_response_stream,
     generate_bridge_support_response_stream,
@@ -56,6 +58,12 @@ from stream.errors import build_sse_error_payload
 from stream.validation import (
     validate_bridge_activation_answer,
     validate_bridge_activation_kb_question,
+)
+from attribute_activity import (
+    build_attribute_debug,
+    classify_attribute_reply,
+    select_attribute_profile,
+    start_attribute_session,
 )
 
 classify_bridge_follow = classify_pre_anchor_semantic_reply
@@ -177,6 +185,11 @@ def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
         "pre_anchor_support_count": assistant.pre_anchor_support_count,
         "activation_turn_count": getattr(assistant, "activation_turn_count", 0),
         "activation_handoff_ready": getattr(assistant, "activation_handoff_ready", False),
+        "attribute_pipeline_enabled": getattr(assistant, "attribute_pipeline_enabled", False),
+        "attribute_lane_active": getattr(assistant, "attribute_lane_active", False),
+        "attribute_debug": getattr(assistant, "last_attribute_debug", None),
+        "activity_ready": getattr(assistant, "attribute_activity_ready", False),
+        "activity_target": assistant.attribute_activity_target() if hasattr(assistant, "attribute_activity_target") else None,
         "resolution_debug": assistant.session_resolution_debug,
     }
 
@@ -562,6 +575,7 @@ def start_conversation():
     object_name = data.get('object_name')
     model_name_override = data.get('model_name_override')
     grounding_model_override = data.get('grounding_model_override')
+    attribute_pipeline_enabled = bool(data.get('attribute_pipeline_enabled', False))
     # Validate required fields
     if not object_name:
         return jsonify({
@@ -595,6 +609,46 @@ def start_conversation():
         config=assistant.config,
     )
     assistant.apply_resolution(resolution)
+    assistant.attribute_pipeline_enabled = attribute_pipeline_enabled
+    if attribute_pipeline_enabled:
+        try:
+            future = asyncio.run_coroutine_threadsafe(
+                select_attribute_profile(
+                    object_name=object_name,
+                    age=age or 6,
+                    client=assistant.client,
+                    config=assistant.config,
+                ),
+                _ASYNC_LOOP,
+            )
+            attribute_profile, selection_debug = future.result(timeout=10)
+        except Exception as exc:
+            attribute_profile = None
+            selection_debug = {
+                "decision": "no_attribute_match_fallback",
+                "source": "exception",
+                "reason": str(exc),
+            }
+
+        if attribute_profile:
+            attribute_state = start_attribute_session(
+                object_name=object_name,
+                profile=attribute_profile,
+                age=age or 6,
+            )
+            assistant.start_attribute_lane(attribute_state, attribute_profile)
+            assistant.set_last_attribute_debug(
+                build_attribute_debug(
+                    decision="attribute_lane_started",
+                    profile=attribute_profile,
+                    state=attribute_state,
+                    reason=selection_debug.get("reason"),
+                )
+            )
+        else:
+            assistant.clear_attribute_lane()
+            assistant.attribute_pipeline_enabled = True
+            assistant.set_last_attribute_debug(selection_debug)
     logger.info(
         f"[RESOLUTION] {format_resolution_log_line(session_id=session_id, request_id='start', resolution_debug=assistant.session_resolution_debug)}"
     )
@@ -651,6 +705,78 @@ def start_conversation():
 
             try:
                 async def stream_introduction():
+                    if assistant.attribute_lane_active and assistant.attribute_state:
+                        messages = prepare_messages_for_streaming(
+                            assistant.conversation_history.copy(),
+                            age_prompt,
+                        )
+                        generator = ask_attribute_intro_stream(
+                            messages=messages,
+                            object_name=assistant.attribute_state.object_name,
+                            attribute_label=assistant.attribute_state.profile.label,
+                            activity_target=assistant.attribute_state.profile.activity_target,
+                            attribute_branch=assistant.attribute_state.profile.branch,
+                            age_prompt=age_prompt,
+                            age=age or 6,
+                            config=assistant.config,
+                            client=assistant.client,
+                        )
+                        sequence_number = 0
+                        full_response = ""
+                        async for text_chunk, token_usage, full_so_far, _decision_info in generator:
+                            full_response = full_so_far
+                            if not text_chunk:
+                                continue
+                            sequence_number += 1
+                            yield sse_event("chunk", StreamChunk(
+                                response=text_chunk,
+                                session_finished=False,
+                                duration=0.0,
+                                token_usage=token_usage,
+                                finish=False,
+                                sequence_number=sequence_number,
+                                timestamp=time.time(),
+                                session_id=session_id,
+                                request_id=request_id,
+                                response_type="attribute_intro",
+                                correct_answer_count=assistant.correct_answer_count,
+                                **_assistant_stream_fields(assistant),
+                            ))
+
+                        attribute_debug = build_attribute_debug(
+                            decision="attribute_intro",
+                            profile=assistant.attribute_profile,
+                            state=assistant.attribute_state,
+                            reason="intro generated",
+                            response_text=full_response,
+                        )
+                        assistant.set_last_attribute_debug(attribute_debug)
+                        assistant.conversation_history.append({
+                            "role": "assistant",
+                            "content": full_response,
+                            "nodes_executed": [],
+                            "mode": "chat",
+                            "response_type": "attribute_intro",
+                            "attribute_debug": attribute_debug,
+                            "resolution_debug": assistant.session_resolution_debug,
+                        })
+                        sequence_number += 1
+                        yield sse_event("chunk", StreamChunk(
+                            response=full_response,
+                            session_finished=False,
+                            duration=0.0,
+                            token_usage=None,
+                            finish=True,
+                            sequence_number=sequence_number,
+                            timestamp=time.time(),
+                            session_id=session_id,
+                            request_id=request_id,
+                            response_type="attribute_intro",
+                            correct_answer_count=assistant.correct_answer_count,
+                            **_assistant_stream_fields(assistant),
+                        ))
+                        return
+
                     # Construct Initial State for Graph
                     initial_state = {
                         "age": age,
@@ -740,6 +866,12 @@ def start_conversation():
                         # Yield StreamChunk as SSE event (pass directly for optimized serialization)
                         # Update conversation history with final response
                         chunk = _apply_activation_stream_fields(chunk, initial_state)
+                        attribute_update = {
+                            key: value
+                            for key, value in _assistant_stream_fields(assistant).items()
+                            if key.startswith("attribute_") or key in {"activity_ready", "activity_target"}
+                        }
+                        chunk = chunk.model_copy(update=attribute_update)
                         if chunk.finish:
                             if chunk.bridge_debug:
                                 assistant.set_last_bridge_debug(chunk.bridge_debug.model_dump())
@@ -857,6 +989,104 @@ def continue_conversation():
             loop = _ASYNC_LOOP
 
             try:
+                if assistant.attribute_lane_active and assistant.attribute_state:
+                    decision = classify_attribute_reply(assistant.attribute_state, child_input)
+                    if decision.counted_turn:
+                        assistant.attribute_state.turn_count += 1
+                    if decision.activity_ready:
+                        assistant.attribute_state.activity_ready = True
+                        assistant.attribute_activity_ready = True
+
+                    async def stream_attribute_activity():
+                        messages = prepare_messages_for_streaming(
+                            assistant.conversation_history.copy(),
+                            age_prompt,
+                        )
+                        generator = generate_attribute_activation_response_stream(
+                            messages=messages,
+                            object_name=assistant.attribute_state.object_name,
+                            attribute_label=assistant.attribute_state.profile.label,
+                            activity_target=assistant.attribute_state.profile.activity_target,
+                            child_answer=child_input,
+                            reply_type=decision.reply_type,
+                            state_action=decision.state_action,
+                            age=assistant.age or 6,
+                            age_prompt=age_prompt,
+                            config=assistant.config,
+                            client=assistant.client,
+                        )
+
+                        sequence_number = 0
+                        full_response = ""
+                        async for text_chunk, token_usage, full_so_far in generator:
+                            full_response = full_so_far
+                            if not text_chunk:
+                                continue
+                            partial_debug = build_attribute_debug(
+                                decision="attribute_activity",
+                                profile=assistant.attribute_profile,
+                                state=assistant.attribute_state,
+                                reason=decision.reason,
+                                reply=decision,
+                            )
+                            assistant.set_last_attribute_debug(partial_debug)
+                            sequence_number += 1
+                            yield sse_event("chunk", StreamChunk(
+                                response=text_chunk,
+                                session_finished=False,
+                                duration=0.0,
+                                token_usage=token_usage,
+                                finish=False,
+                                sequence_number=sequence_number,
+                                timestamp=time.time(),
+                                session_id=session_id,
+                                request_id=request_id,
+                                response_type="attribute_activity",
+                                correct_answer_count=assistant.correct_answer_count,
+                                chat_phase_complete=assistant.attribute_activity_ready or None,
+                                **_assistant_stream_fields(assistant),
+                            ))
+
+                        attribute_debug = build_attribute_debug(
+                            decision="attribute_activity",
+                            profile=assistant.attribute_profile,
+                            state=assistant.attribute_state,
+                            reason=decision.reason,
+                            reply=decision,
+                            response_text=full_response,
+                        )
+                        assistant.set_last_attribute_debug(attribute_debug)
+                        assistant.conversation_history.append({"role": "user", "content": child_input})
+                        assistant.conversation_history.append({
+                            "role": "assistant",
+                            "content": full_response,
+                            "mode": "chat",
+                            "response_type": "attribute_activity",
+                            "attribute_debug": attribute_debug,
+                        })
+                        sequence_number += 1
+                        yield sse_event("chunk", StreamChunk(
+                            response=full_response,
+                            session_finished=False,
+                            duration=0.0,
+                            token_usage=None,
+                            finish=True,
+                            sequence_number=sequence_number,
+                            timestamp=time.time(),
+                            session_id=session_id,
+                            request_id=request_id,
+                            response_type="attribute_activity",
+                            correct_answer_count=assistant.correct_answer_count,
+                            chat_phase_complete=assistant.attribute_activity_ready or None,
+                            **_assistant_stream_fields(assistant),
+                        ))
+                        yield sse_event("complete", {"success": True})
+
+                    gen = stream_attribute_activity()
+                    for event in async_gen_to_sync(gen, loop):
+                        yield event
+                    return
+
                 if (
                     assistant.bridge_phase == "none"
                     and not assistant.learning_anchor_active

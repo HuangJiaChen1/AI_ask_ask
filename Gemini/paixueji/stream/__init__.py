@@ -32,6 +32,7 @@ from .response_generators import (
     generate_bridge_activation_response_stream,
     generate_bridge_retry_response_stream,
     generate_bridge_support_response_stream,
+    generate_attribute_activation_response_stream,
     generate_topic_switch_response_stream,
 )
 
@@ -39,6 +40,7 @@ from .response_generators import (
 from .question_generators import (
     ask_introduction_question_stream,
     ask_followup_question_stream,
+    ask_attribute_intro_stream,
 )
 
 # Intent classification (replaces decide_topic_switch_with_validation)
@@ -69,11 +71,13 @@ __all__ = [
     'generate_bridge_activation_response_stream',
     'generate_bridge_retry_response_stream',
     'generate_bridge_support_response_stream',
+    'generate_attribute_activation_response_stream',
     'generate_topic_switch_response_stream',
 
     # Question generators (intro path + followup)
     'ask_introduction_question_stream',
     'ask_followup_question_stream',
+    'ask_attribute_intro_stream',
 
     # Intent classification
     'classify_pre_anchor_semantic_reply',

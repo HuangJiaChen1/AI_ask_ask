@@ -239,6 +239,11 @@ class StreamChunk(BaseModel):
     activation_child_reply_type: str | None = None
     counted_turn: bool | None = None
     counted_turn_reason: str | None = None
+    attribute_pipeline_enabled: bool = False
+    attribute_lane_active: bool = False
+    attribute_debug: dict | None = None
+    activity_ready: bool = False
+    activity_target: dict | None = None
 
     # Node execution tracing (for critique reports)
     nodes_executed: list[dict] | None = None  # Passed through final chunk

@@ -359,6 +359,61 @@ Return JSON only:
 Choose the attribute that can be discussed naturally from the object name without needing a KB anchor.
 """
 
+ATTRIBUTE_INTRO_PROMPT = """You are starting an attribute-focused conversation with a child about: {object_name}
+
+AGE GUIDANCE: {age_prompt}
+SELECTED ATTRIBUTE: {attribute_label}
+ACTIVITY TARGET: {activity_target}
+ATTRIBUTE BRANCH: {attribute_branch}
+
+TASK - Write ONE short opening that directly starts this attribute lane.
+
+STRUCTURE: Emotional Opening -> Object Confirmation -> Feature Description -> Engagement Hook
+
+BEAT 1 - EMOTIONAL OPENING
+Lead with a warm, natural opening like "Whoa!" or "Oh, nice!"
+
+BEAT 2 - OBJECT CONFIRMATION
+Name the child's object clearly: {object_name}
+
+BEAT 3 - FEATURE DESCRIPTION
+Describe this selected attribute in child-friendly sensory words: {attribute_label}
+Do not drift to a different feature.
+
+BEAT 4 - ENGAGEMENT HOOK
+End with exactly one easy question that lets the child notice, compare, pretend, or react through the selected attribute.
+
+Rules:
+- Keep the selected attribute coherent.
+- Do not require a supported anchor object.
+- Do not mention databases, pipelines, or modes.
+- Do not ask a knowledge-testing question.
+- Respond naturally, not as JSON.
+"""
+
+ATTRIBUTE_CONTINUE_PROMPT = """You are continuing an attribute-focused lane.
+
+AGE GUIDANCE: {age_prompt}
+OBJECT: {object_name}
+SELECTED ATTRIBUTE: {attribute_label}
+ACTIVITY TARGET: {activity_target}
+CHILD REPLY: {child_answer}
+REPLY TYPE: {reply_type}
+STATE ACTION: {state_action}
+
+YOUR JOB:
+- Acknowledge the child's actual reply first.
+- Keep the selected attribute coherent: {attribute_label}.
+- If the child is unsure, give one small sensory clue and keep pressure low.
+- If the child drifts to another feature of the same object, accept it briefly and return to the selected attribute.
+- If the child names another object with the same attribute, accept the comparison and stay with the attribute.
+- If the child asks a curiosity question, answer briefly and reconnect to the attribute.
+- If the child states a constraint or avoidance, respect it and offer an easy pretend or no-pressure alternative.
+- If the child is activity-ready, naturally hand off toward: {activity_target}.
+- Ask at most one short follow-up question unless handing off to the activity.
+- Respond naturally, not as JSON.
+"""
+
 ANCHOR_BRIDGE_RETRY_PROMPT = """You are replying to a child who is still talking about: {surface_object_name}
 
 AGE GUIDANCE: {age_prompt}
@@ -1717,6 +1772,8 @@ def get_prompts():
         'bridge_activation_kb_question_validator_prompt': BRIDGE_ACTIVATION_KB_QUESTION_VALIDATOR_PROMPT,
         'bridge_activation_answer_validator_prompt': BRIDGE_ACTIVATION_ANSWER_VALIDATOR_PROMPT,
         'attribute_selection_prompt': ATTRIBUTE_SELECTION_PROMPT,
+        'attribute_intro_prompt': ATTRIBUTE_INTRO_PROMPT,
+        'attribute_continue_prompt': ATTRIBUTE_CONTINUE_PROMPT,
         'object_resolution_prompt': OBJECT_RESOLUTION_PROMPT,
         'relation_repair_prompt': RELATION_REPAIR_PROMPT,
         'bridge_profile_prompt': BRIDGE_PROFILE_PROMPT,
