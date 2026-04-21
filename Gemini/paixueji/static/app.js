@@ -44,6 +44,7 @@ let currentClassificationFailureReason = null;
 let currentUsedKbItem = null;
 let currentKbMappingStatus = null;
 let currentBridgeDebug = null;
+let currentAttributeActivityTarget = null;
 
 const INTENT_METADATA = {
     ACTION: {
@@ -535,6 +536,7 @@ function displayChunk(element, text) {
 async function startConversation() {
     const age = parseInt(document.getElementById('age').value);
     const objectName = document.getElementById('objectName').value.trim();
+    const attributePipelineEnabled = !!document.getElementById('attributePipelineEnabled')?.checked;
     // Save state for debug panel
     currentObject = objectName;
 
@@ -564,6 +566,7 @@ async function startConversation() {
     currentKbMappingStatus = null;
     currentKbMappingStatus = null;
     currentBridgeDebug = null;
+    currentAttributeActivityTarget = null;
 
     // Reset progress
     correctAnswerCount = 0;
@@ -601,7 +604,8 @@ async function startConversation() {
                 age: age,
                 object_name: objectName,
                 model_name_override: conversationModel,
-                grounding_model_override: groundingModel
+                grounding_model_override: groundingModel,
+                attribute_pipeline_enabled: attributePipelineEnabled
             }),
             signal: currentStreamController.signal
         });
@@ -994,6 +998,14 @@ function handleStreamChunk(chunk) {
         currentBridgeDebug = chunk.bridge_debug;
         updateDebugPanel();
     }
+    if (chunk.activity_target) {
+        currentAttributeActivityTarget = chunk.activity_target;
+        updateDebugPanel();
+    }
+    if (chunk.activity_ready && !currentAttributeActivityTarget) {
+        currentAttributeActivityTarget = { activity_source: 'attribute' };
+        updateDebugPanel();
+    }
 
     // Update hook type (set on introduction, persists for session)
     if (chunk.selected_hook_type) {
@@ -1002,7 +1014,7 @@ function handleStreamChunk(chunk) {
     }
 
     // Chat phase complete: only trigger after the final response chunk lands
-    if (chunk.finish && chunk.chat_phase_complete) {
+    if (chunk.finish && (chunk.chat_phase_complete || chunk.activity_ready)) {
         conversationComplete = true;
         showChatPhaseCompleteModal();
     }
@@ -1187,6 +1199,10 @@ function isCurrentObjectGameEligible() {
     return !!currentObject && gameEntityNames.has(currentObject.toLowerCase());
 }
 
+function hasAttributeActivityReady() {
+    return !!currentAttributeActivityTarget && currentAttributeActivityTarget.activity_source === 'attribute';
+}
+
 function setChatPhaseCompleteModalVisible(visible) {
     const modal = document.getElementById('chatPhaseCompleteModal');
     if (modal) modal.style.display = visible ? 'flex' : 'none';
@@ -1204,7 +1220,7 @@ function disableCompletedChatInput() {
 
 /**
  * Show the "chat phase complete" modal once the correct-answer threshold is reached.
- * For game-eligible entities the button becomes "Let's Play!" and triggers handoff.
+ * For game-eligible entities or attribute-bound activities the button starts handoff.
  */
 function showChatPhaseCompleteModal() {
     setActivitiesMiniLauncherVisible(false);
@@ -1212,7 +1228,7 @@ function showChatPhaseCompleteModal() {
 
     const btn = document.getElementById('chatCompletePrimaryBtn');
     if (!btn) return;
-    if (isCurrentObjectGameEligible()) {
+    if (isCurrentObjectGameEligible() || hasAttributeActivityReady()) {
         btn.textContent = "Let's Play!";
         btn.onclick = handoff;
     } else {
@@ -1229,7 +1245,7 @@ function closeChatPhaseCompleteModal() {
 
 function minimizeChatPhaseCompleteModal() {
     setChatPhaseCompleteModalVisible(false);
-    if (isCurrentObjectGameEligible()) {
+    if (isCurrentObjectGameEligible() || hasAttributeActivityReady()) {
         setActivitiesMiniLauncherVisible(true);
     } else {
         setActivitiesMiniLauncherVisible(false);

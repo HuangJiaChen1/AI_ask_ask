@@ -2769,6 +2769,7 @@ def get_exchanges(session_id):
             entry["mode"] = msg.get("mode", "chat")
             entry["response_type"] = msg.get("response_type")
             entry["bridge_debug"] = msg.get("bridge_debug")
+            entry["attribute_debug"] = msg.get("attribute_debug")
             entry["resolution_debug"] = msg.get("resolution_debug")
             entry["classification_status"] = msg.get("classification_status")
             entry["classification_failure_reason"] = msg.get("classification_failure_reason")
@@ -2786,6 +2787,7 @@ def get_exchanges(session_id):
                 "mode": transcript[i].get("mode", "chat"),
                 "response_type": transcript[i].get("response_type"),
                 "bridge_debug": transcript[i].get("bridge_debug"),
+                "attribute_debug": transcript[i].get("attribute_debug"),
                 "resolution_debug": transcript[i].get("resolution_debug"),
                 "classification_status": transcript[i].get("classification_status"),
                 "classification_failure_reason": transcript[i].get("classification_failure_reason"),
@@ -2822,6 +2824,7 @@ def get_exchanges(session_id):
                 "mode": transcript[i + 1].get("mode", "chat"),
                 "response_type": transcript[i + 1].get("response_type"),
                 "bridge_debug": transcript[i + 1].get("bridge_debug"),
+                "attribute_debug": transcript[i + 1].get("attribute_debug"),
                 "resolution_debug": transcript[i + 1].get("resolution_debug"),
                 "intent_type": intent_type,
                 "classification_status": transcript[i + 1].get("classification_status"),
@@ -2924,6 +2927,7 @@ def manual_critique():
             entry["mode"] = msg.get("mode", "chat")
             entry["response_type"] = msg.get("response_type")
             entry["bridge_debug"] = msg.get("bridge_debug")
+            entry["attribute_debug"] = msg.get("attribute_debug")
             entry["resolution_debug"] = msg.get("resolution_debug")
             entry["classification_status"] = msg.get("classification_status")
             entry["classification_failure_reason"] = msg.get("classification_failure_reason")
@@ -2941,6 +2945,7 @@ def manual_critique():
                 "mode": transcript[i].get("mode", "chat"),
                 "response_type": transcript[i].get("response_type"),
                 "bridge_debug": transcript[i].get("bridge_debug"),
+                "attribute_debug": transcript[i].get("attribute_debug"),
                 "resolution_debug": transcript[i].get("resolution_debug"),
                 "classification_status": transcript[i].get("classification_status"),
                 "classification_failure_reason": transcript[i].get("classification_failure_reason"),
@@ -2958,6 +2963,7 @@ def manual_critique():
                 "mode": transcript[i + 1].get("mode", "chat"),
                 "response_type": transcript[i + 1].get("response_type"),
                 "bridge_debug": transcript[i + 1].get("bridge_debug"),
+                "attribute_debug": transcript[i + 1].get("attribute_debug"),
                 "resolution_debug": transcript[i + 1].get("resolution_debug"),
                 "classification_status": transcript[i + 1].get("classification_status"),
                 "classification_failure_reason": transcript[i + 1].get("classification_failure_reason"),
@@ -4118,10 +4124,21 @@ def create_handoff():
         elif msg.get('role') == 'assistant' and msg.get('content'):
             conversation.append({'role': 'ai', 'text': msg['content']})
 
+    handoff_payload = conversation
+    activity_target = assistant.attribute_activity_target() if hasattr(assistant, "attribute_activity_target") else None
+    if activity_target and getattr(assistant, "attribute_activity_ready", False):
+        handoff_payload = {
+            "conversation": conversation,
+            "activity_source": "attribute",
+            "attribute_id": activity_target.get("attribute_id"),
+            "attribute_label": activity_target.get("attribute_label"),
+            "activity_target": activity_target.get("activity_target"),
+        }
+
     os.makedirs('/tmp/handoff', exist_ok=True)
     filename = uuid.uuid4().hex[:8] + '.json'
     with open(f'/tmp/handoff/{filename}', 'w', encoding='utf-8') as f:
-        json.dump(conversation, f, indent=2, ensure_ascii=False)
+        json.dump(handoff_payload, f, indent=2, ensure_ascii=False)
 
     base_dir = os.path.dirname(os.path.abspath(__file__))
     with open(os.path.join(base_dir, 'config.json'), 'r', encoding='utf-8') as f:

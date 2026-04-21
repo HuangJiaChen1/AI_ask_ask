@@ -184,6 +184,57 @@ def test_handoff_uses_tmp_handoff_route(client):
     assert old_route_response.status_code == 404
 
 
+def test_attribute_handoff_context_includes_attribute_metadata(client):
+    start_response = client.post(
+        '/api/start',
+        json={"object_name": "cat food", "age": 6, "attribute_pipeline_enabled": True},
+    )
+    events = parse_sse(start_response.data)
+    session_id = events[0]['data']['session_id']
+
+    continue_response = client.post(
+        '/api/continue',
+        json={"session_id": session_id, "child_input": "Let's play a smell game"},
+    )
+    parse_sse(continue_response.data)
+
+    handoff_response = client.post('/api/handoff', json={"session_id": session_id})
+    assert handoff_response.status_code == 200
+    handoff_data = handoff_response.get_json()
+
+    context_response = client.get(handoff_data["context_path"])
+    assert context_response.status_code == 200
+    context = context_response.get_json()
+
+    assert context["activity_source"] == "attribute"
+    assert context["attribute_id"] == "strong_smell"
+    assert context["attribute_label"] == "strong smell"
+    assert context["activity_target"] == "smell-to-reaction activity"
+    assert context["conversation"]
+
+
+def test_exchanges_endpoint_exposes_attribute_debug(client):
+    start_response = client.post(
+        '/api/start',
+        json={"object_name": "apple", "age": 6, "attribute_pipeline_enabled": True},
+    )
+    events = parse_sse(start_response.data)
+    session_id = events[0]['data']['session_id']
+
+    continue_response = client.post(
+        '/api/continue',
+        json={"session_id": session_id, "child_input": "My spoon is shiny too"},
+    )
+    parse_sse(continue_response.data)
+
+    response = client.get(f'/api/exchanges/{session_id}')
+    assert response.status_code == 200
+    data = response.get_json()
+
+    assert data["introduction"]["attribute_debug"]["profile"]["attribute_id"] == "surface_shiny_smooth"
+    assert data["exchanges"][0]["attribute_debug"]["reply"]["reply_type"] == "new_object_same_attribute_drift"
+
+
 def test_exchanges_endpoint_exposes_bridge_debug_for_intro_and_turns(client, monkeypatch):
     from object_resolver import ObjectResolutionResult
     from unittest.mock import AsyncMock

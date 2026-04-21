@@ -1468,3 +1468,19 @@ body {
     background: #0f172a;
     margin: 0;
 }
+.attribute-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0;
+    color: #334155;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.attribute-toggle input {
+    width: 18px;
+    height: 18px;
+    accent-color: #10b981;
+    cursor: pointer;
+}

@@ -71,7 +71,7 @@ def test_chat_complete_keeps_input_disabled_after_stream_finally():
     app_js = APP_JS.read_text(encoding="utf-8")
 
     assert "conversationComplete = true;" in app_js
-    assert "if (chunk.finish && chunk.chat_phase_complete) {" in app_js
+    assert "if (chunk.finish && (chunk.chat_phase_complete || chunk.activity_ready)) {" in app_js
     assert app_js.count("if (!conversationComplete) {") >= 2
     assert app_js.count("disableCompletedChatInput();") >= 4
 
@@ -84,3 +84,23 @@ def test_activities_launcher_has_visible_bottom_left_design():
     assert "left: 20px" in style_css
     assert "@keyframes activities-mini-pulse" in style_css
     assert "z-index: 1900" in style_css
+
+
+def test_frontend_sends_attribute_pipeline_toggle():
+    app_js = APP_JS.read_text(encoding="utf-8")
+    index_html = INDEX_HTML.read_text(encoding="utf-8")
+
+    assert 'id="attributePipelineEnabled"' in index_html
+    assert "attributePipelineEnabled" in app_js
+    assert "attribute_pipeline_enabled" in app_js
+
+
+def test_attribute_activity_ready_uses_existing_activity_launcher():
+    app_js = APP_JS.read_text(encoding="utf-8")
+
+    assert "currentAttributeActivityTarget" in app_js
+    assert "chunk.activity_target" in app_js
+    assert "chunk.activity_ready" in app_js
+    assert "function hasAttributeActivityReady()" in app_js
+    assert "isCurrentObjectGameEligible() || hasAttributeActivityReady()" in app_js
+    assert "if (isCurrentObjectGameEligible() || hasAttributeActivityReady())" in app_js
