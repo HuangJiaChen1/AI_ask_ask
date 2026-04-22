@@ -4,6 +4,13 @@ from dataclasses import asdict, dataclass
 
 import paixueji_prompts
 from model_json import extract_json_object
+from stream.exploration_loader import (
+    SubAttributeCandidate,
+    get_candidate_sub_attributes,
+    infer_domain,
+    sub_attribute_to_label,
+    dimension_to_activity_target,
+)
 
 
 @dataclass(frozen=True)
@@ -44,72 +51,41 @@ class AttributeReplyDecision:
         return asdict(self)
 
 
-MOCK_ATTRIBUTE_PROFILES: tuple[AttributeProfile, ...] = (
-    AttributeProfile(
-        attribute_id="surface_shiny_smooth",
-        label="shiny smooth skin",
-        activity_target="noticing/comparing surfaces",
-        branch="in_kb",
-        object_examples=("apple", "green apple", "red apple"),
-    ),
-    AttributeProfile(
-        attribute_id="fur_paws_soft",
-        label="soft fur and paws",
-        activity_target="gentle observation game",
-        branch="in_kb",
-        object_examples=("cat", "kitten"),
-    ),
-    AttributeProfile(
-        attribute_id="strong_smell",
-        label="strong smell",
-        activity_target="smell-to-reaction activity",
-        branch="anchored_not_in_kb",
-        object_examples=("cat food",),
-    ),
-    AttributeProfile(
-        attribute_id="sparkle_glow",
-        label="pretend sparkly glow",
-        activity_target="imagination/light activity",
-        branch="unresolved_not_in_kb",
-        object_examples=("spaceship fuel",),
-    ),
-    AttributeProfile(
-        attribute_id="round_rolls",
-        label="round rolling shape",
-        activity_target="roll-and-compare activity",
-        branch="in_kb",
-        object_examples=("ball", "orange"),
-    ),
-)
-
-
 def _normalize(text: str | None) -> str:
     return " ".join((text or "").strip().lower().split())
 
 
-def find_mock_attribute_profile(object_name: str | None) -> AttributeProfile | None:
-    normalized = _normalize(object_name)
-    for profile in MOCK_ATTRIBUTE_PROFILES:
-        if normalized in profile.object_examples:
-            return profile
-    return None
+def _anchor_status_to_branch(anchor_status: str | None) -> str:
+    """Map anchor_status to attribute branch."""
+    if anchor_status == "exact_supported":
+        return "in_kb"
+    if anchor_status in ("anchored_high", "anchored_medium"):
+        return "anchored_not_in_kb"
+    return "unresolved_not_in_kb"
 
 
-def _profile_by_id(attribute_id: str | None) -> AttributeProfile | None:
-    normalized = _normalize(attribute_id)
-    for profile in MOCK_ATTRIBUTE_PROFILES:
-        if profile.attribute_id == normalized:
-            return profile
-    return None
+def _candidate_to_profile(
+    candidate: SubAttributeCandidate,
+    object_name: str,
+    branch: str,
+) -> AttributeProfile:
+    """Convert a SubAttributeCandidate to an AttributeProfile."""
+    return AttributeProfile(
+        attribute_id=f"{candidate.dimension}.{candidate.sub_attribute}",
+        label=sub_attribute_to_label(candidate.sub_attribute),
+        activity_target=dimension_to_activity_target(candidate.dimension, object_name),
+        branch=branch,
+        object_examples=(object_name,),
+    )
 
 
-def _supported_attribute_block(profiles: tuple[AttributeProfile, ...]) -> str:
+def _build_supported_attribute_block(profiles: tuple[AttributeProfile, ...]) -> str:
+    """Build the text block listing all candidate attributes for the Gemini prompt."""
     lines = []
     for profile in profiles:
-        examples = ", ".join(profile.object_examples)
         lines.append(
             f"- {profile.attribute_id}: {profile.label}; activity={profile.activity_target}; "
-            f"branch={profile.branch}; examples={examples}"
+            f"branch={profile.branch}"
         )
     return "\n".join(lines)
 
@@ -118,14 +94,57 @@ async def select_attribute_profile(
     *,
     object_name: str,
     age: int | None,
+    anchor_status: str | None = None,
     client,
     config: dict | None,
-    supported_profiles: tuple[AttributeProfile, ...] = MOCK_ATTRIBUTE_PROFILES,
 ) -> tuple[AttributeProfile | None, dict]:
+    """
+    Select an attribute profile for the given object.
+
+    Dynamically generates candidates from exploration_categories.yaml
+    based on the surface object's domain and the child's age tier.
+    Then asks Gemini to pick the best one.
+
+    Args:
+        object_name: The surface object the child named.
+        age: Child's age.
+        anchor_status: From object resolution — determines the branch.
+        client: Gemini client.
+        config: Config dict with model_name.
+
+    Returns:
+        (AttributeProfile | None, debug_dict)
+    """
+    resolved_age = age or 6
+    branch = _anchor_status_to_branch(anchor_status)
+
+    # Determine domain for the surface object
+    domain = await infer_domain(object_name, client, config)
+
+    # Generate candidates from YAML
+    candidates = get_candidate_sub_attributes(domain, resolved_age)
+
+    if not candidates:
+        return None, {
+            "decision": "no_attribute_match_fallback",
+            "source": "empty_candidates",
+            "attribute_id": None,
+            "confidence": None,
+            "reason": f"no candidates for domain={domain}, age={resolved_age}",
+            "domain": domain,
+        }
+
+    # Convert all candidates to profiles
+    profiles = tuple(
+        _candidate_to_profile(c, object_name, branch) for c in candidates
+    )
+
+    # Ask Gemini to select
     prompt = paixueji_prompts.get_prompts()["attribute_selection_prompt"].format(
         object_name=object_name,
-        age=age or 6,
-        supported_attributes=_supported_attribute_block(supported_profiles),
+        age=resolved_age,
+        domain=domain or "unknown",
+        supported_attributes=_build_supported_attribute_block(profiles),
     )
 
     try:
@@ -143,40 +162,33 @@ async def select_attribute_profile(
     else:
         exc_reason = None
 
+    # Try to match Gemini's choice to a profile
     if isinstance(payload, dict):
-        profile = _profile_by_id(payload.get("attribute_id"))
-        if profile:
-            return profile, {
-                "decision": "attribute_selected",
-                "source": "gemini",
-                "attribute_id": profile.attribute_id,
-                "confidence": payload.get("confidence"),
-                "reason": payload.get("reason") or "selected by Gemini",
-                "payload_kind": payload_kind,
-                "json_recovery_applied": recovered,
-            }
+        chosen_id = payload.get("attribute_id")
+        for profile in profiles:
+            if profile.attribute_id == chosen_id:
+                return profile, {
+                    "decision": "attribute_selected",
+                    "source": "gemini",
+                    "attribute_id": profile.attribute_id,
+                    "confidence": payload.get("confidence"),
+                    "reason": payload.get("reason") or "selected by Gemini",
+                    "payload_kind": payload_kind,
+                    "json_recovery_applied": recovered,
+                    "domain": domain,
+                }
 
-    fallback = find_mock_attribute_profile(object_name)
-    if fallback:
-        reason = exc_reason or f"invalid Gemini attribute selection payload: {payload_kind}"
-        return fallback, {
-            "decision": "attribute_selected",
-            "source": "mock_fallback",
-            "attribute_id": fallback.attribute_id,
-            "confidence": "fallback",
-            "reason": reason,
-            "payload_kind": payload_kind,
-            "json_recovery_applied": recovered,
-        }
-
-    return None, {
-        "decision": "no_attribute_match_fallback",
-        "source": "none",
-        "attribute_id": None,
-        "confidence": None,
+    # Fallback: use the first candidate
+    fallback = profiles[0]
+    return fallback, {
+        "decision": "attribute_selected",
+        "source": "first_candidate_fallback",
+        "attribute_id": fallback.attribute_id,
+        "confidence": "fallback",
         "reason": exc_reason or f"invalid Gemini attribute selection payload: {payload_kind}",
         "payload_kind": payload_kind,
         "json_recovery_applied": recovered,
+        "domain": domain,
     }
 
 

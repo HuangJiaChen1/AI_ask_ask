@@ -616,6 +616,7 @@ def start_conversation():
                 select_attribute_profile(
                     object_name=object_name,
                     age=age or 6,
+                    anchor_status=assistant.anchor_status,
                     client=assistant.client,
                     config=assistant.config,
                 ),

@@ -1,114 +1,150 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from attribute_activity import (
     AttributeProfile,
     AttributeSessionState,
     build_attribute_debug,
     classify_attribute_reply,
-    find_mock_attribute_profile,
     select_attribute_profile,
     start_attribute_session,
 )
 
 
-@pytest.mark.parametrize(
-    ("object_name", "attribute_id", "label", "branch"),
-    [
-        ("apple", "surface_shiny_smooth", "shiny smooth skin", "in_kb"),
-        ("cat", "fur_paws_soft", "soft fur and paws", "in_kb"),
-        ("cat food", "strong_smell", "strong smell", "anchored_not_in_kb"),
-        ("spaceship fuel", "sparkle_glow", "pretend sparkly glow", "unresolved_not_in_kb"),
-        ("ball", "round_rolls", "round rolling shape", "in_kb"),
-    ],
-)
-def test_find_mock_attribute_profile_returns_supported_profile(object_name, attribute_id, label, branch):
-    profile = find_mock_attribute_profile(object_name)
-
-    assert isinstance(profile, AttributeProfile)
-    assert profile.attribute_id == attribute_id
-    assert profile.label == label
-    assert profile.branch == branch
-    assert profile.activity_target
-
-
-def test_find_mock_attribute_profile_returns_none_for_unsupported_object():
-    assert find_mock_attribute_profile("plain thing") is None
-
-
-@pytest.mark.parametrize("object_name", ["cat food", "spaceship fuel"])
-def test_attribute_session_does_not_require_surface_or_anchor_objects(object_name):
-    profile = find_mock_attribute_profile(object_name)
-
-    state = start_attribute_session(object_name=object_name, profile=profile, age=6)
-
-    assert isinstance(state, AttributeSessionState)
-    assert state.object_name == object_name
-    assert state.profile.attribute_id == profile.attribute_id
-    assert state.surface_object_name is None
-    assert state.anchor_object_name is None
-    assert state.turn_count == 0
-    assert state.activity_ready is False
-
-
-def test_build_attribute_debug_includes_profile_state_and_reason():
-    profile = find_mock_attribute_profile("apple")
-    state = start_attribute_session(object_name="apple", profile=profile, age=6)
-
-    debug = build_attribute_debug(
-        decision="attribute_lane_started",
-        profile=profile,
-        state=state,
-        reason="selected by test",
-    )
-
-    assert debug["decision"] == "attribute_lane_started"
-    assert debug["profile"]["attribute_id"] == "surface_shiny_smooth"
-    assert debug["state"]["profile"]["label"] == "shiny smooth skin"
-    assert debug["reason"] == "selected by test"
+# --- select_attribute_profile tests ---
 
 
 @pytest.mark.asyncio
-async def test_select_attribute_profile_uses_gemini_json_choice():
+async def test_select_attribute_profile_gemini_selects_from_dynamic_candidates():
+    """Gemini returns a valid attribute_id from the dynamically generated candidates."""
     client = MagicMock()
-    client.aio.models.generate_content = AsyncMock()
     response = MagicMock()
-    response.text = '{"attribute_id":"strong_smell","confidence":"high","reason":"smell is salient"}'
-    client.aio.models.generate_content.return_value = response
+    # New format: "dimension.sub_attribute"
+    response.text = '{"attribute_id":"senses.taste","confidence":"high","reason":"smell is salient for food"}'
+    client.aio.models.generate_content = AsyncMock(return_value=response)
 
-    profile, debug = await select_attribute_profile(
-        object_name="cat food",
-        age=6,
-        client=client,
-        config={"model_name": "gemini-test"},
-    )
+    with patch("attribute_activity.infer_domain", new_callable=AsyncMock, return_value="food"):
+        profile, debug = await select_attribute_profile(
+            object_name="cat food",
+            age=6,
+            anchor_status="anchored_high",
+            client=client,
+            config={"model_name": "gemini-test"},
+        )
 
-    assert profile.attribute_id == "strong_smell"
+    assert profile is not None
+    assert profile.attribute_id == "senses.taste"
+    assert profile.label == "taste"
+    assert "cat food" in profile.activity_target
     assert debug["decision"] == "attribute_selected"
     assert debug["source"] == "gemini"
-    assert debug["confidence"] == "high"
-    client.aio.models.generate_content.assert_awaited_once()
 
 
 @pytest.mark.asyncio
-async def test_select_attribute_profile_falls_back_to_mock_profile_on_invalid_json():
+async def test_select_attribute_profile_falls_back_to_first_candidate_on_invalid_json():
+    """When Gemini returns invalid JSON, the first candidate becomes the fallback."""
     client = MagicMock()
-    client.aio.models.generate_content = AsyncMock()
     response = MagicMock()
-    response.text = "not json"
-    client.aio.models.generate_content.return_value = response
+    response.text = "not json at all"
+    client.aio.models.generate_content = AsyncMock(return_value=response)
+
+    with patch("attribute_activity.infer_domain", new_callable=AsyncMock, return_value="food"):
+        profile, debug = await select_attribute_profile(
+            object_name="cat food",
+            age=6,
+            anchor_status="unresolved",
+            client=client,
+            config={"model_name": "gemini-test"},
+        )
+
+    assert profile is not None
+    # Fallback is the first candidate; exact value depends on domain inference
+    # but attribute_id should be in "dimension.sub_attribute" format
+    assert "." in profile.attribute_id
+    assert debug["source"] == "first_candidate_fallback"
+
+
+@pytest.mark.asyncio
+async def test_select_attribute_profile_returns_none_when_no_candidates():
+    """Edge case: if somehow no candidates are generated, returns None."""
+    client = MagicMock()
+    with patch("attribute_activity.get_candidate_sub_attributes", return_value=[]):
+        with patch("attribute_activity.infer_domain", new_callable=AsyncMock, return_value=None):
+            profile, debug = await select_attribute_profile(
+                object_name="impossible thing",
+                age=3,
+                anchor_status="unresolved",
+                client=client,
+                config={"model_name": "gemini-test"},
+            )
+
+    assert profile is None
+    assert debug["decision"] == "no_attribute_match_fallback"
+
+
+@pytest.mark.asyncio
+async def test_select_attribute_profile_uses_mappings_domain_for_known_object():
+    """For objects in the mappings DB, domain is resolved from the entity, not Gemini."""
+    client = MagicMock()
+
+    # "cat" is in the mappings DB with domain="animals"
+    # We need Gemini only for attribute selection, not domain inference
+    response = MagicMock()
+    response.text = '{"attribute_id":"appearance.body_color","confidence":"high","reason":"color is salient"}'
+    client.aio.models.generate_content = AsyncMock(return_value=response)
 
     profile, debug = await select_attribute_profile(
-        object_name="apple",
-        age=6,
+        object_name="cat",
+        age=4,
+        anchor_status="exact_supported",
         client=client,
         config={"model_name": "gemini-test"},
     )
 
-    assert profile.attribute_id == "surface_shiny_smooth"
-    assert debug["decision"] == "attribute_selected"
-    assert debug["source"] == "mock_fallback"
-    assert "invalid" in debug["reason"]
+    assert profile is not None
+    assert profile.branch == "in_kb"
+
+
+@pytest.mark.asyncio
+async def test_select_attribute_profile_branch_unresolved_for_unresolved_anchor():
+    """Unresolved anchor_status results in branch="unresolved_not_in_kb"."""
+    client = MagicMock()
+    response = MagicMock()
+    response.text = '{"attribute_id":"appearance.color","confidence":"medium","reason":"generic attribute"}'
+    client.aio.models.generate_content = AsyncMock(return_value=response)
+
+    # "quantum computer" is not in mappings → domain=None → default sub_attributes
+    with patch("attribute_activity.infer_domain", new_callable=AsyncMock, return_value=None):
+        profile, debug = await select_attribute_profile(
+            object_name="quantum computer",
+            age=6,
+            anchor_status="unresolved",
+            client=client,
+            config={"model_name": "gemini-test"},
+        )
+
+    assert profile is not None
+    assert profile.branch == "unresolved_not_in_kb"
+
+
+# --- classify_attribute_reply tests (unchanged behavior, new attribute_id format) ---
+
+
+def test_classify_attribute_reply_preserves_selected_attribute():
+    """classify_attribute_reply still works with new attribute_id format."""
+    profile = AttributeProfile(
+        attribute_id="appearance.body_color",
+        label="body color",
+        activity_target="noticing and describing what cat looks like",
+        branch="in_kb",
+        object_examples=("cat",),
+    )
+    state = start_attribute_session(object_name="cat", profile=profile, age=6)
+
+    decision = classify_attribute_reply(state, "It has brown fur")
+    assert decision.attribute_id == "appearance.body_color"
+    assert decision.reply_type == "aligned"
+    assert decision.counted_turn is True
 
 
 @pytest.mark.parametrize(
@@ -123,13 +159,19 @@ async def test_select_attribute_profile_falls_back_to_mock_profile_on_invalid_js
         ("It feels smooth", "aligned", True, False),
     ],
 )
-def test_classify_attribute_reply_preserves_selected_attribute(
+def test_classify_attribute_reply_all_cases(
     child_reply,
     reply_type,
     counted_turn,
     activity_ready,
 ):
-    profile = find_mock_attribute_profile("apple")
+    profile = AttributeProfile(
+        attribute_id="appearance.surface_texture",
+        label="shiny smooth skin",
+        activity_target="noticing and describing what apple looks like",
+        branch="in_kb",
+        object_examples=("apple",),
+    )
     state = start_attribute_session(object_name="apple", profile=profile, age=6)
 
     decision = classify_attribute_reply(state, child_reply)
@@ -138,3 +180,45 @@ def test_classify_attribute_reply_preserves_selected_attribute(
     assert decision.attribute_id == profile.attribute_id
     assert decision.counted_turn is counted_turn
     assert decision.activity_ready is activity_ready
+
+
+def test_build_attribute_debug_includes_profile_state_and_reason():
+    profile = AttributeProfile(
+        attribute_id="appearance.color",
+        label="color",
+        activity_target="noticing and describing what apple looks like",
+        branch="in_kb",
+        object_examples=("apple",),
+    )
+    state = start_attribute_session(object_name="apple", profile=profile, age=6)
+
+    debug = build_attribute_debug(
+        decision="attribute_lane_started",
+        profile=profile,
+        state=state,
+        reason="selected by test",
+    )
+
+    assert debug["decision"] == "attribute_lane_started"
+    assert debug["profile"]["attribute_id"] == "appearance.color"
+    assert debug["state"]["profile"]["label"] == "color"
+    assert debug["reason"] == "selected by test"
+
+
+def test_attribute_session_does_not_require_surface_or_anchor_objects():
+    profile = AttributeProfile(
+        attribute_id="senses.taste",
+        label="taste",
+        activity_target="exploring how cat food feels, sounds, or smells",
+        branch="anchored_not_in_kb",
+        object_examples=("cat food",),
+    )
+    state = start_attribute_session(object_name="cat food", profile=profile, age=6)
+
+    assert isinstance(state, AttributeSessionState)
+    assert state.object_name == "cat food"
+    assert state.profile.attribute_id == profile.attribute_id
+    assert state.surface_object_name is None
+    assert state.anchor_object_name is None
+    assert state.turn_count == 0
+    assert state.activity_ready is False

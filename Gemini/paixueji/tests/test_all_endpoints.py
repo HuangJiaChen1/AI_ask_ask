@@ -207,9 +207,9 @@ def test_attribute_handoff_context_includes_attribute_metadata(client):
     context = context_response.get_json()
 
     assert context["activity_source"] == "attribute"
-    assert context["attribute_id"] == "strong_smell"
-    assert context["attribute_label"] == "strong smell"
-    assert context["activity_target"] == "smell-to-reaction activity"
+    assert "." in context["attribute_id"]  # new format: dimension.sub_attribute
+    assert context["attribute_label"]  # non-empty label
+    assert context["activity_target"]  # non-empty activity target
     assert context["conversation"]
 
 
@@ -231,8 +231,13 @@ def test_exchanges_endpoint_exposes_attribute_debug(client):
     assert response.status_code == 200
     data = response.get_json()
 
-    assert data["introduction"]["attribute_debug"]["profile"]["attribute_id"] == "surface_shiny_smooth"
-    assert data["exchanges"][0]["attribute_debug"]["reply"]["reply_type"] == "new_object_same_attribute_drift"
+    assert "." in data["introduction"]["attribute_debug"]["profile"]["attribute_id"]  # new format: dimension.sub_attribute
+    # The attribute debug reply captures the classification of the child's input
+    assert data["exchanges"][0]["attribute_debug"]["reply"]["reply_type"] in (
+        "new_object_same_attribute_drift",
+        "aligned",
+        "same_object_feature_drift",
+    )
 
 
 def test_exchanges_endpoint_exposes_bridge_debug_for_intro_and_turns(client, monkeypatch):

@@ -1,0 +1,162 @@
+# Exploration dimension definitions for tier guidance generation.
+#
+# Two types of dimensions:
+#
+# physical_dimensions: domain-aware, produce {attribute, value, topics} entries
+#   - sub_attributes: keyed by domain with a "default" fallback
+#   - tiers: which tiers (0, 1, 2) include this dimension
+#
+# engagement_dimensions: universal (no domain split), produce topics-only lists
+#   - guidance: example prompts to steer the LLM
+#   - tiers: which tiers (0, 1, 2) include this dimension
+#
+# Tier definitions:
+#   T0 (ages 2-4): basic sensory, naming, pointing + simple feelings
+#   T1 (ages 4-6): descriptive, simple "why" questions + context and function
+#   T2 (ages 6-8): reasoning, comparing, explaining + imagination and narrative
+
+physical_dimensions:
+  appearance:
+    description: "What it looks like — colors, shapes, sizes, patterns"
+    sub_attributes:
+      default: [color, shape, size, pattern, brightness]
+      animals: [body_color, covering, markings, body_size]
+      food: [color, shape, size]
+      vehicles: [body_color, shape, size, lights]
+      plants: [flower_color, leaf_shape, size]
+      people_roles: [clothing_color, uniform, gear]
+      buildings_places: [shape, size, style, color]
+      clothing_accessories: [color, pattern, shape]
+      daily_objects: [color, shape, size]
+      natural_phenomena: [colors, brightness, movement_pattern]
+      arts_music: [color, shape, design]
+      signs_symbols: [color, shape, markings]
+      nature_landscapes: [colors, terrain_shape, size]
+      human_body: [skin_color, shape, size]
+      imagination: [color, shape, glow]
+    tiers: [0, 1, 2]
+
+  senses:
+    description: "How it feels to the senses — touch, sound, smell, taste, weight"
+    sub_attributes:
+      default: [feel, weight, sound]
+      animals: [fur_feel, sound, smell]
+      food: [taste, smell, texture, sound]
+      vehicles: [surface_feel, engine_sound, horn_sound]
+      plants: [leaf_feel, smell, sound]
+      people_roles: [voice_sound, handshake_feel]
+      buildings_places: [echo_sound, floor_feel, air_smell]
+      clothing_accessories: [fabric_feel, weight, sound]
+      daily_objects: [surface_feel, weight, sound]
+      natural_phenomena: [feel, sound, temperature]
+      arts_music: [sound, vibration_feel]
+      nature_landscapes: [ground_feel, ambient_sound, air_smell]
+      human_body: [feel, sound, temperature]
+      imagination: [feel, sound]
+    tiers: [0, 1, 2]
+
+  structure:
+    description: "What it's made of and what parts it has"
+    sub_attributes:
+      default: [main_parts, material, small_details]
+      animals: [body_parts, claws, teeth, wings, tail]
+      food: [skin, seeds, layers, stem]
+      vehicles: [wheels, doors, engine, windows]
+      plants: [stem, leaves, petals, roots]
+      people_roles: [gear, tools, uniform_parts]
+      buildings_places: [rooms, doors, windows, roof]
+      clothing_accessories: [fabric, buttons, zipper, straps]
+      daily_objects: [handle, lid, base, parts]
+      natural_phenomena: [bands, layers, core]
+      arts_music: [keys, strings, body, pedals]
+      signs_symbols: [border, symbol, text, post]
+      nature_landscapes: [sand, rocks, water, plants]
+      human_body: [pupil, iris, eyelid, lashes]
+      imagination: [horns, claws, wings, scales]
+    tiers: [1, 2]
+
+  function:
+    description: "What it does and how it's used"
+    sub_attributes:
+      default: [purpose, how_used, who_uses]
+      animals: [hunting, defense, movement, communication]
+      food: [nutrition, cooking, eating_method]
+      vehicles: [transport, cargo, speed]
+      plants: [pollination, oxygen, food_source]
+      people_roles: [main_job, helping, protecting, teaching]
+      buildings_places: [gathering, learning, playing, shelter]
+      clothing_accessories: [warmth, protection, style]
+      daily_objects: [cleaning, holding, organizing]
+      natural_phenomena: [light_refraction, weather_signal]
+      arts_music: [making_music, creating_art, expressing]
+      signs_symbols: [warning, directing, informing]
+      nature_landscapes: [habitat, recreation, ecosystem]
+      human_body: [seeing, focusing, protecting]
+      imagination: [flying, breathing_fire, camouflage]
+    tiers: [1, 2]
+
+  context:
+    description: "When and where you encounter it"
+    sub_attributes:
+      default: [location, time_of_day, season, situation]
+      animals: [habitat, continent, climate, migration]
+      food: [farm, store, kitchen, season]
+      vehicles: [road, city, countryside, work_site]
+      plants: [garden, field, forest, season]
+      people_roles: [workplace, emergency, community]
+      buildings_places: [neighborhood, city, town]
+      clothing_accessories: [weather, occasion, season]
+      daily_objects: [home_room, bathroom, kitchen]
+      natural_phenomena: [sky, after_rain, sunrise, sunset]
+      arts_music: [concert_hall, classroom, home, stage]
+      signs_symbols: [road, school, park, airport]
+      nature_landscapes: [coast, tropical, temperate]
+      human_body: [face, head]
+      imagination: [storybook, movie, dream]
+    tiers: [1, 2]
+
+  change:
+    description: "How it changes, grows, or transforms over time"
+    sub_attributes:
+      default: [aging, wear, seasonal_change]
+      animals: [growth, molting, seasonal_coat, aging]
+      food: [ripening, cooking_change, spoiling]
+      vehicles: [rust, upgrade, wear]
+      plants: [sprouting, blooming, wilting, seasonal]
+      people_roles: [training, career_growth, skill_building]
+      buildings_places: [renovation, weathering, seasonal_decor]
+      clothing_accessories: [fading, stretching, wear]
+      daily_objects: [wear, replacement, upgrade]
+      natural_phenomena: [fading, shifting, intensifying]
+      arts_music: [tuning, aging_sound, restoration]
+      signs_symbols: [fading, updating, replacement]
+      nature_landscapes: [erosion, tidal_change, seasonal]
+      human_body: [growth, aging, healing]
+      imagination: [evolution, transformation, power_growth]
+    tiers: [2]
+
+engagement_dimensions:
+  emotions:
+    description: "Personal feelings and preferences"
+    guidance: "Do you like it? How does it make you feel? Would you want to...? Is it scary or friendly?"
+    tiers: [0, 1, 2]
+
+  relationship:
+    description: "Comparisons and connections to other things"
+    guidance: "What else is like this? How is it different from...? What does it remind you of?"
+    tiers: [1, 2]
+
+  reasoning:
+    description: "Why and what-if questions"
+    guidance: "Why do you think...? What would happen if...? How does it work? What's the reason?"
+    tiers: [2]
+
+  imagination:
+    description: "Creative and pretend scenarios"
+    guidance: "Pretend you are a... What if it could talk? Design a... Imagine if..."
+    tiers: [2]
+
+  narrative:
+    description: "Storytelling prompts"
+    guidance: "Tell me a story about... What adventure would...? Once upon a time..."
+    tiers: [2]

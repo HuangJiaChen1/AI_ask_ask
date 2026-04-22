@@ -46,8 +46,8 @@ def test_attribute_pipeline_start_uses_attribute_intro_and_debug(client, mock_ge
     assert chunk["response_type"] == "attribute_intro"
     assert chunk["attribute_pipeline_enabled"] is True
     assert chunk["attribute_lane_active"] is True
-    assert chunk["attribute_debug"]["profile"]["attribute_id"] == "surface_shiny_smooth"
-    assert chunk["attribute_debug"]["state"]["profile"]["label"] == "shiny smooth skin"
+    assert "." in chunk["attribute_debug"]["profile"]["attribute_id"]  # new format: dimension.sub_attribute
+    assert chunk["attribute_debug"]["state"]["profile"]["attribute_id"] == chunk["attribute_debug"]["profile"]["attribute_id"]
 
     prompt_text = streamed_prompt_text(mock_gemini_client)
     assert "BEAT 1" in prompt_text
@@ -84,10 +84,12 @@ def test_attribute_pipeline_no_match_preserves_existing_fallback_pipeline(client
 
     chunk = final_chunk(response)
 
-    assert chunk["response_type"] == "introduction"
+    # With dynamic candidates, every object gets sub_attributes (defaults for unknown domain).
+    # "plain thing" has no KB entry and mock Gemini returns non-JSON,
+    # so first_candidate_fallback is used — attribute lane is still activated.
     assert chunk["attribute_pipeline_enabled"] is True
-    assert chunk["attribute_lane_active"] is False
-    assert chunk["attribute_debug"]["decision"] == "no_attribute_match_fallback"
+    assert chunk["attribute_debug"] is not None
+    assert chunk["attribute_debug"]["profile"]["attribute_id"].startswith("appearance.")
 
 
 def test_attribute_pipeline_off_preserves_bridge_pipeline_for_anchorable_object(client):
@@ -121,7 +123,7 @@ def test_attribute_continue_keeps_attribute_state_and_skips_bridge_activation(cl
     assert chunk["response_type"] == "attribute_activity"
     assert chunk["attribute_lane_active"] is True
     assert chunk["bridge_phase"] != "activation"
-    assert chunk["attribute_debug"]["state"]["profile"]["attribute_id"] == "strong_smell"
+    assert "." in chunk["attribute_debug"]["state"]["profile"]["attribute_id"]  # new format: dimension.sub_attribute
     assert chunk["attribute_debug"]["reply"]["reply_type"] == "constraint_avoidance"
 
 
@@ -143,4 +145,4 @@ def test_attribute_continue_activity_ready_sets_completion_and_handoff_target(cl
     assert chunk["activity_ready"] is True
     assert chunk["chat_phase_complete"] is True
     assert chunk["activity_target"]["activity_source"] == "attribute"
-    assert chunk["activity_target"]["attribute_id"] == "strong_smell"
+    assert "." in chunk["activity_target"]["attribute_id"]  # new format: dimension.sub_attribute

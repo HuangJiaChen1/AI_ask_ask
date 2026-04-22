@@ -341,23 +341,36 @@ Rules:
 - If you mention the object, mean only the literal named item in front of the child.
 """
 
+DOMAIN_CLASSIFICATION_PROMPT = """Classify this object into exactly one category.
+
+OBJECT: {object_name}
+
+CATEGORIES: {supported_domains}
+
+Return JSON only:
+{{"domain": "one category name, or null if none fit"}}
+
+Choose the category that best describes what kind of thing this object is."""
+
 ATTRIBUTE_SELECTION_PROMPT = """Choose one supported activity attribute for a child chat.
 
 OBJECT: {object_name}
 CHILD AGE: {age}
+DOMAIN: {domain}
 
 SUPPORTED ATTRIBUTES:
 {supported_attributes}
 
 Return JSON only:
 {{
-  "attribute_id": "one supported attribute id, or null",
+  "attribute_id": "one supported attribute id (format: dimension.sub_attribute), or null",
   "confidence": "high|medium|low|none",
   "reason": "short reason"
 }}
 
-Choose the attribute that can be discussed naturally from the object name without needing a KB anchor.
-"""
+Choose the attribute most naturally connected to this object.
+If domain is "unknown", prefer attributes from appearance or senses dimensions.
+The attribute_id must exactly match one from the SUPPORTED ATTRIBUTES list."""
 
 ATTRIBUTE_INTRO_PROMPT = """You are starting an attribute-focused conversation with a child about: {object_name}
 
@@ -1771,6 +1784,7 @@ def get_prompts():
         'bridge_follow_classifier_prompt': BRIDGE_FOLLOW_CLASSIFIER_PROMPT,
         'bridge_activation_kb_question_validator_prompt': BRIDGE_ACTIVATION_KB_QUESTION_VALIDATOR_PROMPT,
         'bridge_activation_answer_validator_prompt': BRIDGE_ACTIVATION_ANSWER_VALIDATOR_PROMPT,
+        'domain_classification_prompt': DOMAIN_CLASSIFICATION_PROMPT,
         'attribute_selection_prompt': ATTRIBUTE_SELECTION_PROMPT,
         'attribute_intro_prompt': ATTRIBUTE_INTRO_PROMPT,
         'attribute_continue_prompt': ATTRIBUTE_CONTINUE_PROMPT,

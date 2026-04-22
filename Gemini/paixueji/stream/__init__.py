@@ -55,6 +55,16 @@ from .validation import (
 # Fun fact (grounded)
 from .fun_fact import generate_fun_fact
 
+# Exploration categories
+from .exploration_loader import (
+    get_candidate_sub_attributes,
+    infer_domain,
+    SubAttributeCandidate,
+    sub_attribute_to_label,
+    dimension_to_activity_target,
+    ALL_DOMAINS,
+)
+
 __all__ = [
     # Utils
     'safe_print',
@@ -88,4 +98,12 @@ __all__ = [
 
     # Fun fact (grounded)
     'generate_fun_fact',
+
+    # Exploration categories
+    'get_candidate_sub_attributes',
+    'infer_domain',
+    'SubAttributeCandidate',
+    'sub_attribute_to_label',
+    'dimension_to_activity_target',
+    'ALL_DOMAINS',
 ]
