@@ -44,6 +44,9 @@ let currentClassificationFailureReason = null;
 let currentUsedKbItem = null;
 let currentKbMappingStatus = null;
 let currentBridgeDebug = null;
+let currentAttributeDebug = null;
+let currentAttributePipelineEnabled = false;
+let currentAttributeLaneActive = false;
 let currentAttributeActivityTarget = null;
 
 const INTENT_METADATA = {
@@ -566,6 +569,9 @@ async function startConversation() {
     currentKbMappingStatus = null;
     currentKbMappingStatus = null;
     currentBridgeDebug = null;
+    currentAttributeDebug = null;
+    currentAttributePipelineEnabled = false;
+    currentAttributeLaneActive = false;
     currentAttributeActivityTarget = null;
 
     // Reset progress
@@ -998,6 +1004,18 @@ function handleStreamChunk(chunk) {
         currentBridgeDebug = chunk.bridge_debug;
         updateDebugPanel();
     }
+    if ('attribute_pipeline_enabled' in chunk) {
+        currentAttributePipelineEnabled = !!chunk.attribute_pipeline_enabled;
+        updateDebugPanel();
+    }
+    if ('attribute_lane_active' in chunk) {
+        currentAttributeLaneActive = !!chunk.attribute_lane_active;
+        updateDebugPanel();
+    }
+    if ('attribute_debug' in chunk) {
+        currentAttributeDebug = chunk.attribute_debug;
+        updateDebugPanel();
+    }
     if (chunk.activity_target) {
         currentAttributeActivityTarget = chunk.activity_target;
         updateDebugPanel();
@@ -1170,6 +1188,16 @@ function updateDebugPanel() {
         const el = document.getElementById(id);
         if (el) el.textContent = value || '-';
     };
+    const attributeDebug = currentAttributeDebug || {};
+    const attributeProfile = attributeDebug.profile || {};
+    const attributeReply = attributeDebug.reply || {};
+    setText('debugAttributePipeline', currentAttributePipelineEnabled ? 'on' : 'off');
+    setText('debugAttributeLane', currentAttributeLaneActive ? 'active' : 'inactive');
+    setText('debugAttributeId', attributeProfile.attribute_id);
+    setText('debugAttributeLabel', attributeProfile.label);
+    setText('debugAttributeActivityTarget', attributeProfile.activity_target);
+    setText('debugAttributeBranch', attributeProfile.branch);
+    setText('debugAttributeReplyType', attributeReply.reply_type);
     setText('debugSurfaceObject', bridgeDebug.surface_object_name);
     setText('debugAnchorObject', bridgeDebug.anchor_object_name);
     setText('debugAnchorStatus', bridgeDebug.anchor_status);

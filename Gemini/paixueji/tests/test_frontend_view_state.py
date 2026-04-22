@@ -104,3 +104,36 @@ def test_attribute_activity_ready_uses_existing_activity_launcher():
     assert "function hasAttributeActivityReady()" in app_js
     assert "isCurrentObjectGameEligible() || hasAttributeActivityReady()" in app_js
     assert "if (isCurrentObjectGameEligible() || hasAttributeActivityReady())" in app_js
+
+
+def test_debug_panel_exposes_attribute_debug_fields():
+    html = INDEX_HTML.read_text(encoding="utf-8")
+
+    assert "Attribute Debug:" in html
+    for field_id in (
+        "debugAttributePipeline",
+        "debugAttributeLane",
+        "debugAttributeId",
+        "debugAttributeLabel",
+        "debugAttributeActivityTarget",
+        "debugAttributeBranch",
+        "debugAttributeReplyType",
+    ):
+        assert f'id="{field_id}"' in html
+
+
+def test_frontend_renders_attribute_debug_payload():
+    app_js = APP_JS.read_text(encoding="utf-8")
+
+    assert "let currentAttributeDebug = null;" in app_js
+    assert "let currentAttributePipelineEnabled = false;" in app_js
+    assert "let currentAttributeLaneActive = false;" in app_js
+    assert "currentAttributeDebug = null;" in app_js
+    assert "currentAttributePipelineEnabled = false;" in app_js
+    assert "currentAttributeLaneActive = false;" in app_js
+    assert "currentAttributeDebug = chunk.attribute_debug;" in app_js
+    assert "currentAttributePipelineEnabled = !!chunk.attribute_pipeline_enabled;" in app_js
+    assert "currentAttributeLaneActive = !!chunk.attribute_lane_active;" in app_js
+    assert "const attributeProfile = attributeDebug.profile || {};" in app_js
+    assert "setText('debugAttributeId', attributeProfile.attribute_id);" in app_js
+    assert "setText('debugAttributeReplyType', attributeReply.reply_type);" in app_js
