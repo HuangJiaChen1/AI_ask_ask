@@ -6,6 +6,7 @@ from attribute_activity import (
     AttributeSessionState,
     build_attribute_debug,
     classify_attribute_reply,
+    evaluate_attribute_activity_readiness,
     select_attribute_profile,
     start_attribute_session,
 )
@@ -155,7 +156,7 @@ def test_classify_attribute_reply_preserves_selected_attribute():
         ("My spoon is shiny too", "new_object_same_attribute_drift", True, False),
         ("Why is it shiny?", "curiosity", True, False),
         ("I can't smell it", "constraint_avoidance", False, False),
-        ("Let's play a shiny game", "activity_ready", True, True),
+        ("Let's play a shiny game", "activity_command", False, False),
         ("It feels smooth", "aligned", True, False),
     ],
 )
@@ -180,6 +181,53 @@ def test_classify_attribute_reply_all_cases(
     assert decision.attribute_id == profile.attribute_id
     assert decision.counted_turn is counted_turn
     assert decision.activity_ready is activity_ready
+
+
+def test_attribute_readiness_requires_two_counted_engaged_turns():
+    profile = AttributeProfile(
+        attribute_id="appearance.surface_texture",
+        label="shiny smooth skin",
+        activity_target="noticing and describing what apple looks like",
+        branch="in_kb",
+        object_examples=("apple",),
+    )
+    state = start_attribute_session(object_name="apple", profile=profile, age=6)
+
+    first = classify_attribute_reply(state, "It feels smooth")
+    if first.counted_turn:
+        state.turn_count += 1
+    first_ready = evaluate_attribute_activity_readiness(state, first)
+    assert first_ready.activity_ready is False
+    assert first_ready.chat_phase_complete is False
+    assert first_ready.engaged_turn_count == 1
+
+    second = classify_attribute_reply(state, "My spoon is shiny too")
+    if second.counted_turn:
+        state.turn_count += 1
+    second_ready = evaluate_attribute_activity_readiness(state, second)
+    assert second_ready.activity_ready is True
+    assert second_ready.chat_phase_complete is True
+    assert second_ready.state_action == "invite_attribute_activity"
+    assert second_ready.readiness_source == "backend_engagement_policy"
+
+
+def test_activity_command_does_not_count_or_trigger_readiness():
+    profile = AttributeProfile(
+        attribute_id="appearance.surface_texture",
+        label="shiny smooth skin",
+        activity_target="noticing and describing what apple looks like",
+        branch="in_kb",
+        object_examples=("apple",),
+    )
+    state = start_attribute_session(object_name="apple", profile=profile, age=6)
+
+    decision = classify_attribute_reply(state, "Let's play a shiny game")
+    ready = evaluate_attribute_activity_readiness(state, decision)
+
+    assert decision.reply_type == "activity_command"
+    assert decision.counted_turn is False
+    assert ready.activity_ready is False
+    assert ready.engaged_turn_count == 0
 
 
 def test_build_attribute_debug_includes_profile_state_and_reason():

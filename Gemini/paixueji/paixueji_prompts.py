@@ -422,7 +422,8 @@ YOUR JOB:
 - If the child names another object with the same attribute, accept the comparison and stay with the attribute.
 - If the child asks a curiosity question, answer briefly and reconnect to the attribute.
 - If the child states a constraint or avoidance, respect it and offer an easy pretend or no-pressure alternative.
-- If the child is activity-ready, naturally hand off toward: {activity_target}.
+- If STATE ACTION is "invite_attribute_activity", do not ask another chat question. Briefly connect the child's attribute idea to the activity target and invite them to try that activity next: {activity_target}.
+- Do not mention Wonderlens, databases, pipelines, tests, or internal state.
 - Ask at most one short follow-up question unless handing off to the activity.
 - Respond naturally, not as JSON.
 """
