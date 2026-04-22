@@ -13,6 +13,10 @@ from stream.exploration_loader import (
 )
 
 
+ATTRIBUTE_ACTIVITY_READY_TURN_THRESHOLD = 2
+ACTIVITY_COMMAND_WORDS = {"let's", "lets", "game", "play", "activity", "ready"}
+
+
 @dataclass(frozen=True)
 class AttributeProfile:
     attribute_id: str
@@ -51,8 +55,27 @@ class AttributeReplyDecision:
         return asdict(self)
 
 
+@dataclass(frozen=True)
+class AttributeReadinessDecision:
+    activity_ready: bool
+    chat_phase_complete: bool
+    state_action: str
+    reason: str
+    engaged_turn_count: int
+    readiness_threshold: int
+    readiness_source: str = "backend_engagement_policy"
+
+    def to_debug_dict(self) -> dict:
+        return asdict(self)
+
+
 def _normalize(text: str | None) -> str:
     return " ".join((text or "").strip().lower().split())
+
+
+def _contains_activity_command(text: str) -> bool:
+    words = {word.strip(".,!?;:") for word in text.split()}
+    return bool(ACTIVITY_COMMAND_WORDS.intersection(words))
 
 
 def _anchor_status_to_branch(anchor_status: str | None) -> str:
@@ -239,14 +262,14 @@ def classify_attribute_reply(
             reason="child expressed constraint or avoidance",
         )
 
-    if any(token in text for token in ("let's", "lets", "game", "play", "activity", "ready")):
+    if _contains_activity_command(text):
         return AttributeReplyDecision(
-            reply_type="activity_ready",
+            reply_type="activity_command",
             attribute_id=state.profile.attribute_id,
-            counted_turn=True,
-            activity_ready=True,
-            state_action="handoff_to_activity",
-            reason="child is ready for activity",
+            counted_turn=False,
+            activity_ready=False,
+            state_action="acknowledge_keep_attribute",
+            reason="child mentioned play or activity, but readiness is backend-policy driven",
         )
 
     if "?" in (child_reply or "") or text.startswith(("why ", "how ", "what ", "where ", "can ")):
@@ -292,6 +315,40 @@ def classify_attribute_reply(
     )
 
 
+def evaluate_attribute_activity_readiness(
+    state: AttributeSessionState,
+    reply: AttributeReplyDecision,
+) -> AttributeReadinessDecision:
+    if state.activity_ready:
+        return AttributeReadinessDecision(
+            activity_ready=True,
+            chat_phase_complete=True,
+            state_action="invite_attribute_activity",
+            reason="attribute activity was already ready",
+            engaged_turn_count=state.turn_count,
+            readiness_threshold=ATTRIBUTE_ACTIVITY_READY_TURN_THRESHOLD,
+        )
+
+    if reply.counted_turn and state.turn_count >= ATTRIBUTE_ACTIVITY_READY_TURN_THRESHOLD:
+        return AttributeReadinessDecision(
+            activity_ready=True,
+            chat_phase_complete=True,
+            state_action="invite_attribute_activity",
+            reason="child completed two coherent attribute-engaged turns",
+            engaged_turn_count=state.turn_count,
+            readiness_threshold=ATTRIBUTE_ACTIVITY_READY_TURN_THRESHOLD,
+        )
+
+    return AttributeReadinessDecision(
+        activity_ready=False,
+        chat_phase_complete=False,
+        state_action=reply.state_action,
+        reason="attribute engagement threshold not reached",
+        engaged_turn_count=state.turn_count,
+        readiness_threshold=ATTRIBUTE_ACTIVITY_READY_TURN_THRESHOLD,
+    )
+
+
 def build_attribute_debug(
     *,
     decision: str,
@@ -299,6 +356,7 @@ def build_attribute_debug(
     state: AttributeSessionState | None,
     reason: str | None = None,
     reply: dict | None = None,
+    readiness: dict | None = None,
     response_text: str | None = None,
 ) -> dict:
     return {
@@ -307,5 +365,6 @@ def build_attribute_debug(
         "state": state.to_debug_dict() if state else None,
         "reason": reason,
         "reply": reply.to_debug_dict() if hasattr(reply, "to_debug_dict") else reply,
+        "readiness": readiness.to_debug_dict() if hasattr(readiness, "to_debug_dict") else readiness,
         "response_text": response_text,
     }

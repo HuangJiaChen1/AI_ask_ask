@@ -62,6 +62,7 @@ from stream.validation import (
 from attribute_activity import (
     build_attribute_debug,
     classify_attribute_reply,
+    evaluate_attribute_activity_readiness,
     select_attribute_profile,
     start_attribute_session,
 )
@@ -994,7 +995,12 @@ def continue_conversation():
                     decision = classify_attribute_reply(assistant.attribute_state, child_input)
                     if decision.counted_turn:
                         assistant.attribute_state.turn_count += 1
-                    if decision.activity_ready:
+
+                    readiness = evaluate_attribute_activity_readiness(
+                        assistant.attribute_state,
+                        decision,
+                    )
+                    if readiness.activity_ready:
                         assistant.attribute_state.activity_ready = True
                         assistant.attribute_activity_ready = True
 
@@ -1010,7 +1016,7 @@ def continue_conversation():
                             activity_target=assistant.attribute_state.profile.activity_target,
                             child_answer=child_input,
                             reply_type=decision.reply_type,
-                            state_action=decision.state_action,
+                            state_action=readiness.state_action,
                             age=assistant.age or 6,
                             age_prompt=age_prompt,
                             config=assistant.config,
@@ -1029,6 +1035,7 @@ def continue_conversation():
                                 state=assistant.attribute_state,
                                 reason=decision.reason,
                                 reply=decision,
+                                readiness=readiness,
                             )
                             assistant.set_last_attribute_debug(partial_debug)
                             sequence_number += 1
@@ -1054,6 +1061,7 @@ def continue_conversation():
                             state=assistant.attribute_state,
                             reason=decision.reason,
                             reply=decision,
+                            readiness=readiness,
                             response_text=full_response,
                         )
                         assistant.set_last_attribute_debug(attribute_debug)

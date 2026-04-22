@@ -192,11 +192,12 @@ def test_attribute_handoff_context_includes_attribute_metadata(client):
     events = parse_sse(start_response.data)
     session_id = events[0]['data']['session_id']
 
-    continue_response = client.post(
-        '/api/continue',
-        json={"session_id": session_id, "child_input": "Let's play a smell game"},
-    )
-    parse_sse(continue_response.data)
+    for child_input in ["It smells strong", "My lunch smells strong too"]:
+        continue_response = client.post(
+            '/api/continue',
+            json={"session_id": session_id, "child_input": child_input},
+        )
+        parse_sse(continue_response.data)
 
     handoff_response = client.post('/api/handoff', json={"session_id": session_id})
     assert handoff_response.status_code == 200

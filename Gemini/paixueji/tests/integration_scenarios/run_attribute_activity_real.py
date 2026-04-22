@@ -64,6 +64,8 @@ Scoring guidance:
 - Do not penalize object drift when the same attribute remains coherent.
 - Penalize fragmented jumps from object-bound facts to activity.
 - Penalize mentioning pipelines, modes, databases, or tests.
+- Fail if activity readiness appears to depend on the child asking to play or saying activity/game/ready.
+- Reward activity transition after normal attribute observations or comparisons.
 """
 
 
@@ -123,6 +125,9 @@ def run_scenario(flask_client, scenario: dict) -> dict:
             "attribute_debug": chunk.get("attribute_debug"),
         })
 
+    if not chunk.get("activity_ready"):
+        raise AssertionError(f"Scenario {scenario['id']} did not reach attribute activity readiness")
+
     return {"session_id": session_id, "transcript": transcript}
 
 
@@ -165,7 +170,6 @@ def main():
             "child_turns": [
                 "It is shiny and smooth.",
                 "My spoon is shiny too.",
-                "Let's play a shiny game.",
             ],
         },
         {
@@ -178,7 +182,6 @@ def main():
             "child_turns": [
                 "It glows blue.",
                 "A flashlight glows too.",
-                "Let's do the light activity.",
             ],
         },
     ]
