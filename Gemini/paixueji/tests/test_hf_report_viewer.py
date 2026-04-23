@@ -123,6 +123,9 @@ def test_frontend_assets_cover_search_critique_badges_and_none_state():
     assert "Diagnostics Ref" in REPORTS_JS
     assert "rvPopupBridgeDebug" in REPORTS_JS
     assert "rvFormatBridgeDebug" in REPORTS_JS
+    assert "turn.attribute_debug" in REPORTS_JS
+    assert "rvPopupAttributeDebug" in REPORTS_JS
+    assert "rvFormatAttributeDebug" in REPORTS_JS
     assert "Activation Transition" in REPORTS_JS
     assert "crit.bridge_verdict" in REPORTS_JS
     assert "crit.bridge_debug" in REPORTS_JS
@@ -133,11 +136,124 @@ def test_frontend_assets_cover_search_critique_badges_and_none_state():
     assert "Activation Outcome" in INDEX_HTML
     assert "Diagnostics Ref" in INDEX_HTML
     assert "Raw Diagnostics" in INDEX_HTML
+    assert "Attribute Diagnostics" in INDEX_HTML
 
     assert "@keyframes rv-critique-pulse" in STYLE_CSS
     assert ".rv-bubble-critiqued" in STYLE_CSS
     assert ".rv-bubble-debug" in STYLE_CSS
     assert "#rvRawModal" in STYLE_CSS
+
+
+def test_hf_report_includes_attribute_diagnostics_without_bridge_debug(tmp_path):
+    from paixueji_app import _parse_hf_report, build_human_feedback_report
+
+    attribute_debug = {
+        "decision": "attribute_activity",
+        "profile": {
+            "attribute_id": "appearance.shape",
+            "label": "shape",
+            "activity_target": "noticing and describing what cat food looks like",
+            "branch": "anchored_not_in_kb",
+            "object_examples": ("cat food",),
+        },
+        "state": {
+            "object_name": "cat food",
+            "profile": {
+                "attribute_id": "appearance.shape",
+                "label": "shape",
+                "activity_target": "noticing and describing what cat food looks like",
+                "branch": "anchored_not_in_kb",
+            },
+            "turn_count": 1,
+            "activity_ready": False,
+        },
+        "reply": {
+            "reply_type": "aligned",
+            "attribute_id": "appearance.shape",
+            "counted_turn": True,
+            "activity_ready": False,
+            "state_action": "continue_attribute_chat",
+            "reason": "child described the selected attribute",
+        },
+        "readiness": {
+            "activity_ready": False,
+            "chat_phase_complete": False,
+            "state_action": "continue_attribute_chat",
+            "reason": "attribute engagement threshold not reached",
+            "engaged_turn_count": 1,
+            "readiness_threshold": 2,
+        },
+        "reason": "child described the selected attribute",
+        "response_text": "Does it feel smooth like a marble, or is it bumpy?",
+    }
+
+    report = build_human_feedback_report(
+        object_name="cat food",
+        age=6,
+        session_id="sess",
+        transcript=[
+            {
+                "role": "model",
+                "content": "What shapes do you see?",
+                "mode": "chat",
+                "response_type": "attribute_intro",
+                "attribute_debug": attribute_debug,
+            },
+            {"role": "child", "content": "They look like cylinders"},
+            {
+                "role": "model",
+                "content": "Does it feel smooth like a marble, or is it bumpy?",
+                "mode": "chat",
+                "response_type": "attribute_activity",
+                "attribute_debug": attribute_debug,
+            },
+        ],
+        all_exchanges=[{
+            "child_response": "They look like cylinders",
+            "model_response": "Does it feel smooth like a marble, or is it bumpy?",
+            "response_type": "attribute_activity",
+            "attribute_debug": attribute_debug,
+        }],
+        exchange_critiques=[{
+            "exchange_index": 1,
+            "model_response_problem": "Asked about texture after matching shape.",
+        }],
+        global_conclusion="",
+        introduction={
+            "content": "What shapes do you see?",
+            "mode": "chat",
+            "response_type": "attribute_intro",
+            "attribute_debug": attribute_debug,
+        },
+    )
+
+    assert "- Attribute Pipeline: `on`" in report
+    assert "- Attribute Lane: `active`" in report
+    assert "- Attribute ID: `appearance.shape`" in report
+    assert "- Attribute Label: `shape`" in report
+    assert "- Activity Target: `noticing and describing what cat food looks like`" in report
+    assert "- Attribute Branch: `anchored_not_in_kb`" in report
+    assert "- Attribute Reply Type: `aligned`" in report
+    assert "## Raw Diagnostics Appendix" in report
+    assert "#### Raw Attribute Debug" in report
+    assert "- attribute_id: `appearance.shape`" in report
+    assert "#### Raw Bridge Debug" not in report
+
+    report_path = tmp_path / "hf.md"
+    report_path.write_text(report, encoding="utf-8")
+    parsed = _parse_hf_report(report_path)
+    model_turn = next(
+        turn for turn in parsed["transcript"]
+        if turn["role"] == "model" and turn["exchange_index"] == 1
+    )
+
+    assert model_turn["diagnostics_ref"] == "D1"
+    assert model_turn["attribute_id"] == "appearance.shape"
+    assert model_turn["attribute_label"] == "shape"
+    assert model_turn["attribute_branch"] == "anchored_not_in_kb"
+    assert model_turn["attribute_reply_type"] == "aligned"
+    assert model_turn["attribute_debug"]["profile"]["attribute_id"] == "appearance.shape"
+    assert model_turn["critique"]["attribute_debug"]["reply"]["reply_type"] == "aligned"
 
 
 def test_frontend_assets_cover_critiqued_response_panel_and_pre_wrap():

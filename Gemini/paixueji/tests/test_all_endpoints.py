@@ -241,6 +241,48 @@ def test_exchanges_endpoint_exposes_attribute_debug(client):
     )
 
 
+def test_manual_critique_report_preserves_attribute_debug(client):
+    start_response = client.post(
+        '/api/start',
+        json={"object_name": "apple", "age": 6, "attribute_pipeline_enabled": True},
+    )
+    events = parse_sse(start_response.data)
+    session_id = events[0]['data']['session_id']
+
+    continue_response = client.post(
+        '/api/continue',
+        json={"session_id": session_id, "child_input": "It is round"},
+    )
+    parse_sse(continue_response.data)
+
+    response = client.post('/api/manual-critique', json={
+        "session_id": session_id,
+        "exchange_critiques": [{
+            "exchange_index": 1,
+            "model_response_problem": "Matched shape but asked about another attribute.",
+        }],
+        "skip_traces": True,
+    })
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["success"] is True
+
+    report_path = Path(body["report_path"])
+    report_text = report_path.read_text(encoding="utf-8")
+    assert "Attribute ID" in report_text
+    assert "Raw Attribute Debug" in report_text
+
+    detail_response = client.get(f"/api/reports/hf/{report_path.parent.name}/{report_path.name}")
+    assert detail_response.status_code == 200
+    detail = detail_response.get_json()
+    model_turn = next(
+        turn for turn in detail["transcript"]
+        if turn["role"] == "model" and turn.get("exchange_index") == 1
+    )
+    assert model_turn["attribute_debug"]["profile"]["attribute_id"].startswith("appearance.")
+    assert model_turn["critique"]["attribute_debug"]["profile"]["attribute_id"].startswith("appearance.")
+
+
 def test_exchanges_endpoint_exposes_bridge_debug_for_intro_and_turns(client, monkeypatch):
     from object_resolver import ObjectResolutionResult
     from unittest.mock import AsyncMock

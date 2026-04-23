@@ -3306,32 +3306,48 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
 
     diagnostics_entries = {}
 
-    def register_diagnostics(exchange_index, source_label, response_type, bridge_debug):
-        if bridge_debug:
+    def register_diagnostics(
+        exchange_index,
+        source_label,
+        response_type,
+        bridge_debug=None,
+        attribute_debug=None,
+    ):
+        if bridge_debug or attribute_debug:
+            existing = diagnostics_entries.get(exchange_index, {})
             diagnostics_entries[exchange_index] = {
                 "exchange_index": exchange_index,
-                "source_label": source_label,
-                "response_type": response_type,
-                "bridge_debug": bridge_debug,
+                "source_label": source_label or existing.get("source_label"),
+                "response_type": response_type or existing.get("response_type"),
+                "bridge_debug": bridge_debug or existing.get("bridge_debug"),
+                "attribute_debug": attribute_debug or existing.get("attribute_debug"),
             }
 
     register_diagnostics(
         0,
         "introduction",
         introduction.get("response_type") if introduction else None,
-        introduction.get("bridge_debug") if introduction else None,
+        bridge_debug=introduction.get("bridge_debug") if introduction else None,
+        attribute_debug=introduction.get("attribute_debug") if introduction else None,
     )
     for idx, exchange in enumerate(all_exchanges, start=1):
-        register_diagnostics(idx, f"exchange {idx}", exchange.get("response_type"), exchange.get("bridge_debug"))
+        register_diagnostics(
+            idx,
+            f"exchange {idx}",
+            exchange.get("response_type"),
+            bridge_debug=exchange.get("bridge_debug"),
+            attribute_debug=exchange.get("attribute_debug"),
+        )
 
     # Introduction Critique section (if the reviewer critiqued the introduction)
     if introduction and introduction_critique:
         report += "## Introduction — Human Critique\n\n"
         intro_content = introduction.get("content", "")
         report += f"**Introduction:** \"{intro_content}\"\n\n"
-        if introduction.get("bridge_debug"):
+        if introduction.get("bridge_debug") or introduction.get("attribute_debug"):
             report += _render_turn_summary(
                 introduction.get("bridge_debug"),
+                introduction.get("attribute_debug"),
                 introduction.get("response_type"),
                 diagnostics_ref="D0",
             )
@@ -3368,12 +3384,19 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
                 exchange_index,
                 "introduction" if exchange_index == 0 else f"exchange {exchange_index}",
                 response_type,
-                msg.get("bridge_debug"),
+                bridge_debug=msg.get("bridge_debug"),
+                attribute_debug=msg.get("attribute_debug"),
             )
             diagnostics = diagnostics_entries.get(exchange_index) or {}
             bridge_debug = msg.get("bridge_debug") or diagnostics.get("bridge_debug")
-            diagnostics_ref = f"D{exchange_index}" if bridge_debug else None
-            turn_diagnostics = _render_turn_summary(bridge_debug, response_type, diagnostics_ref=diagnostics_ref)
+            attribute_debug = msg.get("attribute_debug") or diagnostics.get("attribute_debug")
+            diagnostics_ref = f"D{exchange_index}" if bridge_debug or attribute_debug else None
+            turn_diagnostics = _render_turn_summary(
+                bridge_debug,
+                attribute_debug,
+                response_type,
+                diagnostics_ref=diagnostics_ref,
+            )
             nodes_executed = msg.get("nodes_executed", [])
             if nodes_executed:
                 node_names = [n["node"] for n in nodes_executed]
@@ -3425,6 +3448,7 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
                 source_label=entry.get("source_label"),
                 response_type=entry.get("response_type"),
                 bridge_debug=entry.get("bridge_debug"),
+                attribute_debug=entry.get("attribute_debug"),
             )
 
     # Global conclusion
@@ -3447,9 +3471,10 @@ def _render_hf_exchange(idx, exchange, ec):
     report = f"### Exchange {idx}\n\n"
     report += f"**Child said:** \"{exchange['child_response']}\"\n\n"
     report += f"**Model responded:** \"{exchange['model_response']}\"\n\n"
-    if exchange.get("bridge_debug"):
+    if exchange.get("bridge_debug") or exchange.get("attribute_debug"):
         report += _render_turn_summary(
             exchange.get("bridge_debug"),
+            exchange.get("attribute_debug"),
             exchange.get("response_type"),
             diagnostics_ref=f"D{idx}",
         )
@@ -3554,23 +3579,71 @@ def _derive_report_activation_outcome(bridge_debug):
     return outcome.get("handoff_result")
 
 
-def _render_turn_summary(bridge_debug, response_type=None, diagnostics_ref=None):
-    if not bridge_debug:
+def _attribute_profile(attribute_debug):
+    if not attribute_debug:
+        return {}
+    profile = attribute_debug.get("profile") or {}
+    if profile:
+        return profile
+    state_profile = ((attribute_debug.get("state") or {}).get("profile") or {})
+    return state_profile if isinstance(state_profile, dict) else {}
+
+
+def _attribute_reply(attribute_debug):
+    reply = (attribute_debug or {}).get("reply") or {}
+    return reply if isinstance(reply, dict) else {}
+
+
+def _derive_report_attribute_summary(attribute_debug):
+    if not attribute_debug:
+        return {}
+    profile = _attribute_profile(attribute_debug)
+    reply = _attribute_reply(attribute_debug)
+    return {
+        "attribute_pipeline": "on",
+        "attribute_lane": "active" if profile or attribute_debug.get("state") else "inactive",
+        "attribute_id": profile.get("attribute_id") or reply.get("attribute_id"),
+        "attribute_label": profile.get("label"),
+        "activity_target": profile.get("activity_target"),
+        "attribute_branch": profile.get("branch"),
+        "attribute_reply_type": reply.get("reply_type"),
+        "attribute_decision": attribute_debug.get("decision"),
+    }
+
+
+def _render_turn_summary(bridge_debug, attribute_debug=None, response_type=None, diagnostics_ref=None):
+    if not bridge_debug and not attribute_debug:
         return ""
     lines = ["#### Turn Summary\n\n"]
-    bridge_state = _derive_report_bridge_state(bridge_debug)
-    output_node = _derive_report_output_node(bridge_debug, response_type=response_type)
-    bridge_evidence = _derive_report_bridge_evidence(bridge_debug)
-    activation_outcome = _derive_report_activation_outcome(bridge_debug)
-    if bridge_state:
-        lines.append(f"- Bridge State: `{bridge_state}`\n")
-    if output_node:
-        lines.append(f"- Output Node: `{output_node}`\n")
-    lines.append(f"- Bridge Verdict: `{_bridge_verdict_text(bridge_debug)}`\n")
-    if bridge_evidence:
-        lines.append(f"- Bridge Evidence: `{bridge_evidence}`\n")
-    if activation_outcome:
-        lines.append(f"- Activation Outcome: `{activation_outcome}`\n")
+    if bridge_debug:
+        bridge_state = _derive_report_bridge_state(bridge_debug)
+        output_node = _derive_report_output_node(bridge_debug, response_type=response_type)
+        bridge_evidence = _derive_report_bridge_evidence(bridge_debug)
+        activation_outcome = _derive_report_activation_outcome(bridge_debug)
+        if bridge_state:
+            lines.append(f"- Bridge State: `{bridge_state}`\n")
+        if output_node:
+            lines.append(f"- Output Node: `{output_node}`\n")
+        lines.append(f"- Bridge Verdict: `{_bridge_verdict_text(bridge_debug)}`\n")
+        if bridge_evidence:
+            lines.append(f"- Bridge Evidence: `{bridge_evidence}`\n")
+        if activation_outcome:
+            lines.append(f"- Activation Outcome: `{activation_outcome}`\n")
+    if attribute_debug:
+        attribute_summary = _derive_report_attribute_summary(attribute_debug)
+        for label, key in [
+            ("Attribute Pipeline", "attribute_pipeline"),
+            ("Attribute Lane", "attribute_lane"),
+            ("Attribute ID", "attribute_id"),
+            ("Attribute Label", "attribute_label"),
+            ("Activity Target", "activity_target"),
+            ("Attribute Branch", "attribute_branch"),
+            ("Attribute Reply Type", "attribute_reply_type"),
+            ("Attribute Decision", "attribute_decision"),
+        ]:
+            value = attribute_summary.get(key)
+            if value is not None:
+                lines.append(f"- {label}: `{value}`\n")
     if diagnostics_ref:
         lines.append(f"- Diagnostics Ref: `{diagnostics_ref}`\n")
     lines.append("\n")
@@ -3610,8 +3683,50 @@ def _render_raw_bridge_debug(bridge_debug):
     return "".join(lines)
 
 
-def _render_raw_diagnostics_entry(exchange_index, source_label, response_type, bridge_debug):
-    if not bridge_debug:
+def _format_report_debug_value(value):
+    if isinstance(value, (dict, list, tuple)):
+        return json.dumps(value, ensure_ascii=False)
+    return str(value)
+
+
+def _render_raw_attribute_group(group_label, group_value):
+    if not isinstance(group_value, dict) or not group_value:
+        return ""
+    lines = [f"\n##### {group_label}\n\n"]
+    for key, value in group_value.items():
+        if value is None:
+            continue
+        lines.append(f"- {key}: `{_format_report_debug_value(value)}`\n")
+    return "".join(lines)
+
+
+def _render_raw_attribute_debug(attribute_debug):
+    if not attribute_debug:
+        return ""
+    lines = ["#### Raw Attribute Debug\n\n"]
+    for key in ("decision", "reason", "response_text"):
+        value = attribute_debug.get(key)
+        if value is not None:
+            lines.append(f"- {key}: `{_format_report_debug_value(value)}`\n")
+    for key, label in [
+        ("profile", "Attribute Profile"),
+        ("state", "Attribute State"),
+        ("reply", "Attribute Reply"),
+        ("readiness", "Attribute Readiness"),
+    ]:
+        lines.append(_render_raw_attribute_group(label, attribute_debug.get(key)))
+    lines.append("\n")
+    return "".join(lines)
+
+
+def _render_raw_diagnostics_entry(
+    exchange_index,
+    source_label,
+    response_type,
+    bridge_debug,
+    attribute_debug=None,
+):
+    if not bridge_debug and not attribute_debug:
         return ""
     lines = [
         f"### Diagnostics D{exchange_index} — {source_label}\n",
@@ -3629,8 +3744,19 @@ def _render_raw_diagnostics_entry(exchange_index, source_label, response_type, b
         lines.append(f"**Bridge Evidence:** {bridge_evidence}\n")
     if activation_outcome:
         lines.append(f"**Activation Outcome:** {activation_outcome}\n")
+    attribute_summary = _derive_report_attribute_summary(attribute_debug)
+    for label, key in [
+        ("Attribute ID", "attribute_id"),
+        ("Attribute Label", "attribute_label"),
+        ("Attribute Branch", "attribute_branch"),
+        ("Attribute Reply Type", "attribute_reply_type"),
+    ]:
+        value = attribute_summary.get(key)
+        if value is not None:
+            lines.append(f"**{label}:** {value}\n")
     lines.append("\n")
     lines.append(_render_raw_bridge_debug(bridge_debug))
+    lines.append(_render_raw_attribute_debug(attribute_debug))
     return "".join(lines)
 
 
@@ -3714,6 +3840,46 @@ def _parse_hf_report(filepath):
             debug["activation_transition"] = activation_transition
         return debug or None
 
+    def parse_attribute_value(value):
+        if value.startswith(("{", "[")):
+            try:
+                return json.loads(value)
+            except json.JSONDecodeError:
+                return value
+        return value
+
+    def parse_raw_attribute_debug(raw_text):
+        debug = {}
+        group_map = {
+            "attribute_profile": "profile",
+            "attribute_state": "state",
+            "attribute_reply": "reply",
+            "attribute_readiness": "readiness",
+        }
+        current_group = None
+
+        for raw_line in raw_text.splitlines():
+            line = raw_line.strip()
+            if not line:
+                continue
+            if line.startswith("##### "):
+                label = line[6:].strip().lower().replace(" ", "_")
+                current_group = group_map.get(label)
+                if current_group:
+                    debug.setdefault(current_group, {})
+                continue
+            m = re.match(r'-\s+([^:]+):\s+`(.*)`', line)
+            if not m:
+                continue
+            key = m.group(1).strip()
+            value = parse_attribute_value(m.group(2).strip())
+            if current_group:
+                debug.setdefault(current_group, {})[key] = value
+            else:
+                debug[key] = value
+
+        return debug or None
+
     def parse_summary_block(block_text):
         summary = {
             "bridge_state": None,
@@ -3721,6 +3887,14 @@ def _parse_hf_report(filepath):
             "bridge_verdict": None,
             "bridge_evidence": None,
             "activation_outcome": None,
+            "attribute_pipeline": None,
+            "attribute_lane": None,
+            "attribute_id": None,
+            "attribute_label": None,
+            "activity_target": None,
+            "attribute_branch": None,
+            "attribute_reply_type": None,
+            "attribute_decision": None,
             "diagnostics_ref": None,
         }
         sm = re.search(r'#### Turn Summary\n+(.+?)(?=\n\n#### |\n\n---|\n\*\*|\n### |\n## |\Z)', block_text, re.DOTALL)
@@ -3733,6 +3907,14 @@ def _parse_hf_report(filepath):
             ("Bridge Verdict", "bridge_verdict"),
             ("Bridge Evidence", "bridge_evidence"),
             ("Activation Outcome", "activation_outcome"),
+            ("Attribute Pipeline", "attribute_pipeline"),
+            ("Attribute Lane", "attribute_lane"),
+            ("Attribute ID", "attribute_id"),
+            ("Attribute Label", "attribute_label"),
+            ("Activity Target", "activity_target"),
+            ("Attribute Branch", "attribute_branch"),
+            ("Attribute Reply Type", "attribute_reply_type"),
+            ("Attribute Decision", "attribute_decision"),
             ("Diagnostics Ref", "diagnostics_ref"),
         ]:
             lm = re.search(rf'- {re.escape(label)}:\s+`(.+?)`', summary_text)
@@ -3753,6 +3935,15 @@ def _parse_hf_report(filepath):
                 "output_node": summary["output_node"],
                 "bridge_evidence": summary["bridge_evidence"],
                 "activation_outcome": summary["activation_outcome"],
+                "attribute_pipeline": summary["attribute_pipeline"],
+                "attribute_lane": summary["attribute_lane"],
+                "attribute_id": summary["attribute_id"],
+                "attribute_label": summary["attribute_label"],
+                "activity_target": summary["activity_target"],
+                "attribute_branch": summary["attribute_branch"],
+                "attribute_reply_type": summary["attribute_reply_type"],
+                "attribute_decision": summary["attribute_decision"],
+                "attribute_debug": None,
                 "diagnostics_ref": summary["diagnostics_ref"],
             }
 
@@ -3763,12 +3954,18 @@ def _parse_hf_report(filepath):
             vm = re.search(r'\*\*Bridge Verdict:\*\*\s*(.+)', diagnostics_part)
             verdict = vm.group(1).strip() if vm else None
             raw_bridge = re.search(
-                r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### (?!#)|\Z)',
+                r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### Raw Attribute Debug|\n\n#### (?!#)|\Z)',
                 diagnostics_part,
                 re.DOTALL,
             )
             if raw_bridge:
                 bridge_debug = parse_raw_bridge_debug(raw_bridge.group(1))
+            raw_attribute = re.search(
+                r'#### Raw Attribute Debug\n+(.+?)(?=\n\n#### (?!#)|\Z)',
+                diagnostics_part,
+                re.DOTALL,
+            )
+            attribute_debug = parse_raw_attribute_debug(raw_attribute.group(1)) if raw_attribute else None
             return {
                 "text": cleaned_text,
                 "bridge_verdict": verdict,
@@ -3777,6 +3974,15 @@ def _parse_hf_report(filepath):
                 "output_node": None,
                 "bridge_evidence": (bridge_debug or {}).get("bridge_follow_reason"),
                 "activation_outcome": (((bridge_debug or {}).get("activation_transition") or {}).get("outcome") or {}).get("handoff_result"),
+                "attribute_pipeline": None,
+                "attribute_lane": None,
+                "attribute_id": ((attribute_debug or {}).get("profile") or {}).get("attribute_id"),
+                "attribute_label": ((attribute_debug or {}).get("profile") or {}).get("label"),
+                "activity_target": ((attribute_debug or {}).get("profile") or {}).get("activity_target"),
+                "attribute_branch": ((attribute_debug or {}).get("profile") or {}).get("branch"),
+                "attribute_reply_type": ((attribute_debug or {}).get("reply") or {}).get("reply_type"),
+                "attribute_decision": (attribute_debug or {}).get("decision"),
+                "attribute_debug": attribute_debug,
                 "diagnostics_ref": None,
             }
         return {
@@ -3787,6 +3993,15 @@ def _parse_hf_report(filepath):
             "output_node": None,
             "bridge_evidence": None,
             "activation_outcome": None,
+            "attribute_pipeline": None,
+            "attribute_lane": None,
+            "attribute_id": None,
+            "attribute_label": None,
+            "activity_target": None,
+            "attribute_branch": None,
+            "attribute_reply_type": None,
+            "attribute_decision": None,
+            "attribute_debug": None,
             "diagnostics_ref": None,
         }
 
@@ -3804,6 +4019,15 @@ def _parse_hf_report(filepath):
                 "bridge_evidence": None,
                 "activation_outcome": None,
                 "bridge_debug": None,
+                "attribute_pipeline": None,
+                "attribute_lane": None,
+                "attribute_id": None,
+                "attribute_label": None,
+                "activity_target": None,
+                "attribute_branch": None,
+                "attribute_reply_type": None,
+                "attribute_decision": None,
+                "attribute_debug": None,
             }
             for label, key in [
                 ("Bridge State", "bridge_state"),
@@ -3814,9 +4038,29 @@ def _parse_hf_report(filepath):
                 sm = re.search(rf'\*\*{re.escape(label)}:\*\*\s+(.+)', block)
                 if sm:
                     entry[key] = sm.group(1).strip()
-            raw_bridge = re.search(r'#### Raw Bridge Debug\n+(.+?)(?=\n\n### |\n## |\Z)', block, re.DOTALL)
+            for label, key in [
+                ("Attribute ID", "attribute_id"),
+                ("Attribute Label", "attribute_label"),
+                ("Attribute Branch", "attribute_branch"),
+                ("Attribute Reply Type", "attribute_reply_type"),
+            ]:
+                sm = re.search(rf'\*\*{re.escape(label)}:\*\*\s+(.+)', block)
+                if sm:
+                    entry[key] = sm.group(1).strip()
+            raw_bridge = re.search(
+                r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### Raw Attribute Debug|\n\n### |\n## |\Z)',
+                block,
+                re.DOTALL,
+            )
             if raw_bridge:
                 entry["bridge_debug"] = parse_raw_bridge_debug(raw_bridge.group(1))
+            raw_attribute = re.search(
+                r'#### Raw Attribute Debug\n+(.+?)(?=\n\n### |\n## |\Z)',
+                block,
+                re.DOTALL,
+            )
+            if raw_attribute:
+                entry["attribute_debug"] = parse_raw_attribute_debug(raw_attribute.group(1))
             appendix[exchange_index] = entry
         return appendix
 
@@ -3861,6 +4105,15 @@ def _parse_hf_report(filepath):
                 "output_node": turn_meta["output_node"],
                 "bridge_evidence": turn_meta["bridge_evidence"],
                 "activation_outcome": turn_meta["activation_outcome"],
+                "attribute_pipeline": turn_meta["attribute_pipeline"],
+                "attribute_lane": turn_meta["attribute_lane"],
+                "attribute_id": turn_meta["attribute_id"],
+                "attribute_label": turn_meta["attribute_label"],
+                "activity_target": turn_meta["activity_target"],
+                "attribute_branch": turn_meta["attribute_branch"],
+                "attribute_reply_type": turn_meta["attribute_reply_type"],
+                "attribute_decision": turn_meta["attribute_decision"],
+                "attribute_debug": turn_meta["attribute_debug"],
                 "diagnostics_ref": turn_meta["diagnostics_ref"],
                 "critique": None,
             })
@@ -3900,6 +4153,15 @@ def _parse_hf_report(filepath):
         turn["output_node"] = entry.get("output_node") or turn.get("output_node")
         turn["bridge_evidence"] = entry.get("bridge_evidence") or turn.get("bridge_evidence")
         turn["activation_outcome"] = entry.get("activation_outcome") or turn.get("activation_outcome")
+        turn["attribute_pipeline"] = entry.get("attribute_pipeline") or turn.get("attribute_pipeline")
+        turn["attribute_lane"] = entry.get("attribute_lane") or turn.get("attribute_lane")
+        turn["attribute_id"] = entry.get("attribute_id") or turn.get("attribute_id")
+        turn["attribute_label"] = entry.get("attribute_label") or turn.get("attribute_label")
+        turn["activity_target"] = entry.get("activity_target") or turn.get("activity_target")
+        turn["attribute_branch"] = entry.get("attribute_branch") or turn.get("attribute_branch")
+        turn["attribute_reply_type"] = entry.get("attribute_reply_type") or turn.get("attribute_reply_type")
+        turn["attribute_decision"] = entry.get("attribute_decision") or turn.get("attribute_decision")
+        turn["attribute_debug"] = entry.get("attribute_debug") or turn.get("attribute_debug")
         turn["diagnostics_ref"] = f"D{turn['exchange_index']}"
         turn["bridge_debug"] = entry.get("bridge_debug") or turn.get("bridge_debug")
 
@@ -3916,7 +4178,8 @@ def _parse_hf_report(filepath):
                 continue
 
             crit = {"phase": phase_key, "expected": None, "problematic": None,
-                    "conclusion": None, "node_trace": [], "bridge_verdict": None, "bridge_debug": None}
+                    "conclusion": None, "node_trace": [], "bridge_verdict": None,
+                    "bridge_debug": None, "attribute_debug": None}
 
             for rm in re.finditer(r'\|\s*([^|\n]+?)\s*\|\s*([^|\n]+?)\s*\|\s*([^|\n]+?)\s*\|', block):
                 nd, tm, st = rm.group(1).strip(), rm.group(2).strip(), rm.group(3).strip()
@@ -3940,15 +4203,23 @@ def _parse_hf_report(filepath):
             summary = parse_summary_block(block)
             if crit["bridge_verdict"] is None:
                 crit["bridge_verdict"] = summary["bridge_verdict"]
-            raw_bridge = re.search(r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### (?!#)|\n\n---|\Z)', block, re.DOTALL)
+            raw_bridge = re.search(
+                r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### Raw Attribute Debug|\n\n#### (?!#)|\n\n---|\Z)',
+                block,
+                re.DOTALL,
+            )
             if raw_bridge:
                 crit["bridge_debug"] = parse_raw_bridge_debug(raw_bridge.group(1))
+            raw_attribute = re.search(r'#### Raw Attribute Debug\n+(.+?)(?=\n\n#### (?!#)|\n\n---|\Z)', block, re.DOTALL)
+            if raw_attribute:
+                crit["attribute_debug"] = parse_raw_attribute_debug(raw_attribute.group(1))
             if (
                 crit["expected"]
                 or crit["problematic"]
                 or crit["conclusion"]
                 or crit["bridge_verdict"]
                 or crit["bridge_debug"]
+                or crit["attribute_debug"]
                 or crit["node_trace"]
             ):
                 critiques[eidx] = crit
@@ -3966,7 +4237,8 @@ def _parse_hf_report(filepath):
     intro_sec = get_section("Introduction")
     if intro_sec:
         crit = {"phase": "CHAT", "expected": None, "problematic": None,
-                "conclusion": None, "node_trace": [], "bridge_verdict": None, "bridge_debug": None}
+                "conclusion": None, "node_trace": [], "bridge_verdict": None,
+                "bridge_debug": None, "attribute_debug": None}
         all_expected    = re.findall(r'\*What is expected:\*\s*(.+)', intro_sec)
         all_problematic = re.findall(r'\*Why is it problematic:\*\s*(.+)', intro_sec)
         crit["expected"]    = all_expected[-1].strip()    if all_expected    else None
@@ -3978,15 +4250,23 @@ def _parse_hf_report(filepath):
         summary = parse_summary_block(intro_sec)
         if crit["bridge_verdict"] is None:
             crit["bridge_verdict"] = summary["bridge_verdict"]
-        raw_bridge = re.search(r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### (?!#)|\n\n---|\Z)', intro_sec, re.DOTALL)
+        raw_bridge = re.search(
+            r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### Raw Attribute Debug|\n\n#### (?!#)|\n\n---|\Z)',
+            intro_sec,
+            re.DOTALL,
+        )
         if raw_bridge:
             crit["bridge_debug"] = parse_raw_bridge_debug(raw_bridge.group(1))
+        raw_attribute = re.search(r'#### Raw Attribute Debug\n+(.+?)(?=\n\n#### (?!#)|\n\n---|\Z)', intro_sec, re.DOTALL)
+        if raw_attribute:
+            crit["attribute_debug"] = parse_raw_attribute_debug(raw_attribute.group(1))
         if (
             crit["expected"]
             or crit["problematic"]
             or crit["conclusion"]
             or crit["bridge_verdict"]
             or crit["bridge_debug"]
+            or crit["attribute_debug"]
             or crit["node_trace"]
             or appendix.get(0)
         ):
@@ -4004,6 +4284,8 @@ def _parse_hf_report(filepath):
                 turn["critique"]["bridge_debug"] = turn["bridge_debug"]
             if turn["critique"].get("bridge_verdict") is None and turn.get("bridge_verdict") is not None:
                 turn["critique"]["bridge_verdict"] = turn["bridge_verdict"]
+            if turn["critique"].get("attribute_debug") is None and turn.get("attribute_debug") is not None:
+                turn["critique"]["attribute_debug"] = turn["attribute_debug"]
 
     # ── Global conclusion ────────────────────────────────────────────────────
     gc_sec = get_section("Global Conclusion")
