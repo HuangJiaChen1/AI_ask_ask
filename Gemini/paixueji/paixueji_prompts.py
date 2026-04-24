@@ -446,15 +446,25 @@ B) FRAME WEAVING — when the child noticed something OTHER than
      "That's nice, but what color is it?" (ignores their observation,
       forced redirect)
 
-C) NATURAL BRIDGE — when the child ALREADY engaged with
-   {attribute_label}, extend toward the activity goal naturally.
-   This previews the activity content, not announces it:
-   GOOD (child said "red", attribute=body color,
-         activity=find colored objects):
-     "Red really stands out! Can you spot anything else around you
-      that's that bold red color?"
-   BAD (child said "red"):
+C) NATURAL BRIDGE — when YOU feel the child has explored {attribute_label}
+   with enough depth for a natural activity invitation, extend toward
+   the activity goal. This previews the activity content, not announces it:
+   GOOD (child explored color with depth, activity=find colored objects):
+     "Can you spot anything else around you that's that bold red color?"
+   BAD (shallow engagement, only one word about color):
+     Using C here would be premature — use A or B instead.
+   BAD (any depth):
      "Great! Now we can start an activity!" (mechanical announcement)
+
+TRANSITION SIGNAL: When you choose technique C and include an
+activity-preview question, append [ACTIVITY_READY] at the very end
+of your response (after your question, on a separate line). This
+marker is invisible to the child — the system uses it to know the
+conversation reached a natural transition point. Do NOT add
+[ACTIVITY_READY] unless you genuinely chose technique C and your
+question invites the child to DO something related to {activity_target}.
+Adding it prematurely (before the child has explored {attribute_label}
+with real depth) breaks the experience.
 
 ANTI-PATTERNS — NEVER produce these:
 ✗ "What {attribute_label} is it?" — that's a quiz
@@ -463,6 +473,7 @@ ANTI-PATTERNS — NEVER produce these:
 ✗ "Let's look at its {attribute_label}!" — forced redirect
 ✗ "That's nice, but..." followed by a question about {attribute_label} — ignoring child
 ✗ "Great! Now we can start an activity!" — mechanical announcement
+✗ Adding [ACTIVITY_READY] after just one shallow exchange — premature handoff
 """
 
 ATTRIBUTE_RESPONSE_HINT = """
