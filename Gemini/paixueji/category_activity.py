@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 
-from attribute_activity import SUBSTANTIVE_TURN_THRESHOLD
 from stream.exploration_loader import ALL_DOMAINS
 
 
-CATEGORY_ACTIVITY_READY_TURN_THRESHOLD = SUBSTANTIVE_TURN_THRESHOLD
+CATEGORY_ACTIVITY_READY_TURN_THRESHOLD = 2
 ACTIVITY_COMMAND_WORDS = {"let's", "lets", "game", "play", "activity", "ready"}
 CATEGORY_ACTIVITY_TEMPLATES: dict[str, str] = {
     "animals": "discovering different animals and what makes them special",
