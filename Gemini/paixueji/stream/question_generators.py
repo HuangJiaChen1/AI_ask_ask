@@ -343,3 +343,65 @@ async def ask_attribute_intro_stream(
                 pass
 
     yield ("", token_usage, full_response, {})
+
+
+async def ask_category_intro_stream(
+    *,
+    messages: list[dict],
+    object_name: str,
+    category_label: str,
+    activity_target: str,
+    age_prompt: str,
+    age: int,
+    config: dict,
+    client: genai.Client,
+) -> AsyncGenerator[tuple[str, TokenUsage | None, str, dict], None]:
+    prompts = paixueji_prompts.get_prompts()
+    prompt = prompts["category_intro_prompt"].format(
+        object_name=object_name,
+        category_label=category_label,
+        activity_target=activity_target,
+        age_prompt=age_prompt,
+        age=age,
+    )
+    messages_to_send = messages + [{"role": "user", "content": prompt}]
+    clean_messages = clean_messages_for_api(messages_to_send)
+    system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
+
+    full_response = ""
+    token_usage = None
+    stream = None
+    try:
+        gen_config = GenerateContentConfig(
+            temperature=config.get("temperature", 0.3),
+            max_output_tokens=config.get("max_tokens", 2000),
+            system_instruction=system_instruction if system_instruction else None,
+        )
+        stream = await client.aio.models.generate_content_stream(
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config,
+        )
+        decision_info = {
+            "new_object_name": None,
+            "detected_object_name": None,
+            "switch_decision_reasoning": None,
+        }
+        async for chunk in stream:
+            if chunk.text:
+                full_response += chunk.text
+                yield (chunk.text, None, full_response, decision_info)
+    except Exception as e:
+        logger.error("ask_category_intro_stream error | error={}", str(e), exc_info=True)
+        raise_if_rate_limited(e)
+        if full_response:
+            yield ("", token_usage, full_response, {})
+        return
+    finally:
+        if stream is not None:
+            try:
+                del stream
+            except Exception:
+                pass
+
+    yield ("", token_usage, full_response, {})

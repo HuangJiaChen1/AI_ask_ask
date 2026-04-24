@@ -48,6 +48,10 @@ let currentAttributeDebug = null;
 let currentAttributePipelineEnabled = false;
 let currentAttributeLaneActive = false;
 let currentAttributeActivityTarget = null;
+let currentCategoryDebug = null;
+let currentCategoryPipelineEnabled = false;
+let currentCategoryLaneActive = false;
+let currentCategoryActivityTarget = null;
 
 const INTENT_METADATA = {
     ACTION: {
@@ -540,6 +544,7 @@ async function startConversation() {
     const age = parseInt(document.getElementById('age').value);
     const objectName = document.getElementById('objectName').value.trim();
     const attributePipelineEnabled = !!document.getElementById('attributePipelineEnabled')?.checked;
+    const categoryPipelineEnabled = !!document.getElementById('categoryPipelineEnabled')?.checked;
     // Save state for debug panel
     currentObject = objectName;
 
@@ -573,6 +578,10 @@ async function startConversation() {
     currentAttributePipelineEnabled = false;
     currentAttributeLaneActive = false;
     currentAttributeActivityTarget = null;
+    currentCategoryDebug = null;
+    currentCategoryPipelineEnabled = false;
+    currentCategoryLaneActive = false;
+    currentCategoryActivityTarget = null;
 
     // Reset progress
     correctAnswerCount = 0;
@@ -611,7 +620,8 @@ async function startConversation() {
                 object_name: objectName,
                 model_name_override: conversationModel,
                 grounding_model_override: groundingModel,
-                attribute_pipeline_enabled: attributePipelineEnabled
+                attribute_pipeline_enabled: attributePipelineEnabled,
+                category_pipeline_enabled: categoryPipelineEnabled
             }),
             signal: currentStreamController.signal
         });
@@ -1016,12 +1026,34 @@ function handleStreamChunk(chunk) {
         currentAttributeDebug = chunk.attribute_debug;
         updateDebugPanel();
     }
-    if (chunk.activity_target) {
-        currentAttributeActivityTarget = chunk.activity_target;
+    if ('category_pipeline_enabled' in chunk) {
+        currentCategoryPipelineEnabled = !!chunk.category_pipeline_enabled;
         updateDebugPanel();
     }
-    if (chunk.activity_ready && !currentAttributeActivityTarget) {
-        currentAttributeActivityTarget = { activity_source: 'attribute' };
+    if ('category_lane_active' in chunk) {
+        currentCategoryLaneActive = !!chunk.category_lane_active;
+        updateDebugPanel();
+    }
+    if ('category_debug' in chunk) {
+        currentCategoryDebug = chunk.category_debug;
+        updateDebugPanel();
+    }
+    if (chunk.activity_target) {
+        if (chunk.activity_target.activity_source === 'category') {
+            currentCategoryActivityTarget = chunk.activity_target;
+            currentAttributeActivityTarget = null;
+        } else {
+            currentAttributeActivityTarget = chunk.activity_target;
+            currentCategoryActivityTarget = null;
+        }
+        updateDebugPanel();
+    }
+    if (chunk.activity_ready && !currentAttributeActivityTarget && !currentCategoryActivityTarget) {
+        if (currentCategoryLaneActive || currentCategoryPipelineEnabled) {
+            currentCategoryActivityTarget = { activity_source: 'category' };
+        } else {
+            currentAttributeActivityTarget = { activity_source: 'attribute' };
+        }
         updateDebugPanel();
     }
 
@@ -1198,6 +1230,16 @@ function updateDebugPanel() {
     setText('debugAttributeActivityTarget', attributeProfile.activity_target);
     setText('debugAttributeBranch', attributeProfile.branch);
     setText('debugAttributeReplyType', attributeReply.reply_type);
+    const categoryDebug = currentCategoryDebug || {};
+    const categoryProfile = categoryDebug.profile || {};
+    const categoryReply = categoryDebug.reply || {};
+    setText('debugCategoryPipeline', currentCategoryPipelineEnabled ? 'on' : 'off');
+    setText('debugCategoryLane', currentCategoryLaneActive ? 'active' : 'inactive');
+    setText('debugCategoryId', categoryProfile.category_id);
+    setText('debugCategoryLabel', categoryProfile.category_label);
+    setText('debugCategoryActivityTarget', categoryProfile.activity_target);
+    setText('debugCategoryReplyType', categoryReply.reply_type);
+    setText('debugCategoryDecision', categoryDebug.decision);
     setText('debugSurfaceObject', bridgeDebug.surface_object_name);
     setText('debugAnchorObject', bridgeDebug.anchor_object_name);
     setText('debugAnchorStatus', bridgeDebug.anchor_status);
@@ -1228,7 +1270,11 @@ function isCurrentObjectGameEligible() {
 }
 
 function hasAttributeActivityReady() {
-    return !!currentAttributeActivityTarget && currentAttributeActivityTarget.activity_source === 'attribute';
+    const currentActivityTarget = currentAttributeActivityTarget || currentCategoryActivityTarget;
+    return !!currentActivityTarget && (
+        currentActivityTarget.activity_source === 'attribute'
+        || currentActivityTarget.activity_source === 'category'
+    );
 }
 
 function setChatPhaseCompleteModalVisible(visible) {
@@ -1352,6 +1398,15 @@ function resetConversation() {
     currentClassificationStatus = null;
     currentClassificationFailureReason = null;
     currentUsedKbItem = null;
+    currentBridgeDebug = null;
+    currentAttributeDebug = null;
+    currentAttributePipelineEnabled = false;
+    currentAttributeLaneActive = false;
+    currentAttributeActivityTarget = null;
+    currentCategoryDebug = null;
+    currentCategoryPipelineEnabled = false;
+    currentCategoryLaneActive = false;
+    currentCategoryActivityTarget = null;
 
     // Clear messages
     messagesContainer.innerHTML = '';
@@ -1394,6 +1449,21 @@ function init() {
             <small>Choose an object from the dropdown, then click "Start Learning!" to begin</small>
         `;
         messagesContainer.appendChild(emptyState);
+    }
+
+    const attributeToggle = document.getElementById('attributePipelineEnabled');
+    const categoryToggle = document.getElementById('categoryPipelineEnabled');
+    if (attributeToggle && categoryToggle) {
+        attributeToggle.addEventListener('change', () => {
+            if (attributeToggle.checked) {
+                categoryToggle.checked = false;
+            }
+        });
+        categoryToggle.addEventListener('change', () => {
+            if (categoryToggle.checked) {
+                attributeToggle.checked = false;
+            }
+        });
     }
 
     loadObjects();

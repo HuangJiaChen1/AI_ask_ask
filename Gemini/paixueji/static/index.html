@@ -94,10 +94,16 @@
                 </div>
             </div>
 
-            <label class="attribute-toggle" for="attributePipelineEnabled">
-                <input type="checkbox" id="attributePipelineEnabled">
-                <span>Attributes</span>
-            </label>
+            <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+                <label class="attribute-toggle" for="attributePipelineEnabled">
+                    <input type="checkbox" id="attributePipelineEnabled">
+                    <span>Attributes</span>
+                </label>
+                <label class="category-toggle" for="categoryPipelineEnabled">
+                    <input type="checkbox" id="categoryPipelineEnabled">
+                    <span>Category</span>
+                </label>
+            </div>
 
             <button onclick="startConversation()">Start Learning!</button>
         </div>
@@ -218,6 +224,16 @@
                 <div style="font-size: 0.85em; color: #64748b;">Activity Target: <span id="debugAttributeActivityTarget">-</span></div>
                 <div style="font-size: 0.85em; color: #64748b;">Branch: <span id="debugAttributeBranch">-</span></div>
                 <div style="font-size: 0.85em; color: #64748b;">Reply Type: <span id="debugAttributeReplyType">-</span></div>
+            </div>
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #94a3b8;">
+                <strong>Category Debug:</strong>
+                <div style="font-size: 0.85em; color: #64748b; margin-top: 4px;">Pipeline: <span id="debugCategoryPipeline">-</span></div>
+                <div style="font-size: 0.85em; color: #64748b;">Lane: <span id="debugCategoryLane">-</span></div>
+                <div style="font-size: 0.85em; color: #64748b;">Category ID: <span id="debugCategoryId" style="font-family: monospace;">-</span></div>
+                <div style="font-size: 0.85em; color: #64748b;">Label: <span id="debugCategoryLabel">-</span></div>
+                <div style="font-size: 0.85em; color: #64748b;">Activity Target: <span id="debugCategoryActivityTarget">-</span></div>
+                <div style="font-size: 0.85em; color: #64748b;">Reply Type: <span id="debugCategoryReplyType">-</span></div>
+                <div style="font-size: 0.85em; color: #64748b;">Decision: <span id="debugCategoryDecision">-</span></div>
             </div>
             <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #94a3b8;">
                 <strong>Bridge Debug:</strong>
@@ -481,6 +497,12 @@
                     <details class="rv-popup-trace">
                         <summary>Attribute Diagnostics</summary>
                         <div class="rv-crit-panel-text" id="rvPopupAttributeDebug"></div>
+                    </details>
+                </div>
+                <div class="rv-crit-panel rv-panel-green">
+                    <details class="rv-popup-trace">
+                        <summary>Category Diagnostics</summary>
+                        <div class="rv-crit-panel-text" id="rvPopupCategoryDebug"></div>
                     </details>
                 </div>
                 <details class="rv-popup-trace" id="rvPopupTrace">

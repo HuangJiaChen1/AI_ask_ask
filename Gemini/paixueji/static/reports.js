@@ -190,6 +190,48 @@ function rvFormatAttributeDebug(debug, turn = null) {
     return lines.length ? lines.join('\n') : '—';
 }
 
+function rvCategoryStateSummary(turn, debug) {
+    if (!turn && (!debug || Object.keys(debug).length === 0)) return [];
+    const profile = debug?.profile || debug?.state?.profile || {};
+    const reply = debug?.reply || {};
+    const lines = [];
+    const fields = [
+        ['Category Pipeline', turn?.category_pipeline || (debug ? 'on' : null)],
+        ['Category Lane', turn?.category_lane || (profile.category_id || debug?.state ? 'active' : null)],
+        ['Category ID', turn?.category_id || profile.category_id || reply.category_id],
+        ['Category Label', turn?.category_label || profile.category_label],
+        ['Activity Target', turn?.activity_target || profile.activity_target],
+        ['Category Reply Type', turn?.category_reply_type || reply.reply_type],
+        ['Category Decision', turn?.category_decision || debug?.decision],
+    ];
+    for (const [label, value] of fields) {
+        if (value != null && value !== '') lines.push(`${label}: ${value}`);
+    }
+    return lines;
+}
+
+function rvFormatCategoryDebug(debug, turn = null) {
+    if (!debug || Object.keys(debug).length === 0) return '—';
+    const lines = rvCategoryStateSummary(turn, debug);
+    const formatValue = (value) => {
+        if (value == null) return null;
+        if (typeof value === 'object') return JSON.stringify(value, null, 2);
+        return String(value);
+    };
+    for (const [key, value] of Object.entries(debug)) {
+        if (value == null) continue;
+        const formatted = formatValue(value);
+        if (formatted == null) continue;
+        if (typeof value === 'object') {
+            lines.push(`${key}:`);
+            lines.push(formatted);
+            continue;
+        }
+        lines.push(`${key}: ${formatted}`);
+    }
+    return lines.length ? lines.join('\n') : '—';
+}
+
 function rvTurnBridgeVerdict(turn) {
     return turn.bridge_verdict || turn.critique?.bridge_verdict || null;
 }
@@ -200,6 +242,10 @@ function rvTurnBridgeDebug(turn) {
 
 function rvTurnAttributeDebug(turn) {
     return turn.attribute_debug || turn.critique?.attribute_debug || null;
+}
+
+function rvTurnCategoryDebug(turn) {
+    return turn.category_debug || turn.critique?.category_debug || null;
 }
 
 function rvTurnBridgeState(turn) {
@@ -236,12 +282,14 @@ function rvTurnHasHumanCritique(turn) {
         || (crit.bridge_debug && Object.keys(crit.bridge_debug).length)
     );
     const hasAttributeDebug = !!(crit.attribute_debug && Object.keys(crit.attribute_debug).length);
+    const hasCategoryDebug = !!(crit.category_debug && Object.keys(crit.category_debug).length);
     return !!(
         crit.expected
         || crit.problematic
         || crit.conclusion
         || hasBridgeDebug
         || hasAttributeDebug
+        || hasCategoryDebug
         || (crit.node_trace && crit.node_trace.length)
     );
 }
@@ -251,7 +299,9 @@ function rvTurnHasDiagnostics(turn) {
         turn.bridge_verdict
         || (turn.bridge_debug && Object.keys(turn.bridge_debug).length)
         || (turn.attribute_debug && Object.keys(turn.attribute_debug).length)
+        || (turn.category_debug && Object.keys(turn.category_debug).length)
         || turn.attribute_id
+        || turn.category_id
     );
 }
 
@@ -488,11 +538,12 @@ function showRvCritiquePopup(exchangeIdx) {
     const bridgeVerdict = turn ? rvTurnBridgeVerdict(turn) : (crit?.bridge_verdict || null);
     const bridgeDebug = turn ? (rvTurnBridgeDebug(turn) || {}) : (crit?.bridge_debug || {});
     const attributeDebug = turn ? (rvTurnAttributeDebug(turn) || {}) : (crit?.attribute_debug || {});
+    const categoryDebug = turn ? (rvTurnCategoryDebug(turn) || {}) : (crit?.category_debug || {});
     const outputNode = turn ? rvTurnOutputNode(turn) : (crit?.bridge_debug?.response_type || null);
     const bridgeEvidence = turn ? rvTurnBridgeEvidence(turn) : rvDeriveBridgeEvidence(crit?.bridge_debug || {});
     const activationOutcome = turn ? rvTurnActivationOutcome(turn) : rvDeriveActivationOutcome(crit?.bridge_debug || {});
     const diagnosticsRef = turn ? rvTurnDiagnosticsRef(turn) : (typeof exchangeIdx === 'number' ? `D${exchangeIdx}` : null);
-    if (!turn || (!crit && !bridgeVerdict && !Object.keys(bridgeDebug).length && !Object.keys(attributeDebug).length)) return;
+    if (!turn || (!crit && !bridgeVerdict && !Object.keys(bridgeDebug).length && !Object.keys(attributeDebug).length && !Object.keys(categoryDebug).length)) return;
 
     const isProblematic = crit && crit.problematic
         && crit.problematic.toLowerCase() !== 'none'
@@ -552,6 +603,10 @@ function showRvCritiquePopup(exchangeIdx) {
     const attributeDebugEl = document.getElementById('rvPopupAttributeDebug');
     if (attributeDebugEl) {
         attributeDebugEl.textContent = rvFormatAttributeDebug(attributeDebug, turn || null);
+    }
+    const categoryDebugEl = document.getElementById('rvPopupCategoryDebug');
+    if (categoryDebugEl) {
+        categoryDebugEl.textContent = rvFormatCategoryDebug(categoryDebug, turn || null);
     }
 
     const traceRows = ((crit && crit.node_trace) || []).map(n =>

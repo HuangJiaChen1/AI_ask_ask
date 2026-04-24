@@ -432,6 +432,60 @@ YOUR JOB:
 - Respond naturally, not as JSON.
 """
 
+CATEGORY_INTRO_PROMPT = """You are starting a category-focused conversation with a child about: {object_name}
+
+AGE GUIDANCE: {age_prompt}
+INFERRED CATEGORY: {category_label}
+ACTIVITY TARGET: {activity_target}
+
+TASK - Write ONE short opening that directly starts this category lane.
+
+STRUCTURE: Emotional Opening -> Object Confirmation -> Category Framing -> Engagement Hook
+
+BEAT 1 - EMOTIONAL OPENING
+Lead with a warm, natural opening like "Whoa!" or "Oh, nice!"
+
+BEAT 2 - OBJECT CONFIRMATION
+Name the child's object clearly: {object_name}
+
+BEAT 3 - CATEGORY FRAMING
+Frame the object as part of the bigger category: {category_label}.
+If {category_label} is "Category", stay broad and talk about different kinds of things in the world.
+
+BEAT 4 - ENGAGEMENT HOOK
+End with exactly one easy question that invites the child to notice, compare, imagine, or wonder about {category_label}.
+
+Rules:
+- Keep the conversation at the category level, not a single attribute.
+- Use the category exploration goal naturally: {activity_target}
+- Do not mention databases, pipelines, classifications, or internal state.
+- Do not ask a knowledge-testing question.
+- Respond naturally, not as JSON.
+"""
+
+CATEGORY_CONTINUE_PROMPT = """You are continuing a category-focused lane.
+
+AGE GUIDANCE: {age_prompt}
+OBJECT: {object_name}
+INFERRED CATEGORY: {category_label}
+ACTIVITY TARGET: {activity_target}
+CHILD REPLY: {child_answer}
+REPLY TYPE: {reply_type}
+STATE ACTION: {state_action}
+
+YOUR JOB:
+- Acknowledge the child's actual reply first.
+- Keep the conversation focused on the category: {category_label}.
+- If the child is unsure, offer one low-pressure clue or example from the category.
+- If the child compares with a different category, accept the comparison briefly and reconnect to {category_label}.
+- If the child asks a curiosity question, answer briefly and reconnect to {category_label}.
+- If the child states a constraint or avoidance, respect it and offer an easy no-pressure alternative that still stays in the category lane.
+- If STATE ACTION is "invite_category_activity", do not ask another chat question. Briefly connect the child's category idea to the activity target and invite them to try that activity next: {activity_target}.
+- Do not mention Wonderlens, databases, pipelines, tests, or internal state.
+- Ask at most one short follow-up question unless handing off to the activity.
+- Respond naturally, not as JSON.
+"""
+
 ANCHOR_BRIDGE_RETRY_PROMPT = """You are replying to a child who is still talking about: {surface_object_name}
 
 AGE GUIDANCE: {age_prompt}
@@ -1793,6 +1847,8 @@ def get_prompts():
         'attribute_selection_prompt': ATTRIBUTE_SELECTION_PROMPT,
         'attribute_intro_prompt': ATTRIBUTE_INTRO_PROMPT,
         'attribute_continue_prompt': ATTRIBUTE_CONTINUE_PROMPT,
+        'category_intro_prompt': CATEGORY_INTRO_PROMPT,
+        'category_continue_prompt': CATEGORY_CONTINUE_PROMPT,
         'object_resolution_prompt': OBJECT_RESOLUTION_PROMPT,
         'relation_repair_prompt': RELATION_REPAIR_PROMPT,
         'bridge_profile_prompt': BRIDGE_PROFILE_PROMPT,

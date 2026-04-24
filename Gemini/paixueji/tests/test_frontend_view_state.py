@@ -95,6 +95,17 @@ def test_frontend_sends_attribute_pipeline_toggle():
     assert "attribute_pipeline_enabled" in app_js
 
 
+def test_frontend_sends_category_pipeline_toggle_and_enforces_mutual_exclusion():
+    app_js = APP_JS.read_text(encoding="utf-8")
+    index_html = INDEX_HTML.read_text(encoding="utf-8")
+
+    assert 'id="categoryPipelineEnabled"' in index_html
+    assert "categoryPipelineEnabled" in app_js
+    assert "category_pipeline_enabled" in app_js
+    assert "addEventListener('change'" in app_js
+    assert "attributePipelineEnabled" in app_js
+
+
 def test_attribute_activity_ready_uses_existing_activity_launcher():
     app_js = APP_JS.read_text(encoding="utf-8")
 
@@ -104,6 +115,12 @@ def test_attribute_activity_ready_uses_existing_activity_launcher():
     assert "function hasAttributeActivityReady()" in app_js
     assert "isCurrentObjectGameEligible() || hasAttributeActivityReady()" in app_js
     assert "if (isCurrentObjectGameEligible() || hasAttributeActivityReady())" in app_js
+
+
+def test_category_activity_ready_uses_existing_activity_launcher():
+    app_js = APP_JS.read_text(encoding="utf-8")
+
+    assert "activity_source === 'category'" in app_js
 
 
 def test_debug_panel_exposes_attribute_debug_fields():
@@ -118,6 +135,22 @@ def test_debug_panel_exposes_attribute_debug_fields():
         "debugAttributeActivityTarget",
         "debugAttributeBranch",
         "debugAttributeReplyType",
+    ):
+        assert f'id="{field_id}"' in html
+
+
+def test_debug_panel_exposes_category_debug_fields():
+    html = INDEX_HTML.read_text(encoding="utf-8")
+
+    assert "Category Debug:" in html
+    for field_id in (
+        "debugCategoryPipeline",
+        "debugCategoryLane",
+        "debugCategoryId",
+        "debugCategoryLabel",
+        "debugCategoryActivityTarget",
+        "debugCategoryReplyType",
+        "debugCategoryDecision",
     ):
         assert f'id="{field_id}"' in html
 
@@ -137,3 +170,20 @@ def test_frontend_renders_attribute_debug_payload():
     assert "const attributeProfile = attributeDebug.profile || {};" in app_js
     assert "setText('debugAttributeId', attributeProfile.attribute_id);" in app_js
     assert "setText('debugAttributeReplyType', attributeReply.reply_type);" in app_js
+
+
+def test_frontend_renders_category_debug_payload():
+    app_js = APP_JS.read_text(encoding="utf-8")
+
+    assert "let currentCategoryDebug = null;" in app_js
+    assert "let currentCategoryPipelineEnabled = false;" in app_js
+    assert "let currentCategoryLaneActive = false;" in app_js
+    assert "currentCategoryDebug = null;" in app_js
+    assert "currentCategoryPipelineEnabled = false;" in app_js
+    assert "currentCategoryLaneActive = false;" in app_js
+    assert "currentCategoryDebug = chunk.category_debug;" in app_js
+    assert "currentCategoryPipelineEnabled = !!chunk.category_pipeline_enabled;" in app_js
+    assert "currentCategoryLaneActive = !!chunk.category_lane_active;" in app_js
+    assert "const categoryProfile = categoryDebug.profile || {};" in app_js
+    assert "setText('debugCategoryId', categoryProfile.category_id);" in app_js
+    assert "setText('debugCategoryReplyType', categoryReply.reply_type);" in app_js

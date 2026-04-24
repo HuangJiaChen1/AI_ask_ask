@@ -46,11 +46,14 @@ from pre_anchor_policy import classify_pre_anchor_reply
 from resolution_debug import format_resolution_log_line
 from stream import (
     ask_attribute_intro_stream,
+    ask_category_intro_stream,
     classify_pre_anchor_semantic_reply,
     generate_attribute_activation_response_stream,
+    generate_category_activation_response_stream,
     generate_bridge_activation_response_stream,
     generate_bridge_retry_response_stream,
     generate_bridge_support_response_stream,
+    infer_domain,
     generate_topic_switch_response_stream,
     prepare_messages_for_streaming,
 )
@@ -65,6 +68,13 @@ from attribute_activity import (
     evaluate_attribute_activity_readiness,
     select_attribute_profile,
     start_attribute_session,
+)
+from category_activity import (
+    build_category_debug,
+    build_category_profile,
+    classify_category_reply,
+    evaluate_category_activity_readiness,
+    start_category_session,
 )
 
 classify_bridge_follow = classify_pre_anchor_semantic_reply
@@ -171,6 +181,11 @@ def sse_event(event_type, data):
 
 
 def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
+    activity_ready = getattr(assistant, "attribute_activity_ready", False)
+    activity_target = assistant.attribute_activity_target() if hasattr(assistant, "attribute_activity_target") else None
+    if getattr(assistant, "category_lane_active", False) or getattr(assistant, "category_pipeline_enabled", False):
+        activity_ready = getattr(assistant, "category_activity_ready", False)
+        activity_target = assistant.category_activity_target() if hasattr(assistant, "category_activity_target") else None
     return {
         "current_object_name": assistant.object_name,
         "surface_object_name": assistant.surface_object_name,
@@ -189,8 +204,11 @@ def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
         "attribute_pipeline_enabled": getattr(assistant, "attribute_pipeline_enabled", False),
         "attribute_lane_active": getattr(assistant, "attribute_lane_active", False),
         "attribute_debug": getattr(assistant, "last_attribute_debug", None),
-        "activity_ready": getattr(assistant, "attribute_activity_ready", False),
-        "activity_target": assistant.attribute_activity_target() if hasattr(assistant, "attribute_activity_target") else None,
+        "category_pipeline_enabled": getattr(assistant, "category_pipeline_enabled", False),
+        "category_lane_active": getattr(assistant, "category_lane_active", False),
+        "category_debug": getattr(assistant, "last_category_debug", None),
+        "activity_ready": activity_ready,
+        "activity_target": activity_target,
         "resolution_debug": assistant.session_resolution_debug,
     }
 
@@ -577,6 +595,7 @@ def start_conversation():
     model_name_override = data.get('model_name_override')
     grounding_model_override = data.get('grounding_model_override')
     attribute_pipeline_enabled = bool(data.get('attribute_pipeline_enabled', False))
+    category_pipeline_enabled = bool(data.get('category_pipeline_enabled', False))
     # Validate required fields
     if not object_name:
         return jsonify({
@@ -611,6 +630,7 @@ def start_conversation():
     )
     assistant.apply_resolution(resolution)
     assistant.attribute_pipeline_enabled = attribute_pipeline_enabled
+    assistant.category_pipeline_enabled = category_pipeline_enabled
     if attribute_pipeline_enabled:
         try:
             future = asyncio.run_coroutine_threadsafe(
@@ -651,6 +671,38 @@ def start_conversation():
             assistant.clear_attribute_lane()
             assistant.attribute_pipeline_enabled = True
             assistant.set_last_attribute_debug(selection_debug)
+    if category_pipeline_enabled:
+        try:
+            future = asyncio.run_coroutine_threadsafe(
+                infer_domain(
+                    object_name,
+                    assistant.client,
+                    assistant.config,
+                ),
+                _ASYNC_LOOP,
+            )
+            category_domain = future.result(timeout=10)
+        except Exception as exc:
+            category_domain = None
+            category_reason = str(exc)
+        else:
+            category_reason = "domain inferred for category lane" if category_domain else "generic category fallback"
+
+        category_profile = build_category_profile(category_domain, object_name)
+        category_state = start_category_session(
+            object_name=object_name,
+            profile=category_profile,
+            age=age or 6,
+        )
+        assistant.start_category_lane(category_state, category_profile)
+        assistant.set_last_category_debug(
+            build_category_debug(
+                decision="category_lane_started",
+                profile=category_profile,
+                state=category_state,
+                reason=category_reason,
+            )
+        )
     logger.info(
         f"[RESOLUTION] {format_resolution_log_line(session_id=session_id, request_id='start', resolution_debug=assistant.session_resolution_debug)}"
     )
@@ -707,6 +759,76 @@ def start_conversation():
 
             try:
                 async def stream_introduction():
+                    if assistant.category_lane_active and assistant.category_state:
+                        messages = prepare_messages_for_streaming(
+                            assistant.conversation_history.copy(),
+                            age_prompt,
+                        )
+                        generator = ask_category_intro_stream(
+                            messages=messages,
+                            object_name=assistant.category_state.object_name,
+                            category_label=assistant.category_state.profile.category_label,
+                            activity_target=assistant.category_state.profile.activity_target,
+                            age_prompt=age_prompt,
+                            age=age or 6,
+                            config=assistant.config,
+                            client=assistant.client,
+                        )
+                        sequence_number = 0
+                        full_response = ""
+                        async for text_chunk, token_usage, full_so_far, _decision_info in generator:
+                            full_response = full_so_far
+                            if not text_chunk:
+                                continue
+                            sequence_number += 1
+                            yield sse_event("chunk", StreamChunk(
+                                response=text_chunk,
+                                session_finished=False,
+                                duration=0.0,
+                                token_usage=token_usage,
+                                finish=False,
+                                sequence_number=sequence_number,
+                                timestamp=time.time(),
+                                session_id=session_id,
+                                request_id=request_id,
+                                response_type="category_intro",
+                                correct_answer_count=assistant.correct_answer_count,
+                                **_assistant_stream_fields(assistant),
+                            ))
+
+                        category_debug = build_category_debug(
+                            decision="category_intro",
+                            profile=assistant.category_profile,
+                            state=assistant.category_state,
+                            reason="intro generated",
+                            response_text=full_response,
+                        )
+                        assistant.set_last_category_debug(category_debug)
+                        assistant.conversation_history.append({
+                            "role": "assistant",
+                            "content": full_response,
+                            "nodes_executed": [],
+                            "mode": "chat",
+                            "response_type": "category_intro",
+                            "category_debug": category_debug,
+                        })
+                        sequence_number += 1
+                        yield sse_event("chunk", StreamChunk(
+                            response=full_response,
+                            session_finished=False,
+                            duration=0.0,
+                            token_usage=None,
+                            finish=True,
+                            sequence_number=sequence_number,
+                            timestamp=time.time(),
+                            session_id=session_id,
+                            request_id=request_id,
+                            response_type="category_intro",
+                            correct_answer_count=assistant.correct_answer_count,
+                            **_assistant_stream_fields(assistant),
+                        ))
+                        return
+
                     if assistant.attribute_lane_active and assistant.attribute_state:
                         messages = prepare_messages_for_streaming(
                             assistant.conversation_history.copy(),
@@ -991,6 +1113,113 @@ def continue_conversation():
             loop = _ASYNC_LOOP
 
             try:
+                if assistant.category_lane_active and assistant.category_state:
+                    decision = classify_category_reply(assistant.category_state, child_input)
+                    if decision.counted_turn:
+                        assistant.category_state.turn_count += 1
+
+                    readiness = evaluate_category_activity_readiness(
+                        assistant.category_state,
+                        decision,
+                    )
+                    if readiness.activity_ready:
+                        assistant.category_state.activity_ready = True
+                        assistant.category_activity_ready = True
+
+                    response_type = "category_activity" if readiness.activity_ready else "category_chat"
+
+                    async def stream_category_activity():
+                        messages = prepare_messages_for_streaming(
+                            assistant.conversation_history.copy(),
+                            age_prompt,
+                        )
+                        generator = generate_category_activation_response_stream(
+                            messages=messages,
+                            object_name=assistant.category_state.object_name,
+                            category_label=assistant.category_state.profile.category_label,
+                            activity_target=assistant.category_state.profile.activity_target,
+                            child_answer=child_input,
+                            reply_type=decision.reply_type,
+                            state_action=readiness.state_action,
+                            age=assistant.age or 6,
+                            age_prompt=age_prompt,
+                            config=assistant.config,
+                            client=assistant.client,
+                        )
+
+                        sequence_number = 0
+                        full_response = ""
+                        async for text_chunk, token_usage, full_so_far in generator:
+                            full_response = full_so_far
+                            if not text_chunk:
+                                continue
+                            partial_debug = build_category_debug(
+                                decision=response_type,
+                                profile=assistant.category_profile,
+                                state=assistant.category_state,
+                                reason=decision.reason,
+                                reply=decision,
+                                readiness=readiness,
+                            )
+                            assistant.set_last_category_debug(partial_debug)
+                            sequence_number += 1
+                            yield sse_event("chunk", StreamChunk(
+                                response=text_chunk,
+                                session_finished=False,
+                                duration=0.0,
+                                token_usage=token_usage,
+                                finish=False,
+                                sequence_number=sequence_number,
+                                timestamp=time.time(),
+                                session_id=session_id,
+                                request_id=request_id,
+                                response_type=response_type,
+                                correct_answer_count=assistant.correct_answer_count,
+                                chat_phase_complete=assistant.category_activity_ready or None,
+                                **_assistant_stream_fields(assistant),
+                            ))
+
+                        category_debug = build_category_debug(
+                            decision=response_type,
+                            profile=assistant.category_profile,
+                            state=assistant.category_state,
+                            reason=decision.reason,
+                            reply=decision,
+                            readiness=readiness,
+                            response_text=full_response,
+                        )
+                        assistant.set_last_category_debug(category_debug)
+                        assistant.conversation_history.append({"role": "user", "content": child_input})
+                        assistant.conversation_history.append({
+                            "role": "assistant",
+                            "content": full_response,
+                            "mode": "chat",
+                            "response_type": response_type,
+                            "category_debug": category_debug,
+                        })
+                        sequence_number += 1
+                        yield sse_event("chunk", StreamChunk(
+                            response=full_response,
+                            session_finished=False,
+                            duration=0.0,
+                            token_usage=None,
+                            finish=True,
+                            sequence_number=sequence_number,
+                            timestamp=time.time(),
+                            session_id=session_id,
+                            request_id=request_id,
+                            response_type=response_type,
+                            correct_answer_count=assistant.correct_answer_count,
+                            chat_phase_complete=assistant.category_activity_ready or None,
+                            **_assistant_stream_fields(assistant),
+                        ))
+                        yield sse_event("complete", {"success": True})
+
+                    gen = stream_category_activity()
+                    for event in async_gen_to_sync(gen, loop):
+                        yield event
+                    return
+
                 if assistant.attribute_lane_active and assistant.attribute_state:
                     decision = classify_attribute_reply(assistant.attribute_state, child_input)
                     if decision.counted_turn:
@@ -2779,6 +3008,7 @@ def get_exchanges(session_id):
             entry["response_type"] = msg.get("response_type")
             entry["bridge_debug"] = msg.get("bridge_debug")
             entry["attribute_debug"] = msg.get("attribute_debug")
+            entry["category_debug"] = msg.get("category_debug")
             entry["resolution_debug"] = msg.get("resolution_debug")
             entry["classification_status"] = msg.get("classification_status")
             entry["classification_failure_reason"] = msg.get("classification_failure_reason")
@@ -2797,6 +3027,7 @@ def get_exchanges(session_id):
                 "response_type": transcript[i].get("response_type"),
                 "bridge_debug": transcript[i].get("bridge_debug"),
                 "attribute_debug": transcript[i].get("attribute_debug"),
+                "category_debug": transcript[i].get("category_debug"),
                 "resolution_debug": transcript[i].get("resolution_debug"),
                 "classification_status": transcript[i].get("classification_status"),
                 "classification_failure_reason": transcript[i].get("classification_failure_reason"),
@@ -2834,6 +3065,7 @@ def get_exchanges(session_id):
                 "response_type": transcript[i + 1].get("response_type"),
                 "bridge_debug": transcript[i + 1].get("bridge_debug"),
                 "attribute_debug": transcript[i + 1].get("attribute_debug"),
+                "category_debug": transcript[i + 1].get("category_debug"),
                 "resolution_debug": transcript[i + 1].get("resolution_debug"),
                 "intent_type": intent_type,
                 "classification_status": transcript[i + 1].get("classification_status"),
@@ -2937,6 +3169,7 @@ def manual_critique():
             entry["response_type"] = msg.get("response_type")
             entry["bridge_debug"] = msg.get("bridge_debug")
             entry["attribute_debug"] = msg.get("attribute_debug")
+            entry["category_debug"] = msg.get("category_debug")
             entry["resolution_debug"] = msg.get("resolution_debug")
             entry["classification_status"] = msg.get("classification_status")
             entry["classification_failure_reason"] = msg.get("classification_failure_reason")
@@ -2955,6 +3188,7 @@ def manual_critique():
                 "response_type": transcript[i].get("response_type"),
                 "bridge_debug": transcript[i].get("bridge_debug"),
                 "attribute_debug": transcript[i].get("attribute_debug"),
+                "category_debug": transcript[i].get("category_debug"),
                 "resolution_debug": transcript[i].get("resolution_debug"),
                 "classification_status": transcript[i].get("classification_status"),
                 "classification_failure_reason": transcript[i].get("classification_failure_reason"),
@@ -2973,6 +3207,7 @@ def manual_critique():
                 "response_type": transcript[i + 1].get("response_type"),
                 "bridge_debug": transcript[i + 1].get("bridge_debug"),
                 "attribute_debug": transcript[i + 1].get("attribute_debug"),
+                "category_debug": transcript[i + 1].get("category_debug"),
                 "resolution_debug": transcript[i + 1].get("resolution_debug"),
                 "classification_status": transcript[i + 1].get("classification_status"),
                 "classification_failure_reason": transcript[i + 1].get("classification_failure_reason"),
@@ -3312,8 +3547,9 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
         response_type,
         bridge_debug=None,
         attribute_debug=None,
+        category_debug=None,
     ):
-        if bridge_debug or attribute_debug:
+        if bridge_debug or attribute_debug or category_debug:
             existing = diagnostics_entries.get(exchange_index, {})
             diagnostics_entries[exchange_index] = {
                 "exchange_index": exchange_index,
@@ -3321,6 +3557,7 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
                 "response_type": response_type or existing.get("response_type"),
                 "bridge_debug": bridge_debug or existing.get("bridge_debug"),
                 "attribute_debug": attribute_debug or existing.get("attribute_debug"),
+                "category_debug": category_debug or existing.get("category_debug"),
             }
 
     register_diagnostics(
@@ -3329,6 +3566,7 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
         introduction.get("response_type") if introduction else None,
         bridge_debug=introduction.get("bridge_debug") if introduction else None,
         attribute_debug=introduction.get("attribute_debug") if introduction else None,
+        category_debug=introduction.get("category_debug") if introduction else None,
     )
     for idx, exchange in enumerate(all_exchanges, start=1):
         register_diagnostics(
@@ -3337,6 +3575,7 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
             exchange.get("response_type"),
             bridge_debug=exchange.get("bridge_debug"),
             attribute_debug=exchange.get("attribute_debug"),
+            category_debug=exchange.get("category_debug"),
         )
 
     # Introduction Critique section (if the reviewer critiqued the introduction)
@@ -3344,10 +3583,11 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
         report += "## Introduction — Human Critique\n\n"
         intro_content = introduction.get("content", "")
         report += f"**Introduction:** \"{intro_content}\"\n\n"
-        if introduction.get("bridge_debug") or introduction.get("attribute_debug"):
+        if introduction.get("bridge_debug") or introduction.get("attribute_debug") or introduction.get("category_debug"):
             report += _render_turn_summary(
                 introduction.get("bridge_debug"),
                 introduction.get("attribute_debug"),
+                introduction.get("category_debug"),
                 introduction.get("response_type"),
                 diagnostics_ref="D0",
             )
@@ -3386,14 +3626,17 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
                 response_type,
                 bridge_debug=msg.get("bridge_debug"),
                 attribute_debug=msg.get("attribute_debug"),
+                category_debug=msg.get("category_debug"),
             )
             diagnostics = diagnostics_entries.get(exchange_index) or {}
             bridge_debug = msg.get("bridge_debug") or diagnostics.get("bridge_debug")
             attribute_debug = msg.get("attribute_debug") or diagnostics.get("attribute_debug")
-            diagnostics_ref = f"D{exchange_index}" if bridge_debug or attribute_debug else None
+            category_debug = msg.get("category_debug") or diagnostics.get("category_debug")
+            diagnostics_ref = f"D{exchange_index}" if bridge_debug or attribute_debug or category_debug else None
             turn_diagnostics = _render_turn_summary(
                 bridge_debug,
                 attribute_debug,
+                category_debug,
                 response_type,
                 diagnostics_ref=diagnostics_ref,
             )
@@ -3449,6 +3692,7 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
                 response_type=entry.get("response_type"),
                 bridge_debug=entry.get("bridge_debug"),
                 attribute_debug=entry.get("attribute_debug"),
+                category_debug=entry.get("category_debug"),
             )
 
     # Global conclusion
@@ -3471,10 +3715,11 @@ def _render_hf_exchange(idx, exchange, ec):
     report = f"### Exchange {idx}\n\n"
     report += f"**Child said:** \"{exchange['child_response']}\"\n\n"
     report += f"**Model responded:** \"{exchange['model_response']}\"\n\n"
-    if exchange.get("bridge_debug") or exchange.get("attribute_debug"):
+    if exchange.get("bridge_debug") or exchange.get("attribute_debug") or exchange.get("category_debug"):
         report += _render_turn_summary(
             exchange.get("bridge_debug"),
             exchange.get("attribute_debug"),
+            exchange.get("category_debug"),
             exchange.get("response_type"),
             diagnostics_ref=f"D{idx}",
         )
@@ -3594,6 +3839,21 @@ def _attribute_reply(attribute_debug):
     return reply if isinstance(reply, dict) else {}
 
 
+def _category_profile(category_debug):
+    if not category_debug:
+        return {}
+    profile = category_debug.get("profile") or {}
+    if profile:
+        return profile
+    state_profile = ((category_debug.get("state") or {}).get("profile") or {})
+    return state_profile if isinstance(state_profile, dict) else {}
+
+
+def _category_reply(category_debug):
+    reply = (category_debug or {}).get("reply") or {}
+    return reply if isinstance(reply, dict) else {}
+
+
 def _derive_report_attribute_summary(attribute_debug):
     if not attribute_debug:
         return {}
@@ -3611,8 +3871,30 @@ def _derive_report_attribute_summary(attribute_debug):
     }
 
 
-def _render_turn_summary(bridge_debug, attribute_debug=None, response_type=None, diagnostics_ref=None):
-    if not bridge_debug and not attribute_debug:
+def _derive_report_category_summary(category_debug):
+    if not category_debug:
+        return {}
+    profile = _category_profile(category_debug)
+    reply = _category_reply(category_debug)
+    return {
+        "category_pipeline": "on",
+        "category_lane": "active" if profile or category_debug.get("state") else "inactive",
+        "category_id": profile.get("category_id") or reply.get("category_id"),
+        "category_label": profile.get("category_label"),
+        "activity_target": profile.get("activity_target"),
+        "category_reply_type": reply.get("reply_type"),
+        "category_decision": category_debug.get("decision"),
+    }
+
+
+def _render_turn_summary(
+    bridge_debug,
+    attribute_debug=None,
+    category_debug=None,
+    response_type=None,
+    diagnostics_ref=None,
+):
+    if not bridge_debug and not attribute_debug and not category_debug:
         return ""
     lines = ["#### Turn Summary\n\n"]
     if bridge_debug:
@@ -3642,6 +3924,20 @@ def _render_turn_summary(bridge_debug, attribute_debug=None, response_type=None,
             ("Attribute Decision", "attribute_decision"),
         ]:
             value = attribute_summary.get(key)
+            if value is not None:
+                lines.append(f"- {label}: `{value}`\n")
+    if category_debug:
+        category_summary = _derive_report_category_summary(category_debug)
+        for label, key in [
+            ("Category Pipeline", "category_pipeline"),
+            ("Category Lane", "category_lane"),
+            ("Category ID", "category_id"),
+            ("Category Label", "category_label"),
+            ("Activity Target", "activity_target"),
+            ("Category Reply Type", "category_reply_type"),
+            ("Category Decision", "category_decision"),
+        ]:
+            value = category_summary.get(key)
             if value is not None:
                 lines.append(f"- {label}: `{value}`\n")
     if diagnostics_ref:
@@ -3719,14 +4015,34 @@ def _render_raw_attribute_debug(attribute_debug):
     return "".join(lines)
 
 
+def _render_raw_category_debug(category_debug):
+    if not category_debug:
+        return ""
+    lines = ["#### Raw Category Debug\n\n"]
+    for key in ("decision", "reason", "response_text"):
+        value = category_debug.get(key)
+        if value is not None:
+            lines.append(f"- {key}: `{_format_report_debug_value(value)}`\n")
+    for key, label in [
+        ("profile", "Category Profile"),
+        ("state", "Category State"),
+        ("reply", "Category Reply"),
+        ("readiness", "Category Readiness"),
+    ]:
+        lines.append(_render_raw_attribute_group(label, category_debug.get(key)))
+    lines.append("\n")
+    return "".join(lines)
+
+
 def _render_raw_diagnostics_entry(
     exchange_index,
     source_label,
     response_type,
     bridge_debug,
     attribute_debug=None,
+    category_debug=None,
 ):
-    if not bridge_debug and not attribute_debug:
+    if not bridge_debug and not attribute_debug and not category_debug:
         return ""
     lines = [
         f"### Diagnostics D{exchange_index} — {source_label}\n",
@@ -3754,9 +4070,19 @@ def _render_raw_diagnostics_entry(
         value = attribute_summary.get(key)
         if value is not None:
             lines.append(f"**{label}:** {value}\n")
+    category_summary = _derive_report_category_summary(category_debug)
+    for label, key in [
+        ("Category ID", "category_id"),
+        ("Category Label", "category_label"),
+        ("Category Reply Type", "category_reply_type"),
+    ]:
+        value = category_summary.get(key)
+        if value is not None:
+            lines.append(f"**{label}:** {value}\n")
     lines.append("\n")
     lines.append(_render_raw_bridge_debug(bridge_debug))
     lines.append(_render_raw_attribute_debug(attribute_debug))
+    lines.append(_render_raw_category_debug(category_debug))
     return "".join(lines)
 
 
@@ -3880,6 +4206,38 @@ def _parse_hf_report(filepath):
 
         return debug or None
 
+    def parse_raw_category_debug(raw_text):
+        debug = {}
+        group_map = {
+            "category_profile": "profile",
+            "category_state": "state",
+            "category_reply": "reply",
+            "category_readiness": "readiness",
+        }
+        current_group = None
+
+        for raw_line in raw_text.splitlines():
+            line = raw_line.strip()
+            if not line:
+                continue
+            if line.startswith("##### "):
+                label = line[6:].strip().lower().replace(" ", "_")
+                current_group = group_map.get(label)
+                if current_group:
+                    debug.setdefault(current_group, {})
+                continue
+            m = re.match(r'-\s+([^:]+):\s+`(.*)`', line)
+            if not m:
+                continue
+            key = m.group(1).strip()
+            value = parse_attribute_value(m.group(2).strip())
+            if current_group:
+                debug.setdefault(current_group, {})[key] = value
+            else:
+                debug[key] = value
+
+        return debug or None
+
     def parse_summary_block(block_text):
         summary = {
             "bridge_state": None,
@@ -3895,6 +4253,12 @@ def _parse_hf_report(filepath):
             "attribute_branch": None,
             "attribute_reply_type": None,
             "attribute_decision": None,
+            "category_pipeline": None,
+            "category_lane": None,
+            "category_id": None,
+            "category_label": None,
+            "category_reply_type": None,
+            "category_decision": None,
             "diagnostics_ref": None,
         }
         sm = re.search(r'#### Turn Summary\n+(.+?)(?=\n\n#### |\n\n---|\n\*\*|\n### |\n## |\Z)', block_text, re.DOTALL)
@@ -3915,6 +4279,12 @@ def _parse_hf_report(filepath):
             ("Attribute Branch", "attribute_branch"),
             ("Attribute Reply Type", "attribute_reply_type"),
             ("Attribute Decision", "attribute_decision"),
+            ("Category Pipeline", "category_pipeline"),
+            ("Category Lane", "category_lane"),
+            ("Category ID", "category_id"),
+            ("Category Label", "category_label"),
+            ("Category Reply Type", "category_reply_type"),
+            ("Category Decision", "category_decision"),
             ("Diagnostics Ref", "diagnostics_ref"),
         ]:
             lm = re.search(rf'- {re.escape(label)}:\s+`(.+?)`', summary_text)
@@ -3944,6 +4314,13 @@ def _parse_hf_report(filepath):
                 "attribute_reply_type": summary["attribute_reply_type"],
                 "attribute_decision": summary["attribute_decision"],
                 "attribute_debug": None,
+                "category_pipeline": summary["category_pipeline"],
+                "category_lane": summary["category_lane"],
+                "category_id": summary["category_id"],
+                "category_label": summary["category_label"],
+                "category_reply_type": summary["category_reply_type"],
+                "category_decision": summary["category_decision"],
+                "category_debug": None,
                 "diagnostics_ref": summary["diagnostics_ref"],
             }
 
@@ -3954,18 +4331,24 @@ def _parse_hf_report(filepath):
             vm = re.search(r'\*\*Bridge Verdict:\*\*\s*(.+)', diagnostics_part)
             verdict = vm.group(1).strip() if vm else None
             raw_bridge = re.search(
-                r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### Raw Attribute Debug|\n\n#### (?!#)|\Z)',
+                r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### Raw Attribute Debug|\n\n#### Raw Category Debug|\n\n#### (?!#)|\Z)',
                 diagnostics_part,
                 re.DOTALL,
             )
             if raw_bridge:
                 bridge_debug = parse_raw_bridge_debug(raw_bridge.group(1))
             raw_attribute = re.search(
-                r'#### Raw Attribute Debug\n+(.+?)(?=\n\n#### (?!#)|\Z)',
+                r'#### Raw Attribute Debug\n+(.+?)(?=\n\n#### Raw Category Debug|\n\n#### (?!#)|\Z)',
                 diagnostics_part,
                 re.DOTALL,
             )
             attribute_debug = parse_raw_attribute_debug(raw_attribute.group(1)) if raw_attribute else None
+            raw_category = re.search(
+                r'#### Raw Category Debug\n+(.+?)(?=\n\n#### (?!#)|\Z)',
+                diagnostics_part,
+                re.DOTALL,
+            )
+            category_debug = parse_raw_category_debug(raw_category.group(1)) if raw_category else None
             return {
                 "text": cleaned_text,
                 "bridge_verdict": verdict,
@@ -3978,11 +4361,21 @@ def _parse_hf_report(filepath):
                 "attribute_lane": None,
                 "attribute_id": ((attribute_debug or {}).get("profile") or {}).get("attribute_id"),
                 "attribute_label": ((attribute_debug or {}).get("profile") or {}).get("label"),
-                "activity_target": ((attribute_debug or {}).get("profile") or {}).get("activity_target"),
+                "activity_target": (
+                    ((attribute_debug or {}).get("profile") or {}).get("activity_target")
+                    or ((category_debug or {}).get("profile") or {}).get("activity_target")
+                ),
                 "attribute_branch": ((attribute_debug or {}).get("profile") or {}).get("branch"),
                 "attribute_reply_type": ((attribute_debug or {}).get("reply") or {}).get("reply_type"),
                 "attribute_decision": (attribute_debug or {}).get("decision"),
                 "attribute_debug": attribute_debug,
+                "category_pipeline": None,
+                "category_lane": None,
+                "category_id": ((category_debug or {}).get("profile") or {}).get("category_id"),
+                "category_label": ((category_debug or {}).get("profile") or {}).get("category_label"),
+                "category_reply_type": ((category_debug or {}).get("reply") or {}).get("reply_type"),
+                "category_decision": (category_debug or {}).get("decision"),
+                "category_debug": category_debug,
                 "diagnostics_ref": None,
             }
         return {
@@ -4002,6 +4395,13 @@ def _parse_hf_report(filepath):
             "attribute_reply_type": None,
             "attribute_decision": None,
             "attribute_debug": None,
+            "category_pipeline": None,
+            "category_lane": None,
+            "category_id": None,
+            "category_label": None,
+            "category_reply_type": None,
+            "category_decision": None,
+            "category_debug": None,
             "diagnostics_ref": None,
         }
 
@@ -4028,6 +4428,13 @@ def _parse_hf_report(filepath):
                 "attribute_reply_type": None,
                 "attribute_decision": None,
                 "attribute_debug": None,
+                "category_pipeline": None,
+                "category_lane": None,
+                "category_id": None,
+                "category_label": None,
+                "category_reply_type": None,
+                "category_decision": None,
+                "category_debug": None,
             }
             for label, key in [
                 ("Bridge State", "bridge_state"),
@@ -4047,20 +4454,36 @@ def _parse_hf_report(filepath):
                 sm = re.search(rf'\*\*{re.escape(label)}:\*\*\s+(.+)', block)
                 if sm:
                     entry[key] = sm.group(1).strip()
+            for label, key in [
+                ("Category ID", "category_id"),
+                ("Category Label", "category_label"),
+                ("Category Reply Type", "category_reply_type"),
+            ]:
+                sm = re.search(rf'\*\*{re.escape(label)}:\*\*\s+(.+)', block)
+                if sm:
+                    entry[key] = sm.group(1).strip()
             raw_bridge = re.search(
-                r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### Raw Attribute Debug|\n\n### |\n## |\Z)',
+                r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### Raw Attribute Debug|\n\n#### Raw Category Debug|\n\n### |\n## |\Z)',
                 block,
                 re.DOTALL,
             )
             if raw_bridge:
                 entry["bridge_debug"] = parse_raw_bridge_debug(raw_bridge.group(1))
             raw_attribute = re.search(
-                r'#### Raw Attribute Debug\n+(.+?)(?=\n\n### |\n## |\Z)',
+                r'#### Raw Attribute Debug\n+(.+?)(?=\n\n#### Raw Category Debug|\n\n### |\n## |\Z)',
                 block,
                 re.DOTALL,
             )
             if raw_attribute:
                 entry["attribute_debug"] = parse_raw_attribute_debug(raw_attribute.group(1))
+            raw_category = re.search(
+                r'#### Raw Category Debug\n+(.+?)(?=\n\n### |\n## |\Z)',
+                block,
+                re.DOTALL,
+            )
+            if raw_category:
+                entry["category_debug"] = parse_raw_category_debug(raw_category.group(1))
+                entry["activity_target"] = entry["activity_target"] or ((entry["category_debug"] or {}).get("profile") or {}).get("activity_target")
             appendix[exchange_index] = entry
         return appendix
 
@@ -4114,6 +4537,13 @@ def _parse_hf_report(filepath):
                 "attribute_reply_type": turn_meta["attribute_reply_type"],
                 "attribute_decision": turn_meta["attribute_decision"],
                 "attribute_debug": turn_meta["attribute_debug"],
+                "category_pipeline": turn_meta["category_pipeline"],
+                "category_lane": turn_meta["category_lane"],
+                "category_id": turn_meta["category_id"],
+                "category_label": turn_meta["category_label"],
+                "category_reply_type": turn_meta["category_reply_type"],
+                "category_decision": turn_meta["category_decision"],
+                "category_debug": turn_meta["category_debug"],
                 "diagnostics_ref": turn_meta["diagnostics_ref"],
                 "critique": None,
             })
@@ -4162,6 +4592,13 @@ def _parse_hf_report(filepath):
         turn["attribute_reply_type"] = entry.get("attribute_reply_type") or turn.get("attribute_reply_type")
         turn["attribute_decision"] = entry.get("attribute_decision") or turn.get("attribute_decision")
         turn["attribute_debug"] = entry.get("attribute_debug") or turn.get("attribute_debug")
+        turn["category_pipeline"] = entry.get("category_pipeline") or turn.get("category_pipeline")
+        turn["category_lane"] = entry.get("category_lane") or turn.get("category_lane")
+        turn["category_id"] = entry.get("category_id") or turn.get("category_id")
+        turn["category_label"] = entry.get("category_label") or turn.get("category_label")
+        turn["category_reply_type"] = entry.get("category_reply_type") or turn.get("category_reply_type")
+        turn["category_decision"] = entry.get("category_decision") or turn.get("category_decision")
+        turn["category_debug"] = entry.get("category_debug") or turn.get("category_debug")
         turn["diagnostics_ref"] = f"D{turn['exchange_index']}"
         turn["bridge_debug"] = entry.get("bridge_debug") or turn.get("bridge_debug")
 
@@ -4179,7 +4616,7 @@ def _parse_hf_report(filepath):
 
             crit = {"phase": phase_key, "expected": None, "problematic": None,
                     "conclusion": None, "node_trace": [], "bridge_verdict": None,
-                    "bridge_debug": None, "attribute_debug": None}
+                    "bridge_debug": None, "attribute_debug": None, "category_debug": None}
 
             for rm in re.finditer(r'\|\s*([^|\n]+?)\s*\|\s*([^|\n]+?)\s*\|\s*([^|\n]+?)\s*\|', block):
                 nd, tm, st = rm.group(1).strip(), rm.group(2).strip(), rm.group(3).strip()
@@ -4204,15 +4641,18 @@ def _parse_hf_report(filepath):
             if crit["bridge_verdict"] is None:
                 crit["bridge_verdict"] = summary["bridge_verdict"]
             raw_bridge = re.search(
-                r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### Raw Attribute Debug|\n\n#### (?!#)|\n\n---|\Z)',
+                r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### Raw Attribute Debug|\n\n#### Raw Category Debug|\n\n#### (?!#)|\n\n---|\Z)',
                 block,
                 re.DOTALL,
             )
             if raw_bridge:
                 crit["bridge_debug"] = parse_raw_bridge_debug(raw_bridge.group(1))
-            raw_attribute = re.search(r'#### Raw Attribute Debug\n+(.+?)(?=\n\n#### (?!#)|\n\n---|\Z)', block, re.DOTALL)
+            raw_attribute = re.search(r'#### Raw Attribute Debug\n+(.+?)(?=\n\n#### Raw Category Debug|\n\n#### (?!#)|\n\n---|\Z)', block, re.DOTALL)
             if raw_attribute:
                 crit["attribute_debug"] = parse_raw_attribute_debug(raw_attribute.group(1))
+            raw_category = re.search(r'#### Raw Category Debug\n+(.+?)(?=\n\n#### (?!#)|\n\n---|\Z)', block, re.DOTALL)
+            if raw_category:
+                crit["category_debug"] = parse_raw_category_debug(raw_category.group(1))
             if (
                 crit["expected"]
                 or crit["problematic"]
@@ -4220,6 +4660,7 @@ def _parse_hf_report(filepath):
                 or crit["bridge_verdict"]
                 or crit["bridge_debug"]
                 or crit["attribute_debug"]
+                or crit["category_debug"]
                 or crit["node_trace"]
             ):
                 critiques[eidx] = crit
@@ -4238,7 +4679,7 @@ def _parse_hf_report(filepath):
     if intro_sec:
         crit = {"phase": "CHAT", "expected": None, "problematic": None,
                 "conclusion": None, "node_trace": [], "bridge_verdict": None,
-                "bridge_debug": None, "attribute_debug": None}
+                "bridge_debug": None, "attribute_debug": None, "category_debug": None}
         all_expected    = re.findall(r'\*What is expected:\*\s*(.+)', intro_sec)
         all_problematic = re.findall(r'\*Why is it problematic:\*\s*(.+)', intro_sec)
         crit["expected"]    = all_expected[-1].strip()    if all_expected    else None
@@ -4251,15 +4692,18 @@ def _parse_hf_report(filepath):
         if crit["bridge_verdict"] is None:
             crit["bridge_verdict"] = summary["bridge_verdict"]
         raw_bridge = re.search(
-            r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### Raw Attribute Debug|\n\n#### (?!#)|\n\n---|\Z)',
+            r'#### Raw Bridge Debug\n+(.+?)(?=\n\n#### Raw Attribute Debug|\n\n#### Raw Category Debug|\n\n#### (?!#)|\n\n---|\Z)',
             intro_sec,
             re.DOTALL,
         )
         if raw_bridge:
             crit["bridge_debug"] = parse_raw_bridge_debug(raw_bridge.group(1))
-        raw_attribute = re.search(r'#### Raw Attribute Debug\n+(.+?)(?=\n\n#### (?!#)|\n\n---|\Z)', intro_sec, re.DOTALL)
+        raw_attribute = re.search(r'#### Raw Attribute Debug\n+(.+?)(?=\n\n#### Raw Category Debug|\n\n#### (?!#)|\n\n---|\Z)', intro_sec, re.DOTALL)
         if raw_attribute:
             crit["attribute_debug"] = parse_raw_attribute_debug(raw_attribute.group(1))
+        raw_category = re.search(r'#### Raw Category Debug\n+(.+?)(?=\n\n#### (?!#)|\n\n---|\Z)', intro_sec, re.DOTALL)
+        if raw_category:
+            crit["category_debug"] = parse_raw_category_debug(raw_category.group(1))
         if (
             crit["expected"]
             or crit["problematic"]
@@ -4267,6 +4711,7 @@ def _parse_hf_report(filepath):
             or crit["bridge_verdict"]
             or crit["bridge_debug"]
             or crit["attribute_debug"]
+            or crit["category_debug"]
             or crit["node_trace"]
             or appendix.get(0)
         ):
@@ -4286,6 +4731,8 @@ def _parse_hf_report(filepath):
                 turn["critique"]["bridge_verdict"] = turn["bridge_verdict"]
             if turn["critique"].get("attribute_debug") is None and turn.get("attribute_debug") is not None:
                 turn["critique"]["attribute_debug"] = turn["attribute_debug"]
+            if turn["critique"].get("category_debug") is None and turn.get("category_debug") is not None:
+                turn["critique"]["category_debug"] = turn["category_debug"]
 
     # ── Global conclusion ────────────────────────────────────────────────────
     gc_sec = get_section("Global Conclusion")
@@ -4417,13 +4864,28 @@ def create_handoff():
 
     handoff_payload = conversation
     activity_target = assistant.attribute_activity_target() if hasattr(assistant, "attribute_activity_target") else None
-    if activity_target and getattr(assistant, "attribute_activity_ready", False):
+    attribute_ready = getattr(assistant, "attribute_activity_ready", False) or bool(
+        getattr(getattr(assistant, "attribute_state", None), "activity_ready", False)
+    )
+    if activity_target and attribute_ready:
         handoff_payload = {
             "conversation": conversation,
             "activity_source": "attribute",
             "attribute_id": activity_target.get("attribute_id"),
             "attribute_label": activity_target.get("attribute_label"),
             "activity_target": activity_target.get("activity_target"),
+        }
+    category_target = assistant.category_activity_target() if hasattr(assistant, "category_activity_target") else None
+    category_ready = getattr(assistant, "category_activity_ready", False) or bool(
+        getattr(getattr(assistant, "category_state", None), "activity_ready", False)
+    )
+    if category_target and category_ready:
+        handoff_payload = {
+            "conversation": conversation,
+            "activity_source": "category",
+            "category_id": category_target.get("category_id"),
+            "category_label": category_target.get("category_label"),
+            "activity_target": category_target.get("activity_target"),
         }
 
     os.makedirs('/tmp/handoff', exist_ok=True)

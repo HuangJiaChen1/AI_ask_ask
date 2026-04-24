@@ -242,6 +242,9 @@ class StreamChunk(BaseModel):
     attribute_pipeline_enabled: bool = False
     attribute_lane_active: bool = False
     attribute_debug: dict | None = None
+    category_pipeline_enabled: bool = False
+    category_lane_active: bool = False
+    category_debug: dict | None = None
     activity_ready: bool = False
     activity_target: dict | None = None
 

@@ -126,6 +126,11 @@ def test_frontend_assets_cover_search_critique_badges_and_none_state():
     assert "turn.attribute_debug" in REPORTS_JS
     assert "rvPopupAttributeDebug" in REPORTS_JS
     assert "rvFormatAttributeDebug" in REPORTS_JS
+    assert "Category Diagnostics" in INDEX_HTML
+    assert "rvPopupCategoryDebug" in INDEX_HTML
+    assert "turn.category_debug" in REPORTS_JS
+    assert "rvPopupCategoryDebug" in REPORTS_JS
+    assert "rvFormatCategoryDebug" in REPORTS_JS
     assert "Activation Transition" in REPORTS_JS
     assert "crit.bridge_verdict" in REPORTS_JS
     assert "crit.bridge_debug" in REPORTS_JS
@@ -258,6 +263,116 @@ def test_hf_report_includes_attribute_diagnostics_without_bridge_debug(tmp_path)
 
 def test_frontend_assets_cover_critiqued_response_panel_and_pre_wrap():
     assert "rvPopupCritiquedResponse" in INDEX_HTML
+
+
+def test_hf_report_includes_category_diagnostics_without_bridge_debug(tmp_path):
+    from paixueji_app import _parse_hf_report, build_human_feedback_report
+
+    category_debug = {
+        "decision": "category_activity",
+        "profile": {
+            "category_id": "animals",
+            "category_label": "Animals",
+            "activity_target": "discovering different animals and what makes them special",
+            "domain": "animals",
+        },
+        "state": {
+            "object_name": "cat",
+            "profile": {
+                "category_id": "animals",
+                "category_label": "Animals",
+                "activity_target": "discovering different animals and what makes them special",
+                "domain": "animals",
+            },
+            "turn_count": 1,
+            "activity_ready": False,
+        },
+        "reply": {
+            "reply_type": "aligned",
+            "category_id": "animals",
+            "counted_turn": True,
+            "activity_ready": False,
+            "state_action": "continue_category_lane",
+            "reason": "child stayed in the category lane",
+        },
+        "readiness": {
+            "activity_ready": False,
+            "chat_phase_complete": False,
+            "state_action": "continue_category_lane",
+            "reason": "category engagement threshold not reached",
+            "engaged_turn_count": 1,
+            "readiness_threshold": 2,
+        },
+        "reason": "child stayed in the category lane",
+        "response_text": "Cats are animals. What other animals can you think of?",
+    }
+
+    report = build_human_feedback_report(
+        object_name="cat",
+        age=6,
+        session_id="sess",
+        transcript=[
+            {
+                "role": "model",
+                "content": "Cats are animals. What other animals can you think of?",
+                "mode": "chat",
+                "response_type": "category_intro",
+                "category_debug": category_debug,
+            },
+            {"role": "child", "content": "Dogs too"},
+            {
+                "role": "model",
+                "content": "Cats are animals. What other animals can you think of?",
+                "mode": "chat",
+                "response_type": "category_activity",
+                "category_debug": category_debug,
+            },
+        ],
+        all_exchanges=[{
+            "child_response": "Dogs too",
+            "model_response": "Cats are animals. What other animals can you think of?",
+            "response_type": "category_activity",
+            "category_debug": category_debug,
+        }],
+        exchange_critiques=[{
+            "exchange_index": 1,
+            "model_response_problem": "Needs broader category comparison before activity invite.",
+        }],
+        global_conclusion="",
+        introduction={
+            "content": "Cats are animals. What other animals can you think of?",
+            "mode": "chat",
+            "response_type": "category_intro",
+            "category_debug": category_debug,
+        },
+    )
+
+    assert "- Category Pipeline: `on`" in report
+    assert "- Category Lane: `active`" in report
+    assert "- Category ID: `animals`" in report
+    assert "- Category Label: `Animals`" in report
+    assert "- Activity Target: `discovering different animals and what makes them special`" in report
+    assert "- Category Reply Type: `aligned`" in report
+    assert "- Category Decision: `category_activity`" in report
+    assert "#### Raw Category Debug" in report
+    assert "- category_id: `animals`" in report
+    assert "#### Raw Bridge Debug" not in report
+
+    report_path = tmp_path / "hf-category.md"
+    report_path.write_text(report, encoding="utf-8")
+    parsed = _parse_hf_report(report_path)
+    model_turn = next(
+        turn for turn in parsed["transcript"]
+        if turn["role"] == "model" and turn["exchange_index"] == 1
+    )
+
+    assert model_turn["diagnostics_ref"] == "D1"
+    assert model_turn["category_id"] == "animals"
+    assert model_turn["category_label"] == "Animals"
+    assert model_turn["category_reply_type"] == "aligned"
+    assert model_turn["category_decision"] == "category_activity"
+    assert model_turn["category_debug"]["profile"]["category_id"] == "animals"
+    assert model_turn["critique"]["category_debug"]["reply"]["reply_type"] == "aligned"
     assert "rvPopupResponseLabel" in INDEX_HTML
     assert "Critiqued Model Response" in INDEX_HTML
     assert "rvPopupCritiquedResponse" in REPORTS_JS

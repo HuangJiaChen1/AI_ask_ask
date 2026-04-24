@@ -214,6 +214,36 @@ def test_attribute_handoff_context_includes_attribute_metadata(client):
     assert context["conversation"]
 
 
+def test_category_handoff_context_includes_category_metadata(client):
+    start_response = client.post(
+        '/api/start',
+        json={"object_name": "cat", "age": 6, "category_pipeline_enabled": True},
+    )
+    events = parse_sse(start_response.data)
+    session_id = events[0]['data']['session_id']
+
+    for child_input in ["I like dogs too", "Why do animals have tails?"]:
+        continue_response = client.post(
+            '/api/continue',
+            json={"session_id": session_id, "child_input": child_input},
+        )
+        parse_sse(continue_response.data)
+
+    handoff_response = client.post('/api/handoff', json={"session_id": session_id})
+    assert handoff_response.status_code == 200
+    handoff_data = handoff_response.get_json()
+
+    context_response = client.get(handoff_data["context_path"])
+    assert context_response.status_code == 200
+    context = context_response.get_json()
+
+    assert context["activity_source"] == "category"
+    assert context["category_id"] == "animals"
+    assert context["category_label"] == "Animals"
+    assert context["activity_target"]
+    assert context["conversation"]
+
+
 def test_exchanges_endpoint_exposes_attribute_debug(client):
     start_response = client.post(
         '/api/start',
@@ -281,6 +311,48 @@ def test_manual_critique_report_preserves_attribute_debug(client):
     )
     assert model_turn["attribute_debug"]["profile"]["attribute_id"].startswith("appearance.")
     assert model_turn["critique"]["attribute_debug"]["profile"]["attribute_id"].startswith("appearance.")
+
+
+def test_manual_critique_report_preserves_category_debug(client):
+    start_response = client.post(
+        '/api/start',
+        json={"object_name": "cat", "age": 6, "category_pipeline_enabled": True},
+    )
+    events = parse_sse(start_response.data)
+    session_id = events[0]['data']['session_id']
+
+    continue_response = client.post(
+        '/api/continue',
+        json={"session_id": session_id, "child_input": "Dogs are animals too"},
+    )
+    parse_sse(continue_response.data)
+
+    response = client.post('/api/manual-critique', json={
+        "session_id": session_id,
+        "exchange_critiques": [{
+            "exchange_index": 1,
+            "model_response_problem": "Should invite a broader category comparison first.",
+        }],
+        "skip_traces": True,
+    })
+    assert response.status_code == 200
+    body = response.get_json()
+    assert body["success"] is True
+
+    report_path = Path(body["report_path"])
+    report_text = report_path.read_text(encoding="utf-8")
+    assert "Category ID" in report_text
+    assert "Raw Category Debug" in report_text
+
+    detail_response = client.get(f"/api/reports/hf/{report_path.parent.name}/{report_path.name}")
+    assert detail_response.status_code == 200
+    detail = detail_response.get_json()
+    model_turn = next(
+        turn for turn in detail["transcript"]
+        if turn["role"] == "model" and turn.get("exchange_index") == 1
+    )
+    assert model_turn["category_debug"]["profile"]["category_id"] == "animals"
+    assert model_turn["critique"]["category_debug"]["profile"]["category_id"] == "animals"
 
 
 def test_exchanges_endpoint_exposes_bridge_debug_for_intro_and_turns(client, monkeypatch):
