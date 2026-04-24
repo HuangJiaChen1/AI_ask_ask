@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 
 import paixueji_prompts
 from model_json import extract_json_object
@@ -13,8 +13,151 @@ from stream.exploration_loader import (
 )
 
 
-ATTRIBUTE_ACTIVITY_READY_TURN_THRESHOLD = 2
+# ---------------------------------------------------------------------------
+# Readiness thresholds
+# ---------------------------------------------------------------------------
+SUBSTANTIVE_TURN_THRESHOLD = 2
+ATTRIBUTE_TOUCH_THRESHOLD = 1
 ACTIVITY_COMMAND_WORDS = {"let's", "lets", "game", "play", "activity", "ready"}
+
+# Intents that count as substantive engagement (used for readiness).
+SUBSTANTIVE_INTENTS = {
+    "correct_answer", "informative", "curiosity", "play",
+    "emotional", "clarifying_wrong", "clarifying_constraint",
+    "concept_confusion",
+}
+
+
+# ---------------------------------------------------------------------------
+# Attribute touch detection — heuristic keyword patterns
+# ---------------------------------------------------------------------------
+ATTRIBUTE_TOUCH_PATTERNS: dict[str, dict[str, list[str]]] = {
+    "body_color": {
+        "direct": [
+            "red", "green", "yellow", "blue", "orange", "black",
+            "white", "pink", "purple", "brown", "gold", "silver",
+            "color", "colour", "colored", "coloured",
+        ],
+        "indirect": [
+            "bright", "shiny", "dark", "light", "vivid", "pale",
+            "looks like", "same color as", "brightest",
+            "dull", "striped", "spotted",
+        ],
+        "preference": [
+            "i like the", "my favorite color", "which color",
+            "favorite colour",
+        ],
+    },
+    "covering": {
+        "direct": [
+            "fur", "hair", "feathers", "skin", "shell", "scales",
+            "fluffy", "smooth", "rough", "bumpy", "fuzzy", "soft",
+            "hairy", "feathered", "scales",
+        ],
+        "indirect": [
+            "fur", "furry", "hairy", "smooth", "rough",
+            "hard", "fuzzy", "coat", "cover",
+        ],
+        "preference": [
+            "i like touching", "feels nice", "soft is better",
+        ],
+    },
+    "taste": {
+        "direct": [
+            "sweet", "sour", "bitter", "salty", "spicy", "taste",
+            "yummy", "delicious", "flavor", "tangy", "savory",
+            "bland", "gross taste",
+        ],
+        "indirect": [
+            "tastes like", "fresh", "flavor", "tangy",
+            "flavour", "mouth", "lick",
+        ],
+        "preference": [
+            "i like how it", "my favorite taste", "tastes good",
+            "tastes bad",
+        ],
+    },
+    "sound": {
+        "direct": [
+            "loud", "quiet", "roar", "bark", "chirp", "meow",
+            "buzz", "crunch", "squeak", "honk", "purr",
+            "sound", "noise", "hear",
+        ],
+        "indirect": [
+            "sounds like", "makes a", "you can hear",
+            "quiet", "noisy", "silent",
+        ],
+        "preference": [
+            "i like the sound", "sounds cool", "sounds funny",
+        ],
+    },
+    "smell": {
+        "direct": [
+            "smell", "stinky", "fragrant", "scent", "odor",
+            "aroma", "stinks", "smells", "sniff",
+        ],
+        "indirect": [
+            "smells like", "you can smell", "scented",
+            "fresh smell",
+        ],
+        "preference": [
+            "i like the smell", "smells good", "smells bad",
+        ],
+    },
+    "body_size": {
+        "direct": [
+            "big", "small", "tiny", "huge", "giant", "little",
+            "long", "short", "tall", "wide", "narrow",
+            "size", "heavy", "light",
+        ],
+        "indirect": [
+            "as big as", "as small as", "bigger than", "smaller than",
+            "fits in", "can hold",
+        ],
+        "preference": [
+            "i like big", "i like small", "too big", "too small",
+        ],
+    },
+    "body_parts": {
+        "direct": [
+            "legs", "arms", "eyes", "ears", "nose", "mouth",
+            "teeth", "claws", "paws", "tail", "wing", "wings",
+            "fin", "fins", "horn", "horns", "beak",
+            "head", "neck", "back", "stomach", "belly",
+        ],
+        "indirect": [
+            "has", "with", "uses its", "part",
+        ],
+        "preference": [
+            "i like its", "my favorite part",
+        ],
+    },
+    "markings": {
+        "direct": [
+            "stripes", "spots", "pattern", "dots", "lines",
+            "spots", "striped", "spotted", "patches",
+            "markings", "marks",
+        ],
+        "indirect": [
+            "looks like it has", "you can see",
+        ],
+        "preference": [],
+    },
+    "function_use": {
+        "direct": [
+            "use", "used", "does", "works", "helps", "help",
+            "tool", "purpose", "made for", "can do",
+            "job", "role", "used for",
+        ],
+        "indirect": [
+            "helps you", "people use", "we use",
+            "good for", "useful",
+        ],
+        "preference": [
+            "i like using", "my favorite way",
+        ],
+    },
+}
 
 
 @dataclass(frozen=True)
@@ -28,13 +171,21 @@ class AttributeProfile:
 
 
 @dataclass
-class AttributeSessionState:
+class DiscoverySessionState:
+    """Session state for the natural-discovery attribute pipeline.
+
+    Tracks substantive engagement and attribute touches separately,
+    so the conversation can flow naturally while still guaranteeing
+    that the handoff activity connects to what the child explored.
+    """
     object_name: str
     profile: AttributeProfile
     age: int
-    turn_count: int = 0
+    substantive_turns: int = 0
+    attribute_touches: int = 0
+    attribute_touch_types: list[str] = field(default_factory=list)
+    intent_history: list[str] = field(default_factory=list)
     activity_ready: bool = False
-    last_question: str | None = None
     surface_object_name: str | None = None
     anchor_object_name: str | None = None
 
@@ -43,16 +194,20 @@ class AttributeSessionState:
 
 
 @dataclass(frozen=True)
-class AttributeReplyDecision:
-    reply_type: str
-    attribute_id: str
-    counted_turn: bool
-    activity_ready: bool
-    state_action: str
-    reason: str
+class AttributeTouchResult:
+    """Result of heuristic attribute touch detection."""
+    touched: bool
+    touch_type: str       # "direct", "indirect", "preference", or "none"
+    confidence: str       # "high", "medium", "low"
+    matched: list[str]    # keywords that triggered the match
 
     def to_debug_dict(self) -> dict:
-        return asdict(self)
+        return {
+            "touched": self.touched,
+            "touch_type": self.touch_type,
+            "confidence": self.confidence,
+            "matched": self.matched,
+        }
 
 
 @dataclass(frozen=True)
@@ -61,14 +216,19 @@ class AttributeReadinessDecision:
     chat_phase_complete: bool
     state_action: str
     reason: str
-    engaged_turn_count: int
-    readiness_threshold: int
-    readiness_source: str = "backend_engagement_policy"
+    substantive_turns: int
+    attribute_touches: int
+    readiness_threshold_substantive: int = SUBSTANTIVE_TURN_THRESHOLD
+    readiness_threshold_touch: int = ATTRIBUTE_TOUCH_THRESHOLD
+    readiness_source: str = "discovery_engagement_policy"
 
     def to_debug_dict(self) -> dict:
         return asdict(self)
 
 
+# ---------------------------------------------------------------------------
+# Internal helpers
+# ---------------------------------------------------------------------------
 def _normalize(text: str | None) -> str:
     return " ".join((text or "").strip().lower().split())
 
@@ -79,7 +239,6 @@ def _contains_activity_command(text: str) -> bool:
 
 
 def _anchor_status_to_branch(anchor_status: str | None) -> str:
-    """Map anchor_status to attribute branch."""
     if anchor_status == "exact_supported":
         return "in_kb"
     if anchor_status in ("anchored_high", "anchored_medium"):
@@ -92,7 +251,6 @@ def _candidate_to_profile(
     object_name: str,
     branch: str,
 ) -> AttributeProfile:
-    """Convert a SubAttributeCandidate to an AttributeProfile."""
     return AttributeProfile(
         attribute_id=f"{candidate.dimension}.{candidate.sub_attribute}",
         label=sub_attribute_to_label(candidate.sub_attribute),
@@ -103,7 +261,6 @@ def _candidate_to_profile(
 
 
 def _build_supported_attribute_block(profiles: tuple[AttributeProfile, ...]) -> str:
-    """Build the text block listing all candidate attributes for the Gemini prompt."""
     lines = []
     for profile in profiles:
         lines.append(
@@ -113,6 +270,9 @@ def _build_supported_attribute_block(profiles: tuple[AttributeProfile, ...]) -> 
     return "\n".join(lines)
 
 
+# ---------------------------------------------------------------------------
+# Public API — attribute selection (unchanged)
+# ---------------------------------------------------------------------------
 async def select_attribute_profile(
     *,
     object_name: str,
@@ -121,30 +281,11 @@ async def select_attribute_profile(
     client,
     config: dict | None,
 ) -> tuple[AttributeProfile | None, dict]:
-    """
-    Select an attribute profile for the given object.
-
-    Dynamically generates candidates from exploration_categories.yaml
-    based on the surface object's domain and the child's age tier.
-    Then asks Gemini to pick the best one.
-
-    Args:
-        object_name: The surface object the child named.
-        age: Child's age.
-        anchor_status: From object resolution — determines the branch.
-        client: Gemini client.
-        config: Config dict with model_name.
-
-    Returns:
-        (AttributeProfile | None, debug_dict)
-    """
     resolved_age = age or 6
     branch = _anchor_status_to_branch(anchor_status)
 
-    # Determine domain for the surface object
     domain = await infer_domain(object_name, client, config)
 
-    # Generate candidates from YAML
     candidates = get_candidate_sub_attributes(domain, resolved_age)
 
     if not candidates:
@@ -157,12 +298,10 @@ async def select_attribute_profile(
             "domain": domain,
         }
 
-    # Convert all candidates to profiles
     profiles = tuple(
         _candidate_to_profile(c, object_name, branch) for c in candidates
     )
 
-    # Ask Gemini to select
     prompt = paixueji_prompts.get_prompts()["attribute_selection_prompt"].format(
         object_name=object_name,
         age=resolved_age,
@@ -185,7 +324,6 @@ async def select_attribute_profile(
     else:
         exc_reason = None
 
-    # Try to match Gemini's choice to a profile
     if isinstance(payload, dict):
         chosen_id = payload.get("attribute_id")
         for profile in profiles:
@@ -201,7 +339,6 @@ async def select_attribute_profile(
                     "domain": domain,
                 }
 
-    # Fallback: use the first candidate
     fallback = profiles[0]
     return fallback, {
         "decision": "attribute_selected",
@@ -215,6 +352,9 @@ async def select_attribute_profile(
     }
 
 
+# ---------------------------------------------------------------------------
+# Public API — session start (adapted for DiscoverySessionState)
+# ---------------------------------------------------------------------------
 def start_attribute_session(
     *,
     object_name: str,
@@ -222,10 +362,10 @@ def start_attribute_session(
     age: int | None,
     surface_object_name: str | None = None,
     anchor_object_name: str | None = None,
-) -> AttributeSessionState:
+) -> DiscoverySessionState:
     if profile is None:
         raise ValueError("profile is required to start an attribute session")
-    return AttributeSessionState(
+    return DiscoverySessionState(
         object_name=object_name,
         profile=profile,
         age=age or 6,
@@ -234,137 +374,189 @@ def start_attribute_session(
     )
 
 
-def classify_attribute_reply(
-    state: AttributeSessionState,
-    child_reply: str | None,
-) -> AttributeReplyDecision:
+# ---------------------------------------------------------------------------
+# Public API — attribute touch detection (heuristic)
+# ---------------------------------------------------------------------------
+def detect_attribute_touch(
+    child_reply: str,
+    attribute_id: str,
+) -> AttributeTouchResult:
+    """Detect whether the child's reply touched the suggested attribute.
+
+    Uses heuristic keyword matching — no LLM call needed.
+    The sub_attribute part of attribute_id (e.g. "body_color" from
+    "appearance.body_color") is used as the lookup key.
+    """
     text = _normalize(child_reply)
-    object_name = _normalize(state.object_name)
-    attribute_words = set(_normalize(state.profile.label).replace("/", " ").split())
-
-    if any(token in text for token in ("don't know", "dont know", "not sure", "idk", "maybe")):
-        return AttributeReplyDecision(
-            reply_type="uncertainty",
-            attribute_id=state.profile.attribute_id,
-            counted_turn=False,
-            activity_ready=False,
-            state_action="scaffold_attribute",
-            reason="child expressed uncertainty",
+    if not text:
+        return AttributeTouchResult(
+            touched=False, touch_type="none",
+            confidence="low", matched=[],
         )
 
-    if any(token in text for token in ("can't", "cannot", "dont want", "don't want", "stop", "no more")):
-        return AttributeReplyDecision(
-            reply_type="constraint_avoidance",
-            attribute_id=state.profile.attribute_id,
-            counted_turn=False,
-            activity_ready=False,
-            state_action="low_pressure_repair",
-            reason="child expressed constraint or avoidance",
+    sub_attribute = attribute_id.split(".", 1)[-1] if "." in attribute_id else attribute_id
+    patterns = ATTRIBUTE_TOUCH_PATTERNS.get(sub_attribute, {})
+
+    direct_hits = [w for w in patterns.get("direct", []) if w in text]
+    indirect_hits = [w for w in patterns.get("indirect", []) if w in text]
+    preference_hits = [w for w in patterns.get("preference", []) if w in text]
+
+    if direct_hits:
+        return AttributeTouchResult(
+            touched=True, touch_type="direct",
+            confidence="high", matched=direct_hits,
+        )
+    if indirect_hits:
+        return AttributeTouchResult(
+            touched=True, touch_type="indirect",
+            confidence="medium", matched=indirect_hits,
+        )
+    if preference_hits:
+        return AttributeTouchResult(
+            touched=True, touch_type="preference",
+            confidence="medium", matched=preference_hits,
         )
 
-    if _contains_activity_command(text):
-        return AttributeReplyDecision(
-            reply_type="activity_command",
-            attribute_id=state.profile.attribute_id,
-            counted_turn=False,
-            activity_ready=False,
-            state_action="acknowledge_keep_attribute",
-            reason="child mentioned play or activity, but readiness is backend-policy driven",
-        )
-
-    if "?" in (child_reply or "") or text.startswith(("why ", "how ", "what ", "where ", "can ")):
-        return AttributeReplyDecision(
-            reply_type="curiosity",
-            attribute_id=state.profile.attribute_id,
-            counted_turn=True,
-            activity_ready=False,
-            state_action="answer_and_reconnect",
-            reason="child asked a curiosity question",
-        )
-
-    drift_words = {"crunchy", "sweet", "color", "red", "green", "tail", "eyes", "bowl"}
-    text_words = set(text.split())
-    if object_name and object_name in text and drift_words.intersection(text_words) and not attribute_words.intersection(text_words):
-        return AttributeReplyDecision(
-            reply_type="same_object_feature_drift",
-            attribute_id=state.profile.attribute_id,
-            counted_turn=True,
-            activity_ready=False,
-            state_action="accept_then_return_to_attribute",
-            reason="child stayed on object but shifted feature",
-        )
-
-    other_object_words = {"spoon", "ball", "toy", "car", "rock", "cup", "bowl", "blanket"}
-    if attribute_words.intersection(text_words) and other_object_words.intersection(text_words) and object_name not in text:
-        return AttributeReplyDecision(
-            reply_type="new_object_same_attribute_drift",
-            attribute_id=state.profile.attribute_id,
-            counted_turn=True,
-            activity_ready=False,
-            state_action="accept_comparison_keep_attribute",
-            reason="child named another object with same attribute",
-        )
-
-    return AttributeReplyDecision(
-        reply_type="aligned",
-        attribute_id=state.profile.attribute_id,
-        counted_turn=True,
-        activity_ready=False,
-        state_action="continue_attribute_lane",
-        reason="child stayed aligned with selected attribute",
+    return AttributeTouchResult(
+        touched=False, touch_type="none",
+        confidence="low", matched=[],
     )
 
 
-def evaluate_attribute_activity_readiness(
-    state: AttributeSessionState,
-    reply: AttributeReplyDecision,
+# ---------------------------------------------------------------------------
+# Public API — readiness evaluation (discovery-based)
+# ---------------------------------------------------------------------------
+def evaluate_discovery_readiness(
+    state: DiscoverySessionState,
+    touch_result: AttributeTouchResult,
+    intent_type: str,
 ) -> AttributeReadinessDecision:
+    """Evaluate whether the child is ready for an attribute activity handoff.
+
+    Two conditions must BOTH be met:
+    1. attribute_touches >= 1: child has engaged the suggested attribute
+       (guarantees activity connects to conversation)
+    2. substantive_turns >= 2: enough conversational depth
+       (prevents premature handoff after one word)
+    """
+    # Update state
+    if touch_result.touched:
+        state.attribute_touches += 1
+        state.attribute_touch_types.append(touch_result.touch_type)
+    if intent_type in SUBSTANTIVE_INTENTS:
+        state.substantive_turns += 1
+    state.intent_history.append(intent_type)
+
+    # Already ready — stay ready
     if state.activity_ready:
         return AttributeReadinessDecision(
             activity_ready=True,
             chat_phase_complete=True,
             state_action="invite_attribute_activity",
             reason="attribute activity was already ready",
-            engaged_turn_count=state.turn_count,
-            readiness_threshold=ATTRIBUTE_ACTIVITY_READY_TURN_THRESHOLD,
+            substantive_turns=state.substantive_turns,
+            attribute_touches=state.attribute_touches,
         )
 
-    if reply.counted_turn and state.turn_count >= ATTRIBUTE_ACTIVITY_READY_TURN_THRESHOLD:
+    # Check both thresholds
+    has_attribute_engagement = state.attribute_touches >= ATTRIBUTE_TOUCH_THRESHOLD
+    has_conversation_richness = state.substantive_turns >= SUBSTANTIVE_TURN_THRESHOLD
+
+    if has_attribute_engagement and has_conversation_richness:
+        state.activity_ready = True
         return AttributeReadinessDecision(
             activity_ready=True,
             chat_phase_complete=True,
             state_action="invite_attribute_activity",
-            reason="child completed two coherent attribute-engaged turns",
-            engaged_turn_count=state.turn_count,
-            readiness_threshold=ATTRIBUTE_ACTIVITY_READY_TURN_THRESHOLD,
+            reason=f"child engaged attribute ({state.attribute_touches} touches) "
+                   f"with sufficient depth ({state.substantive_turns} substantive turns)",
+            substantive_turns=state.substantive_turns,
+            attribute_touches=state.attribute_touches,
         )
+
+    # Not ready yet — determine guidance action
+    if not has_attribute_engagement:
+        action = "soft_guide_attribute"
+    elif not has_conversation_richness:
+        action = "continue_conversation"
+    else:
+        action = "continue_conversation"
 
     return AttributeReadinessDecision(
         activity_ready=False,
         chat_phase_complete=False,
-        state_action=reply.state_action,
-        reason="attribute engagement threshold not reached",
-        engaged_turn_count=state.turn_count,
-        readiness_threshold=ATTRIBUTE_ACTIVITY_READY_TURN_THRESHOLD,
+        state_action=action,
+        reason=f"attribute_touches={state.attribute_touches} "
+               f"(need {ATTRIBUTE_TOUCH_THRESHOLD}), "
+               f"substantive_turns={state.substantive_turns} "
+               f"(need {SUBSTANTIVE_TURN_THRESHOLD})",
+        substantive_turns=state.substantive_turns,
+        attribute_touches=state.attribute_touches,
     )
 
 
+# ---------------------------------------------------------------------------
+# Public API — debug builder (adapted for DiscoverySessionState)
+# ---------------------------------------------------------------------------
 def build_attribute_debug(
     *,
     decision: str,
     profile: AttributeProfile | None,
-    state: AttributeSessionState | None,
+    state: DiscoverySessionState | None,
     reason: str | None = None,
-    reply: dict | None = None,
-    readiness: dict | None = None,
+    touch_result: AttributeTouchResult | None = None,
+    readiness: AttributeReadinessDecision | None = None,
     response_text: str | None = None,
+    intent_type: str | None = None,
 ) -> dict:
     return {
         "decision": decision,
         "profile": asdict(profile) if profile else None,
         "state": state.to_debug_dict() if state else None,
         "reason": reason,
-        "reply": reply.to_debug_dict() if hasattr(reply, "to_debug_dict") else reply,
-        "readiness": readiness.to_debug_dict() if hasattr(readiness, "to_debug_dict") else readiness,
+        "touch_result": touch_result.to_debug_dict() if touch_result else None,
+        "readiness": readiness.to_debug_dict() if readiness else None,
         "response_text": response_text,
+        "intent_type": intent_type,
     }
+
+
+# ---------------------------------------------------------------------------
+# Legacy compatibility — old names still work but delegate to new functions
+# ---------------------------------------------------------------------------
+AttributeSessionState = DiscoverySessionState
+
+def classify_attribute_reply(state, child_reply):
+    """Legacy wrapper — delegates to detect_attribute_touch + intent logic."""
+    touch = detect_attribute_touch(child_reply, state.profile.attribute_id)
+    # Map touch result to a reply_type for backward compat
+    if touch.touched:
+        reply_type = "aligned" if touch.touch_type == "direct" else "attribute_touch"
+    else:
+        reply_type = "other_feature"
+    counted = touch.touched
+    return type("LegacyReplyDecision", (), {
+        "reply_type": reply_type,
+        "attribute_id": state.profile.attribute_id,
+        "counted_turn": counted,
+        "activity_ready": False,
+        "state_action": "soft_guide_attribute" if not touch.touched else "continue_attribute_lane",
+        "reason": touch.touch_type if touch.touched else "child did not engage suggested attribute",
+        "to_debug_dict": lambda: {
+            "reply_type": reply_type,
+            "attribute_id": state.profile.attribute_id,
+            "counted_turn": counted,
+            "touch_result": touch.to_debug_dict(),
+        },
+    })()
+
+def evaluate_attribute_activity_readiness(state, reply, intent_type="aligned"):
+    """Legacy wrapper — delegates to evaluate_discovery_readiness."""
+    touch = detect_attribute_touch("", state.profile.attribute_id)
+    # If reply has counted_turn, we had a touch from the earlier classify call
+    if hasattr(reply, "counted_turn") and reply.counted_turn:
+        touch = AttributeTouchResult(
+            touched=True, touch_type="direct",
+            confidence="high", matched=[],
+        )
+    return evaluate_discovery_readiness(state, touch, intent_type)

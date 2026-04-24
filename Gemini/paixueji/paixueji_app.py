@@ -47,6 +47,8 @@ from resolution_debug import format_resolution_log_line
 from stream import (
     ask_attribute_intro_stream,
     ask_category_intro_stream,
+    ask_followup_question_stream,
+    classify_intent,
     classify_pre_anchor_semantic_reply,
     generate_attribute_activation_response_stream,
     generate_category_activation_response_stream,
@@ -56,6 +58,7 @@ from stream import (
     infer_domain,
     generate_topic_switch_response_stream,
     prepare_messages_for_streaming,
+    extract_previous_response,
 )
 from stream.errors import build_sse_error_payload
 from stream.validation import (
@@ -64,10 +67,11 @@ from stream.validation import (
 )
 from attribute_activity import (
     build_attribute_debug,
-    classify_attribute_reply,
-    evaluate_attribute_activity_readiness,
+    detect_attribute_touch,
+    evaluate_discovery_readiness,
     select_attribute_profile,
     start_attribute_session,
+    SUBSTANTIVE_INTENTS,
 )
 from category_activity import (
     build_category_debug,
@@ -1221,13 +1225,34 @@ def continue_conversation():
                     return
 
                 if assistant.attribute_lane_active and assistant.attribute_state:
-                    decision = classify_attribute_reply(assistant.attribute_state, child_input)
-                    if decision.counted_turn:
-                        assistant.attribute_state.turn_count += 1
+                    # --- Natural Discovery Pipeline ---
+                    # 1. Detect whether child touched the suggested attribute (heuristic)
+                    touch_result = detect_attribute_touch(
+                        child_input,
+                        assistant.attribute_state.profile.attribute_id,
+                    )
 
-                    readiness = evaluate_attribute_activity_readiness(
+                    # 2. Classify intent (async call via shared loop)
+                    try:
+                        intent_future = asyncio.run_coroutine_threadsafe(
+                            classify_intent(
+                                assistant=assistant,
+                                child_answer=child_input,
+                                object_name=assistant.attribute_state.object_name,
+                                age=assistant.age or 6,
+                            ),
+                            _ASYNC_LOOP,
+                        )
+                        intent_result = intent_future.result(timeout=10)
+                        intent_type_lower = (intent_result.get("intent_type") or "classification_fallback").lower()
+                    except Exception:
+                        intent_type_lower = "classification_fallback"
+
+                    # 3. Evaluate readiness (attribute_touch >= 1 AND substantive >= 2)
+                    readiness = evaluate_discovery_readiness(
                         assistant.attribute_state,
-                        decision,
+                        touch_result,
+                        intent_type_lower,
                     )
                     if readiness.activity_ready:
                         assistant.attribute_state.activity_ready = True
@@ -1238,33 +1263,42 @@ def continue_conversation():
                             assistant.conversation_history.copy(),
                             age_prompt,
                         )
-                        generator = generate_attribute_activation_response_stream(
+                        attribute_label = assistant.attribute_state.profile.label
+                        activity_target = assistant.attribute_state.profile.activity_target
+                        object_name_attr = assistant.attribute_state.object_name
+
+                        # --- Phase 1: Intent response (pure, no attribute constraint) ---
+                        response_generator = generate_attribute_activation_response_stream(
                             messages=messages,
-                            object_name=assistant.attribute_state.object_name,
-                            attribute_label=assistant.attribute_state.profile.label,
-                            activity_target=assistant.attribute_state.profile.activity_target,
+                            intent_type=intent_type_lower,
+                            object_name=object_name_attr,
+                            attribute_label=attribute_label,
+                            activity_target=activity_target,
                             child_answer=child_input,
-                            reply_type=decision.reply_type,
+                            reply_type=touch_result.touch_type if touch_result.touched else "other",
                             state_action=readiness.state_action,
                             age=assistant.age or 6,
                             age_prompt=age_prompt,
+                            knowledge_context="",
+                            last_model_response=extract_previous_response(assistant.conversation_history),
                             config=assistant.config,
                             client=assistant.client,
                         )
 
                         sequence_number = 0
                         full_response = ""
-                        async for text_chunk, token_usage, full_so_far in generator:
+                        async for text_chunk, token_usage, full_so_far in response_generator:
                             full_response = full_so_far
                             if not text_chunk:
                                 continue
                             partial_debug = build_attribute_debug(
-                                decision="attribute_activity",
+                                decision="attribute_activity_response",
                                 profile=assistant.attribute_profile,
                                 state=assistant.attribute_state,
-                                reason=decision.reason,
-                                reply=decision,
+                                reason=readiness.reason,
+                                touch_result=touch_result,
                                 readiness=readiness,
+                                intent_type=intent_type_lower,
                             )
                             assistant.set_last_attribute_debug(partial_debug)
                             sequence_number += 1
@@ -1280,31 +1314,90 @@ def continue_conversation():
                                 request_id=request_id,
                                 response_type="attribute_activity",
                                 correct_answer_count=assistant.correct_answer_count,
-                                chat_phase_complete=assistant.attribute_activity_ready or None,
                                 **_assistant_stream_fields(assistant),
                             ))
 
+                        # --- Phase 2: Follow-up question (with attribute soft guide) ---
+                        # Build soft guide, including natural bridge if activity is ready
+                        soft_guide = paixueji_prompts.get_prompts()["attribute_soft_guide"].format(
+                            attribute_label=attribute_label,
+                            activity_target=activity_target,
+                        )
+                        if readiness.activity_ready:
+                            natural_bridge = (
+                                f"\n\nHANDOFF INSTRUCTION: The response above already confirmed "
+                                f"the child's observation about {attribute_label} and gave a wow fact. "
+                                f"Do NOT re-state or re-observe {attribute_label} — the response handled that. "
+                                f"Go directly to an activity-preview question that invites the child to "
+                                f"do something related to {activity_target}. "
+                                f"Example: if activity is 'find colored objects' and the response "
+                                f"already talked about orange fur, the followup should jump straight to "
+                                f"'Can you spot anything else around you that's that bold, sunny color?' "
+                                f"with NO re-observation like 'That orange really stands out!' "
+                                f"Do NOT say 'Now we can start an activity!' or 'Let's play!'"
+                            )
+                            soft_guide += natural_bridge
+
+                        # Add the response to messages before asking follow-up
+                        messages_with_response = messages + [
+                            {"role": "user", "content": child_input},
+                            {"role": "assistant", "content": full_response},
+                        ]
+                        followup_generator = ask_followup_question_stream(
+                            messages=messages_with_response,
+                            object_name=object_name_attr,
+                            age_prompt=age_prompt,
+                            age=assistant.age or 6,
+                            config=assistant.config,
+                            client=assistant.client,
+                            attribute_soft_guide=soft_guide,
+                        )
+
+                        full_followup = ""
+                        async for text_chunk, token_usage, full_so_far in followup_generator:
+                            full_followup = full_so_far
+                            if not text_chunk:
+                                continue
+                            sequence_number += 1
+                            yield sse_event("chunk", StreamChunk(
+                                response=text_chunk,
+                                session_finished=False,
+                                duration=0.0,
+                                token_usage=token_usage,
+                                finish=False,
+                                sequence_number=sequence_number,
+                                timestamp=time.time(),
+                                session_id=session_id,
+                                request_id=request_id,
+                                response_type="attribute_activity",
+                                correct_answer_count=assistant.correct_answer_count,
+                                **_assistant_stream_fields(assistant),
+                            ))
+
+                        # --- Final: combine response + followup into conversation history ---
+                        combined_response = full_response + " " + full_followup
                         attribute_debug = build_attribute_debug(
                             decision="attribute_activity",
                             profile=assistant.attribute_profile,
                             state=assistant.attribute_state,
-                            reason=decision.reason,
-                            reply=decision,
+                            reason=readiness.reason,
+                            touch_result=touch_result,
                             readiness=readiness,
-                            response_text=full_response,
+                            response_text=combined_response,
+                            intent_type=intent_type_lower,
                         )
                         assistant.set_last_attribute_debug(attribute_debug)
                         assistant.conversation_history.append({"role": "user", "content": child_input})
                         assistant.conversation_history.append({
                             "role": "assistant",
-                            "content": full_response,
+                            "content": combined_response,
                             "mode": "chat",
                             "response_type": "attribute_activity",
                             "attribute_debug": attribute_debug,
                         })
                         sequence_number += 1
                         yield sse_event("chunk", StreamChunk(
-                            response=full_response,
+                            response=combined_response,
                             session_finished=False,
                             duration=0.0,
                             token_usage=None,

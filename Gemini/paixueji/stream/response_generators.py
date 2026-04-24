@@ -227,6 +227,7 @@ async def generate_classification_fallback_stream(
 async def generate_attribute_activation_response_stream(
     *,
     messages: list[dict],
+    intent_type: str,
     object_name: str,
     attribute_label: str,
     activity_target: str,
@@ -235,20 +236,45 @@ async def generate_attribute_activation_response_stream(
     state_action: str,
     age: int,
     age_prompt: str,
+    knowledge_context: str = "",
+    last_model_response: str = "",
     config: dict,
     client: genai.Client,
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
-    prompt = paixueji_prompts.get_prompts()["attribute_continue_prompt"].format(
-        object_name=object_name,
+    """Generate attribute-pipeline RESPONSE part using the normal intent prompt.
+
+    This produces ONLY the response (confirmation + wow fact etc.), with no
+    attribute constraint. The follow-up question is generated separately by
+    ask_followup_question_stream with the ATTRIBUTE_SOFT_GUIDE appended.
+    """
+    prompts = paixueji_prompts.get_prompts()
+    intent_lower = intent_type.lower()
+    prompt_key = f"{intent_lower}_intent_prompt"
+    intent_template = prompts.get(prompt_key, "")
+
+    if not intent_template:
+        intent_template = prompts.get("classification_fallback_prompt", "")
+
+    # Build the intent prompt (pure response — no attribute constraint)
+    try:
+        intent_prompt = intent_template.format(
+            child_answer=child_answer,
+            object_name=object_name,
+            age=age,
+            age_prompt=age_prompt,
+            last_model_response=last_model_response,
+            knowledge_context=knowledge_context,
+        )
+    except KeyError:
+        intent_prompt = intent_template
+
+    # Append response coherence hint (soft — prefers attribute-related wow fact)
+    response_hint = prompts["attribute_response_hint"].format(
         attribute_label=attribute_label,
-        activity_target=activity_target,
-        child_answer=child_answer,
-        reply_type=reply_type,
-        state_action=state_action,
-        age=age,
-        age_prompt=age_prompt,
     )
-    messages_to_send = messages + [{"role": "user", "content": prompt}]
+    full_prompt = f"{intent_prompt}\n\n{response_hint}"
+
+    messages_to_send = messages + [{"role": "user", "content": full_prompt}]
     clean_messages = clean_messages_for_api(messages_to_send)
     system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
 

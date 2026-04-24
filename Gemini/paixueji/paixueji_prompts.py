@@ -372,36 +372,109 @@ Choose the attribute most naturally connected to this object.
 If domain is "unknown", prefer attributes from appearance or senses dimensions.
 The attribute_id must exactly match one from the SUPPORTED ATTRIBUTES list."""
 
-ATTRIBUTE_INTRO_PROMPT = """You are starting an attribute-focused conversation with a child about: {object_name}
+ATTRIBUTE_INTRO_PROMPT = """You are starting a discovery conversation with a child about: {object_name}
 
 AGE GUIDANCE: {age_prompt}
-SELECTED ATTRIBUTE: {attribute_label}
+SUGGESTED ATTRIBUTE: {attribute_label}
 ACTIVITY TARGET: {activity_target}
-ATTRIBUTE BRANCH: {attribute_branch}
 
-TASK - Write ONE short opening that directly starts this attribute lane.
+TASK — Write ONE short opening that makes {attribute_label} naturally noticeable.
 
-STRUCTURE: Emotional Opening -> Object Confirmation -> Feature Description -> Engagement Hook
+STRUCTURE: Emotional Opening -> Object Confirmation -> Salience Highlight -> Engagement Hook
 
-BEAT 1 - EMOTIONAL OPENING
+BEAT 1 — EMOTIONAL OPENING
 Lead with a warm, natural opening like "Whoa!" or "Oh, nice!"
+Do NOT open with a generic greeting — jump into the excitement.
 
-BEAT 2 - OBJECT CONFIRMATION
+BEAT 2 — OBJECT CONFIRMATION
 Name the child's object clearly: {object_name}
 
-BEAT 3 - FEATURE DESCRIPTION
-Describe this selected attribute in child-friendly sensory words: {attribute_label}
-ONLY discuss {attribute_label} — do not drift to or mention other features of {object_name}.
+BEAT 3 — SALIENCE HIGHLIGHT
+Add ONE vivid sensory detail that makes {attribute_label} feel naturally noticeable.
+Do NOT describe the attribute explicitly ("its color is...") — weave it into an observation.
+GOOD (attribute=body color, object=apple):
+  "It looks so bright and fresh!"
+GOOD (attribute=covering, object=cat):
+  "It looks so soft and fluffy!"
+BAD (attribute=body color, object=apple):
+  "Let's talk about its color!" (forced, quiz-like)
+BAD (attribute=body color, object=apple):
+  "What color is it?" (knowledge-testing question)
 
-BEAT 4 - ENGAGEMENT HOOK
-End with exactly one easy question that lets the child notice, compare, pretend, or react through the selected attribute.
+BEAT 4 — ENGAGEMENT HOOK
+End with exactly ONE easy question that lets the child notice, compare, or react.
+The question should be open-ended enough that the child can answer about any feature,
+but the wording should make {attribute_label} feel salient.
+GOOD (attribute=body color, object=apple):
+  "What do you notice first when you look at it?"
+GOOD (attribute=covering, object=cat):
+  "What's the first thing you notice about this cat?"
+BAD: "What color is the apple?" (knowledge-testing quiz)
+BAD: "What can you tell me about the apple?" (too vague, no direction)
 
 Rules:
-- Stay strictly within {attribute_label}. Do not mention other features of {object_name}.
-- Do not require a supported anchor object.
-- Do not mention databases, pipelines, or modes.
-- Do not ask a knowledge-testing question.
+- Make {attribute_label} feel naturally noticeable, NOT forced or quiz-like.
+- Do NOT ask a knowledge-testing question ("What color is it?", "How many legs does it have?").
+- Do NOT require a supported anchor object.
+- Do NOT mention databases, pipelines, or modes.
 - Respond naturally, not as JSON.
+"""
+
+ATTRIBUTE_SOFT_GUIDE = """
+SUGGESTED EXPLORATION DIRECTION: {attribute_label}
+ACTIVITY GOAL: {activity_target}
+
+When choosing your follow-up question, you can gently lean toward
+{attribute_label} when it fits naturally. You do NOT need to force it.
+
+THREE TECHNIQUES (use ONE per turn, when it fits):
+
+A) SALIENCE — include a {attribute_label}-related sensory word in your
+   question setup, so the attribute feels naturally present:
+   GOOD (attribute=body color, object=apple):
+     "That bright red really jumps out — which apple color do you
+      like best, red or green?"
+   BAD (attribute=body color, object=apple):
+     "What color is the apple?" (direct knowledge quiz)
+
+B) FRAME WEAVING — when the child noticed something OTHER than
+   {attribute_label}, offer a choice or comparison that includes
+   {attribute_label} as one option:
+   GOOD (child said "round", attribute=body color):
+     "A little round ball! Is it more like a red ball or a green ball?"
+   BAD (child said "round", attribute=body color):
+     "That's nice, but what color is it?" (ignores their observation,
+      forced redirect)
+
+C) NATURAL BRIDGE — when the child ALREADY engaged with
+   {attribute_label}, extend toward the activity goal naturally.
+   This previews the activity content, not announces it:
+   GOOD (child said "red", attribute=body color,
+         activity=find colored objects):
+     "Red really stands out! Can you spot anything else around you
+      that's that bold red color?"
+   BAD (child said "red"):
+     "Great! Now we can start an activity!" (mechanical announcement)
+
+ANTI-PATTERNS — NEVER produce these:
+✗ "What {attribute_label} is it?" — that's a quiz
+✗ "Do you know what {attribute_label} it has?" — quiz with wrapper
+✗ "What else can you tell me about it?" — too vague, no direction
+✗ "Let's look at its {attribute_label}!" — forced redirect
+✗ "That's nice, but..." followed by a question about {attribute_label} — ignoring child
+✗ "Great! Now we can start an activity!" — mechanical announcement
+"""
+
+ATTRIBUTE_RESPONSE_HINT = """
+RESPONSE COHERENCE NOTE: When choosing your wow fact or the specific
+angle of your response, prefer a detail related to {attribute_label}
+if it fits naturally with what the child said. This makes the
+follow-up question feel like it grows from your response, rather than
+pivoting to an unrelated topic.
+If no {attribute_label}-related wow fact fits naturally, use any
+relevant detail — the follow-up question will handle the direction.
+Do NOT force a {attribute_label} pivot if the child's answer points
+elsewhere.
 """
 
 ATTRIBUTE_CONTINUE_PROMPT = """You are continuing an attribute-focused lane.
@@ -1847,6 +1920,8 @@ def get_prompts():
         'attribute_selection_prompt': ATTRIBUTE_SELECTION_PROMPT,
         'attribute_intro_prompt': ATTRIBUTE_INTRO_PROMPT,
         'attribute_continue_prompt': ATTRIBUTE_CONTINUE_PROMPT,
+        'attribute_soft_guide': ATTRIBUTE_SOFT_GUIDE,
+        'attribute_response_hint': ATTRIBUTE_RESPONSE_HINT,
         'category_intro_prompt': CATEGORY_INTRO_PROMPT,
         'category_continue_prompt': CATEGORY_CONTINUE_PROMPT,
         'object_resolution_prompt': OBJECT_RESOLUTION_PROMPT,

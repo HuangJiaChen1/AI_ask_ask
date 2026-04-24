@@ -203,12 +203,14 @@ async def ask_followup_question_stream(
     resolution_guardrails: str = "",
     surface_only_mode: bool = False,
     surface_object_name: str = "",
+    attribute_soft_guide: str = "",
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
-    Stream a follow-up question after the correct-answer confirmation+wow-fact burst.
+    Stream a follow-up question after the response burst.
 
     Args:
         knowledge_context: Full current-object KB context for playful inspiration.
+        attribute_soft_guide: Optional soft guide for attribute-pipeline followups.
 
     Yields:
         Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
@@ -233,6 +235,10 @@ async def ask_followup_question_stream(
         followup_prompt = f"{surface_only_prompt}\n\n{followup_prompt}"
     elif resolution_guardrails:
         followup_prompt = f"{resolution_guardrails}\n\n{followup_prompt}"
+
+    # Append attribute soft guide for attribute-pipeline follow-ups
+    if attribute_soft_guide:
+        followup_prompt = f"{followup_prompt}\n\n{attribute_soft_guide}"
 
     messages_to_send = messages + [{"role": "user", "content": followup_prompt}]
     clean_messages = clean_messages_for_api(messages_to_send)
@@ -287,18 +293,19 @@ async def ask_attribute_intro_stream(
     object_name: str,
     attribute_label: str,
     activity_target: str,
-    attribute_branch: str,
+    attribute_branch: str = "",
     age_prompt: str,
     age: int,
     config: dict,
     client: genai.Client,
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str, dict], None]:
+    """Stream a soft attribute introduction — makes the suggested attribute
+    salient without hard-locking the conversation."""
     prompts = paixueji_prompts.get_prompts()
     prompt = prompts["attribute_intro_prompt"].format(
         object_name=object_name,
         attribute_label=attribute_label,
         activity_target=activity_target,
-        attribute_branch=attribute_branch,
         age_prompt=age_prompt,
         age=age,
     )

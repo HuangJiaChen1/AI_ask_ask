@@ -3,12 +3,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from attribute_activity import (
     AttributeProfile,
-    AttributeSessionState,
+    DiscoverySessionState,
     build_attribute_debug,
-    classify_attribute_reply,
-    evaluate_attribute_activity_readiness,
+    detect_attribute_touch,
+    evaluate_discovery_readiness,
     select_attribute_profile,
     start_attribute_session,
+    SUBSTANTIVE_INTENTS,
+    SUBSTANTIVE_TURN_THRESHOLD,
+    ATTRIBUTE_TOUCH_THRESHOLD,
 )
 
 
@@ -20,7 +23,6 @@ async def test_select_attribute_profile_gemini_selects_from_dynamic_candidates()
     """Gemini returns a valid attribute_id from the dynamically generated candidates."""
     client = MagicMock()
     response = MagicMock()
-    # New format: "dimension.sub_attribute"
     response.text = '{"attribute_id":"senses.taste","confidence":"high","reason":"smell is salient for food"}'
     client.aio.models.generate_content = AsyncMock(return_value=response)
 
@@ -59,8 +61,6 @@ async def test_select_attribute_profile_falls_back_to_first_candidate_on_invalid
         )
 
     assert profile is not None
-    # Fallback is the first candidate; exact value depends on domain inference
-    # but attribute_id should be in "dimension.sub_attribute" format
     assert "." in profile.attribute_id
     assert debug["source"] == "first_candidate_fallback"
 
@@ -87,9 +87,6 @@ async def test_select_attribute_profile_returns_none_when_no_candidates():
 async def test_select_attribute_profile_uses_mappings_domain_for_known_object():
     """For objects in the mappings DB, domain is resolved from the entity, not Gemini."""
     client = MagicMock()
-
-    # "cat" is in the mappings DB with domain="animals"
-    # We need Gemini only for attribute selection, not domain inference
     response = MagicMock()
     response.text = '{"attribute_id":"appearance.body_color","confidence":"high","reason":"color is salient"}'
     client.aio.models.generate_content = AsyncMock(return_value=response)
@@ -114,7 +111,6 @@ async def test_select_attribute_profile_branch_unresolved_for_unresolved_anchor(
     response.text = '{"attribute_id":"appearance.color","confidence":"medium","reason":"generic attribute"}'
     client.aio.models.generate_content = AsyncMock(return_value=response)
 
-    # "quantum computer" is not in mappings → domain=None → default sub_attributes
     with patch("attribute_activity.infer_domain", new_callable=AsyncMock, return_value=None):
         profile, debug = await select_attribute_profile(
             object_name="quantum computer",
@@ -128,11 +124,11 @@ async def test_select_attribute_profile_branch_unresolved_for_unresolved_anchor(
     assert profile.branch == "unresolved_not_in_kb"
 
 
-# --- classify_attribute_reply tests (unchanged behavior, new attribute_id format) ---
+# --- attribute touch detection tests (new discovery pipeline) ---
 
 
-def test_classify_attribute_reply_preserves_selected_attribute():
-    """classify_attribute_reply still works with new attribute_id format."""
+def test_detect_attribute_touch_direct_for_body_color():
+    """Direct keyword match for body_color attribute."""
     profile = AttributeProfile(
         attribute_id="appearance.body_color",
         label="body color",
@@ -142,92 +138,53 @@ def test_classify_attribute_reply_preserves_selected_attribute():
     )
     state = start_attribute_session(object_name="cat", profile=profile, age=6)
 
-    decision = classify_attribute_reply(state, "It has brown fur")
-    assert decision.attribute_id == "appearance.body_color"
-    assert decision.reply_type == "aligned"
-    assert decision.counted_turn is True
+    touch = detect_attribute_touch("It has brown fur", state.profile.attribute_id)
+    # "brown" is a direct match for body_color
+    assert touch.touched is True
+    assert touch.confidence == "high"
 
 
-@pytest.mark.parametrize(
-    ("child_reply", "reply_type", "counted_turn", "activity_ready"),
-    [
-        ("I don't know", "uncertainty", False, False),
-        ("The apple is crunchy too", "same_object_feature_drift", True, False),
-        ("My spoon is shiny too", "new_object_same_attribute_drift", True, False),
-        ("Why is it shiny?", "curiosity", True, False),
-        ("I can't smell it", "constraint_avoidance", False, False),
-        ("Let's play a shiny game", "activity_command", False, False),
-        ("It feels smooth", "aligned", True, False),
-    ],
-)
-def test_classify_attribute_reply_all_cases(
-    child_reply,
-    reply_type,
-    counted_turn,
-    activity_ready,
-):
+def test_attribute_readiness_requires_touch_and_substantive():
+    """Readiness requires both attribute touch AND substantive turns."""
     profile = AttributeProfile(
-        attribute_id="appearance.surface_texture",
-        label="shiny smooth skin",
+        attribute_id="appearance.body_color",
+        label="body color",
         activity_target="noticing and describing what apple looks like",
         branch="in_kb",
         object_examples=("apple",),
     )
     state = start_attribute_session(object_name="apple", profile=profile, age=6)
 
-    decision = classify_attribute_reply(state, child_reply)
+    # Turn 1: substantive + touch
+    touch1 = detect_attribute_touch("It's red!", state.profile.attribute_id)
+    r1 = evaluate_discovery_readiness(state, touch1, "correct_answer")
+    assert r1.activity_ready is False  # need 2 substantive turns
+    assert state.substantive_turns == 1
+    assert state.attribute_touches == 1
 
-    assert decision.reply_type == reply_type
-    assert decision.attribute_id == profile.attribute_id
-    assert decision.counted_turn is counted_turn
-    assert decision.activity_ready is activity_ready
+    # Turn 2: another substantive + touch
+    touch2 = detect_attribute_touch("It's bright red", state.profile.attribute_id)
+    r2 = evaluate_discovery_readiness(state, touch2, "informative")
+    assert r2.activity_ready is True
+    assert r2.state_action == "invite_attribute_activity"
 
 
-def test_attribute_readiness_requires_two_counted_engaged_turns():
+def test_no_touch_means_not_ready():
+    """Without touching the suggested attribute, readiness is never reached."""
     profile = AttributeProfile(
-        attribute_id="appearance.surface_texture",
-        label="shiny smooth skin",
+        attribute_id="appearance.body_color",
+        label="body color",
         activity_target="noticing and describing what apple looks like",
         branch="in_kb",
         object_examples=("apple",),
     )
     state = start_attribute_session(object_name="apple", profile=profile, age=6)
 
-    first = classify_attribute_reply(state, "It feels smooth")
-    if first.counted_turn:
-        state.turn_count += 1
-    first_ready = evaluate_attribute_activity_readiness(state, first)
-    assert first_ready.activity_ready is False
-    assert first_ready.chat_phase_complete is False
-    assert first_ready.engaged_turn_count == 1
-
-    second = classify_attribute_reply(state, "My spoon is shiny too")
-    if second.counted_turn:
-        state.turn_count += 1
-    second_ready = evaluate_attribute_activity_readiness(state, second)
-    assert second_ready.activity_ready is True
-    assert second_ready.chat_phase_complete is True
-    assert second_ready.state_action == "invite_attribute_activity"
-    assert second_ready.readiness_source == "backend_engagement_policy"
-
-
-def test_activity_command_does_not_count_or_trigger_readiness():
-    profile = AttributeProfile(
-        attribute_id="appearance.surface_texture",
-        label="shiny smooth skin",
-        activity_target="noticing and describing what apple looks like",
-        branch="in_kb",
-        object_examples=("apple",),
-    )
-    state = start_attribute_session(object_name="apple", profile=profile, age=6)
-
-    decision = classify_attribute_reply(state, "Let's play a shiny game")
-    ready = evaluate_attribute_activity_readiness(state, decision)
-
-    assert decision.reply_type == "activity_command"
-    assert decision.counted_turn is False
-    assert ready.activity_ready is False
-    assert ready.engaged_turn_count == 0
+    # Substantive but no attribute touch
+    touch = detect_attribute_touch("It's round", state.profile.attribute_id)
+    r = evaluate_discovery_readiness(state, touch, "correct_answer")
+    assert r.activity_ready is False
+    assert r.state_action == "soft_guide_attribute"
 
 
 def test_build_attribute_debug_includes_profile_state_and_reason():
@@ -263,10 +220,10 @@ def test_attribute_session_does_not_require_surface_or_anchor_objects():
     )
     state = start_attribute_session(object_name="cat food", profile=profile, age=6)
 
-    assert isinstance(state, AttributeSessionState)
+    assert isinstance(state, DiscoverySessionState)
     assert state.object_name == "cat food"
     assert state.profile.attribute_id == profile.attribute_id
     assert state.surface_object_name is None
     assert state.anchor_object_name is None
-    assert state.turn_count == 0
+    assert state.substantive_turns == 0
     assert state.activity_ready is False
