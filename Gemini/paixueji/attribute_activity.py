@@ -96,7 +96,7 @@ def _candidate_to_profile(
     return AttributeProfile(
         attribute_id=f"{candidate.dimension}.{candidate.sub_attribute}",
         label=sub_attribute_to_label(candidate.sub_attribute),
-        activity_target=dimension_to_activity_target(candidate.dimension, object_name),
+        activity_target=dimension_to_activity_target(candidate.dimension, object_name, candidate.sub_attribute),
         branch=branch,
         object_examples=(object_name,),
     )

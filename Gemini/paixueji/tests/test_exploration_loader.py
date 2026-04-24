@@ -170,3 +170,33 @@ def test_dimension_to_activity_target_covers_all_dimensions():
 def test_dimension_to_activity_target_unknown_dimension():
     target = dimension_to_activity_target("unknown_dim", "ball")
     assert isinstance(target, str)  # returns generic fallback
+
+
+def test_dimension_to_activity_target_with_sub_attribute_adds_suffix():
+    target = dimension_to_activity_target("appearance", "orange cat", "body_color")
+    assert "orange cat" in target
+    assert "body color" in target
+    assert target.endswith("orange cat's body color")
+
+
+def test_dimension_to_activity_target_without_sub_attribute_backward_compat():
+    # 2-arg call should produce the same output as before
+    target = dimension_to_activity_target("appearance", "cat")
+    assert target == "noticing and describing what cat looks like"
+    # No suffix should be present
+    assert "specifically" not in target
+
+
+def test_dimension_to_activity_target_with_sub_attribute_all_dimensions():
+    for dim, sub_attr in [
+        ("appearance", "body_color"),
+        ("senses", "feel"),
+        ("structure", "parts"),
+        ("function", "use"),
+        ("context", "location"),
+        ("change", "growth"),
+    ]:
+        target = dimension_to_activity_target(dim, "cat", sub_attr)
+        label = sub_attribute_to_label(sub_attr)
+        assert "cat" in target
+        assert label in target

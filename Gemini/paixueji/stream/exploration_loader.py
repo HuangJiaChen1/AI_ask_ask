@@ -131,16 +131,26 @@ def sub_attribute_to_label(sub_attribute: str) -> str:
     return sub_attribute.replace("_", " ")
 
 
-def dimension_to_activity_target(dimension: str, object_name: str) -> str:
+def dimension_to_activity_target(
+    dimension: str,
+    object_name: str,
+    sub_attribute: str | None = None,
+) -> str:
     """
     Generate an activity_target string for a dimension + object.
+    If sub_attribute is provided, narrow the target to that specific attribute.
     Falls back to a generic template if the dimension is unknown.
     """
     template = DIMENSION_ACTIVITY_TEMPLATES.get(
         dimension,
         "exploring {object}",
     )
-    return template.format(object=object_name)
+    base_target = template.format(object=object_name)
+
+    if sub_attribute:
+        label = sub_attribute_to_label(sub_attribute)
+        return f"{base_target} — specifically, {object_name}'s {label}"
+    return base_target
 
 
 def _resolve_domain_from_mappings(object_name: str) -> str | None:
