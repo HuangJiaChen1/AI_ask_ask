@@ -67,11 +67,8 @@ from stream.validation import (
 )
 from attribute_activity import (
     build_attribute_debug,
-    detect_attribute_touch,
-    evaluate_discovery_readiness,
     select_attribute_profile,
     start_attribute_session,
-    SUBSTANTIVE_INTENTS,
 )
 from category_activity import (
     build_category_debug,
@@ -1225,14 +1222,8 @@ def continue_conversation():
                     return
 
                 if assistant.attribute_lane_active and assistant.attribute_state:
-                    # --- Natural Discovery Pipeline ---
-                    # 1. Detect whether child touched the suggested attribute (heuristic)
-                    touch_result = detect_attribute_touch(
-                        child_input,
-                        assistant.attribute_state.profile.attribute_id,
-                    )
+                    assistant.attribute_state.turn_count += 1
 
-                    # 2. Classify intent (async call via shared loop)
                     try:
                         intent_future = asyncio.run_coroutine_threadsafe(
                             classify_intent(
@@ -1245,18 +1236,10 @@ def continue_conversation():
                         )
                         intent_result = intent_future.result(timeout=10)
                         intent_type_lower = (intent_result.get("intent_type") or "classification_fallback").lower()
-                    except Exception:
+                        attribute_reason = intent_result.get("reasoning") or "intent classified for discovery continuation"
+                    except Exception as exc:
                         intent_type_lower = "classification_fallback"
-
-                    # 3. Evaluate readiness (attribute_touch >= 1 AND substantive >= 2)
-                    readiness = evaluate_discovery_readiness(
-                        assistant.attribute_state,
-                        touch_result,
-                        intent_type_lower,
-                    )
-                    if readiness.activity_ready:
-                        assistant.attribute_state.activity_ready = True
-                        assistant.attribute_activity_ready = True
+                        attribute_reason = f"intent classification fallback: {exc}"
 
                     async def stream_attribute_activity():
                         messages = prepare_messages_for_streaming(
@@ -1267,7 +1250,6 @@ def continue_conversation():
                         activity_target = assistant.attribute_state.profile.activity_target
                         object_name_attr = assistant.attribute_state.object_name
 
-                        # --- Phase 1: Intent response (pure, no attribute constraint) ---
                         response_generator = generate_attribute_activation_response_stream(
                             messages=messages,
                             intent_type=intent_type_lower,
@@ -1275,8 +1257,8 @@ def continue_conversation():
                             attribute_label=attribute_label,
                             activity_target=activity_target,
                             child_answer=child_input,
-                            reply_type=touch_result.touch_type if touch_result.touched else "other",
-                            state_action=readiness.state_action,
+                            reply_type="discovery",
+                            state_action="continue_conversation",
                             age=assistant.age or 6,
                             age_prompt=age_prompt,
                             knowledge_context="",
@@ -1295,9 +1277,7 @@ def continue_conversation():
                                 decision="attribute_activity_response",
                                 profile=assistant.attribute_profile,
                                 state=assistant.attribute_state,
-                                reason=readiness.reason,
-                                touch_result=touch_result,
-                                readiness=readiness,
+                                reason=attribute_reason,
                                 intent_type=intent_type_lower,
                             )
                             assistant.set_last_attribute_debug(partial_debug)
@@ -1317,28 +1297,11 @@ def continue_conversation():
                                 **_assistant_stream_fields(assistant),
                             ))
 
-                        # --- Phase 2: Follow-up question (with attribute soft guide) ---
-                        # Build soft guide, including natural bridge if activity is ready
                         soft_guide = paixueji_prompts.get_prompts()["attribute_soft_guide"].format(
                             attribute_label=attribute_label,
                             activity_target=activity_target,
                         )
-                        if readiness.activity_ready:
-                            natural_bridge = (
-                                f"\n\nHANDOFF INSTRUCTION: The response above already confirmed "
-                                f"the child's observation about {attribute_label} and gave a wow fact. "
-                                f"Do NOT re-state or re-observe {attribute_label} — the response handled that. "
-                                f"Go directly to an activity-preview question that invites the child to "
-                                f"do something related to {activity_target}. "
-                                f"Example: if activity is 'find colored objects' and the response "
-                                f"already talked about orange fur, the followup should jump straight to "
-                                f"'Can you spot anything else around you that's that bold, sunny color?' "
-                                f"with NO re-observation like 'That orange really stands out!' "
-                                f"Do NOT say 'Now we can start an activity!' or 'Let's play!'"
-                            )
-                            soft_guide += natural_bridge
 
-                        # Add the response to messages before asking follow-up
                         messages_with_response = messages + [
                             {"role": "user", "content": child_input},
                             {"role": "assistant", "content": full_response},
@@ -1353,14 +1316,34 @@ def continue_conversation():
                             attribute_soft_guide=soft_guide,
                         )
 
+                        activity_marker = "[ACTIVITY_READY]"
+                        activity_marker_detected = False
+                        raw_followup_so_far = ""
                         full_followup = ""
-                        async for text_chunk, token_usage, full_so_far in followup_generator:
-                            full_followup = full_so_far
-                            if not text_chunk:
+
+                        def _displayable_followup(raw_followup: str) -> str:
+                            marker_free_followup = raw_followup.replace(activity_marker, "")
+                            if activity_marker in raw_followup:
+                                return marker_free_followup
+
+                            max_buffered_prefix = min(len(raw_followup), len(activity_marker) - 1)
+                            for suffix_len in range(max_buffered_prefix, 0, -1):
+                                if raw_followup.endswith(activity_marker[:suffix_len]):
+                                    return marker_free_followup[:-suffix_len]
+                            return marker_free_followup
+
+                        async for _text_chunk, token_usage, full_so_far in followup_generator:
+                            raw_followup_so_far = full_so_far
+                            if activity_marker in raw_followup_so_far:
+                                activity_marker_detected = True
+                            displayable_followup = _displayable_followup(raw_followup_so_far)
+                            visible_chunk = displayable_followup[len(full_followup):]
+                            full_followup = displayable_followup
+                            if visible_chunk == "":
                                 continue
                             sequence_number += 1
                             yield sse_event("chunk", StreamChunk(
-                                response=text_chunk,
+                                response=visible_chunk,
                                 session_finished=False,
                                 duration=0.0,
                                 token_usage=token_usage,
@@ -1374,15 +1357,19 @@ def continue_conversation():
                                 **_assistant_stream_fields(assistant),
                             ))
 
-                        # --- Final: combine response + followup into conversation history ---
-                        combined_response = full_response + " " + full_followup
+                        full_followup = _displayable_followup(raw_followup_so_far)
+
+                        if activity_marker_detected:
+                            assistant.attribute_state.activity_ready = True
+                            assistant.attribute_activity_ready = True
+
+                        combined_response = (full_response + " " + full_followup).strip()
                         attribute_debug = build_attribute_debug(
                             decision="attribute_activity",
                             profile=assistant.attribute_profile,
                             state=assistant.attribute_state,
-                            reason=readiness.reason,
-                            touch_result=touch_result,
-                            readiness=readiness,
+                            reason=attribute_reason,
+                            activity_marker_detected=activity_marker_detected,
                             response_text=combined_response,
                             intent_type=intent_type_lower,
                         )

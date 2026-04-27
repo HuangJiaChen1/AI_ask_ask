@@ -46,7 +46,7 @@ def test_attribute_pipeline_start_uses_attribute_intro_and_debug(client, mock_ge
     assert chunk["response_type"] == "attribute_intro"
     assert chunk["attribute_pipeline_enabled"] is True
     assert chunk["attribute_lane_active"] is True
-    assert "." in chunk["attribute_debug"]["profile"]["attribute_id"]  # new format: dimension.sub_attribute
+    assert "." in chunk["attribute_debug"]["profile"]["attribute_id"]
     assert chunk["attribute_debug"]["state"]["profile"]["attribute_id"] == chunk["attribute_debug"]["profile"]["attribute_id"]
 
     prompt_text = streamed_prompt_text(mock_gemini_client)
@@ -55,7 +55,7 @@ def test_attribute_pipeline_start_uses_attribute_intro_and_debug(client, mock_ge
     assert "BEAT 2" in prompt_text
     assert "OBJECT CONFIRMATION" in prompt_text
     assert "BEAT 3" in prompt_text
-    assert "FEATURE DESCRIPTION" in prompt_text
+    assert "SALIENCE HIGHLIGHT" in prompt_text
     assert "BEAT 4" in prompt_text
     assert "ENGAGEMENT HOOK" in prompt_text
 
@@ -84,9 +84,6 @@ def test_attribute_pipeline_no_match_preserves_existing_fallback_pipeline(client
 
     chunk = final_chunk(response)
 
-    # With dynamic candidates, every object gets sub_attributes (defaults for unknown domain).
-    # "plain thing" has no KB entry and mock Gemini returns non-JSON,
-    # so first_candidate_fallback is used — attribute lane is still activated.
     assert chunk["attribute_pipeline_enabled"] is True
     assert chunk["attribute_debug"] is not None
     assert chunk["attribute_debug"]["profile"]["attribute_id"].startswith("appearance.")
@@ -106,7 +103,7 @@ def test_attribute_pipeline_off_preserves_bridge_pipeline_for_anchorable_object(
     assert chunk["attribute_debug"] is None
 
 
-def test_attribute_continue_keeps_attribute_state_and_skips_bridge_activation(client):
+def test_attribute_continue_keeps_attribute_state(client):
     start = client.post(
         "/api/start",
         json={"age": 6, "object_name": "cat food", "attribute_pipeline_enabled": True},
@@ -123,11 +120,12 @@ def test_attribute_continue_keeps_attribute_state_and_skips_bridge_activation(cl
     assert chunk["response_type"] == "attribute_activity"
     assert chunk["attribute_lane_active"] is True
     assert chunk["bridge_phase"] != "activation"
-    assert "." in chunk["attribute_debug"]["state"]["profile"]["attribute_id"]  # new format: dimension.sub_attribute
-    assert chunk["attribute_debug"]["reply"]["reply_type"] == "constraint_avoidance"
+    assert "." in chunk["attribute_debug"]["state"]["profile"]["attribute_id"]
+    # New debug shape has intent_type and activity_marker_detected, not reply/readiness
+    assert "activity_marker_detected" in chunk["attribute_debug"]
 
 
-def test_attribute_continue_activity_ready_after_two_engaged_attribute_turns(client):
+def test_attribute_continue_tracks_turns_without_heuristic_readiness(client):
     start = client.post(
         "/api/start",
         json={"age": 6, "object_name": "cat food", "attribute_pipeline_enabled": True},
@@ -139,19 +137,7 @@ def test_attribute_continue_activity_ready_after_two_engaged_attribute_turns(cli
         json={"session_id": session_id, "child_input": "It smells strong"},
     )
     first_chunk = final_chunk(first)
+    assert first_chunk["response_type"] == "attribute_activity"
+    # activity_ready is False until LLM emits [ACTIVITY_READY] marker
     assert first_chunk["activity_ready"] is False
-    assert first_chunk["chat_phase_complete"] is None
-    assert first_chunk["attribute_debug"]["readiness"]["engaged_turn_count"] == 1
-
-    second = client.post(
-        "/api/continue",
-        json={"session_id": session_id, "child_input": "My lunch smells strong too"},
-    )
-    second_chunk = final_chunk(second)
-
-    assert second_chunk["response_type"] == "attribute_activity"
-    assert second_chunk["activity_ready"] is True
-    assert second_chunk["chat_phase_complete"] is True
-    assert second_chunk["attribute_debug"]["readiness"]["readiness_source"] == "backend_engagement_policy"
-    assert second_chunk["activity_target"]["activity_source"] == "attribute"
-    assert "." in second_chunk["activity_target"]["attribute_id"]  # new format: dimension.sub_attribute
+    assert "activity_marker_detected" in first_chunk["attribute_debug"]

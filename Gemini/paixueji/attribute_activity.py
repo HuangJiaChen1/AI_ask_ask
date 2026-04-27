@@ -6,10 +6,10 @@ import paixueji_prompts
 from model_json import extract_json_object
 from stream.exploration_loader import (
     SubAttributeCandidate,
+    dimension_to_activity_target,
     get_candidate_sub_attributes,
     infer_domain,
     sub_attribute_to_label,
-    dimension_to_activity_target,
 )
 
 
@@ -25,11 +25,6 @@ class AttributeProfile:
 
 @dataclass
 class DiscoverySessionState:
-    """Session state for the natural-discovery attribute pipeline.
-
-    The LLM decides when the conversation is ready for an activity
-    handoff — no backend readiness counting.
-    """
     object_name: str
     profile: AttributeProfile
     age: int
@@ -53,6 +48,7 @@ def _anchor_status_to_branch(anchor_status: str | None) -> str:
     return "unresolved_not_in_kb"
 
 
+
 def _candidate_to_profile(
     candidate: SubAttributeCandidate,
     object_name: str,
@@ -67,6 +63,7 @@ def _candidate_to_profile(
     )
 
 
+
 def _build_supported_attribute_block(profiles: tuple[AttributeProfile, ...]) -> str:
     lines = []
     for profile in profiles:
@@ -78,7 +75,7 @@ def _build_supported_attribute_block(profiles: tuple[AttributeProfile, ...]) -> 
 
 
 # ---------------------------------------------------------------------------
-# Public API — attribute selection (unchanged)
+# Public API — attribute selection
 # ---------------------------------------------------------------------------
 async def select_attribute_profile(
     *,
@@ -88,7 +85,7 @@ async def select_attribute_profile(
     client,
     config: dict | None,
 ) -> tuple[AttributeProfile | None, dict]:
-    resolved_age = age or 6
+    resolved_age = 6 if age is None else age
     branch = _anchor_status_to_branch(anchor_status)
 
     domain = await infer_domain(object_name, client, config)
@@ -160,7 +157,7 @@ async def select_attribute_profile(
 
 
 # ---------------------------------------------------------------------------
-# Public API — session start (adapted for DiscoverySessionState)
+# Public API — session start
 # ---------------------------------------------------------------------------
 def start_attribute_session(
     *,
@@ -175,7 +172,7 @@ def start_attribute_session(
     return DiscoverySessionState(
         object_name=object_name,
         profile=profile,
-        age=age or 6,
+        age=6 if age is None else age,
         surface_object_name=surface_object_name,
         anchor_object_name=anchor_object_name,
     )
@@ -205,7 +202,4 @@ def build_attribute_debug(
     }
 
 
-# ---------------------------------------------------------------------------
-# Compatibility alias
-# ---------------------------------------------------------------------------
 AttributeSessionState = DiscoverySessionState

@@ -199,6 +199,15 @@ def test_attribute_handoff_context_includes_attribute_metadata(client):
         )
         parse_sse(continue_response.data)
 
+    # In the LLM-driven attribute pipeline, readiness is set when the LLM emits
+    # [ACTIVITY_READY]. Simulate that marker being detected so the handoff endpoint
+    # returns attribute metadata.
+    import paixueji_app
+    assistant = paixueji_app.sessions.get(session_id)
+    assert assistant is not None
+    assistant.attribute_activity_ready = True
+    assistant.attribute_state.activity_ready = True
+
     handoff_response = client.post('/api/handoff', json={"session_id": session_id})
     assert handoff_response.status_code == 200
     handoff_data = handoff_response.get_json()
@@ -263,12 +272,8 @@ def test_exchanges_endpoint_exposes_attribute_debug(client):
     data = response.get_json()
 
     assert "." in data["introduction"]["attribute_debug"]["profile"]["attribute_id"]  # new format: dimension.sub_attribute
-    # The attribute debug reply captures the classification of the child's input
-    assert data["exchanges"][0]["attribute_debug"]["reply"]["reply_type"] in (
-        "new_object_same_attribute_drift",
-        "aligned",
-        "same_object_feature_drift",
-    )
+    # New debug shape uses activity_marker_detected and intent_type, not reply/readiness
+    assert "activity_marker_detected" in data["exchanges"][0]["attribute_debug"]
 
 
 def test_manual_critique_report_preserves_attribute_debug(client):
