@@ -38,7 +38,8 @@ def test_bridge_activation_grounding_context_matches_chat_kb_exactly():
 
 
 def test_config_no_longer_exposes_bridge_activation_grounding_mode():
-    config = json.loads(Path("config.json").read_text(encoding="utf-8"))
+    config_path = Path(__file__).parent / "config.json"
+    config = json.loads(config_path.read_text(encoding="utf-8"))
 
     assert "bridge_activation_grounding_mode" not in config
 
