@@ -498,6 +498,64 @@ def evaluate_discovery_readiness(
 # ---------------------------------------------------------------------------
 # Public API — debug builder (adapted for DiscoverySessionState)
 # ---------------------------------------------------------------------------
+def _legacy_attribute_reply_debug(
+    *,
+    profile: AttributeProfile | None,
+    touch_result: AttributeTouchResult | None,
+    readiness: AttributeReadinessDecision | None,
+    intent_type: str | None,
+) -> dict | None:
+    """Build a legacy-compatible reply block for debug/report consumers.
+
+    The discovery pipeline replaced the old semantic reply classifier with
+    touch-result + intent + readiness signals. Some API/debug consumers still
+    expect ``attribute_debug.reply`` to exist, so derive a compatibility view
+    without changing the discovery behavior itself.
+    """
+    if profile is None:
+        return None
+
+    normalized_intent = (intent_type or "").strip().lower()
+    if normalized_intent == "clarifying_idk":
+        reply_type = "uncertainty"
+        counted_turn = False
+        legacy_reason = "child expressed uncertainty"
+    elif normalized_intent == "clarifying_constraint":
+        reply_type = "constraint_avoidance"
+        counted_turn = False
+        legacy_reason = "child expressed constraint or avoidance"
+    elif normalized_intent == "play":
+        reply_type = "activity_command"
+        counted_turn = False
+        legacy_reason = "child mentioned play or activity, but readiness is backend-policy driven"
+    elif normalized_intent == "curiosity":
+        reply_type = "curiosity"
+        counted_turn = True
+        legacy_reason = "child asked a curiosity question"
+    elif touch_result and touch_result.touched:
+        reply_type = "aligned" if touch_result.touch_type == "direct" else "attribute_touch"
+        counted_turn = True
+        legacy_reason = touch_result.touch_type
+    elif normalized_intent in {"correct_answer", "informative", "emotional", "clarifying_wrong", "concept_confusion"}:
+        reply_type = "aligned"
+        counted_turn = True
+        legacy_reason = "child stayed aligned with selected attribute"
+    else:
+        reply_type = "other_feature"
+        counted_turn = False
+        legacy_reason = "child did not engage suggested attribute"
+
+    return {
+        "reply_type": reply_type,
+        "attribute_id": profile.attribute_id,
+        "counted_turn": counted_turn,
+        "activity_ready": readiness.activity_ready if readiness else False,
+        "state_action": readiness.state_action if readiness else None,
+        "reason": legacy_reason,
+    }
+
+
+
 def build_attribute_debug(
     *,
     decision: str,
@@ -514,6 +572,12 @@ def build_attribute_debug(
         "profile": asdict(profile) if profile else None,
         "state": state.to_debug_dict() if state else None,
         "reason": reason,
+        "reply": _legacy_attribute_reply_debug(
+            profile=profile,
+            touch_result=touch_result,
+            readiness=readiness,
+            intent_type=intent_type,
+        ),
         "touch_result": touch_result.to_debug_dict() if touch_result else None,
         "readiness": readiness.to_debug_dict() if readiness else None,
         "response_text": response_text,
