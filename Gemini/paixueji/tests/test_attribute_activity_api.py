@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 
 def parse_sse(response_data):
@@ -33,6 +34,19 @@ def streamed_prompt_text(mock_gemini_client):
         for part in content.get("parts", []):
             parts.append(part.get("text", ""))
     return "\n".join(parts)
+
+
+def test_attribute_pipeline_start_passes_attribute_hook_filter(client, mock_gemini_client):
+    with patch("paixueji_app.select_attribute_profile", return_value=(None, {"reason": "test bypass"})):
+        with patch("graph.select_hook_type", return_value=("细节发现", "Hook style: 细节发现")) as mock_select:
+            response = client.post(
+                "/api/start",
+                json={"age": 6, "object_name": "apple", "attribute_pipeline_enabled": True},
+            )
+
+    assert response.status_code == 200
+    _, kwargs = mock_select.call_args
+    assert kwargs["attribute_pipeline_enabled"] is True
 
 
 def test_attribute_pipeline_start_uses_attribute_intro_and_debug(client, mock_gemini_client):

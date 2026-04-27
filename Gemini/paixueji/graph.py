@@ -160,6 +160,7 @@ class PaixuejiState(TypedDict):
     hook_types: dict                       # Loaded from hook_types.json at startup
     selected_hook_type: Optional[str]      # e.g. "情绪投射", "创意改造"
     question_style: Optional[str]          # "open_ended" | "concrete"
+    attribute_pipeline_enabled: bool
 
     # --- Output Accumulation ---
     full_response_text: str
@@ -604,7 +605,10 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
     hook_types = state.get("hook_types") or {}
     if hook_types:
         hook_type_name, hook_type_section = select_hook_type(
-            state["age"], state["messages"], hook_types
+            state["age"],
+            state["messages"],
+            hook_types,
+            attribute_pipeline_enabled=bool(state.get("attribute_pipeline_enabled")),
         )
         logger.info(f"[{state['session_id']}] Hook type selected: {hook_type_name}")
     else:
