@@ -113,7 +113,12 @@ def convert_messages_to_gemini_format(messages: list[dict]) -> tuple[str, list[d
     return system_instruction.strip(), contents
 
 
-def select_hook_type(age: int, messages: list, hook_types: dict) -> tuple[str, str]:
+def select_hook_type(
+    age: int,
+    messages: list,
+    hook_types: dict,
+    attribute_pipeline_enabled: bool = False,
+) -> tuple[str, str]:
     """
     Select a hook type for the introduction question using age-weighted random sampling.
 
@@ -133,6 +138,9 @@ def select_hook_type(age: int, messages: list, hook_types: dict) -> tuple[str, s
     weights = []
 
     for name, hook in hook_types.items():
+        if attribute_pipeline_enabled and hook.get("attribute_mode") != "observable":
+            continue
+
         # Exclude hooks that need conversation context when not enough history exists
         if hook.get("requires_history", False) and len(messages) < 4:
             continue
@@ -148,7 +156,7 @@ def select_hook_type(age: int, messages: list, hook_types: dict) -> tuple[str, s
 
     # Younger children default to concrete openings. If any low-imagination hooks
     # are available, remove the high-imagination ones from the intro pool.
-    if resolved_age <= 6:
+    if resolved_age <= 6 and not attribute_pipeline_enabled:
         filtered = [
             (name, weight)
             for name, weight in zip(pool, weights)
@@ -161,6 +169,8 @@ def select_hook_type(age: int, messages: list, hook_types: dict) -> tuple[str, s
     if not pool:
         # Fallback: pick any hook that doesn't require history
         for name, hook in hook_types.items():
+            if attribute_pipeline_enabled and hook.get("attribute_mode") != "observable":
+                continue
             if not hook.get("requires_history", False):
                 pool.append(name)
                 weights.append(1.0)

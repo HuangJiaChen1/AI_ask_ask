@@ -604,7 +604,10 @@ async def node_generate_intro(state: PaixuejiState) -> dict:
     hook_types = state.get("hook_types") or {}
     if hook_types:
         hook_type_name, hook_type_section = select_hook_type(
-            state["age"], state["messages"], hook_types
+            state["age"],
+            state["messages"],
+            hook_types,
+            attribute_pipeline_enabled=bool(state.get("attribute_pipeline_enabled")),
         )
         logger.info(f"[{state['session_id']}] Hook type selected: {hook_type_name}")
     else:

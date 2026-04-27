@@ -53,7 +53,8 @@
       "Which color flower do you like best — this one or a red one?"
     ],
     "age_weights": {"3": 2, "4": 2, "5": 1, "6": 1, "7": 1, "8": 1},
-    "requires_history": false
+    "requires_history": false,
+    "attribute_mode": "observable"
   },
   "细节发现": {
     "name": "细节发现",
@@ -64,7 +65,8 @@
       "Those spiky plates on its back look so cool — what do you think they're for?"
     ],
     "age_weights": {"3": 1, "4": 1, "5": 2, "6": 2, "7": 1, "8": 1},
-    "requires_history": false
+    "requires_history": false,
+    "attribute_mode": "observable"
   },
   "经验、生活链接": {
     "name": "经验、生活链接",

@@ -91,6 +91,7 @@ class PaixuejiAssistant:
         self.attribute_lane_active = False
         self.attribute_state = None
         self.attribute_profile = None
+        self.selected_hook_type = None
         self.last_attribute_debug = None
         self.attribute_activity_ready = False
         self.category_pipeline_enabled = False

@@ -59,6 +59,7 @@ from stream import (
     generate_topic_switch_response_stream,
     prepare_messages_for_streaming,
     extract_previous_response,
+    select_hook_type,
 )
 from stream.errors import build_sse_error_payload
 from stream.validation import (
@@ -208,6 +209,7 @@ def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
         "attribute_pipeline_enabled": getattr(assistant, "attribute_pipeline_enabled", False),
         "attribute_lane_active": getattr(assistant, "attribute_lane_active", False),
         "attribute_debug": getattr(assistant, "last_attribute_debug", None),
+        "selected_hook_type": getattr(assistant, "selected_hook_type", None),
         "category_pipeline_enabled": getattr(assistant, "category_pipeline_enabled", False),
         "category_lane_active": getattr(assistant, "category_lane_active", False),
         "category_debug": getattr(assistant, "last_category_debug", None),
@@ -838,6 +840,13 @@ def start_conversation():
                             assistant.conversation_history.copy(),
                             age_prompt,
                         )
+                        hook_type_name, _hook_type_section = select_hook_type(
+                            age=age or 6,
+                            messages=assistant.conversation_history,
+                            hook_types=HOOK_TYPES,
+                            attribute_pipeline_enabled=True,
+                        )
+                        assistant.selected_hook_type = hook_type_name
                         generator = ask_attribute_intro_stream(
                             messages=messages,
                             object_name=assistant.attribute_state.object_name,

@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 
 def parse_sse(response_data):
@@ -90,6 +91,55 @@ def test_attribute_pipeline_no_match_preserves_existing_fallback_pipeline(client
     assert chunk["attribute_pipeline_enabled"] is True
     assert chunk["attribute_debug"] is not None
     assert chunk["attribute_debug"]["profile"]["attribute_id"].startswith("appearance.")
+
+
+def test_attribute_pipeline_start_passes_attribute_hook_filter(client, mock_gemini_client):
+    with patch("paixueji_app.select_hook_type", return_value=("细节发现", "Hook style: 细节发现")) as mock_select:
+        response = client.post(
+            "/api/start",
+            json={"age": 6, "object_name": "apple", "attribute_pipeline_enabled": True},
+        )
+        final_chunk(response)
+
+    assert response.status_code == 200
+    _, kwargs = mock_select.call_args
+    assert kwargs["attribute_pipeline_enabled"] is True
+
+
+
+
+def test_attribute_pipeline_start_reports_only_observable_hook_types(client, mock_gemini_client, monkeypatch):
+    import paixueji_app
+
+    monkeypatch.setattr(
+        paixueji_app,
+        "HOOK_TYPES",
+        {
+            "想象导向": {
+                "name": "想象导向",
+                "concept": "fantasy prompt",
+                "examples": ["If it were magic?"],
+                "age_weights": {"6": 1},
+                "requires_history": False,
+            },
+            "细节发现": {
+                "name": "细节发现",
+                "concept": "observable prompt",
+                "examples": ["What shape do you notice?"],
+                "age_weights": {"6": 1},
+                "requires_history": False,
+                "attribute_mode": "observable",
+            },
+        },
+    )
+
+    response = client.post(
+        "/api/start",
+        json={"age": 6, "object_name": "apple", "attribute_pipeline_enabled": True},
+    )
+
+    assert response.status_code == 200
+    assert final_chunk(response)["selected_hook_type"] == "细节发现"
 
 
 def test_attribute_pipeline_off_preserves_bridge_pipeline_for_anchorable_object(client):
