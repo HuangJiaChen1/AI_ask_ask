@@ -38,7 +38,9 @@
       "Bash(pip install:*)",
       "Skill(commit-commands:commit-push-pr)",
       "Bash(WPATH=\"/Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/.worktrees/fix-unified-struggle-counter/Gemini/paixueji\")",
-      "Read(//Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/.worktrees/fix-unified-struggle-counter/**)"
+      "Read(//Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/.worktrees/fix-unified-struggle-counter/**)",
+      "Bash(echo \".worktrees ignored: $?\")",
+      "Bash(echo \"worktrees ignored: $?\")"
     ]
   },
   "outputStyle": "Explanatory"

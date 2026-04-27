@@ -955,6 +955,7 @@ def start_conversation():
                         "hook_types": HOOK_TYPES,
                         "selected_hook_type": None,
                         "question_style": None,
+                        "attribute_pipeline_enabled": assistant.attribute_pipeline_enabled,
 
                         # Node execution tracing
                         "nodes_executed": [],

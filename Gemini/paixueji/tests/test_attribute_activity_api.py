@@ -51,6 +51,55 @@ def set_intent(mock_gemini_client, intent_type, reasoning="Mock classification")
     )
 
 
+def test_attribute_pipeline_start_passes_attribute_hook_filter(client, mock_gemini_client):
+    with patch("paixueji_app.select_attribute_profile", return_value=(None, {"reason": "test bypass"})):
+        with patch("graph.select_hook_type", return_value=("细节发现", "Hook style: 细节发现")) as mock_select:
+            response = client.post(
+                "/api/start",
+                json={"age": 6, "object_name": "apple", "attribute_pipeline_enabled": True},
+            )
+
+    assert response.status_code == 200
+    _, kwargs = mock_select.call_args
+    assert kwargs["attribute_pipeline_enabled"] is True
+
+
+def test_attribute_pipeline_start_reports_only_observable_hook_types(client, mock_gemini_client, monkeypatch):
+    import paixueji_app
+    monkeypatch.setattr(
+        paixueji_app,
+        "HOOK_TYPES",
+        {
+            "想象导向": {
+                "name": "想象导向",
+                "concept": "fantasy prompt",
+                "examples": ["If it were magic?"],
+                "age_weights": {"6": 1},
+                "requires_history": False,
+            },
+            "细节发现": {
+                "name": "细节发现",
+                "concept": "observable prompt",
+                "examples": ["What shape do you notice?"],
+                "age_weights": {"6": 1},
+                "requires_history": False,
+                "attribute_mode": "observable",
+            },
+        },
+    )
+
+    with patch("paixueji_app.select_attribute_profile", return_value=(None, {"reason": "test bypass"})):
+        response = client.post(
+            "/api/start",
+            json={"age": 6, "object_name": "apple", "attribute_pipeline_enabled": True},
+        )
+
+    assert response.status_code == 200
+    chunks = [event["data"] for event in parse_sse(response.data) if event["event"] == "chunk"]
+    final_chunk = chunks[-1]
+    assert final_chunk["selected_hook_type"] == "细节发现"
+
+
 def test_attribute_pipeline_start_uses_attribute_intro_and_debug(client, mock_gemini_client):
     response = client.post(
         "/api/start",

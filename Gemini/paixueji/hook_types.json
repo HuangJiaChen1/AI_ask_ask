@@ -64,7 +64,8 @@
       "Those spiky plates on its back look so cool — what do you think they're for?"
     ],
     "age_weights": {"3": 1, "4": 1, "5": 2, "6": 2, "7": 1, "8": 1},
-    "requires_history": false
+    "requires_history": false,
+    "attribute_mode": "observable"
   },
   "经验、生活链接": {
     "name": "经验、生活链接",
