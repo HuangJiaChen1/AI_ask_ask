@@ -168,7 +168,7 @@ def test_attribute_pipeline_off_preserves_bridge_pipeline_for_anchorable_object(
     assert chunk["attribute_debug"] is None
 
 
-def test_attribute_continue_keeps_attribute_state(client):
+def test_attribute_continue_keeps_attribute_state(client, mock_gemini_client):
     start = client.post(
         "/api/start",
         json={"age": 6, "object_name": "cat food", "attribute_pipeline_enabled": True},
@@ -191,7 +191,7 @@ def test_attribute_continue_keeps_attribute_state(client):
     assert "activity_marker_detected" in chunk["attribute_debug"]
 
 
-def test_attribute_continue_tracks_turns_without_heuristic_readiness(client):
+def test_attribute_continue_tracks_turns_without_heuristic_readiness(client, mock_gemini_client):
     start = client.post(
         "/api/start",
         json={"age": 6, "object_name": "cat food", "attribute_pipeline_enabled": True},
