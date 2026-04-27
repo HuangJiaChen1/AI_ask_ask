@@ -692,6 +692,36 @@ class TestUtilityFunctions:
             )
             assert selected_name == "细节发现"
 
+    def test_select_hook_type_general_path_still_allows_non_attribute_hooks(self):
+        from stream.utils import select_hook_type
+
+        hook_types = {
+            "想象导向": {
+                "name": "想象导向",
+                "concept": "fantasy prompt",
+                "examples": ["If it were magic?"],
+                "age_weights": {"7": 10},
+                "requires_history": False,
+            },
+            "细节发现": {
+                "name": "细节发现",
+                "concept": "observable prompt",
+                "examples": ["What shape do you notice?"],
+                "age_weights": {"7": 1},
+                "requires_history": False,
+                "attribute_mode": "observable",
+            },
+        }
+
+        selected_name, _ = select_hook_type(
+            age=7,
+            messages=[],
+            hook_types=hook_types,
+            attribute_pipeline_enabled=False,
+        )
+
+        assert selected_name == "想象导向"
+
 
 class TestIntroHookSelection:
     """Intro hook selection should default away from high-imagination hooks for younger kids."""

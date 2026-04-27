@@ -113,7 +113,12 @@ def convert_messages_to_gemini_format(messages: list[dict]) -> tuple[str, list[d
     return system_instruction.strip(), contents
 
 
-def select_hook_type(age: int, messages: list, hook_types: dict) -> tuple[str, str]:
+def select_hook_type(
+    age: int,
+    messages: list,
+    hook_types: dict,
+    attribute_pipeline_enabled: bool = False,
+) -> tuple[str, str]:
     """
     Select a hook type for the introduction question using age-weighted random sampling.
 
@@ -121,19 +126,22 @@ def select_hook_type(age: int, messages: list, hook_types: dict) -> tuple[str, s
         age: Child's age (3-8)
         messages: Current conversation history (used to check history length)
         hook_types: Dict loaded from hook_types.json
+        attribute_pipeline_enabled: If True, only allow hooks with attribute_mode="observable"
 
     Returns:
         (hook_type_name, hook_type_section_string) — the selected hook name and
         a formatted block ready to inject into the INTRODUCTION_PROMPT.
     """
     resolved_age = min(max(age or 5, 3), 8)
-    age_str = str(resolved_age)  # clamp to supported range; default 5 if None
+    age_str = str(resolved_age)
 
     pool = []
     weights = []
 
     for name, hook in hook_types.items():
-        # Exclude hooks that need conversation context when not enough history exists
+        if attribute_pipeline_enabled and hook.get("attribute_mode") != "observable":
+            continue
+
         if hook.get("requires_history", False) and len(messages) < 4:
             continue
 
@@ -146,9 +154,7 @@ def select_hook_type(age: int, messages: list, hook_types: dict) -> tuple[str, s
         pool.append(name)
         weights.append(base_weight)
 
-    # Younger children default to concrete openings. If any low-imagination hooks
-    # are available, remove the high-imagination ones from the intro pool.
-    if resolved_age <= 6:
+    if resolved_age <= 6 and not attribute_pipeline_enabled:
         filtered = [
             (name, weight)
             for name, weight in zip(pool, weights)
@@ -159,8 +165,9 @@ def select_hook_type(age: int, messages: list, hook_types: dict) -> tuple[str, s
             weights = [weight for _, weight in filtered]
 
     if not pool:
-        # Fallback: pick any hook that doesn't require history
         for name, hook in hook_types.items():
+            if attribute_pipeline_enabled and hook.get("attribute_mode") != "observable":
+                continue
             if not hook.get("requires_history", False):
                 pool.append(name)
                 weights.append(1.0)
