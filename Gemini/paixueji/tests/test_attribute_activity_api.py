@@ -168,7 +168,7 @@ def test_attribute_pipeline_off_preserves_bridge_pipeline_for_anchorable_object(
     assert chunk["attribute_debug"] is None
 
 
-def test_attribute_continue_keeps_attribute_state_and_skips_bridge_activation(client, mock_gemini_client):
+def test_attribute_continue_keeps_attribute_state(client):
     start = client.post(
         "/api/start",
         json={"age": 6, "object_name": "cat food", "attribute_pipeline_enabled": True},
@@ -187,11 +187,15 @@ def test_attribute_continue_keeps_attribute_state_and_skips_bridge_activation(cl
     assert chunk["attribute_lane_active"] is True
     assert chunk["bridge_phase"] != "activation"
     assert "." in chunk["attribute_debug"]["state"]["profile"]["attribute_id"]
-    assert chunk["attribute_debug"]["reply"]["reply_type"] == "constraint_avoidance"
-    assert chunk["attribute_debug"]["reply"]["counted_turn"] is False
+    # New debug shape has intent_type and activity_marker_detected, not reply/readiness
+    assert "activity_marker_detected" in chunk["attribute_debug"]
 
 
-def test_attribute_continue_activity_ready_after_two_engaged_attribute_turns(client, mock_gemini_client):
+def test_attribute_continue_tracks_turns_without_heuristic_readiness(client):
+    start = client.post(
+        "/api/start",
+        json={"age": 6, "object_name": "cat food", "attribute_pipeline_enabled": True},
+    )
     forced_profile = AttributeProfile(
         attribute_id="senses.smell",
         label="smell",
@@ -222,36 +226,7 @@ def test_attribute_continue_activity_ready_after_two_engaged_attribute_turns(cli
         json={"session_id": session_id, "child_input": "It smells strong"},
     )
     first_chunk = final_chunk(first)
+    assert first_chunk["response_type"] == "attribute_activity"
+    # activity_ready is False until LLM emits [ACTIVITY_READY] marker
     assert first_chunk["activity_ready"] is False
-    assert first_chunk["chat_phase_complete"] is None
-    assert first_chunk["attribute_debug"]["readiness"]["substantive_turns"] == 1
-    assert first_chunk["attribute_debug"]["readiness"]["attribute_touches"] == 1
-    assert first_chunk["attribute_debug"]["readiness"]["readiness_source"] == "discovery_engagement_policy"
-    assert first_chunk["attribute_debug"]["touch_result"]["touched"] is True
-    assert first_chunk["attribute_debug"]["reply"]["reply_type"] == "aligned"
-    assert first_chunk["attribute_debug"]["reply"]["counted_turn"] is True
-    assert first_chunk["attribute_debug"]["reply"]["activity_ready"] is False
-
-    set_intent(mock_gemini_client, "CORRECT_ANSWER")
-    second = client.post(
-        "/api/continue",
-        json={"session_id": session_id, "child_input": "My lunch smells strong too"},
-    )
-    second_chunk = final_chunk(second)
-
-    assert second_chunk["response_type"] == "attribute_activity"
-    assert second_chunk["activity_ready"] is True
-    assert second_chunk["chat_phase_complete"] is True
-    assert second_chunk["attribute_debug"]["readiness"]["readiness_source"] == "discovery_engagement_policy"
-    assert second_chunk["attribute_debug"]["readiness"]["substantive_turns"] == 2
-    assert second_chunk["attribute_debug"]["readiness"]["attribute_touches"] == 2
-    assert second_chunk["attribute_debug"]["touch_result"]["touched"] is True
-    assert second_chunk["attribute_debug"]["reply"]["reply_type"] == "aligned"
-    assert second_chunk["attribute_debug"]["reply"]["counted_turn"] is True
-    assert second_chunk["attribute_debug"]["reply"]["activity_ready"] is True
-    assert second_chunk["activity_target"]["activity_source"] == "attribute"
-    assert second_chunk["activity_target"]["attribute_id"] == "senses.smell"
-
-    # Compatibility check: the restored legacy reply block stays in sync with discovery readiness.
-    assert second_chunk["attribute_debug"]["reply"]["state_action"] == "invite_attribute_activity"
-    assert first_chunk["attribute_debug"]["reply"]["state_action"] == "continue_conversation"
+    assert "activity_marker_detected" in first_chunk["attribute_debug"]
