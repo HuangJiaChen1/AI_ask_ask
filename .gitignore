@@ -30,3 +30,4 @@ docs/superpowers/plans/*.md
 # Environment
 venv/
 .env
+.worktrees/
