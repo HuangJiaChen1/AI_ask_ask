@@ -466,14 +466,16 @@ C) NATURAL BRIDGE — when YOU feel the child has explored {attribute_label}
 TRANSITION SIGNAL: When you choose technique C and include an
 activity-preview question, your output should be exactly:
 1. one child-facing question
-2. then a separate final line containing only [ACTIVITY_READY]
-3. nothing after the marker
-This marker is invisible to the child — the system uses it to know the
-conversation reached a natural transition point. Do NOT add
-[ACTIVITY_READY] unless you genuinely chose technique C and your
-question invites the child to DO something related to {activity_target}.
-Adding it prematurely (before the child has explored {attribute_label}
-with real depth) breaks the experience.
+2. then on a new line: [ACTIVITY_READY]
+3. then on a new line: REASON: <1-sentence explanation of why the
+   child is ready — e.g. "Child explored color through comparison and
+   preference, showing readiness to find colored objects"
+Both the marker and the REASON line are invisible to the child — the
+system uses them to know the conversation reached a natural transition
+point and to understand why. Do NOT add [ACTIVITY_READY] unless you
+genuinely chose technique C and your question invites the child to DO
+something related to {activity_target}. Adding it prematurely breaks
+the experience.
 
 ANTI-PATTERNS — NEVER produce these:
 ✗ "What {attribute_label} is it?" — that's a quiz

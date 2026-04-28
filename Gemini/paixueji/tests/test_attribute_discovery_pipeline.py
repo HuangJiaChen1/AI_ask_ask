@@ -119,6 +119,13 @@ def test_soft_guide_defines_marker_and_llm_decides_timing():
     assert "you feel" in guide_lower or "when you" in guide_lower
 
 
+def test_soft_guide_requests_reason_line():
+    guide_lower = ATTRIBUTE_SOFT_GUIDE.lower()
+
+    assert "reason:" in guide_lower
+    assert "invisible to the child" in guide_lower
+
+
 def test_soft_guide_rejects_hard_lock_and_quiz_patterns():
     guide_lower = ATTRIBUTE_SOFT_GUIDE.lower()
 
