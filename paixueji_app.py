@@ -1417,6 +1417,7 @@ def continue_conversation():
                                         msg["content"] for msg in assistant.conversation_history
                                         if msg.get("role") == "user"
                                     ]
+                                    child_messages.append(child_input)
                                     found_match = False
                                     for quote in quotes:
                                         quote_lower = quote.lower()

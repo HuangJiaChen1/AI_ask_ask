@@ -312,3 +312,37 @@ def test_activity_marker_rejected_with_fabricated_quote(client, mock_gemini_clie
     assert chunk["activity_ready"] is False
     assert chunk["attribute_debug"]["activity_marker_detected"] is True
     assert chunk["attribute_debug"]["activity_marker_rejected_reason"] == "evidence_not_in_transcript"
+
+
+def test_activity_marker_accepted_with_current_turn_quote(client, mock_gemini_client):
+    """A quote from the current turn's child input should be accepted."""
+    start = client.post(
+        "/api/start",
+        json={"age": 6, "object_name": "cat", "attribute_pipeline_enabled": True},
+    )
+    session_id = final_chunk(start)["session_id"]
+
+    set_intent(mock_gemini_client, "CURIOSITY")
+
+    stream_call = 0
+    def _side_effect(model, contents, config=None):
+        nonlocal stream_call
+        stream_call += 1
+        if stream_call == 1:
+            return _make_stream("Cats have amazing fur. What do you notice about this one?")
+        return _make_stream(
+            'Can you spot anything orange nearby?\n[ACTIVITY_READY]\nREASON: Child said "it is fat" and explored the color.'
+        )
+
+    mock_gemini_client.aio.models.generate_content_stream.side_effect = _side_effect
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "it is fat"},
+    )
+
+    chunk = final_chunk(response)
+    assert chunk["response_type"] == "attribute_activity"
+    assert chunk["activity_ready"] is True
+    assert chunk["attribute_debug"]["activity_marker_detected"] is True
+    assert chunk["attribute_debug"]["activity_marker_rejected_reason"] is None

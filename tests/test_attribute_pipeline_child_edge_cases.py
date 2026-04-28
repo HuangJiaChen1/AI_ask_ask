@@ -823,7 +823,7 @@ class TestDifficultChildConversations:
         client = _attribute_client(
             classify_intent_text="INTENT: INFORMATIVE\nNEW_OBJECT: null\nREASONING: more info",
             response_text="That's interesting",
-            followup_text="Can you tell me more?\n[ACTIVITY_READY]\nREASON: child engaged",
+            followup_text='Can you tell me more?\n[ACTIVITY_READY]\nREASON: child said "very red" and is engaged',
         )
 
         start_resp = client.post("/api/start", json={
