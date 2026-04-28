@@ -346,3 +346,68 @@ def test_activity_marker_accepted_with_current_turn_quote(client, mock_gemini_cl
     assert chunk["activity_ready"] is True
     assert chunk["attribute_debug"]["activity_marker_detected"] is True
     assert chunk["attribute_debug"]["activity_marker_rejected_reason"] is None
+
+
+def test_reason_not_leaked_when_marker_present(client, mock_gemini_client):
+    """REASON line must never appear in any SSE chunk when marker is present."""
+    start = client.post(
+        "/api/start",
+        json={"age": 6, "object_name": "cat", "attribute_pipeline_enabled": True},
+    )
+    session_id = final_chunk(start)["session_id"]
+
+    set_intent(mock_gemini_client, "CURIOSITY")
+
+    stream_call = 0
+    def _side_effect(model, contents, config=None):
+        nonlocal stream_call
+        stream_call += 1
+        if stream_call == 1:
+            return _make_stream("Cats have amazing fur. What do you notice about this one?")
+        return _make_stream(
+            'Can you spot anything orange nearby?\n[ACTIVITY_READY]\nREASON: Child said "it is orange".'
+        )
+
+    mock_gemini_client.aio.models.generate_content_stream.side_effect = _side_effect
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "it is fat"},
+    )
+
+    chunks = [event["data"] for event in parse_sse(response.data) if event["event"] == "chunk"]
+    for chunk in chunks:
+        assert "REASON:" not in (chunk.get("response") or ""), f"REASON leaked in chunk: {chunk}"
+        assert "[ACTIVITY_READY]" not in (chunk.get("response") or ""), f"Marker leaked in chunk: {chunk}"
+
+
+def test_reason_stripped_when_marker_absent(client, mock_gemini_client):
+    """REASON line must be stripped even when LLM emits it without the marker."""
+    start = client.post(
+        "/api/start",
+        json={"age": 6, "object_name": "cat", "attribute_pipeline_enabled": True},
+    )
+    session_id = final_chunk(start)["session_id"]
+
+    set_intent(mock_gemini_client, "CURIOSITY")
+
+    stream_call = 0
+    def _side_effect(model, contents, config=None):
+        nonlocal stream_call
+        stream_call += 1
+        if stream_call == 1:
+            return _make_stream("Cats have amazing fur. What do you notice about this one?")
+        return _make_stream("Can you spot anything red?\nREASON: child seemed ready")
+
+    mock_gemini_client.aio.models.generate_content_stream.side_effect = _side_effect
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "it is fat"},
+    )
+
+    chunks = [event["data"] for event in parse_sse(response.data) if event["event"] == "chunk"]
+    for chunk in chunks:
+        assert "REASON:" not in (chunk.get("response") or ""), f"REASON leaked in chunk: {chunk}"
+    final = chunks[-1]
+    assert "REASON:" not in (final.get("response") or "")

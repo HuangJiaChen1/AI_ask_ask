@@ -1359,9 +1359,12 @@ def continue_conversation():
                             def _displayable_followup(raw_followup: str) -> str:
                                 # Strip the activity marker
                                 marker_free_followup = raw_followup.replace(activity_marker, "")
+                                # Always strip the REASON line if present — the LLM may emit
+                                # REASON: even without the marker (prompt misbehavior), and
+                                # during streaming partial REASON text can leak character-by-
+                                # character before the regex fully matches.
+                                marker_free_followup = _REASON_RE.sub("", marker_free_followup)
                                 if activity_marker in raw_followup:
-                                    # Also strip the REASON line if present
-                                    marker_free_followup = _REASON_RE.sub("", marker_free_followup)
                                     # Clean up any trailing newlines left after stripping
                                     marker_free_followup = marker_free_followup.rstrip("\n")
                                     return marker_free_followup
@@ -1380,6 +1383,12 @@ def continue_conversation():
                                 visible_chunk = displayable_followup[len(full_followup):]
                                 full_followup = displayable_followup
                                 if visible_chunk == "":
+                                    continue
+                                # Once the activity marker has been detected, nothing that
+                                # follows it is user-facing text (the marker and REASON line
+                                # are internal signals). Suppress further chunk yields — the
+                                # final finish=True chunk carries the fully-filtered text.
+                                if activity_marker_detected:
                                     continue
                                 sequence_number += 1
                                 yield sse_event("chunk", StreamChunk(
