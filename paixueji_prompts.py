@@ -463,6 +463,21 @@ C) NATURAL BRIDGE — when YOU feel the child has explored {attribute_label}
    BAD (any depth):
      "Great! Now we can start an activity!" (mechanical announcement)
 
+EVIDENCE REQUIREMENT: Your REASON: line MUST include at least one direct
+quote from the child's actual messages in this conversation, enclosed in
+double quotes ("). The quote must be something the child literally said —
+do not paraphrase or invent quotes.
+
+GOOD:
+  REASON: Child described the orange color directly ("it looks orange")
+  and said it reminds them of the sun.
+
+BAD (no quote — will be rejected):
+  REASON: Child explored the color.
+
+BAD (fabricated quote — will be rejected):
+  REASON: Child said "it is bright orange". (The child never said this.)
+
 TRANSITION SIGNAL: When you choose technique C and include an
 activity-preview question, your output should be exactly:
 1. one child-facing question

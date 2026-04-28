@@ -141,6 +141,7 @@ def test_soft_guide_requests_reason_line():
 
     assert "reason:" in guide_lower
     assert "invisible to the child" in guide_lower
+    assert "evidence requirement" in guide_lower
 
 
 def test_soft_guide_rejects_hard_lock_and_quiz_patterns():
