@@ -12,6 +12,7 @@ from attribute_activity import (
     build_attribute_debug,
     start_attribute_session,
 )
+import paixueji_prompts
 from paixueji_prompts import ATTRIBUTE_SOFT_GUIDE
 
 
@@ -150,3 +151,15 @@ def test_soft_guide_warns_about_premature_handoff():
 
     assert "premature" in guide_lower or "too early" in guide_lower or "shallow" in guide_lower
     assert "breaks the experience" in guide_lower or "break" in guide_lower
+
+
+# -- CURIOSITY_ATTRIBUTE_RESPONSE_PROMPT invariants ----------------------------
+
+def test_curiosity_attribute_response_prompt_exists():
+    prompts = paixueji_prompts.get_prompts()
+    assert "curiosity_attribute_response_prompt" in prompts
+    prompt = prompts["curiosity_attribute_response_prompt"]
+    assert "BEAT 3" not in prompt
+    assert "Do NOT ask a question" in prompt
+    assert "BEAT 1" in prompt
+    assert "BEAT 2" in prompt
