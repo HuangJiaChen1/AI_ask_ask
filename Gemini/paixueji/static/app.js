@@ -1230,6 +1230,8 @@ function updateDebugPanel() {
     setText('debugAttributeActivityTarget', attributeProfile.activity_target);
     setText('debugAttributeBranch', attributeProfile.branch);
     setText('debugAttributeReplyType', attributeReply.reply_type);
+    setText('debugActivityMarkerDetected', attributeDebug.activity_marker_detected ? 'yes' : null);
+    setText('debugActivityMarkerReason', attributeDebug.activity_marker_reason);
     const categoryDebug = currentCategoryDebug || {};
     const categoryProfile = categoryDebug.profile || {};
     const categoryReply = categoryDebug.reply || {};
