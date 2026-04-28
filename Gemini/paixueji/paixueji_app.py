@@ -12,6 +12,7 @@ import asyncio
 import threading
 import os
 import yaml
+import re
 
 from google import genai
 from google.genai.types import HttpOptions
@@ -1319,12 +1320,20 @@ def continue_conversation():
 
                         activity_marker = "[ACTIVITY_READY]"
                         activity_marker_detected = False
+                        activity_marker_reason = None
                         raw_followup_so_far = ""
                         full_followup = ""
 
+                        _REASON_RE = re.compile(r"REASON:\s*(.+?)(?:\n|$)")
+
                         def _displayable_followup(raw_followup: str) -> str:
+                            # Strip the activity marker
                             marker_free_followup = raw_followup.replace(activity_marker, "")
                             if activity_marker in raw_followup:
+                                # Also strip the REASON line if present
+                                marker_free_followup = _REASON_RE.sub("", marker_free_followup)
+                                # Clean up any trailing newlines left after stripping
+                                marker_free_followup = marker_free_followup.rstrip("\n")
                                 return marker_free_followup
 
                             max_buffered_prefix = min(len(raw_followup), len(activity_marker) - 1)
@@ -1360,6 +1369,12 @@ def continue_conversation():
 
                         full_followup = _displayable_followup(raw_followup_so_far)
 
+                        # Extract reason from raw text after marker is fully present
+                        if activity_marker_detected:
+                            reason_match = _REASON_RE.search(raw_followup_so_far)
+                            if reason_match:
+                                activity_marker_reason = reason_match.group(1).strip()
+
                         if activity_marker_detected:
                             assistant.attribute_state.activity_ready = True
                             assistant.attribute_activity_ready = True
@@ -1371,6 +1386,7 @@ def continue_conversation():
                             state=assistant.attribute_state,
                             reason=attribute_reason,
                             activity_marker_detected=activity_marker_detected,
+                            activity_marker_reason=activity_marker_reason,
                             response_text=combined_response,
                             intent_type=intent_type_lower,
                         )

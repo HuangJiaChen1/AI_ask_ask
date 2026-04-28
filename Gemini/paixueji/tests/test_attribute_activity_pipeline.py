@@ -203,3 +203,21 @@ def test_build_attribute_debug_with_marker_detected():
 
     assert debug["activity_marker_detected"] is True
     assert debug["intent_type"] == "correct_answer"
+
+
+def test_build_attribute_debug_with_marker_reason():
+    state = start_attribute_session(object_name="apple", profile=_make_profile(), age=6)
+
+    debug = build_attribute_debug(
+        decision="attribute_activity",
+        profile=state.profile,
+        state=state,
+        reason="marker detected in follow-up",
+        activity_marker_detected=True,
+        activity_marker_reason="Child explored color through comparison and preference",
+        intent_type="correct_answer",
+    )
+
+    assert debug["activity_marker_detected"] is True
+    assert debug["activity_marker_reason"] == "Child explored color through comparison and preference"
+    assert debug["intent_type"] == "correct_answer"
