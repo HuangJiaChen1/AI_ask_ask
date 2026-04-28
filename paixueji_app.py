@@ -1309,6 +1309,7 @@ def continue_conversation():
                                 reason=attribute_reason,
                                 intent_type=intent_type_lower,
                                 reply_type="discovery",
+                                activity_marker_rejected_reason=None,
                             )
                             assistant.set_last_attribute_debug(partial_debug)
                             sequence_number += 1
@@ -1405,7 +1406,34 @@ def continue_conversation():
                                 if reason_match:
                                     activity_marker_reason = reason_match.group(1).strip()
 
-                            if activity_marker_detected:
+                            activity_marker_rejected_reason = None
+                            if activity_marker_detected and activity_marker_reason:
+                                quotes = re.findall(r'"([^"]+)"', activity_marker_reason)
+                                if not quotes:
+                                    activity_marker_rejected_reason = "no_evidence_quotes"
+                                    logger.info("[ACTIVITY_READY] rejected: no evidence quotes in reason")
+                                else:
+                                    child_messages = [
+                                        msg["content"] for msg in assistant.conversation_history
+                                        if msg.get("role") == "user"
+                                    ]
+                                    found_match = False
+                                    for quote in quotes:
+                                        quote_lower = quote.lower()
+                                        for child_msg in child_messages:
+                                            if quote_lower in child_msg.lower():
+                                                found_match = True
+                                                break
+                                        if found_match:
+                                            break
+                                    if not found_match:
+                                        activity_marker_rejected_reason = "evidence_not_in_transcript"
+                                        logger.info(
+                                            "[ACTIVITY_READY] rejected: evidence quotes not found in transcript — %s",
+                                            quotes,
+                                        )
+
+                            if activity_marker_detected and not activity_marker_rejected_reason:
                                 assistant.attribute_state.activity_ready = True
                                 assistant.attribute_activity_ready = True
                         else:
@@ -1421,6 +1449,7 @@ def continue_conversation():
                             reason=attribute_reason,
                             activity_marker_detected=activity_marker_detected,
                             activity_marker_reason=activity_marker_reason,
+                            activity_marker_rejected_reason=activity_marker_rejected_reason,
                             response_text=combined_response,
                             intent_type=intent_type_lower,
                             reply_type="discovery",
