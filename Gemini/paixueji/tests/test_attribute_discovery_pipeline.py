@@ -4,6 +4,8 @@ Covers the public API contract: simplified session state, debug payload shape,
 prompt invariants, and build_attribute_debug behavior.
 """
 
+from unittest.mock import MagicMock
+
 import pytest
 
 from attribute_activity import (
@@ -14,6 +16,7 @@ from attribute_activity import (
 )
 import paixueji_prompts
 from paixueji_prompts import ATTRIBUTE_SOFT_GUIDE
+from stream.response_generators import generate_attribute_activation_response_stream
 
 
 def _make_profile(
@@ -163,3 +166,56 @@ def test_curiosity_attribute_response_prompt_exists():
     assert "Do NOT ask a question" in prompt
     assert "BEAT 1" in prompt
     assert "BEAT 2" in prompt
+
+
+@pytest.mark.asyncio
+async def test_curiosity_uses_attribute_prompt_in_pipeline(monkeypatch):
+    prompts = {
+        "curiosity_intent_prompt": "INTENT_PROMPT",
+        "curiosity_attribute_response_prompt": "ATTR_PROMPT",
+        "attribute_response_hint": "HINT: {attribute_label}",
+    }
+    monkeypatch.setattr(paixueji_prompts, "get_prompts", lambda: prompts)
+
+    captured_contents = []
+
+    async def mock_generate(*, model, contents, config):
+        # Capture contents to verify prompt used (prompt text is in the user message)
+        captured_contents.append(contents)
+
+        class FakeStream:
+            async def __anext__(self):
+                raise StopAsyncIteration
+
+            def __aiter__(self):
+                return self
+
+        return FakeStream()
+
+    client = MagicMock()
+    client.aio.models.generate_content_stream = mock_generate
+
+    generator = generate_attribute_activation_response_stream(
+        messages=[{"role": "system", "content": "sys"}],
+        intent_type="curiosity",
+        object_name="cat",
+        attribute_label="body color",
+        activity_target="find colors",
+        child_answer="Why stripes?",
+        reply_type="discovery",
+        state_action="continue",
+        age=5,
+        age_prompt="Keep it simple.",
+        config={"model_name": "test-model", "temperature": 0.7, "max_tokens": 500},
+        client=client,
+    )
+
+    # Drain the generator
+    async for _ in generator:
+        pass
+
+    assert len(captured_contents) > 0
+    # The ATTR_PROMPT should have been used, not INTENT_PROMPT
+    contents_text = str(captured_contents[0])
+    assert "ATTR_PROMPT" in contents_text
+    assert "INTENT_PROMPT" not in contents_text
