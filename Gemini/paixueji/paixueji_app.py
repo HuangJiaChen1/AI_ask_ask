@@ -45,6 +45,10 @@ from kb_context import (
 )
 from pre_anchor_policy import classify_pre_anchor_reply
 from resolution_debug import format_resolution_log_line
+# Module-level compiled regex for stripping REASON lines from activity follow-ups.
+# Must be defined here (not inside a function) to avoid re-compiling on every request.
+_REASON_RE = re.compile(r"REASON:\s*(.+?)(?:\n|$)")
+
 from stream import (
     ask_attribute_intro_stream,
     ask_category_intro_stream,
@@ -1323,8 +1327,6 @@ def continue_conversation():
                         activity_marker_reason = None
                         raw_followup_so_far = ""
                         full_followup = ""
-
-                        _REASON_RE = re.compile(r"REASON:\s*(.+?)(?:\n|$)")
 
                         def _displayable_followup(raw_followup: str) -> str:
                             # Strip the activity marker

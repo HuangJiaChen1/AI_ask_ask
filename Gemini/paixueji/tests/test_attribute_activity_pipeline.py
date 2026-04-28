@@ -221,3 +221,20 @@ def test_build_attribute_debug_with_marker_reason():
     assert debug["activity_marker_detected"] is True
     assert debug["activity_marker_reason"] == "Child explored color through comparison and preference"
     assert debug["intent_type"] == "correct_answer"
+
+
+def test_reason_regex_strips_reason_line():
+    import re
+    _REASON_RE = re.compile(r"REASON:\s*(.+?)(?:\n|$)")
+
+    # Basic stripping
+    text = "Some question\nREASON: child is ready\n"
+    assert _REASON_RE.sub("", text) == "Some question\n"
+
+    # No reason present
+    text2 = "Some question\n"
+    assert _REASON_RE.sub("", text2) == "Some question\n"
+
+    # Reason at end without newline
+    text3 = "Some question\nREASON: child is ready"
+    assert _REASON_RE.sub("", text3) == "Some question\n"
