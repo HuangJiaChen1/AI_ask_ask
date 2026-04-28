@@ -230,3 +230,85 @@ def test_attribute_continue_tracks_turns_without_heuristic_readiness(client, moc
     # activity_ready is False until LLM emits [ACTIVITY_READY] marker
     assert first_chunk["activity_ready"] is False
     assert "activity_marker_detected" in first_chunk["attribute_debug"]
+
+
+def _make_stream(text):
+    """Helper to build a mock async stream that yields the given text word-by-word."""
+    class _Chunk:
+        def __init__(self, text):
+            self.text = text
+
+    class _Stream:
+        def __init__(self, chunks):
+            self.chunks = chunks
+
+        async def __aiter__(self):
+            for chunk in self.chunks:
+                yield chunk
+
+    chunks = [_Chunk(word + " ") for word in text.split()]
+    return _Stream(chunks)
+
+
+def test_activity_marker_rejected_without_evidence_quote(client, mock_gemini_client):
+    start = client.post(
+        "/api/start",
+        json={"age": 6, "object_name": "cat", "attribute_pipeline_enabled": True},
+    )
+    session_id = final_chunk(start)["session_id"]
+
+    set_intent(mock_gemini_client, "CURIOSITY")
+
+    stream_call = 0
+    def _side_effect(model, contents, config=None):
+        nonlocal stream_call
+        stream_call += 1
+        if stream_call == 1:
+            return _make_stream("Cats have amazing fur. What do you notice about this one?")
+        return _make_stream("Can you spot anything orange nearby?\n[ACTIVITY_READY]\nREASON: Child explored the color.")
+
+    mock_gemini_client.aio.models.generate_content_stream.side_effect = _side_effect
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "it is fat"},
+    )
+
+    chunk = final_chunk(response)
+    assert chunk["response_type"] == "attribute_activity"
+    assert chunk["activity_ready"] is False
+    assert chunk["attribute_debug"]["activity_marker_detected"] is True
+    assert chunk["attribute_debug"]["activity_marker_rejected_reason"] == "no_evidence_quotes"
+
+
+def test_activity_marker_rejected_with_fabricated_quote(client, mock_gemini_client):
+    start = client.post(
+        "/api/start",
+        json={"age": 6, "object_name": "cat", "attribute_pipeline_enabled": True},
+    )
+    session_id = final_chunk(start)["session_id"]
+
+    set_intent(mock_gemini_client, "CURIOSITY")
+
+    stream_call = 0
+    def _side_effect(model, contents, config=None):
+        nonlocal stream_call
+        stream_call += 1
+        if stream_call == 1:
+            return _make_stream("Cats have amazing fur. What do you notice about this one?")
+        return _make_stream(
+            'Can you spot anything orange nearby?\n[ACTIVITY_READY]\nREASON: Child said "it is orange".'
+        )
+
+    mock_gemini_client.aio.models.generate_content_stream.side_effect = _side_effect
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "it is fat"},
+    )
+
+    chunk = final_chunk(response)
+    assert chunk["response_type"] == "attribute_activity"
+    assert chunk["activity_ready"] is False
+    assert chunk["attribute_debug"]["activity_marker_detected"] is True
+    assert chunk["attribute_debug"]["activity_marker_rejected_reason"] == "evidence_not_in_transcript"
