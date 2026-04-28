@@ -1,4 +1,0 @@
-interface:
-  display_name: "Session Smoke Simulator"
-  short_description: "Paixueji live-session smoke simulation workflow"
-  default_prompt: "Use $session-smoke-simulator at /Users/huangjiachen/Desktop/PROJECTS/AI_ask_ask/Gemini/paixueji/codex-skills/session-smoke-simulator to convert PR manual-smoke notes into deterministic Paixueji session verification."

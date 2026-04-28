@@ -1,11 +1,32 @@
-Gemini/Ask Ask/nul
-Gemini/paixueji.zip
-/Gemini/paixueji/__pycache__
+__pycache__/
 *.pyc
-/Gemini/paixueji/reports
-/Gemini/paixueji/traces
-/Gemini/paixueji/docs/superpowers
+*.pyo
+*.pyd
+.Python
+
+# Project generated directories
+reports/
+traces/
+logs/
 *.log
-/Gemini/paixueji/logs
-*.pyc
-/Gemini/paixueji/optimizations
+optimizations/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude / plans
+docs/superpowers/plans/*.md
+
+# Worktrees
+.worktrees/
+
+# Environment
+venv/
+.env

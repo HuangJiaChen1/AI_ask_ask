@@ -14,19 +14,19 @@
 
 | File | Action | Responsibility |
 |---|---|---|
-| `Gemini/paixueji/paixueji_prompts.py` | Modify | Update `ATTRIBUTE_SOFT_GUIDE` TRANSITION SIGNAL to request a `REASON:` line |
-| `Gemini/paixueji/paixueji_app.py` | Modify | Import `re`; update `_displayable_followup` to strip reason; extract reason after stream; pass to debug builder |
-| `Gemini/paixueji/attribute_activity.py` | Modify | Add `activity_marker_reason` parameter to `build_attribute_debug` |
-| `Gemini/paixueji/tests/test_attribute_discovery_pipeline.py` | Modify | Add tests for `activity_marker_reason` presence in debug |
-| `Gemini/paixueji/tests/test_attribute_activity_pipeline.py` | Modify | Add test for `activity_marker_reason` field |
+| `paixueji_prompts.py` | Modify | Update `ATTRIBUTE_SOFT_GUIDE` TRANSITION SIGNAL to request a `REASON:` line |
+| `paixueji_app.py` | Modify | Import `re`; update `_displayable_followup` to strip reason; extract reason after stream; pass to debug builder |
+| `attribute_activity.py` | Modify | Add `activity_marker_reason` parameter to `build_attribute_debug` |
+| `tests/test_attribute_discovery_pipeline.py` | Modify | Add tests for `activity_marker_reason` presence in debug |
+| `tests/test_attribute_activity_pipeline.py` | Modify | Add test for `activity_marker_reason` field |
 
 ---
 
 ### Task 1: Prompt — Add REASON line to TRANSITION SIGNAL
 
 **Files:**
-- Modify: `Gemini/paixueji/paixueji_prompts.py:466-476`
-- Test: `Gemini/paixueji/tests/test_attribute_discovery_pipeline.py:115-120`
+- Modify: `paixueji_prompts.py:466-476`
+- Test: `tests/test_attribute_discovery_pipeline.py:115-120`
 
 - [ ] **Step 1: Modify the prompt**
 
@@ -62,13 +62,13 @@ def test_soft_guide_requests_reason_line():
 
 - [ ] **Step 3: Run prompt tests**
 
-Run: `pytest Gemini/paixueji/tests/test_attribute_discovery_pipeline.py -v`
+Run: `pytest tests/test_attribute_discovery_pipeline.py -v`
 Expected: PASS (3 tests)
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add Gemini/paixueji/paixueji_prompts.py Gemini/paixueji/tests/test_attribute_discovery_pipeline.py
+git add paixueji_prompts.py tests/test_attribute_discovery_pipeline.py
 git commit -m "feat(prompt): add REASON line to ACTIVITY_READY marker instructions"
 ```
 
@@ -77,12 +77,12 @@ git commit -m "feat(prompt): add REASON line to ACTIVITY_READY marker instructio
 ### Task 2: Debug Builder — Add `activity_marker_reason` field
 
 **Files:**
-- Modify: `Gemini/paixueji/attribute_activity.py:184-202`
-- Test: `Gemini/paixueji/tests/test_attribute_discovery_pipeline.py:84-110`
+- Modify: `attribute_activity.py:184-202`
+- Test: `tests/test_attribute_discovery_pipeline.py:84-110`
 
 - [ ] **Step 1: Add parameter to `build_attribute_debug`**
 
-In `Gemini/paixueji/attribute_activity.py`, modify the function signature and return dict:
+In `attribute_activity.py`, modify the function signature and return dict:
 
 ```python
 def build_attribute_debug(
@@ -149,13 +149,13 @@ def test_build_attribute_debug_defaults_reason_to_none():
 
 - [ ] **Step 3: Run tests**
 
-Run: `pytest Gemini/paixueji/tests/test_attribute_discovery_pipeline.py -v`
+Run: `pytest tests/test_attribute_discovery_pipeline.py -v`
 Expected: PASS (all tests)
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add Gemini/paixueji/attribute_activity.py Gemini/paixueji/tests/test_attribute_discovery_pipeline.py
+git add attribute_activity.py tests/test_attribute_discovery_pipeline.py
 git commit -m "feat(debug): add activity_marker_reason to build_attribute_debug"
 ```
 
@@ -164,12 +164,12 @@ git commit -m "feat(debug): add activity_marker_reason to build_attribute_debug"
 ### Task 3: Stream Parser — Extract and strip `REASON:` line
 
 **Files:**
-- Modify: `Gemini/paixueji/paixueji_app.py:1319-1375`
-- Test: `Gemini/paixueji/tests/test_attribute_activity_pipeline.py`
+- Modify: `paixueji_app.py:1319-1375`
+- Test: `tests/test_attribute_activity_pipeline.py`
 
 - [ ] **Step 1: Add `re` import**
 
-At the top of `Gemini/paixueji/paixueji_app.py`, add `re` to the imports (around line 7):
+At the top of `paixueji_app.py`, add `re` to the imports (around line 7):
 
 ```python
 import json
@@ -259,7 +259,7 @@ Update the `build_attribute_debug` call (around line 1367) to include the new fi
 
 - [ ] **Step 5: Add unit test for reason extraction**
 
-In `Gemini/paixueji/tests/test_attribute_activity_pipeline.py`, add:
+In `tests/test_attribute_activity_pipeline.py`, add:
 
 ```python
 def test_build_attribute_debug_with_marker_reason():
@@ -282,16 +282,16 @@ def test_build_attribute_debug_with_marker_reason():
 
 - [ ] **Step 6: Run tests**
 
-Run: `pytest Gemini/paixueji/tests/test_attribute_activity_pipeline.py Gemini/paixueji/tests/test_attribute_discovery_pipeline.py -v`
+Run: `pytest tests/test_attribute_activity_pipeline.py tests/test_attribute_discovery_pipeline.py -v`
 Expected: PASS
 
-Run: `pytest Gemini/paixueji/tests/test_all_endpoints.py::test_attribute_continue_returns_correct_shape -v`
+Run: `pytest tests/test_all_endpoints.py::test_attribute_continue_returns_correct_shape -v`
 Expected: PASS
 
 - [ ] **Step 7: Commit**
 
 ```bash
-git add Gemini/paixueji/paixueji_app.py Gemini/paixueji/tests/test_attribute_activity_pipeline.py
+git add paixueji_app.py tests/test_attribute_activity_pipeline.py
 git commit -m "feat(stream): extract and surface activity_marker_reason from LLM output"
 ```
 
