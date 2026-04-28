@@ -1375,37 +1375,14 @@ def continue_conversation():
                                         return marker_free_followup[:-suffix_len]
                                 return marker_free_followup
 
+                            # Collect the full followup without yielding to the client.
+                            # We must validate the [ACTIVITY_READY] marker before deciding
+                            # whether to emit the handoff sentence. If the marker is rejected,
+                            # the handoff text must be suppressed entirely.
                             async for _text_chunk, token_usage, full_so_far in followup_generator:
                                 raw_followup_so_far = full_so_far
                                 if activity_marker in raw_followup_so_far:
                                     activity_marker_detected = True
-                                displayable_followup = _displayable_followup(raw_followup_so_far)
-                                visible_chunk = displayable_followup[len(full_followup):]
-                                full_followup = displayable_followup
-                                if visible_chunk == "":
-                                    continue
-                                # Once the activity marker has been detected, nothing that
-                                # follows it is user-facing text (the marker and REASON line
-                                # are internal signals). Suppress further chunk yields — the
-                                # final finish=True chunk carries the fully-filtered text.
-                                if activity_marker_detected:
-                                    continue
-                                sequence_number += 1
-                                yield sse_event("chunk", StreamChunk(
-                                    response=visible_chunk,
-                                    session_finished=False,
-                                    duration=0.0,
-                                    token_usage=token_usage,
-                                    finish=False,
-                                    sequence_number=sequence_number,
-                                    timestamp=time.time(),
-                                    session_id=session_id,
-                                    request_id=request_id,
-                                    response_type="attribute_activity",
-                                    correct_answer_count=assistant.correct_answer_count,
-                                    intent_type=intent_type_lower,
-                                    **_assistant_stream_fields(assistant),
-                                ))
 
                             full_followup = _displayable_followup(raw_followup_so_far)
 
@@ -1446,6 +1423,47 @@ def continue_conversation():
                             if activity_marker_detected and not activity_marker_rejected_reason:
                                 assistant.attribute_state.activity_ready = True
                                 assistant.attribute_activity_ready = True
+                                # Yield the validated followup text
+                                if full_followup:
+                                    sequence_number += 1
+                                    yield sse_event("chunk", StreamChunk(
+                                        response=full_followup,
+                                        session_finished=False,
+                                        duration=0.0,
+                                        token_usage=None,
+                                        finish=False,
+                                        sequence_number=sequence_number,
+                                        timestamp=time.time(),
+                                        session_id=session_id,
+                                        request_id=request_id,
+                                        response_type="attribute_activity",
+                                        correct_answer_count=assistant.correct_answer_count,
+                                        intent_type=intent_type_lower,
+                                        **_assistant_stream_fields(assistant),
+                                    ))
+                            elif activity_marker_detected and activity_marker_rejected_reason:
+                                # Handoff rejected — suppress the handoff sentence and stay
+                                # in the attribute lane so the conversation continues normally.
+                                full_followup = ""
+                            else:
+                                # No marker detected — yield the followup normally
+                                if full_followup:
+                                    sequence_number += 1
+                                    yield sse_event("chunk", StreamChunk(
+                                        response=full_followup,
+                                        session_finished=False,
+                                        duration=0.0,
+                                        token_usage=None,
+                                        finish=False,
+                                        sequence_number=sequence_number,
+                                        timestamp=time.time(),
+                                        session_id=session_id,
+                                        request_id=request_id,
+                                        response_type="attribute_activity",
+                                        correct_answer_count=assistant.correct_answer_count,
+                                        intent_type=intent_type_lower,
+                                        **_assistant_stream_fields(assistant),
+                                    ))
                         else:
                             full_followup = ""
                             activity_marker_detected = False
