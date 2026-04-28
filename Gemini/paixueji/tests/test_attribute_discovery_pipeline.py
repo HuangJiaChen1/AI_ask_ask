@@ -300,3 +300,15 @@ def test_ask_followup_skips_thread_weaving_without_soft_guide(monkeypatch):
     assert len(captured_contents) > 0
     contents_text = str(captured_contents[0])
     assert "RESPONSE THREAD CONTEXT" not in contents_text
+
+
+from paixueji_app import INTENTS_WITHOUT_FOLLOWUP
+
+
+def test_intent_followup_branching_logic():
+    """Verify which intents get follow-up and which don't."""
+    assert "play" in INTENTS_WITHOUT_FOLLOWUP
+    assert "emotional" in INTENTS_WITHOUT_FOLLOWUP
+    assert "curiosity" not in INTENTS_WITHOUT_FOLLOWUP
+    assert "correct_answer" not in INTENTS_WITHOUT_FOLLOWUP
+    assert "informative" not in INTENTS_WITHOUT_FOLLOWUP
