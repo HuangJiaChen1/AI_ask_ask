@@ -247,6 +247,7 @@ class StreamChunk(BaseModel):
     category_debug: dict | None = None
     activity_ready: bool = False
     activity_target: dict | None = None
+    reply_type: str | None = None
 
     # Node execution tracing (for critique reports)
     nodes_executed: list[dict] | None = None  # Passed through final chunk

@@ -13,6 +13,7 @@ import threading
 import os
 import yaml
 import re
+from typing import Optional
 
 from google import genai
 from google.genai.types import HttpOptions
@@ -186,12 +187,24 @@ def sse_event(event_type, data):
     return f"event: {event_type}\ndata: {json_data}\n\n"
 
 
+def _latest_assistant_message(history: list[dict]) -> Optional[dict]:
+    for message in reversed(history or []):
+        if message.get("role") == "assistant":
+            return message
+    return None
+
+
 def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
     activity_ready = getattr(assistant, "attribute_activity_ready", False)
     activity_target = assistant.attribute_activity_target() if hasattr(assistant, "attribute_activity_target") else None
     if getattr(assistant, "category_lane_active", False) or getattr(assistant, "category_pipeline_enabled", False):
         activity_ready = getattr(assistant, "category_activity_ready", False)
         activity_target = assistant.category_activity_target() if hasattr(assistant, "category_activity_target") else None
+
+    latest = _latest_assistant_message(assistant.conversation_history)
+    selected_hook_type = latest.get("selected_hook_type") if latest else None
+    question_style = latest.get("question_style") if latest else None
+
     return {
         "current_object_name": assistant.object_name,
         "surface_object_name": assistant.surface_object_name,
@@ -216,6 +229,8 @@ def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
         "activity_ready": activity_ready,
         "activity_target": activity_target,
         "resolution_debug": assistant.session_resolution_debug,
+        "selected_hook_type": selected_hook_type,
+        "question_style": question_style,
     }
 
 
@@ -870,6 +885,7 @@ def start_conversation():
                                 request_id=request_id,
                                 response_type="attribute_intro",
                                 correct_answer_count=assistant.correct_answer_count,
+                                intent_type=None,
                                 **_assistant_stream_fields(assistant),
                             ))
 
@@ -879,6 +895,7 @@ def start_conversation():
                             state=assistant.attribute_state,
                             reason="intro generated",
                             response_text=full_response,
+                            reply_type="attribute_intro",
                         )
                         assistant.set_last_attribute_debug(attribute_debug)
                         assistant.conversation_history.append({
@@ -1285,6 +1302,7 @@ def continue_conversation():
                                 state=assistant.attribute_state,
                                 reason=attribute_reason,
                                 intent_type=intent_type_lower,
+                                reply_type="discovery",
                             )
                             assistant.set_last_attribute_debug(partial_debug)
                             sequence_number += 1
@@ -1300,6 +1318,7 @@ def continue_conversation():
                                 request_id=request_id,
                                 response_type="attribute_activity",
                                 correct_answer_count=assistant.correct_answer_count,
+                                intent_type=intent_type_lower,
                                 **_assistant_stream_fields(assistant),
                             ))
 
@@ -1366,6 +1385,7 @@ def continue_conversation():
                                 request_id=request_id,
                                 response_type="attribute_activity",
                                 correct_answer_count=assistant.correct_answer_count,
+                                intent_type=intent_type_lower,
                                 **_assistant_stream_fields(assistant),
                             ))
 
@@ -1391,6 +1411,7 @@ def continue_conversation():
                             activity_marker_reason=activity_marker_reason,
                             response_text=combined_response,
                             intent_type=intent_type_lower,
+                            reply_type="discovery",
                         )
                         assistant.set_last_attribute_debug(attribute_debug)
                         assistant.conversation_history.append({"role": "user", "content": child_input})
@@ -1415,6 +1436,7 @@ def continue_conversation():
                             response_type="attribute_activity",
                             correct_answer_count=assistant.correct_answer_count,
                             chat_phase_complete=assistant.attribute_activity_ready or None,
+                            intent_type=intent_type_lower,
                             **_assistant_stream_fields(assistant),
                         ))
                         yield sse_event("complete", {"success": True})

@@ -191,6 +191,7 @@ def build_attribute_debug(
     activity_marker_reason: str | None = None,
     response_text: str | None = None,
     intent_type: str | None = None,
+    reply_type: str | None = None,
 ) -> dict:
     return {
         "decision": decision,
@@ -201,6 +202,7 @@ def build_attribute_debug(
         "activity_marker_reason": activity_marker_reason,
         "response_text": response_text,
         "intent_type": intent_type,
+        "reply_type": reply_type,
     }
 
 
