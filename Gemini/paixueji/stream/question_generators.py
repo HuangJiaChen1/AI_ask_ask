@@ -204,6 +204,7 @@ async def ask_followup_question_stream(
     surface_only_mode: bool = False,
     surface_object_name: str = "",
     attribute_soft_guide: str = "",
+    response_text: str = "",
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
     Stream a follow-up question after the response burst.
@@ -239,6 +240,16 @@ async def ask_followup_question_stream(
     # Append attribute soft guide for attribute-pipeline follow-ups
     if attribute_soft_guide:
         followup_prompt = f"{followup_prompt}\n\n{attribute_soft_guide}"
+
+    # Append response thread context for attribute-pipeline follow-ups
+    if response_text and attribute_soft_guide:
+        thread_weaving = (
+            f"\n\nRESPONSE THREAD CONTEXT: The assistant just said: '{response_text}'"
+            f"\nYour follow-up question should feel like it grows from this response, "
+            f"not like a sudden pivot. Reference a specific detail from the response "
+            f"when framing your question, while still gently steering toward the exploration direction above."
+        )
+        followup_prompt = f"{followup_prompt}{thread_weaving}"
 
     messages_to_send = messages + [{"role": "user", "content": followup_prompt}]
     clean_messages = clean_messages_for_api(messages_to_send)

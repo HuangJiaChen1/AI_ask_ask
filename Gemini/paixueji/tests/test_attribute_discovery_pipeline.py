@@ -17,6 +17,7 @@ from attribute_activity import (
 import paixueji_prompts
 from paixueji_prompts import ATTRIBUTE_SOFT_GUIDE
 from stream.response_generators import generate_attribute_activation_response_stream
+from stream.question_generators import ask_followup_question_stream
 
 
 def _make_profile(
@@ -219,3 +220,83 @@ async def test_curiosity_uses_attribute_prompt_in_pipeline(monkeypatch):
     contents_text = str(captured_contents[0])
     assert "ATTR_PROMPT" in contents_text
     assert "INTENT_PROMPT" not in contents_text
+
+
+def test_ask_followup_includes_thread_weaving(monkeypatch):
+    prompts = {
+        "followup_question_prompt": "ASK ONE QUESTION about {object_name}.",
+        "attribute_soft_guide": "SOFT GUIDE: {attribute_label}",
+    }
+    monkeypatch.setattr(paixueji_prompts, "get_prompts", lambda: prompts)
+
+    captured_contents = []
+    async def mock_stream(*, model, contents, config):
+        captured_contents.append(contents)
+        class Fake:
+            async def __anext__(self): raise StopAsyncIteration
+            def __aiter__(self): return self
+        return Fake()
+
+    client = MagicMock()
+    client.aio.models.generate_content_stream = mock_stream
+
+    async def drain():
+        gen = ask_followup_question_stream(
+            messages=[{"role": "system", "content": "sys"}],
+            object_name="cat",
+            age_prompt="Keep it simple.",
+            age=5,
+            config={"model_name": "test-model", "temperature": 0.3, "max_tokens": 2000},
+            client=client,
+            attribute_soft_guide="SOFT GUIDE: body color",
+            response_text="Cats have stripes for camouflage!",
+        )
+        async for _ in gen:
+            pass
+
+    import asyncio
+    asyncio.run(drain())
+
+    assert len(captured_contents) > 0
+    contents_text = str(captured_contents[0])
+    assert "RESPONSE THREAD CONTEXT" in contents_text
+    assert "Cats have stripes for camouflage!" in contents_text
+    assert "grows from this response" in contents_text
+
+
+def test_ask_followup_skips_thread_weaving_without_soft_guide(monkeypatch):
+    prompts = {
+        "followup_question_prompt": "ASK ONE QUESTION about {object_name}.",
+    }
+    monkeypatch.setattr(paixueji_prompts, "get_prompts", lambda: prompts)
+
+    captured_contents = []
+    async def mock_stream(*, model, contents, config):
+        captured_contents.append(contents)
+        class Fake:
+            async def __anext__(self): raise StopAsyncIteration
+            def __aiter__(self): return self
+        return Fake()
+
+    client = MagicMock()
+    client.aio.models.generate_content_stream = mock_stream
+
+    async def drain():
+        gen = ask_followup_question_stream(
+            messages=[{"role": "system", "content": "sys"}],
+            object_name="cat",
+            age_prompt="Keep it simple.",
+            age=5,
+            config={"model_name": "test-model", "temperature": 0.3, "max_tokens": 2000},
+            client=client,
+            response_text="Some response text",
+        )
+        async for _ in gen:
+            pass
+
+    import asyncio
+    asyncio.run(drain())
+
+    assert len(captured_contents) > 0
+    contents_text = str(captured_contents[0])
+    assert "RESPONSE THREAD CONTEXT" not in contents_text
