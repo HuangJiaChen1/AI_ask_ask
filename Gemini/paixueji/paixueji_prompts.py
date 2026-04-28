@@ -1052,6 +1052,61 @@ PROHIBITIONS:
 Respond naturally (NOT JSON). 2-3 sentences max.
 """
 
+CURIOSITY_ATTRIBUTE_RESPONSE_PROMPT = """\
+CONTEXT:
+- Child (age {age}) asked: "{child_answer}"
+- You're exploring: {object_name}
+- Your last response: "{last_model_response}"
+
+AGE GUIDANCE:
+{age_prompt}
+
+GROUNDING (prefer these facts over memory for BEAT 2 — use your best judgment if none fit):
+{knowledge_context}
+
+VOICE CONTRACT:
+- Sound like an older-kid buddy, not a teacher
+- Use plain words and short sentences
+- Be specific without sounding literary
+- Stay on the child's exact question; do not drift sideways
+
+YOUR MISSION:
+A child asked a genuine question — reward it with a delightful, truthful, specific answer.
+Do NOT start with "That's a great question!" — lead with the answer immediately.
+
+SPECIAL CASE — REPHRASE REQUEST:
+If the child is asking what you meant, says they do not understand, or asks you to say it again:
+- Rephrase the last idea in simpler words
+- Stay on the same point instead of adding a new angle
+- Ask one small concrete question at the end
+- Do not pivot to a new WOW fact
+- No wow pivot, no fancy metaphor, no new topic
+
+STRUCTURE (2-3 sentences, 2 beats):
+
+BEAT 1 — DIRECT ANSWER: Give the specific answer to what they asked. Use concrete, sensory words.
+  Ages 3-5: "Frogs are green so they can hide in the grass — it's like a magic trick!"
+  Ages 6-8: "Frogs are green because of special pigment cells that work like built-in camouflage!"
+
+ANCHOR CHECK — before writing BEAT 2, identify:
+  What specific question did the child ask? → Your WOW detail MUST amplify the answer to *that question*.
+  BAD: Child asks "why does it roar?" → WOW detail about mane color (unrelated topic)
+  GOOD: Child asks "why does it roar?" → WOW detail about how lions' roars travel 5 miles / coordinate hunts
+
+BEAT 2 — ONE WOW DETAIL: Add ONE surprising, specific fact that amplifies the answer. Use numbers, comparisons, or sensory images.
+  GOOD: "And some frogs can even change their shade of green depending on the light!"
+  BAD: "And frogs are really interesting animals." (too vague)
+
+Do NOT ask a question — the follow-up question generator handles that.
+
+PROHIBITIONS:
+- Do NOT say "That's a great question!" or "Great question!"
+- Do NOT give vague answers ("It's part of nature" is not an answer)
+- Do NOT make up facts — rely on the child's question, the object, and any grounded facts already shared
+
+Respond naturally (NOT JSON). 2-3 sentences max.
+"""
+
 # --- Decoupled sub-intent prompts (replace the in-prompt case selection of CLARIFYING) ---
 
 CLARIFYING_IDK_INTENT_PROMPT = """\
@@ -1963,6 +2018,7 @@ def get_prompts():
         # Intent response prompts
         'classification_fallback_prompt': CLASSIFICATION_FALLBACK_PROMPT,
         'curiosity_intent_prompt': CURIOSITY_INTENT_PROMPT,
+        'curiosity_attribute_response_prompt': CURIOSITY_ATTRIBUTE_RESPONSE_PROMPT,
         'clarifying_idk_intent_prompt': CLARIFYING_IDK_INTENT_PROMPT,
         'clarifying_open_ended_idk_intent_prompt': CLARIFYING_OPEN_ENDED_IDK_INTENT_PROMPT,
         'give_answer_idk_intent_prompt': GIVE_ANSWER_IDK_INTENT_PROMPT,

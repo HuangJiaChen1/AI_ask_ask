@@ -50,6 +50,10 @@ from resolution_debug import format_resolution_log_line
 # Must be defined here (not inside a function) to avoid re-compiling on every request.
 _REASON_RE = re.compile(r"REASON:\s*(.+?)(?:\n|$)")
 
+# Intents that do not receive a follow-up question in the attribute activity stream.
+# Defined at module level so tests can import it directly.
+INTENTS_WITHOUT_FOLLOWUP = {"play", "emotional"}
+
 from stream import (
     ask_attribute_intro_stream,
     ask_category_intro_stream,
@@ -1265,6 +1269,8 @@ def continue_conversation():
                         attribute_reason = f"intent classification fallback: {exc}"
 
                     async def stream_attribute_activity():
+                        needs_followup = intent_type_lower not in INTENTS_WITHOUT_FOLLOWUP
+
                         messages = prepare_messages_for_streaming(
                             assistant.conversation_history.copy(),
                             age_prompt,
@@ -1327,79 +1333,85 @@ def continue_conversation():
                             activity_target=activity_target,
                         )
 
-                        messages_with_response = messages + [
-                            {"role": "user", "content": child_input},
-                            {"role": "assistant", "content": full_response},
-                        ]
-                        followup_generator = ask_followup_question_stream(
-                            messages=messages_with_response,
-                            object_name=object_name_attr,
-                            age_prompt=age_prompt,
-                            age=assistant.age or 6,
-                            config=assistant.config,
-                            client=assistant.client,
-                            attribute_soft_guide=soft_guide,
-                        )
+                        if needs_followup:
+                            messages_with_response = messages + [
+                                {"role": "user", "content": child_input},
+                                {"role": "assistant", "content": full_response},
+                            ]
+                            followup_generator = ask_followup_question_stream(
+                                messages=messages_with_response,
+                                object_name=object_name_attr,
+                                age_prompt=age_prompt,
+                                age=assistant.age or 6,
+                                config=assistant.config,
+                                client=assistant.client,
+                                attribute_soft_guide=soft_guide,
+                                response_text=full_response if intent_type_lower == "curiosity" else "",
+                            )
 
-                        activity_marker = "[ACTIVITY_READY]"
-                        activity_marker_detected = False
-                        activity_marker_reason = None
-                        raw_followup_so_far = ""
-                        full_followup = ""
+                            activity_marker = "[ACTIVITY_READY]"
+                            activity_marker_detected = False
+                            activity_marker_reason = None
+                            raw_followup_so_far = ""
+                            full_followup = ""
 
-                        def _displayable_followup(raw_followup: str) -> str:
-                            # Strip the activity marker
-                            marker_free_followup = raw_followup.replace(activity_marker, "")
-                            if activity_marker in raw_followup:
-                                # Also strip the REASON line if present
-                                marker_free_followup = _REASON_RE.sub("", marker_free_followup)
-                                # Clean up any trailing newlines left after stripping
-                                marker_free_followup = marker_free_followup.rstrip("\n")
+                            def _displayable_followup(raw_followup: str) -> str:
+                                # Strip the activity marker
+                                marker_free_followup = raw_followup.replace(activity_marker, "")
+                                if activity_marker in raw_followup:
+                                    # Also strip the REASON line if present
+                                    marker_free_followup = _REASON_RE.sub("", marker_free_followup)
+                                    # Clean up any trailing newlines left after stripping
+                                    marker_free_followup = marker_free_followup.rstrip("\n")
+                                    return marker_free_followup
+
+                                max_buffered_prefix = min(len(raw_followup), len(activity_marker) - 1)
+                                for suffix_len in range(max_buffered_prefix, 0, -1):
+                                    if raw_followup.endswith(activity_marker[:suffix_len]):
+                                        return marker_free_followup[:-suffix_len]
                                 return marker_free_followup
 
-                            max_buffered_prefix = min(len(raw_followup), len(activity_marker) - 1)
-                            for suffix_len in range(max_buffered_prefix, 0, -1):
-                                if raw_followup.endswith(activity_marker[:suffix_len]):
-                                    return marker_free_followup[:-suffix_len]
-                            return marker_free_followup
+                            async for _text_chunk, token_usage, full_so_far in followup_generator:
+                                raw_followup_so_far = full_so_far
+                                if activity_marker in raw_followup_so_far:
+                                    activity_marker_detected = True
+                                displayable_followup = _displayable_followup(raw_followup_so_far)
+                                visible_chunk = displayable_followup[len(full_followup):]
+                                full_followup = displayable_followup
+                                if visible_chunk == "":
+                                    continue
+                                sequence_number += 1
+                                yield sse_event("chunk", StreamChunk(
+                                    response=visible_chunk,
+                                    session_finished=False,
+                                    duration=0.0,
+                                    token_usage=token_usage,
+                                    finish=False,
+                                    sequence_number=sequence_number,
+                                    timestamp=time.time(),
+                                    session_id=session_id,
+                                    request_id=request_id,
+                                    response_type="attribute_activity",
+                                    correct_answer_count=assistant.correct_answer_count,
+                                    intent_type=intent_type_lower,
+                                    **_assistant_stream_fields(assistant),
+                                ))
 
-                        async for _text_chunk, token_usage, full_so_far in followup_generator:
-                            raw_followup_so_far = full_so_far
-                            if activity_marker in raw_followup_so_far:
-                                activity_marker_detected = True
-                            displayable_followup = _displayable_followup(raw_followup_so_far)
-                            visible_chunk = displayable_followup[len(full_followup):]
-                            full_followup = displayable_followup
-                            if visible_chunk == "":
-                                continue
-                            sequence_number += 1
-                            yield sse_event("chunk", StreamChunk(
-                                response=visible_chunk,
-                                session_finished=False,
-                                duration=0.0,
-                                token_usage=token_usage,
-                                finish=False,
-                                sequence_number=sequence_number,
-                                timestamp=time.time(),
-                                session_id=session_id,
-                                request_id=request_id,
-                                response_type="attribute_activity",
-                                correct_answer_count=assistant.correct_answer_count,
-                                intent_type=intent_type_lower,
-                                **_assistant_stream_fields(assistant),
-                            ))
+                            full_followup = _displayable_followup(raw_followup_so_far)
 
-                        full_followup = _displayable_followup(raw_followup_so_far)
+                            # Extract reason from raw text after marker is fully present
+                            if activity_marker_detected:
+                                reason_match = _REASON_RE.search(raw_followup_so_far)
+                                if reason_match:
+                                    activity_marker_reason = reason_match.group(1).strip()
 
-                        # Extract reason from raw text after marker is fully present
-                        if activity_marker_detected:
-                            reason_match = _REASON_RE.search(raw_followup_so_far)
-                            if reason_match:
-                                activity_marker_reason = reason_match.group(1).strip()
-
-                        if activity_marker_detected:
-                            assistant.attribute_state.activity_ready = True
-                            assistant.attribute_activity_ready = True
+                            if activity_marker_detected:
+                                assistant.attribute_state.activity_ready = True
+                                assistant.attribute_activity_ready = True
+                        else:
+                            full_followup = ""
+                            activity_marker_detected = False
+                            activity_marker_reason = None
 
                         combined_response = (full_response + " " + full_followup).strip()
                         attribute_debug = build_attribute_debug(

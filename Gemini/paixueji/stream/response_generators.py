@@ -249,8 +249,10 @@ async def generate_attribute_activation_response_stream(
     """
     prompts = paixueji_prompts.get_prompts()
     intent_lower = intent_type.lower()
+    # Prefer attribute-specific prompt when available (attribute pipeline only)
+    attr_prompt_key = f"{intent_lower}_attribute_response_prompt"
     prompt_key = f"{intent_lower}_intent_prompt"
-    intent_template = prompts.get(prompt_key, "")
+    intent_template = prompts.get(attr_prompt_key) or prompts.get(prompt_key, "")
 
     if not intent_template:
         intent_template = prompts.get("classification_fallback_prompt", "")
