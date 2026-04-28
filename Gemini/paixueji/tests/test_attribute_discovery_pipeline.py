@@ -89,12 +89,14 @@ def test_build_attribute_debug_includes_marker_flag():
         state=state,
         reason="marker detected in follow-up",
         activity_marker_detected=True,
+        activity_marker_reason="Child explored color through comparison and preference",
         response_text="Can you spot anything else around you that's bright red?",
         intent_type="correct_answer",
     )
 
     assert debug["decision"] == "attribute_activity"
     assert debug["activity_marker_detected"] is True
+    assert debug["activity_marker_reason"] == "Child explored color through comparison and preference"
     assert debug["intent_type"] == "correct_answer"
     assert "touch_result" not in debug
     assert "readiness" not in debug
@@ -108,6 +110,16 @@ def test_build_attribute_debug_defaults_marker_flag_to_false():
         state=state,
     )
     assert debug["activity_marker_detected"] is False
+
+
+def test_build_attribute_debug_defaults_reason_to_none():
+    state = _make_state()
+    debug = build_attribute_debug(
+        decision="attribute_activity",
+        profile=state.profile,
+        state=state,
+    )
+    assert debug["activity_marker_reason"] is None
 
 
 # -- ATTRIBUTE_SOFT_GUIDE invariants -----------------------------------------

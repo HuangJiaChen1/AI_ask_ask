@@ -188,6 +188,7 @@ def build_attribute_debug(
     state: DiscoverySessionState | None,
     reason: str | None = None,
     activity_marker_detected: bool = False,
+    activity_marker_reason: str | None = None,
     response_text: str | None = None,
     intent_type: str | None = None,
 ) -> dict:
@@ -197,6 +198,7 @@ def build_attribute_debug(
         "state": state.to_debug_dict() if state else None,
         "reason": reason,
         "activity_marker_detected": activity_marker_detected,
+        "activity_marker_reason": activity_marker_reason,
         "response_text": response_text,
         "intent_type": intent_type,
     }
