@@ -1,0 +1,16 @@
+{
+  "id": "23_curiosity_chain",
+  "age": 6,
+  "object_name": "apple",
+  "attribute_pipeline_enabled": true,
+  "model_name_override": "gemini-2.0-flash-lite",
+  "turn_delay_seconds": 1,
+  "child_turns": [
+    "Why is it red?",
+    "Do all apples grow on trees?",
+    "Yes, I have seen apple trees before"
+  ],
+  "assertions": [
+    "no_reason_leaked"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "22_idk_then_correct",
+  "age": 6,
+  "object_name": "apple",
+  "attribute_pipeline_enabled": true,
+  "model_name_override": "gemini-2.0-flash-lite",
+  "turn_delay_seconds": 1,
+  "child_turns": [
+    "I don't know",
+    "It's red and shiny"
+  ],
+  "assertions": [
+    "no_reason_leaked"
+  ]
+}

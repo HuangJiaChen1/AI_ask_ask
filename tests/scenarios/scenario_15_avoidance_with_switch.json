@@ -1,0 +1,14 @@
+{
+  "id": "15_avoidance_with_switch",
+  "age": 6,
+  "object_name": "apple",
+  "attribute_pipeline_enabled": true,
+  "model_name_override": "gemini-2.0-flash-lite",
+  "turn_delay_seconds": 1,
+  "child_turns": [
+    "Can we talk about bananas instead?"
+  ],
+  "assertions": [
+    "no_reason_leaked"
+  ]
+}

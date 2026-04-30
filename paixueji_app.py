@@ -1099,7 +1099,7 @@ def continue_conversation():
     session_id = data.get('session_id')
     child_input = data.get('child_input')
 
-    if not session_id or not child_input:
+    if session_id is None or child_input is None:
         return jsonify({
             "success": False,
             "error": "Missing required fields: session_id and child_input"
@@ -1116,7 +1116,8 @@ def continue_conversation():
     # Generate unique request ID for this stream
     request_id = str(uuid.uuid4())
 
-    print(f"[INFO] Session {session_id[:8]}... continuing | answer: '{child_input[:50]}...', "
+    safe_input = child_input[:50].encode('gbk', errors='replace').decode('gbk')
+    print(f"[INFO] Session {session_id[:8]}... continuing | answer: '{safe_input}...', "
           f"correct_count: {assistant.correct_answer_count}, request_id={request_id[:8]}...")
 
     def generate():
@@ -1450,6 +1451,7 @@ def continue_conversation():
                             full_followup = ""
                             activity_marker_detected = False
                             activity_marker_reason = None
+                            activity_marker_rejected_reason = None
 
                         combined_response = (full_response + " " + full_followup).strip()
                         attribute_debug = build_attribute_debug(
