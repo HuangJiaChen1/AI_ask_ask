@@ -21,9 +21,6 @@ optimizations/
 .DS_Store
 Thumbs.db
 
-# Claude / plans
-docs/superpowers/plans/*.md
-
 # Worktrees
 .worktrees/
 

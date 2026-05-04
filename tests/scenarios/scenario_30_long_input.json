@@ -1,0 +1,14 @@
+{
+  "id": "30_long_input",
+  "age": 6,
+  "object_name": "apple",
+  "attribute_pipeline_enabled": true,
+  "model_name_override": "gemini-2.0-flash-lite",
+  "turn_delay_seconds": 1,
+  "child_turns": [
+    "I really like apples because they are sweet and crunchy and my mom buys them at the grocery store every weekend and we eat them together as a family and sometimes we make apple pie which is my favorite dessert in the whole wide world and I also like green apples but red ones are the best"
+  ],
+  "assertions": [
+    "no_reason_leaked"
+  ]
+}
