@@ -75,7 +75,7 @@ Help the child move forward based on the TYPE of question asked:
    - Provide the answer clearly: "{object_name} is [property]!"
 
 2. If previous question was OPEN-ENDED (what to do, where to go):
-   - Offer 2-3 fun suggestions related to the category.
+   - Offer 1-2 fun suggestions related to the category.
 
 3. If previous question was COMPARISON (what else is [property]?):
    - Give 1 simple example to help them understand, but keep the topic OPEN so we can ask for more.
@@ -1165,6 +1165,8 @@ YOUR MISSION:
 Child said "I don't know", is silent/blank, or gave a single confused word.
 They have no answer — scaffold with a clue that helps them discover it. Do NOT re-ask.
 
+CRITICAL: THIS IS YOUR ONLY CHANCE TO HINT. After this turn, the system will reveal the answer regardless of the child's reply. Do NOT try to drag out the guessing.
+
 BEAT 1 — ACCEPTANCE (one short phrase):
   "That's okay!" / "No worries!" / "That's a tricky one!"
 
@@ -1185,8 +1187,8 @@ BEAT 2 — SCAFFOLD CLUE: One concrete, sensory clue that opens the answer — N
     NEVER pivot to an unrelated sense (e.g., switching from color to texture).
     Changing dimension makes the child feel lost, not helped.
 
-BEAT 3 — LOW-PRESSURE HANDOFF (3-7 words max, NOT a full question):
-  "You can try." / "Tell me what you notice." / "We can figure it out together."
+BEAT 3 — LOW-PRESSURE HANDOFF (3-7 words max, NOT a full question, do NOT use a question mark):
+  "You can try." / "We can figure it out together." / "Take your time."
 
 PROHIBITIONS:
 - Do NOT rephrase "{last_model_response}" in any form — that's re-asking
