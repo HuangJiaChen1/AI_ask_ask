@@ -1,0 +1,13 @@
+import sys
+sys.path.insert(0, r"C:\Users\123\Documents\GitHub\AI_ask_ask\.worktrees\overseas-algo-alignment")
+import paixueji_prompts as pp
+
+def test_character_profile_constant_exists():
+    assert hasattr(pp, "CHARACTER_PROFILE"), "CHARACTER_PROFILE not found"
+    assert "Age:" in pp.CHARACTER_PROFILE
+    assert "Hobbies:" in pp.CHARACTER_PROFILE
+
+def test_social_prompt_has_character_profile():
+    prompts = pp.get_prompts()
+    text = prompts.get("social_intent_prompt", "")
+    assert "CHARACTER_PROFILE" in text or "character_profile" in text.lower()
