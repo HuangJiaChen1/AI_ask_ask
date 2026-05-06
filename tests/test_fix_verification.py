@@ -482,10 +482,10 @@ class TestCorrectAnswerPromptBeat3:
             "CORRECT_ANSWER_INTENT_PROMPT must not contain BEAT 3 after decoupling"
         )
 
-    def test_followup_prompt_has_sensory_tier(self):
-        """FOLLOWUP_QUESTION_PROMPT must include a SENSORY INVITE tier for observable questions."""
-        assert "SENSORY" in self.followup, (
-            "FOLLOWUP_QUESTION_PROMPT must include a SENSORY INVITE tier for observable questions"
+    def test_followup_prompt_has_visual_or_imaginative_tier(self):
+        """FOLLOWUP_QUESTION_PROMPT must include a VISUAL OR IMAGINATIVE INVITE tier for observable questions."""
+        assert "VISUAL OR IMAGINATIVE" in self.followup, (
+            "FOLLOWUP_QUESTION_PROMPT must include a VISUAL OR IMAGINATIVE INVITE tier for observable questions"
         )
 
     def test_followup_prompt_has_knowledge_testing_forbidden(self):
@@ -611,10 +611,10 @@ class TestFollowupQuestionPromptRule6:
             "The 'Did you know' ban must explain why (e.g. 'reads like yet another question')"
         )
 
-    def test_sensory_invite_tier_exists(self):
-        """FOLLOWUP_QUESTION_PROMPT must list SENSORY INVITE as a fallback tier."""
-        assert "SENSORY" in self.prompt, (
-            "FOLLOWUP_QUESTION_PROMPT must include a SENSORY INVITE fallback tier"
+    def test_visual_or_imaginative_invite_tier_exists(self):
+        """FOLLOWUP_QUESTION_PROMPT must list VISUAL OR IMAGINATIVE INVITE as a fallback tier."""
+        assert "VISUAL OR IMAGINATIVE" in self.prompt, (
+            "FOLLOWUP_QUESTION_PROMPT must include a VISUAL OR IMAGINATIVE INVITE fallback tier"
         )
 
     def test_followup_prompt_requires_staying_on_same_detail(self):
