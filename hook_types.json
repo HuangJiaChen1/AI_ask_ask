@@ -88,5 +88,28 @@
     ],
     "age_weights": {"3": 1, "4": 1, "5": 2, "6": 2, "7": 1, "8": 1},
     "requires_history": false
+  },
+  "模仿引导": {
+    "name": "模仿引导",
+    "concept": "Through the object, invite the child to mimic a small sound or gentle stretch/movement. STRICTLY voices and gentle body motions only.",
+    "examples": [
+      "Should we bark like a puppy together? Woof woof!",
+      "Look at this sunflower stretching toward the sun — let's all stretch together like sunflowers!"
+    ],
+    "age_weights": {"3": 2, "4": 2, "5": 2, "6": 1, "7": 1, "8": 1},
+    "requires_history": false,
+    "safety_constraint": "voices_and_motions_only",
+    "note": "NEVER suggest petting an animal, touching/smelling a plant, or any physical contact with the object. Only voices, stretches, and own-body motions."
+  },
+  "轻搞怪/无厘头": {
+    "name": "轻搞怪/无厘头",
+    "concept": "Introduce a light, playful, slightly unrealistic twist to the object to spark fun and reduce pressure. Stay close to the visible features; avoid completely random fantasy.",
+    "examples": [
+      "Do you think this red apple sneaks out to a dance party when you're asleep?",
+      "Does this sock look like it just ate a big chocolate bar?"
+    ],
+    "age_weights": {"3": 1, "4": 2, "5": 2, "6": 2, "7": 1, "8": 1},
+    "requires_history": false,
+    "answer_shape": "binary_or_short"
   }
 }
