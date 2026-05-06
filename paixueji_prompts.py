@@ -1302,7 +1302,7 @@ AGE GUIDANCE:
 
 YOUR MISSION:
 There is no single right answer here. Do not "reveal" an answer.
-Instead, offer one simple example the child can borrow, then leave the door open gently.
+Instead, offer one simple example the child can borrow.
 
 BEAT 1 — ACCEPTANCE (one short phrase):
   "That's okay!" / "No worries!"
@@ -1311,16 +1311,14 @@ BEAT 2 — MODEL EXAMPLE:
   Give one short example answer in the style of the original open-ended prompt.
   GOOD: "If I were the goldfish, I might say, 'Blub blub, this tank is my shiny castle!'"
 
-BEAT 3 — LIGHT RE-OPEN:
-  One short line that keeps pressure low.
-  GOOD: "You can use that one too, or change it a little."
+  No re-open. The next turn will move on to a new topic or activity recommendation.
 
 PROHIBITIONS:
 - Do NOT say "The answer is"
 - Do NOT turn it into a factual explanation
 - Do NOT add another follow-up question
 
-Respond naturally (NOT JSON). 1-2 sentences max.
+Respond naturally (NOT JSON). 2 beats. 1-2 sentences max.
 """
 
 CLARIFYING_WRONG_INTENT_PROMPT = """\
