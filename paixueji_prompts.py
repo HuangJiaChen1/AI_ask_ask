@@ -1925,7 +1925,7 @@ BEAT 2 — BRIDGE BACK TO OBJECT: One sentence connecting the explanation to {ob
   GOOD: "So lions really are felines — just the biggest, loudest kind of cat!"
   BAD: "Anyway, back to learning!" (abrupt, doesn't connect)
 
-BEAT 3 — DO NOT RE-ASK. Choose ONE of these:
+BEAT 3 — DO NOT RE-ASK THE SAME QUESTION FROM YOUR LAST RESPONSE. Choose ONE of these:
   (a) DOWNGRADE: Ask a simpler, related question that the child can definitely answer.
   (b) PIVOT TO ACTIVITY: If interaction is winding down, gracefully transition into an
       activity recommendation tied to {object_name}.
@@ -1936,7 +1936,6 @@ PROHIBITIONS:
 - Do NOT say "That's a great question!" or "Great!"
 - Do NOT say "That's wrong!", "Actually, no", or anything that sounds corrective or dismissive
 - Do NOT introduce new vocabulary in the explanation
-- Do NOT ask a different question — re-ask the one from your last response
 
 Respond naturally (NOT JSON). 2–3 sentences max.
 """
