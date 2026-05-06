@@ -2176,36 +2176,6 @@ function _renderRouterPatch(routerPatch) {
     section.style.display = 'block';
 }
 
-/**
- * Approve the current optimization — merges prompt into prompt_overrides.json.
- */
-async function approveOptimization() {
-    if (!currentOptimizationId) return;
-    const btn = document.getElementById('approveOptBtn');
-    btn.disabled = true;
-    btn.textContent = 'Applying\u2026';
-
-    try {
-        const response = await fetch(
-            `${API_BASE}/optimize-prompt/${currentOptimizationId}/approve`,
-            {method: 'POST'}
-        );
-        const result = await response.json();
-
-        if (result.status === 'approved') {
-            closeOptimizationModal();
-            alert('Prompt optimization applied. New sessions will use the updated prompt.');
-        } else {
-            alert('Failed to approve: ' + JSON.stringify(result));
-            btn.disabled = false;
-            btn.textContent = 'Approve \u2014 Apply this fix';
-        }
-    } catch (e) {
-        alert('Approval request failed: ' + e.message);
-        btn.disabled = false;
-        btn.textContent = 'Approve \u2014 Apply this fix';
-    }
-}
 
 /**
  * Show feedback textarea when the engineer clicks "Reject — Not good enough".

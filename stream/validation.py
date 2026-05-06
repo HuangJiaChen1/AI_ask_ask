@@ -125,10 +125,14 @@ async def classify_intent(
 
         reasoning = _get(r"REASONING:\s*(.+)", "N/A")
 
+        action_subtype_match = re.search(r"ACTION_SUBTYPE:\s*([A-D]|NONE)", text, re.IGNORECASE)
+        action_subtype = action_subtype_match.group(1).upper() if action_subtype_match else None
+
         result = {
             "intent_type": intent_type,
             "new_object": new_object,
             "reasoning": reasoning,
+            "action_subtype": action_subtype,
             "classification_status": "ok",
             "classification_failure_reason": None,
         }

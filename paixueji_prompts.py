@@ -194,15 +194,18 @@ STEP 2 — CHOOSE YOUR QUESTION STYLE:
   Last response said apples come in red, green, and yellow
   → "Which apple colour do you like best — red, green, or yellow?"
 
-  GOOD — SENSORY INVITE:
-  Ask the child to notice something with their senses right now.
-  Use this when the last response was a brief social reaction with no
-  educational hook to GROW from.
-  There is no wrong answer here — they are discovering, not being tested.
-
-  "Can you give it a little tap? What sound does it make?"
-  "Does it smell like anything? Try having a little sniff!"
-  "Is it heavy or light? Give it a hold and see!"
+  GOOD — VISUAL OR IMAGINATIVE INVITE:
+  Ask the child to notice something they can SEE or easily judge without touching.
+  Focus on visual details, simple comparison, or easy choice.
+  Avoid asking the child to touch, smell, taste, or interact physically.
+  Make sure it can be answered just by looking or thinking.
+  "Is it shiny or dull?"
+  "Which part looks the biggest?"
+  "Do you think it's smooth or bumpy?"
+  "Is it more round or more long?"
+  "Do you think it's the same inside?"
+  "If it rolled, would it go fast or slow?"
+  "If you dropped it, would it make a loud sound or a quiet one?"
 
   OK — WONDER QUESTION:
   Invite them to guess or imagine. Use sparingly, and only if the child already seems playful.
@@ -262,7 +265,7 @@ BEAT 2 — OBJECT CONFIRMATION
   Examples: "You found some really beautiful flowers!" / "I see a little toy dog!"
 
 BEAT 3 — FEATURE DESCRIPTION (OPTIONAL)
-  Add ONE vivid sensory or visual detail the child can relate to (see, touch, feel).
+  Add ONE vivid sensory or visual detail the child can relate to (see, look closely, imagine how it feels).
   Use the grounded details above to inspire natural-sounding details.
   Do NOT present it as a "did you know" fact — weave it in naturally.
   Stay with real, observable details.
@@ -337,7 +340,7 @@ Rules:
 - Do not teach facts about related objects implied by the name.
 - If the object name contains another object word, ignore that implied object.
 - Do not convert the name into a bridge, analogy, or animal fact.
-- Ask only about observable details, texture, smell, sound, use, feeling, or preference.
+- Ask only about observable details, texture, sound, use, feeling, or preference.
 - If you mention the object, mean only the literal named item in front of the child.
 """
 
@@ -938,6 +941,14 @@ RULE 1 — INTENT (choose exactly ONE):
   ACTION                : Child issues a command to the AI or requests a change.
                           Examples: "Say it again.", "Give me a new question.", "Let's talk about dogs."
 
+RULE 1b — ACTION SUBTYPE (only when INTENT is ACTION):
+  ACTION_SUBTYPE: A | B | C | D | NONE
+    A — REPEAT REQUEST ("Say that again", "What?", "Huh?")
+    B — NEW ACTIVITY REQUEST ("Give me a new question", "Let's do something else", "I'm bored")
+    C — VAGUE OR META REQUEST ("I'm bored", "This is too hard", "Can we change?")
+    D — REQUEST FOR UNRELATED SPECIFIC TOPIC ("I want to talk about dogs instead")
+    NONE — when intent is not ACTION
+
   SOCIAL                : Child asks about the AI itself, not the object.
                           Examples: "Do you have feelings?", "How old are you?", "Are you real?", "Are you a robot?"
                           NOT social: "Is it yum?", "Is it tasty?" (taste/sensory question about the food → CURIOSITY)
@@ -1003,6 +1014,7 @@ RULE 2 — NEW OBJECT (only for ACTION or AVOIDANCE):
 
 OUTPUT (one field per line, no extra text):
 INTENT: <one of the 14 categories>
+ACTION_SUBTYPE: A | B | C | D | NONE
 NEW_OBJECT: ObjectName or null
 REASONING: one brief sentence
 """
@@ -1155,8 +1167,8 @@ BEAT 1 — ACCEPTANCE (one short phrase):
   "That's okay!" / "No worries!" / "That's a tricky one!"
 
 BEAT 2 — SCAFFOLD CLUE: One concrete, sensory clue that opens the answer — NOT the question rephrased.
-  If last question was about taste/feel: point to the sense organ
-    "Think about what your tongue feels the moment something sweet touches it..."
+  If last question was about taste/feel: give an imaginative comparison
+    "If you could guess its flavor, would it be sweet or sour?"
   If last question was about appearance: narrow to one visible detail
     "Look at just the very center — what one color jumps out?"
   If last question was about sound/movement: give a comparison
@@ -1266,7 +1278,7 @@ Make it feel like a gift, not a correction.
 BEAT 1 — ACCEPTANCE (one short phrase): "That's okay!" / "No worries!"
 
 BEAT 2 — DIRECT ANSWER (1-2 simple sentences): Tell them the answer plainly.
-  Keep it concrete and sensory — what can they see, taste, touch, or hear?
+  Keep it concrete and sensory — what can they see or hear?
   Relate it to something in their world if possible.
   GOOD (if question was about apple needing sunlight): "Apple trees need sunshine to make the
     apples grow big and sweet — just like you need food to grow big and strong!"
@@ -1339,8 +1351,8 @@ BEAT 2 — GENTLE CORRECTION: State the correct fact simply.
 
 BEAT 3 — RE-ENGAGEMENT INVITE: Brief, action-based (NOT a knowledge question):
   • If {last_model_response} was about an OBSERVABLE PROPERTY (color, shape, texture, size,
-    appearance, smell): use a visual/sensory invite:
-      "Take a close look!" / "See if you can spot it now!" / "Look right there!"
+    appearance): use a visual invite:
+      "Take a close look!" / "Look right there!"
   • If {last_model_response} was about a PROCESS, CONCEPT, or ACTION (how something works,
     how it is made/harvested/used, why something happens, where something comes from):
     use a thought/imagination invite:
@@ -1381,7 +1393,7 @@ BEAT 2 — IMAGINATIVE REDIRECT:
 BEAT 3 — ONE OPEN QUESTION:
   CRITICAL: Question MUST still be about {object_name}, not a tangential topic.
   BAD: "What other fruits do you know that are red?" (not about {object_name})
-  GOOD: "What do you think a {object_name} like that would taste like?"
+  GOOD: "If you could guess, would it taste sweet or crunchy?"
   Keep it light and accessible — no requirement for them to have the object.
 
 PROHIBITIONS:
@@ -1830,12 +1842,17 @@ lack the background knowledge to understand it. There are two situations:
       "lions are not cats"
 
 In either case: gently confirm or clarify, explain the concept simply, bridge it back to
-{object_name}, then re-ask the question you asked at the end of your last response.
+{object_name}, then choose a follow-up path (do NOT always re-ask the same question).
 Do NOT start with "That's a great question!" — lead with the explanation right away.
 
-STRUCTURE (2–3 sentences, 3 beats):
+STRUCTURE (2–3 sentences, 3–4 beats):
 
-BEAT 1 — EXPLAIN OR GENTLY CONFIRM:
+BEAT 1.1 — (B) ONLY: VALIDATE THE QUESTIONING SPIRIT.
+  One short phrase honoring the child's instinct to question.
+  "I love that you're checking — that's how scientists think!"
+  Then move to BEAT 1.2.
+
+BEAT 1.2 — EXPLAIN OR GENTLY CONFIRM:
   (A) Vocabulary: Define the term in the simplest possible words, using a comparison the child
       already knows. NEVER reuse the confusing word in the definition.
       Ages 3–5: "A feline is just another name for the cat family — like tigers and the cat
@@ -1846,34 +1863,32 @@ BEAT 1 — EXPLAIN OR GENTLY CONFIRM:
        They're called felines."
       Do NOT say "That's wrong!" or "Actually, no." — warm, not corrective.
 
+  Before delivering BEAT 1.2(B), pause to silently self-verify the disputed fact against
+  {object_name} and current grounding facts (if available). If you have ANY doubt,
+  downgrade to "That's a great thing to wonder about — let's check together with a grown-up later."
+
 BEAT 2 — BRIDGE BACK TO OBJECT: One sentence connecting the explanation to {object_name}.
   GOOD: "So lions really are felines — just the biggest, loudest kind of cat!"
   BAD: "Anyway, back to learning!" (abrupt, doesn't connect)
 
-BEAT 3 — RE-ASK: Re-ask the question from your last response ("{last_model_response}")
-  in fresh words — same question, slightly different phrasing.
-  GOOD: "So — what do you think a lion's roar sounds like?"
-  The re-ask should feel natural, not mechanical.
-
-  If the confusing word appeared in the original question, substitute it with the now-clarified
-  word or a simple synonym — but preserve the EXACT TYPE of question.
-  GOOD: Original "Do you like watching it swim in its tank?" → Re-ask: "Do you like watching
-        the goldfish swim in its little glass home?" (same preference question, word swapped)
-  BAD:  Original "Do you like watching it swim in its tank?" → Re-ask: "What do you think it's
-        like to watch the goldfish move around?" (changed from preference → imagination — WRONG)
+BEAT 3 — DO NOT RE-ASK. Choose ONE of these:
+  (a) DOWNGRADE: Ask a simpler, related question that the child can definitely answer.
+  (b) PIVOT TO ACTIVITY: If interaction is winding down, gracefully transition into an
+      activity recommendation tied to {object_name}.
+  (c) (B-only, if child STILL insists after BEAT 1.2): Suggest asking a trusted grown-up.
+      "Maybe we can ask a grown-up you trust about this — they might know even more!"
 
 PROHIBITIONS:
 - Do NOT say "That's a great question!" or "Great!"
 - Do NOT say "That's wrong!", "Actually, no", or anything that sounds corrective or dismissive
 - Do NOT introduce new vocabulary in the explanation
-- Do NOT skip Beat 3 — the child must not be left hanging after the clarification
 - Do NOT ask a different question — re-ask the one from your last response
 
 Respond naturally (NOT JSON). 2–3 sentences max.
 """
 
 # ============================================================================
-# 7. ROUTER RULES BLOCKS (overridable via prompt_overrides.json)
+# 7. ROUTER RULES BLOCKS
 # ============================================================================
 
 # Rules-only block for ThemeNavigator.analyze_turn() in stream/theme_guide.py.
@@ -2061,14 +2076,5 @@ def get_prompts():
         # Guide navigator rules
         'theme_navigator_rules': THEME_NAVIGATOR_RULES,
     }
-
-    # Merge approved optimizations at call time (no restart required)
-    overrides_path = Path(__file__).parent / "prompt_overrides.json"
-    if overrides_path.exists():
-        try:
-            overrides = json.loads(overrides_path.read_text(encoding="utf-8"))
-            prompts.update(overrides)
-        except Exception:
-            pass  # Corrupted overrides file — silently fall back to defaults
 
     return prompts
