@@ -68,6 +68,7 @@ async def ask_introduction_question_stream(
             age=age,
             hook_type_section=hook_type_section,
             knowledge_context=knowledge_context,
+            sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
         )
         guardrail = paixueji_prompts.ANCHOR_BRIDGE_INTRO_GUARDRAIL_PROMPT.format(
             bridge_context=bridge_context or "",
@@ -95,6 +96,7 @@ async def ask_introduction_question_stream(
             age=age,
             hook_type_section=hook_type_section,
             knowledge_context=knowledge_context,
+            sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
         )
 
     # Prepare messages with introduction prompt

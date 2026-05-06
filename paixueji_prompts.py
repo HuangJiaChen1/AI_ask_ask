@@ -307,6 +307,8 @@ BEAT 4 — ENGAGEMENT HOOK
   Do NOT use literary metaphors.
   Do NOT introduce magic, magical powers, secret treasure, or superpower pivots unless the child already introduced that kind of play.
 
+{sensory_safety_rules}
+
 EXAMPLE SCRIPTS:
 Scene: Indoor | Object: Yellow flower (narcissus) | Age: 3
 → "Wow! You found some really beautiful flowers! They're called daffodils. Did your mom give them to you?"
