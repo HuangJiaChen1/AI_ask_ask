@@ -966,6 +966,7 @@ class TestPromptFormattingEdgeCases:
                 age_prompt="age 6 guidance",
                 age=6,
                 sensory_safety_rules="",
+                hook_type_section="",
             )
             assert "my {favorite} toy" in formatted
         except KeyError as e:

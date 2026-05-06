@@ -310,6 +310,7 @@ async def ask_attribute_intro_stream(
     age: int,
     config: dict,
     client: genai.Client,
+    hook_type_section: str = "",
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str, dict], None]:
     """Stream a soft attribute introduction — makes the suggested attribute
     salient without hard-locking the conversation."""
@@ -321,6 +322,7 @@ async def ask_attribute_intro_stream(
         age_prompt=age_prompt,
         age=age,
         sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
+        hook_type_section=hook_type_section,
     )
     messages_to_send = messages + [{"role": "user", "content": prompt}]
     clean_messages = clean_messages_for_api(messages_to_send)

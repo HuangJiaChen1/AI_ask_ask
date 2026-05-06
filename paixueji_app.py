@@ -69,6 +69,7 @@ from stream import (
     generate_topic_switch_response_stream,
     prepare_messages_for_streaming,
     extract_previous_response,
+    select_hook_type,
 )
 from stream.errors import build_sse_error_payload
 from stream.validation import (
@@ -859,6 +860,15 @@ def start_conversation():
                             assistant.conversation_history.copy(),
                             age_prompt,
                         )
+                        # Select a hook type for the attribute intro
+                        hook_type_section = ""
+                        if HOOK_TYPES:
+                            _hook_type_name, hook_type_section = select_hook_type(
+                                age or 6,
+                                assistant.conversation_history,
+                                HOOK_TYPES,
+                                attribute_pipeline_enabled=True,
+                            )
                         generator = ask_attribute_intro_stream(
                             messages=messages,
                             object_name=assistant.attribute_state.object_name,
@@ -869,6 +879,7 @@ def start_conversation():
                             age=age or 6,
                             config=assistant.config,
                             client=assistant.client,
+                            hook_type_section=hook_type_section,
                         )
                         sequence_number = 0
                         full_response = ""

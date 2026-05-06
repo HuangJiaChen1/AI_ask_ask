@@ -432,15 +432,13 @@ BAD (attribute=body color, object=apple):
   "What color is it?" (knowledge-testing question)
 
 BEAT 4 — ENGAGEMENT HOOK
-End with exactly ONE easy question that lets the child notice, compare, or react.
-The question should be open-ended enough that the child can answer about any feature,
-but the wording should make {attribute_label} feel salient.
-GOOD (attribute=body color, object=apple):
-  "What do you notice first when you look at it?"
-GOOD (attribute=covering, object=cat):
-  "What's the first thing you notice about this cat?"
-BAD: "What color is the apple?" (knowledge-testing quiz)
-BAD: "What can you tell me about the apple?" (too vague, no direction)
+  PRIMARY: Open question that lets the child notice the salient attribute.
+    "What do you notice first when you look at it?"
+  FALLBACK (when the attribute is non-observable or hard to elicit): AI gently states the
+  attribute, then uses the assigned hook type to build an emotional rather than
+  knowledge-testing bridge.
+    "Look at how soft the petals are! {hook_type_section}"
+  The LLM picks PRIMARY by default; FALLBACK is allowed when SUGGESTED ATTRIBUTE is non-observable.
 
 Rules:
 - Make {attribute_label} feel naturally noticeable, NOT forced or quiz-like.
