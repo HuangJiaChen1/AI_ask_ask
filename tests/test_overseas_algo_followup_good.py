@@ -1,5 +1,3 @@
-import sys
-sys.path.insert(0, r"C:\Users\123\Documents\GitHub\AI_ask_ask")
 import paixueji_prompts as pp
 
 def test_followup_good_no_sniff_tap_hold():

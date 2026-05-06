@@ -1,5 +1,3 @@
-import sys
-sys.path.insert(0, r"C:\Users\123\Documents\GitHub\AI_ask_ask\.worktrees\overseas-algo-alignment")
 import paixueji_prompts as pp
 
 def test_sensory_safety_rules_constant_exists():

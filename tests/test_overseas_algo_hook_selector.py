@@ -1,5 +1,3 @@
-import sys
-sys.path.insert(0, r"C:/Users/123/Documents/GitHub/AI_ask_ask/.worktrees/overseas-algo-alignment")
 from stream.utils import HIGH_IMAGINATION_HOOKS, select_hook_type
 from graph import OPEN_ENDED_QUESTION_HOOKS, CONCRETE_QUESTION_HOOKS
 

@@ -1,5 +1,3 @@
-import sys
-sys.path.insert(0, r"C:\Users\123\Documents\GitHub\AI_ask_ask\.worktrees\overseas-algo-alignment")
 import paixueji_prompts as pp
 
 def test_explanation_open_ended_offers_1_to_2_suggestions():
