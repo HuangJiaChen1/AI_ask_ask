@@ -960,6 +960,14 @@ RULE 1 — INTENT (choose exactly ONE):
   ACTION                : Child issues a command to the AI or requests a change.
                           Examples: "Say it again.", "Give me a new question.", "Let's talk about dogs."
 
+RULE 1b — ACTION SUBTYPE (only when INTENT is ACTION):
+  ACTION_SUBTYPE: A | B | C | D | NONE
+    A — REPEAT REQUEST ("Say that again", "What?", "Huh?")
+    B — NEW ACTIVITY REQUEST ("Give me a new question", "Let's do something else", "I'm bored")
+    C — VAGUE OR META REQUEST ("I'm bored", "This is too hard", "Can we change?")
+    D — REQUEST FOR UNRELATED SPECIFIC TOPIC ("I want to talk about dogs instead")
+    NONE — when intent is not ACTION
+
   SOCIAL                : Child asks about the AI itself, not the object.
                           Examples: "Do you have feelings?", "How old are you?", "Are you real?", "Are you a robot?"
                           NOT social: "Is it yum?", "Is it tasty?" (taste/sensory question about the food → CURIOSITY)
@@ -1025,6 +1033,7 @@ RULE 2 — NEW OBJECT (only for ACTION or AVOIDANCE):
 
 OUTPUT (one field per line, no extra text):
 INTENT: <one of the 14 categories>
+ACTION_SUBTYPE: A | B | C | D | NONE
 NEW_OBJECT: ObjectName or null
 REASONING: one brief sentence
 """
