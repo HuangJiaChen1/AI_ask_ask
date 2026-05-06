@@ -5,8 +5,8 @@ Reads all traces for a given culprit, synthesizes a failure pattern across
 instances, rewrites the responsible prompt template, generates a real
 "after-the-fix" sample response, and saves to a pending file for human review.
 
-The optimization is NEVER saved to prompt_overrides.json automatically.
-Human approval via the /api/optimize-prompt/<id>/approve endpoint is required.
+Optimizations are saved to optimizations/pending/ for human review.
+They are NOT applied automatically.
 
 Anti-hardcoding constraint: multiple traces are fed to the optimizer LLM so it
 must extract a general principle, not a case-specific prohibition.
@@ -1046,7 +1046,7 @@ def run_refinement(
     if old_pending.exists():
         old_pending.unlink()
 
-    save_optimization(new_result, approved=False)
+    save_optimization(new_result)
     return new_result
 
 
@@ -1054,77 +1054,19 @@ def run_refinement(
 # Persistence
 # ============================================================================
 
-def save_optimization(result: OptimizationResult, approved: bool = False) -> str:
+def save_optimization(result: OptimizationResult) -> str:
     """
-    Persist an OptimizationResult.
-
-    approved=False  → writes to optimizations/pending/{id}.json
-    approved=True   → merges into prompt_overrides.json and moves the file
-                       from pending/ to optimizations/{id}.json
+    Persist an OptimizationResult to optimizations/pending/{id}.json for human review.
     """
     base_dir = Path(__file__).parent
     opt_id = result.optimization_id
 
-    if not approved:
-        pending_dir = base_dir / "optimizations" / "pending"
-        pending_dir.mkdir(parents=True, exist_ok=True)
-        dest = pending_dir / f"{opt_id}.json"
-        dest.write_text(result.model_dump_json(indent=2), encoding="utf-8")
-        logger.info(f"[Optimizer] Saved pending optimization: {dest}")
-        return str(dest)
-
-    # ── Approved: merge into overrides and archive ──
-    overrides_path = base_dir / "prompt_overrides.json"
-    if overrides_path.exists():
-        overrides = json.loads(overrides_path.read_text(encoding="utf-8"))
-    else:
-        overrides = {}
-
-    overrides[result.prompt_name] = result.optimized_prompt
-    overrides_path.write_text(
-        json.dumps(overrides, indent=2, ensure_ascii=False), encoding="utf-8"
-    )
-    logger.info(
-        f"[Optimizer] Merged '{result.prompt_name}' into prompt_overrides.json"
-    )
-
-    # If there's a router patch, merge it into router_overrides.json
-    if result.router_patch:
-        router_overrides_path = base_dir / "router_overrides.json"
-        if router_overrides_path.exists():
-            try:
-                router_overrides = json.loads(router_overrides_path.read_text(encoding="utf-8"))
-            except Exception:
-                router_overrides = {}
-        else:
-            router_overrides = {}
-
-        for key, value in result.router_patch.items():
-            if isinstance(value, dict) and isinstance(router_overrides.get(key), dict):
-                router_overrides[key].update(value)
-            else:
-                router_overrides[key] = value
-
-        router_overrides_path.write_text(
-            json.dumps(router_overrides, indent=2, ensure_ascii=False), encoding="utf-8"
-        )
-        logger.info(
-            f"[Optimizer] Merged router_patch into router_overrides.json: {result.router_patch}"
-        )
-
-    # Move pending file to approved archive
-    approved_dir = base_dir / "optimizations"
-    approved_dir.mkdir(parents=True, exist_ok=True)
-    pending_path = base_dir / "optimizations" / "pending" / f"{opt_id}.json"
-    archive_path = approved_dir / f"{opt_id}.json"
-    if pending_path.exists():
-        pending_path.rename(archive_path)
-    else:
-        # Pending file missing (e.g. server restart) — write fresh archive copy
-        archive_path.write_text(result.model_dump_json(indent=2), encoding="utf-8")
-
-    logger.info(f"[Optimizer] Archived approved optimization: {archive_path}")
-    return str(archive_path)
+    pending_dir = base_dir / "optimizations" / "pending"
+    pending_dir.mkdir(parents=True, exist_ok=True)
+    dest = pending_dir / f"{opt_id}.json"
+    dest.write_text(result.model_dump_json(indent=2), encoding="utf-8")
+    logger.info(f"[Optimizer] Saved pending optimization: {dest}")
+    return str(dest)
 
 
 # ============================================================================
@@ -1203,5 +1145,5 @@ def run_optimization(
         result.preview_response = f"(Preview generation failed: {e})"
         result.previews = []
 
-    save_optimization(result, approved=False)
+    save_optimization(result)
     return result

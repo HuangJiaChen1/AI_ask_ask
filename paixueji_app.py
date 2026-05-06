@@ -3562,38 +3562,6 @@ def optimize_prompt():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route('/api/optimize-prompt/<optimization_id>/approve', methods=['POST'])
-def approve_optimization(optimization_id):
-    """
-    Approve a pending optimization: merge into prompt_overrides.json and archive.
-
-    Response: {"status": "approved", "prompt_name": ..., "optimization_id": ...}
-    """
-    from pathlib import Path
-    from trace_schema import OptimizationResult
-    from prompt_optimizer import save_optimization
-
-    pending_path = Path(__file__).parent / "optimizations" / "pending" / f"{optimization_id}.json"
-
-    if not pending_path.exists():
-        return jsonify({"success": False, "error": "Pending optimization not found"}), 404
-
-    try:
-        result = OptimizationResult.model_validate_json(
-            pending_path.read_text(encoding="utf-8")
-        )
-        save_optimization(result, approved=True)
-        logger.info(f"[OPTIMIZE] Approved optimization {optimization_id} for '{result.prompt_name}'")
-        return jsonify({
-            "status": "approved",
-            "prompt_name": result.prompt_name,
-            "optimization_id": optimization_id,
-        })
-    except Exception as e:
-        logger.error(f"[OPTIMIZE] Approval error: {e}")
-        return jsonify({"success": False, "error": str(e)}), 500
-
-
 @app.route('/api/optimize-prompt/<optimization_id>/refine', methods=['POST'])
 def refine_optimization(optimization_id):
     """
@@ -3648,14 +3616,6 @@ def reject_optimization(optimization_id):
         logger.info(f"[OPTIMIZE] Rejected and deleted pending optimization {optimization_id}")
 
     return jsonify({"status": "rejected"})
-
-
-def _load_config() -> dict:
-    """Load config.json (used by optimization endpoints that run outside request context)."""
-    import os
-    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
-    with open(config_path, "r") as f:
-        return json.load(f)
 
 
 def build_human_feedback_report(object_name, age, session_id, transcript,

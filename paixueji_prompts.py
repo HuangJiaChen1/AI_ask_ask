@@ -194,15 +194,18 @@ STEP 2 — CHOOSE YOUR QUESTION STYLE:
   Last response said apples come in red, green, and yellow
   → "Which apple colour do you like best — red, green, or yellow?"
 
-  GOOD — SENSORY INVITE:
-  Ask the child to notice something with their senses right now.
-  Use this when the last response was a brief social reaction with no
-  educational hook to GROW from.
-  There is no wrong answer here — they are discovering, not being tested.
-
-  "Can you give it a little tap? What sound does it make?"
-  "Does it smell like anything? Try having a little sniff!"
-  "Is it heavy or light? Give it a hold and see!"
+  GOOD — VISUAL OR IMAGINATIVE INVITE:
+  Ask the child to notice something they can SEE or easily judge without touching.
+  Focus on visual details, simple comparison, or easy choice.
+  Avoid asking the child to touch, smell, taste, or interact physically.
+  Make sure it can be answered just by looking or thinking.
+  "Is it shiny or dull?"
+  "Which part looks the biggest?"
+  "Do you think it's smooth or bumpy?"
+  "Is it more round or more long?"
+  "Do you think it's the same inside?"
+  "If it rolled, would it go fast or slow?"
+  "If you dropped it, would it make a loud sound or a quiet one?"
 
   OK — WONDER QUESTION:
   Invite them to guess or imagine. Use sparingly, and only if the child already seems playful.
@@ -262,7 +265,7 @@ BEAT 2 — OBJECT CONFIRMATION
   Examples: "You found some really beautiful flowers!" / "I see a little toy dog!"
 
 BEAT 3 — FEATURE DESCRIPTION (OPTIONAL)
-  Add ONE vivid sensory or visual detail the child can relate to (see, touch, feel).
+  Add ONE vivid sensory or visual detail the child can relate to (see, look closely, imagine how it feels).
   Use the grounded details above to inspire natural-sounding details.
   Do NOT present it as a "did you know" fact — weave it in naturally.
   Stay with real, observable details.
@@ -337,7 +340,7 @@ Rules:
 - Do not teach facts about related objects implied by the name.
 - If the object name contains another object word, ignore that implied object.
 - Do not convert the name into a bridge, analogy, or animal fact.
-- Ask only about observable details, texture, smell, sound, use, feeling, or preference.
+- Ask only about observable details, texture, sound, use, feeling, or preference.
 - If you mention the object, mean only the literal named item in front of the child.
 """
 
@@ -1155,8 +1158,8 @@ BEAT 1 — ACCEPTANCE (one short phrase):
   "That's okay!" / "No worries!" / "That's a tricky one!"
 
 BEAT 2 — SCAFFOLD CLUE: One concrete, sensory clue that opens the answer — NOT the question rephrased.
-  If last question was about taste/feel: point to the sense organ
-    "Think about what your tongue feels the moment something sweet touches it..."
+  If last question was about taste/feel: give an imaginative comparison
+    "If you could guess its flavor, would it be sweet or sour?"
   If last question was about appearance: narrow to one visible detail
     "Look at just the very center — what one color jumps out?"
   If last question was about sound/movement: give a comparison
@@ -1266,7 +1269,7 @@ Make it feel like a gift, not a correction.
 BEAT 1 — ACCEPTANCE (one short phrase): "That's okay!" / "No worries!"
 
 BEAT 2 — DIRECT ANSWER (1-2 simple sentences): Tell them the answer plainly.
-  Keep it concrete and sensory — what can they see, taste, touch, or hear?
+  Keep it concrete and sensory — what can they see or hear?
   Relate it to something in their world if possible.
   GOOD (if question was about apple needing sunlight): "Apple trees need sunshine to make the
     apples grow big and sweet — just like you need food to grow big and strong!"
@@ -1339,8 +1342,8 @@ BEAT 2 — GENTLE CORRECTION: State the correct fact simply.
 
 BEAT 3 — RE-ENGAGEMENT INVITE: Brief, action-based (NOT a knowledge question):
   • If {last_model_response} was about an OBSERVABLE PROPERTY (color, shape, texture, size,
-    appearance, smell): use a visual/sensory invite:
-      "Take a close look!" / "See if you can spot it now!" / "Look right there!"
+    appearance): use a visual invite:
+      "Take a close look!" / "Look right there!"
   • If {last_model_response} was about a PROCESS, CONCEPT, or ACTION (how something works,
     how it is made/harvested/used, why something happens, where something comes from):
     use a thought/imagination invite:
@@ -1381,7 +1384,7 @@ BEAT 2 — IMAGINATIVE REDIRECT:
 BEAT 3 — ONE OPEN QUESTION:
   CRITICAL: Question MUST still be about {object_name}, not a tangential topic.
   BAD: "What other fruits do you know that are red?" (not about {object_name})
-  GOOD: "What do you think a {object_name} like that would taste like?"
+  GOOD: "If you could guess, would it taste sweet or crunchy?"
   Keep it light and accessible — no requirement for them to have the object.
 
 PROHIBITIONS:
@@ -1873,7 +1876,7 @@ Respond naturally (NOT JSON). 2–3 sentences max.
 """
 
 # ============================================================================
-# 7. ROUTER RULES BLOCKS (overridable via prompt_overrides.json)
+# 7. ROUTER RULES BLOCKS
 # ============================================================================
 
 # Rules-only block for ThemeNavigator.analyze_turn() in stream/theme_guide.py.
@@ -2061,14 +2064,5 @@ def get_prompts():
         # Guide navigator rules
         'theme_navigator_rules': THEME_NAVIGATOR_RULES,
     }
-
-    # Merge approved optimizations at call time (no restart required)
-    overrides_path = Path(__file__).parent / "prompt_overrides.json"
-    if overrides_path.exists():
-        try:
-            overrides = json.loads(overrides_path.read_text(encoding="utf-8"))
-            prompts.update(overrides)
-        except Exception:
-            pass  # Corrupted overrides file — silently fall back to defaults
 
     return prompts
