@@ -8,6 +8,7 @@ from google import genai
 from loguru import logger
 import time
 
+import paixueji_prompts
 from stream import (
     ask_introduction_question_stream,
     ask_followup_question_stream,
@@ -1449,6 +1450,7 @@ async def node_social(state: PaixuejiState) -> dict:
         client=state["client"],
         knowledge_context=_grounding_context_for_intent(state, "social"),
         resolution_guardrails=_resolution_guardrails_for_state(state),
+        character_profile=paixueji_prompts.CHARACTER_PROFILE,
     )
     full_text_intent, new_seq = await stream_generator_to_callback(generator, state)
 

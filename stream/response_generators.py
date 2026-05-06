@@ -33,6 +33,7 @@ async def generate_intent_response_stream(
     resolution_guardrails: str = "",
     surface_only_mode: bool = False,
     surface_object_name: str = "",
+    character_profile: str = "",
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
     Universal intent response generator for the 9-node architecture.
@@ -79,6 +80,7 @@ async def generate_intent_response_stream(
             age_prompt=age_prompt,
             last_model_response=last_model_response,
             knowledge_context=knowledge_context,
+            character_profile=character_profile,
         )
         if surface_only_mode:
             surface_only_prompt = paixueji_prompts.get_prompts()["unresolved_surface_only_prompt"].format(
