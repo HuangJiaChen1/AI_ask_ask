@@ -20,7 +20,7 @@ logger.add(
 
 # Performance thresholds for warnings (in seconds)
 SLOW_LLM_CALL_THRESHOLD = 5.0
-HIGH_IMAGINATION_HOOKS = {"想象导向", "情绪投射", "角色代入", "创意改造"}
+HIGH_IMAGINATION_HOOKS = {"想象导向", "情绪投射", "角色代入", "创意改造", "轻搞怪/无厘头"}
 
 
 def safe_print(message):

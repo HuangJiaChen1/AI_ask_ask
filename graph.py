@@ -44,10 +44,12 @@ OPEN_ENDED_QUESTION_HOOKS = {
     "选择偏好",
     "创意改造",
     "意图好奇",
+    "轻搞怪/无厘头",
 }
 CONCRETE_QUESTION_HOOKS = {
     "细节发现",
     "经验、生活链接",
+    "模仿引导",
 }
 _OPEN_ENDED_QUESTION_PATTERNS = (
     re.compile(r"\bwhat do you think\b"),
