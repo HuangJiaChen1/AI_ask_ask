@@ -3,6 +3,17 @@ Prompts for the Paixueji assistant.
 The LLM asks questions about objects, and the child answers.
 """
 
+SENSORY_SAFETY_RULES = """\
+SENSORY SAFETY (applies to all sensory invitations):
+- Default to sight: "What do you notice?", "Which part looks the biggest?", "Is it shiny or dull?"
+- Allow imagination/guessing: "Do you think it would feel rough?", "If it rolled, would it go fast or slow?"
+- Do NOT invite the child to TOUCH, SMELL, TASTE, LICK, or PHYSICALLY INTERACT with the object —
+  the environment may be unsafe (parks, public spaces, unknown items).
+- Do NOT use "Do you know…" framing — it creates testing pressure.
+- For imitation: only voices and stretches/movements are OK ("Let's bark like a puppy!").
+  NEVER suggest petting an animal, touching/smelling a plant, or any physical contact.
+"""
+
 # ============================================================================
 # 1. CORE SYSTEM PROMPT
 # ============================================================================
@@ -54,6 +65,8 @@ Example:
 # Used when child says "I don't know" or is stuck
 EXPLANATION_RESPONSE_PROMPT = """The child said they don't know or gave an unclear answer: "{child_answer}"
 Context: You previously asked "{previous_question}" about {object_name}.
+
+{sensory_safety_rules}
 
 YOUR TASK:
 Help the child move forward based on the TYPE of question asked:
@@ -143,6 +156,8 @@ Respond naturally (NOT JSON).
 
 FOLLOWUP_QUESTION_PROMPT = """YOUR TASK:
 Ask one more question to a {age}-year-old child about {object_name}.
+
+{sensory_safety_rules}
 
 CONTEXT:
 Look at the last assistant message in the conversation — that is the WOW fact
@@ -378,6 +393,8 @@ AGE GUIDANCE: {age_prompt}
 SUGGESTED ATTRIBUTE: {attribute_label}
 ACTIVITY TARGET: {activity_target}
 
+{sensory_safety_rules}
+
 TASK — Write ONE short opening that makes {attribute_label} naturally noticeable.
 
 STRUCTURE: Emotional Opening -> Object Confirmation -> Salience Highlight -> Engagement Hook
@@ -421,6 +438,8 @@ Rules:
 """
 
 ATTRIBUTE_SOFT_GUIDE = """
+{sensory_safety_rules}
+
 SUGGESTED EXPLORATION DIRECTION: {attribute_label}
 ACTIVITY GOAL: {activity_target}
 

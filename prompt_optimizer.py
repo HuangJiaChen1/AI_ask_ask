@@ -707,6 +707,7 @@ def generate_preview_response(
             age=age,
             correctness_reasoning=correctness_reasoning,
             previous_question=exchange.model_question,
+            sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
         )
 
     elif prompt_name == "user_intent_prompt":

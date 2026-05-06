@@ -1333,6 +1333,7 @@ def continue_conversation():
                         soft_guide = paixueji_prompts.get_prompts()["attribute_soft_guide"].format(
                             attribute_label=attribute_label,
                             activity_target=activity_target,
+                            sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
                         )
 
                         if needs_followup:
