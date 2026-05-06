@@ -145,6 +145,7 @@ class PaixuejiState(TypedDict):
     intent_type: Optional[str]   # one of 9 intent categories (chat mode)
     classification_status: Optional[str]
     classification_failure_reason: Optional[str]
+    action_subtype: Optional[str]  # A/B/C/D for ACTION intent
 
     new_object_name: Optional[str]
     detected_object_name: Optional[str]
@@ -542,6 +543,10 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
     classification_status = intent_result.get("classification_status")
     classification_failure_reason = intent_result.get("classification_failure_reason")
 
+    # Reset per-turn fields and propagate ACTION subtype
+    action_subtype = intent_result.get("action_subtype")
+    state["assistant"].action_subtype = action_subtype
+
     # Update unified struggle counter (IDK or wrong answer)
     if classification_status == "failed":
         state["assistant"].consecutive_struggle_count = 0
@@ -559,6 +564,7 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
         "new_object_name": intent_result.get("new_object"),
         "classification_status": classification_status,
         "classification_failure_reason": classification_failure_reason,
+        "action_subtype": action_subtype,
         "used_kb_item": None,
         "kb_mapping_status": None,
     }
@@ -1365,17 +1371,21 @@ async def node_boundary(state: PaixuejiState) -> dict:
 async def node_action(state: PaixuejiState) -> dict:
     """
     Child issues a command or requests a change.
-    - If new_object named → topic switch via generate_topic_switch_response_stream
-    - If no new_object → intent response executing or redirecting the command
+    Branches on ACTION subtype:
+      A → re-state last response
+      B → new activity: acknowledge + flip activity_ready
+      C → vague/meta: acknowledge + offer option + flip activity_ready
+      D → topic switch if new_object present, else treat as C
     """
     start_time = time.time()
     logger.info(f"[{state['session_id']}] Node: Action")
 
+    subtype = state.get("action_subtype") or "C"
     new_obj = state.get("new_object_name")
     messages = prepare_messages_for_streaming(state["messages"], state["age_prompt"])
     extra_updates = {}
 
-    if new_obj:
+    if subtype == "D" and new_obj:
         switch_updates = await _apply_topic_switch(state, new_obj)
         extra_updates.update(switch_updates)
         generator = generate_topic_switch_response_stream(
@@ -1387,6 +1397,8 @@ async def node_action(state: PaixuejiState) -> dict:
             client=state["client"],
         )
     else:
+        if subtype in ("B", "C") or (subtype == "D" and not new_obj):
+            state["assistant"].attribute_activity_ready = True
         _mark_kb_mapping_not_applicable(state)
         generator = generate_intent_response_stream(
             intent_type="action",

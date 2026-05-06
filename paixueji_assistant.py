@@ -121,6 +121,9 @@ class PaixuejiAssistant:
         # Ordinary chat struggle tracking
         self.consecutive_struggle_count = 0  # Resets on any non-struggling response (IDK or wrong)
 
+        # ACTION intent subtype (A/B/C/D) set by node_analyze_input
+        self.action_subtype: Optional[str] = None
+
         # Initialize Google Gemini client
         if client:
             self.client = client
