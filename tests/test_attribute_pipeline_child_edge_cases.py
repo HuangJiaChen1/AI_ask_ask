@@ -965,6 +965,8 @@ class TestPromptFormattingEdgeCases:
                 activity_target="finding colored objects",
                 age_prompt="age 6 guidance",
                 age=6,
+                sensory_safety_rules="",
+                hook_type_section="",
             )
             assert "my {favorite} toy" in formatted
         except KeyError as e:
@@ -996,6 +998,7 @@ class TestPromptFormattingEdgeCases:
             formatted = guide.format(
                 attribute_label="body {shape} color",
                 activity_target="finding {colored} objects",
+                sensory_safety_rules="",
             )
             assert "body {shape} color" in formatted
         except KeyError as e:

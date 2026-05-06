@@ -228,6 +228,7 @@ async def ask_followup_question_stream(
         age=age,
         age_prompt=age_prompt,
         knowledge_context=knowledge_context,
+        sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
     )
     if surface_only_mode:
         surface_only_prompt = prompts["unresolved_surface_only_prompt"].format(
@@ -309,6 +310,7 @@ async def ask_attribute_intro_stream(
     age: int,
     config: dict,
     client: genai.Client,
+    hook_type_section: str = "",
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str, dict], None]:
     """Stream a soft attribute introduction — makes the suggested attribute
     salient without hard-locking the conversation."""
@@ -319,6 +321,8 @@ async def ask_attribute_intro_stream(
         activity_target=activity_target,
         age_prompt=age_prompt,
         age=age,
+        sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
+        hook_type_section=hook_type_section,
     )
     messages_to_send = messages + [{"role": "user", "content": prompt}]
     clean_messages = clean_messages_for_api(messages_to_send)
