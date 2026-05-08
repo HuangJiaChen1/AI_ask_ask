@@ -62,6 +62,21 @@ _OPEN_ENDED_QUESTION_PATTERNS = (
     re.compile(r"^what do .+ do when\b"),
 )
 
+# Intents that do NOT receive a follow-up question in the response stream.
+# Both ordinary and attribute pipelines use this set.
+INTENTS_WITHOUT_FOLLOWUP = {
+    "curiosity",
+    "concept_confusion",
+    "clarifying_idk",
+    "clarifying_wrong",
+    "clarifying_constraint",
+    "play",
+    "emotional",
+    "avoidance",
+    "boundary",
+    "action",
+}
+
 
 def route_from_analyze_input(state) -> str:
     """
