@@ -158,23 +158,13 @@ def test_soft_guide_warns_about_premature_handoff():
     assert "breaks the experience" in guide_lower or "break" in guide_lower
 
 
-# -- CURIOSITY_ATTRIBUTE_RESPONSE_PROMPT invariants ----------------------------
-
-def test_curiosity_attribute_response_prompt_exists():
-    prompts = paixueji_prompts.get_prompts()
-    assert "curiosity_attribute_response_prompt" in prompts
-    prompt = prompts["curiosity_attribute_response_prompt"]
-    assert "BEAT 3" not in prompt
-    assert "Do NOT ask a question" in prompt
-    assert "BEAT 1" in prompt
-    assert "BEAT 2" in prompt
-
+# -- Unified intent prompt in attribute pipeline --------------------------------
 
 @pytest.mark.asyncio
-async def test_curiosity_uses_attribute_prompt_in_pipeline(monkeypatch):
+async def test_curiosity_uses_unified_intent_prompt_in_pipeline(monkeypatch):
+    """After unification, attribute pipeline uses the normal intent prompt."""
     prompts = {
         "curiosity_intent_prompt": "INTENT_PROMPT",
-        "curiosity_attribute_response_prompt": "ATTR_PROMPT",
         "attribute_response_hint": "HINT: {attribute_label}",
     }
     monkeypatch.setattr(paixueji_prompts, "get_prompts", lambda: prompts)
@@ -217,10 +207,9 @@ async def test_curiosity_uses_attribute_prompt_in_pipeline(monkeypatch):
         pass
 
     assert len(captured_contents) > 0
-    # The ATTR_PROMPT should have been used, not INTENT_PROMPT
+    # The unified INTENT_PROMPT should be used (no attribute-specific prompt)
     contents_text = str(captured_contents[0])
-    assert "ATTR_PROMPT" in contents_text
-    assert "INTENT_PROMPT" not in contents_text
+    assert "INTENT_PROMPT" in contents_text
 
 
 def test_ask_followup_includes_thread_weaving(monkeypatch):
@@ -310,6 +299,6 @@ def test_intent_followup_branching_logic():
     """Verify which intents get follow-up and which don't."""
     assert "play" in INTENTS_WITHOUT_FOLLOWUP
     assert "emotional" in INTENTS_WITHOUT_FOLLOWUP
-    assert "curiosity" not in INTENTS_WITHOUT_FOLLOWUP
+    assert "curiosity" in INTENTS_WITHOUT_FOLLOWUP
     assert "correct_answer" not in INTENTS_WITHOUT_FOLLOWUP
     assert "informative" not in INTENTS_WITHOUT_FOLLOWUP
