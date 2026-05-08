@@ -8,9 +8,9 @@ def test_explanation_open_ended_offers_1_to_2_suggestions():
     assert "2-3 fun suggestions" not in text, "EXPLANATION_RESPONSE_PROMPT still says '2-3 fun suggestions'"
 
 def test_curiosity_beat_2_anchor_constraint():
-    """CURIOSITY_ATTRIBUTE_RESPONSE_PROMPT BEAT 2 must amplify the child's specific question."""
+    """CURIOSITY_INTENT_PROMPT BEAT 2 must amplify the child's specific question."""
     prompts = pp.get_prompts()
-    text = prompts.get("curiosity_attribute_response_prompt", "")
+    text = prompts.get("curiosity_intent_prompt", "")
     # The ANCHOR CHECK must contain the strong constraint language
     assert "Your WOW detail MUST amplify the answer to *that question*" in text, (
         "CURIOSITY BEAT 2 anchor constraint missing"
