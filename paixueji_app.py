@@ -20,7 +20,7 @@ from google.genai.types import HttpOptions
 from loguru import logger
 
 from paixueji_assistant import PaixuejiAssistant
-from graph import paixueji_graph
+from graph import paixueji_graph, INTENTS_WITHOUT_FOLLOWUP
 from schema import BridgeDebugInfo, StreamChunk
 import paixueji_prompts
 import time
@@ -49,10 +49,6 @@ from resolution_debug import format_resolution_log_line
 # Module-level compiled regex for stripping REASON lines from activity follow-ups.
 # Must be defined here (not inside a function) to avoid re-compiling on every request.
 _REASON_RE = re.compile(r"REASON:\s*(.+?)(?:\n|$)")
-
-# Intents that do not receive a follow-up question in the attribute activity stream.
-# Defined at module level so tests can import it directly.
-INTENTS_WITHOUT_FOLLOWUP = {"play", "emotional"}
 
 from stream import (
     ask_attribute_intro_stream,
@@ -1360,7 +1356,7 @@ def continue_conversation():
                                 config=assistant.config,
                                 client=assistant.client,
                                 attribute_soft_guide=soft_guide,
-                                response_text=full_response if intent_type_lower == "curiosity" else "",
+                                response_text="",
                             )
 
                             activity_marker = "[ACTIVITY_READY]"
