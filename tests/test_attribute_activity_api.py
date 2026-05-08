@@ -257,14 +257,14 @@ def test_activity_marker_rejected_without_evidence_quote(client, mock_gemini_cli
     )
     session_id = final_chunk(start)["session_id"]
 
-    set_intent(mock_gemini_client, "CURIOSITY")
+    set_intent(mock_gemini_client, "CORRECT_ANSWER")
 
     stream_call = 0
     def _side_effect(model, contents, config=None):
         nonlocal stream_call
         stream_call += 1
         if stream_call == 1:
-            return _make_stream("Cats have amazing fur. What do you notice about this one?")
+            return _make_stream("Yes, cats are furry!")
         return _make_stream("Can you spot anything orange nearby?\n[ACTIVITY_READY]\nREASON: Child explored the color.")
 
     mock_gemini_client.aio.models.generate_content_stream.side_effect = _side_effect
@@ -292,14 +292,14 @@ def test_activity_marker_rejected_with_fabricated_quote(client, mock_gemini_clie
     )
     session_id = final_chunk(start)["session_id"]
 
-    set_intent(mock_gemini_client, "CURIOSITY")
+    set_intent(mock_gemini_client, "CORRECT_ANSWER")
 
     stream_call = 0
     def _side_effect(model, contents, config=None):
         nonlocal stream_call
         stream_call += 1
         if stream_call == 1:
-            return _make_stream("Cats have amazing fur. What do you notice about this one?")
+            return _make_stream("Yes, cats are furry!")
         return _make_stream(
             'Can you spot anything orange nearby?\n[ACTIVITY_READY]\nREASON: Child said "it is orange".'
         )
@@ -330,14 +330,14 @@ def test_activity_marker_accepted_with_current_turn_quote(client, mock_gemini_cl
     )
     session_id = final_chunk(start)["session_id"]
 
-    set_intent(mock_gemini_client, "CURIOSITY")
+    set_intent(mock_gemini_client, "CORRECT_ANSWER")
 
     stream_call = 0
     def _side_effect(model, contents, config=None):
         nonlocal stream_call
         stream_call += 1
         if stream_call == 1:
-            return _make_stream("Cats have amazing fur. What do you notice about this one?")
+            return _make_stream("Yes, cats are furry!")
         return _make_stream(
             'Can you spot anything orange nearby?\n[ACTIVITY_READY]\nREASON: Child said "it is fat" and explored the color.'
         )
