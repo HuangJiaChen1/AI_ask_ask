@@ -946,6 +946,7 @@ class TestPromptFormattingEdgeCases:
                 age_prompt="age 6 guidance",
                 last_model_response="Previous response",
                 knowledge_context="",
+                sensory_safety_rules="",
             )
             # If this succeeds, the braces were either escaped or not treated as format placeholders
             assert malicious_child in formatted
@@ -985,6 +986,7 @@ class TestPromptFormattingEdgeCases:
             age_prompt="guidance",
             last_model_response="previous",
             knowledge_context="",
+            sensory_safety_rules="",
         )
         assert multiline in formatted
 

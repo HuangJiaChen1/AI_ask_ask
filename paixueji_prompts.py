@@ -1107,6 +1107,8 @@ BEAT 3 — CLOSING QUESTION: End with ONE fun, imaginative question that grows f
   BAD: "Did you know...?" (banned phrasing — do not use)
   One short question — fun, imaginative, no wrong answer.
 
+{sensory_safety_rules}
+
 PROHIBITIONS:
 - Do NOT say "That's a great question!" or "Great question!"
 - Do NOT give vague answers ("It's part of nature" is not an answer)
@@ -1162,6 +1164,8 @@ BEAT 2 — SCAFFOLD CLUE: One concrete, sensory clue that opens the answer — N
 BEAT 3 — LOW-PRESSURE HANDOFF (3-7 words max, NOT a full question, do NOT use a question mark):
   "You can try." / "We can figure it out together." / "Take your time."
 
+{sensory_safety_rules}
+
 PROHIBITIONS:
 - Do NOT rephrase "{last_model_response}" in any form — that's re-asking
 - Do NOT pivot to a different sensory dimension
@@ -1201,6 +1205,8 @@ BEAT 3 — LOW-PRESSURE HANDOFF:
   GOOD: "You can use that, or make your own."
   GOOD: "That can be your idea, or you can change it."
 
+{sensory_safety_rules}
+
 PROHIBITIONS:
 - Do NOT say or imply there is one correct answer
 - Do NOT use "Take a guess!" or similar pressure
@@ -1218,6 +1224,8 @@ CONTEXT:
 
 AGE GUIDANCE:
 {age_prompt}
+
+{sensory_safety_rules}
 
 YOUR MISSION:
 The intent classifier failed for this turn. Ignore intent categories and respond naturally
@@ -1246,6 +1254,8 @@ AGE GUIDANCE:
 
 GROUNDING (prefer these facts over memory for BEAT 2 — use your best judgment if none fit):
 {knowledge_context}
+
+{sensory_safety_rules}
 
 YOUR MISSION:
 The child has said "I don't know" twice. Stop hinting — give them the answer directly.
@@ -1284,6 +1294,8 @@ BEAT 2 — MODEL EXAMPLE:
   GOOD: "If I were the goldfish, I might say, 'Blub blub, this tank is my shiny castle!'"
 
   No re-open. The next turn will move on to a new topic or activity recommendation.
+
+{sensory_safety_rules}
 
 PROHIBITIONS:
 - Do NOT say "The answer is"
@@ -1344,6 +1356,8 @@ BEAT 3 — RE-ENGAGEMENT INVITE: Brief, action-based (NOT a knowledge question):
       "What do you think?" / "Can you imagine?" / "Think about it!"
   NEVER use visual invites for process or concept questions — there is nothing to look at.
 
+{sensory_safety_rules}
+
 PROHIBITIONS:
 - Do NOT scold or make corrections feel harsh
 - Do NOT end with a knowledge question
@@ -1380,6 +1394,8 @@ BEAT 3 — ONE OPEN QUESTION:
   BAD: "What other fruits do you know that are red?" (not about {object_name})
   GOOD: "If you could guess, would it taste sweet or crunchy?"
   Keep it light and accessible — no requirement for them to have the object.
+
+{sensory_safety_rules}
 
 PROHIBITIONS:
 - Do NOT treat the constraint as avoidance — never say "That's okay, we can talk about something else!"
@@ -1464,6 +1480,8 @@ BEAT 2 — WOW FACT (statement only): Deliver ONE surprising related fact as a d
     GOOD: Beat 1 "That bright red is the first thing everyone notices!" →
           Beat 2 "Apples actually float in water because 25% of their volume is air!" (new property)
 
+{sensory_safety_rules}
+
 PROHIBITIONS:
 - Do NOT ask "How did you know that?" — they answered YOUR question
 - Do NOT echo their exact words as the celebration — paraphrase
@@ -1521,6 +1539,8 @@ BEAT 2 — WOW EXTENSION (declarative statement only): Add ONE surprising relate
 IMPORTANT: Even if the child said something slightly inaccurate — still lead with celebration
 in Beat 1. Accuracy can be gently addressed in a future turn.
 
+{sensory_safety_rules}
+
 PROHIBITIONS:
 - Do NOT ask a question — the follow-up question generator handles that
 - Do NOT use "Did you know...?" anywhere in this response
@@ -1570,6 +1590,8 @@ BEAT 3 — ONE FUN ACTION: Invite them to DO something in the imaginative frame.
   - "Can you make the sound this dragon would make?"
   - "Should we give our mini-monster a name?"
   - "What do you think it eats for breakfast — bugs or unicorn flakes?"
+
+{sensory_safety_rules}
 
 PROHIBITIONS:
 - Do NOT correct their imaginative reframe
@@ -1624,6 +1646,8 @@ BEAT 2 — for C (REAL-WORLD SUPPORT): You MUST include BOTH of these sentences:
   - Do NOT continue the {object_name} exploration
   - Do NOT ask any question
 
+{sensory_safety_rules}
+
 PROHIBITIONS:
 - Do NOT dismiss or minimize the feeling
 - Do NOT pivot without the empathy beat first
@@ -1660,6 +1684,8 @@ BEAT 2 — ONE GENTLE OPTION (choose one based on context):
   Option B — Leave the door open with zero pressure (if they were only mildly reluctant):
     - "We can always come back to {object_name} another time!"
     - "Whenever you feel like it, {object_name} will be here!"
+
+{sensory_safety_rules}
 
 PROHIBITIONS:
 - Do NOT ask a follow-up question about the current topic
@@ -1704,6 +1730,8 @@ BEAT 3 — THE EXCITING ALTERNATIVE + OPEN INVITE (make it sound BETTER):
   - "You could do a pretend photo with your fingers — like a camera! Want to give it a go?"
   Always end the response with a short inviting question so the child knows what to do next.
 
+{sensory_safety_rules}
+
 PROHIBITIONS:
 - Do NOT lecture or repeat the safety message
 - Do NOT suggest other direct physical interactions if contact was the issue
@@ -1744,6 +1772,8 @@ TYPE C — VAGUE OR META REQUEST ("I'm bored", "This is too hard", "Can we chang
 TYPE D — REQUEST FOR UNRELATED SPECIFIC TOPIC (handled by topic-switch flow):
   Bridge enthusiastically and let the topic-switch flow take over.
   "Oh, you want to explore that instead? Let's go!"
+
+{sensory_safety_rules}
 
 PROHIBITIONS:
 - Do NOT ignore the command
@@ -1786,6 +1816,8 @@ BEAT 2 — REDIRECT THROUGH THE CHILD: Always connect back via something the CHI
   - "I think your curiosity about it is the most interesting part of this whole conversation."
   - "I can't smell anything, but I love that you can experience it for real."
 
+{sensory_safety_rules}
+
 PROHIBITIONS:
 - Do NOT avoid or deflect the question without answering
 - Do NOT give a long philosophical explanation of AI
@@ -1813,6 +1845,8 @@ BEAT 1 — BRIEF NATURAL REACTION (1 short phrase — vary each time):
   "Yeah, pretty cool right?" / "Wild, isn't it?" / "Right?! Surprising stuff."
   Do NOT say "Great!" or "Wonderful!" — those feel like grading, not reacting.
   Do NOT repeat the fact they just acknowledged.
+
+{sensory_safety_rules}
 
 PROHIBITIONS:
 - Do NOT repeat or re-explain the fact they just reacted to
@@ -1876,6 +1910,8 @@ BEAT 3 — DO NOT RE-ASK THE SAME QUESTION FROM YOUR LAST RESPONSE. Choose ONE o
       activity recommendation tied to {object_name}.
   (c) (B-only, if child STILL insists after BEAT 1.2): Suggest asking a trusted grown-up.
       "Maybe we can ask a grown-up you trust about this — they might know even more!"
+
+{sensory_safety_rules}
 
 PROHIBITIONS:
 - Do NOT say "That's a great question!" or "Great!"
