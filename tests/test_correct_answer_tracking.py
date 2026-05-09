@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, AsyncMock, patch
 
 from paixueji_assistant import PaixuejiAssistant
 from graph import (
-    GUIDE_MODE_THRESHOLD,
+    ACTIVITY_HANDOFF_THRESHOLD,
     node_classify_theme,
     node_correct_answer,
     paixueji_graph,
@@ -256,10 +256,10 @@ class TestRoutingBelowThreshold:
     @pytest.mark.asyncio
     async def test_threshold_boundary_count_2_minus_1_is_not_triggered(self):
         """
-        count=0 -> 0+1=1, which is less than GUIDE_MODE_THRESHOLD=2, so no diversion.
+        count=0 -> 0+1=1, which is less than ACTIVITY_HANDOFF_THRESHOLD=2, so no diversion.
         Specifically verifies the constant value matters.
         """
-        assert GUIDE_MODE_THRESHOLD == 2, "Threshold changed — update this test if intentional"
+        assert ACTIVITY_HANDOFF_THRESHOLD == 2, "Threshold changed — update this test if intentional"
 
         assistant = PaixuejiAssistant()
         assistant.correct_answer_count = 0
@@ -306,12 +306,12 @@ class TestThresholdTriggersClassifyTheme:
         assert assistant._last_route_debug["route_reason"] == "correct_answer_threshold_reached"
         assert assistant._last_route_debug["correct_answer_count_before"] == 1
         assert assistant._last_route_debug["correct_answer_count_after_if_accepted"] == 2
-        assert assistant._last_route_debug["guide_mode_threshold"] == GUIDE_MODE_THRESHOLD
+        assert assistant._last_route_debug["activity_handoff_threshold"] == ACTIVITY_HANDOFF_THRESHOLD
 
     @pytest.mark.asyncio
     async def test_count_1_triggers_completion_without_guide_state(self):
         """
-        With count=1 and intent=CORRECT_ANSWER (1+1=2 >= GUIDE_MODE_THRESHOLD):
+        With count=1 and intent=CORRECT_ANSWER (1+1=2 >= ACTIVITY_HANDOFF_THRESHOLD):
         - assistant.correct_answer_count must become 2
         - guide runtime fields must stay absent
         - assistant.ibpyp_theme_name must be set (non-empty)

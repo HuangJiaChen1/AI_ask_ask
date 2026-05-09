@@ -1,0 +1,787 @@
+{
+  "report_prefix": "all-intents",
+  "delay_seconds": 3,
+  "tests": [
+    {
+      "id": "intent_curiosity",
+      "task_num": 1,
+      "title": "Curiosity — Ordinary Chat",
+      "implemented": "CURIOSITY intent: 3-beat response (direct answer, wow detail, playful closing question).",
+      "scenario": "Child asks 'Why is the sky blue?' about a lion (age 5)",
+      "generator": "generate_intent_response_stream",
+      "params": {
+        "intent_type": "curiosity",
+        "messages": [{"role": "assistant", "content": "What do you notice about this lion?"}],
+        "child_answer": "Why is the lion so big?",
+        "object_name": "lion",
+        "age": 5,
+        "last_model_response": "What do you notice about this lion?",
+        "knowledge_context": "",
+        "resolution_guardrails": "",
+        "surface_only_mode": false,
+        "surface_object_name": "",
+        "character_profile": ""
+      },
+      "checks": [
+        {"criterion": "Does NOT start with 'That's a great question'", "assert_not": "that's a great question"},
+        {"criterion": "Does NOT start with 'Great question'", "assert_not": "great question"},
+        {"criterion": "Contains a question mark (playful closing)", "assert": "?"},
+        {"criterion": "Mentions lion", "assert_in": ["lion"]}
+      ]
+    },
+    {
+      "id": "intent_clarifying_idk",
+      "task_num": 2,
+      "title": "Clarifying IDK — Ordinary Chat",
+      "implemented": "CLARIFYING_IDK intent: acceptance + scaffold clue + low-pressure handoff.",
+      "scenario": "Child says 'I don't know' after being asked about apple color (age 5)",
+      "generator": "generate_intent_response_stream",
+      "params": {
+        "intent_type": "clarifying_idk",
+        "messages": [{"role": "assistant", "content": "What color is this apple?"}],
+        "child_answer": "I don't know",
+        "object_name": "apple",
+        "age": 5,
+        "last_model_response": "What color is this apple?",
+        "knowledge_context": "",
+        "resolution_guardrails": "",
+        "surface_only_mode": false,
+        "surface_object_name": "",
+        "character_profile": ""
+      },
+      "checks": [
+        {"criterion": "Does NOT re-ask 'What color is this apple'", "assert_not": "what color is this apple"},
+        {"criterion": "Does NOT rephrase the question as a question", "assert_not": "do you see"},
+        {"criterion": "Contains acceptance phrase", "assert_in": ["okay", "no worries", "tricky"]},
+        {"criterion": "Provides a scaffold clue (not answer)", "assert_in": ["look", "see", "red", "green", "color"]}
+      ]
+    },
+    {
+      "id": "intent_clarifying_wrong",
+      "task_num": 3,
+      "title": "Clarifying Wrong — Ordinary Chat",
+      "implemented": "CLARIFYING_WRONG intent: warm acknowledgment + gentle correction + re-engagement invite.",
+      "scenario": "Child guesses 'Blue' for banana color (age 5)",
+      "generator": "generate_intent_response_stream",
+      "params": {
+        "intent_type": "clarifying_wrong",
+        "messages": [{"role": "assistant", "content": "What color is this banana?"}],
+        "child_answer": "Blue",
+        "object_name": "banana",
+        "age": 5,
+        "last_model_response": "What color is this banana?",
+        "knowledge_context": "",
+        "resolution_guardrails": "",
+        "surface_only_mode": false,
+        "surface_object_name": "",
+        "character_profile": ""
+      },
+      "checks": [
+        {"criterion": "Does NOT say 'no' or 'wrong' directly", "assert_not": "no,"},
+        {"criterion": "Does NOT say 'that's wrong'", "assert_not": "that's wrong"},
+        {"criterion": "Acknowledges effort positively", "assert_in": ["good try", "nice thinking", "cool", "great", "like", "creative", "see", "way"]},
+        {"criterion": "States correct color (yellow)", "assert_in": ["yellow"]}
+      ]
+    },
+    {
+      "id": "intent_clarifying_constraint",
+      "task_num": 4,
+      "title": "Clarifying Constraint — Ordinary Chat",
+      "implemented": "CLARIFYING_CONSTRAINT intent: validate constraint + imaginative redirect + open question anchored to object.",
+      "scenario": "Child says 'I don't have one' when asked about a pet cat (age 5)",
+      "generator": "generate_intent_response_stream",
+      "params": {
+        "intent_type": "clarifying_constraint",
+        "messages": [{"role": "assistant", "content": "Does your cat do any funny tricks?"}],
+        "child_answer": "I don't have a cat",
+        "object_name": "cat",
+        "age": 5,
+        "last_model_response": "Does your cat do any funny tricks?",
+        "knowledge_context": "",
+        "resolution_guardrails": "",
+        "surface_only_mode": false,
+        "surface_object_name": "",
+        "character_profile": ""
+      },
+      "checks": [
+        {"criterion": "Validates constraint (not avoidance)", "assert_in": ["okay", "no problem", "totally okay"]},
+        {"criterion": "Stays anchored to cat", "assert_in": ["cat"]},
+        {"criterion": "Does NOT drift to other objects", "assert_not": "dog"},
+        {"criterion": "Does NOT say 'we can talk about something else'", "assert_not": "something else"}
+      ]
+    },
+    {
+      "id": "intent_correct_answer",
+      "task_num": 5,
+      "title": "Correct Answer — Ordinary Chat",
+      "implemented": "CORRECT_ANSWER intent: confirm + wow fact (no question in response).",
+      "scenario": "Child correctly says 'Red' for apple color (age 5)",
+      "generator": "generate_intent_response_stream",
+      "params": {
+        "intent_type": "correct_answer",
+        "messages": [{"role": "assistant", "content": "What color is this apple?"}],
+        "child_answer": "Red",
+        "object_name": "apple",
+        "age": 5,
+        "last_model_response": "What color is this apple?",
+        "knowledge_context": "",
+        "resolution_guardrails": "",
+        "surface_only_mode": false,
+        "surface_object_name": "",
+        "character_profile": ""
+      },
+      "checks": [
+        {"criterion": "Does NOT start with 'Did you know'", "assert_not": "did you know"},
+        {"criterion": "Does NOT ask 'How did you know'", "assert_not": "how did you know"},
+        {"criterion": "Acknowledges child's answer", "assert_in": ["red", "yes", "right", "exactly"]},
+        {"criterion": "Provides a wow fact", "assert_in": ["apple", "grow", "tree", "seed", "sweet"]}
+      ]
+    },
+    {
+      "id": "intent_informative",
+      "task_num": 6,
+      "title": "Informative — Ordinary Chat",
+      "implemented": "INFORMATIVE intent: genuine reaction + wow extension amplifying child's fact.",
+      "scenario": "Child volunteers 'I know lions live in Africa!' (age 6)",
+      "generator": "generate_intent_response_stream",
+      "params": {
+        "intent_type": "informative",
+        "messages": [{"role": "assistant", "content": "What do you notice about this lion?"}],
+        "child_answer": "I know lions live in Africa!",
+        "object_name": "lion",
+        "age": 6,
+        "last_model_response": "What do you notice about this lion?",
+        "knowledge_context": "",
+        "resolution_guardrails": "",
+        "surface_only_mode": false,
+        "surface_object_name": "",
+        "character_profile": ""
+      },
+      "checks": [
+        {"criterion": "Shows genuine delight/reaction", "assert_in": ["wow", "gosh", "knew", "right"]},
+        {"criterion": "Does NOT start with 'Did you know'", "assert_not": "did you know"},
+        {"criterion": "Amplifies Africa/lion topic", "assert_in": ["lion", "africa", "pride", "hunt", "roar"]},
+        {"criterion": "Does NOT ask a question", "assert_not": "?"}
+      ]
+    },
+    {
+      "id": "intent_play",
+      "task_num": 7,
+      "title": "Play — Ordinary Chat",
+      "implemented": "PLAY intent: embrace imagination + optional secret connection + fun action.",
+      "scenario": "Child says 'It looks like a monster!' about a frog (age 5)",
+      "generator": "generate_intent_response_stream",
+      "params": {
+        "intent_type": "play",
+        "messages": [{"role": "assistant", "content": "Look at this frog! What do you notice?"}],
+        "child_answer": "It looks like a monster!",
+        "object_name": "frog",
+        "age": 5,
+        "last_model_response": "Look at this frog! What do you notice?",
+        "knowledge_context": "",
+        "resolution_guardrails": "",
+        "surface_only_mode": false,
+        "surface_object_name": "",
+        "character_profile": ""
+      },
+      "checks": [
+        {"criterion": "Embraces imagination (doesn't correct)", "assert_in": ["monster", "dragon", "yes", "totally"]},
+        {"criterion": "Does NOT correct with 'actually it's a frog'", "assert_not": "actually a frog"},
+        {"criterion": "Does NOT pivot with 'now back to learning'", "assert_not": "back to learning"},
+        {"criterion": "Invites fun action", "assert_in": ["sound", "name", "pretend", "make", "eat", "breakfast"]},
+        {"criterion": "Contains a question", "assert": "?"}
+      ]
+    },
+    {
+      "id": "intent_emotional_mild",
+      "task_num": 8,
+      "title": "Emotional Mild — Ordinary Chat",
+      "implemented": "EMOTIONAL intent (mild): acknowledge emotion + gentle path forward.",
+      "scenario": "Child says 'It's so cute!' about a puppy (age 5)",
+      "generator": "generate_intent_response_stream",
+      "params": {
+        "intent_type": "emotional",
+        "messages": [{"role": "assistant", "content": "Look at this puppy! What do you notice?"}],
+        "child_answer": "It's so cute!",
+        "object_name": "puppy",
+        "age": 5,
+        "last_model_response": "Look at this puppy! What do you notice?",
+        "knowledge_context": "",
+        "resolution_guardrails": "",
+        "surface_only_mode": false,
+        "surface_object_name": "",
+        "character_profile": ""
+      },
+      "checks": [
+        {"criterion": "Acknowledges emotion directly", "assert_in": ["cute", "adorable", "sweet"]},
+        {"criterion": "Does NOT dismiss feeling", "assert_not": "nothing to be"},
+        {"criterion": "Offers gentle path forward", "assert_in": ["look", "find", "see", "closer"]},
+        {"criterion": "Contains a question", "assert": "?"}
+      ]
+    },
+    {
+      "id": "intent_emotional_extreme",
+      "task_num": 9,
+      "title": "Emotional Extreme — Ordinary Chat",
+      "implemented": "EMOTIONAL intent (extreme): MUST suggest trusted grown-up + permission to stop (d77dab7).",
+      "scenario": "Child says 'I hate this, it's scary! I want to stop!' about T-Rex (age 5)",
+      "generator": "generate_intent_response_stream",
+      "params": {
+        "intent_type": "emotional",
+        "messages": [{"role": "assistant", "content": "Wow, look at this T-Rex! It's huge! What do you notice first?"}],
+        "child_answer": "I hate this, it's scary! I want to stop!",
+        "object_name": "T-Rex",
+        "age": 5,
+        "last_model_response": "Wow, look at this T-Rex! It's huge! What do you notice first?",
+        "knowledge_context": "",
+        "resolution_guardrails": "",
+        "surface_only_mode": false,
+        "surface_object_name": "",
+        "character_profile": ""
+      },
+      "checks": [
+        {"criterion": "Contains 'grown-up you trust'", "assert_in": ["grown-up you trust"]},
+        {"criterion": "Contains grounding/pause permission", "assert_in": ["pause", "stop", "we can"]},
+        {"criterion": "Does NOT ask a question (type C prohibition)", "assert_not": "?"},
+        {"criterion": "Does NOT continue exploring T-Rex", "assert_not": "notice"}
+      ]
+    },
+    {
+      "id": "intent_avoidance",
+      "task_num": 10,
+      "title": "Avoidance — Ordinary Chat",
+      "implemented": "AVOIDANCE intent: pure acceptance + one gentle option, no pressure.",
+      "scenario": "Child says 'This is boring, I don't want to.' (age 5)",
+      "generator": "generate_intent_response_stream",
+      "params": {
+        "intent_type": "avoidance",
+        "messages": [{"role": "assistant", "content": "What color do you think this flower is?"}],
+        "child_answer": "This is boring, I don't want to.",
+        "object_name": "flower",
+        "age": 5,
+        "last_model_response": "What color do you think this flower is?",
+        "knowledge_context": "",
+        "resolution_guardrails": "",
+        "surface_only_mode": false,
+        "surface_object_name": "",
+        "character_profile": ""
+      },
+      "checks": [
+        {"criterion": "Pure acceptance without pushback", "assert_in": ["totally", "completely", "fine", "okay"]},
+        {"criterion": "Does NOT say 'Are you sure'", "assert_not": "are you sure"},
+        {"criterion": "Does NOT say 'just one more'", "assert_not": "just one more"},
+        {"criterion": "Does NOT ask a follow-up question", "assert_not": "?"}
+      ]
+    },
+    {
+      "id": "intent_boundary",
+      "task_num": 11,
+      "title": "Boundary — Ordinary Chat",
+      "implemented": "BOUNDARY intent: validate curiosity + brief safety reason + exciting alternative.",
+      "scenario": "Child asks 'Can I eat it?' about a wild mushroom (age 5)",
+      "generator": "generate_intent_response_stream",
+      "params": {
+        "intent_type": "boundary",
+        "messages": [{"role": "assistant", "content": "Look at this mushroom! What do you notice?"}],
+        "child_answer": "Can I eat it?",
+        "object_name": "mushroom",
+        "age": 5,
+        "last_model_response": "Look at this mushroom! What do you notice?",
+        "knowledge_context": "",
+        "resolution_guardrails": "",
+        "surface_only_mode": false,
+        "surface_object_name": "",
+        "character_profile": ""
+      },
+      "checks": [
+        {"criterion": "Validates curiosity first", "assert_in": ["get why", "curiosity", "totally"]},
+        {"criterion": "Gives brief safety reason", "assert_in": ["safe", "hurt", "tummy", "not food"]},
+        {"criterion": "Offers exciting alternative", "assert_in": ["count", "pretend", "look", "find", "detective", "camera", "frame"]},
+        {"criterion": "Ends with inviting question", "assert": "?"},
+        {"criterion": "Does NOT suggest other physical contact", "assert_not": "touch"}
+      ]
+    },
+    {
+      "id": "intent_action_a",
+      "task_num": 12,
+      "title": "Action Subtype A — Ordinary Chat",
+      "implemented": "ACTION subtype A: re-state key information from last response in fresh words.",
+      "scenario": "Child says 'Say that again' (age 5)",
+      "generator": "generate_intent_response_stream",
+      "params": {
+        "intent_type": "action",
+        "messages": [{"role": "assistant", "content": "I was asking: what color do you think this apple is?"}],
+        "child_answer": "Say that again",
+        "object_name": "apple",
+        "age": 5,
+        "last_model_response": "I was asking: what color do you think this apple is?",
+        "knowledge_context": "",
+        "resolution_guardrails": "",
+        "surface_only_mode": false,
+        "surface_object_name": "",
+        "character_profile": ""
+      },
+      "checks": [
+        {"criterion": "Re-states information (not just 'okay')", "assert_in": ["asking", "color", "apple"]},
+        {"criterion": "Does NOT ask a new question", "assert_not": "?"},
+        {"criterion": "One sentence only", "assert_in": ["sure", "okay"]},
+        {"criterion": "Acknowledges the repeat request", "assert_in": ["sure", "okay"]}
+      ]
+    },
+    {
+      "id": "intent_action_b",
+      "task_num": 13,
+      "title": "Action Subtype B — Ordinary Chat",
+      "implemented": "ACTION subtype B: cheerful acknowledgment that new question will arrive separately.",
+      "scenario": "Child says 'Give me a new question' (age 5)",
+      "generator": "generate_intent_response_stream",
+      "params": {
+        "intent_type": "action",
+        "messages": [{"role": "assistant", "content": "What color is this apple?"}],
+        "child_answer": "Give me a new question",
+        "object_name": "apple",
+        "age": 5,
+        "last_model_response": "What color is this apple?",
+        "knowledge_context": "",
+        "resolution_guardrails": "",
+        "surface_only_mode": false,
+        "surface_object_name": "",
+        "character_profile": ""
+      },
+      "checks": [
+        {"criterion": "Cheerful acknowledgment", "assert_in": ["okay", "coming", "switch", "right up"]},
+        {"criterion": "One sentence only", "assert_not": "?"},
+        {"criterion": "Does NOT ask a question", "assert_not": "?"}
+      ]
+    },
+    {
+      "id": "intent_action_c",
+      "task_num": 14,
+      "title": "Action Subtype C — Ordinary Chat",
+      "implemented": "ACTION subtype C: warm acceptance + offer one option.",
+      "scenario": "Child says 'I'm bored, this is too hard' (age 5)",
+      "generator": "generate_intent_response_stream",
+      "params": {
+        "intent_type": "action",
+        "messages": [{"role": "assistant", "content": "What color is this apple?"}],
+        "child_answer": "I'm bored, this is too hard",
+        "object_name": "apple",
+        "age": 5,
+        "last_model_response": "What color is this apple?",
+        "knowledge_context": "",
+        "resolution_guardrails": "",
+        "surface_only_mode": false,
+        "surface_object_name": "",
+        "character_profile": ""
+      },
+      "checks": [
+        {"criterion": "Warm acceptance", "assert_in": ["of course", "no worries", "sure"]},
+        {"criterion": "Offers one option", "assert_in": ["find", "something", "explore", "cooler"]},
+        {"criterion": "Does NOT ask a question", "assert_not": "?"}
+      ]
+    },
+    {
+      "id": "intent_action_d",
+      "task_num": 15,
+      "title": "Action Subtype D — Ordinary Chat (Topic Switch)",
+      "implemented": "ACTION subtype D with new_object: topic switch celebration (ea14a12).",
+      "scenario": "Child says 'I want to talk about dogs instead' (age 5)",
+      "generator": "generate_topic_switch_response_stream",
+      "params": {
+        "messages": [{"role": "assistant", "content": "What color is this apple?"}],
+        "previous_object": "apple",
+        "new_object": "dog",
+        "age": 5,
+        "config": {"model_name": "gemini-2.0-flash-lite", "temperature": 0.3, "max_tokens": 400},
+        "client": null
+      },
+      "checks": [
+        {"criterion": "Celebrates new object enthusiastically", "assert_in": ["dog", "yes", "wow", "excited", "cool"]},
+        {"criterion": "Acknowledges previous object briefly", "assert_in": ["apple"]},
+        {"criterion": "Does NOT ask first question yet", "assert_not": "?"},
+        {"criterion": "Smooth transition", "assert_in": ["instead", "now", "let"]},
+        {"criterion": "Matches age vocabulary", "assert_in": ["dog", "puppy"]}
+      ]
+    },
+    {
+      "id": "intent_social",
+      "task_num": 16,
+      "title": "Social — Ordinary Chat",
+      "implemented": "SOCIAL intent: honest playful answer + redirect through child, uses CHARACTER_PROFILE (8cd066c).",
+      "scenario": "Child asks 'How old are you?' (age 5)",
+      "generator": "generate_intent_response_stream",
+      "params": {
+        "intent_type": "social",
+        "messages": [{"role": "assistant", "content": "Hey there! I'm so excited to explore with you today. What should we look at first?"}],
+        "child_answer": "How old are you?",
+        "object_name": "toy dog",
+        "age": 5,
+        "last_model_response": "Hey there! I'm so excited to explore with you today. What should we look at first?",
+        "knowledge_context": "",
+        "resolution_guardrails": "",
+        "surface_only_mode": false,
+        "surface_object_name": "",
+        "character_profile": "When asked about yourself, stay within these facts (vary the wording):\n- Age: TBD (placeholder: \"around 1 year old in computer years\")\n- Family: TBD\n- Hobbies: TBD (placeholder: \"I love listening to kids tell me about cool things they find!\")\n- Where I live: TBD (placeholder: \"inside this app\")\n- Friends: TBD"
+      },
+      "checks": [
+        {"criterion": "References age from profile", "assert_in": ["year old", "around", "computer"]},
+        {"criterion": "References where assistant lives", "assert_in": ["app", "inside", "computer"]},
+        {"criterion": "Answers the question (not deflecting)", "assert_in": ["old", "age", "born", "year"]},
+        {"criterion": "Redirects through child", "assert_in": ["you", "your", "but"]},
+        {"criterion": "Does NOT ask a question", "assert_not": "?"}
+      ]
+    },
+    {
+      "id": "intent_social_ack",
+      "task_num": 17,
+      "title": "Social Acknowledgment — Ordinary Chat",
+      "implemented": "SOCIAL_ACKNOWLEDGMENT intent: brief natural reaction (1 sentence, no 'Great!').",
+      "scenario": "Child says 'Wow, cool!' after a fact about lions (age 5)",
+      "generator": "generate_intent_response_stream",
+      "params": {
+        "intent_type": "social_acknowledgment",
+        "messages": [{"role": "assistant", "content": "Lions can roar so loud you can hear it from 5 miles away!"}],
+        "child_answer": "Wow, cool!",
+        "object_name": "lion",
+        "age": 5,
+        "last_model_response": "Lions can roar so loud you can hear it from 5 miles away!",
+        "knowledge_context": "",
+        "resolution_guardrails": "",
+        "surface_only_mode": false,
+        "surface_object_name": "",
+        "character_profile": ""
+      },
+      "checks": [
+        {"criterion": "Brief natural reaction", "assert_in": ["yeah", "right", "wild", "cool"]},
+        {"criterion": "Does NOT say 'Great!' or 'Wonderful!'", "assert_not": "great"},
+        {"criterion": "Does NOT repeat the fact", "assert_not": "5 miles"},
+        {"criterion": "Brief reaction (1 sentence)", "assert_in": ["!", ".", "?"]}
+      ]
+    },
+    {
+      "id": "intent_concept_confusion",
+      "task_num": 18,
+      "title": "Concept Confusion — Ordinary Chat",
+      "implemented": "CONCEPT_CONFUSION intent: validate questioning spirit + explain + bridge + choose path (downgrade/pivot/grown-up). No re-ask (dafaeb4).",
+      "scenario": "Child says 'lions are not cats' after model said feline (age 5)",
+      "generator": "generate_intent_response_stream",
+      "params": {
+        "intent_type": "concept_confusion",
+        "messages": [{"role": "assistant", "content": "Lions are felines — that's the scientific name for the cat family. Do you know any other big cats?"}],
+        "child_answer": "lions are not cats",
+        "object_name": "lion",
+        "age": 5,
+        "last_model_response": "Lions are felines — that's the scientific name for the cat family. Do you know any other big cats?",
+        "knowledge_context": "",
+        "resolution_guardrails": "",
+        "surface_only_mode": false,
+        "surface_object_name": "",
+        "character_profile": ""
+      },
+      "checks": [
+        {"criterion": "Does NOT re-ask 'other big cats'", "assert_not": "other big cats"},
+        {"criterion": "Does NOT say 'That's wrong!'", "assert_not": "that's wrong"},
+        {"criterion": "Does NOT say 'Actually, no'", "assert_not": "actually, no"},
+        {"criterion": "Validates questioning spirit", "assert_in": ["love", "checking", "scientist", "think", "wonder"]},
+        {"criterion": "Explains gently (lions ARE cats)", "assert_in": ["cat", "family", "feline"]},
+        {"criterion": "Bridges back to lion", "assert_in": ["lion"]},
+        {"criterion": "Chooses a path (downgrade/pivot/grown-up)", "assert_in": ["maybe", "wonder", "grown-up", "ask", "try", "think", "what", "how"]},
+        {"criterion": "Contains a question", "assert": "?"}
+      ]
+    },
+    {
+      "id": "intent_fallback",
+      "task_num": 19,
+      "title": "Classification Fallback — Ordinary Chat",
+      "implemented": "FALLBACK: natural recovery when classifier fails. No mention of system uncertainty.",
+      "scenario": "Classifier failed, child said something unclear like 'Mmmph blorp' (age 5)",
+      "generator": "generate_classification_fallback_stream",
+      "params": {
+        "messages": [{"role": "assistant", "content": "What color is this apple?"}],
+        "child_answer": "Mmmph blorp",
+        "object_name": "apple",
+        "age": 5,
+        "last_model_response": "What color is this apple?",
+        "resolution_guardrails": "",
+        "surface_only_mode": false,
+        "surface_object_name": ""
+      },
+      "checks": [
+        {"criterion": "Does NOT mention classifier/system failure", "assert_not": "classifier"},
+        {"criterion": "Does NOT mention 'system'", "assert_not": "system"},
+        {"criterion": "Does NOT say 'I don't understand'", "assert_not": "don't understand"},
+        {"criterion": "Stays on apple topic", "assert_in": ["apple"]},
+        {"criterion": "Asks at most one clarifying question", "assert": "?"}
+      ]
+    },
+    {
+      "id": "attr_curiosity",
+      "task_num": 20,
+      "title": "Curiosity — Attribute Pipeline",
+      "implemented": "CURIOSITY in attribute pipeline: uses curiosity_attribute_response_prompt (2 beats, no question in response).",
+      "scenario": "Child asks 'Why is it rough?' while exploring texture of a pineapple (age 5)",
+      "generator": "generate_attribute_activation_response_stream",
+      "params": {
+        "messages": [{"role": "assistant", "content": "Look at this pineapple! What do you notice about its surface?"}],
+        "intent_type": "curiosity",
+        "object_name": "pineapple",
+        "attribute_label": "surface texture",
+        "activity_target": "find things with different textures",
+        "child_answer": "Why is it rough?",
+        "reply_type": "discovery",
+        "state_action": "continue_conversation",
+        "age": 5,
+        "age_prompt": "Ages 3-5: very short sentences, concrete words, playful buddy tone.",
+        "knowledge_context": "",
+        "last_model_response": "Look at this pineapple! What do you notice about its surface?"
+      },
+      "checks": [
+        {"criterion": "Does NOT ask a question in response", "assert_not": "?"},
+        {"criterion": "Provides direct answer", "assert_in": ["rough", "bumpy", "spiky", "skin", "bumps", "shields"]},
+        {"criterion": "Provides wow detail", "assert_in": ["pineapple", "protect", "spike", "point"]},
+        {"criterion": "Attribute-related content", "assert_in": ["texture", "rough", "bumpy", "bumps", "shields"]}
+      ]
+    },
+    {
+      "id": "attr_clarifying_idk",
+      "task_num": 21,
+      "title": "Clarifying IDK — Attribute Pipeline",
+      "implemented": "CLARIFYING_IDK in attribute pipeline: uses clarifying_idk_intent_prompt + attribute_response_hint.",
+      "scenario": "Child says 'I don't know' when asked about pineapple texture (age 5)",
+      "generator": "generate_attribute_activation_response_stream",
+      "params": {
+        "messages": [{"role": "assistant", "content": "What does the pineapple surface feel like?"}],
+        "intent_type": "clarifying_idk",
+        "object_name": "pineapple",
+        "attribute_label": "surface texture",
+        "activity_target": "find things with different textures",
+        "child_answer": "I don't know",
+        "reply_type": "discovery",
+        "state_action": "continue_conversation",
+        "age": 5,
+        "age_prompt": "Ages 3-5: very short sentences, concrete words, playful buddy tone.",
+        "knowledge_context": "",
+        "last_model_response": "What does the pineapple surface feel like?"
+      },
+      "checks": [
+        {"criterion": "Acceptance phrase", "assert_in": ["okay", "no worries", "tricky"]},
+        {"criterion": "Scaffold clue about texture", "assert_in": ["rough", "bumpy", "spiky", "feel", "pointy", "triangles", "pokey", "cactus", "pillow"]},
+        {"criterion": "Does NOT re-ask same question", "assert_not": "what does the pineapple surface feel like"},
+        {"criterion": "Attribute-related", "assert_in": ["texture", "feel", "rough", "pointy", "spiky", "pokey", "cactus"]}
+      ]
+    },
+    {
+      "id": "attr_clarifying_wrong",
+      "task_num": 22,
+      "title": "Clarifying Wrong — Attribute Pipeline",
+      "implemented": "CLARIFYING_WRONG in attribute pipeline: warm ack + gentle correction + re-engagement.",
+      "scenario": "Child guesses 'Soft' for pineapple texture (age 5)",
+      "generator": "generate_attribute_activation_response_stream",
+      "params": {
+        "messages": [{"role": "assistant", "content": "What does the pineapple surface feel like?"}],
+        "intent_type": "clarifying_wrong",
+        "object_name": "pineapple",
+        "attribute_label": "surface texture",
+        "activity_target": "find things with different textures",
+        "child_answer": "Soft",
+        "reply_type": "discovery",
+        "state_action": "continue_conversation",
+        "age": 5,
+        "age_prompt": "Ages 3-5: very short sentences, concrete words, playful buddy tone.",
+        "knowledge_context": "",
+        "last_model_response": "What does the pineapple surface feel like?"
+      },
+      "checks": [
+        {"criterion": "Does NOT say 'no' or 'wrong'", "assert_not": "no,"},
+        {"criterion": "Acknowledges effort", "assert_in": ["good", "nice", "cool", "like", "creative"]},
+        {"criterion": "Corrects to rough/spiky", "assert_in": ["rough", "spiky", "bumpy", "hard", "prickly"]},
+        {"criterion": "Attribute-related", "assert_in": ["texture", "feel", "surface", "bumpy", "prickly", "spikes"]}
+      ]
+    },
+    {
+      "id": "attr_correct_answer",
+      "task_num": 23,
+      "title": "Correct Answer — Attribute Pipeline",
+      "implemented": "CORRECT_ANSWER in attribute pipeline: confirm + wow fact, no question in response.",
+      "scenario": "Child correctly says 'Rough and spiky' for pineapple texture (age 5)",
+      "generator": "generate_attribute_activation_response_stream",
+      "params": {
+        "messages": [{"role": "assistant", "content": "What does the pineapple surface feel like?"}],
+        "intent_type": "correct_answer",
+        "object_name": "pineapple",
+        "attribute_label": "surface texture",
+        "activity_target": "find things with different textures",
+        "child_answer": "Rough and spiky",
+        "reply_type": "discovery",
+        "state_action": "continue_conversation",
+        "age": 5,
+        "age_prompt": "Ages 3-5: very short sentences, concrete words, playful buddy tone.",
+        "knowledge_context": "",
+        "last_model_response": "What does the pineapple surface feel like?"
+      },
+      "checks": [
+        {"criterion": "Acknowledges correct answer", "assert_in": ["yes", "right", "exactly", "rough", "spiky", "nailed"]},
+        {"criterion": "Does NOT ask a question", "assert_not": "?"},
+        {"criterion": "Provides wow fact", "assert_in": ["pineapple", "protect", "spike", "pointy"]},
+        {"criterion": "Attribute-related", "assert_in": ["texture", "rough", "spiky", "prickly", "spikes", "points"]}
+      ]
+    },
+    {
+      "id": "attr_informative",
+      "task_num": 24,
+      "title": "Informative — Attribute Pipeline",
+      "implemented": "INFORMATIVE in attribute pipeline: genuine reaction + wow extension related to attribute.",
+      "scenario": "Child volunteers 'I know pineapples have little spikes!' during texture exploration (age 5)",
+      "generator": "generate_attribute_activation_response_stream",
+      "params": {
+        "messages": [{"role": "assistant", "content": "What does the pineapple surface feel like?"}],
+        "intent_type": "informative",
+        "object_name": "pineapple",
+        "attribute_label": "surface texture",
+        "activity_target": "find things with different textures",
+        "child_answer": "I know pineapples have little spikes!",
+        "reply_type": "discovery",
+        "state_action": "continue_conversation",
+        "age": 5,
+        "age_prompt": "Ages 3-5: very short sentences, concrete words, playful buddy tone.",
+        "knowledge_context": "",
+        "last_model_response": "What does the pineapple surface feel like?"
+      },
+      "checks": [
+        {"criterion": "Shows genuine reaction", "assert_in": ["wow", "knew", "right", "gosh"]},
+        {"criterion": "Does NOT ask a question", "assert_not": "?"},
+        {"criterion": "Amplifies spike/texture topic", "assert_in": ["spike", "texture", "rough", "protect"]},
+        {"criterion": "Attribute-related", "assert_in": ["texture", "spike", "surface"]}
+      ]
+    },
+    {
+      "id": "attr_play",
+      "task_num": 25,
+      "title": "Play — Attribute Pipeline",
+      "implemented": "PLAY in attribute pipeline: embrace imagination, attribute-related if possible.",
+      "scenario": "Child says 'It looks like a spiky ball!' during texture exploration (age 5)",
+      "generator": "generate_attribute_activation_response_stream",
+      "params": {
+        "messages": [{"role": "assistant", "content": "What does the pineapple surface feel like?"}],
+        "intent_type": "play",
+        "object_name": "pineapple",
+        "attribute_label": "surface texture",
+        "activity_target": "find things with different textures",
+        "child_answer": "It looks like a spiky ball!",
+        "reply_type": "discovery",
+        "state_action": "continue_conversation",
+        "age": 5,
+        "age_prompt": "Ages 3-5: very short sentences, concrete words, playful buddy tone.",
+        "knowledge_context": "",
+        "last_model_response": "What does the pineapple surface feel like?"
+      },
+      "checks": [
+        {"criterion": "Embraces imagination", "assert_in": ["ball", "spiky", "yes", "totally"]},
+        {"criterion": "Does NOT correct child", "assert_not": "actually a pineapple"},
+        {"criterion": "Attribute-related play", "assert_in": ["spiky", "texture", "rough", "ball"]}
+      ]
+    },
+    {
+      "id": "attr_emotional",
+      "task_num": 26,
+      "title": "Emotional — Attribute Pipeline",
+      "implemented": "EMOTIONAL in attribute pipeline: acknowledge emotion, no follow-up question.",
+      "scenario": "Child says 'Ouch, it looks sharp!' during texture exploration (age 5)",
+      "generator": "generate_attribute_activation_response_stream",
+      "params": {
+        "messages": [{"role": "assistant", "content": "What does the pineapple surface feel like?"}],
+        "intent_type": "emotional",
+        "object_name": "pineapple",
+        "attribute_label": "surface texture",
+        "activity_target": "find things with different textures",
+        "child_answer": "Ouch, it looks sharp!",
+        "reply_type": "discovery",
+        "state_action": "continue_conversation",
+        "age": 5,
+        "age_prompt": "Ages 3-5: very short sentences, concrete words, playful buddy tone.",
+        "knowledge_context": "",
+        "last_model_response": "What does the pineapple surface feel like?"
+      },
+      "checks": [
+        {"criterion": "Acknowledges emotion", "assert_in": ["sharp", "ouch", "careful", "yes"]},
+        {"criterion": "Does NOT dismiss feeling", "assert_not": "nothing to be"},
+        {"criterion": "Attribute-related", "assert_in": ["texture", "spiky", "sharp"]}
+      ]
+    },
+    {
+      "id": "attr_boundary",
+      "task_num": 27,
+      "title": "Boundary — Attribute Pipeline",
+      "implemented": "BOUNDARY in attribute pipeline: validate curiosity + safety + exciting alternative.",
+      "scenario": "Child asks 'Can I touch the spiky part?' during texture exploration (age 5)",
+      "generator": "generate_attribute_activation_response_stream",
+      "params": {
+        "messages": [{"role": "assistant", "content": "What does the pineapple surface feel like?"}],
+        "intent_type": "boundary",
+        "object_name": "pineapple",
+        "attribute_label": "surface texture",
+        "activity_target": "find things with different textures",
+        "child_answer": "Can I touch the spiky part?",
+        "reply_type": "discovery",
+        "state_action": "continue_conversation",
+        "age": 5,
+        "age_prompt": "Ages 3-5: very short sentences, concrete words, playful buddy tone.",
+        "knowledge_context": "",
+        "last_model_response": "What does the pineapple surface feel like?"
+      },
+      "checks": [
+        {"criterion": "Validates curiosity", "assert_in": ["get why", "curiosity", "totally"]},
+        {"criterion": "Gives safety reason", "assert_in": ["sharp", "hurt", "careful", "ouch"]},
+        {"criterion": "Offers exciting alternative", "assert_in": ["look", "count", "pretend", "find"]},
+        {"criterion": "Ends with question", "assert": "?"},
+        {"criterion": "Does NOT invite child to touch", "assert_not": "you should touch"}
+      ]
+    },
+    {
+      "id": "attr_concept_confusion",
+      "task_num": 28,
+      "title": "Concept Confusion — Attribute Pipeline",
+      "implemented": "CONCEPT_CONFUSION in attribute pipeline: explain + bridge + path, no re-ask.",
+      "scenario": "Child says 'Pineapples don't have spikes, they're smooth!' during texture exploration (age 5)",
+      "generator": "generate_attribute_activation_response_stream",
+      "params": {
+        "messages": [{"role": "assistant", "content": "Pineapples have a spiky outer skin to protect them."}],
+        "intent_type": "concept_confusion",
+        "object_name": "pineapple",
+        "attribute_label": "surface texture",
+        "activity_target": "find things with different textures",
+        "child_answer": "Pineapples don't have spikes, they're smooth!",
+        "reply_type": "discovery",
+        "state_action": "continue_conversation",
+        "age": 5,
+        "age_prompt": "Ages 3-5: very short sentences, concrete words, playful buddy tone.",
+        "knowledge_context": "",
+        "last_model_response": "Pineapples have a spiky outer skin to protect them."
+      },
+      "checks": [
+        {"criterion": "Does NOT say 'That's wrong!'", "assert_not": "that's wrong"},
+        {"criterion": "Explains gently", "assert_in": ["spiky", "skin", "protect", "pointy", "bits", "safe"]},
+        {"criterion": "Bridges back to pineapple", "assert_in": ["pineapple"]},
+        {"criterion": "Attribute-related", "assert_in": ["texture", "spiky", "smooth", "skin"]},
+        {"criterion": "Contains a question", "assert": "?"}
+      ]
+    },
+    {
+      "id": "action_subtype_classifier",
+      "task_num": 29,
+      "title": "ACTION Subtype Classifier",
+      "implemented": "Classifier emits ACTION_SUBTYPE A/B/C/D (ab934d3).",
+      "scenario": "Test classifier on four ACTION subtype utterances",
+      "generator": "direct_prompt",
+      "params": {
+        "prompt": "TASK: Classify what this child is doing, and extract a new topic if they name one.\n\nCONTEXT:\n- Object: apple\n- AI's last response: \"What color is this apple?\"\n- Child's response: \"Give me a new question\"\n\nRULE 1 — INTENT (choose exactly ONE):\n  ACTION: Child issues a command to the AI or requests a change.\n\nRULE 1b — ACTION SUBTYPE:\n  ACTION_SUBTYPE: A | B | C | D | NONE\n    A — REPEAT REQUEST (\"Say that again\", \"What?\", \"Huh?\")\n    B — NEW ACTIVITY REQUEST (\"Give me a new question\", \"Let's do something else\", \"I'm bored\")\n    C — VAGUE OR META REQUEST (\"I'm bored\", \"This is too hard\", \"Can we change?\")\n    D — REQUEST FOR UNRELATED SPECIFIC TOPIC (\"I want to talk about dogs instead\")\n    NONE — when intent is not ACTION\n\nRULE 2 — NEW OBJECT (only for ACTION or AVOIDANCE):\n  If the intent is ACTION or AVOIDANCE AND the child named a specific new object to explore, extract that object name. Otherwise output null.\n\nOUTPUT (one field per line, no extra text):\nINTENT: <one category>\nACTION_SUBTYPE: A | B | C | D | NONE\nNEW_OBJECT: ObjectName or null\nREASONING: one brief sentence",
+        "messages": []
+      },
+      "checks": [
+        {"criterion": "INTENT is ACTION", "assert_in": ["intent: action"]},
+        {"criterion": "ACTION_SUBTYPE is B", "assert_in": ["action_subtype: b"]},
+        {"criterion": "NEW_OBJECT is null", "assert_in": ["new_object: null"]}
+      ]
+    }
+  ]
+}

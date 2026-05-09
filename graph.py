@@ -28,7 +28,7 @@ from bridge_activation_policy import BRIDGE_PHASE_ANCHOR_GENERAL
 from kb_context import build_chat_kb_context as format_chat_kb_context
 from kb_context import build_intro_kb_context as format_intro_kb_context
 
-GUIDE_MODE_THRESHOLD = 2  # Correct answers required to complete chat mode
+ACTIVITY_HANDOFF_THRESHOLD = 2  # Correct answers required to complete chat mode
 _STRUGGLING_INTENTS = {"CLARIFYING_IDK", "CLARIFYING_WRONG"}  # Intents that share the struggle counter
 GROUNDED_INTENTS = {
     "curiosity",
@@ -97,12 +97,12 @@ def route_from_analyze_input(state) -> str:
     if (intent == "correct_answer" and
             assistant and
             assistant.learning_anchor_active and
-            assistant.correct_answer_count + 1 >= GUIDE_MODE_THRESHOLD):
+            assistant.correct_answer_count + 1 >= ACTIVITY_HANDOFF_THRESHOLD):
         assistant._last_route_debug = {
             "route_reason": "correct_answer_threshold_reached",
             "correct_answer_count_before": assistant.correct_answer_count,
             "correct_answer_count_after_if_accepted": assistant.correct_answer_count + 1,
-            "guide_mode_threshold": GUIDE_MODE_THRESHOLD,
+            "activity_handoff_threshold": ACTIVITY_HANDOFF_THRESHOLD,
             "learning_anchor_active": assistant.learning_anchor_active,
         }
         return "classify_theme"
@@ -111,7 +111,7 @@ def route_from_analyze_input(state) -> str:
             "route_reason": "below_correct_answer_threshold",
             "correct_answer_count_before": assistant.correct_answer_count,
             "correct_answer_count_after_if_accepted": assistant.correct_answer_count + 1,
-            "guide_mode_threshold": GUIDE_MODE_THRESHOLD,
+            "activity_handoff_threshold": ACTIVITY_HANDOFF_THRESHOLD,
             "learning_anchor_active": assistant.learning_anchor_active,
         }
     # Intercept 2nd+ struggle (IDK or wrong) — route to dedicated answer-reveal node

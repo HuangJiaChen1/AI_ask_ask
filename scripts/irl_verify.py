@@ -68,7 +68,12 @@ from stream.question_generators import (
     ask_followup_question_stream,
     ask_introduction_question_stream,
 )
-from stream.response_generators import generate_intent_response_stream
+from stream.response_generators import (
+    generate_intent_response_stream,
+    generate_topic_switch_response_stream,
+    generate_classification_fallback_stream,
+    generate_attribute_activation_response_stream,
+)
 from stream.utils import clean_messages_for_api, convert_messages_to_gemini_format
 
 
@@ -192,8 +197,16 @@ async def _run_test(test_config: dict, assistant) -> dict:
     generator_name = test_config["generator"]
     params = test_config.get("params", {})
 
-    # Resolve age_prompt if age is provided
-    if "age" in params and "age_prompt" not in params:
+    # Resolve age_prompt if age is provided (skip for generators that don't need it)
+    generators_needing_age_prompt = {
+        "ask_introduction_question_stream",
+        "ask_attribute_intro_stream",
+        "ask_followup_question_stream",
+        "generate_intent_response_stream",
+        "generate_classification_fallback_stream",
+        "generate_attribute_activation_response_stream",
+    }
+    if "age" in params and "age_prompt" not in params and generator_name in generators_needing_age_prompt:
         params["age_prompt"] = _age_prompt_for(params["age"])
 
     # Build messages if not provided
@@ -214,6 +227,12 @@ async def _run_test(test_config: dict, assistant) -> dict:
         output = await _collect_stream(lambda: ask_followup_question_stream(**params))
     elif generator_name == "generate_intent_response_stream":
         output = await _collect_stream(lambda: generate_intent_response_stream(**params))
+    elif generator_name == "generate_topic_switch_response_stream":
+        output = await _collect_stream(lambda: generate_topic_switch_response_stream(**params))
+    elif generator_name == "generate_classification_fallback_stream":
+        output = await _collect_stream(lambda: generate_classification_fallback_stream(**params))
+    elif generator_name == "generate_attribute_activation_response_stream":
+        output = await _collect_stream(lambda: generate_attribute_activation_response_stream(**params))
     elif generator_name == "direct_prompt":
         prompt = params.get("prompt", "")
         messages = params.get("messages", [])

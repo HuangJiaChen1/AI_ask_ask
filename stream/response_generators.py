@@ -81,6 +81,7 @@ async def generate_intent_response_stream(
             last_model_response=last_model_response,
             knowledge_context=knowledge_context,
             character_profile=character_profile,
+            sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
         )
         if surface_only_mode:
             surface_only_prompt = paixueji_prompts.get_prompts()["unresolved_surface_only_prompt"].format(

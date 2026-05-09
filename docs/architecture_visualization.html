@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paixueji 架构可视化 | CODE_REFERENCE.md</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117; --fg: #c9d1d9; --accent: #58a6ff;
+    --layer-http: #f0883e; --layer-state: #a371f7; --layer-graph: #3fb950;
+    --layer-stream: #58a6ff; --layer-kb: #d2a8ff;
+    --border: #30363d; --card: #161b22;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--bg); color: var(--fg);
+    line-height: 1.6;
+  }
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(13,17,23,0.95); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border); padding: 1rem 2rem;
+    display: flex; align-items: center; gap: 1rem;
+  }
+  header h1 { margin: 0; font-size: 1.3rem; color: var(--accent); }
+  .badge {
+    font-size: 0.75rem; padding: 0.2rem 0.6rem; border-radius: 999px;
+    background: var(--border); color: #8b949e;
+  }
+  nav {
+    display: flex; gap: 0.5rem; flex-wrap: wrap; margin-left: auto;
+  }
+  nav button {
+    background: var(--card); color: var(--fg);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 0.4rem 0.9rem; cursor: pointer; font-size: 0.85rem;
+    transition: all 0.15s;
+  }
+  nav button:hover, nav button.active {
+    border-color: var(--accent); color: var(--accent);
+    background: rgba(88,166,255,0.08);
+  }
+  main { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  .diagram-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem;
+    overflow-x: auto;
+  }
+  .diagram-card h2 {
+    margin-top: 0; font-size: 1.1rem; color: var(--accent);
+    border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .diagram-card h3 { font-size: 0.95rem; color: #8b949e; margin-top: 1.5rem; }
+  .mermaid { text-align: center; }
+
+  .legend {
+    display: flex; gap: 1rem; flex-wrap: wrap; margin: 1rem 0;
+    font-size: 0.8rem;
+  }
+  .legend-item { display: flex; align-items: center; gap: 0.35rem; }
+  .dot { width: 12px; height: 12px; border-radius: 3px; }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem; margin: 1.5rem 0;
+  }
+  .stat-box {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1rem; text-align: center;
+  }
+  .stat-box .num {
+    font-size: 2rem; font-weight: 700; color: var(--accent);
+  }
+  .stat-box .label { font-size: 0.8rem; color: #8b949e; }
+
+  .file-tree {
+    font-family: "SFMono-Regular", Consolas, monospace; font-size: 0.85rem;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 1rem; line-height: 1.8;
+  }
+  .file-tree .dir { color: #58a6ff; font-weight: 600; }
+  .file-tree .py { color: #a371f7; }
+  .file-tree .yaml { color: #3fb950; }
+  .file-tree .json { color: #f0883e; }
+
+  table {
+    width: 100%; border-collapse: collapse; font-size: 0.85rem;
+    margin: 1rem 0;
+  }
+  th, td {
+    text-align: left; padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+  }
+  th { color: #8b949e; font-weight: 500; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .callout {
+    border-left: 3px solid var(--accent);
+    background: rgba(88,166,255,0.05); padding: 0.8rem 1rem;
+    border-radius: 0 6px 6px 0; margin: 1rem 0; font-size: 0.9rem;
+  }
+  .callout.warn { border-left-color: #f0883e; background: rgba(240,136,62,0.05); }
+  .callout.danger { border-left-color: #f85149; background: rgba(248,81,73,0.05); }
+
+  .zoom-hint {
+    text-align: center; font-size: 0.75rem; color: #6e7681;
+    margin-top: 0.5rem;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Paixueji 架构可视化</h1>
+  <span class="badge">CODE_REFERENCE.md</span>
+  <span class="badge">3-8岁儿童对话教育系统</span>
+  <nav>
+    <button class="active" onclick="show('overview')">总览</button>
+    <button onclick="show('layers')">五层架构</button>
+    <button onclick="show('workflow')">工作流</button>
+    <button onclick="show('api')">API & 数据流</button>
+    <button onclick="show('bridge')">桥接状态机</button>
+    <button onclick="show('files')">文件地图</button>
+  </nav>
+</header>
+
+<main>
+<!-- ===================== 总览 ===================== -->
+<div id="overview" class="section active">
+  <div class="stats-grid">
+    <div class="stat-box"><div class="num">13</div><div class="label">交际意图</div></div>
+    <div class="stat-box"><div class="num">5</div><div class="label">架构层级</div></div>
+    <div class="stat-box"><div class="num">4</div><div class="label">桥接相位</div></div>
+    <div class="stat-box"><div class="num">3</div><div class="label">对话通道</div></div>
+    <div class="stat-box"><div class="num">9</div><div class="label">HTTP 端点</div></div>
+    <div class="stat-box"><div class="num">2</div><div class="label">串行生成步</div></div>
+  </div>
+
+  <div class="diagram-card">
+    <h2>系统全景图</h2>
+    <div class="mermaid">
+graph TB
+    subgraph CLIENT["客户端"]
+        FE["前端页面 /"]
+    end
+
+    subgraph HTTP["HTTP / Flask 层 (paixueji_app.py)"]
+        API_START["/api/start"]
+        API_CONT["/api/continue"]
+        API_RESET["/api/reset"]
+        API_OBJS["/api/objects"]
+        SSE["SSE 流式响应"]
+    end
+
+    subgraph STATE["状态管理层 (paixueji_assistant.py)"]
+        ASSISTANT["PaixuejiAssistant"]
+        STATE_DICT["会话状态字典"]
+    end
+
+    subgraph GRAPH["图编排层 (graph.py)"]
+        LANGGRAPH["LangGraph 工作流"]
+        ROUTER["条件路由"]
+    end
+
+    subgraph STREAM["流式生成层 (stream/)"]
+        RESP_GEN["response_generators"]
+        Q_GEN["question_generators"]
+        VALID["validation (意图分类)"]
+        FUN["fun_fact ( grounding )"]
+    end
+
+    subgraph KB["知识/策略层"]
+        YAML["YAML 知识库"]
+        BRIDGE_POLICY["桥接策略"]
+        THEME["主题分类"]
+    end
+
+    FE -->|POST| API_START
+    FE -->|POST| API_CONT
+    API_START --> ASSISTANT
+    API_CONT --> STATE_DICT
+    ASSISTANT --> STATE_DICT
+    STATE_DICT --> LANGGRAPH
+    LANGGRAPH --> ROUTER
+    ROUTER -->|13 意图节点| RESP_GEN
+    ROUTER -->|开场| Q_GEN
+    RESP_GEN -->|先回应| SSE
+    Q_GEN -->|后提问| SSE
+    VALID -->|分类结果| ROUTER
+    FUN -->|趣闻| API_START
+    YAML -->|维度数据| STATE_DICT
+    BRIDGE_POLICY -->|相位判断| API_CONT
+    THEME -->|IB PYP| GRAPH
+    SSE --> FE
+    </div>
+    <div class="zoom-hint">Ctrl/Cmd + 滚轮 缩放图表</div>
+  </div>
+
+  <div class="callout">
+    <strong>核心设计：</strong>系统围绕"对象"与儿童展开多轮问答。当儿童说的词（surface）与知识库标准词（anchor）不一致时，启动<strong>桥接激活</strong>流程——通过最多 4 轮对话引导儿童接受标准概念。
+  </div>
+
+  <div class="diagram-card">
+    <h2>对象四层映射</h2>
+    <div class="mermaid">
+graph LR
+    SURFACE["surface_object_name<br/>儿童实际说的词<br/>'kitty'"] -->|解析| ANCHOR["anchor_object_name<br/>知识库标准对象<br/>'cat'"]
+    SURFACE --> VISIBLE["visible_object_name<br/>对外展示用词<br/>'kitty'"]
+    ANCHOR --> STATUS["anchor_status<br/>exact / anchored_high<br/>anchored_medium / unresolved"]
+    STATUS -->|不一致| BRIDGE["启动桥接激活"]
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 五层架构 ===================== -->
+<div id="layers" class="section">
+  <div class="diagram-card">
+    <h2>五层职责边界</h2>
+    <table>
+      <tr><th>层级</th><th>职责</th><th>持有状态</th><th>调用 LLM</th><th>核心文件</th></tr>
+      <tr><td><span style="color:var(--layer-http)">HTTP 传输层</span></td><td>请求/响应、SSE 封装、会话查找</td><td>是 (sessions 字典)</td><td>间接</td><td>paixueji_app.py</td></tr>
+      <tr><td><span style="color:var(--layer-state)">状态管理层</span></td><td>状态容器、配置加载、年龄 prompt</td><td>是 (PaixuejiAssistant)</td><td>否</td><td>paixueji_assistant.py</td></tr>
+      <tr><td><span style="color:var(--layer-graph)">图编排层</span></td><td>工作流节点、条件路由、执行追踪</td><td>否 (纯函数)</td><td>间接</td><td>graph.py</td></tr>
+      <tr><td><span style="color:var(--layer-stream)">流式生成层</span></td><td>所有 LLM 流式生成器</td><td>否</td><td>是</td><td>stream/*.py</td></tr>
+      <tr><td><span style="color:var(--layer-kb)">知识/策略层</span></td><td>YAML 加载、桥接策略、主题分类</td><td>否</td><td>部分</td><td>*.py + YAML</td></tr>
+    </table>
+  </div>
+
+  <div class="diagram-card">
+    <h2>分层调用关系</h2>
+    <div class="mermaid">
+graph BT
+    subgraph L5["知识/策略层"]
+        KB_YAML["YAML 知识库"]
+        KB_POLICY["bridge_activation_policy.py<br/>pre_anchor_policy.py"]
+        KB_THEME["theme_classifier.py"]
+    end
+
+    subgraph L4["流式生成层 stream/"]
+        S_RESP["response_generators.py<br/>7 个响应生成器"]
+        S_Q["question_generators.py<br/>4 个问题生成器"]
+        S_VAL["validation.py<br/>意图分类 / KB 映射"]
+        S_FUN["fun_fact.py<br/>两步 grounding 流水线"]
+        S_UTIL["utils.py / db_loader.py"]
+    end
+
+    subgraph L3["图编排层 graph.py"]
+        G_NODES["节点函数<br/>analyze_input / generate_intro / finalize ..."]
+        G_ROUTER["路由函数<br/>route_from_start / route_from_analyze_input"]
+    end
+
+    subgraph L2["状态管理层"]
+        A_CLASS["PaixuejiAssistant<br/>~30 个状态字段"]
+        A_STATE["会话状态字典<br/>messages / bridge_phase / correct_answer_count ..."]
+    end
+
+    subgraph L1["HTTP 传输层 paixueji_app.py"]
+        H_START["start_conversation()<br/>/api/start"]
+        H_CONT["continue_conversation()<br/>/api/continue (~1000+ 行)"]
+        H_SSE["SSE 流式封装"]
+    end
+
+    L4 -->|被调用| L3
+    L5 -->|策略注入| L3
+    L5 -->|数据加载| L2
+    L3 -->|状态读写| L2
+    L2 -->|封装为 SSE| L1
+    L1 -->|请求分发| L3
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 工作流 ===================== -->
+<div id="workflow" class="section">
+  <div class="diagram-card">
+    <h2>LangGraph 开场路径 (Introduction)</h2>
+    <div class="mermaid">
+graph LR
+    START((START)) --> ROUTER_START{"route_from_start<br/>response_type == introduction?"}
+    ROUTER_START -->|是| GENERATE_INTRO["generate_intro<br/>生成开场白"]
+    GENERATE_INTRO --> GENERATE_QUESTION["generate_question<br/>开场问题"]
+    GENERATE_QUESTION --> FINALIZE["finalize<br/>组装 StreamChunk"]
+    FINALIZE --> END((END))
+    ROUTER_START -->|否| ANALYZE["analyze_input<br/>输入分析"]
+    ANALYZE --> ROUTER_ANALYZE["route_from_analyze_input"]
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <h2>LangGraph 普通对话路径 (Ordinary Chat)</h2>
+    <div class="mermaid">
+graph TD
+    START((START)) --> ROUTER{"route_from_start"}
+    ROUTER -->|intro| INTRO["generate_intro"]
+    ROUTER -->|chat| ANALYZE["analyze_input<br/>classify_intent"]
+
+    ANALYZE --> ROUTER2["route_from_analyze_input"]
+
+    ROUTER2 -->|curiosity| N1["node_curiosity"]
+    ROUTER2 -->|correct_answer| N2["node_correct_answer"]
+    ROUTER2 -->|clarifying_idk| N3["node_clarifying_idk"]
+    ROUTER2 -->|clarifying_wrong| N4["node_clarifying_wrong"]
+    ROUTER2 -->|clarifying_constraint| N5["node_clarifying_constraint"]
+    ROUTER2 -->|informative| N6["node_informative"]
+    ROUTER2 -->|play| N7["node_play"]
+    ROUTER2 -->|emotional| N8["node_emotional"]
+    ROUTER2 -->|avoidance| N9["node_avoidance"]
+    ROUTER2 -->|boundary| N10["node_boundary"]
+    ROUTER2 -->|action| N11["node_action<br/>A/B/C/D 子类型"]
+    ROUTER2 -->|social| N12["node_social"]
+    ROUTER2 -->|social_ack| N13["node_social_ack"]
+    ROUTER2 -->|concept_confusion| N14["node_concept_confusion"]
+    ROUTER2 -->|give_answer_idk| N15["node_give_answer_idk<br/>连续困惑 >= 2"]
+    ROUTER2 -->|classify_theme| N16["node_classify_theme<br/>答对 >= 2 次"]
+
+    N1 --> GEN_RESP["generate_intent_response_stream<br/>生成回应（无问题）"]
+    N2 --> GEN_RESP
+    N3 --> GEN_RESP
+    N4 --> GEN_RESP
+    N5 --> GEN_RESP
+    N6 --> GEN_RESP
+    N7 --> GEN_RESP
+    N8 --> GEN_RESP
+    N9 --> GEN_RESP
+    N10 --> GEN_RESP
+    N11 --> GEN_RESP
+    N12 --> GEN_RESP
+    N13 --> GEN_RESP
+    N14 --> GEN_RESP
+    N15 --> GEN_RESP
+    N16 --> GEN_RESP
+
+    GEN_RESP --> ASK_FOLLOW["ask_followup_question_stream<br/>生成跟进问题"]
+    ASK_FOLLOW --> FINALIZE["finalize"]
+    FINALIZE --> END((END))
+
+    INTRO --> ASK_INTRO["ask_introduction_question_stream"]
+    ASK_INTRO --> FINALIZE
+    </div>
+    <div class="callout">
+      <strong>两步串行生成：</strong>先生成对儿童的回应文本（无问题），再生成下一个跟进问题。这增加了 LLM 调用次数，但使输出结构更可控。
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <h2>路由决策逻辑</h2>
+    <div class="mermaid">
+flowchart TD
+    A["analyze_input 输出 intent_type"] --> B{"intent == correct_answer?"}
+    B -->|是| C{"correct_answer_count + 1 >= 2?"}
+    C -->|是| D["route → classify_theme<br/>触发主题分类"]
+    C -->|否| E["route → correct_answer<br/>递增计数器"]
+    B -->|否| F{"intent in {idk, wrong}?"}
+    F -->|是| G{"consecutive_struggle_count >= 2?"}
+    G -->|是| H["route → give_answer_idk<br/>直接给答案"]
+    G -->|否| I["route → clarifying_idk/wrong<br/>递增 struggle 计数"]
+    F -->|否| J["route → intent 同名节点"]
+    </div>
+  </div>
+</div>
+
+<!-- ===================== API & 数据流 ===================== -->
+<div id="api" class="section">
+  <div class="diagram-card">
+    <h2>HTTP 端点清单</h2>
+    <table>
+      <tr><th>端点</th><th>方法</th><th>作用</th></tr>
+      <tr><td><code>/</code></td><td>GET</td><td>静态前端页面</td></tr>
+      <tr><td><code>/api/health</code></td><td>GET</td><td>健康检查</td></tr>
+      <tr><td><code>/api/objects</code></td><td>GET</td><td>列出所有支持的对象（从 YAML 加载）</td></tr>
+      <tr><td><code>/api/start</code></td><td>POST</td><td>开始新对话（创建 assistant + 对象解析）</td></tr>
+      <tr><td><code>/api/continue</code></td><td>POST</td><td>继续对话（核心，~1000+ 行）</td></tr>
+      <tr><td><code>/api/reset</code></td><td>POST</td><td>删除会话</td></tr>
+      <tr><td><code>/api/sessions</code></td><td>GET</td><td>列出所有活跃会话</td></tr>
+      <tr><td><code>/api/lookup-concepts</code></td><td>POST</td><td>查询对象+年龄对应的概念</td></tr>
+      <tr><td><code>/api/force-switch</code></td><td>POST</td><td>强制切换话题</td></tr>
+    </table>
+  </div>
+
+  <div class="diagram-card">
+    <h2>/api/start 数据流</h2>
+    <div class="mermaid">
+sequenceDiagram
+    participant C as 客户端
+    participant H as Flask /start
+    participant A as PaixuejiAssistant
+    participant R as ObjectResolver
+    participant G as graph.py
+    participant S as stream/
+
+    C->>H: POST {session_id, object_name, age}
+    H->>A: 创建实例
+    A->>R: resolve_object_input(raw_name, age)
+    R-->>A: {anchor, status, relation, profile}
+    A->>A: 加载 YAML 维度数据
+    A->>G: paixueji_graph.invoke(state)
+    G->>S: ask_introduction_question_stream
+    S-->>G: 文本流
+    G-->>H: StreamChunk 序列
+    H-->>C: SSE 流式响应
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <h2>/api/continue 通道选择逻辑</h2>
+    <div class="mermaid">
+flowchart TD
+    REQ["/api/continue 请求"] --> PRIORITY["按优先级判断活跃通道"]
+
+    PRIORITY -->|1. 最高| CAT{"category_lane_active?"}
+    CAT -->|是| CAT_PROC["类别管道处理<br/>category_activity.py"]
+
+    CAT -->|否| ATTR{"attribute_lane_active?"}
+    ATTR -->|是| ATTR_PROC["属性管道处理<br/>attribute_activity.py"]
+
+    ATTR -->|否| BRIDGE_REOPEN{"bridge_phase == none<br/>+ 有锚点<br/>+ reopen 信号?"}
+    BRIDGE_REOPEN -->|是| BRIDGE_R["桥接 reopen 处理"]
+
+    BRIDGE_REOPEN -->|否| BRIDGE_CONT{"bridge_phase == activation?"}
+    BRIDGE_CONT -->|是| BRIDGE_C["桥接 continuation 处理<br/>含 handoff 判定"]
+
+    BRIDGE_CONT -->|否| PRE_ANCHOR{"bridge_phase == pre_anchor?"}
+    PRE_ANCHOR -->|是| PRE_A["预锚定处理"]
+
+    PRE_ANCHOR -->|否| ORDINARY["普通图执行<br/>LangGraph"]
+
+    CAT_PROC --> SSE["SSE 返回"]
+    ATTR_PROC --> SSE
+    BRIDGE_R --> SSE
+    BRIDGE_C --> SSE
+    PRE_A --> SSE
+    ORDINARY --> SSE
+    </div>
+    <div class="callout warn">
+      <strong>脆弱点：</strong>continue_conversation 超过 1000 行，内含 6 条互斥路径，每条都是内联 async def 生成器，存在大量重复代码。
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <h2>StreamChunk 关键字段流转</h2>
+    <div class="mermaid">
+graph LR
+    subgraph INPUT["输入侧"]
+        I1["intent_type"]
+        I2["bridge_phase"]
+        I3["correct_answer_count"]
+        I4["consecutive_struggle_count"]
+    end
+
+    subgraph PROCESS["处理层"]
+        P1["classify_intent"]
+        P2["route_from_analyze_input"]
+        P3["意图节点"]
+    end
+
+    subgraph OUTPUT["输出侧 StreamChunk"]
+        O1["response_type"]
+        O2["bridge_debug"]
+        O3["resolution_debug"]
+        O4["used_kb_item"]
+        O5["nodes_executed"]
+    end
+
+    I1 --> P1
+    I2 --> P2
+    I3 --> P2
+    I4 --> P2
+    P1 --> P2
+    P2 --> P3
+    P3 --> O1
+    P3 --> O4
+    P3 --> O5
+    I2 --> O2
+    I1 --> O3
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 桥接状态机 ===================== -->
+<div id="bridge" class="section">
+  <div class="diagram-card">
+    <h2>桥接激活状态机 (4 相位)</h2>
+    <div class="mermaid">
+stateDiagram-v2
+    [*] --> none: 会话开始
+    none --> pre_anchor: 解析到 anchor<br/>但 surface ≠ anchor
+    none --> activation: reopen 信号<br/>+ 有锚点
+    pre_anchor --> activation: 启动正式激活
+    pre_anchor --> none: 预锚定超时
+    activation --> activation: 每轮对话<br/>max 4 轮
+    activation --> anchor_general: handoff 判定通过
+    activation --> none: 超时 / 失败
+    anchor_general --> [*]: 正常对话
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <h2>Handoff 判定条件（5+ 条件组合）</h2>
+    <div class="mermaid">
+flowchart TD
+    H["handoff_ready?"] --> Q1["上一问是否 KB 支撑?"]
+    Q1 --> Q2["是否 handoff-ready?"]
+    Q2 --> Q3["儿童是否回答了上一问?"]
+    Q3 --> Q4["连续性锚点是否保持?"]
+    Q4 --> Q5["是否超过 MAX_BRIDGE_ACTIVATION_TURNS?"]
+    Q5 --> DECISION{"全部满足?"}
+    DECISION -->|是| SUCCESS["handoff → anchor_general"]
+    DECISION -->|否| BLOCK["block_reason<br/>继续 activation"]
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <h2>桥接激活调试信息结构</h2>
+    <div class="mermaid">
+graph TD
+    T["ActivationTransitionDebugInfo"] --> B["before_state<br/>9 字段"]
+    T --> QV["question_validation<br/>9 字段"]
+    T --> AV["answer_validation<br/>6 字段"]
+    T --> O["outcome<br/>4 字段"]
+    T --> TI["turn_interpretation<br/>3 字段"]
+    T --> C["continuity<br/>4 字段"]
+
+    B --> B1["activation_handoff_ready_before"]
+    B --> B2["activation_turn_count_before"]
+    B --> B3["bridge_phase_before"]
+
+    QV --> QV1["source / confidence / reason"]
+    QV --> QV2["kb_backed_question"]
+    QV --> QV3["handoff_ready_question"]
+
+    AV --> AV1["answered_previous_question"]
+    AV --> AV2["answer_polarity"]
+    AV --> AV3["handoff_check_attempted"]
+    </div>
+    <div class="callout danger">
+      <strong>脆弱点：</strong>30+ 个调试字段的任何新增/修改都需要同步修改整套构建代码（6 个辅助函数 + 1 个主构建函数）。
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <h2>桥接状态转换代码分布</h2>
+    <table>
+      <tr><th>逻辑位置</th><th>职责</th></tr>
+      <tr><td>HTTP 入口层 (paixueji_app.py)</td><td>reopen 判断、continuation 执行、handoff 提交</td></tr>
+      <tr><td>PaixuejiAssistant</td><td>begin_bridge_activation、commit_bridge_activation、clear_bridge_activation</td></tr>
+      <tr><td>graph.py (开场节点)</td><td>intro_mode 判断、桥接上下文注入</td></tr>
+      <tr><td>bridge_activation_policy.py</td><td>重开信号分类、问题提取</td></tr>
+      <tr><td>bridge_context.py</td><td>桥接上下文构建</td></tr>
+      <tr><td>bridge_debug.py</td><td>调试信息组装</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ===================== 文件地图 ===================== -->
+<div id="files" class="section">
+  <div class="diagram-card">
+    <h2>项目文件结构</h2>
+    <div class="file-tree">
+<span class="dir">.</span>
+├── <span class="py">paixueji_app.py</span>          <span style="color:#6e7681"># Flask HTTP 层 + SSE + 会话管理 (~1000+ 行 continue)</span>
+├── <span class="py">paixueji_assistant.py</span>    <span style="color:#6e7681"># PaixuejiAssistant 状态容器 (~30 字段)</span>
+├── <span class="py">graph.py</span>                 <span style="color:#6e7681"># LangGraph 工作流 + 路由逻辑 + PaixuejiState</span>
+├── <span class="py">schema.py</span>                <span style="color:#6e7681"># StreamChunk / BridgeDebugInfo / ResolutionDebugInfo Pydantic 模型</span>
+├── <span class="py">object_resolver.py</span>       <span style="color:#6e7681"># 对象解析: surface → anchor</span>
+├── <span class="py">kb_context.py</span>            <span style="color:#6e7681"># 知识库上下文构建</span>
+├── <span class="py">theme_classifier.py</span>      <span style="color:#6e7681"># IB PYP 主题分类</span>
+├── <span class="py">prompt_optimizer.py</span>      <span style="color:#6e7681"># 自我进化: 失败 trace 分析 → prompt 优化建议</span>
+├── <span class="py">trace_assembler.py</span>       <span style="color:#6e7681"># Trace 组装</span>
+├── <span class="py">trace_schema.py</span>          <span style="color:#6e7681"># Trace 数据结构</span>
+│
+├── <span class="dir">stream/</span>                  <span style="color:#6e7681"># 流式生成层</span>
+│   ├── <span class="py">__init__.py</span>        <span style="color:#6e7681"># 统一导出</span>
+│   ├── <span class="py">response_generators.py</span>  <span style="color:#6e7681"># 7 个响应生成器</span>
+│   ├── <span class="py">question_generators.py</span>  <span style="color:#6e7681"># 4 个问题生成器</span>
+│   ├── <span class="py">validation.py</span>      <span style="color:#6e7681"># 意图分类 / KB 映射</span>
+│   ├── <span class="py">fun_fact.py</span>        <span style="color:#6e7681"># 趣闻 grounding (两步流水线)</span>
+│   ├── <span class="py">utils.py</span>           <span style="color:#6e7681"># 消息转换 / hook 选择</span>
+│   ├── <span class="py">db_loader.py</span>       <span style="color:#6e7681"># 数据库加载</span>
+│   ├── <span class="py">exploration_loader.py</span>  <span style="color:#6e7681"># 探索维度加载</span>
+│   └── <span class="py">errors.py</span>          <span style="color:#6e7681"># 错误处理</span>
+│
+├── <span class="dir">bridge/</span>                  <span style="color:#6e7681"># 桥接相关 (扁平化)</span>
+│   ├── <span class="py">bridge_activation_policy.py</span>  <span style="color:#6e7681"># 激活策略</span>
+│   ├── <span class="py">bridge_context.py</span>  <span style="color:#6e7681"># 上下文构建</span>
+│   ├── <span class="py">bridge_debug.py</span>    <span style="color:#6e7681"># 调试信息 (30+ 字段)</span>
+│   ├── <span class="py">bridge_profile.py</span>  <span style="color:#6e7681"># 桥接画像</span>
+│   ├── <span class="py">pre_anchor_policy.py</span>  <span style="color:#6e7681"># 预锚定策略</span>
+│   └── <span class="py">resolution_debug.py</span>  <span style="color:#6e7681"># 解析调试</span>
+│
+├── <span class="dir">activity/</span>                <span style="color:#6e7681"># 探索管道</span>
+│   ├── <span class="py">attribute_activity.py</span>  <span style="color:#6e7681"># 属性探索管道 (自洽状态机)</span>
+│   └── <span class="py">category_activity.py</span>  <span style="color:#6e7681"># 类别探索管道</span>
+│
+├── <span class="dir">tests/</span>                   <span style="color:#6e7681"># 测试 (50+ 文件)</span>
+│   ├── <span class="py">test_api_flow.py</span>
+│   ├── <span class="py">test_bridge_*.py</span>   <span style="color:#6e7681"># 桥接相关测试</span>
+│   ├── <span class="py">test_overseas_algo_*.py</span>  <span style="color:#6e7681"># 海外算法验证</span>
+│   └── ...
+│
+├── <span class="yaml">config.json</span>              <span style="color:#6e7681"># Vertex AI 配置</span>
+├── <span class="json">age_prompts.json</span>         <span style="color:#6e7681"># 年龄适配 prompt</span>
+└── <span class="yaml">*.yaml</span>                   <span style="color:#6e7681"># 对象知识库</span>
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <h2>模块依赖关系</h2>
+    <div class="mermaid">
+graph BT
+    APP["paixueji_app.py"] --> ASSISTANT["paixueji_assistant.py"]
+    APP --> GRAPH["graph.py"]
+    APP --> SCHEMA["schema.py"]
+    APP --> RESOLVER["object_resolver.py"]
+    APP --> BRIDGE_POLICY["bridge_activation_policy.py"]
+    APP --> BRIDGE_CTX["bridge_context.py"]
+    APP --> BRIDGE_DBG["bridge_debug.py"]
+    APP --> PRE_ANCHOR["pre_anchor_policy.py"]
+    APP --> RES_DBG["resolution_debug.py"]
+    APP --> KB_CTX["kb_context.py"]
+    APP --> ATTR["attribute_activity.py"]
+    APP --> CAT["category_activity.py"]
+
+    GRAPH --> STREAM["stream/"]
+    GRAPH --> SCHEMA
+    GRAPH --> BRIDGE_CTX
+    GRAPH --> BRIDGE_DBG
+
+    ASSISTANT --> BRIDGE_POLICY
+
+    STREAM --> VALID["validation.py"]
+    STREAM --> RESP["response_generators.py"]
+    STREAM --> QGEN["question_generators.py"]
+    STREAM --> FUN["fun_fact.py"]
+    STREAM --> UTILS["utils.py"]
+
+    RESP --> VALID
+    QGEN --> VALID
+    FUN --> VALID
+
+    ATTR --> STREAM
+    CAT --> STREAM
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <h2>已知脆弱点（文档标注）</h2>
+    <div class="callout danger">
+      <strong>1. continue_conversation 庞大嵌套 (~1000+ 行)</strong><br>
+      6 条互斥路径，内联 async def 生成器，大量重复 StreamChunk 构建代码。
+    </div>
+    <div class="callout danger">
+      <strong>2. 桥接状态机分散在三处</strong><br>
+      HTTP 层、PaixuejiAssistant、graph.py 开场节点各管一段。
+    </div>
+    <div class="callout danger">
+      <strong>3. 意图分类重复与不一致</strong><br>
+      图分析节点做大写分类，属性管道在 HTTP 层独立做小写分类，action_subtype 只在图中使用。
+    </div>
+    <div class="callout warn">
+      <strong>4. 全局事件循环线程安全</strong><br>
+      同步 Flask 路由中跑异步代码，async_gen_to_sync 转换，硬编码 10 秒超时。
+    </div>
+    <div class="callout warn">
+      <strong>5. 趣闻功能悬浮</strong><br>
+      node_generate_fun_fact 已定义但未接入主工作流（build_paixueji_graph 未 add_node）。
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#21262d',
+    primaryTextColor: '#c9d1d9',
+    primaryBorderColor: '#30363d',
+    lineColor: '#8b949e',
+    secondaryColor: '#161b22',
+    tertiaryColor: '#0d1117',
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif'
+  },
+  flowchart: { curve: 'basis', padding: 15 },
+  stateDiagram: { padding: 15 }
+});
+</script>
+</body>
+</html>
