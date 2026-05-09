@@ -126,7 +126,8 @@ Celebrate the transition to the new object.
 2. Smoothly transition to exploring it
 3. DO NOT ask the first question yet (that comes next)
 4. Match vocabulary to age {age}
-5. Respond naturally (NOT JSON)
+5. Use natural, simple comparisons. Avoid invented words like "wiggier".
+6. Respond naturally (NOT JSON)
 """
 
 BRIDGE_ACTIVATION_RESPONSE_PROMPT = """You are still in BridgeActivation between {surface_object_name} and {anchor_object_name}.
@@ -1649,7 +1650,7 @@ BEAT 2 — for A/B (GENTLE PATH OFFER): Give ONE option that turns their emotion
     - Scared: "Want to look at it from far away, like a wildlife explorer?"
     - Grossed out: "Should we focus on just the wings and skip the legs?"
   For POSITIVE emotions — offer closer engagement:
-    - Excited: "Want to look even more closely and find the most colorful spot?"
+    - Excited: "Want to use your eyes like a detective and find the most colorful spot?"
     - Amazed: "Let's see if we can find the most amazing part!"
 
 BEAT 2 — for C (REAL-WORLD SUPPORT): You MUST include BOTH of these sentences:
@@ -1729,7 +1730,7 @@ BEAT 1 — VALIDATE THE CURIOSITY:
   - "Oh, I totally get why you'd want to!"
   - "That curiosity is so great — you really want to get in there!"
 
-BEAT 2 — BRIEF SAFETY REASON (one sentence only, age-scaled):
+BEAT 2 — BRIEF SAFETY REASON (required — one sentence only, age-scaled):
   Ages 3-5 (simple and concrete):
     - "{object_name} needs to be safe too — they're very fragile!"
     - "It might hurt your tummy because it's not food for people."
@@ -1737,6 +1738,7 @@ BEAT 2 — BRIEF SAFETY REASON (one sentence only, age-scaled):
     - "Touching {object_name} can actually damage its wings because our fingers have oils on them."
     - "Eating wild things can be risky because we don't know what's been on them."
   Keep it to ONE sentence — do not lecture.
+  You MUST include this step. Do not skip the safety reason.
 
 BEAT 3 — THE EXCITING ALTERNATIVE + OPEN INVITE (make it sound BETTER):
   Offer the exciting alternative, then end with a short yes/no invite question.
@@ -1780,9 +1782,9 @@ TYPE B — NEW ACTIVITY REQUEST ("Give me a new question", "Let's do something e
   One sentence only — just the acknowledgment.
 
 TYPE C — VAGUE OR META REQUEST ("I'm bored", "This is too hard", "Can we change?"):
-  Accept warmly and offer one option.
+  Accept warmly and offer one option as a statement. Do NOT ask a question.
+  "No worries — let's look at the apple's skin instead."
   "Of course — we can find something even cooler to explore!"
-  "No worries — let's make it more fun!"
 
 TYPE D — REQUEST FOR UNRELATED SPECIFIC TOPIC (handled by topic-switch flow):
   Bridge enthusiastically and let the topic-switch flow take over.
