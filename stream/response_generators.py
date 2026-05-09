@@ -267,6 +267,7 @@ async def generate_attribute_activation_response_stream(
             age_prompt=age_prompt,
             last_model_response=last_model_response,
             knowledge_context=knowledge_context,
+            sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
         )
     except KeyError:
         intent_prompt = intent_template
