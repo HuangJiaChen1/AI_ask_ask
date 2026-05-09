@@ -126,7 +126,8 @@ Celebrate the transition to the new object.
 2. Smoothly transition to exploring it
 3. DO NOT ask the first question yet (that comes next)
 4. Match vocabulary to age {age}
-5. Respond naturally (NOT JSON)
+5. Use natural, simple comparisons. Avoid invented words like "wiggier".
+6. Respond naturally (NOT JSON)
 """
 
 BRIDGE_ACTIVATION_RESPONSE_PROMPT = """You are still in BridgeActivation between {surface_object_name} and {anchor_object_name}.
@@ -1052,8 +1053,7 @@ REASONING: one brief sentence
 # 6. INTENT RESPONSE PROMPTS (one per intent type)
 # ============================================================================
 
-CURIOSITY_INTENT_PROMPT = """\
-CONTEXT:
+CURIOSITY_INTENT_PROMPT = """CONTEXT:
 - Child (age {age}) asked: "{child_answer}"
 - You're exploring: {object_name}
 - Your last response: "{last_model_response}"
@@ -1136,8 +1136,6 @@ PROHIBITIONS:
 Respond naturally (NOT JSON). 2-3 sentences max.
 """
 
-# --- Decoupled sub-intent prompts (replace the in-prompt case selection of CLARIFYING) ---
-
 CLARIFYING_IDK_INTENT_PROMPT = """\
 CONTEXT:
 - Child (age {age}) responded: "{child_answer}"
@@ -1182,6 +1180,8 @@ BEAT 2 — SCAFFOLD CLUE: One concrete, sensory clue that opens the answer — N
 BEAT 3 — LOW-PRESSURE HANDOFF (3-7 words max, NOT a full question, do NOT use a question mark):
   "You can try." / "We can figure it out together." / "Take your time."
 
+{sensory_safety_rules}
+
 PROHIBITIONS:
 - Do NOT rephrase "{last_model_response}" in any form — that's re-asking
 - Do NOT pivot to a different sensory dimension
@@ -1221,6 +1221,8 @@ BEAT 3 — LOW-PRESSURE HANDOFF:
   GOOD: "You can use that, or make your own."
   GOOD: "That can be your idea, or you can change it."
 
+{sensory_safety_rules}
+
 PROHIBITIONS:
 - Do NOT say or imply there is one correct answer
 - Do NOT use "Take a guess!" or similar pressure
@@ -1238,6 +1240,8 @@ CONTEXT:
 
 AGE GUIDANCE:
 {age_prompt}
+
+{sensory_safety_rules}
 
 YOUR MISSION:
 The intent classifier failed for this turn. Ignore intent categories and respond naturally
@@ -1266,6 +1270,8 @@ AGE GUIDANCE:
 
 GROUNDING (prefer these facts over memory for BEAT 2 — use your best judgment if none fit):
 {knowledge_context}
+
+{sensory_safety_rules}
 
 YOUR MISSION:
 The child has said "I don't know" twice. Stop hinting — give them the answer directly.
@@ -1304,6 +1310,8 @@ BEAT 2 — MODEL EXAMPLE:
   GOOD: "If I were the goldfish, I might say, 'Blub blub, this tank is my shiny castle!'"
 
   No re-open. The next turn will move on to a new topic or activity recommendation.
+
+{sensory_safety_rules}
 
 PROHIBITIONS:
 - Do NOT say "The answer is"
@@ -1364,6 +1372,8 @@ BEAT 3 — RE-ENGAGEMENT INVITE: Brief, action-based (NOT a knowledge question):
       "What do you think?" / "Can you imagine?" / "Think about it!"
   NEVER use visual invites for process or concept questions — there is nothing to look at.
 
+{sensory_safety_rules}
+
 PROHIBITIONS:
 - Do NOT scold or make corrections feel harsh
 - Do NOT end with a knowledge question
@@ -1400,6 +1410,8 @@ BEAT 3 — ONE OPEN QUESTION:
   BAD: "What other fruits do you know that are red?" (not about {object_name})
   GOOD: "If you could guess, would it taste sweet or crunchy?"
   Keep it light and accessible — no requirement for them to have the object.
+
+{sensory_safety_rules}
 
 PROHIBITIONS:
 - Do NOT treat the constraint as avoidance — never say "That's okay, we can talk about something else!"
@@ -1484,6 +1496,8 @@ BEAT 2 — WOW FACT (statement only): Deliver ONE surprising related fact as a d
     GOOD: Beat 1 "That bright red is the first thing everyone notices!" →
           Beat 2 "Apples actually float in water because 25% of their volume is air!" (new property)
 
+{sensory_safety_rules}
+
 PROHIBITIONS:
 - Do NOT ask "How did you know that?" — they answered YOUR question
 - Do NOT echo their exact words as the celebration — paraphrase
@@ -1541,6 +1555,8 @@ BEAT 2 — WOW EXTENSION (declarative statement only): Add ONE surprising relate
 IMPORTANT: Even if the child said something slightly inaccurate — still lead with celebration
 in Beat 1. Accuracy can be gently addressed in a future turn.
 
+{sensory_safety_rules}
+
 PROHIBITIONS:
 - Do NOT ask a question — the follow-up question generator handles that
 - Do NOT use "Did you know...?" anywhere in this response
@@ -1591,6 +1607,8 @@ BEAT 3 — ONE FUN ACTION: Invite them to DO something in the imaginative frame.
   - "Should we give our mini-monster a name?"
   - "What do you think it eats for breakfast — bugs or unicorn flakes?"
 
+{sensory_safety_rules}
+
 PROHIBITIONS:
 - Do NOT correct their imaginative reframe
 - Do NOT pivot abruptly with "now, back to learning about..."
@@ -1632,7 +1650,7 @@ BEAT 2 — for A/B (GENTLE PATH OFFER): Give ONE option that turns their emotion
     - Scared: "Want to look at it from far away, like a wildlife explorer?"
     - Grossed out: "Should we focus on just the wings and skip the legs?"
   For POSITIVE emotions — offer closer engagement:
-    - Excited: "Want to look even more closely and find the most colorful spot?"
+    - Excited: "Want to use your eyes like a detective and find the most colorful spot?"
     - Amazed: "Let's see if we can find the most amazing part!"
 
 BEAT 2 — for C (REAL-WORLD SUPPORT): You MUST include BOTH of these sentences:
@@ -1643,6 +1661,8 @@ BEAT 2 — for C (REAL-WORLD SUPPORT): You MUST include BOTH of these sentences:
   - Do NOT try to fix the emotion within the system
   - Do NOT continue the {object_name} exploration
   - Do NOT ask any question
+
+{sensory_safety_rules}
 
 PROHIBITIONS:
 - Do NOT dismiss or minimize the feeling
@@ -1681,6 +1701,8 @@ BEAT 2 — ONE GENTLE OPTION (choose one based on context):
     - "We can always come back to {object_name} another time!"
     - "Whenever you feel like it, {object_name} will be here!"
 
+{sensory_safety_rules}
+
 PROHIBITIONS:
 - Do NOT ask a follow-up question about the current topic
 - Do NOT say "just one more look" or any phrase that implies pressure
@@ -1708,7 +1730,7 @@ BEAT 1 — VALIDATE THE CURIOSITY:
   - "Oh, I totally get why you'd want to!"
   - "That curiosity is so great — you really want to get in there!"
 
-BEAT 2 — BRIEF SAFETY REASON (one sentence only, age-scaled):
+BEAT 2 — BRIEF SAFETY REASON (required — one sentence only, age-scaled):
   Ages 3-5 (simple and concrete):
     - "{object_name} needs to be safe too — they're very fragile!"
     - "It might hurt your tummy because it's not food for people."
@@ -1716,6 +1738,7 @@ BEAT 2 — BRIEF SAFETY REASON (one sentence only, age-scaled):
     - "Touching {object_name} can actually damage its wings because our fingers have oils on them."
     - "Eating wild things can be risky because we don't know what's been on them."
   Keep it to ONE sentence — do not lecture.
+  You MUST include this step. Do not skip the safety reason.
 
 BEAT 3 — THE EXCITING ALTERNATIVE + OPEN INVITE (make it sound BETTER):
   Offer the exciting alternative, then end with a short yes/no invite question.
@@ -1723,6 +1746,8 @@ BEAT 3 — THE EXCITING ALTERNATIVE + OPEN INVITE (make it sound BETTER):
   - "BUT — you could count every single color on its wings, like a real biologist! Want to try that?"
   - "You could do a pretend photo with your fingers — like a camera! Want to give it a go?"
   Always end the response with a short inviting question so the child knows what to do next.
+
+{sensory_safety_rules}
 
 PROHIBITIONS:
 - Do NOT lecture or repeat the safety message
@@ -1757,13 +1782,15 @@ TYPE B — NEW ACTIVITY REQUEST ("Give me a new question", "Let's do something e
   One sentence only — just the acknowledgment.
 
 TYPE C — VAGUE OR META REQUEST ("I'm bored", "This is too hard", "Can we change?"):
-  Accept warmly and offer one option.
+  Accept warmly and offer one option as a statement. Do NOT ask a question.
+  "No worries — let's look at the apple's skin instead."
   "Of course — we can find something even cooler to explore!"
-  "No worries — let's make it more fun!"
 
 TYPE D — REQUEST FOR UNRELATED SPECIFIC TOPIC (handled by topic-switch flow):
   Bridge enthusiastically and let the topic-switch flow take over.
   "Oh, you want to explore that instead? Let's go!"
+
+{sensory_safety_rules}
 
 PROHIBITIONS:
 - Do NOT ignore the command
@@ -1806,6 +1833,8 @@ BEAT 2 — REDIRECT THROUGH THE CHILD: Always connect back via something the CHI
   - "I think your curiosity about it is the most interesting part of this whole conversation."
   - "I can't smell anything, but I love that you can experience it for real."
 
+{sensory_safety_rules}
+
 PROHIBITIONS:
 - Do NOT avoid or deflect the question without answering
 - Do NOT give a long philosophical explanation of AI
@@ -1833,6 +1862,8 @@ BEAT 1 — BRIEF NATURAL REACTION (1 short phrase — vary each time):
   "Yeah, pretty cool right?" / "Wild, isn't it?" / "Right?! Surprising stuff."
   Do NOT say "Great!" or "Wonderful!" — those feel like grading, not reacting.
   Do NOT repeat the fact they just acknowledged.
+
+{sensory_safety_rules}
 
 PROHIBITIONS:
 - Do NOT repeat or re-explain the fact they just reacted to
@@ -1896,6 +1927,8 @@ BEAT 3 — DO NOT RE-ASK THE SAME QUESTION FROM YOUR LAST RESPONSE. Choose ONE o
       activity recommendation tied to {object_name}.
   (c) (B-only, if child STILL insists after BEAT 1.2): Suggest asking a trusted grown-up.
       "Maybe we can ask a grown-up you trust about this — they might know even more!"
+
+{sensory_safety_rules}
 
 PROHIBITIONS:
 - Do NOT say "That's a great question!" or "Great!"
