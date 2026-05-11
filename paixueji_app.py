@@ -208,6 +208,16 @@ def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
     selected_hook_type = latest.get("selected_hook_type") if latest else None
     question_style = latest.get("question_style") if latest else None
 
+    switch_state = {}
+    if getattr(assistant, "attribute_state", None):
+        state = assistant.attribute_state
+        switch_state = {
+            "attribute_switched_to": getattr(state, "switched_to", None),
+            "attribute_switch_reason": getattr(state, "switch_reason", None),
+            "attribute_fallback_count": len(getattr(state, "fallback_profiles", ())),
+            "attribute_turn_count": getattr(state, "turn_count", 0),
+        }
+
     return {
         "current_object_name": assistant.object_name,
         "surface_object_name": assistant.surface_object_name,
@@ -234,6 +244,7 @@ def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
         "resolution_debug": assistant.session_resolution_debug,
         "selected_hook_type": selected_hook_type,
         "question_style": question_style,
+        **switch_state,
     }
 
 
