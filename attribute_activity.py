@@ -38,6 +38,7 @@ class DiscoverySessionState:
     fallback_profiles: tuple[AttributeProfile, ...] = ()
     switched_to: str | None = None
     switch_reason: str | None = None
+    last_activity_ready_rejected_reason: str | None = None
 
     def to_debug_dict(self) -> dict:
         return asdict(self)

@@ -48,6 +48,13 @@ let currentAttributeDebug = null;
 let currentAttributePipelineEnabled = false;
 let currentAttributeLaneActive = false;
 let currentAttributeActivityTarget = null;
+let currentAttributeSwitchedTo = null;
+let currentAttributeSwitchReason = null;
+let currentAttributeFallbackCount = 0;
+let currentAttributeTurnCount = 0;
+let currentAttributeFallbackLabels = null;
+let previousAttributeSwitchedTo = null;
+let currentActivityReadyRejectedReason = null;
 let currentCategoryDebug = null;
 let currentCategoryPipelineEnabled = false;
 let currentCategoryLaneActive = false;
@@ -582,6 +589,13 @@ async function startConversation() {
     currentCategoryPipelineEnabled = false;
     currentCategoryLaneActive = false;
     currentCategoryActivityTarget = null;
+    currentAttributeSwitchedTo = null;
+    currentAttributeSwitchReason = null;
+    currentAttributeFallbackCount = 0;
+    currentAttributeTurnCount = 0;
+    currentAttributeFallbackLabels = null;
+    previousAttributeSwitchedTo = null;
+    currentActivityReadyRejectedReason = null;
 
     // Reset progress
     correctAnswerCount = 0;
@@ -1047,7 +1061,42 @@ function handleStreamChunk(chunk) {
             currentCategoryActivityTarget = null;
         }
         updateDebugPanel();
+        updateTopicStatusCard();
     }
+    // Switch state fields
+    if ('attribute_switched_to' in chunk) {
+        previousAttributeSwitchedTo = currentAttributeSwitchedTo;
+        currentAttributeSwitchedTo = chunk.attribute_switched_to;
+        updateDebugPanel();
+        updateTopicStatusCard();
+        if (previousAttributeSwitchedTo !== currentAttributeSwitchedTo && currentAttributeSwitchedTo) {
+            highlightTopicCard();
+        }
+    }
+    if ('attribute_switch_reason' in chunk) {
+        currentAttributeSwitchReason = chunk.attribute_switch_reason;
+        updateDebugPanel();
+        updateTopicStatusCard();
+    }
+    if ('attribute_fallback_count' in chunk) {
+        currentAttributeFallbackCount = chunk.attribute_fallback_count;
+        updateDebugPanel();
+        updateTopicStatusCard();
+    }
+    if ('attribute_turn_count' in chunk) {
+        currentAttributeTurnCount = chunk.attribute_turn_count;
+        updateDebugPanel();
+        updateTopicStatusCard();
+    }
+    if ('attribute_fallback_labels' in chunk) {
+        currentAttributeFallbackLabels = chunk.attribute_fallback_labels;
+        updateTopicStatusCard();
+    }
+    if ('attribute_activity_ready_rejected_reason' in chunk) {
+        currentActivityReadyRejectedReason = chunk.attribute_activity_ready_rejected_reason;
+        updateTopicStatusCard();
+    }
+
     if (chunk.activity_ready && !currentAttributeActivityTarget && !currentCategoryActivityTarget) {
         if (currentCategoryLaneActive || currentCategoryPipelineEnabled) {
             currentCategoryActivityTarget = { activity_source: 'category' };
@@ -1055,6 +1104,7 @@ function handleStreamChunk(chunk) {
             currentAttributeActivityTarget = { activity_source: 'attribute' };
         }
         updateDebugPanel();
+        updateTopicStatusCard();
     }
 
     // Update hook type (set on introduction, persists for session)
@@ -1232,6 +1282,10 @@ function updateDebugPanel() {
     setText('debugAttributeReplyType', attributeReply.reply_type);
     setText('debugActivityMarkerDetected', attributeDebug.activity_marker_detected ? 'yes' : null);
     setText('debugActivityMarkerReason', attributeDebug.activity_marker_reason);
+    setText('debugSwitchedTo', currentAttributeSwitchedTo || '-');
+    setText('debugSwitchReason', currentAttributeSwitchReason || '-');
+    setText('debugFallbackCount', currentAttributeFallbackCount || '-');
+    setText('debugTurnCount', currentAttributeTurnCount !== null ? String(currentAttributeTurnCount) : '-');
     const categoryDebug = currentCategoryDebug || {};
     const categoryProfile = categoryDebug.profile || {};
     const categoryReply = categoryDebug.reply || {};
@@ -1269,6 +1323,64 @@ function updateDebugPanel() {
 
 function isCurrentObjectGameEligible() {
     return !!currentObject && gameEntityNames.has(currentObject.toLowerCase());
+}
+
+function updateTopicStatusCard() {
+    const card = document.getElementById('topicStatusCard');
+    if (!card) return;
+
+    const shouldShow = currentAttributeLaneActive || currentAttributePipelineEnabled;
+    card.style.display = shouldShow ? 'block' : 'none';
+    if (!shouldShow) return;
+
+    const label = currentAttributeDebug?.profile?.label || '-';
+    const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value || '-';
+    };
+    setText('topicCurrentLabel', label);
+
+    const fallbackText = currentAttributeFallbackLabels?.join(', ') || '-';
+    setText('topicFallbackLabels', fallbackText);
+
+    const target = currentAttributeDebug?.profile?.activity_target || '-';
+    setText('topicActivityTarget', target);
+
+    const turnEl = document.getElementById('topicTurnCount');
+    const turnCount = currentAttributeTurnCount || 0;
+    const isReady = currentAttributeActivityTarget || (currentAttributeDebug?.activity_marker_detected && !currentActivityReadyRejectedReason);
+
+    if (isReady) {
+        turnEl.textContent = `${turnCount} / ready`;
+        turnEl.style.color = '#10b981';
+        card.classList.remove('warning');
+        card.classList.add('ready');
+    } else if (turnCount < 3) {
+        turnEl.textContent = `${turnCount} / 3+ required`;
+        turnEl.style.color = '#f97316';
+        card.classList.add('warning');
+        card.classList.remove('ready');
+    } else {
+        turnEl.textContent = `${turnCount} / eligible`;
+        turnEl.style.color = '#64748b';
+        card.classList.remove('warning', 'ready');
+    }
+
+    const switchEl = document.getElementById('topicSwitchStatus');
+    if (currentAttributeSwitchedTo) {
+        const fromLabel = previousAttributeSwitchedTo || 'original';
+        switchEl.textContent = `Switched: ${fromLabel} → ${currentAttributeSwitchedTo}`;
+        switchEl.style.display = 'block';
+    } else {
+        switchEl.style.display = 'none';
+    }
+}
+
+function highlightTopicCard() {
+    const card = document.getElementById('topicStatusCard');
+    if (!card) return;
+    card.classList.add('switching');
+    setTimeout(() => card.classList.remove('switching'), 1000);
 }
 
 function hasAttributeActivityReady() {

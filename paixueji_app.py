@@ -212,6 +212,8 @@ def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
     question_style = latest.get("question_style") if latest else None
 
     switch_state = {}
+    fallback_labels = None
+    activity_ready_rejected_reason = None
     if getattr(assistant, "attribute_state", None):
         state = assistant.attribute_state
         switch_state = {
@@ -220,6 +222,8 @@ def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
             "attribute_fallback_count": len(getattr(state, "fallback_profiles", ())),
             "attribute_turn_count": getattr(state, "turn_count", 0),
         }
+        fallback_labels = [fb.label for fb in getattr(state, "fallback_profiles", ())] or None
+        activity_ready_rejected_reason = getattr(state, "last_activity_ready_rejected_reason", None)
 
     return {
         "current_object_name": assistant.object_name,
@@ -248,6 +252,8 @@ def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
         "selected_hook_type": selected_hook_type,
         "question_style": question_style,
         **switch_state,
+        "attribute_fallback_labels": fallback_labels,
+        "attribute_activity_ready_rejected_reason": activity_ready_rejected_reason,
     }
 
 
@@ -1498,6 +1504,7 @@ def continue_conversation():
                                 # Guard: require minimum conversation depth before accepting handoff
                                 if assistant.attribute_state.turn_count < MIN_ACTIVITY_READY_TURNS:
                                     activity_marker_rejected_reason = "insufficient_turns"
+                                    assistant.attribute_state.last_activity_ready_rejected_reason = activity_marker_rejected_reason
                                     logger.info(
                                         "[ACTIVITY_READY] rejected: turn_count=%d < MIN_TURNS=%d",
                                         assistant.attribute_state.turn_count, MIN_ACTIVITY_READY_TURNS,
@@ -1507,6 +1514,7 @@ def continue_conversation():
                                     quotes = re.findall(r'"([^"]+)"', activity_marker_reason)
                                     if not quotes:
                                         activity_marker_rejected_reason = "no_evidence_quotes"
+                                        assistant.attribute_state.last_activity_ready_rejected_reason = activity_marker_rejected_reason
                                         logger.info("[ACTIVITY_READY] rejected: no evidence quotes in reason")
                                     else:
                                         child_messages = [
@@ -1525,6 +1533,7 @@ def continue_conversation():
                                                 break
                                         if not found_match:
                                             activity_marker_rejected_reason = "evidence_not_in_transcript"
+                                            assistant.attribute_state.last_activity_ready_rejected_reason = activity_marker_rejected_reason
                                             logger.info(
                                                 "[ACTIVITY_READY] rejected: evidence quotes not found in transcript — %s",
                                                 quotes,
@@ -1533,6 +1542,7 @@ def continue_conversation():
                             if activity_marker_detected and not activity_marker_rejected_reason:
                                 assistant.attribute_state.activity_ready = True
                                 assistant.attribute_activity_ready = True
+                                assistant.attribute_state.last_activity_ready_rejected_reason = None
                                 # Yield the validated followup text
                                 if full_followup:
                                     sequence_number += 1

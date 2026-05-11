@@ -249,6 +249,14 @@ class StreamChunk(BaseModel):
     activity_target: dict | None = None
     reply_type: str | None = None
 
+    # Switch state (attribute topic switching visibility)
+    attribute_switched_to: str | None = None
+    attribute_switch_reason: str | None = None
+    attribute_fallback_count: int = 0
+    attribute_turn_count: int = 0
+    attribute_fallback_labels: list[str] | None = None
+    attribute_activity_ready_rejected_reason: str | None = None
+
     # Node execution tracing (for critique reports)
     nodes_executed: list[dict] | None = None  # Passed through final chunk
     bridge_debug: BridgeDebugInfo | None = None

@@ -118,6 +118,16 @@
             </div>
         </div>
 
+        <div id="topicStatusCard" class="topic-status-card" style="display: none; margin: 10px 15px; padding: 12px 16px; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd; font-size: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <span style="font-weight: 600; color: #0369a1;">Topic: <span id="topicCurrentLabel">-</span></span>
+                <span id="topicTurnCount" style="font-size: 12px; color: #64748b; font-weight: 500;">0 / 3+ required</span>
+            </div>
+            <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">Fallback: <span id="topicFallbackLabels">-</span></div>
+            <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">Target: <span id="topicActivityTarget">-</span></div>
+            <div id="topicSwitchStatus" style="display: none; font-size: 12px; color: #d97706; font-weight: 500; margin-top: 4px; padding-top: 4px; border-top: 1px dashed #bae6fd;"></div>
+        </div>
+
         <div class="messages" id="messages"></div>
 
         <!-- Manual Topic Switch Override Panel -->
@@ -226,6 +236,13 @@
                 <div style="font-size: 0.85em; color: #64748b;">Reply Type: <span id="debugAttributeReplyType">-</span></div>
                 <div style="font-size: 0.85em; color: #64748b;">Marker Detected: <span id="debugActivityMarkerDetected">-</span></div>
                 <div style="font-size: 0.85em; color: #64748b;">Marker Reason: <span id="debugActivityMarkerReason">-</span></div>
+            </div>
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #94a3b8;">
+                <strong>Switch State:</strong>
+                <div style="font-size: 0.85em; color: #64748b; margin-top: 4px;">Switched To: <span id="debugSwitchedTo">-</span></div>
+                <div style="font-size: 0.85em; color: #64748b;">Switch Reason: <span id="debugSwitchReason">-</span></div>
+                <div style="font-size: 0.85em; color: #64748b;">Fallback Count: <span id="debugFallbackCount">-</span></div>
+                <div style="font-size: 0.85em; color: #64748b;">Turn Count: <span id="debugTurnCount">-</span></div>
             </div>
             <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #94a3b8;">
                 <strong>Category Debug:</strong>
