@@ -56,6 +56,7 @@ from stream import (
     ask_followup_question_stream,
     classify_intent,
     classify_pre_anchor_semantic_reply,
+    detect_switch_marker,
     generate_attribute_activation_response_stream,
     generate_category_activation_response_stream,
     generate_bridge_activation_response_stream,
@@ -67,6 +68,7 @@ from stream import (
     extract_previous_response,
     select_hook_type,
 )
+from activities import get_activity_for_attribute
 from stream.errors import build_sse_error_payload
 from stream.validation import (
     validate_bridge_activation_answer,
@@ -1337,9 +1339,36 @@ def continue_conversation():
                                 **_assistant_stream_fields(assistant),
                             ))
 
-                        soft_guide = paixueji_prompts.get_prompts()["attribute_soft_guide"].format(
-                            attribute_label=attribute_label,
-                            activity_target=activity_target,
+                        switch_target_id, cleaned_response = detect_switch_marker(full_response)
+                        if switch_target_id:
+                            switch_success = assistant.switch_attribute_topic(
+                                target_attribute_id=switch_target_id,
+                                reason="model_detected_switch_marker",
+                            )
+                            if switch_success:
+                                full_response = cleaned_response
+                                attribute_label = assistant.attribute_state.profile.label
+                                activity_target = assistant.attribute_state.profile.activity_target
+                                logger.info(
+                                    "[ATTRIBUTE_SWITCH] switched to %s | session=%s",
+                                    switch_target_id, session_id[:8],
+                                )
+                            else:
+                                logger.warning(
+                                    "[ATTRIBUTE_SWITCH] rejected: target %s not in fallbacks | session=%s",
+                                    switch_target_id, session_id[:8],
+                                )
+                                full_response = cleaned_response
+
+                        fallback_block = ""
+                        if assistant.attribute_state.profile.fallback_attributes:
+                            lines = [f"- {fb.attribute_id}: {fb.label}" for fb in assistant.attribute_state.profile.fallback_attributes]
+                            fallback_block = "\n".join(lines)
+
+                        soft_guide = paixueji_prompts.get_prompts()["attribute_multi_topic_guide"].format(
+                            primary_attribute_label=attribute_label,
+                            primary_activity_target=activity_target,
+                            fallback_attribute_block=fallback_block or "(no fallback topics)",
                             sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
                         )
 
