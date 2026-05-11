@@ -262,6 +262,7 @@ async def generate_attribute_activation_response_stream(
     last_model_response: str = "",
     config: dict,
     client: genai.Client,
+    multi_topic_guide: str = "",
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """Generate attribute-pipeline RESPONSE part using the normal intent prompt.
 
@@ -296,6 +297,10 @@ async def generate_attribute_activation_response_stream(
         attribute_label=attribute_label,
     )
     full_prompt = f"{intent_prompt}\n\n{response_hint}"
+
+    # Append multi-topic guide if provided (enables SWITCH_TO in response step)
+    if multi_topic_guide:
+        full_prompt = f"{full_prompt}\n\n{multi_topic_guide}"
 
     messages_to_send = messages + [{"role": "user", "content": full_prompt}]
     clean_messages = clean_messages_for_api(messages_to_send)
