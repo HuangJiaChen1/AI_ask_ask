@@ -44,3 +44,12 @@ def test_switch_to_invalid_target():
     success = assistant.switch_attribute_topic("nonexistent.attribute")
     assert success is False
     assert assistant.attribute_state.profile.attribute_id == "appearance.color"
+
+
+def test_focus_topic_parameter_exists():
+    """Verify ask_followup_question_stream accepts focus_topic parameter."""
+    import inspect
+    from stream.question_generators import ask_followup_question_stream
+    sig = inspect.signature(ask_followup_question_stream)
+    assert "focus_topic" in sig.parameters
+    assert sig.parameters["focus_topic"].default == "same attribute or same detail"

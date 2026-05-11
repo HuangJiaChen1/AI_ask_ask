@@ -215,6 +215,8 @@ async def ask_followup_question_stream(
     Args:
         knowledge_context: Full current-object KB context for playful inspiration.
         attribute_soft_guide: Optional soft guide for attribute-pipeline followups.
+        focus_topic: Topic instruction injected into the follow-up question prompt
+            to guide the model toward a specific theme (default: "same attribute or same detail").
 
     Yields:
         Tuple of (text_chunk, token_usage_or_None, full_response_so_far)
