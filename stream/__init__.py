@@ -27,6 +27,7 @@ from .utils import (
 
 # Response generators (intent-based, 9-node architecture)
 from .response_generators import (
+    detect_switch_marker,
     generate_classification_fallback_stream,
     generate_intent_response_stream,
     generate_bridge_activation_response_stream,
@@ -78,6 +79,7 @@ __all__ = [
     'SLOW_LLM_CALL_THRESHOLD',
 
     # Response generators
+    'detect_switch_marker',
     'generate_classification_fallback_stream',
     'generate_intent_response_stream',
     'generate_bridge_activation_response_stream',
