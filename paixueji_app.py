@@ -683,6 +683,27 @@ def start_conversation():
                 age=age or 6,
             )
             assistant.start_attribute_lane(attribute_state, attribute_profile)
+            matched_activity = get_activity_for_attribute(
+                attribute_profile.attribute_id, age or 6
+            )
+            if matched_activity:
+                logger.info(
+                    "[ACTIVITY_MATCH] primary=%s activity=%s session=%s",
+                    attribute_profile.attribute_id, matched_activity.activity_id, session_id[:8],
+                )
+            else:
+                logger.warning(
+                    "[ACTIVITY_MATCH] no activity found for primary=%s session=%s",
+                    attribute_profile.attribute_id, session_id[:8],
+                )
+
+            for fb in attribute_profile.fallback_attributes:
+                fb_activity = get_activity_for_attribute(fb.attribute_id, age or 6)
+                if fb_activity:
+                    logger.info(
+                        "[ACTIVITY_MATCH] fallback=%s activity=%s session=%s",
+                        fb.attribute_id, fb_activity.activity_id, session_id[:8],
+                    )
             assistant.set_last_attribute_debug(
                 build_attribute_debug(
                     decision="attribute_lane_started",
