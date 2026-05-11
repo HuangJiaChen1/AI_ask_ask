@@ -1347,6 +1347,8 @@ def continue_conversation():
                             )
                             if switch_success:
                                 full_response = cleaned_response
+                                # Profile was swapped by switch_attribute_topic;
+                                # refresh label and target for the follow-up prompt.
                                 attribute_label = assistant.attribute_state.profile.label
                                 activity_target = assistant.attribute_state.profile.activity_target
                                 logger.info(
