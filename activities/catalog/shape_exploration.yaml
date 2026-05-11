@@ -1,0 +1,8 @@
+activity_id: "shape_exploration_v1"
+name: "Shape Detective"
+target_attribute: "appearance.shape"
+tier_range: [0, 1, 2]
+launch_prompt: "Let us be Shape Detectives! What other things around you have the same shape?"
+description: "Child identifies objects with similar shapes"
+estimated_duration_minutes: 5
+materials_needed: []

@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ActivityDefinition",
+  "type": "object",
+  "required": ["activity_id", "name", "target_attribute", "tier_range", "launch_prompt"],
+  "properties": {
+    "activity_id": { "type": "string" },
+    "name": { "type": "string" },
+    "target_attribute": { "type": "string" },
+    "tier_range": {
+      "type": "array",
+      "items": { "type": "integer", "minimum": 0, "maximum": 2 },
+      "minItems": 1
+    },
+    "launch_prompt": { "type": "string" },
+    "description": { "type": "string" },
+    "estimated_duration_minutes": { "type": "integer", "minimum": 1 },
+    "materials_needed": { "type": "array", "items": { "type": "string" } }
+  }
+}
