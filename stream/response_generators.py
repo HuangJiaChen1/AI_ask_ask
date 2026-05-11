@@ -6,6 +6,7 @@ Functions:
     - generate_topic_switch_response_stream: Celebration for named-object topic transitions
     - generate_bridge_activation_response_stream: Completes a successful pre-anchor bridge
 """
+import re
 import time
 from typing import AsyncGenerator
 
@@ -17,6 +18,23 @@ from schema import TokenUsage
 import paixueji_prompts
 from .errors import raise_if_rate_limited
 from .utils import clean_messages_for_api, convert_messages_to_gemini_format
+
+
+_SWITCH_TO_RE = re.compile(r"\[SWITCH_TO:([\w.]+)\]")
+
+
+def detect_switch_marker(response_text: str) -> tuple[str | None, str]:
+    """
+    Detect [SWITCH_TO:attribute_id] marker in model output.
+    Returns (target_attribute_id, cleaned_response_text).
+    target_attribute_id is None if no marker found.
+    """
+    match = _SWITCH_TO_RE.search(response_text)
+    if match:
+        target_id = match.group(1)
+        cleaned = _SWITCH_TO_RE.sub("", response_text).strip()
+        return target_id, cleaned
+    return None, response_text
 
 
 async def generate_intent_response_stream(

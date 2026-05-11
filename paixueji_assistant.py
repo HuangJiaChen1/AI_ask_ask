@@ -11,6 +11,7 @@ from typing import Optional
 
 from google import genai
 from google.genai.types import HttpOptions
+from attribute_activity import AttributeProfile
 from bridge_activation_policy import (
     BRIDGE_PHASE_ACTIVATION,
     BRIDGE_PHASE_ANCHOR_GENERAL,
@@ -397,9 +398,55 @@ class PaixuejiAssistant:
     def increment_correct_answers(self):
         """
         Increment the correct answer count.
-        
+
         Returns:
             bool: Always False (conversation never auto-completes)
         """
         self.correct_answer_count += 1
+        return False
+
+    def switch_attribute_topic(self, target_attribute_id: str, reason: str = "") -> bool:
+        """
+        Switch the active attribute topic within the attribute lane.
+        Swaps the active profile with the matching fallback (bidirectional).
+        No limit on number of switches.
+        Returns True if switch succeeded, False if target not found in fallbacks.
+        """
+        if not self.attribute_lane_active or not self.attribute_state:
+            return False
+
+        current_profile = self.attribute_state.profile
+
+        # No-op if already on target
+        if current_profile.attribute_id == target_attribute_id:
+            return True
+
+        # Check fallbacks
+        for fallback in current_profile.fallback_attributes:
+            if fallback.attribute_id == target_attribute_id:
+                # Build new primary: the selected fallback
+                # Build new fallbacks: old fallbacks minus selected, plus old primary
+                new_fallbacks = tuple(
+                    f for f in current_profile.fallback_attributes
+                    if f.attribute_id != target_attribute_id
+                ) + (current_profile,)
+
+                new_profile = AttributeProfile(
+                    attribute_id=fallback.attribute_id,
+                    label=fallback.label,
+                    activity_target=fallback.activity_target,
+                    branch=fallback.branch,
+                    object_examples=fallback.object_examples,
+                    redirect_entity=fallback.redirect_entity,
+                    fallback_attributes=new_fallbacks,
+                )
+
+                self.attribute_state.profile = new_profile
+                self.attribute_state.switched_to = target_attribute_id
+                self.attribute_state.switch_reason = reason
+                self.attribute_profile = new_profile
+                self.attribute_state.activity_ready = False
+                self.attribute_activity_ready = False
+                return True
+
         return False
