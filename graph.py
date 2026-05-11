@@ -1017,6 +1017,7 @@ async def node_give_answer_idk(state: PaixuejiState) -> dict:
         client=state["client"],
         knowledge_context=_build_chat_kb_context(state),
         resolution_guardrails=_resolution_guardrails_for_state(state),
+        focus_topic="the same interesting detail",
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
     followup_question_style = _infer_question_style_from_text(full_text_question)
@@ -1157,6 +1158,7 @@ async def node_correct_answer(state: PaixuejiState) -> dict:
         resolution_guardrails=_resolution_guardrails_for_state(state),
         surface_only_mode=_surface_only_mode_for_state(state),
         surface_object_name=_surface_object_name_for_state(state),
+        focus_topic="the same interesting detail",
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
     followup_question_style = _infer_question_style_from_text(full_text_question)
@@ -1214,6 +1216,7 @@ async def node_informative(state: PaixuejiState) -> dict:
         client=state["client"],
         knowledge_context=_build_chat_kb_context(state),
         resolution_guardrails=_resolution_guardrails_for_state(state),
+        focus_topic="the same interesting detail",
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
     followup_question_style = _infer_question_style_from_text(full_text_question)
@@ -1483,6 +1486,7 @@ async def node_social(state: PaixuejiState) -> dict:
         client=state["client"],
         knowledge_context=_build_chat_kb_context(state),
         resolution_guardrails=_resolution_guardrails_for_state(state),
+        focus_topic="the same interesting detail",
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
     followup_question_style = _infer_question_style_from_text(full_text_question)
@@ -1538,6 +1542,7 @@ async def node_social_acknowledgment(state: PaixuejiState) -> dict:
         client=state["client"],
         knowledge_context=_build_chat_kb_context(state),
         resolution_guardrails=_resolution_guardrails_for_state(state),
+        focus_topic="the same interesting detail",
     )
     full_text_question, new_seq = await stream_generator_to_callback(followup_gen, state)
     followup_question_style = _infer_question_style_from_text(full_text_question)
