@@ -207,6 +207,7 @@ async def ask_followup_question_stream(
     surface_object_name: str = "",
     attribute_soft_guide: str = "",
     response_text: str = "",
+    focus_topic: str = "same attribute or same detail",
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str], None]:
     """
     Stream a follow-up question after the response burst.
@@ -231,6 +232,7 @@ async def ask_followup_question_stream(
         age_prompt=age_prompt,
         knowledge_context=knowledge_context,
         sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
+        focus_topic=focus_topic,
     )
     if surface_only_mode:
         surface_only_prompt = prompts["unresolved_surface_only_prompt"].format(
