@@ -21,6 +21,8 @@ class AttributeProfile:
     branch: str
     object_examples: tuple[str, ...]
     redirect_entity: str | None = None
+    # NEW: fallback attributes for in-lane dynamic switching
+    fallback_attributes: tuple["AttributeProfile", ...] = ()
 
 
 @dataclass
@@ -32,6 +34,10 @@ class DiscoverySessionState:
     activity_ready: bool = False
     surface_object_name: str | None = None
     anchor_object_name: str | None = None
+    # NEW: fallback tracking and switch history
+    fallback_profiles: tuple[AttributeProfile, ...] = ()
+    switched_to: str | None = None
+    switch_reason: str | None = None
 
     def to_debug_dict(self) -> dict:
         return asdict(self)
@@ -70,6 +76,17 @@ def _build_supported_attribute_block(profiles: tuple[AttributeProfile, ...]) -> 
         lines.append(
             f"- {profile.attribute_id}: {profile.label}; activity={profile.activity_target}; "
             f"branch={profile.branch}"
+        )
+    return "\n".join(lines)
+
+
+def _build_fallback_attribute_block(profiles: tuple[AttributeProfile, ...]) -> str:
+    if not profiles:
+        return "(no fallback topics)"
+    lines = []
+    for profile in profiles:
+        lines.append(
+            f"- {profile.attribute_id}: {profile.label}; activity={profile.activity_target}"
         )
     return "\n".join(lines)
 
