@@ -1,6 +1,7 @@
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import paixueji_app
 from attribute_activity import AttributeProfile
 
 
@@ -256,6 +257,7 @@ def test_activity_marker_rejected_without_evidence_quote(client, mock_gemini_cli
         json={"age": 6, "object_name": "cat", "attribute_pipeline_enabled": True},
     )
     session_id = final_chunk(start)["session_id"]
+    paixueji_app.sessions[session_id].attribute_state.turn_count = 3
 
     set_intent(mock_gemini_client, "CORRECT_ANSWER")
 
@@ -291,6 +293,7 @@ def test_activity_marker_rejected_with_fabricated_quote(client, mock_gemini_clie
         json={"age": 6, "object_name": "cat", "attribute_pipeline_enabled": True},
     )
     session_id = final_chunk(start)["session_id"]
+    paixueji_app.sessions[session_id].attribute_state.turn_count = 3
 
     set_intent(mock_gemini_client, "CORRECT_ANSWER")
 
@@ -329,6 +332,7 @@ def test_activity_marker_accepted_with_current_turn_quote(client, mock_gemini_cl
         json={"age": 6, "object_name": "cat", "attribute_pipeline_enabled": True},
     )
     session_id = final_chunk(start)["session_id"]
+    paixueji_app.sessions[session_id].attribute_state.turn_count = 3
 
     set_intent(mock_gemini_client, "CORRECT_ANSWER")
 

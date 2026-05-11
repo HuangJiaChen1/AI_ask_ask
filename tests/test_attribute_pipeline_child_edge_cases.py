@@ -832,6 +832,7 @@ class TestDifficultChildConversations:
             "attribute_pipeline_enabled": True,
         })
         session_id = self._extract_session_id(self._parse_sse(start_resp.data))
+        paixueji_app.sessions[session_id].attribute_state.turn_count = 3
 
         # First continue — this should set activity_ready=True
         continue_resp = client.post("/api/continue", json={
