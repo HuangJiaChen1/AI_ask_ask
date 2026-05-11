@@ -615,16 +615,16 @@ class TestActivityReadyMarkerHandling:
         assert "Can you spot anything red?" in marker_free
 
     @pytest.mark.asyncio
-    async def test_marker_in_response_generator_not_checked(self, _attribute_lane_assistant):
-        """If the RESPONSE generator (not follow-up) emits [ACTIVITY_READY],
-        it would leak to the child because only the follow-up generator checks
-        for the marker. This is a potential bug vector."""
-        # This is documenting expected (possibly buggy) behavior:
-        # the response generator does NOT strip the marker.
-        response_text = "Great observation! [ACTIVITY_READY]"
-        # If this ever happens, the child sees the marker.
-        assert "[ACTIVITY_READY]" in response_text
-        # The test documents that the code does not guard against this.
+    async def test_response_marker_stripped_by_safety_net(self, _attribute_lane_assistant):
+        """If the RESPONSE generator emits [ACTIVITY_READY], the safety-net
+        _strip_activity_markers must remove it before the child sees the text."""
+        from paixueji_app import _strip_activity_markers
+
+        response_text = "Great observation! [ACTIVITY_READY]\nREASON: child noticed size"
+        cleaned = _strip_activity_markers(response_text)
+        assert "[ACTIVITY_READY]" not in cleaned
+        assert "REASON:" not in cleaned
+        assert "Great observation!" in cleaned
 
     @pytest.mark.asyncio
     async def test_child_says_marker_in_input(self, _attribute_lane_assistant):
