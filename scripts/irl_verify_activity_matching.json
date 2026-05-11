@@ -1,0 +1,148 @@
+{
+  "report_prefix": "activity-matching",
+  "delay_seconds": 3,
+  "tests": [
+    {
+      "id": "attribute_selection_primary_fallback",
+      "task_num": 1,
+      "title": "Attribute Selection — Primary + Fallback",
+      "implemented": "select_attribute_profile uses Gemini to pick one primary and one fallback attribute from supported candidates.",
+      "scenario": "Object: orange cat | Age: 5 | Domain: animals",
+      "generator": "direct_prompt",
+      "params": {
+        "messages": [],
+        "prompt": "Choose one supported activity attribute for a child chat, plus one fallback attribute.\n\nOBJECT: orange cat\nCHILD AGE: 5\nDOMAIN: animals\n\nSUPPORTED ATTRIBUTES:\n- appearance.body_color: body color; activity=noticing and describing what orange cat looks like — specifically, orange cat's body color; branch=in_kb\n- appearance.covering: covering; activity=noticing and describing what orange cat looks like — specifically, orange cat's covering; branch=in_kb\n- appearance.markings: markings; activity=noticing and describing what orange cat looks like — specifically, orange cat's markings; branch=in_kb\n- appearance.body_size: body size; activity=noticing and describing what orange cat looks like — specifically, orange cat's body size; branch=in_kb\n- senses.fur_feel: fur feel; activity=exploring how orange cat feels, sounds, or smells — specifically, orange cat's fur feel; branch=in_kb\n- senses.sound: sound; activity=exploring how orange cat feels, sounds, or smells — specifically, orange cat's sound; branch=in_kb\n- senses.smell: smell; activity=exploring how orange cat feels, sounds, or smells — specifically, orange cat's smell; branch=in_kb\n- structure.body_parts: body parts; activity=discovering the parts and materials of orange cat — specifically, orange cat's body parts; branch=in_kb\n- structure.claws: claws; activity=discovering the parts and materials of orange cat — specifically, orange cat's claws; branch=in_kb\n- structure.tail: tail; activity=discovering the parts and materials of orange cat — specifically, orange cat's tail; branch=in_kb\n- function.movement: movement; activity=investigating what orange cat does and how it is used — specifically, orange cat's movement; branch=in_kb\n- function.communication: communication; activity=investigating what orange cat does and how it is used — specifically, orange cat's communication; branch=in_kb\n- context.habitat: habitat; activity=finding where and when you encounter orange cat — specifically, orange cat's habitat; branch=in_kb\n\nReturn JSON only:\n{\n  \"attribute_id\": \"one supported attribute id (format: dimension.sub_attribute), or null\",\n  \"fallback_attribute_id\": \"one supported attribute id different from attribute_id, or null\",\n  \"confidence\": \"high|medium|low|none\",\n  \"reason\": \"short reason\"\n}\n\nChoose the PRIMARY attribute most naturally connected to this object.\nChoose the FALLBACK as a related attribute the child might naturally drift to.\nBoth attribute_ids must exactly match entries from the SUPPORTED ATTRIBUTES list."
+      },
+      "checks": [
+        {"criterion": "Returns valid JSON with attribute_id", "assert": "attribute_id"},
+        {"criterion": "Returns fallback_attribute_id different from primary", "assert": "fallback_attribute_id"},
+        {"criterion": "Contains confidence field", "assert": "confidence"},
+        {"criterion": "Contains reason field", "assert": "reason"}
+      ]
+    },
+    {
+      "id": "attribute_intro_salience_no_quiz",
+      "task_num": 2,
+      "title": "Attribute Intro — No Quiz, Natural Salience",
+      "implemented": "ask_attribute_intro_stream uses ATTRIBUTE_INTRO_PROMPT to make the attribute naturally noticeable without forced redirects.",
+      "scenario": "Object: orange cat | Attribute: shape | Age: 5",
+      "generator": "ask_attribute_intro_stream",
+      "params": {
+        "messages": [],
+        "object_name": "orange cat",
+        "attribute_label": "shape",
+        "activity_target": "noticing and describing what orange cat looks like — specifically, orange cat's shape",
+        "age": 5
+      },
+      "checks": [
+        {"criterion": "Does NOT ask 'What shape is it?'", "assert_not": "what shape is it"},
+        {"criterion": "Does NOT say 'Let's talk about its shape'", "assert_not": "let's talk about its shape"},
+        {"criterion": "Does NOT say 'Let's look at its shape'", "assert_not": "let's look at its shape"},
+        {"criterion": "Contains engagement hook (question mark)", "assert": "?"},
+        {"criterion": "Mentions the object (cat)", "assert_in": ["cat"]}
+      ]
+    },
+    {
+      "id": "followup_primary_topic",
+      "task_num": 3,
+      "title": "Follow-up Question — Stays on Primary Topic",
+      "implemented": "ask_followup_question_stream with ATTRIBUTE_MULTI_TOPIC_GUIDE injected as attribute_soft_guide. Primary=shape, fallback=size.",
+      "scenario": "Child said 'It's round like a ball!' about a cat. Assistant just responded celebrating the roundness.",
+      "generator": "ask_followup_question_stream",
+      "params": {
+        "messages": [
+          {"role": "assistant", "content": "What do you notice about this cat's shape?"},
+          {"role": "user", "content": "It's round like a ball!"},
+          {"role": "assistant", "content": "Wow, it really is round! Like a soft orange ball!"}
+        ],
+        "object_name": "orange cat",
+        "age": 5,
+        "attribute_soft_guide": "SENSORY SAFETY (applies to all sensory invitations):\n- Default to sight: 'What do you notice?', 'Which part looks the biggest?', 'Is it shiny or dull?'\n- Allow imagination/guessing: 'Do you think it would feel rough?', 'If it rolled, would it go fast or slow?'\n- Do NOT invite the child to TOUCH, SMELL, TASTE, LICK, or PHYSICALLY INTERACT with the object.\n\nPRIMARY EXPLORATION DIRECTION: shape\nPRIMARY ACTIVITY GOAL: noticing and describing what orange cat looks like — specifically, orange cat's shape\n\nFALLBACK TOPICS (you may drift to these if the child shows interest):\n- appearance.body_size: body size\n\nTOPIC SWITCHING RULES:\n- Your MAIN job is to guide the child toward shape.\n- BUT if the child clearly shows more interest in a fallback topic, you may switch.\n- To switch: at the END of your response, add [SWITCH_TO:attribute_id].\n- ONLY switch if the child has clearly shifted interest.\n- After switching, your new primary direction becomes that fallback topic.\n- If the child mentions something outside all topics, briefly acknowledge in ONE sentence, then redirect back.\n\nTHREE TECHNIQUES (use ONE per turn, when it fits):\n\nA) SALIENCE — include a shape-related sensory word in the question itself.\nB) FRAME WEAVING — when the child noticed something OTHER than shape, offer a choice that includes shape as one option.\nC) NATURAL BRIDGE — when the child has explored shape with enough depth, extend toward the activity goal.\n\nEVIDENCE REQUIREMENT: Your REASON line MUST include at least one direct quote from the child.\n\nTRANSITION SIGNAL for [ACTIVITY_READY]:\n1. one child-facing question\n2. then on a new line: [ACTIVITY_READY]\n3. then on a new line: REASON: <1-sentence with direct child quote>\n\nTOPIC SWITCH SIGNAL:\n1. one child-facing response about the new topic\n2. then on a new line: [SWITCH_TO:new_attribute_id]\n3. then on a new line: REASON: <brief reason>\n\nANTI-PATTERNS — NEVER produce these:\n- 'What shape is it?' — quiz\n- 'Do you know what shape it has?' — quiz with wrapper\n- 'What else can you tell me about it?' — too vague\n- 'Let us look at its shape!' — forced redirect\n- 'That is nice, but...' then question about shape — ignoring child\n- 'Great! Now we can start an activity!' — mechanical announcement\n- Adding [ACTIVITY_READY] after just one shallow exchange — premature handoff\n- Switching topics on a single casual mention — too sensitive"
+      },
+      "checks": [
+        {"criterion": "Single question only (one question mark)", "assert": "?"},
+        {"criterion": "Does NOT contain [SWITCH_TO]", "assert_not": "switch_to"},
+        {"criterion": "Does NOT say 'What else can you tell me'", "assert_not": "what else can you tell me"},
+        {"criterion": "Does NOT use 'Did you know'", "assert_not": "did you know"},
+        {"criterion": "Question is about shape or related visual detail", "assert_in": ["round", "shape", "circle", "look", "see", "notice"]}
+      ]
+    },
+    {
+      "id": "followup_child_shifted_interest",
+      "task_num": 4,
+      "title": "Follow-up Question — Child Shifted to Fallback Topic",
+      "implemented": "ask_followup_question_stream with multi-topic guide where child clearly expressed interest in the fallback topic (size).",
+      "scenario": "Child said 'It's round like a ball! And it's SO BIG! Bigger than my dog!' Assistant responded celebrating roundness.",
+      "generator": "ask_followup_question_stream",
+      "params": {
+        "messages": [
+          {"role": "assistant", "content": "What do you notice about this cat's shape?"},
+          {"role": "user", "content": "It's round like a ball! And it's SO BIG! Bigger than my dog!"},
+          {"role": "assistant", "content": "Wow, it really is round! Like a soft orange ball!"}
+        ],
+        "object_name": "orange cat",
+        "age": 5,
+        "attribute_soft_guide": "SENSORY SAFETY (applies to all sensory invitations):\n- Default to sight: 'What do you notice?', 'Which part looks the biggest?', 'Is it shiny or dull?'\n- Allow imagination/guessing: 'Do you think it would feel rough?', 'If it rolled, would it go fast or slow?'\n- Do NOT invite the child to TOUCH, SMELL, TASTE, LICK, or PHYSICALLY INTERACT with the object.\n\nPRIMARY EXPLORATION DIRECTION: shape\nPRIMARY ACTIVITY GOAL: noticing and describing what orange cat looks like — specifically, orange cat's shape\n\nFALLBACK TOPICS (you may drift to these if the child shows interest):\n- appearance.body_size: body size\n\nTOPIC SWITCHING RULES:\n- Your MAIN job is to guide the child toward shape.\n- BUT if the child clearly shows more interest in a fallback topic, you may switch.\n- To switch: at the END of your response, add [SWITCH_TO:attribute_id].\n- ONLY switch if the child has clearly shifted interest.\n- After switching, your new primary direction becomes that fallback topic.\n- If the child mentions something outside all topics, briefly acknowledge in ONE sentence, then redirect back.\n\nTHREE TECHNIQUES (use ONE per turn, when it fits):\n\nA) SALIENCE — include a shape-related sensory word in the question itself.\nB) FRAME WEAVING — when the child noticed something OTHER than shape, offer a choice that includes shape as one option.\nC) NATURAL BRIDGE — when the child has explored shape with enough depth, extend toward the activity goal.\n\nEVIDENCE REQUIREMENT: Your REASON line MUST include at least one direct quote from the child.\n\nTRANSITION SIGNAL for [ACTIVITY_READY]:\n1. one child-facing question\n2. then on a new line: [ACTIVITY_READY]\n3. then on a new line: REASON: <1-sentence with direct child quote>\n\nTOPIC SWITCH SIGNAL:\n1. one child-facing response about the new topic\n2. then on a new line: [SWITCH_TO:new_attribute_id]\n3. then on a new line: REASON: <brief reason>\n\nANTI-PATTERNS — NEVER produce these:\n- 'What shape is it?' — quiz\n- 'Do you know what shape it has?' — quiz with wrapper\n- 'What else can you tell me about it?' — too vague\n- 'Let us look at its shape!' — forced redirect\n- 'That is nice, but...' then question about shape — ignoring child\n- 'Great! Now we can start an activity!' — mechanical announcement\n- Adding [ACTIVITY_READY] after just one shallow exchange — premature handoff\n- Switching topics on a single casual mention — too sensitive"
+      },
+      "checks": [
+        {"criterion": "Single question only (contains question mark)", "assert": "?"},
+        {"criterion": "Does NOT say 'What else can you tell me'", "assert_not": "what else can you tell me"},
+        {"criterion": "Does NOT use 'Did you know'", "assert_not": "did you know"},
+        {"criterion": "Acknowledges child's interest in size OR asks about size", "assert_in": ["big", "size", "huge", "large", "small", "bigger"]}
+      ]
+    },
+    {
+      "id": "attribute_response_correct_answer",
+      "task_num": 5,
+      "title": "Attribute Activation Response — WOW Fact Aligns with Attribute",
+      "implemented": "generate_attribute_activation_response_stream uses intent prompt + attribute_response_hint to keep the wow fact aligned with the current attribute.",
+      "scenario": "CORRECT_ANSWER intent. Child said 'It's round!' about a cat. Attribute = shape.",
+      "generator": "generate_attribute_activation_response_stream",
+      "params": {
+        "messages": [
+          {"role": "assistant", "content": "What do you notice about this cat's shape?"},
+          {"role": "user", "content": "It's round!"}
+        ],
+        "intent_type": "correct_answer",
+        "object_name": "orange cat",
+        "attribute_label": "shape",
+        "activity_target": "noticing and describing what orange cat looks like — specifically, orange cat's shape",
+        "child_answer": "It's round!",
+        "reply_type": "correct_answer",
+        "state_action": "continue_conversation",
+        "age": 5,
+        "last_model_response": "What do you notice about this cat's shape?"
+      },
+      "checks": [
+        {"criterion": "Celebrates child's answer (not hollow praise)", "assert_in": ["round", "yes", "right", "exactly", "got it"]},
+        {"criterion": "Does NOT use 'Did you know'", "assert_not": "did you know"},
+        {"criterion": "Does NOT ask a question (response only)", "assert_not": "?"},
+        {"criterion": "WOW fact relates to shape (not color or size)", "assert_in": ["round", "circle", "shape", "ball"]}
+      ]
+    },
+    {
+      "id": "simulated_switch_to_with_full_guide",
+      "task_num": 6,
+      "title": "Simulated SWITCH_TO — Model Given Full Multi-Topic Guide",
+      "implemented": "ATTRIBUTE_MULTI_TOPIC_GUIDE prompt template tested in isolation to verify it can produce [SWITCH_TO] markers when the model sees fallback topics.",
+      "scenario": "Model sees full multi-topic guide with primary=shape, fallback=size. Child clearly shifted to size.",
+      "generator": "direct_prompt",
+      "params": {
+        "messages": [
+          {"role": "assistant", "content": "Whoa, look at this cat! What shape do you notice first?"},
+          {"role": "user", "content": "It's round like a ball!"},
+          {"role": "assistant", "content": "It really is! Like a soft orange ball. What about its ears?"},
+          {"role": "user", "content": "The ears are pointy. And it's SO BIG! Bigger than my dog!"}
+        ],
+        "prompt": "You are a curious and encouraging learning companion for young children.\n\nSENSORY SAFETY (applies to all sensory invitations):\n- Default to sight: 'What do you notice?', 'Which part looks the biggest?', 'Is it shiny or dull?'\n- Allow imagination/guessing: 'Do you think it would feel rough?', 'If it rolled, would it go fast or slow?'\n- Do NOT invite the child to TOUCH, SMELL, TASTE, LICK, or PHYSICALLY INTERACT with the object.\n\nPRIMARY EXPLORATION DIRECTION: shape\nPRIMARY ACTIVITY GOAL: noticing and describing what orange cat looks like — specifically, orange cat's shape\n\nFALLBACK TOPICS (you may drift to these if the child shows interest):\n- appearance.body_size: body size\n\nTOPIC SWITCHING RULES:\n- Your MAIN job is to guide the child toward shape.\n- BUT if the child clearly shows more interest in a fallback topic, you may switch.\n- To switch: at the END of your response, add [SWITCH_TO:attribute_id].\n- ONLY switch if the child has clearly shifted interest.\n- After switching, your new primary direction becomes that fallback topic.\n\nTHREE TECHNIQUES (use ONE per turn, when it fits):\n\nA) SALIENCE — include a shape-related sensory word in the question itself.\nB) FRAME WEAVING — when the child noticed something OTHER than shape, offer a choice that includes shape as one option.\nC) NATURAL BRIDGE — when the child has explored shape with enough depth, extend toward the activity goal.\n\nEVIDENCE REQUIREMENT: Your REASON line MUST include at least one direct quote from the child.\n\nTOPIC SWITCH SIGNAL:\n1. one child-facing response about the new topic\n2. then on a new line: [SWITCH_TO:new_attribute_id]\n3. then on a new line: REASON: <brief reason>\n\nANTI-PATTERNS — NEVER produce these:\n- 'What shape is it?' — quiz\n- 'Do you know what shape it has?' — quiz with wrapper\n- 'What else can you tell me about it?' — too vague\n- 'Let us look at its shape!' — forced redirect\n- 'That is nice, but...' then question about shape — ignoring child\n- Switching topics on a single casual mention — too sensitive\n\nYOUR TASK:\nThe child just said: 'The ears are pointy. And it's SO BIG! Bigger than my dog!'\nRespond to the child. If you think they have clearly shifted interest to a fallback topic, you may switch."
+      },
+      "checks": [
+        {"criterion": "Contains [SWITCH_TO] marker", "assert": "[SWITCH_TO:"},
+        {"criterion": "Contains REASON line", "assert": "REASON:"},
+        {"criterion": "Acknowledges size in child-facing text", "assert_in": ["big", "size", "huge", "large", "bigger"]},
+        {"criterion": "Does NOT invite touch", "assert_not": "touch"},
+        {"criterion": "Does NOT invite smell", "assert_not": "smell"}
+      ]
+    }
+  ]
+}
