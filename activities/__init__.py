@@ -1,12 +1,15 @@
 """Activity catalog loader and matcher."""
 from __future__ import annotations
 
+import logging
 import os
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import Any
 
 import yaml
+
+logger = logging.getLogger(__name__)
 
 _CATALOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "catalog")
 
@@ -48,7 +51,11 @@ def _load_catalog() -> tuple[ActivityDefinition, ...]:
         with open(filepath, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
         if data:
-            activities.append(ActivityDefinition.from_dict(data))
+            try:
+                activities.append(ActivityDefinition.from_dict(data))
+            except (KeyError, TypeError) as e:
+                logger.warning("Skipping malformed activity YAML %s: %s", filename, e)
+                continue
     return tuple(activities)
 
 
