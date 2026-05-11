@@ -442,6 +442,7 @@ class PaixuejiAssistant:
                 )
 
                 self.attribute_state.profile = new_profile
+                self.attribute_state.fallback_profiles = new_profile.fallback_attributes
                 self.attribute_state.switched_to = target_attribute_id
                 self.attribute_state.switch_reason = reason
                 self.attribute_profile = new_profile
