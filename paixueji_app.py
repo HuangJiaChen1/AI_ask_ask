@@ -50,6 +50,9 @@ from resolution_debug import format_resolution_log_line
 # Must be defined here (not inside a function) to avoid re-compiling on every request.
 _REASON_RE = re.compile(r"REASON:\s*(.+?)(?:\n|$)")
 
+# Minimum turns before [ACTIVITY_READY] marker is accepted in attribute activity pipeline.
+MIN_ACTIVITY_READY_TURNS = 3
+
 from stream import (
     ask_attribute_intro_stream,
     ask_category_intro_stream,
@@ -1489,7 +1492,6 @@ def continue_conversation():
                                 if reason_match:
                                     activity_marker_reason = reason_match.group(1).strip()
 
-                            MIN_ACTIVITY_READY_TURNS = 3
                             activity_marker_rejected_reason = None
 
                             if activity_marker_detected:
