@@ -1321,6 +1321,19 @@ def continue_conversation():
                         activity_target = assistant.attribute_state.profile.activity_target
                         object_name_attr = assistant.attribute_state.object_name
 
+                        # Build soft_guide BEFORE response generator so response can use it
+                        fallback_block = ""
+                        if assistant.attribute_state.profile.fallback_attributes:
+                            lines = [f"- {fb.attribute_id}: {fb.label}" for fb in assistant.attribute_state.profile.fallback_attributes]
+                            fallback_block = "\n".join(lines)
+
+                        soft_guide = paixueji_prompts.get_prompts()["attribute_multi_topic_guide"].format(
+                            primary_attribute_label=attribute_label,
+                            primary_activity_target=activity_target,
+                            fallback_attribute_block=fallback_block or "(no fallback topics)",
+                            sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
+                        )
+
                         response_generator = generate_attribute_activation_response_stream(
                             messages=messages,
                             intent_type=intent_type_lower,
@@ -1336,6 +1349,7 @@ def continue_conversation():
                             last_model_response=extract_previous_response(assistant.conversation_history),
                             config=assistant.config,
                             client=assistant.client,
+                            multi_topic_guide=soft_guide,
                         )
 
                         sequence_number = 0
@@ -1394,18 +1408,6 @@ def continue_conversation():
                                 )
                                 full_response = cleaned_response
 
-                        fallback_block = ""
-                        if assistant.attribute_state.profile.fallback_attributes:
-                            lines = [f"- {fb.attribute_id}: {fb.label}" for fb in assistant.attribute_state.profile.fallback_attributes]
-                            fallback_block = "\n".join(lines)
-
-                        soft_guide = paixueji_prompts.get_prompts()["attribute_multi_topic_guide"].format(
-                            primary_attribute_label=attribute_label,
-                            primary_activity_target=activity_target,
-                            fallback_attribute_block=fallback_block or "(no fallback topics)",
-                            sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
-                        )
-
                         if needs_followup:
                             messages_with_response = messages + [
                                 {"role": "user", "content": child_input},
@@ -1420,6 +1422,7 @@ def continue_conversation():
                                 client=assistant.client,
                                 attribute_soft_guide=soft_guide,
                                 response_text="",
+                                focus_topic=f"the '{attribute_label}' attribute",
                             )
 
                             activity_marker = "[ACTIVITY_READY]"
@@ -1458,39 +1461,72 @@ def continue_conversation():
 
                             full_followup = _displayable_followup(raw_followup_so_far)
 
+                            # Safety net: detect [SWITCH_TO] in follow-up question output
+                            followup_switch_target, cleaned_followup = detect_switch_marker(full_followup)
+                            if followup_switch_target:
+                                switch_success = assistant.switch_attribute_topic(
+                                    target_attribute_id=followup_switch_target,
+                                    reason="model_detected_switch_marker_in_followup",
+                                )
+                                if switch_success:
+                                    full_followup = cleaned_followup
+                                    attribute_label = assistant.attribute_state.profile.label
+                                    activity_target = assistant.attribute_state.profile.activity_target
+                                    logger.info(
+                                        "[ATTRIBUTE_SWITCH] followup switched to %s | session=%s",
+                                        followup_switch_target, session_id[:8],
+                                    )
+                                else:
+                                    logger.warning(
+                                        "[ATTRIBUTE_SWITCH] followup rejected: target %s not in fallbacks | session=%s",
+                                        followup_switch_target, session_id[:8],
+                                    )
+                                    full_followup = cleaned_followup
+
                             # Extract reason from raw text after marker is fully present
                             if activity_marker_detected:
                                 reason_match = _REASON_RE.search(raw_followup_so_far)
                                 if reason_match:
                                     activity_marker_reason = reason_match.group(1).strip()
 
+                            MIN_ACTIVITY_READY_TURNS = 3
                             activity_marker_rejected_reason = None
-                            if activity_marker_detected and activity_marker_reason:
-                                quotes = re.findall(r'"([^"]+)"', activity_marker_reason)
-                                if not quotes:
-                                    activity_marker_rejected_reason = "no_evidence_quotes"
-                                    logger.info("[ACTIVITY_READY] rejected: no evidence quotes in reason")
-                                else:
-                                    child_messages = [
-                                        msg["content"] for msg in assistant.conversation_history
-                                        if msg.get("role") == "user"
-                                    ]
-                                    child_messages.append(child_input)
-                                    found_match = False
-                                    for quote in quotes:
-                                        quote_lower = quote.lower()
-                                        for child_msg in child_messages:
-                                            if quote_lower in child_msg.lower():
-                                                found_match = True
+
+                            if activity_marker_detected:
+                                # Guard: require minimum conversation depth before accepting handoff
+                                if assistant.attribute_state.turn_count < MIN_ACTIVITY_READY_TURNS:
+                                    activity_marker_rejected_reason = "insufficient_turns"
+                                    logger.info(
+                                        "[ACTIVITY_READY] rejected: turn_count=%d < MIN_TURNS=%d",
+                                        assistant.attribute_state.turn_count, MIN_ACTIVITY_READY_TURNS,
+                                    )
+                                elif activity_marker_reason:
+                                    # Existing quote validation
+                                    quotes = re.findall(r'"([^"]+)"', activity_marker_reason)
+                                    if not quotes:
+                                        activity_marker_rejected_reason = "no_evidence_quotes"
+                                        logger.info("[ACTIVITY_READY] rejected: no evidence quotes in reason")
+                                    else:
+                                        child_messages = [
+                                            msg["content"] for msg in assistant.conversation_history
+                                            if msg.get("role") == "user"
+                                        ]
+                                        child_messages.append(child_input)
+                                        found_match = False
+                                        for quote in quotes:
+                                            quote_lower = quote.lower()
+                                            for child_msg in child_messages:
+                                                if quote_lower in child_msg.lower():
+                                                    found_match = True
+                                                    break
+                                            if found_match:
                                                 break
-                                        if found_match:
-                                            break
-                                    if not found_match:
-                                        activity_marker_rejected_reason = "evidence_not_in_transcript"
-                                        logger.info(
-                                            "[ACTIVITY_READY] rejected: evidence quotes not found in transcript — %s",
-                                            quotes,
-                                        )
+                                        if not found_match:
+                                            activity_marker_rejected_reason = "evidence_not_in_transcript"
+                                            logger.info(
+                                                "[ACTIVITY_READY] rejected: evidence quotes not found in transcript — %s",
+                                                quotes,
+                                            )
 
                             if activity_marker_detected and not activity_marker_rejected_reason:
                                 assistant.attribute_state.activity_ready = True
