@@ -50,6 +50,18 @@ from resolution_debug import format_resolution_log_line
 # Must be defined here (not inside a function) to avoid re-compiling on every request.
 _REASON_RE = re.compile(r"REASON:\s*(.+?)(?:\n|$)")
 
+
+def _strip_activity_markers(text: str) -> str:
+    """Remove [ACTIVITY_READY] and any REASON: line from LLM output.
+
+    This is a defensive post-processing step applied to all child-facing text
+    that comes from generators instructed with ATTRIBUTE_MULTI_TOPIC_GUIDE.
+    """
+    cleaned = text.replace("[ACTIVITY_READY]", "")
+    cleaned = _REASON_RE.sub("", cleaned)
+    return cleaned.rstrip("\n")
+
+
 # Minimum turns before [ACTIVITY_READY] marker is accepted in attribute activity pipeline.
 MIN_ACTIVITY_READY_TURNS = 3
 
@@ -1365,8 +1377,6 @@ def continue_conversation():
                         full_response = ""
                         async for text_chunk, token_usage, full_so_far in response_generator:
                             full_response = full_so_far
-                            if not text_chunk:
-                                continue
                             partial_debug = build_attribute_debug(
                                 decision="attribute_activity_response",
                                 profile=assistant.attribute_profile,
@@ -1377,9 +1387,15 @@ def continue_conversation():
                                 activity_marker_rejected_reason=None,
                             )
                             assistant.set_last_attribute_debug(partial_debug)
+
+                        # Safety net: strip any leaked [ACTIVITY_READY] / REASON:
+                        # from response text before the child sees it.
+                        full_response = _strip_activity_markers(full_response)
+
+                        if full_response:
                             sequence_number += 1
                             yield sse_event("chunk", StreamChunk(
-                                response=text_chunk,
+                                response=full_response,
                                 session_finished=False,
                                 duration=0.0,
                                 token_usage=token_usage,
@@ -1441,18 +1457,13 @@ def continue_conversation():
                             full_followup = ""
 
                             def _displayable_followup(raw_followup: str) -> str:
-                                # Strip the activity marker
-                                marker_free_followup = raw_followup.replace(activity_marker, "")
-                                # Always strip the REASON line if present — the LLM may emit
-                                # REASON: even without the marker (prompt misbehavior), and
-                                # during streaming partial REASON text can leak character-by-
-                                # character before the regex fully matches.
-                                marker_free_followup = _REASON_RE.sub("", marker_free_followup)
+                                marker_free_followup = _strip_activity_markers(raw_followup)
                                 if activity_marker in raw_followup:
-                                    # Clean up any trailing newlines left after stripping
-                                    marker_free_followup = marker_free_followup.rstrip("\n")
                                     return marker_free_followup
 
+                                # Defensive: strip any trailing partial marker prefix that
+                                # might have leaked through if the stream was interrupted
+                                # mid-marker.
                                 max_buffered_prefix = min(len(raw_followup), len(activity_marker) - 1)
                                 for suffix_len in range(max_buffered_prefix, 0, -1):
                                     if raw_followup.endswith(activity_marker[:suffix_len]):

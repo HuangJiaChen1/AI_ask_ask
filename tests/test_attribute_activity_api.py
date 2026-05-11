@@ -393,6 +393,39 @@ def test_reason_not_leaked_when_marker_present(client, mock_gemini_client):
         assert "[ACTIVITY_READY]" not in (chunk.get("response") or ""), f"Marker leaked in chunk: {chunk}"
 
 
+def test_no_response_marker_leaked_when_response_generator_emits_it(client, mock_gemini_client):
+    """[ACTIVITY_READY] emitted by the response generator must be stripped
+    before it reaches the child — the follow-up generator is not the only
+    place where the marker can appear."""
+    start = client.post(
+        "/api/start",
+        json={"age": 6, "object_name": "cat", "attribute_pipeline_enabled": True},
+    )
+    session_id = final_chunk(start)["session_id"]
+
+    set_intent(mock_gemini_client, "CURIOSITY")
+
+    stream_call = 0
+    def _side_effect(model, contents, config=None):
+        nonlocal stream_call
+        stream_call += 1
+        if stream_call == 1:
+            return _make_stream('That cat is definitely a big one! [ACTIVITY_READY]\nREASON: child said "it is big"')
+        return _make_stream("What else do you notice about the cat?")
+
+    mock_gemini_client.aio.models.generate_content_stream.side_effect = _side_effect
+
+    response = client.post(
+        "/api/continue",
+        json={"session_id": session_id, "child_input": "it is big"},
+    )
+
+    chunks = [event["data"] for event in parse_sse(response.data) if event["event"] == "chunk"]
+    for chunk in chunks:
+        assert "[ACTIVITY_READY]" not in (chunk.get("response") or ""), f"Marker leaked in chunk: {chunk}"
+        assert "REASON:" not in (chunk.get("response") or ""), f"REASON leaked in chunk: {chunk}"
+
+
 def test_reason_stripped_when_marker_absent(client, mock_gemini_client):
     """REASON line must be stripped even when LLM emits it without the marker."""
     start = client.post(
