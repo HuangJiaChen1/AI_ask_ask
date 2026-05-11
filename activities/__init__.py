@@ -52,9 +52,18 @@ def _load_catalog() -> tuple[ActivityDefinition, ...]:
     return tuple(activities)
 
 
-def get_activity_for_attribute(attribute_id: str, age: int) -> ActivityDefinition | None:
-    from stream.exploration_loader import _age_to_tier
+def _age_to_tier(age: int) -> int:
+    """Map child age to tier index (0, 1, 2)."""
+    if age <= 4:
+        return 0
+    elif age <= 6:
+        return 1
+    else:
+        return 2
 
+
+def get_activity_for_attribute(attribute_id: str, age: int) -> ActivityDefinition | None:
+    """Return the first activity matching *attribute_id* and the child's age tier."""
     tier = _age_to_tier(age)
     catalog = _load_catalog()
     for activity in catalog:
@@ -64,5 +73,6 @@ def get_activity_for_attribute(attribute_id: str, age: int) -> ActivityDefinitio
 
 
 def list_activities_for_attribute(attribute_id: str) -> list[ActivityDefinition]:
+    """Return all activities whose *target_attribute* equals *attribute_id*."""
     catalog = _load_catalog()
     return [a for a in catalog if a.target_attribute == attribute_id]
