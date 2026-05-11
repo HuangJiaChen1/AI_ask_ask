@@ -20,7 +20,7 @@ from .errors import raise_if_rate_limited
 from .utils import clean_messages_for_api, convert_messages_to_gemini_format
 
 
-_SWITCH_TO_RE = re.compile(r"\[SWITCH_TO:([\w.]+)\]")
+_SWITCH_TO_RE = re.compile(r"\[SWITCH_TO:([\w.]{1,64})\]")
 
 
 def detect_switch_marker(response_text: str) -> tuple[str | None, str]:
@@ -33,6 +33,7 @@ def detect_switch_marker(response_text: str) -> tuple[str | None, str]:
     if match:
         target_id = match.group(1)
         cleaned = _SWITCH_TO_RE.sub("", response_text).strip()
+        cleaned = re.sub(r"  +", " ", cleaned)
         return target_id, cleaned
     return None, response_text
 

@@ -447,6 +447,10 @@ class PaixuejiAssistant:
                 self.attribute_profile = new_profile
                 self.attribute_state.activity_ready = False
                 self.attribute_activity_ready = False
+                safe_print(
+                    f"[Attribute Switch] {current_profile.attribute_id} -> {target_attribute_id}"
+                    f" (reason: {reason or 'none'})"
+                )
                 return True
 
         return False
