@@ -281,8 +281,10 @@ def test_activity_marker_rejected_without_evidence_quote(client, mock_gemini_cli
     assert chunk["activity_ready"] is False
     assert chunk["attribute_debug"]["activity_marker_detected"] is True
     assert chunk["attribute_debug"]["activity_marker_rejected_reason"] == "no_evidence_quotes"
-    # Rejected handoff sentence must NOT appear in the final response
-    assert "Can you spot anything orange nearby?" not in chunk["response"]
+    # Marker and REASON stripped, but follow-up question preserved
+    assert "Can you spot anything orange nearby?" in chunk["response"]
+    assert "[ACTIVITY_READY]" not in chunk["response"]
+    assert "REASON:" not in chunk["response"]
     # Conversation stays in the attribute lane
     assert chunk["attribute_lane_active"] is True
 
@@ -319,8 +321,10 @@ def test_activity_marker_rejected_with_fabricated_quote(client, mock_gemini_clie
     assert chunk["activity_ready"] is False
     assert chunk["attribute_debug"]["activity_marker_detected"] is True
     assert chunk["attribute_debug"]["activity_marker_rejected_reason"] == "evidence_not_in_transcript"
-    # Rejected handoff sentence must NOT appear in the final response
-    assert "Can you spot anything orange nearby?" not in chunk["response"]
+    # Marker and REASON stripped, but follow-up question preserved
+    assert "Can you spot anything orange nearby?" in chunk["response"]
+    assert "[ACTIVITY_READY]" not in chunk["response"]
+    assert "REASON:" not in chunk["response"]
     # Conversation stays in the attribute lane
     assert chunk["attribute_lane_active"] is True
 
@@ -458,16 +462,19 @@ def test_reason_stripped_when_marker_absent(client, mock_gemini_client):
     assert "REASON:" not in (final.get("response") or "")
 
 
-def test_rejected_handoff_not_in_any_chunk(client, mock_gemini_client):
-    """When [ACTIVITY_READY] is rejected, the handoff sentence must not appear
-    in any SSE chunk — not just the final one."""
+def test_rejected_handoff_preserves_followup_question(client, mock_gemini_client):
+    """When [ACTIVITY_READY] is rejected due to insufficient_turns, the marker
+    and REASON must be stripped but the underlying follow-up question must still
+    be yielded so the conversation can continue."""
     start = client.post(
         "/api/start",
         json={"age": 6, "object_name": "cat", "attribute_pipeline_enabled": True},
     )
     session_id = final_chunk(start)["session_id"]
 
-    set_intent(mock_gemini_client, "CURIOSITY")
+    # Use INFORMATIVE (not CURIOSITY) so needs_followup=True and the
+    # follow-up question block actually executes.
+    set_intent(mock_gemini_client, "INFORMATIVE")
 
     stream_call = 0
     def _side_effect(model, contents, config=None):
@@ -486,9 +493,17 @@ def test_rejected_handoff_not_in_any_chunk(client, mock_gemini_client):
 
     chunks = [event["data"] for event in parse_sse(response.data) if event["event"] == "chunk"]
     for chunk in chunks:
-        assert "Can you spot anything orange nearby?" not in (chunk.get("response") or ""), (
-            f"Handoff sentence leaked in chunk: {chunk}"
+        assert "[ACTIVITY_READY]" not in (chunk.get("response") or ""), (
+            f"ACTIVITY_READY marker leaked in chunk: {chunk}"
+        )
+        assert "REASON:" not in (chunk.get("response") or ""), (
+            f"REASON leaked in chunk: {chunk}"
         )
     final = chunks[-1]
-    assert final["response"] == "Cats have amazing fur. What do you notice about this one?"
+    assert "Can you spot anything orange nearby?" in final["response"], (
+        f"Follow-up question missing from final response: {final['response']}"
+    )
+    assert "[ACTIVITY_READY]" not in final["response"]
+    assert "REASON:" not in final["response"]
+    assert final["attribute_debug"]["activity_marker_rejected_reason"] == "insufficient_turns"
     assert final["attribute_lane_active"] is True

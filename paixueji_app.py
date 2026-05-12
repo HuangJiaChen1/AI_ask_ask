@@ -1573,9 +1573,10 @@ def continue_conversation():
                                         **_assistant_stream_fields(assistant),
                                     ))
                             elif activity_marker_detected and activity_marker_rejected_reason:
-                                # Handoff rejected — suppress the handoff sentence and stay
-                                # in the attribute lane so the conversation continues normally.
-                                full_followup = ""
+                                # Handoff rejected — marker and REASON already stripped by
+                                # _displayable_followup(). Keep the follow-up question so the
+                                # conversation continues normally.
+                                pass
                             else:
                                 # No marker detected — yield the followup normally
                                 if full_followup:
