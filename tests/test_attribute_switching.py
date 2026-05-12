@@ -53,3 +53,39 @@ def test_focus_topic_parameter_exists():
     sig = inspect.signature(ask_followup_question_stream)
     assert "focus_topic" in sig.parameters
     assert sig.parameters["focus_topic"].default == "same attribute or same detail"
+
+
+def test_detector_applies_switch_before_generator():
+    """Switch applied before response generator sees the topic."""
+    from paixueji_assistant import PaixuejiAssistant
+    from attribute_activity import AttributeProfile, start_attribute_session
+
+    assistant = PaixuejiAssistant(client=None)
+    primary = AttributeProfile(
+        attribute_id="appearance.color", label="color",
+        activity_target="exploring colors", branch="in_kb",
+        object_examples=("apple",), fallback_attributes=(),
+    )
+    fallback = AttributeProfile(
+        attribute_id="appearance.shape", label="shape",
+        activity_target="exploring shapes", branch="in_kb",
+        object_examples=("apple",), fallback_attributes=(),
+    )
+    primary_with_fb = AttributeProfile(
+        attribute_id=primary.attribute_id, label=primary.label,
+        activity_target=primary.activity_target, branch=primary.branch,
+        object_examples=primary.object_examples,
+        fallback_attributes=(fallback,),
+    )
+    state = start_attribute_session(object_name="apple", profile=primary_with_fb, age=5)
+    assistant.start_attribute_lane(state, primary_with_fb)
+
+    # Simulate detector having already run and decided to switch
+    success = assistant.switch_attribute_topic("appearance.shape", reason="detector_decided")
+    assert success is True
+
+    # Generator would now receive the POST-SWITCH profile
+    assert assistant.attribute_state.profile.attribute_id == "appearance.shape"
+    assert assistant.attribute_state.profile.label == "shape"
+    assert assistant.attribute_state.switched_to == "appearance.shape"
+    assert assistant.attribute_state.switch_reason == "detector_decided"
