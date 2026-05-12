@@ -279,7 +279,7 @@ async def generate_attribute_activation_response_stream(
     )
     full_prompt = f"{intent_prompt}\n\n{response_hint}"
 
-    # Append multi-topic guide if provided (enables SWITCH_TO in response step).
+    # Append attribute response guide if provided.
     # Strip the [ACTIVITY_READY] transition signal — the response generator
     # must never be told to emit that marker; it belongs to the follow-up step.
     if multi_topic_guide:
