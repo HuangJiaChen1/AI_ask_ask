@@ -449,8 +449,8 @@ activities/
 
 ## 9. 实现记录
 
-> **实现日期**: 2026-05-11（初始实现），2026-05-12（topic switch detector 重构）  
-> **实现分支**: `worktree-activity-matching`（已合并至 `main`），后续 detector 重构直接在 `main` 上进行  
+> **实现日期**: 2026-05-11（初始实现），2026-05-12（topic switch detector 重构），2026-05-13（fallback mapping + matched activity 客户端暴露）  
+> **实现分支**: `worktree-activity-matching`（已合并至 `main`），后续 detector 重构和 activity matching 优化直接在 `main` 上进行  
 > **测试状态**: 669 项测试全部通过（665 passed, 4 skipped）
 
 本节记录本 PRD 中各项决策的实际实现情况，包括代码位置、实现方式和与 PRD 的差异。
@@ -468,12 +468,15 @@ activities/
 | `activities/catalog/color_exploration.yaml` | Mock 活动：颜色探索 |
 | `activities/catalog/shape_exploration.yaml` | Mock 活动：形状探索 |
 | `activities/catalog/size_exploration.yaml` | Mock 活动：大小探索 |
-| `activities/__init__.py` | Catalog loader + matcher：`ActivityDefinition` dataclass、`_load_catalog()`、`get_activity_for_attribute()`、`list_activities_for_attribute()` |
+| `activities/__init__.py` | Catalog loader + matcher：`ActivityDefinition` dataclass、`_load_catalog()`、`get_activity_for_attribute()`、`list_activities_for_attribute()`；**新增** `_SUB_ATTRIBUTE_TO_GENERIC` 回退映射 + `_resolve_generic_attribute_id()` |
 
 **实现细节**:
 - 使用 `yaml.safe_load()` 加载 YAML，LRU cache 避免重复 IO
 - `_age_to_tier()` 本地定义（复制自 `stream/exploration_loader`），避免跨模块依赖
 - `get_activity_for_attribute()` 按 `target_attribute` + `tier` 双条件匹配
+- **新增回退映射**：`get_activity_for_attribute()` 精确匹配失败后，尝试将 domain-specific ID（如 `appearance.body_color`）解析为 generic ID（`appearance.color`）再次匹配；`list_activities_for_attribute()` 同样支持回退
+- `_SUB_ATTRIBUTE_TO_GENERIC` 当前覆盖 7 个 sub-attribute（`body_color`→`color`, `flower_color`→`color`, `body_size`→`size` 等），仅映射到有 mock 活动的 generic 属性
+- 回退成功时记录 `[ACTIVITY_MATCH] fallback mapping ...` info 日志
 - 异常处理：YAML 格式错误时跳过该文件并记录 warning，不中断整个加载流程
 
 #### 9.1.2 主话题 + 备选话题（Primary + Fallback）
@@ -566,7 +569,12 @@ activities/
 
 | 文件 | 修改内容 |
 |------|---------|
-| `paixueji_app.py` | 在 `start_attribute_lane()` 之后，调用 `get_activity_for_attribute()` 为主话题和每个 fallback 话题匹配活动，并记录 `[ACTIVITY_MATCH]` 日志 |
+| `paixueji_app.py` | 在 `start_attribute_lane()` 之后，调用 `get_activity_for_attribute()` 为主话题和每个 fallback 话题匹配活动；匹配成功的 `ActivityDefinition` 保存到 `assistant.attribute_matched_activity`（包含 `activity_id`, `name`, `launch_prompt`） |
+
+**实现细节**:
+- 主话题匹配成功后，将 `activity_id` / `name` / `launch_prompt` 写入 `assistant.attribute_matched_activity`
+- fallback 话题仅记录日志，不保存 matched activity（因为当前只展示主话题的活动）
+- 匹配失败时 `assistant.attribute_matched_activity = None`
 
 #### 9.1.7 Stream 元数据暴露
 
@@ -577,6 +585,24 @@ activities/
 |------|---------|
 | `paixueji_app.py` | `_assistant_stream_fields()` 新增 `switch_state` 字典，包含：`attribute_switched_to`、`attribute_switch_reason`、`attribute_fallback_count`、`attribute_turn_count`；额外暴露 `attribute_fallback_labels` 和 `attribute_activity_ready_rejected_reason` |
 
+#### 9.1.9 活动信息客户端暴露（Chat-to-Activity 闭环）
+
+**PRD 对应**: —（隐含需求，V1 未单独成节）  
+**实现状态**: ✅ 已完成（2026-05-13）
+
+| 文件 | 修改内容 |
+|------|---------|
+| `paixueji_assistant.py` | `__init__` / `start_attribute_lane()` / `clear_attribute_lane()` 中管理 `attribute_matched_activity` 字段；`attribute_activity_target()` 将 matched activity 的 `activity_id` / `name` / `launch_prompt` 暴露给客户端 |
+| `paixueji_app.py` | 切换话题成功后（`switch_attribute_topic`），重新调用 `get_activity_for_attribute()` 为**新话题**匹配活动并更新 `assistant.attribute_matched_activity` |
+
+**实现细节**:
+- `attribute_activity_target()` 返回格式新增三个字段（仅在 matched activity 存在时出现）：
+  - `activity_id`: 如 `"color_exploration_v1"`
+  - `activity_name`: 如 `"Color Explorer"`
+  - `launch_prompt`: 活动的启动文案
+- 该字典通过 `_assistant_stream_fields()` → `StreamChunk` → SSE 流返回客户端
+- 话题切换后自动重新匹配活动，确保客户端最终拿到的是**孩子实际聊的话题**对应的活动
+
 #### 9.1.8 单元测试
 
 **PRD 对应**: 第 7 节  
@@ -584,9 +610,9 @@ activities/
 
 | 文件 | 测试内容 |
 |------|---------|
-| `tests/test_activity_catalog.py` | 4 个测试：颜色/形状匹配、无匹配返回 None、Tier 过滤 |
-| `tests/test_topic_switch_detector.py` | **5 个测试**（新增）：happy path（should_switch=True + 有效目标）、no-switch path、无效目标拒绝、Markdown-fenced JSON 解析、畸形 JSON 安全降级 |
-| `tests/test_attribute_switching.py` | 2 个测试：切换到 fallback、无效目标拒绝（已适配 detector-driven flow） |
+| `tests/test_activity_catalog.py` | 9 个测试：颜色/形状/大小匹配、无匹配返回 None、Tier 过滤、**fallback mapping（5 个）**：`body_color`→`color`、`flower_color`→`color`、`body_size`→`size`、无映射返回 None、`list_activities` 回退 |
+| `tests/test_topic_switch_detector.py` | **5 个测试**：happy path（should_switch=True + 有效目标）、no-switch path、无效目标拒绝、Markdown-fenced JSON 解析、畸形 JSON 安全降级 |
+| `tests/test_attribute_switching.py` | **5 个测试**：切换到 fallback、无效目标拒绝、focus_topic 参数存在、检测器前置切换、**matched activity 暴露（2 个）**：`attribute_activity_target` 包含 `activity_id`/`activity_name`/`launch_prompt`、`clear_attribute_lane` 清除 `attribute_matched_activity` |
 | ~~`tests/test_switch_marker.py`~~ | ~~3 个测试~~ — **已移除**（标记检测机制已废弃） |
 
 ### 9.2 与 PRD 的差异
@@ -598,6 +624,8 @@ activities/
 | 第 3.3 节提到 "prompt 层切换" 需技术验证 | 已实现并验证 | 通过单元测试和完整测试套件验证（669 passed） |
 | 第 4.6 节提到轮数预期 3-6 轮 | 未做强制限制 | 完全由模型 `[ACTIVITY_READY]` 自主判断，保留现有 quote validation |
 | PRD: marker-based `[SWITCH_TO]` switching | 替换为 standalone `detect_topic_switch` 检测器 | 更好的关注点分离，减少幻觉标记，支持并行执行，更易调试 |
+| PRD 未明确 domain-specific → generic 属性映射 | 补充 `_SUB_ATTRIBUTE_TO_GENERIC` 回退映射 | `exploration_categories.yaml` 使用 domain-specific ID（`appearance.body_color`），而活动库使用 generic ID（`appearance.color`），两者命名空间未对齐；回退映射填补了这一 gap |
+| PRD 未明确 matched activity 如何暴露给客户端 | 补充 `attribute_matched_activity` + `attribute_activity_target()` 暴露 | 设计文档描述"推出大小探索活动"但未说明活动信息如何传递；通过 SSE stream metadata 暴露 `activity_id`/`activity_name`/`launch_prompt` 完成闭环 |
 
 ### 9.3 未实现（V2 预留）
 
@@ -619,11 +647,14 @@ activities/
     → paixueji_app.py:start_attribute_lane()
       → paixueji_assistant.py:start_attribute_lane()
     → paixueji_app.py:get_activity_for_attribute() [ACTIVITY_MATCH 日志]
+      → 匹配成功: assistant.attribute_matched_activity = {activity_id, name, launch_prompt}
+      → 匹配失败: assistant.attribute_matched_activity = None
 
 继续对话时检测切换:
   paixueji_app.py:continue_conversation()
     → classify_intent() + detect_topic_switch() 并行运行
       → assistant.switch_attribute_topic() (若检测器判定切换)
+      → 重新匹配活动: get_activity_for_attribute(新话题) → 更新 assistant.attribute_matched_activity
     → stream_attribute_activity()
       → 构造 soft_guide（基于当前已切换的话题）
       → generate_attribute_activation_response_stream(multi_topic_guide=soft_guide)
@@ -637,6 +668,10 @@ activities/
 Stream 元数据:
   paixueji_app.py:_assistant_stream_fields()
     → switch_state {attribute_switched_to, attribute_switch_reason, ...}
+    → activity_target {
+         attribute_id, attribute_label, activity_target,
+         activity_id, activity_name, launch_prompt   ← 新增（matched activity 存在时）
+       }
 ```
 
 ---
