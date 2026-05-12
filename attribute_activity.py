@@ -130,7 +130,7 @@ async def select_attribute_profile(
             "decision": "attribute_selected",
             "source": "only_candidate",
             "attribute_id": profiles[0].attribute_id,
-            "fallback_attribute_id": None,
+            "fallback_attribute_ids": [],
             "confidence": "high",
             "reason": "only one candidate available",
             "domain": domain,
@@ -147,7 +147,7 @@ async def select_attribute_profile(
         response = await client.aio.models.generate_content(
             model=(config or {}).get("model_name"),
             contents=prompt,
-            config={"temperature": 0.0, "max_output_tokens": 180},
+            config={"temperature": 0.0, "max_output_tokens": 256},
         )
         payload, payload_kind, recovered = extract_json_object(response.text or "")
     except Exception as exc:
@@ -159,25 +159,37 @@ async def select_attribute_profile(
         exc_reason = None
 
     chosen_id = None
-    fallback_id = None
+    fallback_ids = []
     if isinstance(payload, dict):
         chosen_id = payload.get("attribute_id")
-        fallback_id = payload.get("fallback_attribute_id")
+        raw_fallbacks = payload.get("fallback_attribute_ids")
+        if isinstance(raw_fallbacks, list):
+            fallback_ids = raw_fallbacks
+        elif isinstance(raw_fallbacks, str):
+            fallback_ids = [raw_fallbacks]
 
     # Find primary profile
     primary = next((p for p in profiles if p.attribute_id == chosen_id), profiles[0])
 
-    # Find fallback profile (must differ from primary)
-    fallback = None
-    if fallback_id:
-        fallback = next(
-            (p for p in profiles if p.attribute_id == fallback_id and p.attribute_id != primary.attribute_id),
-            None,
-        )
-    if fallback is None:
-        fallback = next((p for p in profiles if p.attribute_id != primary.attribute_id), None)
+    # Collect up to 2 fallback profiles, preserving order and excluding primary
+    fallbacks = []
+    seen = {primary.attribute_id}
+    for fb_id in fallback_ids:
+        if fb_id in seen:
+            continue
+        match = next((p for p in profiles if p.attribute_id == fb_id), None)
+        if match and len(fallbacks) < 2:
+            fallbacks.append(match)
+            seen.add(match.attribute_id)
 
-    # Build primary with fallback embedded
+    # If no valid fallbacks from model, pick from remaining candidates
+    if not fallbacks:
+        for p in profiles:
+            if p.attribute_id != primary.attribute_id and len(fallbacks) < 2:
+                fallbacks.append(p)
+                break
+
+    # Build primary with fallbacks embedded
     primary_with_fallback = AttributeProfile(
         attribute_id=primary.attribute_id,
         label=primary.label,
@@ -185,7 +197,7 @@ async def select_attribute_profile(
         branch=primary.branch,
         object_examples=primary.object_examples,
         redirect_entity=primary.redirect_entity,
-        fallback_attributes=(fallback,) if fallback else (),
+        fallback_attributes=tuple(fallbacks),
     )
 
     source = "gemini" if chosen_id and any(p.attribute_id == chosen_id for p in profiles) else "first_candidate_fallback"
@@ -193,7 +205,7 @@ async def select_attribute_profile(
         "decision": "attribute_selected",
         "source": source,
         "attribute_id": primary_with_fallback.attribute_id,
-        "fallback_attribute_id": fallback.attribute_id if fallback else None,
+        "fallback_attribute_ids": [fb.attribute_id for fb in fallbacks],
         "confidence": payload.get("confidence") if isinstance(payload, dict) else ("fallback" if source == "first_candidate_fallback" else "high"),
         "reason": (payload.get("reason") if isinstance(payload, dict) else None) or exc_reason or f"invalid Gemini attribute selection payload: {payload_kind}",
         "payload_kind": payload_kind,

@@ -383,7 +383,7 @@ Return JSON only:
 
 Choose the category that best describes what kind of thing this object is."""
 
-ATTRIBUTE_SELECTION_PROMPT = """Choose one supported activity attribute for a child chat, plus one fallback attribute.
+ATTRIBUTE_SELECTION_PROMPT = """Choose one supported activity attribute for a child chat, plus up to two fallback attributes.
 
 OBJECT: {object_name}
 CHILD AGE: {age}
@@ -395,15 +395,15 @@ SUPPORTED ATTRIBUTES:
 Return JSON only:
 {{
   "attribute_id": "one supported attribute id (format: dimension.sub_attribute), or null",
-  "fallback_attribute_id": "one supported attribute id different from attribute_id, or null",
+  "fallback_attribute_ids": ["up to two supported attribute ids, each different from attribute_id"],
   "confidence": "high|medium|low|none",
   "reason": "short reason"
 }}
 
 Choose the PRIMARY attribute most naturally connected to this object.
-Choose the FALLBACK as a related attribute the child might naturally drift to.
+Choose 1-2 FALLBACKS as related attributes the child might naturally drift to.
 If domain is "unknown", prefer attributes from appearance or senses dimensions.
-Both attribute_ids must exactly match entries from the SUPPORTED ATTRIBUTES list."""
+All attribute_ids must exactly match entries from the SUPPORTED ATTRIBUTES list."""
 
 ATTRIBUTE_INTRO_PROMPT = """You are starting a discovery conversation with a child about: {object_name}
 
