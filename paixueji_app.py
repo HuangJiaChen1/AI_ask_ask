@@ -71,7 +71,7 @@ from stream import (
     ask_followup_question_stream,
     classify_intent,
     classify_pre_anchor_semantic_reply,
-    detect_switch_marker,
+    detect_topic_switch,
     generate_attribute_activation_response_stream,
     generate_category_activation_response_stream,
     generate_bridge_activation_response_stream,
@@ -1314,22 +1314,60 @@ def continue_conversation():
                 if assistant.attribute_lane_active and assistant.attribute_state:
                     assistant.attribute_state.turn_count += 1
 
+                    # Run intent classification and topic switch detector in parallel
+                    intent_future = asyncio.run_coroutine_threadsafe(
+                        classify_intent(
+                            assistant=assistant,
+                            child_answer=child_input,
+                            object_name=assistant.attribute_state.object_name,
+                            age=assistant.age or 6,
+                        ),
+                        _ASYNC_LOOP,
+                    )
+                    switch_future = asyncio.run_coroutine_threadsafe(
+                        detect_topic_switch(
+                            conversation_history=assistant.conversation_history,
+                            primary=assistant.attribute_state.profile,
+                            fallbacks=assistant.attribute_state.profile.fallback_attributes,
+                            child_input=child_input,
+                            config=assistant.config,
+                            client=assistant.client,
+                        ),
+                        _ASYNC_LOOP,
+                    )
+
                     try:
-                        intent_future = asyncio.run_coroutine_threadsafe(
-                            classify_intent(
-                                assistant=assistant,
-                                child_answer=child_input,
-                                object_name=assistant.attribute_state.object_name,
-                                age=assistant.age or 6,
-                            ),
-                            _ASYNC_LOOP,
-                        )
                         intent_result = intent_future.result(timeout=10)
                         intent_type_lower = (intent_result.get("intent_type") or "classification_fallback").lower()
                         attribute_reason = intent_result.get("reasoning") or "intent classified for discovery continuation"
                     except Exception as exc:
                         intent_type_lower = "classification_fallback"
                         attribute_reason = f"intent classification fallback: {exc}"
+                        # Cancel switch future if intent failed
+                        switch_future.cancel()
+
+                    try:
+                        should_switch, switch_target_id, switch_reason = switch_future.result(timeout=10)
+                    except Exception as exc:
+                        logger.warning("[TOPIC_SWITCH] detector error: %s", exc)
+                        should_switch, switch_target_id, switch_reason = False, None, f"detector_error: {exc}"
+
+                    # Apply switch BEFORE entering the generator
+                    if should_switch and switch_target_id:
+                        switch_success = assistant.switch_attribute_topic(
+                            target_attribute_id=switch_target_id,
+                            reason="detector_decided",
+                        )
+                        if switch_success:
+                            logger.info(
+                                "[ATTRIBUTE_SWITCH] detector switched to %s | session=%s",
+                                switch_target_id, session_id[:8],
+                            )
+                        else:
+                            logger.warning(
+                                "[ATTRIBUTE_SWITCH] detector target %s not in fallbacks | session=%s",
+                                switch_target_id, session_id[:8],
+                            )
 
                     async def stream_attribute_activity():
                         needs_followup = intent_type_lower not in INTENTS_WITHOUT_FOLLOWUP
@@ -1342,16 +1380,11 @@ def continue_conversation():
                         activity_target = assistant.attribute_state.profile.activity_target
                         object_name_attr = assistant.attribute_state.object_name
 
-                        # Build soft_guide BEFORE response generator so response can use it
-                        fallback_block = ""
-                        if assistant.attribute_state.profile.fallback_attributes:
-                            lines = [f"- {fb.attribute_id}: {fb.label}" for fb in assistant.attribute_state.profile.fallback_attributes]
-                            fallback_block = "\n".join(lines)
-
-                        soft_guide = paixueji_prompts.get_prompts()["attribute_multi_topic_guide"].format(
-                            primary_attribute_label=attribute_label,
-                            primary_activity_target=activity_target,
-                            fallback_attribute_block=fallback_block or "(no fallback topics)",
+                        # Build response guide BEFORE response generator.
+                        # The topic is already correct (switch applied above if needed).
+                        soft_guide = paixueji_prompts.get_prompts()["attribute_response_guide"].format(
+                            attribute_label=attribute_label,
+                            activity_target=activity_target,
                             sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
                         )
 
@@ -1410,29 +1443,6 @@ def continue_conversation():
                                 **_assistant_stream_fields(assistant),
                             ))
 
-                        switch_target_id, cleaned_response = detect_switch_marker(full_response)
-                        if switch_target_id:
-                            switch_success = assistant.switch_attribute_topic(
-                                target_attribute_id=switch_target_id,
-                                reason="model_detected_switch_marker",
-                            )
-                            if switch_success:
-                                full_response = cleaned_response
-                                # Profile was swapped by switch_attribute_topic;
-                                # refresh label and target for the follow-up prompt.
-                                attribute_label = assistant.attribute_state.profile.label
-                                activity_target = assistant.attribute_state.profile.activity_target
-                                logger.info(
-                                    "[ATTRIBUTE_SWITCH] switched to %s | session=%s",
-                                    switch_target_id, session_id[:8],
-                                )
-                            else:
-                                logger.warning(
-                                    "[ATTRIBUTE_SWITCH] rejected: target %s not in fallbacks | session=%s",
-                                    switch_target_id, session_id[:8],
-                                )
-                                full_response = cleaned_response
-
                         if needs_followup:
                             messages_with_response = messages + [
                                 {"role": "user", "content": child_input},
@@ -1480,28 +1490,6 @@ def continue_conversation():
                                     activity_marker_detected = True
 
                             full_followup = _displayable_followup(raw_followup_so_far)
-
-                            # Safety net: detect [SWITCH_TO] in follow-up question output
-                            followup_switch_target, cleaned_followup = detect_switch_marker(full_followup)
-                            if followup_switch_target:
-                                switch_success = assistant.switch_attribute_topic(
-                                    target_attribute_id=followup_switch_target,
-                                    reason="model_detected_switch_marker_in_followup",
-                                )
-                                if switch_success:
-                                    full_followup = cleaned_followup
-                                    attribute_label = assistant.attribute_state.profile.label
-                                    activity_target = assistant.attribute_state.profile.activity_target
-                                    logger.info(
-                                        "[ATTRIBUTE_SWITCH] followup switched to %s | session=%s",
-                                        followup_switch_target, session_id[:8],
-                                    )
-                                else:
-                                    logger.warning(
-                                        "[ATTRIBUTE_SWITCH] followup rejected: target %s not in fallbacks | session=%s",
-                                        followup_switch_target, session_id[:8],
-                                    )
-                                    full_followup = cleaned_followup
 
                             # Extract reason from raw text after marker is fully present
                             if activity_marker_detected:
