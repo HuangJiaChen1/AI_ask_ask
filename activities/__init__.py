@@ -59,6 +59,42 @@ def _load_catalog() -> tuple[ActivityDefinition, ...]:
     return tuple(activities)
 
 
+# Maps domain-specific sub-attributes to their generic equivalents so that
+# activities defined for generic IDs (e.g. appearance.color) can be matched
+# when the topic selector returns a domain-specific ID (e.g. appearance.body_color).
+_SUB_ATTRIBUTE_TO_GENERIC: dict[str, str] = {
+    # → color
+    "body_color": "color",
+    "flower_color": "color",
+    "clothing_color": "color",
+    "skin_color": "color",
+    # → shape
+    "leaf_shape": "shape",
+    "terrain_shape": "shape",
+    # → size
+    "body_size": "size",
+}
+
+
+def _resolve_generic_attribute_id(attribute_id: str) -> str | None:
+    """Resolve a domain-specific attribute_id to its generic equivalent."""
+    if "." not in attribute_id:
+        return None
+    dimension, sub = attribute_id.split(".", 1)
+    generic_sub = _SUB_ATTRIBUTE_TO_GENERIC.get(sub)
+    if generic_sub:
+        return f"{dimension}.{generic_sub}"
+    return None
+
+
+def _match_activity(catalog: tuple[ActivityDefinition, ...], attribute_id: str, tier: int) -> ActivityDefinition | None:
+    """Return the first activity matching *attribute_id* and *tier*."""
+    for activity in catalog:
+        if activity.target_attribute == attribute_id and tier in activity.tier_range:
+            return activity
+    return None
+
+
 def _age_to_tier(age: int) -> int:
     """Map child age to tier index (0, 1, 2)."""
     if age <= 4:
@@ -70,16 +106,38 @@ def _age_to_tier(age: int) -> int:
 
 
 def get_activity_for_attribute(attribute_id: str, age: int) -> ActivityDefinition | None:
-    """Return the first activity matching *attribute_id* and the child's age tier."""
+    """Return the first activity matching *attribute_id* and the child's age tier.
+
+    Falls back to a generic attribute ID if the domain-specific ID has no
+    direct match but a generic equivalent exists.
+    """
     tier = _age_to_tier(age)
     catalog = _load_catalog()
-    for activity in catalog:
-        if activity.target_attribute == attribute_id and tier in activity.tier_range:
+    activity = _match_activity(catalog, attribute_id, tier)
+    if activity:
+        return activity
+    generic_id = _resolve_generic_attribute_id(attribute_id)
+    if generic_id:
+        activity = _match_activity(catalog, generic_id, tier)
+        if activity:
+            logger.info(
+                "[ACTIVITY_MATCH] fallback mapping %s → %s → activity=%s",
+                attribute_id, generic_id, activity.activity_id,
+            )
             return activity
     return None
 
 
 def list_activities_for_attribute(attribute_id: str) -> list[ActivityDefinition]:
-    """Return all activities whose *target_attribute* equals *attribute_id*."""
+    """Return all activities whose *target_attribute* equals *attribute_id*.
+
+    Falls back to a generic attribute ID when no direct matches exist.
+    """
     catalog = _load_catalog()
-    return [a for a in catalog if a.target_attribute == attribute_id]
+    results = [a for a in catalog if a.target_attribute == attribute_id]
+    if results:
+        return results
+    generic_id = _resolve_generic_attribute_id(attribute_id)
+    if generic_id:
+        return [a for a in catalog if a.target_attribute == generic_id]
+    return []
