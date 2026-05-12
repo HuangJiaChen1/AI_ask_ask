@@ -60,7 +60,7 @@ Paixueji 是一个面向 3-8 岁儿童的对话式教育产品。孩子发送一
 5. 后续的问题围绕形状生成，最终推出"形状探索"活动
 
 **注意**:
-- 这个切换不是"代码自动检测关键词并切 Lane"，而是"通过 prompt 告诉模型有哪些备选方向，让模型自己判断是否切换"。现有代码架构不支持 Lane 级别的自动切换。
+- 这个切换不是"代码自动检测关键词并切 Lane"，而是"通过 prompt 告诉模型有哪些备选方向，由专用检测器判断孩子的兴趣是否已转移"。现有代码架构不支持 Lane 级别的自动切换。
 - **切换是双向的**: 从 primary 切到 fallback 后，旧的 primary 会变成新的 fallback，模型可以在后续轮次中再次切回来。不限制切换次数。
 
 ### 2.4 话题难度进阶
@@ -102,21 +102,33 @@ Paixueji 是一个面向 3-8 岁儿童的对话式教育产品。孩子发送一
 
 ### 3.3 "动态切换"的实现方式
 
-由于代码不支持自动检测切换，实际实现是:
+实际实现采用**独立的切换检测器**，将"检测"与"生成"解耦：
 
 ```
-Prompt 层:
-  "你的主要任务是引导孩子观察[主话题]。
-   但也允许聊这些备选话题：[备选话题列表]。
-   如果孩子主动提到了备选话题，可以顺着聊。
-   你觉得孩子的兴趣已经转移到备选话题时，
-   在回复末尾加上 [SWITCH_TO:shape] 标记。"
+检测层（在响应生成之前运行）:
+  detect_topic_switch(
+    conversation_history,   # 最近 12 条消息
+    primary,                # 当前主话题 AttributeProfile
+    fallbacks,              # 备选话题列表
+    child_input,            # 孩子最新消息
+  )
+  → 调用轻量级 LLM 判断孩子是否明显转向备选话题
+  → 输出 JSON: {should_switch, target_attribute_id, reason}
+  → 代码验证 target_attribute_id 确实在 fallbacks 中
+  → 若有效，调用 assistant.switch_attribute_topic() 更新话题
 
-代码层:
-  检测模型输出中的 [SWITCH_TO:xxx] 标记
-  → 更新 attribute_profile 为新的属性
+生成层（检测完成后运行）:
+  响应生成器看到的已经是更新后的话题
+  → 不需要模型自己输出切换标记
   → 后续问题基于新属性生成
 ```
+
+**为什么不用 `[SWITCH_TO]` 标记了？**
+原方案让模型在生成回复时自行判断并附加标记，存在两个问题：
+1. 模型可能漏加、错加或幻觉标记
+2. 切换判断和响应生成耦合在一起，难以调试
+
+新方案将切换判断交给专门的检测器，在生成器启动前完成决策，生成器只需专注于生成优质回复。
 
 **Prompt 指令冲突解决**：`FOLLOWUP_QUESTION_PROMPT` 原本硬编码 "Stay on the same detail, same attribute"，与后续注入的切换指令冲突。修复方式为将 "same attribute" 改为注入式变量 `{focus_topic}`，由调用方根据当前状态注入实际话题（如 `"the 'shape' attribute"`）。这消除了指令冲突的源头。
 
@@ -128,21 +140,27 @@ Prompt 层:
 
 ### 4.1 切换的触发条件
 
-**决策**: 采用 **C. 模型自主判断**。
+**决策**: 采用 **C. 模型自主判断**（由专用检测器执行）。
 
-模型通过 prompt 获知备选话题列表，自主判断孩子是否对备选话题更感兴趣。判断切换时，在回复末尾加上 `[SWITCH_TO:attribute_id]` 标记，由代码层检测并执行切换。
+不依赖模型在生成回复时自行附加 `[SWITCH_TO]` 标记。而是由一个独立的轻量级 LLM 调用（`detect_topic_switch`）专门负责判断孩子的兴趣转移。检测器在响应生成之前运行，与意图分类并行执行。
 
-**切换判断的 concrete criteria**（prompt 中明确要求模型 ONLY switch when ONE of these is true）：
+**切换判断的 concrete criteria**（检测器 prompt 中明确要求 ONLY switch when ONE of these is true）：
 - 孩子用 3+ 个词描述备选话题（如 "SO BIG! Bigger than my dog!"）
 - 孩子用备选话题做了比较
 - 孩子直接问了一个关于备选话题的问题
 - 孩子在连续 2+ 轮中回到备选话题
 
+**新增负例过滤**（检测器 prompt 中明确排除）：
+- 孩子在主要讨论当前话题时顺带提到备选属性（如 "It's red and very big" — 颜色是附带提及，孩子明显在聊大小）
+- 单个颜色/形状词 without elaboration or comparison（如 "It's red."）
+- 助手提到了备选话题，孩子只是回应助手的提及，没有主动表现出兴趣
+- 孩子在同一句话里提到备选话题后又回到了当前话题
+
 | 选项 | 状态 | 原因 |
 |------|------|------|
 | A. 关键词触发 | ❌ 不采用 | 过于敏感，容易误切 |
 | B. 连续提及触发 | ❌ 不采用 | 增加轮数，孩子可能等不及 |
-| C. 模型自主判断 | ✅ **采用** | 最自然，通过 prompt 调优可控 |
+| C. 模型自主判断（专用检测器） | ✅ **采用** | 最自然，检测器与生成解耦，可控且可调试 |
 | D. 显式询问 | ❌ 不采用 | 打断对话节奏 |
 
 ### 4.2 跨 Lane 话题的处理
@@ -209,11 +227,12 @@ activities/
 
 | 模块 | 修改内容 |
 |------|---------|
-| `paixueji_app.py` | `/api/start` 时，从"选单一属性"改为"选主属性 + 备选属性列表"；`/api/continue` 时支持 `[ACTIVITY_READY]` 轮数保护、`[SWITCH_TO]` 双步骤检测 |
+| `paixueji_app.py` | `/api/start` 时，从"选单一属性"改为"选主属性 + 备选属性列表"；`/api/continue` 时支持 `[ACTIVITY_READY]` 轮数保护、并行意图分类 + 话题切换检测、切换在生成器之前应用 |
 | `attribute_activity.py` | `AttributeProfile` 增加 `fallback_attributes` 字段 |
+| `stream/topic_switch_detector.py` | **新增** — `detect_topic_switch()` 专用检测器，与意图分类并行运行，输出 JSON 切换决策 |
 | `stream/question_generators.py` | `ask_attribute_intro_stream` 支持备选话题的 prompt；`ask_followup_question_stream` 新增 `focus_topic` 参数消除 prompt 指令冲突 |
-| `stream/response_generators.py` | 检测 `[SWITCH_TO:xxx]` 标记，触发话题切换；`generate_attribute_activation_response_stream` 新增 `multi_topic_guide` 参数 |
-| `paixueji_prompts.py` | 新增 attribute_lane 的备选话题 prompt 模板；`FOLLOWUP_QUESTION_PROMPT` 改为注入式 `{focus_topic}`；切换指令从 "you may switch" 强化为 "you SHOULD switch" |
+| `stream/response_generators.py` | `generate_attribute_activation_response_stream` 新增 `multi_topic_guide` 参数；不再处理 `[SWITCH_TO]` 标记，仅负责响应生成 |
+| `paixueji_prompts.py` | `ATTRIBUTE_MULTI_TOPIC_GUIDE` 简化为 `ATTRIBUTE_RESPONSE_GUIDE`；`FOLLOWUP_QUESTION_PROMPT` 改为注入式 `{focus_topic}` |
 
 ### 5.3 实现顺序（建议）
 
@@ -245,8 +264,8 @@ activities/
 | 话题匹配几个活动 | 2 个（V1） | 主活动 + 1 个备选活动 |
 | 话题选择策略 | 三层筛选 | Entity → Tier → 避免重复 |
 | 是否有备选 | ✅ 有 | 在 Lane 内部，不是跨 Lane |
-| 备选是预先选好还是动态 | 动态切换 | 通过 prompt 让模型判断 |
-| 切换触发条件 | 模型自主判断 | `[SWITCH_TO]` 标记，代码检测 |
+| 备选是预先选好还是动态 | 动态切换 | 通过专用检测器 `detect_topic_switch()` 判断 |
+| 切换触发条件 | 检测器自主判断 | 与意图分类并行运行，JSON 输出，代码验证后执行 |
 | 切换是否双向 | ✅ 是 | primary ↔ fallback 可来回切换，无次数限制 |
 | 跨 Lane 切换 | ❌ V1 不做 | Lane 内小幅漂移后拉回 |
 | 话题难度进阶 | ✅ 做 | 基于 Tier 的固定映射 |
@@ -342,18 +361,20 @@ activities/
 - 但后半句转移到了"大小"（好大好大、比玩具熊大）
 - 这是**备选话题**！
 
-**模型判断**：
-- Prompt 告诉模型：如果孩子明显对备选话题更感兴趣，可以切换
-- 模型判断：孩子用了"好大好大"这种强调表达，说明对大小很感兴趣
-- 模型在回复末尾加上标记：`[SWITCH_TO:size]`
+**检测器判断**（在响应生成之前运行）：
+- `detect_topic_switch()` 接收：当前话题=形状，备选=[大小]，历史对话，孩子输入
+- 检测器分析：孩子用了"好大好大"这种强调表达，且用大小做了比较（"比我的玩具熊还大"），符合切换条件
+- 检测器输出：`{"should_switch": true, "target_attribute_id": "size", "reason": "child compared object using size"}`
+- 代码验证 "size" 确实在 fallbacks 中，调用 `assistant.switch_attribute_topic("size")`
 
-> **系统**: "哇，真的吗？比你的玩具熊还大！那它站起来的时候，是不是更高了？`[SWITCH_TO:size]`"
+> **系统**: "哇，真的吗？比你的玩具熊还大！那它站起来的时候，是不是更高了？"
 
 **系统内部状态更新**：
-- 检测到 `[SWITCH_TO:size]` 标记
+- 检测器判定切换到 "size"
 - 主话题从"形状"切换为"大小"
 - 当前活动目标从"形状探索"切换为"大小探索活动"
 - 备选话题更新为：[形状]（旧的 primary 变成新的 fallback）
+- 响应生成器在切换**之后**运行，因此直接围绕"大小"生成回复
 
 ---
 
@@ -411,13 +432,13 @@ activities/
 |------|-----------|------|
 | 开场 | 系统选"形状"为主话题 | 因为颜色刚聊过，需要避免重复 |
 | Round 1-2 | 正常聊形状 | 孩子配合，不触发切换 |
-| Round 3 | 孩子提到"大小" | 这是备选话题，模型判断可以切换 |
-| Round 3 末尾 | 系统加 `[SWITCH_TO:size]` | 代码检测标记，更新活动目标 |
+| Round 3 | 孩子提到"大小" | 这是备选话题，检测器判定可以切换 |
+| Round 3 | 检测器输出切换决策 | `detect_topic_switch()` 运行，验证后更新活动目标 |
 | Round 4 | 顺着大小聊 | 话题已切换，后续围绕大小展开 |
 | 结束 | 推出"大小探索"活动 | 活动匹配孩子的实际兴趣 |
 
 **关键点**：
-1. 切换是**模型自主判断**的，不是关键词硬匹配
+1. 切换由**专用检测器**判断，不是关键词硬匹配，也不是模型自己标记
 2. 切换只在**Lane 内部**发生（形状 → 大小，都在 attribute_lane）
 3. 切换后**活动目标同步更新**，最终推出的活动匹配孩子的兴趣
 4. 如果聊到跨 Lane 话题，**简要回应后拉回**，不切换 Lane
@@ -428,8 +449,8 @@ activities/
 
 ## 9. 实现记录
 
-> **实现日期**: 2026-05-11  
-> **实现分支**: `worktree-activity-matching`（已合并至 `main`）  
+> **实现日期**: 2026-05-11（初始实现），2026-05-12（topic switch detector 重构）  
+> **实现分支**: `worktree-activity-matching`（已合并至 `main`），后续 detector 重构直接在 `main` 上进行  
 > **测试状态**: 669 项测试全部通过（665 passed, 4 skipped）
 
 本节记录本 PRD 中各项决策的实际实现情况，包括代码位置、实现方式和与 PRD 的差异。
@@ -472,57 +493,71 @@ activities/
 - fallback 必须与 primary 不同；若 Gemini 返回相同 ID，自动选择第一个非 primary 候选
 - `max_output_tokens` 从 120 提升至 180，容纳额外 JSON 字段
 
-#### 9.1.3 动态话题切换（`[SWITCH_TO]` 标记）
+#### 9.1.3 动态话题切换（`detect_topic_switch` 检测器）
 
 **PRD 对应**: 第 2.3 节、第 3.3 节、第 4.1 节  
-**实现状态**: ✅ 已完成
+**实现状态**: ✅ 已完成（2026-05-12 重构为检测器驱动）
 
 | 文件 | 修改内容 |
 |------|---------|
-| `stream/response_generators.py` | `detect_switch_marker(response_text)`：正则匹配 `\[SWITCH_TO:([\w.]{1,64})\]`，返回 `(target_id, cleaned_text)` |
+| `stream/topic_switch_detector.py` | **新增** — `detect_topic_switch()`：专用轻量级 LLM 检测器，与意图分类并行运行，输出 JSON 切换决策 |
 | `paixueji_assistant.py` | `switch_attribute_topic(target_attribute_id)`：双向切换逻辑——选中的 fallback 成为新 primary，旧 primary 进入新 fallback 列表；重置 `activity_ready` 标志 |
-| `stream/__init__.py` | 导出 `detect_switch_marker` |
+| `stream/__init__.py` | 导出 `detect_topic_switch` |
 
 **实现细节**:
+- **检测器架构**：独立的 `detect_topic_switch()` 函数，将"切换判断"与"响应生成"完全解耦
+- **并行执行**：在 `paixueji_app.py:1317-1353` 中，`classify_intent()` 和 `detect_topic_switch()` 通过 `asyncio.run_coroutine_threadsafe()` 并行提交到全局事件循环，各有一个 10 秒超时
+- **检测器输入**：当前 primary `AttributeProfile`、`fallback_attributes` tuple、最近 12 条对话历史、孩子最新消息
+- **检测器输出**：`(should_switch: bool, target_attribute_id: str|None, reason: str)`
+- **目标验证**：返回 `True` 前验证 `target_attribute_id` 确实存在于 fallbacks 中，防止幻觉目标
+- **安全降级**：JSON 解析错误、异常或无效目标时返回 `(False, None, "error: ...")`，对话不受影响
+- **检测器 prompt**：包含 4 条 concrete criteria（3+ words / 比较 / 提问 / 连续 2+ 轮）+ 4 条 negative examples（附带提及 / 单字描述 / 被动回应 / 同一消息内回归）
+- **参数**：`temperature=0.1`，`max_output_tokens=150`，轻量快速
 - 切换无次数限制，可来回切换
 - 切换后 `fallback_profiles` 同步更新，保持状态一致性
 - 切换后 `activity_ready` 和 `attribute_activity_ready` 均重置为 `False`
-- 标记检测使用 `{1,64}` 长度限制，防止异常输入
+- **移除的旧代码**：`detect_switch_marker()`（正则检测 `[SWITCH_TO:xxx]` 标记）已从 `stream/response_generators.py` 中移除
 
-#### 9.1.4 多话题 Prompt 模板
+#### 9.1.4 Prompt 模板
 
 **PRD 对应**: 第 3.3 节、第 4.1 节  
-**实现状态**: ✅ 已完成
+**实现状态**: ✅ 已完成（2026-05-12 简化）
 
 | 文件 | 修改内容 |
 |------|---------|
-| `paixueji_prompts.py` | 新增 `ATTRIBUTE_MULTI_TOPIC_GUIDE` 模板，包含：主/备选话题说明、`[SWITCH_TO]` 规则（含 concrete criteria）、三种技巧（SALIENCE / FRAME WEAVING / NATURAL BRIDGE）、EVIDENCE REQUIREMENT、`[ACTIVITY_READY]` 信号、`[SWITCH_TO]` 信号、ANTI-PATTERNS 列表 |
+| `paixueji_prompts.py` | `ATTRIBUTE_MULTI_TOPIC_GUIDE` 简化为 `ATTRIBUTE_RESPONSE_GUIDE`，移除 `[SWITCH_TO]` 规则和三种技巧，保留 exploration direction、activity goal、`[ACTIVITY_READY]` 信号和 anti-patterns |
 | `paixueji_prompts.py` | `FOLLOWUP_QUESTION_PROMPT` 注入式改造："same attribute" 改为 `{focus_topic}`，由调用方传入当前话题，消除与多话题引导的指令冲突 |
 
 **实现细节**:
-- `ATTRIBUTE_MULTI_TOPIC_GUIDE` 通过 `get_prompts()["attribute_multi_topic_guide"]` 暴露
-- 运行时通过 `.format()` 填入 `primary_attribute_label`、`primary_activity_target`、`fallback_attribute_block`、`sensory_safety_rules`
+- `ATTRIBUTE_RESPONSE_GUIDE`（`paixueji_prompts.py:560-580`）结构：
+  - `{sensory_safety_rules}`
+  - `EXPLORATION DIRECTION: {attribute_label}`
+  - `ACTIVITY GOAL: {activity_target}`
+  - `TRANSITION SIGNAL for [ACTIVITY_READY]`（3 行格式）
+  - `ANTI-PATTERNS`（8 项，含 "Switching topics on a single casual mention — too sensitive"）
+- 移除内容：primary/fallback topic block、`[SWITCH_TO]` 规则、SALIENCE/FRAME WEAVING/NATURAL BRIDGE 技巧
 - `FOLLOWUP_QUESTION_PROMPT` 运行时通过 `.format()` 填入 `focus_topic`（如 `"the 'shape' attribute"` 或 `"same attribute or same detail"`）
-- 切换指令从 "you may switch" 强化为 "you SHOULD switch"，并附加 4 条 concrete criteria（3+ words / 比较 / 提问 / 连续 2+ 轮）
+- 响应生成器通过 `multi_topic_guide` 参数接收 guide，但会剥离 `TRANSITION SIGNAL for [ACTIVITY_READY]:` 之后的部分，防止响应生成器输出 `[ACTIVITY_READY]`
 
 #### 9.1.5 `/api/continue` 集成
 
 **PRD 对应**: 第 3.3 节  
-**实现状态**: ✅ 已完成
+**实现状态**: ✅ 已完成（2026-05-12 重构为检测器前置）
 
 | 文件 | 修改内容 |
 |------|---------|
-| `paixueji_app.py` | 在 `stream_attribute_activity()` 的 continue 路径中：构造 `soft_guide`（提前到 response generator 之前）；`generate_attribute_activation_response_stream` 传入 `multi_topic_guide=soft_guide`；收集 `full_response` 后调用 `detect_switch_marker()`；成功切换后刷新 `attribute_label` 和 `activity_target`；`ask_followup_question_stream` 传入 `focus_topic` 和 `attribute_soft_guide=soft_guide`；跟进问题输出后再次检测 `detect_switch_marker()`；`[ACTIVITY_READY]` 增加 `turn_count >= 3` 轮数保护 |
+| `paixueji_app.py` | 在 `stream_attribute_activity()` 的 continue 路径中：`turn_count += 1` 后，并行运行 `classify_intent()` 和 `detect_topic_switch()`；若检测器判定切换，在生成器**启动前**调用 `assistant.switch_attribute_topic()`；然后构造 `soft_guide`；`generate_attribute_activation_response_stream` 传入 `multi_topic_guide=soft_guide`；`ask_followup_question_stream` 传入 `focus_topic` 和 `attribute_soft_guide=soft_guide`；`[ACTIVITY_READY]` 增加 `turn_count >= 3` 轮数保护 |
 
 **实现细节**:
-- `soft_guide` 构造提前到 response generator 之前，使响应生成器和跟进问题生成器共享同一套话题指引
-- response generator 通过 `multi_topic_guide` 参数接收完整多话题引导，支持在响应步骤输出 `[SWITCH_TO]`
+- **检测前置**：切换检测在 `stream_attribute_activity()` 定义/调用之前完成（`paixueji_app.py:1355-1370`），生成器直接看到已更新的话题
+- `soft_guide` 构造在 response generator 之前，使响应生成器和跟进问题生成器共享同一套话题指引
+- response generator 通过 `multi_topic_guide` 参数接收 guide，但已不负责输出 `[SWITCH_TO]`
 - 跟进问题生成器通过 `focus_topic` 参数接收当前话题（如 `"the 'shape' attribute"`），不再与切换指令冲突
-- 切换检测双步骤：response 步骤检测一次，follow-up question 步骤检测一次作为安全网
-- 成功切换后刷新 `attribute_label` / `activity_target`，确保下一轮 prompt 使用新话题
+- `_strip_activity_markers(full_response)` 安全网：在响应返回给孩子前剥离任何泄露的 `[ACTIVITY_READY]` / `REASON:` 标记
 - `[ACTIVITY_READY]` 校验新增 `turn_count >= 3` 门槛，防止过早触发
-- `[ACTIVITY_READY]` 被拒绝时（`insufficient_turns` / `no_evidence_quotes` / `evidence_not_in_transcript`），`_displayable_followup()` 剥离 marker 和 REASON 行后保留 follow-up question 文本，确保对话可以继续。2026-05-12 修复了一个 bug：原代码错误地清空 `full_followup = ""`，导致拒绝时 follow-up question 完全丢失
+- `[ACTIVITY_READY]` 被拒绝时（`insufficient_turns` / `no_evidence_quotes` / `evidence_not_in_transcript`），`_displayable_followup()` 剥离 marker 和 REASON 行后保留 follow-up question 文本，确保对话可以继续
 - 新增 `logger.info("[ATTRIBUTE_SWITCH] ...")` 和 `logger.warning("[ATTRIBUTE_SWITCH] ...")` 便于生产排障
+- 新增 `logger.info("[TOPIC_SWITCH] ...")` 和 `logger.warning("[TOPIC_SWITCH] ...")` 用于检测器诊断
 
 #### 9.1.6 `/api/start` 集成
 
@@ -540,7 +575,7 @@ activities/
 
 | 文件 | 修改内容 |
 |------|---------|
-| `paixueji_app.py` | `_assistant_stream_fields()` 新增 `switch_state` 字典，包含：`attribute_switched_to`、`attribute_switch_reason`、`attribute_fallback_count`、`attribute_turn_count` |
+| `paixueji_app.py` | `_assistant_stream_fields()` 新增 `switch_state` 字典，包含：`attribute_switched_to`、`attribute_switch_reason`、`attribute_fallback_count`、`attribute_turn_count`；额外暴露 `attribute_fallback_labels` 和 `attribute_activity_ready_rejected_reason` |
 
 #### 9.1.8 单元测试
 
@@ -550,8 +585,9 @@ activities/
 | 文件 | 测试内容 |
 |------|---------|
 | `tests/test_activity_catalog.py` | 4 个测试：颜色/形状匹配、无匹配返回 None、Tier 过滤 |
-| `tests/test_switch_marker.py` | 3 个测试：标记检测（存在/不存在/多行） |
-| `tests/test_attribute_switching.py` | 2 个测试：切换到 fallback、无效目标拒绝 |
+| `tests/test_topic_switch_detector.py` | **5 个测试**（新增）：happy path（should_switch=True + 有效目标）、no-switch path、无效目标拒绝、Markdown-fenced JSON 解析、畸形 JSON 安全降级 |
+| `tests/test_attribute_switching.py` | 2 个测试：切换到 fallback、无效目标拒绝（已适配 detector-driven flow） |
+| ~~`tests/test_switch_marker.py`~~ | ~~3 个测试~~ — **已移除**（标记检测机制已废弃） |
 
 ### 9.2 与 PRD 的差异
 
@@ -559,8 +595,9 @@ activities/
 |---------|---------|------|
 | 第 5.1 节提到 `_index.yaml` 注册表 | 未实现 | V1 仅 3 个 mock 活动，直接遍历 YAML 足够快；待活动库规模扩大后再实现 |
 | 第 4.4 节提到 V1 用 2 个活动（主 + 1 备选） | 实现支持任意数量 fallback | `fallback_attributes` 为 `tuple`，不限于 1 个；当前 Gemini prompt 要求选 1 个 fallback |
-| 第 3.3 节提到 "prompt 层切换" 需技术验证 | 已实现并验证 | 通过单元测试和完整测试套件验证（663 passed） |
+| 第 3.3 节提到 "prompt 层切换" 需技术验证 | 已实现并验证 | 通过单元测试和完整测试套件验证（669 passed） |
 | 第 4.6 节提到轮数预期 3-6 轮 | 未做强制限制 | 完全由模型 `[ACTIVITY_READY]` 自主判断，保留现有 quote validation |
+| PRD: marker-based `[SWITCH_TO]` switching | 替换为 standalone `detect_topic_switch` 检测器 | 更好的关注点分离，减少幻觉标记，支持并行执行，更易调试 |
 
 ### 9.3 未实现（V2 预留）
 
@@ -585,20 +622,21 @@ activities/
 
 继续对话时检测切换:
   paixueji_app.py:continue_conversation()
+    → classify_intent() + detect_topic_switch() 并行运行
+      → assistant.switch_attribute_topic() (若检测器判定切换)
     → stream_attribute_activity()
-      → 构造 soft_guide（提前到响应生成器之前）
+      → 构造 soft_guide（基于当前已切换的话题）
       → generate_attribute_activation_response_stream(multi_topic_guide=soft_guide)
-        → 检测 [SWITCH_TO]（响应步骤即可切换）
+        → 不处理 [SWITCH_TO]，仅生成响应
       → ask_followup_question_stream(focus_topic="the '形状' attribute", attribute_soft_guide=soft_guide)
-        → 检测 [SWITCH_TO]（跟进问题步骤安全网）
+        → 不处理 [SWITCH_TO]，仅生成跟进问题
       → [ACTIVITY_READY] 校验: turn_count >= 3 + quote validation
         → 拒绝时: marker/REASON 被 _displayable_followup() 剥离，follow-up question 保留继续对话
         → 接受时: assistant.attribute_activity_ready = True，进入活动推出流程
-      → assistant.switch_attribute_topic()
 
 Stream 元数据:
   paixueji_app.py:_assistant_stream_fields()
-    → switch_state {attribute_switched_to, ...}
+    → switch_state {attribute_switched_to, attribute_switch_reason, ...}
 ```
 
 ---

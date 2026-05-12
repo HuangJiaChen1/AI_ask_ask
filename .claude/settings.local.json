@@ -53,5 +53,15 @@
     "deny": [],
     "ask": []
   },
-  "outputStyle": "Explanatory"
+  "outputStyle": "Explanatory",
+  "skillOverrides": {
+    "openspec-apply-change": "name-only",
+    "openspec-archive-change": "name-only",
+    "openspec-explore": "name-only",
+    "openspec-propose": "name-only",
+    "opsx:apply": "name-only",
+    "opsx:archive": "name-only",
+    "opsx:explore": "name-only",
+    "opsx:propose": "name-only"
+  }
 }
