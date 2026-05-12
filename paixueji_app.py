@@ -719,11 +719,17 @@ def start_conversation():
                 attribute_profile.attribute_id, age or 6
             )
             if matched_activity:
+                assistant.attribute_matched_activity = {
+                    "activity_id": matched_activity.activity_id,
+                    "name": matched_activity.name,
+                    "launch_prompt": matched_activity.launch_prompt,
+                }
                 logger.info(
                     "[ACTIVITY_MATCH] primary=%s activity=%s session=%s",
                     attribute_profile.attribute_id, matched_activity.activity_id, session_id[:8],
                 )
             else:
+                assistant.attribute_matched_activity = None
                 logger.warning(
                     "[ACTIVITY_MATCH] no activity found for primary=%s session=%s",
                     attribute_profile.attribute_id, session_id[:8],
@@ -1359,6 +1365,24 @@ def continue_conversation():
                             reason="detector_decided",
                         )
                         if switch_success:
+                            # Re-match activity for the new topic after switch
+                            new_activity = get_activity_for_attribute(
+                                assistant.attribute_state.profile.attribute_id, age or 6
+                            )
+                            if new_activity:
+                                assistant.attribute_matched_activity = {
+                                    "activity_id": new_activity.activity_id,
+                                    "name": new_activity.name,
+                                    "launch_prompt": new_activity.launch_prompt,
+                                }
+                                logger.info(
+                                    "[ACTIVITY_MATCH] after switch %s → activity=%s session=%s",
+                                    assistant.attribute_state.profile.attribute_id,
+                                    new_activity.activity_id,
+                                    session_id[:8],
+                                )
+                            else:
+                                assistant.attribute_matched_activity = None
                             logger.info(
                                 "[ATTRIBUTE_SWITCH] detector switched to %s | session=%s",
                                 switch_target_id, session_id[:8],

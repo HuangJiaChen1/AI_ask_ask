@@ -94,6 +94,7 @@ class PaixuejiAssistant:
         self.attribute_profile = None
         self.last_attribute_debug = None
         self.attribute_activity_ready = False
+        self.attribute_matched_activity = None
         self.category_pipeline_enabled = False
         self.category_lane_active = False
         self.category_state = None
@@ -305,6 +306,7 @@ class PaixuejiAssistant:
         self.attribute_state = attribute_state
         self.attribute_profile = attribute_profile
         self.attribute_activity_ready = False
+        self.attribute_matched_activity = None
         self.last_attribute_debug = None
         self.clear_category_lane()
         self.category_pipeline_enabled = False
@@ -314,6 +316,7 @@ class PaixuejiAssistant:
         self.attribute_state = None
         self.attribute_profile = None
         self.attribute_activity_ready = False
+        self.attribute_matched_activity = None
         self.last_attribute_debug = None
 
     def set_last_attribute_debug(self, debug_dict):
@@ -322,13 +325,18 @@ class PaixuejiAssistant:
     def attribute_activity_target(self):
         if not self.attribute_profile:
             return None
-        return {
+        result = {
             "activity_source": "attribute",
             "attribute_id": self.attribute_profile.attribute_id,
             "attribute_label": self.attribute_profile.label,
             "activity_target": self.attribute_profile.activity_target,
             "redirect_entity": self.attribute_profile.redirect_entity,
         }
+        if self.attribute_matched_activity:
+            result["activity_id"] = self.attribute_matched_activity.get("activity_id")
+            result["activity_name"] = self.attribute_matched_activity.get("name")
+            result["launch_prompt"] = self.attribute_matched_activity.get("launch_prompt")
+        return result
 
     def start_category_lane(self, category_state, category_profile):
         self.category_pipeline_enabled = True

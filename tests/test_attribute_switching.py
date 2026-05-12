@@ -89,3 +89,37 @@ def test_detector_applies_switch_before_generator():
     assert assistant.attribute_state.profile.label == "shape"
     assert assistant.attribute_state.switched_to == "appearance.shape"
     assert assistant.attribute_state.switch_reason == "detector_decided"
+
+
+def test_attribute_activity_target_includes_matched_activity():
+    """attribute_activity_target exposes activity_id/name/launch_prompt when matched."""
+    assistant = PaixuejiAssistant(client=None)
+    assistant.attribute_profile = AttributeProfile(
+        attribute_id="appearance.color", label="color",
+        activity_target="exploring colors", branch="in_kb",
+        object_examples=("apple",), fallback_attributes=(),
+    )
+    assistant.attribute_matched_activity = {
+        "activity_id": "color_exploration_v1",
+        "name": "Color Explorer",
+        "launch_prompt": "Let's play Color Explorer! Find three red things.",
+    }
+    target = assistant.attribute_activity_target()
+    assert target["activity_id"] == "color_exploration_v1"
+    assert target["activity_name"] == "Color Explorer"
+    assert target["launch_prompt"] == "Let's play Color Explorer! Find three red things."
+
+
+def test_clear_attribute_lane_clears_matched_activity():
+    """clear_attribute_lane nullifies attribute_matched_activity."""
+    assistant = PaixuejiAssistant(client=None)
+    primary = AttributeProfile(
+        attribute_id="appearance.color", label="color",
+        activity_target="exploring colors", branch="in_kb",
+        object_examples=("apple",), fallback_attributes=(),
+    )
+    state = start_attribute_session(object_name="apple", profile=primary, age=5)
+    assistant.start_attribute_lane(state, primary)
+    assistant.attribute_matched_activity = {"activity_id": "x"}
+    assistant.clear_attribute_lane()
+    assert assistant.attribute_matched_activity is None
