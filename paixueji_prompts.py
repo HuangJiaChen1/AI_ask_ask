@@ -557,52 +557,23 @@ Do NOT force a {attribute_label} pivot if the child's answer points
 elsewhere.
 """
 
-ATTRIBUTE_MULTI_TOPIC_GUIDE = """
+ATTRIBUTE_RESPONSE_GUIDE = """
 {sensory_safety_rules}
 
-PRIMARY EXPLORATION DIRECTION: {primary_attribute_label}
-PRIMARY ACTIVITY GOAL: {primary_activity_target}
-
-FALLBACK TOPICS (you may drift to these if the child shows interest):
-{fallback_attribute_block}
-
-TOPIC SWITCHING RULES:
-- Your MAIN job is to guide the child toward {primary_attribute_label}.
-- BUT if the child clearly shows more interest in a fallback topic, you SHOULD switch.
-- "Clearly shows more interest" means ONE of these:
-  * The child used 3+ words describing the fallback topic (e.g. "SO BIG! Bigger than my dog!")
-  * The child compared the object to something else using the fallback topic
-  * The child asked a direct question about the fallback topic
-  * The child returned to the fallback topic in 2+ consecutive messages
-- To switch: at the END of your response, add [SWITCH_TO:attribute_id].
-- ONLY switch if the child has clearly shifted interest (criteria above).
-- After switching, your new primary direction becomes that fallback topic.
-- If the child mentions something outside all topics, briefly acknowledge in ONE sentence, then redirect back.
-
-THREE TECHNIQUES (use ONE per turn, when it fits):
-
-A) SALIENCE — include a {primary_attribute_label}-related sensory word in the question itself.
-B) FRAME WEAVING — when the child noticed something OTHER than {primary_attribute_label}, offer a choice that includes {primary_attribute_label} as one option.
-C) NATURAL BRIDGE — when the child has explored {primary_attribute_label} with enough depth, extend toward the activity goal.
-
-EVIDENCE REQUIREMENT: Your REASON line MUST include at least one direct quote from the child.
+EXPLORATION DIRECTION: {attribute_label}
+ACTIVITY GOAL: {activity_target}
 
 TRANSITION SIGNAL for [ACTIVITY_READY]:
 1. one child-facing question
 2. then on a new line: [ACTIVITY_READY]
 3. then on a new line: REASON: <1-sentence with direct child quote>
 
-TOPIC SWITCH SIGNAL:
-1. one child-facing response about the new topic
-2. then on a new line: [SWITCH_TO:new_attribute_id]
-3. then on a new line: REASON: <brief reason>
-
 ANTI-PATTERNS — NEVER produce these:
-- "What {primary_attribute_label} is it?" — quiz
-- "Do you know what {primary_attribute_label} it has?" — quiz with wrapper
+- "What {attribute_label} is it?" — quiz
+- "Do you know what {attribute_label} it has?" — quiz with wrapper
 - "What else can you tell me about it?" — too vague
-- "Let us look at its {primary_attribute_label}!" — forced redirect
-- "That is nice, but..." then question about {primary_attribute_label} — ignoring child
+- "Let us look at its {attribute_label}!" — forced redirect
+- "That is nice, but..." then question about {attribute_label} — ignoring child
 - "Great! Now we can start an activity!" — mechanical announcement
 - Adding [ACTIVITY_READY] after just one shallow exchange — premature handoff
 - Switching topics on a single casual mention — too sensitive
@@ -2140,7 +2111,7 @@ def get_prompts():
         'attribute_intro_prompt': ATTRIBUTE_INTRO_PROMPT,
         'attribute_continue_prompt': ATTRIBUTE_CONTINUE_PROMPT,
         'attribute_soft_guide': ATTRIBUTE_SOFT_GUIDE,
-        'attribute_multi_topic_guide': ATTRIBUTE_MULTI_TOPIC_GUIDE,
+        'attribute_response_guide': ATTRIBUTE_RESPONSE_GUIDE,
         'attribute_response_hint': ATTRIBUTE_RESPONSE_HINT,
         'category_intro_prompt': CATEGORY_INTRO_PROMPT,
         'category_continue_prompt': CATEGORY_CONTINUE_PROMPT,
