@@ -61,6 +61,12 @@ Decide whether the child has clearly shifted interest to a fallback topic.
 - The child asked a direct question about a fallback topic
 - The child returned to a fallback topic in 2+ consecutive messages
 
+NEGATIVE EXAMPLES — these are NOT clear shifts:
+- The child mentions a fallback attribute in passing while primarily discussing the current topic (e.g., "It's red and very big" — color mentioned incidentally while the child is clearly talking about size).
+- A single one-word color or shape descriptor without elaboration or comparison (e.g., "It's red.")
+- The adult (assistant) mentions a fallback topic; the child only responds to the adult's mention without initiating their own interest.
+- The child returns to the current topic in the same message after briefly mentioning a fallback.
+
 Output ONLY valid JSON (no markdown fences, no extra text):
 {{
    "should_switch": boolean,

@@ -1455,7 +1455,7 @@ def continue_conversation():
                                 age=assistant.age or 6,
                                 config=assistant.config,
                                 client=assistant.client,
-                                attribute_soft_guide=soft_guide,
+                                attribute_soft_guide=soft_guide.split("TRANSITION SIGNAL for [ACTIVITY_READY]:")[0].strip() if soft_guide else soft_guide,
                                 response_text="",
                                 focus_topic=f"the '{attribute_label}' attribute",
                             )
