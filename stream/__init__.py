@@ -55,6 +55,9 @@ from .validation import (
     map_response_to_kb_item,
 )
 
+# Topic switch detector
+from .topic_switch_detector import detect_topic_switch
+
 # Fun fact (grounded)
 from .fun_fact import generate_fun_fact
 
@@ -101,6 +104,9 @@ __all__ = [
     'classify_intent',
     'classify_dimension',
     'map_response_to_kb_item',
+
+    # Topic switch detector
+    'detect_topic_switch',
 
     # Fun fact (grounded)
     'generate_fun_fact',
