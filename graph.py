@@ -75,6 +75,7 @@ INTENTS_WITHOUT_FOLLOWUP = {
     "avoidance",
     "boundary",
     "action",
+    "classification_fallback",
 }
 
 

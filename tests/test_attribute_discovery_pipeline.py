@@ -300,5 +300,6 @@ def test_intent_followup_branching_logic():
     assert "play" in INTENTS_WITHOUT_FOLLOWUP
     assert "emotional" in INTENTS_WITHOUT_FOLLOWUP
     assert "curiosity" in INTENTS_WITHOUT_FOLLOWUP
+    assert "classification_fallback" in INTENTS_WITHOUT_FOLLOWUP
     assert "correct_answer" not in INTENTS_WITHOUT_FOLLOWUP
     assert "informative" not in INTENTS_WITHOUT_FOLLOWUP
