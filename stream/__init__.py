@@ -70,6 +70,13 @@ from .exploration_loader import (
     ALL_DOMAINS,
 )
 
+# Exploration angles (CARES Phase 0)
+from .exploration_angles import (
+    EXPLORATION_ANGLES,
+    AngleCoverageRecord,
+    select_next_angle,
+)
+
 __all__ = [
     # Utils
     'safe_print',
@@ -116,4 +123,9 @@ __all__ = [
     'sub_attribute_to_label',
     'dimension_to_activity_target',
     'ALL_DOMAINS',
+
+    # Exploration angles (CARES Phase 0)
+    'EXPLORATION_ANGLES',
+    'AngleCoverageRecord',
+    'select_next_angle',
 ]
