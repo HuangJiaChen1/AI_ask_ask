@@ -62,6 +62,81 @@ def _strip_activity_markers(text: str) -> str:
     return cleaned.rstrip("\n")
 
 
+def _build_angle_aware_guide(
+    attribute_label: str,
+    activity_target: str,
+    sensory_safety_rules: str,
+    selected_angle: dict,
+    explored_angle_ids: list[str],
+    turn_count: int,
+) -> str:
+    """Build the attribute response guide with angle coverage injected.
+
+    This replaces the static ATTRIBUTE_RESPONSE_GUIDE with a dynamic,
+    angle-aware version that tells the model which cognitive direction
+    to use for this turn and which angles have already been covered.
+    """
+    angle_id = selected_angle["angle_id"]
+    description = selected_angle["description"]
+    response_hint = selected_angle["response_hint"].format(
+        attribute_label=attribute_label, object_name="{object_name}"
+    )
+    question_hint = selected_angle["question_hint"].format(
+        attribute_label=attribute_label, object_name="{object_name}"
+    )
+    example = selected_angle["example"].format(
+        attribute_label=attribute_label, object_name="{object_name}"
+    )
+
+    used_angles = ", ".join(explored_angle_ids) if explored_angle_ids else "(none yet)"
+
+    used_angles_with_examples = []
+    for uid in explored_angle_ids:
+        # Find the angle definition to show its example
+        for pool in EXPLORATION_ANGLES.values():
+            for a in pool:
+                if a["angle_id"] == uid:
+                    ex = a["example"].format(attribute_label=attribute_label, object_name="{object_name}")
+                    used_angles_with_examples.append(f"- {uid}: {ex}")
+                    break
+    used_angles_block = "\n".join(used_angles_with_examples) if used_angles_with_examples else "(none yet)"
+
+    return f"""{sensory_safety_rules}
+
+[CONVERSATION COVERAGE]
+Attribute: {attribute_label}
+Turns explored: {turn_count}
+Angles already used: {used_angles}
+
+[NEXT SUGGESTED ANGLE: {angle_id}]
+{description}
+
+For this turn, try using the {angle_id} angle:
+- Your RESPONSE should: {response_hint}
+- Your FOLLOW-UP QUESTION should: {question_hint}
+- Example of a good question: "{example}"
+
+Already-used angles (try something different if possible):
+{used_angles_block}
+
+TRANSITION SIGNAL for [ACTIVITY_READY]:
+1. one child-facing question
+2. then on a new line: [ACTIVITY_READY]
+3. then on a new line: REASON: <1-sentence with direct child quote>
+
+ANTI-PATTERNS -- NEVER produce these:
+- "What {attribute_label} is it?" -- quiz
+- "Do you know what {attribute_label} it has?" -- quiz with wrapper
+- "What else can you tell me about it?" -- too vague
+- "Let us look at its {attribute_label}!" -- forced redirect
+- "That is nice, but..." then question about {attribute_label} -- ignoring child
+- "Great! Now we can start an activity!" -- mechanical announcement
+- Adding [ACTIVITY_READY] after just one shallow exchange -- premature handoff
+- Switching topics on a single casual mention -- too sensitive
+- Re-phrasing a question from an already-used angle
+"""
+
+
 # Minimum turns before [ACTIVITY_READY] marker is accepted in attribute activity pipeline.
 MIN_ACTIVITY_READY_TURNS = 3
 
@@ -82,6 +157,8 @@ from stream import (
     prepare_messages_for_streaming,
     extract_previous_response,
     select_hook_type,
+    select_next_angle,
+    EXPLORATION_ANGLES,
 )
 from activities import get_activity_for_attribute
 from stream.errors import build_sse_error_payload
@@ -1404,12 +1481,23 @@ def continue_conversation():
                         activity_target = assistant.attribute_state.profile.activity_target
                         object_name_attr = assistant.attribute_state.object_name
 
-                        # Build response guide BEFORE response generator.
-                        # The topic is already correct (switch applied above if needed).
-                        soft_guide = paixueji_prompts.get_prompts()["attribute_response_guide"].format(
+                        # Determine dimension and select next angle (CARES Phase 0)
+                        dimension = assistant.attribute_state.profile.attribute_id.split(".")[0]
+                        selected_angle = select_next_angle(
+                            explored_angle_ids=assistant.attribute_state.explored_angle_ids,
+                            dimension=dimension,
+                            interest_score=0,  # Phase 0: no scoring yet; Phase 1 will pass real score
+                        )
+                        assistant.attribute_state.current_angle_id = selected_angle["angle_id"]
+
+                        # Build angle-aware response guide
+                        soft_guide = _build_angle_aware_guide(
                             attribute_label=attribute_label,
                             activity_target=activity_target,
                             sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
+                            selected_angle=selected_angle,
+                            explored_angle_ids=assistant.attribute_state.explored_angle_ids,
+                            turn_count=assistant.attribute_state.turn_count,
                         )
 
                         response_generator = generate_attribute_activation_response_stream(
@@ -1615,6 +1703,16 @@ def continue_conversation():
                             activity_marker_rejected_reason = None
 
                         combined_response = (full_response + " " + full_followup).strip()
+
+                        # Record angle coverage for this turn (CARES Phase 0)
+                        if assistant.attribute_state.current_angle_id:
+                            assistant.attribute_state.record_angle(
+                                turn_index=assistant.attribute_state.turn_count,
+                                angle_id=assistant.attribute_state.current_angle_id,
+                                question_text=full_followup,
+                                response_text=full_response,
+                            )
+
                         attribute_debug = build_attribute_debug(
                             decision="attribute_activity",
                             profile=assistant.attribute_profile,
