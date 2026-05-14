@@ -238,3 +238,63 @@ def test_reason_regex_strips_reason_line():
     # Reason at end without newline
     text3 = "Some question\nREASON: child is ready"
     assert _REASON_RE.sub("", text3) == "Some question\n"
+
+
+# -- angle coverage tracking (CARES Phase 0) ----------------------------------
+
+from stream.exploration_angles import AngleCoverageRecord
+
+
+def test_start_attribute_session_initializes_empty_angle_tracking():
+    state = start_attribute_session(
+        object_name="apple",
+        profile=_make_profile(),
+        age=6,
+    )
+    assert state.explored_angle_ids == []
+    assert state.angle_records == []
+    assert state.current_angle_id is None
+
+
+def test_discovery_session_state_record_angle():
+    state = start_attribute_session(
+        object_name="apple",
+        profile=_make_profile(),
+        age=6,
+    )
+    state.record_angle(
+        turn_index=1,
+        angle_id="observation",
+        question_text="What color do you see?",
+        response_text="It is red!",
+    )
+    assert state.explored_angle_ids == ["observation"]
+    assert len(state.angle_records) == 1
+    assert state.angle_records[0].angle_id == "observation"
+    assert state.angle_records[0].turn_index == 1
+
+
+def test_discovery_session_state_record_multiple_angles():
+    state = start_attribute_session(
+        object_name="apple",
+        profile=_make_profile(),
+        age=6,
+    )
+    state.record_angle(1, "observation", "Q1", "R1")
+    state.record_angle(2, "comparison", "Q2", "R2")
+    assert state.explored_angle_ids == ["observation", "comparison"]
+    assert state.angle_records[1].angle_id == "comparison"
+
+
+def test_build_attribute_debug_includes_angle_fields():
+    state = start_attribute_session(object_name="apple", profile=_make_profile(), age=6)
+    state.record_angle(1, "observation", "Q1", "R1")
+    debug = build_attribute_debug(
+        decision="attribute_activity",
+        profile=state.profile,
+        state=state,
+        reason="test",
+    )
+    assert debug["state"]["explored_angle_ids"] == ["observation"]
+    assert len(debug["state"]["angle_records"]) == 1
+    assert debug["state"]["angle_records"][0]["angle_id"] == "observation"

@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 
 import paixueji_prompts
 from model_json import extract_json_object
+from stream.exploration_angles import AngleCoverageRecord
 from stream.exploration_loader import (
     SubAttributeCandidate,
     dimension_to_activity_target,
@@ -39,9 +40,33 @@ class DiscoverySessionState:
     switched_to: str | None = None
     switch_reason: str | None = None
     last_activity_ready_rejected_reason: str | None = None
+    # NEW: angle coverage tracking (CARES Phase 0)
+    explored_angle_ids: list[str] = field(default_factory=list)
+    angle_records: list[AngleCoverageRecord] = field(default_factory=list)
+    current_angle_id: str | None = None
 
     def to_debug_dict(self) -> dict:
-        return asdict(self)
+        d = asdict(self)
+        # AngleCoverageRecord is a dataclass; asdict handles it recursively
+        return d
+
+    def record_angle(
+        self,
+        turn_index: int,
+        angle_id: str,
+        question_text: str,
+        response_text: str,
+    ) -> None:
+        """Record that an angle was used for a given turn."""
+        self.explored_angle_ids.append(angle_id)
+        self.angle_records.append(
+            AngleCoverageRecord(
+                angle_id=angle_id,
+                turn_index=turn_index,
+                question_text=question_text,
+                response_text=response_text,
+            )
+        )
 
 
 # ---------------------------------------------------------------------------
