@@ -11,6 +11,7 @@ from attribute_activity import (
     select_attribute_profile,
     start_attribute_session,
 )
+from stream.exploration_loader import SubAttributeCandidate
 
 
 def _make_profile(
@@ -221,6 +222,59 @@ def test_build_attribute_debug_with_marker_reason():
     assert debug["activity_marker_detected"] is True
     assert debug["activity_marker_reason"] == "Child explored color through comparison and preference"
     assert debug["intent_type"] == "correct_answer"
+
+
+@pytest.mark.asyncio
+async def test_select_attribute_profile_filters_by_available_angles():
+    """Candidates whose angles are not in available_angles are excluded."""
+    client = MagicMock()
+    response = MagicMock()
+    response.text = '{"attribute_id":"appearance.color","confidence":"high","reason":"color is available"}'
+    client.aio.models.generate_content = AsyncMock(return_value=response)
+
+    candidates = [
+        SubAttributeCandidate(dimension="appearance", sub_attribute="body_color", tier=1),
+        SubAttributeCandidate(dimension="appearance", sub_attribute="shape", tier=1),
+    ]
+
+    with patch("attribute_activity.get_candidate_sub_attributes", return_value=candidates):
+        with patch("attribute_activity.infer_domain", new_callable=AsyncMock, return_value="animals"):
+            profile, debug = await select_attribute_profile(
+                object_name="cat",
+                age=5,
+                anchor_status="exact_supported",
+                client=client,
+                config={"model_name": "gemini-test"},
+                available_angles={"color"},
+            )
+
+    assert profile is not None
+    assert profile.attribute_id == "appearance.body_color"
+    assert debug["decision"] == "attribute_selected"
+
+
+@pytest.mark.asyncio
+async def test_select_attribute_profile_returns_none_when_filtered_empty():
+    """When available_angles filters out all candidates, return no_attribute_match_fallback."""
+    client = MagicMock()
+    candidates = [
+        SubAttributeCandidate(dimension="appearance", sub_attribute="shape", tier=1),
+    ]
+
+    with patch("attribute_activity.get_candidate_sub_attributes", return_value=candidates):
+        with patch("attribute_activity.infer_domain", new_callable=AsyncMock, return_value="animals"):
+            profile, debug = await select_attribute_profile(
+                object_name="cat",
+                age=5,
+                anchor_status="exact_supported",
+                client=client,
+                config={"model_name": "gemini-test"},
+                available_angles={"color"},
+            )
+
+    assert profile is None
+    assert debug["decision"] == "no_attribute_match_fallback"
+    assert "no candidates" in debug["reason"].lower()
 
 
 def test_reason_regex_strips_reason_line():

@@ -359,7 +359,7 @@ from stream.cares_handoff import (
     compute_attribute_interest_score,
     HandoffDecision,
 )
-from activities import get_activity_for_attribute
+from activities import get_activity_for_attribute, get_explorable_angles
 from stream.errors import build_sse_error_payload
 from stream.validation import (
     validate_bridge_activation_answer,
@@ -961,6 +961,13 @@ def start_conversation():
         config=assistant.config,
     )
     assistant.apply_resolution(resolution)
+    # Pre-compute available angles from catalog for downstream filtering
+    entity_info = {"entity_class": [resolution.anchor_object_name]} if resolution.anchor_object_name else None
+    assistant.available_angles = get_explorable_angles(
+        entity_info=entity_info,
+        extracted_properties=None,
+        age=age or 6,
+    )
     assistant.attribute_pipeline_enabled = attribute_pipeline_enabled
     assistant.category_pipeline_enabled = category_pipeline_enabled
     if attribute_pipeline_enabled:
@@ -970,6 +977,7 @@ def start_conversation():
                     object_name=object_name,
                     age=age or 6,
                     anchor_status=assistant.anchor_status,
+                    available_angles=assistant.available_angles,
                     client=assistant.client,
                     config=assistant.config,
                 ),
@@ -1614,6 +1622,7 @@ def continue_conversation():
                             child_input=child_input,
                             config=assistant.config,
                             client=assistant.client,
+                            available_angles=getattr(assistant, "available_angles", None),
                         ),
                         _ASYNC_LOOP,
                     )

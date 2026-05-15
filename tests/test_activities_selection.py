@@ -8,7 +8,9 @@ from activities import (
     _interest_to_profile,
     _is_eligible,
     _attribute_to_angles,
+    attribute_to_angles,
     get_angle_matched_candidates,
+    get_explorable_angles,
     score_activity,
     select_best_activity,
     _age_to_tier,
@@ -296,6 +298,116 @@ def test_select_best_activity_texture_match():
     assert result.activity.activity_id == "fluffy_expedition_dandelion"
     assert result.activity.observation_angle == "texture"
     assert result.decision == "matched"
+
+
+# ── get_explorable_angles ──
+
+def test_get_explorable_angles_basic():
+    """Without entity binding constraints, parameterized activities are eligible."""
+    angles = get_explorable_angles(
+        entity_info=None,
+        extracted_properties=None,
+        age=5,  # T1
+    )
+    # parameterized activities for T1: fluffy_expedition_dandelion (texture), polka_dot_patrol (pattern)
+    assert "texture" in angles
+    assert "pattern" in angles
+
+
+def test_get_explorable_angles_with_entity_class():
+    """Bound activities become eligible when entity class matches."""
+    angles = get_explorable_angles(
+        entity_info={"entity_class": ["cat"]},
+        extracted_properties=None,
+        age=5,  # T1
+    )
+    # dream_whisperer_cat (emotion + behavior bridge) should now be included
+    assert "emotion" in angles
+    assert "behavior" in angles
+    # parameterized ones still present
+    assert "texture" in angles
+
+
+def test_get_explorable_angles_empty_for_unsupported_tier():
+    """T2 has very limited support in current catalog."""
+    angles = get_explorable_angles(
+        entity_info=None,
+        extracted_properties=None,
+        age=10,  # T2
+    )
+    # Only polka_dot_patrol supports T2
+    assert "pattern" in angles
+
+
+def test_attribute_to_angles_public_alias():
+    """attribute_to_angles is a public alias of _attribute_to_angles."""
+    assert attribute_to_angles("appearance.color") == ["color"]
+    assert attribute_to_angles is _attribute_to_angles
+
+
+# ── select_best_activity with progression_state ──
+
+def test_select_best_activity_with_progression_state():
+    """select_best_activity accepts and passes progression_state to score_activity."""
+    result = select_best_activity(
+        attribute_id="appearance.pattern",
+        interest_score=70,
+        age=5,
+        conversation_context={
+            "dominant_angle": "pattern",
+            "secondary_angles": [],
+            "angles": ["pattern"],
+            "entity_depth": "property_focused",
+            "recent_activities": [],
+        },
+        progression_state={"target_axis": "form", "target_rung": 2},
+    )
+    assert result.activity is not None
+    assert result.activity.activity_id == "polka_dot_patrol"
+    # With progression_state matching topic_axis=form and difficulty=2, score should be boosted
+    assert result.selector_score >= 60
+
+
+def test_select_best_activity_without_progression_state():
+    """select_best_activity works fine when progression_state is omitted."""
+    result = select_best_activity(
+        attribute_id="appearance.pattern",
+        interest_score=70,
+        age=5,
+        conversation_context={
+            "dominant_angle": "pattern",
+            "secondary_angles": [],
+            "angles": ["pattern"],
+            "entity_depth": "property_focused",
+            "recent_activities": [],
+        },
+    )
+    assert result.activity is not None
+
+
+# ── score_activity sibling axis ──
+
+def test_score_activity_sibling_axis():
+    """Sibling axis gives partial bonus (+8) when topic_axis is adjacent to target."""
+    act = ActivityDefinition(
+        activity_id="a1",
+        observation_angle="color",
+        mechanic="collect",
+        topic_axis="function",
+        difficulty_level=2,
+    )
+    ctx = {
+        "dominant_angle": "color",
+        "secondary_angles": [],
+        "angles": ["color"],
+        "entity_depth": "property_focused",
+        "recent_activities": [],
+    }
+    # target_axis="form", activity.topic_axis="function" → sibling
+    prog = {"target_axis": "form", "target_rung": 2}
+    score = score_activity(act, 65, 5, ctx, prog)
+    # Base: 25+0+8=33, Coherence: 15+0+0=15, Progression sibling: 8, Practical: 3
+    assert score == 33 + 15 + 8 + 3
 
 
 def test_select_best_activity_below_threshold():

@@ -172,3 +172,42 @@ async def test_detect_topic_switch_malformed_json_fallback():
     assert should_switch is False
     assert target_id is None
     assert "json_error" in reason.lower()
+
+
+@pytest.mark.asyncio
+async def test_detect_topic_switch_rejects_unavailable_angle():
+    """Detector rejects switch when target angle is not in available_angles."""
+    mock_response = MagicMock()
+    mock_response.text = json.dumps({
+        "should_switch": True,
+        "target_attribute_id": "appearance.shape",
+        "reason": "child asked about shape",
+    })
+
+    mock_client = MagicMock()
+    mock_client.aio.models.generate_content = AsyncMock(return_value=mock_response)
+
+    class FakeProfile:
+        attribute_id = "appearance.color"
+        label = "color"
+
+    class FakeFallback:
+        attribute_id = "appearance.shape"
+        label = "shape"
+
+    primary = FakeProfile()
+    fallbacks = (FakeFallback(),)
+
+    should_switch, target_id, reason = await detect_topic_switch(
+        conversation_history=[{"role": "user", "content": "What shape is it?"}],
+        primary=primary,
+        fallbacks=fallbacks,
+        child_input="What shape is it?",
+        config={"model_name": "gemini-2.0-flash-lite"},
+        client=mock_client,
+        available_angles={"color"},  # shape is NOT available
+    )
+
+    assert should_switch is False
+    assert target_id is None
+    assert "not in available_angles" in reason.lower()

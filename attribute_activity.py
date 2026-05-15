@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 
+from activities import attribute_to_angles
 import paixueji_prompts
 from model_json import extract_json_object
 from stream.exploration_angles import AngleCoverageRecord
@@ -125,6 +126,7 @@ async def select_attribute_profile(
     object_name: str,
     age: int | None,
     anchor_status: str | None = None,
+    available_angles: set[str] | None = None,
     client,
     config: dict | None,
 ) -> tuple[AttributeProfile | None, dict]:
@@ -134,6 +136,12 @@ async def select_attribute_profile(
     domain = await infer_domain(object_name, client, config)
 
     candidates = get_candidate_sub_attributes(domain, resolved_age)
+
+    if available_angles:
+        candidates = [
+            c for c in candidates
+            if any(a in available_angles for a in attribute_to_angles(f"{c.dimension}.{c.sub_attribute}"))
+        ]
 
     if not candidates:
         return None, {
