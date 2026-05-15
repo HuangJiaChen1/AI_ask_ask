@@ -70,6 +70,11 @@ def _build_angle_aware_guide(
     selected_angle: dict,
     explored_angle_ids: list[str],
     turn_count: int,
+    current_score: float = 0.0,
+    total_turns: int = 0,
+    explored_attributes: list[str] | None = None,
+    decision: "HandoffDecision | None" = None,
+    decision_meta: dict | None = None,
 ) -> str:
     """Build the attribute response guide with angle coverage injected.
 
@@ -102,12 +107,54 @@ def _build_angle_aware_guide(
                     break
     used_angles_block = "\n".join(used_angles_with_examples) if used_angles_with_examples else "(none yet)"
 
+    explored_attrs_str = ", ".join(explored_attributes) if explored_attributes else "(none yet)"
+
+    # Build decision-specific instructions
+    decision_block = ""
+    if decision == HandoffDecision.HANDOFF_NOW:
+        target_attr = (decision_meta or {}).get("target_attribute", attribute_label)
+        activity = (decision_meta or {}).get("activity")
+        activity_name = getattr(activity, "name", "an activity") if activity else "an activity"
+        readiness = (decision_meta or {}).get("readiness_score", current_score)
+        decision_block = f"""HANDOFF MODE: ACTIVE
+Target attribute: {target_attr}
+Activity: {activity_name}
+Child interest score for this attribute: {readiness:.0f}/100
+
+Your next message should:
+1. Naturally bridge from the current conversation to the activity
+2. Introduce the activity by name
+3. End with [ACTIVITY_READY]"""
+    elif decision == HandoffDecision.EXIT_LANE:
+        decision_block = """EXIT MODE: ACTIVE
+The session has been long. Wrap up naturally without pushing an activity.
+Suggest free exploration or ask what the child wants to talk about next."""
+    elif decision == HandoffDecision.REENGAGE:
+        decision_block = """REENGAGE MODE: ACTIVE
+The child is struggling. Ask a much simpler, more concrete question.
+Use sensory language (look, touch, point). Avoid abstract questions."""
+    else:
+        decision_block = """HANDOFF MODE: INACTIVE
+Continue exploring the current attribute. Do NOT output [ACTIVITY_READY]."""
+
     return f"""{sensory_safety_rules}
 
 [CONVERSATION COVERAGE]
 Attribute: {attribute_label}
 Turns explored: {turn_count}
 Angles already used: {used_angles}
+
+---
+
+[SYSTEM CONTEXT]
+Current attribute: {attribute_label}
+Current interest score: {current_score:.0f}/100
+Session turns: {total_turns}
+Explored attributes: {explored_attrs_str}
+
+{decision_block}
+
+---
 
 [NEXT SUGGESTED ANGLE: {angle_id}]
 {description}
@@ -119,11 +166,6 @@ For this turn, try using the {angle_id} angle:
 
 Already-used angles (try something different if possible):
 {used_angles_block}
-
-TRANSITION SIGNAL for [ACTIVITY_READY]:
-1. one child-facing question
-2. then on a new line: [ACTIVITY_READY]
-3. then on a new line: REASON: <1-sentence with direct child quote>
 
 ANTI-PATTERNS -- NEVER produce these:
 - "What {attribute_label} is it?" -- quiz
