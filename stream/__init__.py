@@ -77,6 +77,18 @@ from .exploration_angles import (
     select_next_angle,
 )
 
+# CARES handoff (Phase 1)
+from .cares_handoff import (
+    AttributeInterestRecord,
+    compute_attribute_interest_score,
+    on_attribute_turn,
+    HandoffDecision,
+    evaluate_handoff,
+    MIN_INTEREST_FOR_HANDOFF,
+    MAX_SESSION_TURNS,
+    EXIT_LANE_INTEREST,
+)
+
 __all__ = [
     # Utils
     'safe_print',
@@ -128,4 +140,14 @@ __all__ = [
     'EXPLORATION_ANGLES',
     'AngleCoverageRecord',
     'select_next_angle',
+
+    # CARES handoff (Phase 1)
+    'AttributeInterestRecord',
+    'compute_attribute_interest_score',
+    'on_attribute_turn',
+    'HandoffDecision',
+    'evaluate_handoff',
+    'MIN_INTEREST_FOR_HANDOFF',
+    'MAX_SESSION_TURNS',
+    'EXIT_LANE_INTEREST',
 ]
