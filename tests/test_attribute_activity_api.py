@@ -507,3 +507,50 @@ def test_rejected_handoff_preserves_followup_question(client, mock_gemini_client
     assert "REASON:" not in final["response"]
     assert final["attribute_debug"]["activity_marker_rejected_reason"] == "insufficient_turns"
     assert final["attribute_lane_active"] is True
+
+
+def test_attribute_continue_topic_switch_rematches_activity(client, mock_gemini_client):
+    """When topic switch detector fires during attribute lane, activity re-match must not crash on undefined age."""
+    forced_profile = AttributeProfile(
+        attribute_id="appearance.color",
+        label="color",
+        activity_target="noticing colors",
+        branch="in_kb",
+        object_examples=("apple",),
+        fallback_attributes=(
+            AttributeProfile(
+                attribute_id="appearance.shape",
+                label="shape",
+                activity_target="noticing shapes",
+                branch="in_kb",
+                object_examples=("apple",),
+            ),
+        ),
+    )
+    forced_debug = {
+        "decision": "attribute_selected",
+        "source": "test_patch",
+        "attribute_id": "appearance.color",
+        "confidence": "high",
+        "reason": "selected by test patch",
+    }
+
+    with patch("paixueji_app.select_attribute_profile", new=AsyncMock(return_value=(forced_profile, forced_debug))):
+        start = client.post(
+            "/api/start",
+            json={"age": 6, "object_name": "apple", "attribute_pipeline_enabled": True},
+        )
+    start_chunk = final_chunk(start)
+    session_id = start_chunk["session_id"]
+
+    set_intent(mock_gemini_client, "CURIOSITY")
+
+    with patch("paixueji_app.detect_topic_switch", new=AsyncMock(return_value=(True, "appearance.shape", "child asked about shape"))):
+        response = client.post(
+            "/api/continue",
+            json={"session_id": session_id, "child_input": "what shape is it"},
+        )
+
+    assert response.status_code == 200
+    chunk = final_chunk(response)
+    assert chunk["attribute_lane_active"] is True

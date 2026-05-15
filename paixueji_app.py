@@ -1652,7 +1652,7 @@ def continue_conversation():
                         if switch_success:
                             # Re-match activity for the new topic after switch
                             new_activity = get_activity_for_attribute(
-                                assistant.attribute_state.profile.attribute_id, age or 6
+                                assistant.attribute_state.profile.attribute_id, assistant.age or 6
                             )
                             if new_activity:
                                 assistant.attribute_matched_activity = {
