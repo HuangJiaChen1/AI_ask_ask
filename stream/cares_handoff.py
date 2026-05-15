@@ -82,3 +82,77 @@ def compute_attribute_interest_score(record: AttributeInterestRecord) -> float:
     )
 
     return max(0.0, base + initiation + depth - penalty)
+
+
+def on_attribute_turn(
+    assistant,
+    child_input: str,
+    intent_type: str,
+    action_subtype: str | None,
+    switch_result,
+    turn_index: int,
+) -> None:
+    """Update the interest record for the current attribute after one turn.
+
+    Args:
+        assistant: The PaixuejiAssistant instance.
+        child_input: Raw child input text.
+        intent_type: Uppercase intent type from classify_intent.
+        action_subtype: ACTION subtype (A/B/C/D) or None.
+        switch_result: Object with `should_switch` and `target_attribute_id`.
+        turn_index: Current turn index.
+    """
+    current_attr = assistant.attribute_state.profile.attribute_id
+    records = assistant.attribute_interest_records
+
+    # Get or create record
+    if current_attr not in records:
+        records[current_attr] = AttributeInterestRecord(attribute_id=current_attr)
+
+    record = records[current_attr]
+
+    # Initialize on first exploration
+    if record.turns_explored == 0:
+        record.first_turn_index = turn_index
+
+    # Detect "return": previously explored and not currently active
+    if record.turns_explored > 0 and not record.is_current:
+        record.child_returned_count += 1
+
+    # Basic data
+    record.turns_explored += 1
+    record.last_turn_index = turn_index
+    record.intent_history.append(intent_type)
+    record.is_current = True
+
+    # Proactive: topic switch detector says child initiated this attribute
+    if (
+        switch_result.should_switch
+        and switch_result.target_attribute_id == current_attr
+    ):
+        record.child_initiated_count += 1
+
+    # Engagement quality
+    if intent_type in ("INFORMATIVE", "CURIOSITY", "EMOTIONAL"):
+        record.elaboration_turns += 1
+    if any(marker in child_input for marker in ("?", "吗", "什么", "呢")):
+        record.question_count += 1
+    if intent_type == "EMOTIONAL":
+        record.emotional_count += 1
+
+    # Negative signals
+    if intent_type in ("CLARIFYING_IDK", "CLARIFYING_WRONG"):
+        record.struggle_count += 1
+    if intent_type in ("AVOIDANCE", "BOUNDARY"):
+        record.avoidance_count += 1
+    if intent_type == "ACTION" and action_subtype in ("B", "C"):
+        record.avoidance_count += 1
+
+    # Sync angle coverage from DiscoverySessionState
+    record.explored_angle_ids = list(assistant.attribute_state.explored_angle_ids)
+    record.angle_records = list(assistant.attribute_state.angle_records)
+
+    # Mark all other attributes as not current
+    for attr_id, other_record in records.items():
+        if attr_id != current_attr:
+            other_record.is_current = False

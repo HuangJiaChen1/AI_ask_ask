@@ -1,5 +1,6 @@
 import pytest
-from stream.cares_handoff import AttributeInterestRecord, compute_attribute_interest_score
+from types import SimpleNamespace
+from stream.cares_handoff import AttributeInterestRecord, compute_attribute_interest_score, on_attribute_turn
 
 
 def test_attribute_interest_record_defaults():
@@ -124,3 +125,129 @@ def test_compute_interest_score_penalty_cap():
     # penalty=min(10*8+10*12,35)=35 (capped)
     # base=50; penalty=35 -> 15
     assert compute_attribute_interest_score(record) == 15.0
+
+
+def _make_assistant_with_state(current_attr_id: str, explored_angle_ids: list = None):
+    """Build a minimal mock assistant for testing."""
+    assistant = SimpleNamespace()
+    assistant.attribute_interest_records = {}
+    state = SimpleNamespace()
+    state.profile = SimpleNamespace(attribute_id=current_attr_id)
+    state.explored_angle_ids = explored_angle_ids or []
+    state.angle_records = []
+    assistant.attribute_state = state
+    assistant.consecutive_struggle_count = 0
+    return assistant
+
+
+def test_on_attribute_turn_creates_record():
+    assistant = _make_assistant_with_state("appearance.color")
+    switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
+    on_attribute_turn(
+        assistant=assistant,
+        child_input="红色",
+        intent_type="CORRECT_ANSWER",
+        action_subtype=None,
+        switch_result=switch,
+        turn_index=1,
+    )
+    assert "appearance.color" in assistant.attribute_interest_records
+    record = assistant.attribute_interest_records["appearance.color"]
+    assert record.turns_explored == 1
+    assert record.first_turn_index == 1
+    assert record.is_current is True
+
+
+def test_on_attribute_turn_updates_turns():
+    assistant = _make_assistant_with_state("appearance.color")
+    switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
+    on_attribute_turn(assistant, "红色", "CORRECT_ANSWER", None, switch, 1)
+    on_attribute_turn(assistant, "亮红色", "CORRECT_ANSWER", None, switch, 2)
+    record = assistant.attribute_interest_records["appearance.color"]
+    assert record.turns_explored == 2
+    assert record.last_turn_index == 2
+
+
+def test_on_attribute_turn_detects_question():
+    assistant = _make_assistant_with_state("appearance.color")
+    switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
+    on_attribute_turn(assistant, "这是什么颜色吗？", "CURIOSITY", None, switch, 1)
+    record = assistant.attribute_interest_records["appearance.color"]
+    assert record.question_count == 1
+
+
+def test_on_attribute_turn_detects_return():
+    assistant = _make_assistant_with_state("appearance.color")
+    switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
+    # Explore color for 2 turns
+    on_attribute_turn(assistant, "红色", "CORRECT_ANSWER", None, switch, 1)
+    on_attribute_turn(assistant, "亮红色", "CORRECT_ANSWER", None, switch, 2)
+
+    # Switch to shape
+    assistant.attribute_state.profile.attribute_id = "appearance.shape"
+    on_attribute_turn(assistant, "圆形", "CORRECT_ANSWER", None, switch, 3)
+
+    # Return to color
+    assistant.attribute_state.profile.attribute_id = "appearance.color"
+    on_attribute_turn(assistant, "还是红色", "CORRECT_ANSWER", None, switch, 4)
+
+    color_record = assistant.attribute_interest_records["appearance.color"]
+    assert color_record.child_returned_count == 1
+    assert color_record.turns_explored == 3  # 2 + 1 return
+
+
+def test_on_attribute_turn_detects_initiation_via_switch():
+    assistant = _make_assistant_with_state("appearance.color")
+    # Child initiates switch TO color
+    switch = SimpleNamespace(should_switch=True, target_attribute_id="appearance.color")
+    on_attribute_turn(assistant, "说说颜色吧", "CORRECT_ANSWER", None, switch, 1)
+    record = assistant.attribute_interest_records["appearance.color"]
+    assert record.child_initiated_count == 1
+
+
+def test_on_attribute_turn_syncs_angles():
+    assistant = _make_assistant_with_state("appearance.color", explored_angle_ids=["observation"])
+    assistant.attribute_state.angle_records = [
+        SimpleNamespace(angle_id="observation", turn_index=1, question_text="Q", response_text="R")
+    ]
+    switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
+    on_attribute_turn(assistant, "红色", "CORRECT_ANSWER", None, switch, 1)
+    record = assistant.attribute_interest_records["appearance.color"]
+    assert record.explored_angle_ids == ["observation"]
+
+
+def test_on_attribute_turn_marks_other_attrs_not_current():
+    assistant = _make_assistant_with_state("appearance.color")
+    switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
+    on_attribute_turn(assistant, "红色", "CORRECT_ANSWER", None, switch, 1)
+    # Switch to shape
+    assistant.attribute_state.profile.attribute_id = "appearance.shape"
+    on_attribute_turn(assistant, "圆形", "CORRECT_ANSWER", None, switch, 2)
+    color_record = assistant.attribute_interest_records["appearance.color"]
+    assert color_record.is_current is False
+    shape_record = assistant.attribute_interest_records["appearance.shape"]
+    assert shape_record.is_current is True
+
+
+def test_on_attribute_turn_counts_struggle():
+    assistant = _make_assistant_with_state("appearance.color")
+    switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
+    on_attribute_turn(assistant, "不知道", "CLARIFYING_IDK", None, switch, 1)
+    record = assistant.attribute_interest_records["appearance.color"]
+    assert record.struggle_count == 1
+
+
+def test_on_attribute_turn_counts_avoidance():
+    assistant = _make_assistant_with_state("appearance.color")
+    switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
+    on_attribute_turn(assistant, "不想聊这个", "AVOIDANCE", None, switch, 1)
+    record = assistant.attribute_interest_records["appearance.color"]
+    assert record.avoidance_count == 1
+
+
+def test_on_attribute_turn_action_bc_counts_avoidance():
+    assistant = _make_assistant_with_state("appearance.color")
+    switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
+    on_attribute_turn(assistant, "换一个", "ACTION", "B", switch, 1)
+    record = assistant.attribute_interest_records["appearance.color"]
+    assert record.avoidance_count == 1
