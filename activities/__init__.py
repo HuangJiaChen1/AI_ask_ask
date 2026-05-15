@@ -159,6 +159,25 @@ def _load_catalog() -> tuple[ActivityDefinition, ...]:
 
 
 # ---------------------------------------------------------------------------
+# Sibling axis routing for progression
+# ---------------------------------------------------------------------------
+
+_SIBLING_AXES: dict[str, list[str]] = {
+    "form": ["function", "connection"],
+    "function": ["form", "causation"],
+    "causation": ["function", "change"],
+    "change": ["causation", "connection"],
+    "connection": ["change", "form", "perspective"],
+    "perspective": ["connection", "responsibility"],
+    "responsibility": ["perspective"],
+}
+
+
+def _is_sibling_axis(axis_a: str, axis_b: str) -> bool:
+    return axis_b in _SIBLING_AXES.get(axis_a, [])
+
+
+# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
@@ -461,6 +480,8 @@ def score_activity(
                 s += 20
             elif activity.topic_axis == target_axis and abs(activity.difficulty_level - target_rung) <= 1:
                 s += 15
+            elif _is_sibling_axis(activity.topic_axis, target_axis):
+                s += 8
 
     # ── D. Practical Fit (0-3) — V1: recency only ──
     recent = conversation_context.get("recent_activities", [])
@@ -479,6 +500,7 @@ def select_best_activity(
     interest_score: float,
     age: int,
     conversation_context: dict[str, Any],
+    progression_state: dict[str, Any] | None = None,
 ) -> SelectionResult:
     """Three-layer selection: Eligibility → Angle Match → Score & Rank."""
     child_tier = _age_to_tier(age)
@@ -509,7 +531,7 @@ def select_best_activity(
 
     # Layer 3: Scoring
     scored = [
-        (a, score_activity(a, interest_score, age, conversation_context))
+        (a, score_activity(a, interest_score, age, conversation_context, progression_state))
         for a in matched
     ]
     scored.sort(key=lambda x: x[1], reverse=True)
@@ -529,3 +551,31 @@ def select_best_activity(
         decision="none",
         fallback_reason=fallback_reason or "score_below_threshold",
     )
+
+
+# ---------------------------------------------------------------------------
+# Public API: explorable angles from catalog
+# ---------------------------------------------------------------------------
+
+def get_explorable_angles(
+    entity_info: dict | None,
+    extracted_properties: dict | None,
+    age: int,
+) -> set[str]:
+    """Return all observation angles + bridge prerequisites that are eligible for handoff."""
+    child_tier = _age_to_tier(age)
+    catalog = _load_catalog()
+    eligible = [
+        a for a in catalog
+        if _is_eligible(a, child_tier, entity_info, extracted_properties)
+    ]
+    angles: set[str] = set()
+    for a in eligible:
+        if a.observation_angle:
+            angles.add(a.observation_angle)
+        angles.update(a.bridge_prerequisites_primary)
+    return angles
+
+
+# Public alias for downstream modules
+attribute_to_angles = _attribute_to_angles

@@ -10,6 +10,7 @@ from google import genai
 from google.genai.types import GenerateContentConfig
 from loguru import logger
 
+from activities import attribute_to_angles
 from schema import TokenUsage
 from stream.utils import clean_messages_for_api, convert_messages_to_gemini_format
 
@@ -25,6 +26,7 @@ async def detect_topic_switch(
     child_input: str,
     config: dict,
     client: genai.Client,
+    available_angles: set[str] | None = None,
 ) -> tuple[bool, str | None, str]:
     """Detect whether the child has shifted interest to a fallback topic.
 
@@ -110,6 +112,11 @@ Output ONLY valid JSON (no markdown fences, no extra text):
                     target_id, valid_ids,
                 )
                 return False, None, f"invalid target {target_id}"
+            # Validate target angle is available in catalog
+            if available_angles:
+                target_angles = attribute_to_angles(target_id)
+                if not any(a in available_angles for a in target_angles):
+                    return False, None, f"target angle {target_angles} not in available_angles"
             return True, target_id, reason
 
         return False, None, reason or "no_switch_detected"
