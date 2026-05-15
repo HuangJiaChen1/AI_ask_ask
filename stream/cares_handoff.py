@@ -43,3 +43,42 @@ class AttributeInterestRecord:
     # Angle coverage (mirrors DiscoverySessionState)
     explored_angle_ids: list[str] = field(default_factory=list)
     angle_records: list[AngleCoverageRecord] = field(default_factory=list)
+
+
+def compute_attribute_interest_score(record: AttributeInterestRecord) -> float:
+    """Compute interest score for a single attribute (0-100)."""
+    if record.turns_explored == 0:
+        return 0.0
+
+    # Base engagement (0-50)
+    positive_intents = {
+        "CORRECT_ANSWER",
+        "INFORMATIVE",
+        "CURIOSITY",
+        "PLAY",
+        "EMOTIONAL",
+    }
+    positive = sum(1 for it in record.intent_history if it in positive_intents)
+    base = (positive / record.turns_explored) * 50
+
+    # Initiation (0-30)
+    initiation = min(
+        record.child_initiated_count * 8 + record.child_returned_count * 15,
+        30,
+    )
+
+    # Depth (0-25)
+    depth = min(
+        record.elaboration_turns * 4
+        + record.question_count * 6
+        + record.emotional_count * 5,
+        25,
+    )
+
+    # Negative penalty
+    penalty = min(
+        record.struggle_count * 8 + record.avoidance_count * 12,
+        35,
+    )
+
+    return max(0.0, base + initiation + depth - penalty)
