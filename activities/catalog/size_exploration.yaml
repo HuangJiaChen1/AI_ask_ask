@@ -1,8 +1,0 @@
-activity_id: "size_exploration_v1"
-name: "Size Comparison"
-target_attribute: "appearance.size"
-tier_range: [0, 1, 2]
-launch_prompt: "Let us compare sizes! Can you find something bigger and something smaller than this?"
-description: "Child compares sizes of nearby objects"
-estimated_duration_minutes: 5
-materials_needed: []

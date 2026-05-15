@@ -1,0 +1,63 @@
+activity_id: dream_whisperer_cat
+version: 1
+source_entity_exemplar: cat
+template_type: cat1
+pillar: Adventure
+game_style: time_traveler
+
+entity: "cat"
+entity_class: [cat, pet, toy]
+entity_binding: bound
+tier_range:
+  primary: T0
+  span: [T0, T1]
+  elasticity: "neighbor"
+
+category: animals
+attributes: [soft_paws, fluffy_fur, sleeping_state, dream_scene]
+key_concepts: [Perspective]
+related_concepts: [imagination, dreams, empathy, story_sequence]
+atl_skills: [imagination, perspective_taking, narrative_expression, language_expression]
+transdisciplinary_theme: Who_We_Are
+subject_tags: [language, social_emotional, arts]
+
+kud:
+  know:
+    - "cats may look peaceful, cozy, or sleepy when resting"
+    - "dream stories can move through different scenes"
+    - "soft visual details can inspire pretend ideas"
+  understand:
+    - "Perspective helps us imagine what another creature might experience"
+    - "a story can connect scenes into one emotional journey"
+  do:
+    - "describe what the cat sees in each dream scene"
+    - "add imaginative details to a shared story"
+    - "use feeling words to speak from another point of view"
+
+progression:
+  topic_axis: perspective
+  difficulty_level: 1
+  next_step_hint: "Next time, add a choice point inside one dream scene or tell the dream from the cat's voice."
+  reward_hook: "Earned the Dream Whisperer badge"
+
+caregiver_role: [scaffold, observer]
+
+activity_signature:
+  observation_angle: emotion
+  mechanic: imagine
+  entity_role: subject
+  bridge_prerequisites:
+    primary: [emotion, behavior]
+    secondary: [texture, state]
+  focal_attribute: "imagined_dream_perspective"
+  intro: "The child imagines three magical dream scenes for a sleepy cat and describes what the cat sees or finds."
+  preview_label: "Peek into the cat dreams"
+  preview_prompt: "This sleepy cat looks peaceful. Let's peek into three gentle dreams together."
+  role_pivot_note: ""
+
+matchability:
+  entity_class_filter: [cat]
+  tier_support:
+    T0: true
+    T1: true
+    T2: false

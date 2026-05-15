@@ -1,0 +1,28 @@
+recap_payload:
+  activity_id: dream_whisperer_cat
+  entity: "{runtime_entity}"
+  tier: "{runtime_tier}"
+  age_years: "{runtime_age}"
+
+  what_we_noticed: emotion
+  what_we_did: imagine
+  entity_role: subject
+
+  focal_attribute:
+    token: imagined_dream_perspective
+    child_label: imagined dream perspective
+    badge_emoji_none: true
+
+  highlight_moment: "{highlight_moment}"
+  difficulty_level: 1
+  next_step_hint: "Next time, add a choice point inside one dream scene or tell the dream from the cat's voice."
+  caregiver_observed: scaffold
+  reward_badge: dream_whisperer
+
+rendered:
+  title: "You were a Dream Whisperer today!"
+  line_1: "You imagined what the sleepy cat might dream."
+  line_2: "You traveled through three gentle dream scenes."
+  line_3: "You practiced seeing the world from the cat's point of view."
+  badge: "Dream Whisperer"
+  next: "Next time, add a choice point inside one dream scene or tell the dream from the cat's voice."

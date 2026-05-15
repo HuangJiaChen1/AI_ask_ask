@@ -1,0 +1,26 @@
+dashboard_fragment:
+  session:
+    activity_id: time_machine_dinosaur
+    axis: change
+    angle: origin
+    mechanic: imagine
+    entity_role: subject
+    focal_attribute: time_period_behavior
+    entry_rung: "{runtime_entry_rung}"
+    exit_rung: "{runtime_exit_rung}"
+    outcome: "{runtime_outcome}"
+
+  contributes_to:
+    curiosity_radial:
+      axis: change
+      angle: origin
+    exploration_matrix:
+      cell: "imagine x origin"
+    key_concepts_exposure:
+      Change:
+        angle: origin
+    atl_skills_trail:
+      - imagination
+      - narrative_expression
+      - causal_reasoning
+      - language_expression

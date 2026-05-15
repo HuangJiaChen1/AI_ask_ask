@@ -1,0 +1,26 @@
+dashboard_fragment:
+  session:
+    activity_id: mood_changer_dog
+    axis: perspective
+    angle: emotion
+    mechanic: motion_voice
+    entity_role: subject
+    focal_attribute: dog_feeling_voice
+    entry_rung: "{runtime_entry_rung}"
+    exit_rung: "{runtime_exit_rung}"
+    outcome: "{runtime_outcome}"
+
+  contributes_to:
+    curiosity_radial:
+      axis: perspective
+      angle: emotion
+    exploration_matrix:
+      cell: "motion_voice x emotion"
+    key_concepts_exposure:
+      Perspective:
+        angle: emotion
+    atl_skills_trail:
+      - language_expression
+      - perspective_taking
+      - empathy
+      - creative_thinking

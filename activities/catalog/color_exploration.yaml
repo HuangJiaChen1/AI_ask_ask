@@ -1,8 +1,0 @@
-activity_id: "color_exploration_v1"
-name: "Color Explorer"
-target_attribute: "appearance.color"
-tier_range: [0, 1, 2]
-launch_prompt: "Let us play Color Explorer! Can you find three things around you that are the same color as this?"
-description: "Child finds objects matching the color of the target object"
-estimated_duration_minutes: 5
-materials_needed: []

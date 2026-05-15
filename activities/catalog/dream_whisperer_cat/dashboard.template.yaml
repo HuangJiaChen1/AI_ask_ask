@@ -1,0 +1,26 @@
+dashboard_fragment:
+  session:
+    activity_id: dream_whisperer_cat
+    axis: perspective
+    angle: emotion
+    mechanic: imagine
+    entity_role: subject
+    focal_attribute: imagined_dream_perspective
+    entry_rung: "{runtime_entry_rung}"
+    exit_rung: "{runtime_exit_rung}"
+    outcome: "{runtime_outcome}"
+
+  contributes_to:
+    curiosity_radial:
+      axis: perspective
+      angle: emotion
+    exploration_matrix:
+      cell: "imagine x emotion"
+    key_concepts_exposure:
+      Perspective:
+        angle: emotion
+    atl_skills_trail:
+      - imagination
+      - perspective_taking
+      - narrative_expression
+      - language_expression

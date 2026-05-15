@@ -1,0 +1,28 @@
+dashboard_fragment:
+  session:
+    activity_id: fluffy_expedition_dandelion
+    axis: connection
+    angle: texture
+    mechanic: collect
+    entity_role: exemplar
+    focal_attribute: fluffy_soft_texture
+    entry_rung: "{runtime_entry_rung}"
+    exit_rung: "{runtime_exit_rung}"
+    outcome: "{runtime_outcome}"
+
+  contributes_to:
+    curiosity_radial:
+      axis: connection
+      angle: texture
+    exploration_matrix:
+      cell: "collect x texture"
+    key_concepts_exposure:
+      Connection:
+        angle: texture
+      Form:
+        angle: texture
+    atl_skills_trail:
+      - observation
+      - evidence_collection
+      - language_expression
+      - imagination
