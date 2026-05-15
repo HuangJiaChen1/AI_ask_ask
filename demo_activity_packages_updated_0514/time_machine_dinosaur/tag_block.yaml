@@ -1,0 +1,63 @@
+activity_id: time_machine_dinosaur
+version: 1
+source_entity_exemplar: dinosaur
+template_type: cat1
+pillar: Adventure
+game_style: time_traveler
+
+entity: "dinosaur"
+entity_class: [dinosaur, toy, animal]
+entity_binding: bound
+tier_range:
+  primary: T0
+  span: [T0, T1]
+  elasticity: "neighbor"
+
+category: prehistoric_animals
+attributes: [big_teeth, powerful_legs, time_period, environment_behavior]
+key_concepts: [Change]
+related_concepts: [time, environment, adaptation, sequence]
+atl_skills: [imagination, narrative_expression, causal_reasoning, language_expression]
+transdisciplinary_theme: How_The_World_Works
+subject_tags: [science, language]
+
+kud:
+  know:
+    - "different environments can be loud, dramatic, quiet, or calm"
+    - "a creature may behave differently when the setting changes"
+    - "a time journey can be shown as a sequence"
+  understand:
+    - "Change helps us notice how place and time affect action"
+    - "the same character can make different choices in different settings"
+  do:
+    - "imagine dinosaur actions in three time periods"
+    - "describe scene details with sound and movement words"
+    - "connect the three jumps into a timeline"
+
+progression:
+  topic_axis: change
+  difficulty_level: 1
+  next_step_hint: "Next time, add a child choice at one time jump and compare how the path changes."
+  reward_hook: "Earned the Time Traveler badge"
+
+caregiver_role: [scaffold, observer]
+
+activity_signature:
+  observation_angle: origin
+  mechanic: imagine
+  entity_role: subject
+  bridge_prerequisites:
+    primary: [origin, behavior]
+    secondary: [state, function]
+  focal_attribute: "time_period_behavior"
+  intro: "The child takes a dinosaur through three time jumps and imagines what it does in each environment."
+  preview_label: "Travel with the dinosaur"
+  preview_prompt: "This dinosaur looks ready for a time machine. Let's jump through three places in time."
+  role_pivot_note: ""
+
+matchability:
+  entity_class_filter: [dinosaur]
+  tier_support:
+    T0: true
+    T1: true
+    T2: false

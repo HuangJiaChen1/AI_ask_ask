@@ -1,0 +1,53 @@
+{
+  "report_prefix": "cares-refactor-regression",
+  "delay_seconds": 3,
+  "tests": [
+    {
+      "id": "handoff_active_regression",
+      "task_num": 1,
+      "title": "HANDOFF MODE ACTIVE — Activity Bridge (score=68)",
+      "implemented": "Refactored: dedicated _build_handoff_guide() with [BRIDGE TO ACTIVITY] block, no competing angle instructions.",
+      "scenario": "Object: apple | Attribute: color | Age: 5 | Turn 5, interest_score=68, should handoff to Color Matching Game",
+      "generator": "ask_followup_question_stream",
+      "params": {
+        "object_name": "apple",
+        "age": 5,
+        "response_text": "You know why apples turn red? Because they make a special red paint inside!",
+        "focus_topic": "the 'color' attribute",
+        "attribute_soft_guide": "SENSORY SAFETY (applies to all sensory invitations):\n- Default to sight: 'What do you notice?', 'Which part looks the biggest?', 'Is it shiny or dull?'\n- Allow imagination/guessing: 'Do you think it would feel rough?', 'If it rolled, would it go fast or slow?'\n- Do NOT invite the child to TOUCH, SMELL, TASTE, LICK, or PHYSICALLY INTERACT with the object\n- Do NOT use 'Do you know…' framing\n- For imitation: only voices and stretches/movements are OK\n\n[CONVERSATION COVERAGE]\nAttribute: color\nTurns explored: 5\nAngles already used: observation, comparison, preference, association\n\n---\n\n[SYSTEM CONTEXT]\nTarget attribute: appearance.color\nActivity: Color Matching Game\nChild interest score: 68/100\n\nHANDOFF MODE: ACTIVE\nYour next message should:\n1. Naturally bridge from the current conversation to the activity\n2. Introduce the activity by name\n3. End with [ACTIVITY_READY]\n\n---\n\n[BRIDGE TO ACTIVITY]\nActivity: Color Matching Game\nDescription: Match colors with objects around you\n\nExample of a good bridge:\n\"You seem to really like colors! Want to try the Color Matching Game?\"\n\nFormat: engaging question + newline + [ACTIVITY_READY]\n\nANTI-PATTERNS:\n- Do NOT continue exploring the attribute -- bridge to the activity now\n- Do NOT output [ACTIVITY_READY] without mentioning the activity\n- Do NOT ask a causal question about the attribute and then append [ACTIVITY_READY] mechanically"
+      },
+      "checks": [
+        {"criterion": "Contains [ACTIVITY_READY]", "assert": "[ACTIVITY_READY]"},
+        {"criterion": "Mentions activity name (Color Matching or similar)", "assert_in": ["Color Matching", "color matching", "matching game", "color game"]},
+        {"criterion": "Ends with [ACTIVITY_READY]", "assert": "[ACTIVITY_READY]"},
+        {"criterion": "No touch invitation", "assert_not": "touch"},
+        {"criterion": "Does NOT ask why/how/causal question as main content", "assert_not": "why do you think"},
+        {"criterion": "Natural bridge language present", "assert_in": ["want to", "try", "play", "game", "let's", "how about"]}
+      ]
+    },
+    {
+      "id": "exit_lane_regression",
+      "task_num": 2,
+      "title": "EXIT MODE — No Activity Push (8 turns, score=35)",
+      "implemented": "Refactored: dedicated _build_exit_guide() with [WRAP-UP] block, no competing angle instructions.",
+      "scenario": "Object: apple | Attribute: color | Age: 5 | 8 total turns, best score=35, should exit without pushing",
+      "generator": "ask_followup_question_stream",
+      "params": {
+        "object_name": "apple",
+        "age": 5,
+        "response_text": "We've talked about so many fun things today!",
+        "focus_topic": "the 'color' attribute",
+        "attribute_soft_guide": "SENSORY SAFETY (applies to all sensory invitations):\n- Default to sight: 'What do you notice?', 'Which part looks the biggest?', 'Is it shiny or dull?'\n- Allow imagination/guessing: 'Do you think it would feel rough?', 'If it rolled, would it go fast or slow?'\n- Do NOT invite the child to TOUCH, SMELL, TASTE, LICK, or PHYSICALLY INTERACT with the object\n- Do NOT use 'Do you know…' framing\n- For imitation: only voices and stretches/movements are OK\n\n[CONVERSATION COVERAGE]\nAttribute: color\nTurns explored: 4\nAngles already used: observation, comparison, preference, association\n\n---\n\n[SYSTEM CONTEXT]\nSession turns: 8\nExplored attributes: appearance.color, appearance.shape\n\nEXIT MODE: ACTIVE\nWrap up naturally. Thank the child for exploring.\nAsk what they want to talk about next.\nDo NOT push an activity. Do NOT ask deep questions about the current attribute.\n\n---\n\n[WRAP-UP]\nTone: warm, appreciative, open-ended\nExample: \"We talked about so much today! What do you want to explore next?\"\n\nANTI-PATTERNS:\n- Do NOT ask why/how/causal questions about the current attribute\n- Do NOT suggest an activity or game\n- Do NOT continue exploring color"
+      },
+      "checks": [
+        {"criterion": "Does NOT contain [ACTIVITY_READY]", "assert_not": "[activity_ready]"},
+        {"criterion": "Does NOT mention activity or game", "assert_not": "activity"},
+        {"criterion": "Does NOT mention game", "assert_not": "game"},
+        {"criterion": "Suggests free exploration or asks what next", "assert_in": ["want to", "talk about", "explore", "next", "else", "what do you"]},
+        {"criterion": "No touch invitation", "assert_not": "touch"},
+        {"criterion": "Does NOT ask why/how/causal question", "assert_not": "why do you think"},
+        {"criterion": "Warm wrap-up tone", "assert_in": ["thank", "fun", "great", "nice", "today", "talked", "explored"]}
+      ]
+    }
+  ]
+}

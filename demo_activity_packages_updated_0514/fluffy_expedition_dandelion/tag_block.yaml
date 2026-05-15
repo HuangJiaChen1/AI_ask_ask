@@ -1,0 +1,63 @@
+activity_id: fluffy_expedition_dandelion
+version: 1
+source_entity_exemplar: dandelion
+template_type: cat5
+pillar: Adventure
+game_style: quest_collector
+
+entity: "{parameterized_by_matched_property}"
+entity_class: []
+entity_binding: parameterized
+tier_range:
+  primary: T0
+  span: [T0, T1]
+  elasticity: "neighbor"
+
+category: nature_objects
+attributes: [fluffy, fuzzy, soft, texture]
+key_concepts: [Connection, Form]
+related_concepts: [texture, softness, sensory_observation, character_naming]
+atl_skills: [observation, evidence_collection, language_expression, imagination]
+transdisciplinary_theme: Sharing_The_Planet
+subject_tags: [science, language, nature]
+
+kud:
+  know:
+    - "dandelion seeds can look fluffy and light"
+    - "softness can feel fuzzy, silky, puffy, or woolly"
+    - "touch and description help compare textures"
+  understand:
+    - "Connection helps us notice how different things share one texture clue"
+    - "Form helps us describe what each soft thing is like"
+  do:
+    - "find three nearby soft or fuzzy things"
+    - "describe how each texture feels"
+    - "give each find a character name and connect them in a tiny story"
+
+progression:
+  topic_axis: connection
+  difficulty_level: 1
+  next_step_hint: "Next time, compare soft textures with rough, smooth, or spiky textures."
+  reward_hook: "Earned the Fluffy Expedition Explorer badge"
+
+caregiver_role: [scaffold, co-explorer]
+
+activity_signature:
+  observation_angle: texture
+  mechanic: collect
+  entity_role: exemplar
+  bridge_prerequisites:
+    primary: [texture]
+    secondary: [material, shape]
+  focal_attribute: "fluffy_soft_texture"
+  intro: "The child uses a dandelion as the first fluffy example, then finds three more soft or fuzzy things and names them as characters."
+  preview_label: "Find three fluffy friends"
+  preview_prompt: "This dandelion is fluffy. Let's find more soft or fuzzy things nearby."
+  role_pivot_note: "The dandelion starts as the photographed subject, then becomes the first example of the broader fluffy texture mission."
+
+matchability:
+  entity_class_filter: []
+  tier_support:
+    T0: true
+    T1: true
+    T2: false

@@ -1,0 +1,28 @@
+recap_payload:
+  activity_id: fluffy_expedition_dandelion
+  entity: "{runtime_entity}"
+  tier: "{runtime_tier}"
+  age_years: "{runtime_age}"
+
+  what_we_noticed: texture
+  what_we_did: collect
+  entity_role: exemplar
+
+  focal_attribute:
+    token: fluffy_soft_texture
+    child_label: fluffy soft texture
+    badge_emoji_none: true
+
+  highlight_moment: "{highlight_moment}"
+  difficulty_level: 1
+  next_step_hint: "Next time, compare soft textures with rough, smooth, or spiky textures."
+  caregiver_observed: scaffold
+  reward_badge: fluffy_expedition_explorer
+
+rendered:
+  title: "You were a Fluffy Expedition Explorer today!"
+  line_1: "You found soft and fluffy treasures."
+  line_2: "You compared how each texture felt."
+  line_3: "You named your fluffy friends and connected them in a story."
+  badge: "Fluffy Expedition Explorer"
+  next: "Next time, compare soft textures with rough, smooth, or spiky textures."

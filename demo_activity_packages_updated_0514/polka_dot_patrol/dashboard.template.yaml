@@ -1,0 +1,27 @@
+# Parent dashboard FRAGMENT produced by this game.
+# This is what gets merged into the device-scoped rollup at session end.
+dashboard_fragment:
+  session:
+    axis: form
+    angle: pattern
+    mechanic: collect
+    entity_role: exemplar
+    focal_attribute: "polka_dots"
+    entry_rung: "{runtime_entry_rung}"
+    exit_rung:  "{runtime_exit_rung}"
+    outcome:    "{runtime_outcome}"         # promote | hold | demote | soft_reframe
+
+  contributes_to:
+    curiosity_radial:
+      axis: form
+      angle: pattern                         # bumps form.by_angle.pattern.sessions
+    exploration_matrix:
+      cell: "collect × pattern"              # bumps this cell's count
+    key_concepts_exposure:
+      Form:
+        angle: pattern
+      Connection:
+        angle: pattern
+    atl_skills_trail:
+      - observation
+      - classification

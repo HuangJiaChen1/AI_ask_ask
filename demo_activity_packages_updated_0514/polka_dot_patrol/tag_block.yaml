@@ -1,0 +1,61 @@
+# ─── §0 · IDENTITY ────────────────────────────────────
+activity_id: polka_dot_patrol
+version: 1
+source_entity_exemplar: ladybug
+template_type: cat5
+pillar: Adventure
+game_style: quest_collector
+
+# ─── §1 · IB FRAME ────────────────────────────────────
+entity: "{parameterized_by_matched_property}"
+entity_class: []
+entity_binding: parameterized
+tier_range:
+  primary: T1
+  span: [T0, T1, T2]
+  elasticity: "±1"
+
+category: objects
+attributes: [polka_dots, spots, circles]
+
+key_concepts: [Form, Connection]
+related_concepts: [pattern, observation, similarity, difference]
+atl_skills: [observation, pattern_recognition, evidence_collection, classification]
+transdisciplinary_theme: How_We_Express_Ourselves
+
+kud:
+  know:       ["polka dots are a pattern where round shapes repeat", "dots come in many sizes"]
+  understand: ["the same pattern can look very different on different things"]
+  do:         ["find 3 things that share the polka-dot pattern", "turn the finds into a patrol story"]
+
+progression:
+  topic_axis: form
+  difficulty_level: 2
+  next_step_hint: "Next time, compare dots to stripes or zigzags"
+  reward_hook: "Earned the Polka Dot Patrol badge"
+
+caregiver_role: [scaffold, co-explorer]
+
+# ─── §2 · ACTIVITY SIGNATURE ───────────────────────────
+activity_signature:
+  # ── Layer 1: editorial identity (fixed; matcher reads these) ──
+  observation_angle: pattern
+  mechanic: collect
+  entity_role: exemplar
+  bridge_prerequisites:
+    primary:   [pattern]
+    secondary: [color, shape]
+
+  # ── Layer 2: presentation (author templates; runtime renders) ──
+  focal_attribute: "polka_dots"
+  intro: "The child patrols the neighborhood looking for three more spotted things, using the {entity} as the first clue, then turns them into a patrol parade."
+  preview_label:  "Find three polka-dotted things!"
+  preview_prompt: "You noticed the polka dots on the {entity}. Let's find more polka-dotted things!"
+  role_pivot_note: |
+    The {entity} was our subject during the chat; now it becomes an
+    EXAMPLE of polka-dot pattern — we're going to find more polka-dotted things.
+
+# ─── §3 · MATCHABILITY (from 2026-04-20 spec) ─────────
+matchability:
+  entity_class_filter: []
+  tier_support: {T0: yes, T1: yes, T2: yes}

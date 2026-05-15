@@ -1,0 +1,63 @@
+activity_id: mood_changer_dog
+version: 1
+source_entity_exemplar: dog
+template_type: cat1
+pillar: Performance
+game_style: voice_stage
+
+entity: "stuffed_dog"
+entity_class: [dog, pet, toy]
+entity_binding: bound
+tier_range:
+  primary: T0
+  span: [T0, T1]
+  elasticity: "neighbor"
+
+category: animals
+attributes: [floppy_ears, soft_fur, emotion_context, pretend_voice]
+key_concepts: [Perspective]
+related_concepts: [feelings, empathy, expression, context]
+atl_skills: [language_expression, perspective_taking, empathy, creative_thinking]
+transdisciplinary_theme: Who_We_Are
+subject_tags: [social_emotional, language]
+
+kud:
+  know:
+    - "feelings can change when the situation changes"
+    - "voices and words can express emotion"
+    - "body details such as ears, yawns, and tail wags can suggest mood"
+  understand:
+    - "Perspective helps us imagine how another character feels"
+    - "one character can feel cozy, surprised, and excited in different contexts"
+  do:
+    - "speak or act in the dog's voice"
+    - "name feelings from a situation"
+    - "adjust expression when the scene changes"
+
+progression:
+  topic_axis: perspective
+  difficulty_level: 1
+  next_step_hint: "Next time, contrast two feelings in the same scene or ask the child how to comfort the dog."
+  reward_hook: "Earned the Emotion Translator badge"
+
+caregiver_role: [scaffold, observer]
+
+activity_signature:
+  observation_angle: emotion
+  mechanic: motion_voice
+  entity_role: subject
+  bridge_prerequisites:
+    primary: [emotion, behavior]
+    secondary: [texture, state]
+  focal_attribute: "dog_feeling_voice"
+  intro: "The child speaks for a stuffed dog across three situations and names how the dog feels."
+  preview_label: "Translate the dog feelings"
+  preview_prompt: "This fluffy dog friend has feelings inside. Let's give those feelings a voice."
+  role_pivot_note: ""
+
+matchability:
+  entity_class_filter: [dog]
+  tier_support:
+    T0: true
+    T1: true
+    T2: false

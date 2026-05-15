@@ -1,0 +1,28 @@
+recap_payload:
+  activity_id: mood_changer_dog
+  entity: "{runtime_entity}"
+  tier: "{runtime_tier}"
+  age_years: "{runtime_age}"
+
+  what_we_noticed: emotion
+  what_we_did: motion_voice
+  entity_role: subject
+
+  focal_attribute:
+    token: dog_feeling_voice
+    child_label: dog feeling voice
+    badge_emoji_none: true
+
+  highlight_moment: "{highlight_moment}"
+  difficulty_level: 1
+  next_step_hint: "Next time, contrast two feelings in the same scene or ask the child how to comfort the dog."
+  caregiver_observed: scaffold
+  reward_badge: emotion_translator
+
+rendered:
+  title: "You were an Emotion Translator today!"
+  line_1: "You gave the dog a voice for different feelings."
+  line_2: "You noticed cozy, surprised, and excited moods."
+  line_3: "You practiced Perspective by speaking from the dog's point of view."
+  badge: "Emotion Translator"
+  next: "Next time, contrast two feelings in the same scene or ask the child how to comfort the dog."

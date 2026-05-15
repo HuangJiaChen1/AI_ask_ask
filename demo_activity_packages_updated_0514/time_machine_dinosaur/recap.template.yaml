@@ -1,0 +1,28 @@
+recap_payload:
+  activity_id: time_machine_dinosaur
+  entity: "{runtime_entity}"
+  tier: "{runtime_tier}"
+  age_years: "{runtime_age}"
+
+  what_we_noticed: origin
+  what_we_did: imagine
+  entity_role: subject
+
+  focal_attribute:
+    token: time_period_behavior
+    child_label: time period behavior
+    badge_emoji_none: true
+
+  highlight_moment: "{highlight_moment}"
+  difficulty_level: 1
+  next_step_hint: "Next time, add a child choice at one time jump and compare how the path changes."
+  caregiver_observed: scaffold
+  reward_badge: time_traveler
+
+rendered:
+  title: "You were a Time Traveler today!"
+  line_1: "You took the dinosaur through three time jumps."
+  line_2: "You imagined what changed in each place."
+  line_3: "You practiced Change by noticing how setting affects action."
+  badge: "Time Traveler"
+  next: "Next time, add a child choice at one time jump and compare how the path changes."

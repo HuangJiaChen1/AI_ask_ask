@@ -1,0 +1,36 @@
+# Child recap payload shape for this game.
+# At runtime, {placeholders} are filled with session-specific values.
+recap_payload:
+  entity: "{runtime_entity}"            # e.g. ladybug
+  tier: "{runtime_tier}"                # T0 | T1 | T2
+  age_years: "{runtime_age}"
+
+  what_we_noticed: pattern
+  what_we_did:     collected
+  entity_role:     exemplar
+
+  focal_attribute:
+    token: "polka_dots"
+    child_label: "polka dots"
+    badge_emoji_none: true
+
+  highlight_moment: "You led THREE spotted treasures on patrol!"
+
+  finds:
+    - {label: "{find_1}", photo: "{photo_1}"}
+    - {label: "{find_2}", photo: "{photo_2}"}
+    - {label: "{find_3}", photo: "{photo_3}"}
+
+  difficulty_level: 2
+  next_step_hint:  "Next time, let's compare dots to stripes or zigzags"
+
+  caregiver_observed: co-explorer
+  reward_badge:       polka_dot_patrol
+
+rendered:
+  title:  "You were a Polka-Dot Patrol Officer today!"
+  line_1: "We noticed polka dots hiding everywhere."
+  line_2: "You collected and named 3 spotted treasures."
+  line_3: "Your patrol followed one dotted pattern into a tiny parade."
+  badge:  "Polka-Dot Patrol"
+  next:   "Next time, let's compare dots to stripes or zigzags."
