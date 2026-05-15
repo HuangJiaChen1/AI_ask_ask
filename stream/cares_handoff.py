@@ -6,7 +6,7 @@ from typing import Any
 
 from stream.exploration_angles import AngleCoverageRecord
 
-from activities import get_activity_for_attribute
+from activities import select_best_activity, SelectionResult
 
 
 # ---------------------------------------------------------------------------
@@ -171,10 +171,7 @@ class HandoffDecision(Enum):
 
 
 def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, dict[str, Any]]:
-    """Evaluate handoff decision based on interest scores and session state.
-
-    Returns: (decision, reason_string, metadata_dict)
-    """
+    """Evaluate handoff decision based on interest scores and session state."""
     records = assistant.attribute_interest_records
     total_turns = sum(r.turns_explored for r in records.values())
 
@@ -189,6 +186,18 @@ def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, di
     current_attr = assistant.attribute_state.profile.attribute_id
     current_record = records.get(current_attr)
     current_score = compute_attribute_interest_score(current_record) if current_record else 0
+
+    # Build conversation context for selection
+    def _build_context() -> dict[str, Any]:
+        return {
+            "dominant_angle": getattr(assistant.attribute_state, "current_angle_id", None) or "",
+            "secondary_angles": list(getattr(current_record, "explored_angle_ids", [])) if current_record else [],
+            "angles": list(getattr(current_record, "explored_angle_ids", [])) if current_record else [],
+            "entity_depth": "property_focused",
+            "recent_activities": [],
+            "entity_info": None,
+            "extracted_properties": None,
+        }
 
     # 1. Severe disengagement -> REENGAGE
     if assistant.consecutive_struggle_count >= 3:
@@ -208,7 +217,16 @@ def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, di
 
     # 3. Attribute meets threshold -> HANDOFF_NOW
     if best_score >= MIN_INTEREST_FOR_HANDOFF:
-        activity = get_activity_for_attribute(best_attr, assistant.age or 6)
+        conversation_context = _build_context()
+
+        selection = select_best_activity(
+            attribute_id=best_attr,
+            interest_score=best_score,
+            age=assistant.age or 6,
+            conversation_context=conversation_context,
+        )
+        activity = selection.activity
+
         if activity:
             if best_attr == current_attr:
                 return HandoffDecision.HANDOFF_NOW, f"current_best:{best_score:.0f}", {
@@ -218,7 +236,13 @@ def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, di
                 }
 
             if current_score >= 50:
-                current_activity = get_activity_for_attribute(current_attr, assistant.age or 6)
+                current_selection = select_best_activity(
+                    attribute_id=current_attr,
+                    interest_score=current_score,
+                    age=assistant.age or 6,
+                    conversation_context=conversation_context,
+                )
+                current_activity = current_selection.activity
                 if current_activity:
                     return HandoffDecision.HANDOFF_NOW, f"current_good:{current_score:.0f}", {
                         "target_attribute": current_attr,
@@ -234,6 +258,14 @@ def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, di
                 "current_attribute": current_attr,
                 "bridge_context": f"child_previously_explored_{best_attr}_with_score_{best_score:.0f}",
             }
+
+        # Selection returned no activity -> degrade to CONTINUE
+        return HandoffDecision.CONTINUE, f"no_activity_for_best:{best_score:.0f}", {
+            "current_attribute": current_attr,
+            "current_score": current_score,
+            "best_attribute": best_attr,
+            "best_score": best_score,
+        }
 
     # 4. Session timeout without threshold met -> EXIT_LANE
     if total_turns >= MAX_SESSION_TURNS:

@@ -397,9 +397,43 @@ def test_evaluate_handoff_handoff_now_current_best():
         age=6,
     )
     switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
-    # Need to mock get_activity_for_attribute — we'll patch it
+    # Mock select_best_activity returning a matched SelectionResult
     from unittest.mock import patch
-    with patch("stream.cares_handoff.get_activity_for_attribute", return_value=SimpleNamespace(activity_id="act1")):
+    mock_activity = SimpleNamespace(activity_id="act1", name="Test", launch_prompt="Go!")
+    mock_result = SimpleNamespace(
+        activity=mock_activity,
+        selector_score=75.0,
+        decision="matched",
+        fallback_reason=None,
+    )
+    with patch("stream.cares_handoff.select_best_activity", return_value=mock_result):
         decision, reason, meta = evaluate_handoff(assistant, switch)
     assert decision == HandoffDecision.HANDOFF_NOW
     assert meta["target_attribute"] == "appearance.color"
+
+
+def test_evaluate_handoff_handoff_now_no_activity_degrades_to_continue():
+    rec = AttributeInterestRecord(
+        attribute_id="appearance.color",
+        turns_explored=5,
+        intent_history=["CORRECT_ANSWER"] * 5,
+        is_current=True,
+    )
+    rec.child_initiated_count = 2
+    assistant = _make_assistant_for_handoff(
+        interest_records={"appearance.color": rec},
+        turn_count=5,
+        age=6,
+    )
+    switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
+    from unittest.mock import patch
+    mock_result = SimpleNamespace(
+        activity=None,
+        selector_score=45.0,
+        decision="none",
+        fallback_reason="score_below_threshold",
+    )
+    with patch("stream.cares_handoff.select_best_activity", return_value=mock_result):
+        decision, reason, meta = evaluate_handoff(assistant, switch)
+    assert decision == HandoffDecision.CONTINUE
+    assert "no_activity_for_best" in reason
