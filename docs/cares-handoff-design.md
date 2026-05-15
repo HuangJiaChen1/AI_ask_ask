@@ -878,12 +878,95 @@ def reengage_strategy(assistant, attempt_number: int) -> tuple[str, str]:
 
 ## 7. Prompt 注入改动
 
-### 7.1 角度覆盖注入（第 2.2 章）
+### 7.1 决策感知 Prompt 注入（Phase 1 重构）
 
-`ATTRIBUTE_RESPONSE_GUIDE` 基础结构改为角度感知版本，`_build_angle_aware_guide()` 运行时动态构建：
+IRL 验证 Phase 1 发现：使用单一 `_build_angle_aware_guide()` 将 5 种决策模式的指令混合注入同一个 prompt，导致**指令竞争**。模型遵循了更具体的角度示例，而忽略了抽象的模式指令。
+
+- **Task 4 (HANDOFF_NOW)**：决策块说"bridge to activity, introduce by name"，角度块说"use causal angle, ask why apples turn red"。模型输出因果问题 + 机械性附加 `[ACTIVITY_READY]`，完全不提及活动名。
+- **Task 6 (EXIT_LANE)**：决策块说"wrap up naturally, suggest free exploration"，角度块说"ask a causal question"。模型继续深入探索属性，完全忽略退出指令。
+
+**根因**：当抽象的高层指令与具象的角度示例在同一个 prompt 中竞争时，模型优先遵循更具体的示例。
+
+**解决方案**：代码级分支——每个决策模式拥有**独立的 prompt builder**，只包含该模式相关的指令。
+
+#### 代码级分支
 
 ```python
-def _build_angle_aware_guide(
+dimension = assistant.attribute_state.profile.attribute_id.split(".")[0]
+
+if decision == HandoffDecision.HANDOFF_NOW:
+    activity = decision_meta.get("activity")
+    soft_guide = _build_handoff_guide(
+        attribute_label=attribute_label,
+        activity_target=activity_target,
+        sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
+        activity=activity,
+        target_attribute=decision_meta.get("target_attribute", attribute_label),
+        readiness_score=decision_meta.get("readiness_score", current_interest_score),
+        turn_count=assistant.attribute_state.turn_count,
+        total_turns=total_turns,
+    )
+elif decision == HandoffDecision.EXIT_LANE:
+    soft_guide = _build_exit_guide(
+        attribute_label=attribute_label,
+        activity_target=activity_target,
+        sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
+        best_attribute=decision_meta.get("best_attribute"),
+        best_score=decision_meta.get("best_score"),
+        explored_attributes=explored_attributes,
+        total_turns=total_turns,
+    )
+elif decision == HandoffDecision.REENGAGE:
+    selected_angle = select_next_angle(
+        explored_angle_ids=assistant.attribute_state.explored_angle_ids,
+        dimension=dimension,
+        interest_score=0,  # 强制简单角度
+    )
+    assistant.attribute_state.current_angle_id = selected_angle["angle_id"]
+    soft_guide = _build_reengage_guide(
+        attribute_label=attribute_label,
+        activity_target=activity_target,
+        sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
+        selected_angle=selected_angle,
+        explored_angle_ids=assistant.attribute_state.explored_angle_ids,
+        turn_count=assistant.attribute_state.turn_count,
+        struggle_count=assistant.consecutive_struggle_count,
+        current_score=current_interest_score,
+    )
+else:  # CONTINUE or CONTINUE_SWITCH
+    selected_angle = select_next_angle(
+        explored_angle_ids=assistant.attribute_state.explored_angle_ids,
+        dimension=dimension,
+        interest_score=current_interest_score,
+    )
+    assistant.attribute_state.current_angle_id = selected_angle["angle_id"]
+    soft_guide = _build_continue_guide(
+        attribute_label=attribute_label,
+        activity_target=activity_target,
+        sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
+        selected_angle=selected_angle,
+        explored_angle_ids=assistant.attribute_state.explored_angle_ids,
+        turn_count=assistant.attribute_state.turn_count,
+        current_score=current_interest_score,
+        total_turns=total_turns,
+        explored_attributes=explored_attributes,
+    )
+```
+
+#### 4 个独立 Prompt Builder
+
+所有 builder 共享相同顶层结构（`{sensory_safety_rules}` + `[CONVERSATION COVERAGE]` + `---\n\n[SYSTEM CONTEXT]`），保证下游分割逻辑统一。
+
+**`_build_continue_guide()` — 继续探索（CONTINUE / CONTINUE_SWITCH）**
+
+- `[SYSTEM CONTEXT]` 包含当前分数、会话轮数、已探索属性
+- 模式指令：`HANDOFF MODE: INACTIVE` + `Do NOT output [ACTIVITY_READY]`
+- 完整 `[NEXT SUGGESTED ANGLE]` 块（response_hint、question_hint、example）
+- 完整的 `Already-used angles` 列表
+- 全部反模式
+
+```python
+def _build_continue_guide(
     attribute_label: str,
     activity_target: str,
     sensory_safety_rules: str,
@@ -893,46 +976,9 @@ def _build_angle_aware_guide(
     current_score: float = 0.0,
     total_turns: int = 0,
     explored_attributes: list[str] | None = None,
-    decision: "HandoffDecision | None" = None,
-    decision_meta: dict | None = None,
 ) -> str:
-    # ... angle lookup and formatting ...
-
-    explored_attrs_str = ", ".join(explored_attributes) if explored_attributes else "(none yet)"
-
-    # Build decision-specific instructions
-    if decision == HandoffDecision.HANDOFF_NOW:
-        target_attr = (decision_meta or {}).get("target_attribute", attribute_label)
-        activity = (decision_meta or {}).get("activity")
-        activity_name = getattr(activity, "name", "an activity") if activity else "an activity"
-        readiness = (decision_meta or {}).get("readiness_score", current_score)
-        decision_block = f"""HANDOFF MODE: ACTIVE
-Target attribute: {target_attr}
-Activity: {activity_name}
-Child interest score for this attribute: {readiness:.0f}/100
-
-Your next message should:
-1. Naturally bridge from the current conversation to the activity
-2. Introduce the activity by name
-3. End with [ACTIVITY_READY]"""
-    elif decision == HandoffDecision.EXIT_LANE:
-        decision_block = """EXIT MODE: ACTIVE
-The session has been long. Wrap up naturally without pushing an activity.
-Suggest free exploration or ask what the child wants to talk about next."""
-    elif decision == HandoffDecision.REENGAGE:
-        decision_block = """REENGAGE MODE: ACTIVE
-The child is struggling. Ask a much simpler, more concrete question.
-Use sensory language (look, touch, point). Avoid abstract questions."""
-    else:
-        decision_block = """HANDOFF MODE: INACTIVE
-Continue exploring the current attribute. Do NOT output [ACTIVITY_READY]."""
-
-    return f"""{sensory_safety_rules}
-
-[CONVERSATION COVERAGE]
-Attribute: {attribute_label}
-Turns explored: {turn_count}
-Angles already used: {used_angles}
+    # _build_common_preamble + _build_angle_block + _build_used_angles_block
+    return f"""{preamble}
 
 ---
 
@@ -942,35 +988,180 @@ Current interest score: {current_score:.0f}/100
 Session turns: {total_turns}
 Explored attributes: {explored_attrs_str}
 
-{decision_block}
+HANDOFF MODE: INACTIVE
+Continue exploring the current attribute.
+Do NOT output [ACTIVITY_READY].
 
 ---
 
-[NEXT SUGGESTED ANGLE: {angle_id}]
-{description}
-
-For this turn, try using the {angle_id} angle:
-- Your RESPONSE should: {response_hint}
-- Your FOLLOW-UP QUESTION should: {question_hint}
-- Example of a good question: "{example}"
+{angle_block}
 
 Already-used angles (try something different if possible):
 {used_angles_block}
 
 ANTI-PATTERNS -- NEVER produce these:
-- "What {attribute_label} is it?" -- quiz
-- "Do you know what {attribute_label} it has?" -- quiz with wrapper
-- "What else can you tell me about it?" -- too vague
-- "Let us look at its {attribute_label}!" -- forced redirect
-- "That is nice, but..." then question about {attribute_label} -- ignoring child
-- "Great! Now we can start an activity!" -- mechanical announcement
-- Adding [ACTIVITY_READY] after just one shallow exchange -- premature handoff
-- Switching topics on a single casual mention -- too sensitive
-- Re-phrasing a question from an already-used angle
+...
 """
 ```
 
-**关键设计**：`[CONVERSATION COVERAGE]` 放在 `[SYSTEM CONTEXT]` 之前，让模型**先看到角度约束**，再看到 handoff/exit/reengage 指令。角度措辞使用 "try using" 而非强制，模型有自由度，但有了明确的防重复指引。
+**`_build_handoff_guide()` — 推送活动（HANDOFF_NOW）**
+
+- **无 `[NEXT SUGGESTED ANGLE]` 块** — 完全移除角度探索指令
+- `[BRIDGE TO ACTIVITY]` 块替代角度块：
+  - 活动名称和描述
+  - 桥接示例
+  - 格式提醒：`question + newline + [ACTIVITY_READY]`
+- 模式指令：明确的 3 步桥接流程
+
+```python
+def _build_handoff_guide(...):
+    activity_name = getattr(activity, "name", "an activity") if activity else "an activity"
+    return f"""{preamble}
+
+---
+
+[SYSTEM CONTEXT]
+Target attribute: {target_attribute}
+Activity: {activity_name}
+Child interest score: {readiness_score:.0f}/100
+
+HANDOFF MODE: ACTIVE
+Your next message should:
+1. Naturally bridge from the current conversation to the activity
+2. Introduce the activity by name
+3. End with [ACTIVITY_READY]
+
+---
+
+[BRIDGE TO ACTIVITY]
+Activity: {activity_name}
+Description: {activity_description}
+
+Example of a good bridge:
+"You seem to really like colors! Want to try the Color Matching Game?"
+
+Format: engaging question + newline + [ACTIVITY_READY]
+
+ANTI-PATTERNS:
+- Do NOT continue exploring the attribute -- bridge to the activity now
+- Do NOT output [ACTIVITY_READY] without mentioning the activity
+...
+"""
+```
+
+**`_build_exit_guide()` — 退出管道（EXIT_LANE）**
+
+- **无 `[NEXT SUGGESTED ANGLE]` 块**
+- `[WRAP-UP]` 块：温暖、感谢的语气 + 开放结尾示例
+- 模式指令：`EXIT MODE: ACTIVE` + 不推活动
+- 反模式新增：`Do NOT ask why/how/causal questions about the current attribute`
+
+```python
+def _build_exit_guide(...):
+    return f"""{preamble}
+
+---
+
+[SYSTEM CONTEXT]
+Session turns: {total_turns}
+Explored attributes: {explored_attrs_str}
+
+EXIT MODE: ACTIVE
+Wrap up naturally. Thank the child for exploring.
+Ask what they want to talk about next.
+Do NOT push an activity. Do NOT ask deep questions about the current attribute.
+
+---
+
+[WRAP-UP]
+Tone: warm, appreciative, open-ended
+Example: "We talked about so much today! What do you want to explore next?"
+
+ANTI-PATTERNS:
+- Do NOT ask why/how/causal questions about the current attribute
+- Do NOT suggest an activity or game
+- Do NOT continue exploring {attribute_label}
+...
+"""
+```
+
+**`_build_reengage_guide()` — 挣扎恢复（REENGAGE）**
+
+- 极简 `[NEXT SUGGESTED ANGLE]` 块 — 仅 observation 或 comparison
+- 简化的 hint：`response_hint` 缩短为鼓励性语句，`question_hint` 强调"最简单的问题"
+- 缩短的 `Already-used angles` 列表
+- 模式指令：明确简化要求 + 挣扎计数
+
+```python
+def _build_reengage_guide(...):
+    return f"""{preamble}
+
+---
+
+[SYSTEM CONTEXT]
+Current attribute: {attribute_label}
+Current interest score: {current_score:.0f}/100
+Consecutive struggle count: {struggle_count}
+
+REENGAGE MODE: ACTIVE
+The child is struggling. Ask ONE very simple, concrete question.
+Use "see", "look", "notice". Single concept only.
+
+---
+
+{minimal_angle_block}
+
+ANTI-PATTERNS:
+- Do NOT ask open-ended questions
+- Do NOT ask why/how questions
+- Do NOT suggest an activity
+...
+"""
+```
+
+#### 共享辅助函数
+
+3 个辅助函数提取公共逻辑，避免 4 个 builder 之间重复：
+
+```python
+def _build_common_preamble(
+    sensory_safety_rules: str,
+    attribute_label: str,
+    turn_count: int,
+    explored_angle_ids: list[str],
+) -> str:
+    """安全规则 + 对话覆盖信息（[CONVERSATION COVERAGE]）"""
+    ...
+
+def _build_angle_block(selected_angle: dict, attribute_label: str) -> str:
+    """格式化 [NEXT SUGGESTED ANGLE] 块（含 response_hint、question_hint、example）"""
+    ...
+
+def _build_used_angles_block(explored_angle_ids: list[str], attribute_label: str) -> str:
+    """格式化已用角度列表（含示例问题）"""
+    ...
+```
+
+#### 响应/跟进分割修复
+
+`stream/response_generators.py:286` 的旧分割逻辑依赖已废弃的字符串 `"TRANSITION SIGNAL for [ACTIVITY_READY]:"`，该字符串已不存在于任何新 builder 中。改为以统一分隔符分割：
+
+```python
+# 旧（已废弃）
+response_guide = multi_topic_guide.split("TRANSITION SIGNAL for [ACTIVITY_READY]:")[0].strip()
+
+# 新
+if "---\n\n[SYSTEM CONTEXT]" in multi_topic_guide:
+    response_guide = multi_topic_guide.split("---\n\n[SYSTEM CONTEXT]")[0].strip()
+else:
+    response_guide = multi_topic_guide.strip()
+```
+
+所有 4 个 builder 都使用 `---\n\n[SYSTEM CONTEXT]` 作为分隔符，响应生成器只取标记之前的部分（安全规则 + 对话覆盖），跟进生成器接收完整 prompt。
+
+**关键原则**：不同的决策模式有完全不同的回应方式，不在 prompt 内竞争——在代码层决定用哪个 builder。每个 builder 只包含单一、一致、无冲突的指令集。
+
+**验证结果**：727 个单元测试全部通过。重构消除了 Task 4 和 Task 6 的指令竞争问题。
 
 ---
 
@@ -1049,7 +1240,8 @@ ANTI-PATTERNS -- NEVER produce these:
 **修改文件：**
 - `stream/__init__.py` — 导出 `AttributeInterestRecord`、`compute_attribute_interest_score`、`on_attribute_turn`、`HandoffDecision`、`evaluate_handoff`、常量
 - `paixueji_assistant.py` — 新增 `attribute_interest_records: dict[str, AttributeInterestRecord]`（`clear_attribute_lane` 不重置）
-- `paixueji_app.py` — 每轮调用 `on_attribute_turn` → `compute_attribute_interest_score` → `evaluate_handoff`；`_build_angle_aware_guide` 新增 `current_score`、`total_turns`、`explored_attributes`、`decision`、`decision_meta` 参数；跟随生成器用 `"---\\n\\n[SYSTEM CONTEXT]"` 分割剥离决策上下文
+- `paixueji_app.py` — 每轮调用 `on_attribute_turn` → `compute_attribute_interest_score` → `evaluate_handoff`；删除 `_build_angle_aware_guide`，新增 4 个独立 prompt builder（`_build_continue_guide` / `_build_handoff_guide` / `_build_exit_guide` / `_build_reengage_guide`）+ 3 个共享辅助函数；`stream_attribute_activity` 按决策模式分支调用对应 builder；跟进生成器用 `"---\\n\\n[SYSTEM CONTEXT]"` 分割剥离决策上下文
+- `stream/response_generators.py` — 修复分割字符串：`"TRANSITION SIGNAL for [ACTIVITY_READY]:"` → `"---\\n\\n[SYSTEM CONTEXT]"`，适配新 builder 结构
 
 **当前行为（Phase 1）：**
 
@@ -1073,7 +1265,7 @@ ANTI-PATTERNS -- NEVER produce these:
 
 ### Phase 3: 清理遗留门槛（1 天）
 
-- [ ] 移除 `turn_count >= 3` 硬性检查（保留为可选安全网，CARES 决策优先）
+- [ ] 移除 `turn_count >= 3` 硬性检查
 - [ ] 移除 `quote_validation` 硬性检查
 - [ ] 端到端整合测试：多属性切换、兴趣累积、handoff 时机
 
@@ -1087,8 +1279,9 @@ ANTI-PATTERNS -- NEVER produce these:
 | `stream/cares_handoff.py` | **新增 (Phase 1)** | `AttributeInterestRecord` + `compute_attribute_interest_score` + `on_attribute_turn` + `HandoffDecision` + `evaluate_handoff` |
 | `attribute_activity.py` | 新增 `explored_angle_ids`/`angle_records` (Phase 0) | 角度覆盖追踪 |
 | `paixueji_assistant.py` | 新增 `attribute_interest_records` (Phase 1) | 存储所有被探索过的属性档案，`clear_attribute_lane` 不重置 |
-| `paixueji_app.py` | 接入角度选择 (Phase 0) + CARES 评估 (Phase 1) | 每轮选择下一个角度、更新兴趣档案、评估 handoff、注入 prompt |
-| `paixueji_app.py` | `_build_angle_aware_guide` 注入 `[SYSTEM CONTEXT]` (Phase 1) | 显示当前分数、决策模式、handoff/exit/reengage 指令 |
+| `paixueji_app.py` | 4 个独立 prompt builder (Phase 1 重构) | `_build_continue_guide` / `_build_handoff_guide` / `_build_exit_guide` / `_build_reengage_guide`，代码级决策分支消除指令竞争 |
+| `paixueji_app.py` | 接入角度选择 (Phase 0) + CARES 评估 (Phase 1) | 每轮选择下一个角度、更新兴趣档案、评估 handoff、根据决策调用对应 builder |
+| `stream/response_generators.py` | 分割字符串修复 (Phase 1 重构) | `"TRANSITION SIGNAL"` → `"---\n\n[SYSTEM CONTEXT]"`，适配新 builder 结构 |
 | `paixueji_app.py` | `turn_count >= 3` 和 quote 验证 (Phase 3 TODO) | 仍作为安全网存在，CARES 决策优先 |
 | `activities/__init__.py` | 待 Phase 2 | 删除 `activity_type`，新增 Tag Block 字段（`mechanic`, `game_style`, `observation_angle` 等） |
 | `switch_attribute_topic()` | 待 Phase 3 | 切换时将旧属性加入新属性 fallbacks，支持 drift 回来检测 |

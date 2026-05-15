@@ -280,10 +280,13 @@ async def generate_attribute_activation_response_stream(
     full_prompt = f"{intent_prompt}\n\n{response_hint}"
 
     # Append attribute response guide if provided.
-    # Strip the [ACTIVITY_READY] transition signal — the response generator
-    # must never be told to emit that marker; it belongs to the follow-up step.
+    # Strip the SYSTEM CONTEXT section — the response generator only needs
+    # the safety rules and conversation coverage that come before it.
     if multi_topic_guide:
-        response_guide = multi_topic_guide.split("TRANSITION SIGNAL for [ACTIVITY_READY]:")[0].strip()
+        if "---\n\n[SYSTEM CONTEXT]" in multi_topic_guide:
+            response_guide = multi_topic_guide.split("---\n\n[SYSTEM CONTEXT]")[0].strip()
+        else:
+            response_guide = multi_topic_guide.strip()
         if response_guide:
             full_prompt = f"{full_prompt}\n\n{response_guide}"
 

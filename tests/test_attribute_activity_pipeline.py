@@ -307,3 +307,167 @@ def test_assistant_initializes_empty_interest_records():
     from paixueji_assistant import PaixuejiAssistant
     assistant = PaixuejiAssistant(config_path="config.json", age_prompts_path="age_prompts.json")
     assert assistant.attribute_interest_records == {}
+
+
+# -- prompt builder tests (CARES Phase 1 refactor) ----------------------------
+
+from paixueji_app import (
+    _build_continue_guide,
+    _build_handoff_guide,
+    _build_exit_guide,
+    _build_reengage_guide,
+)
+from stream.exploration_angles import EXPLORATION_ANGLES
+
+
+_SAFETY = "SENSORY SAFETY: Do NOT invite touch, smell, taste."
+
+
+def _observation_angle():
+    return EXPLORATION_ANGLES["physical"][0]
+
+
+def _comparison_angle():
+    return EXPLORATION_ANGLES["physical"][1]
+
+
+def test_build_continue_guide_contains_angle_block():
+    guide = _build_continue_guide(
+        attribute_label="color",
+        activity_target="noticing colors",
+        sensory_safety_rules=_SAFETY,
+        selected_angle=_observation_angle(),
+        explored_angle_ids=[],
+        turn_count=1,
+    )
+    assert "[NEXT SUGGESTED ANGLE: observation]" in guide
+    assert "Ask what the child notices or sees about the color" in guide
+
+
+def test_build_continue_guide_has_inactive_handoff():
+    guide = _build_continue_guide(
+        attribute_label="color",
+        activity_target="noticing colors",
+        sensory_safety_rules=_SAFETY,
+        selected_angle=_observation_angle(),
+        explored_angle_ids=[],
+        turn_count=1,
+        current_score=45,
+        total_turns=3,
+    )
+    assert "HANDOFF MODE: INACTIVE" in guide
+    assert "Do NOT output [ACTIVITY_READY]" in guide
+    assert "Current interest score: 45/100" in guide
+    assert "Session turns: 3" in guide
+
+
+def test_build_handoff_guide_no_angle_block():
+    guide = _build_handoff_guide(
+        attribute_label="color",
+        activity_target="noticing colors",
+        sensory_safety_rules=_SAFETY,
+        activity=None,
+        target_attribute="appearance.color",
+        readiness_score=68,
+        turn_count=5,
+    )
+    assert "[NEXT SUGGESTED ANGLE" not in guide
+    assert "Your RESPONSE should:" not in guide
+    assert "Example of a good question:" not in guide
+
+
+def test_build_handoff_guide_contains_activity_name():
+    class FakeActivity:
+        name = "Color Matching Game"
+        description = "Match colors with objects around you"
+
+    guide = _build_handoff_guide(
+        attribute_label="color",
+        activity_target="noticing colors",
+        sensory_safety_rules=_SAFETY,
+        activity=FakeActivity(),
+        target_attribute="appearance.color",
+        readiness_score=68,
+        turn_count=5,
+    )
+    assert "Color Matching Game" in guide
+    assert "[BRIDGE TO ACTIVITY]" in guide
+    assert "Mention the activity by name" in guide
+    assert "End with [ACTIVITY_READY]" in guide
+
+
+def test_build_exit_guide_no_angle_block():
+    guide = _build_exit_guide(
+        attribute_label="color",
+        activity_target="noticing colors",
+        sensory_safety_rules=_SAFETY,
+        best_attribute="appearance.color",
+        best_score=48,
+        explored_attributes=["appearance.color", "appearance.shape"],
+        total_turns=8,
+    )
+    assert "[NEXT SUGGESTED ANGLE" not in guide
+    assert "Your RESPONSE should:" not in guide
+
+
+def test_build_exit_guide_has_wrapup_instruction():
+    guide = _build_exit_guide(
+        attribute_label="color",
+        activity_target="noticing colors",
+        sensory_safety_rules=_SAFETY,
+        best_attribute="appearance.color",
+        best_score=48,
+        explored_attributes=["appearance.color"],
+        total_turns=8,
+    )
+    assert "EXIT MODE: ACTIVE" in guide
+    assert "[WRAP-UP]" in guide
+    assert "Thank the child" in guide
+    assert "what they want to talk about" in guide
+    assert "why/how/causal questions" in guide
+    assert "Outputting [ACTIVITY_READY]" in guide
+
+
+def test_build_reengage_guide_simple_angle_only():
+    guide = _build_reengage_guide(
+        attribute_label="color",
+        activity_target="noticing colors",
+        sensory_safety_rules=_SAFETY,
+        selected_angle=_observation_angle(),
+        explored_angle_ids=["observation"],
+        turn_count=3,
+        struggle_count=3,
+    )
+    assert "[NEXT SUGGESTED ANGLE: observation]" in guide
+    assert "REENGAGE MODE: ACTIVE" in guide
+
+
+def test_build_reengage_guide_uses_comparison_when_observation_used():
+    guide = _build_reengage_guide(
+        attribute_label="color",
+        activity_target="noticing colors",
+        sensory_safety_rules=_SAFETY,
+        selected_angle=_comparison_angle(),
+        explored_angle_ids=["observation"],
+        turn_count=3,
+        struggle_count=3,
+    )
+    assert "[NEXT SUGGESTED ANGLE: comparison]" in guide
+
+
+def test_build_reengage_guide_simplification_instruction():
+    guide = _build_reengage_guide(
+        attribute_label="color",
+        activity_target="noticing colors",
+        sensory_safety_rules=_SAFETY,
+        selected_angle=_observation_angle(),
+        explored_angle_ids=[],
+        turn_count=3,
+        struggle_count=3,
+        current_score=15,
+    )
+    assert "The child is struggling" in guide
+    assert "MUCH simpler" in guide
+    assert "Consecutive struggle count: 3" in guide
+    assert "Current interest score: 15/100" in guide
+    assert "Causal or how/why questions" in guide

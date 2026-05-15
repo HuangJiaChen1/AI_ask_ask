@@ -63,7 +63,82 @@ def _strip_activity_markers(text: str) -> str:
     return cleaned.rstrip("\n")
 
 
-def _build_angle_aware_guide(
+def _format_angle_example(angle_def: dict, attribute_label: str) -> str:
+    """Format an angle's example string with attribute label placeholder."""
+    return angle_def["example"].format(attribute_label=attribute_label, object_name="{object_name}")
+
+
+def _build_used_angles_block(
+    explored_angle_ids: list[str], attribute_label: str
+) -> str:
+    """Build the 'Already-used angles' section for prompt injection."""
+    lines = []
+    for uid in explored_angle_ids:
+        for pool in EXPLORATION_ANGLES.values():
+            for a in pool:
+                if a["angle_id"] == uid:
+                    ex = _format_angle_example(a, attribute_label)
+                    lines.append(f"- {uid}: {ex}")
+                    break
+    return "\n".join(lines) if lines else "(none yet)"
+
+
+def _build_angle_block(selected_angle: dict, attribute_label: str) -> str:
+    """Build the [NEXT SUGGESTED ANGLE] section."""
+    angle_id = selected_angle["angle_id"]
+    description = selected_angle["description"]
+    response_hint = selected_angle["response_hint"].format(
+        attribute_label=attribute_label, object_name="{object_name}"
+    )
+    question_hint = selected_angle["question_hint"].format(
+        attribute_label=attribute_label, object_name="{object_name}"
+    )
+    example = _format_angle_example(selected_angle, attribute_label)
+    return (
+        f"[NEXT SUGGESTED ANGLE: {angle_id}]\n"
+        f"{description}\n\n"
+        f"For this turn, try using the {angle_id} angle:\n"
+        f"- Your RESPONSE should: {response_hint}\n"
+        f"- Your FOLLOW-UP QUESTION should: {question_hint}\n"
+        f'- Example of a good question: "{example}"'
+    )
+
+
+def _build_common_preamble(
+    sensory_safety_rules: str,
+    attribute_label: str,
+    turn_count: int,
+    explored_angle_ids: list[str],
+) -> str:
+    """Build the shared top section (safety rules + conversation coverage)."""
+    used_angles = ", ".join(explored_angle_ids) if explored_angle_ids else "(none yet)"
+    return f"""{sensory_safety_rules}
+
+[CONVERSATION COVERAGE]
+Attribute: {attribute_label}
+Turns explored: {turn_count}
+Angles already used: {used_angles}"""
+
+
+def _build_common_antipatterns(attribute_label: str) -> str:
+    """Shared anti-patterns that apply to all modes."""
+    return f"""ANTI-PATTERNS -- NEVER produce these:
+- "What {attribute_label} is it?" -- quiz
+- "Do you know what {attribute_label} it has?" -- quiz with wrapper
+- "What else can you tell me about it?" -- too vague
+- "Let us look at its {attribute_label}!" -- forced redirect
+- "That is nice, but..." then question about {attribute_label} -- ignoring child
+- "Great! Now we can start an activity!" -- mechanical announcement
+- Adding [ACTIVITY_READY] after just one shallow exchange -- premature handoff
+- Switching topics on a single casual mention -- too sensitive
+- Re-phrasing a question from an already-used angle"""
+
+
+# ---------------------------------------------------------------------------
+# Mode-specific prompt builders
+# ---------------------------------------------------------------------------
+
+def _build_continue_guide(
     attribute_label: str,
     activity_target: str,
     sensory_safety_rules: str,
@@ -73,76 +148,15 @@ def _build_angle_aware_guide(
     current_score: float = 0.0,
     total_turns: int = 0,
     explored_attributes: list[str] | None = None,
-    decision: "HandoffDecision | None" = None,
-    decision_meta: dict | None = None,
 ) -> str:
-    """Build the attribute response guide with angle coverage injected.
-
-    This replaces the static ATTRIBUTE_RESPONSE_GUIDE with a dynamic,
-    angle-aware version that tells the model which cognitive direction
-    to use for this turn and which angles have already been covered.
-    """
-    angle_id = selected_angle["angle_id"]
-    description = selected_angle["description"]
-    response_hint = selected_angle["response_hint"].format(
-        attribute_label=attribute_label, object_name="{object_name}"
-    )
-    question_hint = selected_angle["question_hint"].format(
-        attribute_label=attribute_label, object_name="{object_name}"
-    )
-    example = selected_angle["example"].format(
-        attribute_label=attribute_label, object_name="{object_name}"
-    )
-
-    used_angles = ", ".join(explored_angle_ids) if explored_angle_ids else "(none yet)"
-
-    used_angles_with_examples = []
-    for uid in explored_angle_ids:
-        # Find the angle definition to show its example
-        for pool in EXPLORATION_ANGLES.values():
-            for a in pool:
-                if a["angle_id"] == uid:
-                    ex = a["example"].format(attribute_label=attribute_label, object_name="{object_name}")
-                    used_angles_with_examples.append(f"- {uid}: {ex}")
-                    break
-    used_angles_block = "\n".join(used_angles_with_examples) if used_angles_with_examples else "(none yet)"
-
+    """Build prompt for CONTINUE / CONTINUE_SWITCH — full angle system active."""
+    preamble = _build_common_preamble(sensory_safety_rules, attribute_label, turn_count, explored_angle_ids)
+    angle_block = _build_angle_block(selected_angle, attribute_label)
+    used_angles_block = _build_used_angles_block(explored_angle_ids, attribute_label)
     explored_attrs_str = ", ".join(explored_attributes) if explored_attributes else "(none yet)"
+    antipatterns = _build_common_antipatterns(attribute_label)
 
-    # Build decision-specific instructions
-    decision_block = ""
-    if decision == HandoffDecision.HANDOFF_NOW:
-        target_attr = (decision_meta or {}).get("target_attribute", attribute_label)
-        activity = (decision_meta or {}).get("activity")
-        activity_name = getattr(activity, "name", "an activity") if activity else "an activity"
-        readiness = (decision_meta or {}).get("readiness_score", current_score)
-        decision_block = f"""HANDOFF MODE: ACTIVE
-Target attribute: {target_attr}
-Activity: {activity_name}
-Child interest score for this attribute: {readiness:.0f}/100
-
-Your next message should:
-1. Naturally bridge from the current conversation to the activity
-2. Introduce the activity by name
-3. End with [ACTIVITY_READY]"""
-    elif decision == HandoffDecision.EXIT_LANE:
-        decision_block = """EXIT MODE: ACTIVE
-The session has been long. Wrap up naturally without pushing an activity.
-Suggest free exploration or ask what the child wants to talk about next."""
-    elif decision == HandoffDecision.REENGAGE:
-        decision_block = """REENGAGE MODE: ACTIVE
-The child is struggling. Ask a much simpler, more concrete question.
-Use sensory language (look, touch, point). Avoid abstract questions."""
-    else:
-        decision_block = """HANDOFF MODE: INACTIVE
-Continue exploring the current attribute. Do NOT output [ACTIVITY_READY]."""
-
-    return f"""{sensory_safety_rules}
-
-[CONVERSATION COVERAGE]
-Attribute: {attribute_label}
-Turns explored: {turn_count}
-Angles already used: {used_angles}
+    return f"""{preamble}
 
 ---
 
@@ -152,17 +166,155 @@ Current interest score: {current_score:.0f}/100
 Session turns: {total_turns}
 Explored attributes: {explored_attrs_str}
 
-{decision_block}
+HANDOFF MODE: INACTIVE
+Continue exploring the current attribute. Do NOT output [ACTIVITY_READY].
 
 ---
 
-[NEXT SUGGESTED ANGLE: {angle_id}]
-{description}
+{angle_block}
 
-For this turn, try using the {angle_id} angle:
-- Your RESPONSE should: {response_hint}
-- Your FOLLOW-UP QUESTION should: {question_hint}
-- Example of a good question: "{example}"
+Already-used angles (try something different if possible):
+{used_angles_block}
+
+{antipatterns}
+"""
+
+
+def _build_handoff_guide(
+    attribute_label: str,
+    activity_target: str,
+    sensory_safety_rules: str,
+    activity,
+    target_attribute: str,
+    readiness_score: float,
+    turn_count: int,
+    total_turns: int = 0,
+) -> str:
+    """Build prompt for HANDOFF_NOW — bridge to activity, no angle exploration."""
+    activity_name = getattr(activity, "name", "an activity") if activity else "an activity"
+    activity_description = getattr(activity, "description", "") if activity else ""
+
+    return f"""{sensory_safety_rules}
+
+[CONVERSATION COVERAGE]
+Attribute: {attribute_label}
+Turns explored: {turn_count}
+Angles already used: (session complete)
+
+---
+
+[SYSTEM CONTEXT]
+Target attribute: {target_attribute}
+Activity: {activity_name}
+Child interest score for this attribute: {readiness_score:.0f}/100
+Session turns: {total_turns}
+
+HANDOFF MODE: ACTIVE
+Your next message must bridge from the current conversation to the activity below.
+
+---
+
+[BRIDGE TO ACTIVITY]
+Activity name: {activity_name}
+Activity description: {activity_description or "A fun activity related to what you just explored!"}
+
+Your next message MUST:
+1. Mention the activity by name: "{activity_name}"
+2. Connect it to what you just talked about (one sentence)
+3. Ask the child if they want to try it (one short question)
+4. End with [ACTIVITY_READY] on its own line
+
+Example of a good bridge:
+"You really seem to love colors! Want to try the Color Matching Game? [ACTIVITY_READY]"
+
+ANTI-PATTERNS -- NEVER produce these:
+- Asking a deep question about the attribute AFTER mentioning the activity
+- Forgetting to say the activity name
+- Ending with anything other than [ACTIVITY_READY]
+- Re-phrasing a question from an already-used angle
+"""
+
+
+def _build_exit_guide(
+    attribute_label: str,
+    activity_target: str,
+    sensory_safety_rules: str,
+    best_attribute: str | None,
+    best_score: float,
+    explored_attributes: list[str],
+    total_turns: int,
+) -> str:
+    """Build prompt for EXIT_LANE — wrap up naturally, no activity push."""
+    explored_attrs_str = ", ".join(explored_attributes) if explored_attributes else "(none yet)"
+
+    return f"""{sensory_safety_rules}
+
+[CONVERSATION COVERAGE]
+Attribute: {attribute_label}
+Turns explored: {total_turns}
+Angles already used: (session complete)
+
+---
+
+[SYSTEM CONTEXT]
+Session turns: {total_turns}
+Explored attributes: {explored_attrs_str}
+Best attribute explored: {best_attribute or "none"}
+Best interest score: {best_score:.0f}/100
+
+EXIT MODE: ACTIVE
+The session has been long. Wrap up naturally WITHOUT pushing an activity.
+
+---
+
+[WRAP-UP]
+Your next message MUST:
+1. Thank the child for exploring with you (one warm sentence)
+2. Ask what they want to talk about or explore next (one open-ended question)
+3. Keep it light and open — no pressure
+
+Example of a good wrap-up:
+"We talked about so many fun things today! What do you want to explore next?"
+
+ANTI-PATTERNS -- NEVER produce these:
+- Asking why/how/causal questions about the current attribute
+- Pushing an activity or game
+- Outputting [ACTIVITY_READY]
+- Re-phrasing a question from an already-used angle
+"""
+
+
+def _build_reengage_guide(
+    attribute_label: str,
+    activity_target: str,
+    sensory_safety_rules: str,
+    selected_angle: dict,
+    explored_angle_ids: list[str],
+    turn_count: int,
+    struggle_count: int,
+    current_score: float = 0.0,
+) -> str:
+    """Build prompt for REENGAGE — simplified sensory questions only."""
+    preamble = _build_common_preamble(sensory_safety_rules, attribute_label, turn_count, explored_angle_ids)
+    angle_block = _build_angle_block(selected_angle, attribute_label)
+    used_angles_block = _build_used_angles_block(explored_angle_ids, attribute_label)
+
+    return f"""{preamble}
+
+---
+
+[SYSTEM CONTEXT]
+Current attribute: {attribute_label}
+Current interest score: {current_score:.0f}/100
+Consecutive struggle count: {struggle_count}
+
+REENGAGE MODE: ACTIVE
+The child is struggling. Ask a MUCH simpler, more concrete question.
+Use only sensory language (see, look, notice). Single concept only.
+
+---
+
+{angle_block}
 
 Already-used angles (try something different if possible):
 {used_angles_block}
@@ -171,11 +323,9 @@ ANTI-PATTERNS -- NEVER produce these:
 - "What {attribute_label} is it?" -- quiz
 - "Do you know what {attribute_label} it has?" -- quiz with wrapper
 - "What else can you tell me about it?" -- too vague
-- "Let us look at its {attribute_label}!" -- forced redirect
-- "That is nice, but..." then question about {attribute_label} -- ignoring child
-- "Great! Now we can start an activity!" -- mechanical announcement
-- Adding [ACTIVITY_READY] after just one shallow exchange -- premature handoff
-- Switching topics on a single casual mention -- too sensitive
+- Open-ended or abstract questions ("what do you think", "why do you think")
+- Causal or how/why questions
+- Adding [ACTIVITY_READY]
 - Re-phrasing a question from an already-used angle
 """
 
@@ -1559,12 +1709,6 @@ def continue_conversation():
 
                         # Determine dimension and select next angle (CARES Phase 0)
                         dimension = assistant.attribute_state.profile.attribute_id.split(".")[0]
-                        selected_angle = select_next_angle(
-                            explored_angle_ids=assistant.attribute_state.explored_angle_ids,
-                            dimension=dimension,
-                            interest_score=current_interest_score,
-                        )
-                        assistant.attribute_state.current_angle_id = selected_angle["angle_id"]
 
                         # Build list of explored attributes for display
                         explored_attributes = list(assistant.attribute_interest_records.keys())
@@ -1572,20 +1716,65 @@ def continue_conversation():
                             r.turns_explored for r in assistant.attribute_interest_records.values()
                         )
 
-                        # Build angle-aware response guide
-                        soft_guide = _build_angle_aware_guide(
-                            attribute_label=attribute_label,
-                            activity_target=activity_target,
-                            sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
-                            selected_angle=selected_angle,
-                            explored_angle_ids=assistant.attribute_state.explored_angle_ids,
-                            turn_count=assistant.attribute_state.turn_count,
-                            current_score=current_interest_score,
-                            total_turns=total_turns,
-                            explored_attributes=explored_attributes,
-                            decision=decision,
-                            decision_meta=decision_meta,
-                        )
+                        # Branch prompt builder based on CARES decision
+                        if decision == HandoffDecision.HANDOFF_NOW:
+                            activity = decision_meta.get("activity")
+                            soft_guide = _build_handoff_guide(
+                                attribute_label=attribute_label,
+                                activity_target=activity_target,
+                                sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
+                                activity=activity,
+                                target_attribute=decision_meta.get("target_attribute", attribute_label),
+                                readiness_score=decision_meta.get("readiness_score", current_interest_score),
+                                turn_count=assistant.attribute_state.turn_count,
+                                total_turns=total_turns,
+                            )
+                        elif decision == HandoffDecision.EXIT_LANE:
+                            soft_guide = _build_exit_guide(
+                                attribute_label=attribute_label,
+                                activity_target=activity_target,
+                                sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
+                                best_attribute=decision_meta.get("best_attribute"),
+                                best_score=decision_meta.get("best_score", 0.0),
+                                explored_attributes=explored_attributes,
+                                total_turns=total_turns,
+                            )
+                        elif decision == HandoffDecision.REENGAGE:
+                            selected_angle = select_next_angle(
+                                explored_angle_ids=assistant.attribute_state.explored_angle_ids,
+                                dimension=dimension,
+                                interest_score=0,  # force simple angles only
+                            )
+                            assistant.attribute_state.current_angle_id = selected_angle["angle_id"]
+                            soft_guide = _build_reengage_guide(
+                                attribute_label=attribute_label,
+                                activity_target=activity_target,
+                                sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
+                                selected_angle=selected_angle,
+                                explored_angle_ids=assistant.attribute_state.explored_angle_ids,
+                                turn_count=assistant.attribute_state.turn_count,
+                                struggle_count=assistant.consecutive_struggle_count,
+                                current_score=current_interest_score,
+                            )
+                        else:
+                            # CONTINUE or CONTINUE_SWITCH
+                            selected_angle = select_next_angle(
+                                explored_angle_ids=assistant.attribute_state.explored_angle_ids,
+                                dimension=dimension,
+                                interest_score=current_interest_score,
+                            )
+                            assistant.attribute_state.current_angle_id = selected_angle["angle_id"]
+                            soft_guide = _build_continue_guide(
+                                attribute_label=attribute_label,
+                                activity_target=activity_target,
+                                sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
+                                selected_angle=selected_angle,
+                                explored_angle_ids=assistant.attribute_state.explored_angle_ids,
+                                turn_count=assistant.attribute_state.turn_count,
+                                current_score=current_interest_score,
+                                total_turns=total_turns,
+                                explored_attributes=explored_attributes,
+                            )
 
                         response_generator = generate_attribute_activation_response_stream(
                             messages=messages,
