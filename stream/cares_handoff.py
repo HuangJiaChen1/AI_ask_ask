@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
+from typing import Any
 
 from stream.exploration_angles import AngleCoverageRecord
+
+from activities import get_activity_for_attribute
 
 
 # ---------------------------------------------------------------------------
@@ -156,3 +160,98 @@ def on_attribute_turn(
     for attr_id, other_record in records.items():
         if attr_id != current_attr:
             other_record.is_current = False
+
+
+class HandoffDecision(Enum):
+    CONTINUE = "continue"
+    CONTINUE_SWITCH = "continue_switch"
+    HANDOFF_NOW = "handoff_now"
+    REENGAGE = "reengage"
+    EXIT_LANE = "exit_lane"
+
+
+def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, dict[str, Any]]:
+    """Evaluate handoff decision based on interest scores and session state.
+
+    Returns: (decision, reason_string, metadata_dict)
+    """
+    records = assistant.attribute_interest_records
+    total_turns = sum(r.turns_explored for r in records.values())
+
+    # Compute scores for all attributes
+    scored = [
+        (aid, compute_attribute_interest_score(r))
+        for aid, r in records.items()
+    ]
+    scored.sort(key=lambda x: x[1], reverse=True)
+
+    best_attr, best_score = scored[0] if scored else (None, 0)
+    current_attr = assistant.attribute_state.profile.attribute_id
+    current_record = records.get(current_attr)
+    current_score = compute_attribute_interest_score(current_record) if current_record else 0
+
+    # 1. Severe disengagement -> REENGAGE
+    if assistant.consecutive_struggle_count >= 3:
+        return HandoffDecision.REENGAGE, "struggle_streak_3", {}
+
+    if total_turns >= 2 and current_score < 20:
+        return HandoffDecision.REENGAGE, "critical_disengagement", {}
+
+    # 2. Clear switch signal -> CONTINUE_SWITCH
+    if switch_result.should_switch and switch_result.target_attribute_id:
+        target = switch_result.target_attribute_id
+        if any(aid == target for aid, _ in scored):
+            return HandoffDecision.CONTINUE_SWITCH, f"detector:{target}", {
+                "target_attribute": target,
+                "reason": "child_showed_clear_interest",
+            }
+
+    # 3. Attribute meets threshold -> HANDOFF_NOW
+    if best_score >= MIN_INTEREST_FOR_HANDOFF:
+        activity = get_activity_for_attribute(best_attr, assistant.age or 6)
+        if activity:
+            if best_attr == current_attr:
+                return HandoffDecision.HANDOFF_NOW, f"current_best:{best_score:.0f}", {
+                    "target_attribute": best_attr,
+                    "activity": activity,
+                    "readiness_score": best_score,
+                }
+
+            if current_score >= 50:
+                current_activity = get_activity_for_attribute(current_attr, assistant.age or 6)
+                if current_activity:
+                    return HandoffDecision.HANDOFF_NOW, f"current_good:{current_score:.0f}", {
+                        "target_attribute": current_attr,
+                        "activity": current_activity,
+                        "readiness_score": current_score,
+                        "note": f"global_best_is_{best_attr}_but_current_is_good_enough",
+                    }
+
+            return HandoffDecision.HANDOFF_NOW, f"global_best:{best_attr}:{best_score:.0f}", {
+                "target_attribute": best_attr,
+                "activity": activity,
+                "readiness_score": best_score,
+                "current_attribute": current_attr,
+                "bridge_context": f"child_previously_explored_{best_attr}_with_score_{best_score:.0f}",
+            }
+
+    # 4. Session timeout without threshold met -> EXIT_LANE
+    if total_turns >= MAX_SESSION_TURNS:
+        if best_score >= EXIT_LANE_INTEREST:
+            return HandoffDecision.EXIT_LANE, f"timeout_with_memory:{best_attr}:{best_score:.0f}", {
+                "best_attribute": best_attr,
+                "best_score": best_score,
+                "reason": "session_long_but_interest_detected",
+            }
+        else:
+            return HandoffDecision.EXIT_LANE, "timeout_no_interest", {
+                "reason": "session_long_no_meaningful_interest",
+            }
+
+    # 5. Default: continue
+    return HandoffDecision.CONTINUE, f"building:{current_score:.0f}", {
+        "current_attribute": current_attr,
+        "current_score": current_score,
+        "best_attribute": best_attr,
+        "best_score": best_score,
+    }

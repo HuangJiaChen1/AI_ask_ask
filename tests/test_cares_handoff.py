@@ -1,6 +1,13 @@
 import pytest
 from types import SimpleNamespace
-from stream.cares_handoff import AttributeInterestRecord, compute_attribute_interest_score, on_attribute_turn
+from stream.cares_handoff import (
+    AttributeInterestRecord,
+    compute_attribute_interest_score,
+    on_attribute_turn,
+    HandoffDecision,
+    evaluate_handoff,
+    MIN_INTEREST_FOR_HANDOFF,
+)
 
 
 def test_attribute_interest_record_defaults():
@@ -251,3 +258,148 @@ def test_on_attribute_turn_action_bc_counts_avoidance():
     on_attribute_turn(assistant, "换一个", "ACTION", "B", switch, 1)
     record = assistant.attribute_interest_records["appearance.color"]
     assert record.avoidance_count == 1
+
+
+def _make_assistant_for_handoff(
+    current_attr_id="appearance.color",
+    interest_records: dict | None = None,
+    turn_count: int = 1,
+    consecutive_struggle: int = 0,
+    age: int = 6,
+):
+    assistant = SimpleNamespace()
+    assistant.attribute_interest_records = interest_records or {}
+    assistant.current_attribute_id = current_attr_id  # convenience
+    state = SimpleNamespace()
+    state.profile = SimpleNamespace(attribute_id=current_attr_id)
+    state.turn_count = turn_count
+    assistant.attribute_state = state
+    assistant.consecutive_struggle_count = consecutive_struggle
+    assistant.age = age
+    return assistant
+
+
+def test_evaluate_handoff_continue_default():
+    assistant = _make_assistant_for_handoff(
+        interest_records={
+            "appearance.color": AttributeInterestRecord(
+                attribute_id="appearance.color",
+                turns_explored=2,
+                intent_history=["CORRECT_ANSWER", "CORRECT_ANSWER"],
+                is_current=True,
+            )
+        }
+    )
+    switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
+    decision, reason, meta = evaluate_handoff(assistant, switch)
+    assert decision == HandoffDecision.CONTINUE
+
+
+def test_evaluate_handoff_engage_struggle_streak():
+    assistant = _make_assistant_for_handoff(
+        consecutive_struggle=3,
+        interest_records={
+            "appearance.color": AttributeInterestRecord(
+                attribute_id="appearance.color", turns_explored=3, is_current=True
+            )
+        },
+    )
+    switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
+    decision, reason, meta = evaluate_handoff(assistant, switch)
+    assert decision == HandoffDecision.REENGAGE
+    assert "struggle_streak_3" in reason
+
+
+def test_evaluate_handoff_critical_disengagement():
+    rec = AttributeInterestRecord(
+        attribute_id="appearance.color",
+        turns_explored=2,
+        intent_history=["CLARIFYING_IDK", "AVOIDANCE"],
+        is_current=True,
+    )
+    rec.struggle_count = 1
+    rec.avoidance_count = 1
+    assistant = _make_assistant_for_handoff(
+        interest_records={"appearance.color": rec},
+        turn_count=2,
+    )
+    switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
+    decision, reason, meta = evaluate_handoff(assistant, switch)
+    assert decision == HandoffDecision.REENGAGE
+    assert "critical_disengagement" in reason
+
+
+def test_evaluate_handoff_continue_switch():
+    assistant = _make_assistant_for_handoff(
+        interest_records={
+            "appearance.color": AttributeInterestRecord(
+                attribute_id="appearance.color", turns_explored=1, is_current=True
+            ),
+            "appearance.shape": AttributeInterestRecord(
+                attribute_id="appearance.shape", turns_explored=0, is_current=False
+            ),
+        }
+    )
+    switch = SimpleNamespace(should_switch=True, target_attribute_id="appearance.shape")
+    decision, reason, meta = evaluate_handoff(assistant, switch)
+    assert decision == HandoffDecision.CONTINUE_SWITCH
+    assert meta["target_attribute"] == "appearance.shape"
+
+
+def test_evaluate_handoff_exit_lane_timeout_no_interest():
+    rec = AttributeInterestRecord(
+        attribute_id="appearance.color",
+        turns_explored=8,
+        intent_history=["CORRECT_ANSWER"] * 6 + ["CLARIFYING_IDK"] * 2,
+        is_current=True,
+    )
+    rec.struggle_count = 2
+    # base=(6/8)*50=37.5; penalty=min(2*8,35)=16; score=21.5 (above 20, below 40)
+    assistant = _make_assistant_for_handoff(
+        interest_records={"appearance.color": rec},
+        turn_count=8,
+    )
+    switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
+    decision, reason, meta = evaluate_handoff(assistant, switch)
+    assert decision == HandoffDecision.EXIT_LANE
+    assert "timeout_no_interest" in reason
+
+
+def test_evaluate_handoff_exit_lane_timeout_with_memory():
+    rec = AttributeInterestRecord(
+        attribute_id="appearance.color",
+        turns_explored=8,
+        intent_history=["CORRECT_ANSWER"] * 8,
+        is_current=True,
+    )
+    assistant = _make_assistant_for_handoff(
+        interest_records={"appearance.color": rec},
+        turn_count=8,
+    )
+    switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
+    decision, reason, meta = evaluate_handoff(assistant, switch)
+    assert decision == HandoffDecision.EXIT_LANE
+    assert "timeout_with_memory" in reason
+    assert meta["best_attribute"] == "appearance.color"
+
+
+def test_evaluate_handoff_handoff_now_current_best():
+    rec = AttributeInterestRecord(
+        attribute_id="appearance.color",
+        turns_explored=5,
+        intent_history=["CORRECT_ANSWER"] * 5,
+        is_current=True,
+    )
+    rec.child_initiated_count = 2  # +16 initiation, score = 50 + 16 = 66 >= 60
+    assistant = _make_assistant_for_handoff(
+        interest_records={"appearance.color": rec},
+        turn_count=5,
+        age=6,
+    )
+    switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
+    # Need to mock get_activity_for_attribute — we'll patch it
+    from unittest.mock import patch
+    with patch("stream.cares_handoff.get_activity_for_attribute", return_value=SimpleNamespace(activity_id="act1")):
+        decision, reason, meta = evaluate_handoff(assistant, switch)
+    assert decision == HandoffDecision.HANDOFF_NOW
+    assert meta["target_attribute"] == "appearance.color"
