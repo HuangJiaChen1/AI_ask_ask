@@ -280,15 +280,25 @@ async def generate_attribute_activation_response_stream(
     full_prompt = f"{intent_prompt}\n\n{response_hint}"
 
     # Append attribute response guide if provided.
-    # Strip the SYSTEM CONTEXT section — the response generator only needs
-    # the safety rules and conversation coverage that come before it.
+    # For non-CONTINUE CARES modes (HANDOFF/EXIT/REENGAGE), the full guide
+    # IS the prompt — it already contains all necessary instructions. The
+    # intent template would only compete with and dilute mode instructions.
+    # For CONTINUE, strip SYSTEM CONTEXT — the intent template dominates.
     if multi_topic_guide:
-        if "---\n\n[SYSTEM CONTEXT]" in multi_topic_guide:
-            response_guide = multi_topic_guide.split("---\n\n[SYSTEM CONTEXT]")[0].strip()
+        is_non_continue = (
+            "HANDOFF MODE: ACTIVE" in multi_topic_guide
+            or "EXIT MODE: ACTIVE" in multi_topic_guide
+            or "REENGAGE MODE: ACTIVE" in multi_topic_guide
+        )
+        if is_non_continue:
+            full_prompt = multi_topic_guide.strip()
         else:
-            response_guide = multi_topic_guide.strip()
-        if response_guide:
-            full_prompt = f"{full_prompt}\n\n{response_guide}"
+            if "---\n\n[SYSTEM CONTEXT]" in multi_topic_guide:
+                response_guide = multi_topic_guide.split("---\n\n[SYSTEM CONTEXT]")[0].strip()
+            else:
+                response_guide = multi_topic_guide.strip()
+            if response_guide:
+                full_prompt = f"{full_prompt}\n\n{response_guide}"
 
     messages_to_send = messages + [{"role": "user", "content": full_prompt}]
     clean_messages = clean_messages_for_api(messages_to_send)

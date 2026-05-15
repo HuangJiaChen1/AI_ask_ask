@@ -303,3 +303,219 @@ def test_intent_followup_branching_logic():
     assert "classification_fallback" in INTENTS_WITHOUT_FOLLOWUP
     assert "correct_answer" not in INTENTS_WITHOUT_FOLLOWUP
     assert "informative" not in INTENTS_WITHOUT_FOLLOWUP
+
+
+# -- Mode-aware prompt routing -------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_response_generator_uses_full_guide_for_handoff_mode(monkeypatch):
+    """HANDOFF_NOW must use the full guide (not strip SYSTEM CONTEXT)."""
+    prompts = {
+        "correct_answer_intent_prompt": "INTENT_PROMPT_FOR_CORRECT_ANSWER",
+        "attribute_response_hint": "HINT: {attribute_label}",
+    }
+    monkeypatch.setattr(paixueji_prompts, "get_prompts", lambda: prompts)
+
+    captured_contents = []
+
+    async def mock_generate(*, model, contents, config):
+        captured_contents.append(contents)
+
+        class FakeStream:
+            async def __anext__(self):
+                raise StopAsyncIteration
+
+            def __aiter__(self):
+                return self
+
+        return FakeStream()
+
+    client = MagicMock()
+    client.aio.models.generate_content_stream = mock_generate
+
+    handoff_guide = """Safety rules here.
+
+[CONVERSATION COVERAGE]
+Attribute: color
+Turns explored: 4
+
+---
+
+[SYSTEM CONTEXT]
+Target attribute: color
+Activity: polka_dot_patrol
+Child interest score: 75/100
+
+HANDOFF MODE: ACTIVE
+Your next message must bridge from the current conversation to the activity below.
+
+---
+
+[BRIDGE TO ACTIVITY]
+Activity name: polka_dot_patrol
+Your next message MUST mention the activity by name.
+"""
+
+    generator = generate_attribute_activation_response_stream(
+        messages=[{"role": "system", "content": "sys"}],
+        intent_type="correct_answer",
+        object_name="ladybug",
+        attribute_label="pattern",
+        activity_target="find patterns",
+        child_answer="It has dots!",
+        reply_type="correct_answer",
+        state_action="continue",
+        age=5,
+        age_prompt="Keep it simple.",
+        config={"model_name": "test-model", "temperature": 0.7, "max_tokens": 500},
+        client=client,
+        multi_topic_guide=handoff_guide,
+    )
+
+    async for _ in generator:
+        pass
+
+    assert len(captured_contents) > 0
+    contents_text = str(captured_contents[0])
+
+    # The full guide must be present — SYSTEM CONTEXT must NOT be stripped
+    assert "HANDOFF MODE: ACTIVE" in contents_text
+    assert "[BRIDGE TO ACTIVITY]" in contents_text
+    assert "polka_dot_patrol" in contents_text
+
+    # The intent template must NOT be included — it would compete with the bridge
+    assert "INTENT_PROMPT_FOR_CORRECT_ANSWER" not in contents_text
+    assert "HINT: pattern" not in contents_text
+
+
+@pytest.mark.asyncio
+async def test_response_generator_strips_system_context_for_continue_mode(monkeypatch):
+    """CONTINUE mode must strip SYSTEM CONTEXT and keep the intent template."""
+    prompts = {
+        "correct_answer_intent_prompt": "INTENT_PROMPT_FOR_CORRECT_ANSWER",
+        "attribute_response_hint": "HINT: {attribute_label}",
+    }
+    monkeypatch.setattr(paixueji_prompts, "get_prompts", lambda: prompts)
+
+    captured_contents = []
+
+    async def mock_generate(*, model, contents, config):
+        captured_contents.append(contents)
+
+        class FakeStream:
+            async def __anext__(self):
+                raise StopAsyncIteration
+
+            def __aiter__(self):
+                return self
+
+        return FakeStream()
+
+    client = MagicMock()
+    client.aio.models.generate_content_stream = mock_generate
+
+    continue_guide = """Safety rules here.
+
+---
+
+[SYSTEM CONTEXT]
+Current attribute: color
+HANDOFF MODE: INACTIVE
+Continue exploring.
+
+---
+
+[NEXT SUGGESTED ANGLE]
+Ask about observation.
+"""
+
+    generator = generate_attribute_activation_response_stream(
+        messages=[{"role": "system", "content": "sys"}],
+        intent_type="correct_answer",
+        object_name="apple",
+        attribute_label="color",
+        activity_target="find colors",
+        child_answer="It's red!",
+        reply_type="correct_answer",
+        state_action="continue",
+        age=5,
+        age_prompt="Keep it simple.",
+        config={"model_name": "test-model", "temperature": 0.7, "max_tokens": 500},
+        client=client,
+        multi_topic_guide=continue_guide,
+    )
+
+    async for _ in generator:
+        pass
+
+    assert len(captured_contents) > 0
+    contents_text = str(captured_contents[0])
+
+    # Intent template must be present
+    assert "INTENT_PROMPT_FOR_CORRECT_ANSWER" in contents_text
+    assert "HINT: color" in contents_text
+
+    # SYSTEM CONTEXT must be stripped
+    assert "[SYSTEM CONTEXT]" not in contents_text
+    assert "[NEXT SUGGESTED ANGLE]" not in contents_text
+    assert "HANDOFF MODE: INACTIVE" not in contents_text
+
+
+def test_ask_followup_preserves_full_guide_with_system_context(monkeypatch):
+    """Follow-up generator must pass through attribute_soft_guide verbatim."""
+    prompts = {
+        "followup_question_prompt": "ASK ONE QUESTION about {object_name}.",
+        "attribute_soft_guide": "SOFT GUIDE: {attribute_label}",
+    }
+    monkeypatch.setattr(paixueji_prompts, "get_prompts", lambda: prompts)
+
+    captured_contents = []
+    async def mock_stream(*, model, contents, config):
+        captured_contents.append(contents)
+        class Fake:
+            async def __anext__(self): raise StopAsyncIteration
+            def __aiter__(self): return self
+        return Fake()
+
+    client = MagicMock()
+    client.aio.models.generate_content_stream = mock_stream
+
+    full_guide = """Safety rules.
+
+---
+
+[SYSTEM CONTEXT]
+HANDOFF MODE: ACTIVE
+Bridge to activity.
+
+---
+
+[BRIDGE TO ACTIVITY]
+Activity: polka_dot_patrol
+"""
+
+    async def drain():
+        gen = ask_followup_question_stream(
+            messages=[{"role": "system", "content": "sys"}],
+            object_name="ladybug",
+            age_prompt="Keep it simple.",
+            age=5,
+            config={"model_name": "test-model", "temperature": 0.3, "max_tokens": 2000},
+            client=client,
+            attribute_soft_guide=full_guide,
+            response_text="",
+        )
+        async for _ in gen:
+            pass
+
+    import asyncio
+    asyncio.run(drain())
+
+    assert len(captured_contents) > 0
+    contents_text = str(captured_contents[0])
+
+    # The full guide must be preserved — SYSTEM CONTEXT must NOT be stripped
+    assert "HANDOFF MODE: ACTIVE" in contents_text
+    assert "[BRIDGE TO ACTIVITY]" in contents_text
+    assert "polka_dot_patrol" in contents_text
+    assert "[SYSTEM CONTEXT]" in contents_text

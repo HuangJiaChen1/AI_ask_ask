@@ -1836,6 +1836,13 @@ def continue_conversation():
                                 {"role": "user", "content": child_input},
                                 {"role": "assistant", "content": full_response},
                             ]
+                            # Non-CONTINUE modes need the full guide so follow-up
+                            # questions (if any) respect mode instructions.
+                            followup_soft_guide = (
+                                soft_guide
+                                if decision in (HandoffDecision.HANDOFF_NOW, HandoffDecision.EXIT_LANE, HandoffDecision.REENGAGE)
+                                else (soft_guide.split("---\n\n[SYSTEM CONTEXT]")[0].strip() if soft_guide else soft_guide)
+                            )
                             followup_generator = ask_followup_question_stream(
                                 messages=messages_with_response,
                                 object_name=object_name_attr,
@@ -1843,7 +1850,7 @@ def continue_conversation():
                                 age=assistant.age or 6,
                                 config=assistant.config,
                                 client=assistant.client,
-                                attribute_soft_guide=soft_guide.split("---\n\n[SYSTEM CONTEXT]")[0].strip() if soft_guide else soft_guide,
+                                attribute_soft_guide=followup_soft_guide,
                                 response_text="",
                                 focus_topic=f"the '{attribute_label}' attribute",
                             )
