@@ -2,7 +2,7 @@
 
 > **版本**: 1.0
 > **日期**: 2026-05-14
-> **状态**: 设计确定，待实现
+> **状态**: 设计确定，已实现
 > **定位**: 与 `cares-handoff-design.md`（兴趣档案 + 决策引擎）和 `activity-matching-design-report.md`（Pipeline + 动态切换）解耦，专注解决"给定一个兴趣方向和分数，如何选择最佳活动"。
 
 ---
@@ -90,8 +90,11 @@ def get_explorable_angles(entity_info, extracted_properties, child_tier) -> set[
 
 | 现有模块 | 改动 | 说明 |
 |---------|------|------|
-| `attribute_activity.py:select_attribute_profile()` | 新增 catalog 预扫描 | 在选 primary/fallback 前过滤掉 catalog 不支持的属性 |
-| `stream/topic_switch_detector.py` | 新增 angle 可用性验证 | `detect_topic_switch()` 验证 target_attribute_id 对应的 angle 是否在 `available_angles` 中 |
+| `attribute_activity.py:select_attribute_profile()` | 新增 catalog 预扫描（Phase 2 待接入） | 在选 primary/fallback 前过滤掉 catalog 不支持的属性 |
+| `stream/topic_switch_detector.py` | 新增 angle 可用性验证（Phase 2 待接入） | `detect_topic_switch()` 验证 target_attribute_id 对应的 angle 是否在 `available_angles` 中 |
+| `activities/__init__.py` | **已实现** | `_load_catalog()` + `_is_eligible()` + `select_best_activity()` 已实现三层选择，Catalog 本身已可工作 |
+
+> **V1 现状**：`get_explorable_angles()` 逻辑已内建于 `select_best_activity` 的 Layer 1（Eligibility），但尚未前置到 `select_attribute_profile()` 和 `detect_topic_switch()`。这意味着系统仍可能探索 catalog 不支持 handoff 的属性，只是最终 `select_best_activity` 会返回 `no_eligible_activities` 降级到 CONTINUE。Phase 2.5（Catalog 驱动集成）完成前置过滤后，属性选择将完全由 catalog 驱动。
 | `paixueji_app.py` | `/api/start` 时预计算 `available_angles` | 存入 session state，供后续 topic switch 使用 |
 
 ---
@@ -110,8 +113,6 @@ class ActivityDefinition:
     name: str
     launch_prompt: str
     description: str = ""
-    estimated_duration_minutes: int = 5
-    materials_needed: tuple[str, ...] = ()
 
     # === Tag Block 核心标签 ===
     observation_angle: str            # color, shape, pattern, behavior, emotion, state, function, quantity...
@@ -128,7 +129,7 @@ class ActivityDefinition:
     # === Coherence 信号 ===
     bridge_prerequisites_primary: tuple[str, ...] = ()
     bridge_prerequisites_secondary: tuple[str, ...] = ()
-    entity_role: str = "subject"      # subject | exemplar | catalyst | reference
+    entity_role: str = "subject"      # subject | exemplar
 
     # === Progression（V2 预留）===
     topic_axis: str = ""              # form | function | causation | change | connection | perspective | responsibility
@@ -375,27 +376,72 @@ def score_activity(activity, interest_score, age, conversation, progression=None
             elif _is_sibling_axis(activity.topic_axis, target_axis):
                 s += 8
 
-    # ── D. Practical Fit (0-10) ──
-    max_duration = 5 if age <= 4 else 10 if age <= 6 else 15
-    duration = getattr(activity, 'estimated_duration_minutes', 5)
-    if duration <= max_duration:
-        s += 4
-    elif duration <= max_duration * 1.5:
-        s += 2
-
-    materials = getattr(activity, 'materials_needed', [])
-    if not materials:
-        s += 3
-    elif len(materials) <= 2:
-        s += 1
-
+    # ── D. Practical Fit (0-3) — V1 简化，仅 recency ──
     if activity.activity_id not in conversation.recent_activities:
         s += 3
 
     return s
 ```
 
-**总分 = 100**。`MIN_SCORE_FOR_HANDOFF = 60`，与 `MIN_INTEREST_FOR_HANDOFF` 一致。
+**V1 总分 ≈ 81**（不含 Progression，A 48 + B 30 + D 3）。`MIN_SCORE_FOR_HANDOFF = 60`，与 `MIN_INTEREST_FOR_HANDOFF` 一致。
+
+### 6.4 顶层选择函数
+
+```python
+def select_best_activity(
+    attribute_id: str,
+    interest_score: float,
+    age: int,
+    conversation_context: dict[str, Any],
+) -> SelectionResult:
+    """
+    三层选择流程的顶层 orchestration。
+    返回 SelectionResult（含 activity、selector_score、decision、fallback_reason）。
+    V1 暂不接 progression_state（Phase 3 接入）。
+    """
+    child_tier = _age_to_tier(age)  # <=4 -> T0, <=6 -> T1, else T2
+
+    entity_info = conversation_context.get("entity_info")
+    extracted_properties = conversation_context.get("extracted_properties")
+
+    # ── Layer 1: Eligibility ──
+    eligible = [
+        a for a in ACTIVITY_CATALOG
+        if _is_eligible(a, child_tier, entity_info, extracted_properties)
+    ]
+    if not eligible:
+        return SelectionResult(
+            activity=None, selector_score=0.0,
+            decision="none", fallback_reason="no_eligible_activities"
+        )
+
+    # ── Layer 2: Angle/Attribute 匹配 ──
+    conversation_angles = list(conversation_context.get("angles", []))
+    matched, fallback_reason = get_angle_matched_candidates(
+        eligible, attribute_id, conversation_angles
+    )
+
+    # ── Layer 3: Scoring & Ranking ──
+    scored = [
+        (a, score_activity(a, interest_score, age, conversation_context))
+        for a in matched
+    ]
+    scored.sort(key=lambda x: x[1], reverse=True)
+    best, best_score = scored[0]
+
+    if best_score < MIN_SCORE_FOR_HANDOFF:
+        return SelectionResult(
+            activity=None, selector_score=best_score,
+            decision="none",
+            fallback_reason=fallback_reason or "score_below_threshold"
+        )
+
+    return SelectionResult(
+        activity=best, selector_score=best_score,
+        decision="matched",
+        fallback_reason=fallback_reason,
+    )
+```
 
 ---
 
@@ -468,7 +514,9 @@ Photo Detection:
     - pattern = "striped"
 ```
 
-**Catalog 预扫描**：
+> **注意**：以下 Trace 使用**示意性 mock 活动**（如 `color_scout`、`pattern_hunt`）说明算法逻辑。实际 Catalog 包含 5 个真实 Tag Block 活动包：`polka_dot_patrol` (pattern)、`fluffy_expedition_dandelion` (texture)、`mood_changer_dog` (behavior)、`dream_whisperer_cat` (emotion)、`time_machine_dinosaur` (origin)。其中 `color` 和 `shape` 暂无对应活动，因此 V1 中探索 `appearance.color` 会触发 `no_eligible_activities` 降级到 CONTINUE。
+
+**Catalog 预扫描**（示意）：
 - `color` → `color_scout` (parameterized, wide) ✓
 - `pattern` → `pattern_hunt` (parameterized, needs patterned_thing) ✓
 - `shape` → 无活动 ✗
@@ -567,21 +615,23 @@ activity_signature:
 
 ## 11. 实施计划
 
-### Phase 1: 核心重构（1-2 周）
+### Phase 1: 核心重构 ✅ IMPLEMENTED (2026-05-15)
 
-- [ ] 更新 `ActivityDefinition` dataclass（删除 `activity_type`，新增 Tag Block 字段）
-- [ ] 实现 `_interest_to_profile()` 和评分公式
-- [ ] 实现三层 selector：`filter_eligible()` → `match_angles()` → `score_and_rank()`
-- [ ] 实现 `_ATTRIBUTE_TO_ANGLE` 映射表
-- [ ] 更新 mock 活动 YAML，使用新字段
-- [ ] 单元测试：10 种场景的 eligibility + scoring
+- [x] 更新 `ActivityDefinition` dataclass（删除 `activity_type`，新增 Tag Block 字段）
+- [x] 实现 `_interest_to_profile()` 和评分公式
+- [x] 实现三层 selector：`_is_eligible()` → `get_angle_matched_candidates()` → `score_activity()`
+- [x] 实现 `_ATTRIBUTE_TO_ANGLE` 映射表
+- [x] 替换 mock 活动 YAML 为 5 个真实 Tag Block 活动包
+- [x] 单元测试：eligibility + angle matching + scoring + 完整选择流程（`tests/test_activities_selection.py` 26 个测试）
+- [x] 将 `evaluate_handoff` 中的 `get_activity_for_attribute` 替换为 `select_best_activity`
 
-### Phase 2: Catalog 驱动集成（1 周）
+**Commit range:** `50891e7..df0613b` on `main`
+
+### Phase 2: Catalog 驱动集成（待实现）
 
 - [ ] 在 `select_attribute_profile()` 中接入 `get_explorable_angles()`
 - [ ] 在 `detect_topic_switch()` 中接入 angle 可用性验证
 - [ ] 在 `/api/start` 中预计算 `available_angles` 并存入 session state
-- [ ] 橘猫 trace 端到端验证
 
 ### Phase 3: Progression 对接（V2）
 

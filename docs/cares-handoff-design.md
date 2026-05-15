@@ -4,7 +4,7 @@
 > **日期**: 2026-05-15  
 > **Phase 0 状态**: ✅ 已实现 (2026-05-14)  
 > **Phase 1 状态**: ✅ 已实现 (2026-05-15)  
-> **Phase 2 状态**: 🔄 待实现  
+> **Phase 2 状态**: ✅ 已实现 (2026-05-15)  
 > **Phase 3 状态**: 🔄 待实现  
 > **核心原则**: 聊天机器人是手段，挖掘兴趣、推出科教活动是目的。所有设计必须服务于"推什么活动、何时推、为什么推"这三个问题。
 
@@ -497,9 +497,17 @@ def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, di
     # │ 3. 有属性达标 → HANDOFF_NOW                                  │
     # └──────────────────────────────────────────────────────────────┘
     # NOTE: Phase 1 使用现有的 get_activity_for_attribute 作为占位符。
-    # Phase 2 将替换为 select_best_activity（Tag Block schema 对齐版）。
+    # Phase 2 替换为 select_best_activity（详见 activity-selection-strategy.md Section 6.4）。
     if best_score >= MIN_INTEREST_FOR_HANDOFF:
-        activity = get_activity_for_attribute(best_attr, assistant.age or 6)
+        conversation_context = _build_context()
+
+        selection = select_best_activity(
+            attribute_id=best_attr,
+            interest_score=best_score,
+            age=assistant.age or 6,
+            conversation_context=conversation_context,
+        )
+        activity = selection.activity
 
         if activity:
             # 最佳属性就是当前属性：直接推
@@ -512,8 +520,13 @@ def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, di
 
             # 最佳属性 ≠ 当前属性
             if current_score >= 50:
-                # 当前属性也还行：推当前的（保持对话流畅）
-                current_activity = get_activity_for_attribute(current_attr, assistant.age or 6)
+                current_selection = select_best_activity(
+                    attribute_id=current_attr,
+                    interest_score=current_score,
+                    age=assistant.age or 6,
+                    conversation_context=conversation_context,
+                )
+                current_activity = current_selection.activity
                 if current_activity:
                     return HandoffDecision.HANDOFF_NOW, f"current_good:{current_score:.0f}", {
                         "target_attribute": current_attr,
@@ -530,6 +543,14 @@ def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, di
                 "current_attribute": current_attr,
                 "bridge_context": f"child_previously_explored_{best_attr}_with_score_{best_score:.0f}",
             }
+
+        # Selection returned no activity → degrade to CONTINUE
+        return HandoffDecision.CONTINUE, f"no_activity_for_best:{best_score:.0f}", {
+            "current_attribute": current_attr,
+            "current_score": current_score,
+            "best_attribute": best_attr,
+            "best_score": best_score,
+        }
     
     # ┌──────────────────────────────────────────────────────────────┐
     # │ 4. 会话超时但无属性达标 → EXIT_LANE          │
@@ -572,254 +593,69 @@ def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, di
 
 ## 5. 活动选择策略
 
-### 5.0 核心原则
+> **详细设计见 `activity-selection-strategy.md`**。本文档仅保留与 CARES 决策引擎的对接接口和前置影响。
+
+### 5.1 核心原则
 
 1. **Catalog 驱动**：只探索 catalog 中有活动支撑的属性（observation_angle），保证每轮对话都在"可落地"轨道上。不聊 catalog 无法 handoff 的属性。
-2. **Tag Block 原生标签**：用 `mechanic` + `game_style` 替代 CARES 的 `activity_type`，兴趣分映射到认知深度偏好，而非固定的类型枚举。
+2. **Tag Block 原生标签**：用 `mechanic` + `game_style` 替代 `activity_type`，兴趣分映射到认知深度偏好，而非固定的类型枚举。
 3. **三层架构**：Eligibility（硬过滤）→ Angle/Attribute 匹配 → Scoring & Ranking（兴趣 + 连贯性 + progression）。
 
-### 5.1 Catalog 驱动的属性探索
+### 5.2 与 CARES 的对接接口
 
-**旧问题**：先探索属性再匹配活动 → 聊了半天"气味"发现 catalog 里根本没有 smell 的活动 → 只能 EXIT_LANE。
-
-**新流程**：Photo → 提取属性 → **扫描 catalog** → 哪些 angles 有 eligible 活动？→ **只在这些 angles 里选择探索** → 保证能 handoff。
-
-```python
-def get_explorable_angles(entity_info, extracted_properties, child_tier) -> set[str]:
-    """扫描 catalog，返回当前 photo + tier 下能支撑 handoff 的所有 observation_angle"""
-    eligible = [a for a in ACTIVITY_CATALOG
-                if _is_eligible(a, child_tier, entity_info, extracted_properties)]
-    
-    angles = set()
-    for a in eligible:
-        angles.add(a.observation_angle)
-        angles.update(a.bridge_prerequisites_primary)
-    return angles
-```
-
-**Topic Switch 过滤**：如果孩子提到一个不在 `available_angles` 中的属性，系统不跟随切换，而是 gentle pivot 回有活动支撑的属性。
-
-### 5.2 数据模型对齐（CARES ↔ Tag Block）
-
-**删除 `activity_type`**，改用 Tag Block 原生标签：
-
-```python
-@dataclass(frozen=True)
-class ActivityDefinition:
-    # === 保留字段 ===
-    activity_id: str
-    name: str
-    launch_prompt: str
-    description: str = ""
-    estimated_duration_minutes: int = 5
-    materials_needed: tuple[str, ...] = ()
-    
-    # === 新增：直接用 Tag Block 标签 ===
-    observation_angle: str            # color, shape, pattern, behavior, emotion, state...
-    mechanic: str                     # collect, compare, sort, observe, voice, narrate, build, care, test
-    game_style: str                   # field_experiment, voice_stage, mystery_trail, creation
-    
-    # === 新增：Eligibility 硬门槛 ===
-    entity_binding: str               # bound | parameterized | agnostic
-    entity_class: tuple[str, ...] = ()
-    entity_class_filter: tuple[str, ...] = ()
-    tier_range_span: tuple[str, ...] = ()      # ["T0", "T1", "T2"]
-    tier_support: dict[str, bool] = field(default_factory=dict)
-    
-    # === 新增：Coherence 信号 ===
-    bridge_prerequisites_primary: tuple[str, ...] = ()
-    bridge_prerequisites_secondary: tuple[str, ...] = ()
-    entity_role: str = "subject"      # subject | exemplar | catalyst | reference
-    
-    # === 新增：Progression（为未来预留）===
-    topic_axis: str = ""              # form | function | causation | change | connection | perspective | responsibility
-    difficulty_level: int = 1         # 1 | 2 | 3
-```
-
-**`_ATTRIBUTE_TO_ANGLE` 映射表**：将 CARES 内部属性 ID 映射到 Tag Block 的 observation_angle vocabulary。
-
-```python
-_ATTRIBUTE_TO_ANGLE = {
-    "appearance.color": "color",
-    "appearance.shape": "shape",
-    "appearance.pattern": "pattern",
-    "appearance.size": "size",
-    "function.behavior": "behavior",
-    "function.use": "function",
-    "emotion.state": "emotion",
-    "quantity.count": "quantity",
-    # ...
-}
-```
-
-### 5.3 Interest Score → Activity Profile 映射
-
-兴趣分映射的是**孩子能承受的认知深度**，直接映射到 `mechanic` 和 `game_style`：
-
-```python
-@dataclass
-class ActivityProfile:
-    preferred_mechanics: list[str]
-    acceptable_mechanics: list[str]
-    preferred_game_styles: list[str]
-    acceptable_game_styles: list[str]
-    preferred_difficulty_level: int
-
-def _interest_to_profile(interest_score: float) -> ActivityProfile:
-    if interest_score >= 80:
-        # 深度探索：主动搜集、比较、测试、构建
-        return ActivityProfile(
-            preferred_mechanics=["collect", "compare", "test", "build"],
-            acceptable_mechanics=["sort", "voice", "care"],
-            preferred_game_styles=["field_experiment", "creation", "mystery_trail"],
-            acceptable_game_styles=["voice_stage"],
-            preferred_difficulty_level=3,
-        )
-    elif interest_score >= 60:
-        # 中度探索：比较、分类、表达
-        return ActivityProfile(
-            preferred_mechanics=["compare", "collect", "sort", "voice"],
-            acceptable_mechanics=["observe", "narrate"],
-            preferred_game_styles=["field_experiment", "voice_stage"],
-            acceptable_game_styles=["mystery_trail"],
-            preferred_difficulty_level=2,
-        )
-    else:
-        # 轻度：观察、简单表达（<60 实际上不会触发 handoff）
-        return ActivityProfile(
-            preferred_mechanics=["observe", "voice"],
-            acceptable_mechanics=["narrate"],
-            preferred_game_styles=["voice_stage", "field_experiment"],
-            acceptable_game_styles=[],
-            preferred_difficulty_level=1,
-        )
-```
-
-### 5.4 三层选择流程
+CARES 决策引擎在 `HANDOFF_NOW` 分支中调用 `select_best_activity()`：
 
 ```python
 def select_best_activity(
     attribute_id: str,           # 来自 CARES，如 "appearance.color"
     interest_score: float,       # 来自 CARES，0-100
-    age: int,                    # 来自 CARES
-    conversation_context: dict,  # dominant_angle, secondary_angles, entity, entity_class, extracted_properties
-    progression_state: dict = None,
-) -> ActivityDefinition | None:
-    
-    child_tier = _age_to_tier(age)  # <=4 -> T0, <=6 -> T1, else T2
-    
-    # === Layer 1: Eligibility（硬过滤）===
-    eligible = [a for a in ACTIVITY_CATALOG
-                if _is_eligible(a, child_tier, conversation_context)]
-    if not eligible:
-        return None
-    
-    # === Layer 2: Angle/Attribute 匹配 ===
-    target_angles = _attribute_to_angles(attribute_id)
-    matched = [a for a in eligible if a.observation_angle in target_angles]
-    if not matched:
-        # 尝试 bridge_prerequisites 重叠
-        matched = [a for a in eligible
-                   if set(a.bridge_prerequisites_primary) & set(target_angles)]
-    candidates = matched if matched else eligible  # 如果都没有，回退到全部 eligible
-    
-    # === Layer 3: Scoring & Ranking ===
-    def score(activity):
-        s = 0
-        profile = _interest_to_profile(interest_score)
-        
-        # A. Interest-Profile Match (0-40)
-        if activity.mechanic in profile.preferred_mechanics:
-            s += 25
-        elif activity.mechanic in profile.acceptable_mechanics:
-            s += 12
-        else:
-            s += 5
-        
-        if activity.game_style in profile.preferred_game_styles:
-            s += 15
-        elif activity.game_style in profile.acceptable_game_styles:
-            s += 7
-        
-        # difficulty_level 匹配 (0-8)
-        diff = abs(activity.difficulty_level - profile.preferred_difficulty_level)
-        if diff == 0:
-            s += 8
-        elif diff == 1:
-            s += 4
-        
-        # B. Conversation Coherence (0-30)
-        if activity.observation_angle == conversation_context.dominant_angle:
-            s += 15
-        elif activity.observation_angle in conversation_context.secondary_angles:
-            s += 7
-        
-        overlap = len(set(activity.bridge_prerequisites_primary) & set(conversation_context.angles))
-        s += min(overlap * 5, 10)
-        
-        if (activity.entity_role == "subject" and conversation_context.entity_depth == "deep") or \
-           (activity.entity_role == "exemplar" and conversation_context.entity_depth == "property_focused"):
-            s += 5
-        
-        # C. Progression Fit (0-20)
-        if progression_state:
-            target_axis = progression_state.get("target_axis")
-            target_rung = progression_state.get("target_rung")
-            if (activity.topic_axis == target_axis and 
-                activity.difficulty_level == target_rung):
-                s += 20
-            elif (activity.topic_axis == target_axis and
-                  abs(activity.difficulty_level - target_rung) <= 1):
-                s += 15
-            elif _is_sibling_axis(activity.topic_axis, target_axis):
-                s += 8
-        
-        # D. Practical Fit (0-10)
-        max_duration = 5 if age <= 4 else 10 if age <= 6 else 15
-        duration = getattr(activity, 'estimated_duration_minutes', 5)
-        if duration <= max_duration:
-            s += 4
-        elif duration <= max_duration * 1.5:
-            s += 2
-        
-        materials = getattr(activity, 'materials_needed', [])
-        if not materials:
-            s += 3
-        elif len(materials) <= 2:
-            s += 1
-        
-        if activity.activity_id not in conversation_context.recent_activities:
-            s += 3
-        
-        return s
-    
-    best = max(candidates, key=score)
-    if score(best) < MIN_SCORE_FOR_HANDOFF:
-        return None
-    return best
+    age: int,                    # 来自 Session
+    conversation_context: dict,  # dominant_angle, secondary_angles, entity_info, extracted_properties, recent_activities
+) -> SelectionResult:
+    """
+    三层选择：Eligibility → Angle Match → Scoring & Ranking。
+    返回 SelectionResult（含 activity、selector_score、decision、fallback_reason）。
+    V1 暂不接 progression_state（Phase 3 接入）。
+    详见 activity-selection-strategy.md Section 6.4。
+    """
 ```
 
-### 5.5 降级链（Fallback Chain）
+**返回值处理**：
+- `result.activity is not None` → 将活动注入 `_build_handoff_guide()`，引导模型输出 `[ACTIVITY_READY]`
+- `result.activity is None` → CARES 回到 `CONTINUE`（等待兴趣进一步积累）或 `REENGAGE`（如果当前属性挣扎）
+- `result.selector_score` 和 `result.fallback_reason` 用于调试和可观测性
 
+**`conversation_context` 构造**（由 `evaluate_handoff` 内联 `_build_context()` 组装）：
+```python
+def _build_context() -> dict[str, Any]:
+    current_record = records.get(current_attr)
+    return {
+        "dominant_angle": getattr(assistant.attribute_state, "current_angle_id", None) or "",
+        "secondary_angles": list(getattr(current_record, "explored_angle_ids", [])) if current_record else [],
+        "angles": list(getattr(current_record, "explored_angle_ids", [])) if current_record else [],
+        "entity_depth": "property_focused",  # V1 简化
+        "recent_activities": [],
+        "entity_info": None,
+        "extracted_properties": None,
+    }
 ```
-1. 精确匹配: observation_angle == attribute_id, difficulty 匹配 interest_score
-2. 同 dimension 泛化: observation_angle 属于 attribute_id 的 dimension
-3. Bridge prerequisite 匹配: primary prerequisites 与 conversation angles 重叠
-4. 完全 agnostic: 任何安全可观察的活动
-5. None → CARES 回到 CONTINUE 或 REENGAGE（不强行 handoff）
+
+**注意**：V1 中 `entity_info` 和 `extracted_properties` 默认传 `None`，Parameterized 活动在未指定 extracted_properties 时默认可通过 Eligibility。Progression 状态尚未接入（Phase 3）。
+
+`ActivityDefinition` 数据模型、`_interest_to_profile()` 映射、`score_activity()` 公式、降级链、Progression 对接策略、完整橘猫 Trace 等详见 `activity-selection-strategy.md`。
+
+### 5.3 Catalog 驱动的前置影响
+
+活动选择不仅发生在 handoff 时刻，还**前置影响**属性探索的方向（详见 `activity-selection-strategy.md` Section 3）：
+
+```python
+def get_explorable_angles(entity_info, extracted_properties, child_tier) -> set[str]:
+    """扫描 catalog，返回当前 photo + tier 下能支撑 handoff 的所有 observation_angle"""
 ```
 
-### 5.6 与 Progression 的对接
-
-**核心原则**：Progression 是"建议方向"，不是"强制命令"。
-
-| 场景 | 处理方式 |
-|------|---------|
-| 兴趣方向和 progression target 一致 | 完美。选 matching axis + rung 的活动，给最高 progression bonus。 |
-| 兴趣方向和 progression target 不同，但 interest_score ≥ 70 | 优先兴趣方向。尝试选 observation_angle=兴趣方向 AND topic_axis=progression_target.axis 的活动。如果没有，选兴趣方向的活动，progression bonus 降低。 |
-| 兴趣方向和 progression target 不同，且 interest_score < 70 | 考虑 CONTINUE_SWITCH 到 progression target 对应的属性，或 sibling-jump。 |
-
-**L3 Ceiling / L1 Overload**：如果 progression state 显示当前 axis 已达 L3 ceiling 或 L1 persistent overload，selector 优先考虑 sibling axis 的活动（见 Tag Block 的 sibling graph）。
+- `select_attribute_profile()` 在选 primary/fallback 前，过滤掉不在 `available_angles` 中的属性
+- `detect_topic_switch()` 拒绝切换到 catalog 不支持的属性
+- `/api/start` 预计算 `available_angles` 存入 session state，供后续使用
 
 
 ---
@@ -1253,15 +1089,22 @@ else:
 | Prompt 注入 | `[SYSTEM CONTEXT]` 显示当前分数、总轮数、已探索属性、决策模式 |
 | 决策模式 | HANDOFF_NOW → 引导输出 `[ACTIVITY_READY]`；EXIT_LANE → 建议自由探索；REENGAGE → 简化问题；默认 → 继续探索 |
 | 跨属性追踪 | `attribute_interest_records` 在属性切换时保留，支持返回检测和全局最佳排名 |
-| 活动匹配 | 使用现有 `get_activity_for_attribute`（Phase 2 升级为 `select_best_activity`） |
+| 活动匹配 | `select_best_activity`（三层：eligibility → angle match → scoring） |
 
-### Phase 2: 活动选择（1-2 天）
+### Phase 2: 活动选择 ✅ IMPLEMENTED (2026-05-15)
 
-- [ ] 实现 `select_best_activity`（Tag Block schema 对齐版，三层架构：Eligibility → Angle/Attribute 匹配 → Scoring & Ranking）
-- [ ] 确认活动团队新增字段时间表（`mechanic`、`game_style`、`observation_angle` 等）
-- [ ] 添加 dimension-level 泛化保底活动
-- [ ] 单元测试：验证活动排序逻辑
-- [ ] 将 `evaluate_handoff` 中的 `get_activity_for_attribute` 替换为 `select_best_activity`
+> **详细设计见 `activity-selection-strategy.md`**
+
+- [x] 实现 `select_best_activity()` 和 `SelectionResult`（按 `activity-selection-strategy.md` Section 4、6）
+- [x] 更新 `ActivityDefinition` dataclass（删除 `activity_type`，新增 Tag Block 字段：`observation_angle`, `mechanic`, `game_style`, `entity_binding`, `entity_class_filter`, `tier_support`, `bridge_prerequisites`, `entity_role`, `topic_axis`, `difficulty_level`）
+- [x] 实现 `_ATTRIBUTE_TO_ANGLE` 映射表
+- [x] 实现 `get_explorable_angles()` 并在 `select_attribute_profile()` 中接入（过滤掉 catalog 不支持的属性）
+- [ ] 在 `detect_topic_switch()` 中接入 angle 可用性验证
+- [ ] 在 `/api/start` 中预计算 `available_angles` 并存入 session state
+- [x] 单元测试：验证 eligibility + scoring + 降级链（参考 `activity-selection-strategy.md` Section 9 橘猫 Trace）
+- [x] 将 `evaluate_handoff` 中的 `get_activity_for_attribute` 替换为 `select_best_activity`
+
+**Commit range:** `50891e7..df0613b` on `main`
 
 ### Phase 3: 清理遗留门槛（1 天）
 
@@ -1283,7 +1126,8 @@ else:
 | `paixueji_app.py` | 接入角度选择 (Phase 0) + CARES 评估 (Phase 1) | 每轮选择下一个角度、更新兴趣档案、评估 handoff、根据决策调用对应 builder |
 | `stream/response_generators.py` | 分割字符串修复 (Phase 1 重构) | `"TRANSITION SIGNAL"` → `"---\n\n[SYSTEM CONTEXT]"`，适配新 builder 结构 |
 | `paixueji_app.py` | `turn_count >= 3` 和 quote 验证 (Phase 3 TODO) | 仍作为安全网存在，CARES 决策优先 |
-| `activities/__init__.py` | 待 Phase 2 | 删除 `activity_type`，新增 Tag Block 字段（`mechanic`, `game_style`, `observation_angle` 等） |
+| `activities/__init__.py` | **已实现 (Phase 2)** | 删除 `activity_type`，新增 Tag Block 字段（`mechanic`, `game_style`, `observation_angle` 等），三层选择算法 |
+| `stream/cares_handoff.py` | **已实现 (Phase 2)** | `evaluate_handoff` 替换为 `select_best_activity`，无匹配时降级到 CONTINUE |
 | `switch_attribute_topic()` | 待 Phase 3 | 切换时将旧属性加入新属性 fallbacks，支持 drift 回来检测 |
 
 ---
