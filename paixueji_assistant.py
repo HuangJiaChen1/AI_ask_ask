@@ -95,6 +95,7 @@ class PaixuejiAssistant:
         self.last_attribute_debug = None
         self.attribute_activity_ready = False
         self.attribute_matched_activity = None
+        self.attribute_interest_records: dict[str, "AttributeInterestRecord"] = {}
         self.category_pipeline_enabled = False
         self.category_lane_active = False
         self.category_state = None

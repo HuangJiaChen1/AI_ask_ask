@@ -298,3 +298,12 @@ def test_build_attribute_debug_includes_angle_fields():
     assert debug["state"]["explored_angle_ids"] == ["observation"]
     assert len(debug["state"]["angle_records"]) == 1
     assert debug["state"]["angle_records"][0]["angle_id"] == "observation"
+
+
+from stream.cares_handoff import AttributeInterestRecord
+
+
+def test_assistant_initializes_empty_interest_records():
+    from paixueji_assistant import PaixuejiAssistant
+    assistant = PaixuejiAssistant(config_path="config.json", age_prompts_path="age_prompts.json")
+    assert assistant.attribute_interest_records == {}
