@@ -484,8 +484,8 @@ def select_best_activity(
     child_tier = _age_to_tier(age)
     catalog = _load_catalog()
 
-    entity_info = conversation_context.get("entity_info", {})
-    extracted_properties = conversation_context.get("extracted_properties", {})
+    entity_info = conversation_context.get("entity_info")
+    extracted_properties = conversation_context.get("extracted_properties")
 
     # Layer 1: Eligibility
     eligible = [
