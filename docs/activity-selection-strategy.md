@@ -37,7 +37,7 @@
 | `interest_score` | CARES `compute_attribute_interest_score()` | 0-100 的兴趣分 |
 | `age` | Session 状态 | 用于 tier 映射 |
 | `conversation_context` | 对话历史 + Photo 理解层 | `dominant_angle`, `secondary_angles`, `entity`, `entity_class`, `extracted_properties`, `recent_activities` |
-| `progression_state` | Progression Service（可选） | `target_axis`, `target_rung`，V2 接入 |
+| `progression_state` | Progression Service（可选） | `target_axis`, `target_rung`，V1 已接入， sibling-axis routing + exact match bonus |
 
 ### 2.2 输出
 
@@ -90,11 +90,11 @@ def get_explorable_angles(entity_info, extracted_properties, child_tier) -> set[
 
 | 现有模块 | 改动 | 说明 |
 |---------|------|------|
-| `attribute_activity.py:select_attribute_profile()` | 新增 catalog 预扫描（Phase 2 待接入） | 在选 primary/fallback 前过滤掉 catalog 不支持的属性 |
-| `stream/topic_switch_detector.py` | 新增 angle 可用性验证（Phase 2 待接入） | `detect_topic_switch()` 验证 target_attribute_id 对应的 angle 是否在 `available_angles` 中 |
+| `attribute_activity.py:select_attribute_profile()` | 新增 catalog 预扫描（Phase 2 已接入） | 在选 primary/fallback 前过滤掉 catalog 不支持的属性 |
+| `stream/topic_switch_detector.py` | 新增 angle 可用性验证（Phase 2 已接入） | `detect_topic_switch()` 验证 target_attribute_id 对应的 angle 是否在 `available_angles` 中 |
 | `activities/__init__.py` | **已实现** | `_load_catalog()` + `_is_eligible()` + `select_best_activity()` 已实现三层选择，Catalog 本身已可工作 |
 
-> **V1 现状**：`get_explorable_angles()` 逻辑已内建于 `select_best_activity` 的 Layer 1（Eligibility），但尚未前置到 `select_attribute_profile()` 和 `detect_topic_switch()`。这意味着系统仍可能探索 catalog 不支持 handoff 的属性，只是最终 `select_best_activity` 会返回 `no_eligible_activities` 降级到 CONTINUE。Phase 2.5（Catalog 驱动集成）完成前置过滤后，属性选择将完全由 catalog 驱动。
+> **V1 现状（2026-05-15 更新）**：`get_explorable_angles()` 已前置到 `select_attribute_profile()` 和 `detect_topic_switch()`，`/api/start` 预计算 `available_angles` 存入 session。属性选择现在完全由 catalog 驱动，系统不会探索 catalog 无法 handoff 的属性。
 | `paixueji_app.py` | `/api/start` 时预计算 `available_angles` | 存入 session state，供后续 topic switch 使用 |
 
 ---
@@ -131,7 +131,7 @@ class ActivityDefinition:
     bridge_prerequisites_secondary: tuple[str, ...] = ()
     entity_role: str = "subject"      # subject | exemplar
 
-    # === Progression（V2 预留）===
+    # === Progression（V1 已接入，V2 调优）===
     topic_axis: str = ""              # form | function | causation | change | connection | perspective | responsibility
     difficulty_level: int = 1         # 1 | 2 | 3
 ```
@@ -393,11 +393,12 @@ def select_best_activity(
     interest_score: float,
     age: int,
     conversation_context: dict[str, Any],
+    progression_state: dict[str, Any] | None = None,
 ) -> SelectionResult:
     """
     三层选择流程的顶层 orchestration。
     返回 SelectionResult（含 activity、selector_score、decision、fallback_reason）。
-    V1 暂不接 progression_state（Phase 3 接入）。
+    progression_state 可选，用于 Layer 3 的 progression bonus。
     """
     child_tier = _age_to_tier(age)  # <=4 -> T0, <=6 -> T1, else T2
 
@@ -423,7 +424,7 @@ def select_best_activity(
 
     # ── Layer 3: Scoring & Ranking ──
     scored = [
-        (a, score_activity(a, interest_score, age, conversation_context))
+        (a, score_activity(a, interest_score, age, conversation_context, progression_state))
         for a in matched
     ]
     scored.sort(key=lambda x: x[1], reverse=True)
@@ -490,15 +491,15 @@ def select_best_activity(
 
 ### 8.3 无 Progression State 时的行为
 
-V1 没有 progression service 时：
-- `progression_state` 为 `None`
-- Layer 3 的 C 项（Progression Fit）得 0 分
-- 选择完全由兴趣分 + 连贯性 + 实用度驱动
-- 这是预期行为，不降级体验
+`progression_state` 是可选参数：
+- 传入 `None`（默认）→ Layer 3 的 C 项（Progression Fit）得 0 分
+- 传入 `{"target_axis": "form", "target_rung": 2}` → 按 axis/rung 匹配度打分（exact +20 / adjacent +15 / sibling +8）
+- 无论是否传入，选择都由兴趣分 + 连贯性 + 实用度驱动；progression 只是 bonus
+- 这是预期行为，不强制依赖 progression service
 
 ---
 
-## 9. 完整 Trace：橘猫 → 橘色探索
+## 9. 完整 Trace：橘猫 → 条纹探索
 
 ### 9.1 初始状态
 
@@ -510,89 +511,109 @@ Photo Detection:
   entity: "cat"
   entity_class: ["cat", "domestic_pet", "mammal", "animal"]
   extracted_properties:
-    - color = "orange"
     - pattern = "striped"
+    - texture = "soft"
 ```
 
-> **注意**：以下 Trace 使用**示意性 mock 活动**（如 `color_scout`、`pattern_hunt`）说明算法逻辑。实际 Catalog 包含 5 个真实 Tag Block 活动包：`polka_dot_patrol` (pattern)、`fluffy_expedition_dandelion` (texture)、`mood_changer_dog` (behavior)、`dream_whisperer_cat` (emotion)、`time_machine_dinosaur` (origin)。其中 `color` 和 `shape` 暂无对应活动，因此 V1 中探索 `appearance.color` 会触发 `no_eligible_activities` 降级到 CONTINUE。
+**Catalog 预扫描**（真实 Tag Block 活动包）：
 
-**Catalog 预扫描**（示意）：
-- `color` → `color_scout` (parameterized, wide) ✓
-- `pattern` → `pattern_hunt` (parameterized, needs patterned_thing) ✓
-- `shape` → 无活动 ✗
-- `texture` → 无活动 ✗
+| 角度 | 活动 | 检查 |
+|------|------|------|
+| `pattern` | `polka_dot_patrol` | parameterized, tier span [T0,T1,T2], T1=yes ✓ |
+| `texture` | `fluffy_expedition_dandelion` | parameterized, tier span [T0,T1], T1=true ✓ |
+| `color` | — | Catalog 中暂无 color 活动 ✗ |
+| `shape` | — | Catalog 中暂无 shape 活动 ✗ |
 
-`available_angles = {"color", "pattern"}`
+`available_angles = {"pattern", "texture"}`
 
-**话题选择**：系统只从 `available_angles` 里选 primary/fallback，最终选 `color` 为主话题，`pattern` 为 fallback。
+**话题选择**：系统只从 `available_angles` 里选 primary/fallback，最终选 `pattern` 为主话题，`texture` 为 fallback。
 
 ### 9.2 对话与兴趣分
 
 | Turn | 孩子 | Intent | 档案更新 |
 |------|------|--------|----------|
-| 1 | "橘色的！像橘子一样！" | INFORMATIVE | color: turns=1, elaboration=1 |
-| 2 | "橘色的皮球！还有橘色的花！" | INFORMATIVE | color: turns=2, elaboration=2 |
-| 3 | "为什么橘猫是橘色的呀？" | CURIOSITY (主动!) | color: turns=3, elaboration=3, initiated=1, question=1 |
-| 4 | "想！我想找橘色的玩具！" | EMOTIONAL + PLAY | color: turns=4, elaboration=4, emotional=1 |
+| 1 | "猫咪身上有条纹！" | INFORMATIVE | pattern: turns=1, elaboration=1 |
+| 2 | "像老虎一样的条纹！" | INFORMATIVE | pattern: turns=2, elaboration=2 |
+| 3 | "为什么有条纹呀？" | CURIOSITY (主动!) | pattern: turns=3, elaboration=3, initiated=1, question=1 |
+| 4 | "我想找更多有条纹的东西！" | EMOTIONAL + PLAY | pattern: turns=4, elaboration=4, emotional=1 |
 
-**Interest score = 83**（计算过程见 `cares-handoff-design.md` Section 3.3），触发 `HANDOFF_NOW`。
+**Interest score = 75**（计算过程见 `cares-handoff-design.md` Section 3.3），触发 `HANDOFF_NOW`。
 
 ### 9.3 活动选择
 
 **输入**：
-- `attribute_id` = "appearance.color"
-- `interest_score` = 83
+- `attribute_id` = "appearance.pattern"
+- `interest_score` = 75
 - `age` = 5 → "T1"
-- `conversation_context`: entity="cat", dominant_angle="color", secondary_angles=["pattern"], recent_activities=[]
+- `conversation_context`: entity="cat", dominant_angle="pattern", secondary_angles=["texture"], angles=["pattern", "texture"], recent_activities=[]
 
 **Layer 1: Eligibility**
 
-| 活动 | 检查 | 结果 |
-|------|------|------|
-| A `color_scout` | parameterized, needs `{matched_color}` → extracted `color=orange` ✓ | **ELIGIBLE** |
-| B `lion_voice` | bound, filter=[big_cat], cat ∉ big_cat | ✗ |
-| C `pattern_hunt` | parameterized, needs `{matched_pattern}` → extracted `pattern=striped` ✓ | **ELIGIBLE** |
-| D `cat_story` | bound, entity="cat" ✓, 但假设 tier_support[T1]=false | ✗ |
-| E `shape_sort` | parameterized, needs `{matched_shape}` → 无 shape | ✗ |
-| F `appearance_detective` | agnostic, always ✓ | **ELIGIBLE** |
+| 活动 | entity_binding | 检查 | 结果 |
+|------|---------------|------|------|
+| `polka_dot_patrol` | parameterized | needs `{matched_property}` → extracted `pattern=striped` ✓, T1 in span ✓, T1=yes ✓ | **ELIGIBLE** |
+| `fluffy_expedition_dandelion` | parameterized | needs `{matched_property}` → extracted `texture=soft` ✓, T1 in span ✓, T1=true ✓ | **ELIGIBLE** |
+| `mood_changer_dog` | bound | filter=[dog], cat ∉ dog | ✗ |
+| `dream_whisperer_cat` | bound | filter=[cat], cat ∈ cat ✓, T1 in span ✓, T1=true ✓ | **ELIGIBLE** |
+| `time_machine_dinosaur` | bound | filter=[dinosaur], cat ∉ dinosaur | ✗ |
 
-Eligible: A, C, F
+Eligible: `polka_dot_patrol`, `fluffy_expedition_dandelion`, `dream_whisperer_cat`
 
 **Layer 2: Angle Match**
 
-`attribute_id = "appearance.color"` → `_attribute_to_angles` → `["color"]`
+`attribute_id = "appearance.pattern"` → `_attribute_to_angles` → `["pattern"]`
 
-- A: observation_angle="color" → **EXACT MATCH**
-- C: angle="pattern" → 不匹配；bridge_prerequisites=["pattern", "texture"] → 无 overlap with ["color"]
-- F: angle="state" → 不匹配；bridge_prerequisites=[] → 无 overlap
+| 活动 | observation_angle | bridge_prerequisites_primary | 匹配结果 |
+|------|-------------------|------------------------------|----------|
+| `polka_dot_patrol` | "pattern" | `["pattern"]` | **EXACT MATCH** |
+| `fluffy_expedition_dandelion` | "texture" | `["texture"]` | 无 overlap → 不匹配 |
+| `dream_whisperer_cat` | "emotion" | `["emotion", "behavior"]` | 无 overlap → 不匹配 |
 
-Matched: A
+Matched: `polka_dot_patrol`
 
-**Layer 3: Scoring**（仅 A）
+**Layer 3: Scoring**（仅 `polka_dot_patrol`）
 
-- `interest_score=83` → profile: preferred_mechanics=["collect","compare","test","build"], preferred_game_styles=["field_experiment","creation","mystery_trail"], preferred_difficulty_level=3
-- A.mechanic="collect" → preferred → 25
-- A.game_style="field_experiment" → preferred → 15
-- A.difficulty_level=2, preferred=3 → diff=1 → 4
-- coherence: angle="color"==dominant="color" → 15; bridge=["color"]∩["color"]=1 → 5; entity_role="exemplar", entity_depth="property_focused" → 5
-- progression: None → 0
-- practical: duration=8≤10 → 4; materials=[] → 3; not recent → 3
+`interest_score=75` → mid profile:
+- preferred_mechanics=["compare", "collect", "sort", "voice"]
+- acceptable_mechanics=["observe", "narrate", "imagine"]
+- preferred_game_styles=["field_experiment", "voice_stage"]
+- acceptable_game_styles=["mystery_trail", "time_traveler", "quest_collector"]
+- preferred_difficulty_level=2
 
-**Total = 79**，超过阈值 60。
+| 维度 | 计算 | 得分 |
+|------|------|------|
+| **A. Interest-Profile Match (0-40)** | | |
+| mechanic="collect" | in preferred | **25** |
+| game_style="quest_collector" | in acceptable | **7** |
+| difficulty_level=2, preferred=2 | diff=0 | **8** |
+| **B. Coherence (0-30)** | | |
+| observation_angle="pattern" == dominant="pattern" | | **15** |
+| bridge primary=["pattern"] ∩ angles=["pattern","texture"] = 1 | min(1×5, 10) | **5** |
+| entity_role="exemplar" + entity_depth="property_focused" | | **5** |
+| **C. Progression (0-20)** | progression_state=None | **0** |
+| **D. Practical (0-3)** | not in recent_activities | **3** |
+| **Total** | | **68** |
 
-**选中 `color_scout`**。
+**Total = 68**，超过阈值 60。
+
+**选中 `polka_dot_patrol`**。
 
 ### 9.4 Runtime 渲染
 
+`polka_dot_patrol` 的 Tag Block 模板（原文）：
+
 ```yaml
 activity_signature:
-  focal_attribute: "{matched_color}"
-  preview_prompt: "You noticed the {color} of the {entity}. Let's go find more {color} things together."
-  role_pivot_note: "The {entity} was our subject during the chat; now it becomes an example of {color}."
+  focal_attribute: "polka_dots"
+  preview_prompt: "You noticed the polka dots on the {entity}. Let's find more polka-dotted things!"
+  role_pivot_note: |
+    The {entity} was our subject during the chat; now it becomes an
+    EXAMPLE of polka-dot pattern — we're going to find more polka-dotted things.
 ```
 
-渲染后：
-> "你注意到这只猫咪是橘色的。刚才我们在聊猫咪，现在它变成了'橘色'的一个例子。我们去找找看，还有哪些东西也是橘色的吧！"
+渲染后（将 `{entity}` 替换为 "cat"，将概念从 "polka dots" 泛化为 "pattern"）：
+
+> "你注意到这只猫咪身上有条纹。刚才我们在聊猫咪，现在它变成了'条纹图案'的一个例子。我们去找找看，还有哪些东西也有条纹吧！"
 
 `[ACTIVITY_READY]`
 
@@ -627,17 +648,19 @@ activity_signature:
 
 **Commit range:** `50891e7..df0613b` on `main`
 
-### Phase 2: Catalog 驱动集成（待实现）
+### Phase 2: Catalog 驱动集成 ✅ IMPLEMENTED (2026-05-15)
 
-- [ ] 在 `select_attribute_profile()` 中接入 `get_explorable_angles()`
-- [ ] 在 `detect_topic_switch()` 中接入 angle 可用性验证
-- [ ] 在 `/api/start` 中预计算 `available_angles` 并存入 session state
+- [x] 在 `select_attribute_profile()` 中接入 `get_explorable_angles()`
+- [x] 在 `detect_topic_switch()` 中接入 angle 可用性验证
+- [x] 在 `/api/start` 中预计算 `available_angles` 并存入 session state
 
-### Phase 3: Progression 对接（V2）
+**Commit:** `b61e7b0` on `main`
 
-- [ ] 接入 `progression_state` 作为 Layer 3 bonus
-- [ ] 实现 sibling-axis routing
-- [ ] 根据运行数据调整各 score 权重
+### Phase 3: Progression 对接 ✅ IMPLEMENTED (2026-05-15)
+
+- [x] 接入 `progression_state` 作为 Layer 3 bonus
+- [x] 实现 sibling-axis routing（`_SIBLING_AXES` + `_is_sibling_axis()`）
+- [ ] 根据运行数据调整各 score 权重（V2 调优）
 
 ---
 

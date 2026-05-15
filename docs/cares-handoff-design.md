@@ -611,11 +611,12 @@ def select_best_activity(
     interest_score: float,       # 来自 CARES，0-100
     age: int,                    # 来自 Session
     conversation_context: dict,  # dominant_angle, secondary_angles, entity_info, extracted_properties, recent_activities
+    progression_state: dict | None = None,  # optional: target_axis, target_rung
 ) -> SelectionResult:
     """
     三层选择：Eligibility → Angle Match → Scoring & Ranking。
     返回 SelectionResult（含 activity、selector_score、decision、fallback_reason）。
-    V1 暂不接 progression_state（Phase 3 接入）。
+    progression_state 可选，用于 Layer 3 Progression Fit bonus（exact +20 / adjacent +15 / sibling +8）。
     详见 activity-selection-strategy.md Section 6.4。
     """
 ```
@@ -637,10 +638,11 @@ def _build_context() -> dict[str, Any]:
         "recent_activities": [],
         "entity_info": None,
         "extracted_properties": None,
+        # "progression_state": {"target_axis": "form", "target_rung": 2},  # 可选
     }
 ```
 
-**注意**：V1 中 `entity_info` 和 `extracted_properties` 默认传 `None`，Parameterized 活动在未指定 extracted_properties 时默认可通过 Eligibility。Progression 状态尚未接入（Phase 3）。
+**注意**：V1 中 `entity_info` 和 `extracted_properties` 默认传 `None`，Parameterized 活动在未指定 extracted_properties 时默认可通过 Eligibility。`progression_state` 已接入（2026-05-15），可选传入 `{"target_axis": "form", "target_rung": 2}` 等活动选择加分。
 
 `ActivityDefinition` 数据模型、`_interest_to_profile()` 映射、`score_activity()` 公式、降级链、Progression 对接策略、完整橘猫 Trace 等详见 `activity-selection-strategy.md`。
 
@@ -1099,8 +1101,8 @@ else:
 - [x] 更新 `ActivityDefinition` dataclass（删除 `activity_type`，新增 Tag Block 字段：`observation_angle`, `mechanic`, `game_style`, `entity_binding`, `entity_class_filter`, `tier_support`, `bridge_prerequisites`, `entity_role`, `topic_axis`, `difficulty_level`）
 - [x] 实现 `_ATTRIBUTE_TO_ANGLE` 映射表
 - [x] 实现 `get_explorable_angles()` 并在 `select_attribute_profile()` 中接入（过滤掉 catalog 不支持的属性）
-- [ ] 在 `detect_topic_switch()` 中接入 angle 可用性验证
-- [ ] 在 `/api/start` 中预计算 `available_angles` 并存入 session state
+- [x] 在 `detect_topic_switch()` 中接入 angle 可用性验证
+- [x] 在 `/api/start` 中预计算 `available_angles` 并存入 session state
 - [x] 单元测试：验证 eligibility + scoring + 降级链（参考 `activity-selection-strategy.md` Section 9 橘猫 Trace）
 - [x] 将 `evaluate_handoff` 中的 `get_activity_for_attribute` 替换为 `select_best_activity`
 
@@ -1126,8 +1128,11 @@ else:
 | `paixueji_app.py` | 接入角度选择 (Phase 0) + CARES 评估 (Phase 1) | 每轮选择下一个角度、更新兴趣档案、评估 handoff、根据决策调用对应 builder |
 | `stream/response_generators.py` | 分割字符串修复 (Phase 1 重构) | `"TRANSITION SIGNAL"` → `"---\n\n[SYSTEM CONTEXT]"`，适配新 builder 结构 |
 | `paixueji_app.py` | `turn_count >= 3` 和 quote 验证 (Phase 3 TODO) | 仍作为安全网存在，CARES 决策优先 |
-| `activities/__init__.py` | **已实现 (Phase 2)** | 删除 `activity_type`，新增 Tag Block 字段（`mechanic`, `game_style`, `observation_angle` 等），三层选择算法 |
+| `activities/__init__.py` | **已实现 (Phase 2)** | 删除 `activity_type`，新增 Tag Block 字段（`mechanic`, `game_style`, `observation_angle` 等），三层选择算法；新增 `get_explorable_angles()`、`progression_state` 支持、sibling-axis routing |
 | `stream/cares_handoff.py` | **已实现 (Phase 2)** | `evaluate_handoff` 替换为 `select_best_activity`，无匹配时降级到 CONTINUE |
+| `attribute_activity.py` | **已实现 (Phase 2)** | `select_attribute_profile()` 接入 `available_angles` 过滤，保证只探索 catalog 能支撑的属性 |
+| `stream/topic_switch_detector.py` | **已实现 (Phase 2)** | `detect_topic_switch()` 验证 target angle 是否在 `available_angles` 中，拒绝 catalog 不支持的切换 |
+| `paixueji_app.py` | **已实现 (Phase 2)** | `/api/start` 预计算 `available_angles`，线程通过属性选择和话题切换 |
 | `switch_attribute_topic()` | 待 Phase 3 | 切换时将旧属性加入新属性 fallbacks，支持 drift 回来检测 |
 
 ---
