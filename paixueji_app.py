@@ -13,6 +13,7 @@ import threading
 import os
 import yaml
 import re
+from types import SimpleNamespace
 from typing import Optional
 
 from google import genai
@@ -159,6 +160,12 @@ from stream import (
     select_hook_type,
     select_next_angle,
     EXPLORATION_ANGLES,
+)
+from stream.cares_handoff import (
+    on_attribute_turn,
+    evaluate_handoff,
+    compute_attribute_interest_score,
+    HandoffDecision,
 )
 from activities import get_activity_for_attribute
 from stream.errors import build_sse_error_payload
@@ -1473,6 +1480,33 @@ def continue_conversation():
                     async def stream_attribute_activity():
                         needs_followup = intent_type_lower not in INTENTS_WITHOUT_FOLLOWUP
 
+                        # CARES Phase 1: update interest record for this turn
+                        switch_result_for_cares = SimpleNamespace(
+                            should_switch=should_switch,
+                            target_attribute_id=switch_target_id,
+                        )
+                        on_attribute_turn(
+                            assistant=assistant,
+                            child_input=child_input,
+                            intent_type=intent_type_lower.upper(),
+                            action_subtype=assistant.action_subtype,
+                            switch_result=switch_result_for_cares,
+                            turn_index=assistant.attribute_state.turn_count,
+                        )
+
+                        # Compute current interest score for angle unlocking
+                        current_attr_id = assistant.attribute_state.profile.attribute_id
+                        current_interest_record = assistant.attribute_interest_records.get(current_attr_id)
+                        current_interest_score = (
+                            compute_attribute_interest_score(current_interest_record)
+                            if current_interest_record else 0.0
+                        )
+
+                        # Evaluate handoff decision
+                        decision, decision_reason, decision_meta = evaluate_handoff(
+                            assistant, switch_result_for_cares
+                        )
+
                         messages = prepare_messages_for_streaming(
                             assistant.conversation_history.copy(),
                             age_prompt,
@@ -1486,9 +1520,15 @@ def continue_conversation():
                         selected_angle = select_next_angle(
                             explored_angle_ids=assistant.attribute_state.explored_angle_ids,
                             dimension=dimension,
-                            interest_score=0,  # Phase 0: no scoring yet; Phase 1 will pass real score
+                            interest_score=current_interest_score,
                         )
                         assistant.attribute_state.current_angle_id = selected_angle["angle_id"]
+
+                        # Build list of explored attributes for display
+                        explored_attributes = list(assistant.attribute_interest_records.keys())
+                        total_turns = sum(
+                            r.turns_explored for r in assistant.attribute_interest_records.values()
+                        )
 
                         # Build angle-aware response guide
                         soft_guide = _build_angle_aware_guide(
@@ -1498,6 +1538,11 @@ def continue_conversation():
                             selected_angle=selected_angle,
                             explored_angle_ids=assistant.attribute_state.explored_angle_ids,
                             turn_count=assistant.attribute_state.turn_count,
+                            current_score=current_interest_score,
+                            total_turns=total_turns,
+                            explored_attributes=explored_attributes,
+                            decision=decision,
+                            decision_meta=decision_meta,
                         )
 
                         response_generator = generate_attribute_activation_response_stream(
@@ -1567,7 +1612,7 @@ def continue_conversation():
                                 age=assistant.age or 6,
                                 config=assistant.config,
                                 client=assistant.client,
-                                attribute_soft_guide=soft_guide.split("TRANSITION SIGNAL for [ACTIVITY_READY]:")[0].strip() if soft_guide else soft_guide,
+                                attribute_soft_guide=soft_guide.split("---\n\n[SYSTEM CONTEXT]")[0].strip() if soft_guide else soft_guide,
                                 response_text="",
                                 focus_topic=f"the '{attribute_label}' attribute",
                             )
