@@ -11,6 +11,9 @@ from pydantic import BaseModel, Field
 from loguru import logger
 from google.genai.types import GenerateContentConfig
 
+from stream.llm_client import llm_generate
+from stream.errors import RateLimitError
+
 
 class ConversationThemeClassificationResult(BaseModel):
     """Result of classifying a conversation into an IB PYP theme."""
@@ -80,13 +83,15 @@ async def classify_conversation_to_theme(
         )
 
         logger.info(f"[THEME_CLASSIFY] Classifying conversation theme for: {object_name}")
-        response = await client.aio.models.generate_content(
+        response = await llm_generate(
+            client=client,
             model=config["model_name"],
             contents=prompt,
             config=GenerateContentConfig(
                 response_mime_type="application/json",
                 temperature=0.1,
             ),
+            call_name="classify_theme",
         )
 
         if not response.text:
