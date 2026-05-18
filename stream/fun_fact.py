@@ -24,6 +24,8 @@ from google.genai.types import Tool, GoogleSearch
 from loguru import logger
 
 import paixueji_prompts
+from stream.llm_client import llm_generate
+from stream.errors import RateLimitError
 
 # Module-level cache: object_name (lowercased) -> full structured result
 _fun_fact_cache: dict[str, dict] = {}
@@ -134,7 +136,8 @@ async def generate_fun_fact(
         logger.info(f"[FUN_FACT] Step 1: Grounded research for '{object_name}' (model={grounding_model})")
         t0 = time.time()
 
-        grounding_response = await client.aio.models.generate_content(
+        grounding_response = await llm_generate(
+            client=client,
             model=grounding_model,
             contents=grounding_prompt,
             config={
@@ -142,7 +145,8 @@ async def generate_fun_fact(
                 "temperature": 0.3,
                 "max_output_tokens": 1000,
                 "safety_settings": safety_settings,
-            }
+            },
+            call_name="fun_fact_step1",
         )
 
         t1 = time.time()
@@ -153,6 +157,8 @@ async def generate_fun_fact(
             logger.warning(f"[FUN_FACT] Grounding returned empty text for '{object_name}'")
             return empty_fallback
 
+    except RateLimitError:
+        raise
     except Exception as e:
         logger.error(f"[FUN_FACT] Step 1 (grounding) failed for '{object_name}': {e}")
         return empty_fallback
@@ -168,7 +174,8 @@ async def generate_fun_fact(
         logger.info(f"[FUN_FACT] Step 2: JSON structuring for '{object_name}'")
         t0 = time.time()
 
-        structuring_response = await client.aio.models.generate_content(
+        structuring_response = await llm_generate(
+            client=client,
             model=grounding_model,
             contents=structuring_prompt,
             config={
@@ -176,7 +183,8 @@ async def generate_fun_fact(
                 "temperature": 0.1,
                 "max_output_tokens": 800,
                 "safety_settings": safety_settings,
-            }
+            },
+            call_name="fun_fact_step2",
         )
 
         t1 = time.time()
@@ -210,6 +218,8 @@ async def generate_fun_fact(
         )
         return result
 
+    except RateLimitError:
+        raise
     except json.JSONDecodeError as e:
         logger.error(f"[FUN_FACT] Step 2 JSON parse error for '{object_name}': {e}")
         return empty_fallback
