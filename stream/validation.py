@@ -221,12 +221,16 @@ async def classify_pre_anchor_semantic_reply(
     )
 
     try:
-        response = await generate_content(
+        response = await llm_generate(
+            client=client,
             model=config["model_name"],
             contents=prompt,
             config={"temperature": 0.0, "max_output_tokens": 80},
+            call_name="classify_pre_anchor",
         )
         payload, _, _ = extract_json_object(response.text or "")
+    except RateLimitError:
+        raise
     except Exception:
         payload = None
 
@@ -312,12 +316,16 @@ async def validate_bridge_activation_kb_question(
     )
 
     try:
-        response = await assistant.client.aio.models.generate_content(
+        response = await llm_generate(
+            client=assistant.client,
             model=assistant.config["model_name"],
             contents=prompt,
             config={"temperature": 0.0, "max_output_tokens": 80},
+            call_name="validate_kb_question",
         )
         payload = json.loads(response.text or "{}")
+    except RateLimitError:
+        raise
     except Exception:
         payload = {}
 
@@ -367,12 +375,16 @@ async def validate_bridge_activation_answer(
     )
 
     try:
-        response = await assistant.client.aio.models.generate_content(
+        response = await llm_generate(
+            client=assistant.client,
             model=assistant.config["model_name"],
             contents=prompt,
             config={"temperature": 0.0, "max_output_tokens": 80},
+            call_name="validate_answer",
         )
         payload = json.loads(response.text or "{}")
+    except RateLimitError:
+        raise
     except Exception:
         payload = {}
 
