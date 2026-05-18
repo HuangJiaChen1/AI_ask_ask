@@ -509,6 +509,66 @@ def test_rejected_handoff_preserves_followup_question(client, mock_gemini_client
     assert final["attribute_lane_active"] is True
 
 
+def test_handoff_now_without_marker_skips_followup_generator(client, mock_gemini_client):
+    """Regression for duplication bug: when HANDOFF_NOW is decided but the
+    response generator does NOT emit [ACTIVITY_READY], the follow-up question
+    generator must NOT run with the same handoff guide.
+
+    Before the fix, the follow-up generator would produce a second bridge
+    message that got concatenated with the response, causing sentence duplication.
+    """
+    from stream.cares_handoff import HandoffDecision
+    from stream import question_generators
+
+    start = client.post(
+        "/api/start",
+        json={"age": 6, "object_name": "cat", "attribute_pipeline_enabled": True},
+    )
+    session_id = final_chunk(start)["session_id"]
+    # Satisfy MIN_ACTIVITY_READY_TURNS so handoff is not rejected for insufficient turns
+    paixueji_app.sessions[session_id].attribute_state.turn_count = 3
+
+    set_intent(mock_gemini_client, "CORRECT_ANSWER")
+
+    # Response generator emits bridge text WITHOUT [ACTIVITY_READY]
+    mock_gemini_client.aio.models.generate_content_stream.side_effect = lambda *a, **kw: _make_stream(
+        "Let's find polka-dotted things!"
+    )
+
+    fake_activity = MagicMock()
+    fake_activity.name = "Polka Dot Patrol"
+    fake_activity.description = "Find spotted things"
+
+    with patch(
+        "paixueji_app.evaluate_handoff",
+        return_value=(
+            HandoffDecision.HANDOFF_NOW,
+            "current_best:60",
+            {"target_attribute": "appearance.covering", "activity": fake_activity, "readiness_score": 60},
+        ),
+    ):
+        with patch.object(
+            question_generators, "ask_followup_question_stream", new_callable=AsyncMock
+        ) as mock_followup:
+            response = client.post(
+                "/api/continue",
+                json={"session_id": session_id, "child_input": "nope"},
+            )
+
+    chunk = final_chunk(response)
+    # Follow-up generator must NOT be invoked for HANDOFF_NOW
+    assert mock_followup.call_count == 0, (
+        f"ask_followup_question_stream was called {mock_followup.call_count} times "
+        f"for HANDOFF_NOW — it should be skipped entirely."
+    )
+    # Response should contain the bridge text but NOT duplicated
+    assert "Let's find polka-dotted things!" in chunk["response"]
+    # No duplication: the same text should not appear twice
+    assert chunk["response"].count("Let's find polka-dotted things!") == 1, (
+        f"Response contains duplicated text: {chunk['response']}"
+    )
+
+
 def test_attribute_continue_topic_switch_rematches_activity(client, mock_gemini_client):
     """When topic switch detector fires during attribute lane, activity re-match must not crash on undefined age."""
     forced_profile = AttributeProfile(

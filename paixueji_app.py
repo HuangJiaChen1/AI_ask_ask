@@ -1916,17 +1916,23 @@ def continue_conversation():
                         activity_marker_rejected_reason = response_rejected_reason
                         full_followup = ""
 
-                        if needs_followup and not response_ready_valid:
+                        # Only generate follow-up for CONTINUE modes.
+                        # HANDOFF_NOW, EXIT_LANE, and REENGAGE guides instruct the LLM
+                        # to produce a complete message in one shot; running the follow-up
+                        # generator with the same guide produces a second competing bridge
+                        # that gets concatenated with the response, causing duplication.
+                        if (
+                            needs_followup
+                            and not response_ready_valid
+                            and decision in (HandoffDecision.CONTINUE, HandoffDecision.CONTINUE_SWITCH)
+                        ):
                             messages_with_response = messages + [
                                 {"role": "user", "content": child_input},
                                 {"role": "assistant", "content": full_response},
                             ]
-                            # Non-CONTINUE modes need the full guide so follow-up
-                            # questions (if any) respect mode instructions.
                             followup_soft_guide = (
-                                soft_guide
-                                if decision in (HandoffDecision.HANDOFF_NOW, HandoffDecision.EXIT_LANE, HandoffDecision.REENGAGE)
-                                else (soft_guide.split("---\n\n[SYSTEM CONTEXT]")[0].strip() if soft_guide else soft_guide)
+                                soft_guide.split("---\n\n[SYSTEM CONTEXT]")[0].strip()
+                                if soft_guide else soft_guide
                             )
                             followup_generator = ask_followup_question_stream(
                                 messages=messages_with_response,
