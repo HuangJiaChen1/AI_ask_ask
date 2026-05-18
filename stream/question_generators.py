@@ -19,6 +19,7 @@ from loguru import logger
 from schema import TokenUsage
 import paixueji_prompts
 from .errors import raise_if_rate_limited
+from .llm_client import llm_generate_stream
 from .utils import (
     clean_messages_for_api,
     convert_messages_to_gemini_format,
@@ -113,7 +114,6 @@ async def ask_introduction_question_stream(
     full_response = ""
     token_usage = None
 
-    stream = None
     try:
         logger.debug(f"Sending {len(contents)} messages to Gemini API")
 
@@ -124,16 +124,6 @@ async def ask_introduction_question_stream(
             system_instruction=system_instruction if system_instruction else None
         )
 
-        # Call streaming API
-        stream = await client.aio.models.generate_content_stream(
-            model=config["model_name"],
-            contents=contents,
-            config=gen_config
-        )
-
-        # Log stream type for debugging
-        logger.debug(f"Stream object type: {type(stream).__name__}")
-
         # Prepare decision info (no switching in introduction)
         decision_info = {
             'new_object_name': None,
@@ -143,7 +133,13 @@ async def ask_introduction_question_stream(
 
         # Yield chunks as they arrive
         chunk_count = 0
-        async for chunk in stream:
+        async for chunk in llm_generate_stream(
+            client=client,
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config,
+            call_name="ask_introduction_question",
+        ):
             if chunk.text:
                 chunk_count += 1
                 full_response += chunk.text
@@ -167,14 +163,6 @@ async def ask_introduction_question_stream(
             }
             yield ("", token_usage, full_response, decision_info)
         return
-    finally:
-        # Always attempt cleanup via deletion
-        if stream is not None:
-            try:
-                del stream
-                logger.debug('Cleaned up stream via del in finally block')
-            except:
-                pass
 
     duration = time.time() - start_time
     logger.info(
@@ -264,19 +252,19 @@ async def ask_followup_question_stream(
 
     full_response = ""
     token_usage = None
-    stream = None
     try:
         gen_config = GenerateContentConfig(
             temperature=config.get("temperature", 0.3),
             max_output_tokens=config.get("max_tokens", 2000),
             system_instruction=system_instruction if system_instruction else None
         )
-        stream = await client.aio.models.generate_content_stream(
+        async for chunk in llm_generate_stream(
+            client=client,
             model=config["model_name"],
             contents=contents,
-            config=gen_config
-        )
-        async for chunk in stream:
+            config=gen_config,
+            call_name="ask_followup_question",
+        ):
             if chunk.text:
                 full_response += chunk.text
                 yield (chunk.text, None, full_response)
@@ -287,12 +275,6 @@ async def ask_followup_question_stream(
         if full_response:
             yield ("", token_usage, full_response)
         return
-    finally:
-        if stream is not None:
-            try:
-                del stream
-            except:
-                pass
 
     duration = time.time() - start_time
     logger.info(
@@ -336,24 +318,24 @@ async def ask_attribute_intro_stream(
 
     full_response = ""
     token_usage = None
-    stream = None
     try:
         gen_config = GenerateContentConfig(
             temperature=config.get("temperature", 0.3),
             max_output_tokens=config.get("max_tokens", 2000),
             system_instruction=system_instruction if system_instruction else None,
         )
-        stream = await client.aio.models.generate_content_stream(
-            model=config["model_name"],
-            contents=contents,
-            config=gen_config,
-        )
         decision_info = {
             "new_object_name": None,
             "detected_object_name": None,
             "switch_decision_reasoning": None,
         }
-        async for chunk in stream:
+        async for chunk in llm_generate_stream(
+            client=client,
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config,
+            call_name="ask_attribute_intro",
+        ):
             if chunk.text:
                 full_response += chunk.text
                 yield (chunk.text, None, full_response, decision_info)
@@ -363,12 +345,6 @@ async def ask_attribute_intro_stream(
         if full_response:
             yield ("", token_usage, full_response, {})
         return
-    finally:
-        if stream is not None:
-            try:
-                del stream
-            except Exception:
-                pass
 
     yield ("", token_usage, full_response, {})
 
@@ -398,24 +374,24 @@ async def ask_category_intro_stream(
 
     full_response = ""
     token_usage = None
-    stream = None
     try:
         gen_config = GenerateContentConfig(
             temperature=config.get("temperature", 0.3),
             max_output_tokens=config.get("max_tokens", 2000),
             system_instruction=system_instruction if system_instruction else None,
         )
-        stream = await client.aio.models.generate_content_stream(
-            model=config["model_name"],
-            contents=contents,
-            config=gen_config,
-        )
         decision_info = {
             "new_object_name": None,
             "detected_object_name": None,
             "switch_decision_reasoning": None,
         }
-        async for chunk in stream:
+        async for chunk in llm_generate_stream(
+            client=client,
+            model=config["model_name"],
+            contents=contents,
+            config=gen_config,
+            call_name="ask_category_intro",
+        ):
             if chunk.text:
                 full_response += chunk.text
                 yield (chunk.text, None, full_response, decision_info)
@@ -425,11 +401,5 @@ async def ask_category_intro_stream(
         if full_response:
             yield ("", token_usage, full_response, {})
         return
-    finally:
-        if stream is not None:
-            try:
-                del stream
-            except Exception:
-                pass
 
     yield ("", token_usage, full_response, {})
