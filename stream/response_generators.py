@@ -16,6 +16,7 @@ from loguru import logger
 from schema import TokenUsage
 import paixueji_prompts
 from .errors import raise_if_rate_limited
+from .llm_client import llm_generate_stream
 from .utils import clean_messages_for_api, convert_messages_to_gemini_format
 
 
@@ -100,7 +101,6 @@ async def generate_intent_response_stream(
 
     full_response = ""
     token_usage = None
-    stream = None
 
     try:
         gen_config = GenerateContentConfig(
@@ -109,13 +109,13 @@ async def generate_intent_response_stream(
             system_instruction=system_instruction if system_instruction else None
         )
 
-        stream = await client.aio.models.generate_content_stream(
+        async for chunk in llm_generate_stream(
+            client=client,
             model=config["model_name"],
             contents=contents,
-            config=gen_config
-        )
-
-        async for chunk in stream:
+            config=gen_config,
+            call_name="generate_intent_response",
+        ):
             if chunk.text:
                 full_response += chunk.text
                 yield (chunk.text, None, full_response)
@@ -127,12 +127,6 @@ async def generate_intent_response_stream(
         if full_response:
             yield ("", token_usage, full_response)
         return
-    finally:
-        if stream is not None:
-            try:
-                del stream
-            except Exception:
-                pass
 
     duration = time.time() - start_time
     logger.info(f"generate_intent_response_stream completed | intent={intent_lower}, duration={duration:.3f}s, length={len(full_response)}")
@@ -182,7 +176,6 @@ async def generate_classification_fallback_stream(
 
     full_response = ""
     token_usage = None
-    stream = None
 
     try:
         gen_config = GenerateContentConfig(
@@ -191,13 +184,13 @@ async def generate_classification_fallback_stream(
             system_instruction=system_instruction if system_instruction else None
         )
 
-        stream = await client.aio.models.generate_content_stream(
+        async for chunk in llm_generate_stream(
+            client=client,
             model=config["model_name"],
             contents=contents,
-            config=gen_config
-        )
-
-        async for chunk in stream:
+            config=gen_config,
+            call_name="generate_classification_fallback",
+        ):
             if chunk.text:
                 full_response += chunk.text
                 yield (chunk.text, None, full_response)
@@ -212,12 +205,6 @@ async def generate_classification_fallback_stream(
         if full_response:
             yield ("", token_usage, full_response)
         return
-    finally:
-        if stream is not None:
-            try:
-                del stream
-            except Exception:
-                pass
 
     duration = time.time() - start_time
     logger.info(
@@ -306,19 +293,19 @@ async def generate_attribute_activation_response_stream(
 
     full_response = ""
     token_usage = None
-    stream = None
     try:
         gen_config = GenerateContentConfig(
             temperature=config.get("temperature", 0.7),
             max_output_tokens=config.get("max_tokens", 500),
             system_instruction=system_instruction if system_instruction else None,
         )
-        stream = await client.aio.models.generate_content_stream(
+        async for chunk in llm_generate_stream(
+            client=client,
             model=config["model_name"],
             contents=contents,
             config=gen_config,
-        )
-        async for chunk in stream:
+            call_name="generate_attribute_activation_response",
+        ):
             if chunk.text:
                 full_response += chunk.text
                 yield (chunk.text, None, full_response)
@@ -328,12 +315,6 @@ async def generate_attribute_activation_response_stream(
         if full_response:
             yield ("", token_usage, full_response)
         return
-    finally:
-        if stream is not None:
-            try:
-                del stream
-            except Exception:
-                pass
 
     yield ("", token_usage, full_response)
 
@@ -368,19 +349,19 @@ async def generate_category_activation_response_stream(
 
     full_response = ""
     token_usage = None
-    stream = None
     try:
         gen_config = GenerateContentConfig(
             temperature=config.get("temperature", 0.7),
             max_output_tokens=config.get("max_tokens", 500),
             system_instruction=system_instruction if system_instruction else None,
         )
-        stream = await client.aio.models.generate_content_stream(
+        async for chunk in llm_generate_stream(
+            client=client,
             model=config["model_name"],
             contents=contents,
             config=gen_config,
-        )
-        async for chunk in stream:
+            call_name="generate_category_activation_response",
+        ):
             if chunk.text:
                 full_response += chunk.text
                 yield (chunk.text, None, full_response)
@@ -390,12 +371,6 @@ async def generate_category_activation_response_stream(
         if full_response:
             yield ("", token_usage, full_response)
         return
-    finally:
-        if stream is not None:
-            try:
-                del stream
-            except Exception:
-                pass
 
     yield ("", token_usage, full_response)
 
@@ -440,7 +415,6 @@ async def generate_topic_switch_response_stream(
 
     full_response = ""
     token_usage = None
-    stream = None
 
     try:
         gen_config = GenerateContentConfig(
@@ -449,13 +423,13 @@ async def generate_topic_switch_response_stream(
             system_instruction=system_instruction if system_instruction else None
         )
 
-        stream = await client.aio.models.generate_content_stream(
+        async for chunk in llm_generate_stream(
+            client=client,
             model=config["model_name"],
             contents=contents,
-            config=gen_config
-        )
-
-        async for chunk in stream:
+            config=gen_config,
+            call_name="generate_topic_switch_response",
+        ):
             if chunk.text:
                 full_response += chunk.text
                 yield (chunk.text, None, full_response)
@@ -467,12 +441,6 @@ async def generate_topic_switch_response_stream(
         if full_response:
             yield ("", token_usage, full_response)
         return
-    finally:
-        if stream is not None:
-            try:
-                del stream
-            except Exception:
-                pass
 
     duration = time.time() - start_time
     logger.info(f"generate_topic_switch_response_stream completed | duration={duration:.3f}s, length={len(full_response)}")
@@ -517,7 +485,6 @@ async def generate_bridge_support_response_stream(
 
     full_response = ""
     token_usage = None
-    stream = None
 
     try:
         gen_config = GenerateContentConfig(
@@ -526,13 +493,13 @@ async def generate_bridge_support_response_stream(
             system_instruction=system_instruction if system_instruction else None,
         )
 
-        stream = await client.aio.models.generate_content_stream(
+        async for chunk in llm_generate_stream(
+            client=client,
             model=config["model_name"],
             contents=contents,
             config=gen_config,
-        )
-
-        async for chunk in stream:
+            call_name="generate_bridge_support_response",
+        ):
             if chunk.text:
                 full_response += chunk.text
                 yield (chunk.text, None, full_response)
@@ -547,12 +514,6 @@ async def generate_bridge_support_response_stream(
         if full_response:
             yield ("", token_usage, full_response)
         return
-    finally:
-        if stream is not None:
-            try:
-                del stream
-            except Exception:
-                pass
 
     duration = time.time() - start_time
     logger.info(
@@ -606,7 +567,6 @@ async def generate_bridge_activation_response_stream(
 
     full_response = ""
     token_usage = None
-    stream = None
 
     try:
         gen_config = GenerateContentConfig(
@@ -615,13 +575,13 @@ async def generate_bridge_activation_response_stream(
             system_instruction=system_instruction if system_instruction else None,
         )
 
-        stream = await client.aio.models.generate_content_stream(
+        async for chunk in llm_generate_stream(
+            client=client,
             model=config["model_name"],
             contents=contents,
             config=gen_config,
-        )
-
-        async for chunk in stream:
+            call_name="generate_bridge_activation_response",
+        ):
             if chunk.text:
                 full_response += chunk.text
                 yield (chunk.text, None, full_response)
@@ -637,12 +597,6 @@ async def generate_bridge_activation_response_stream(
         if full_response:
             yield ("", token_usage, full_response)
         return
-    finally:
-        if stream is not None:
-            try:
-                del stream
-            except Exception:
-                pass
 
     duration = time.time() - start_time
     logger.info(
@@ -685,7 +639,6 @@ async def generate_bridge_retry_response_stream(
 
     full_response = ""
     token_usage = None
-    stream = None
 
     try:
         gen_config = GenerateContentConfig(
@@ -694,13 +647,13 @@ async def generate_bridge_retry_response_stream(
             system_instruction=system_instruction if system_instruction else None,
         )
 
-        stream = await client.aio.models.generate_content_stream(
+        async for chunk in llm_generate_stream(
+            client=client,
             model=config["model_name"],
             contents=contents,
             config=gen_config,
-        )
-
-        async for chunk in stream:
+            call_name="generate_bridge_retry_response",
+        ):
             if chunk.text:
                 full_response += chunk.text
                 yield (chunk.text, None, full_response)
@@ -714,12 +667,6 @@ async def generate_bridge_retry_response_stream(
         if full_response:
             yield ("", token_usage, full_response)
         return
-    finally:
-        if stream is not None:
-            try:
-                del stream
-            except Exception:
-                pass
 
     duration = time.time() - start_time
     logger.info(

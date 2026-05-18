@@ -13,6 +13,8 @@ from loguru import logger
 from activities import attribute_to_angles
 from schema import TokenUsage
 from stream.utils import clean_messages_for_api, convert_messages_to_gemini_format
+from .llm_client import llm_generate
+from .errors import RateLimitError
 
 
 # Extract JSON from model output even if wrapped in markdown fences.
@@ -87,10 +89,12 @@ Output ONLY valid JSON (no markdown fences, no extra text):
             max_output_tokens=150,
             system_instruction=system_instruction if system_instruction else None,
         )
-        response = await client.aio.models.generate_content(
+        response = await llm_generate(
+            client=client,
             model=config["model_name"],
             contents=contents,
             config=gen_config,
+            call_name="detect_topic_switch",
         )
         raw_text = response.text or ""
 
@@ -120,7 +124,8 @@ Output ONLY valid JSON (no markdown fences, no extra text):
             return True, target_id, reason
 
         return False, None, reason or "no_switch_detected"
-
+    except RateLimitError:
+        raise
     except json.JSONDecodeError as exc:
         logger.warning("[TOPIC_SWITCH_DETECTOR] JSON parse error: %s | raw=%r", exc, raw_text[:200])
         return False, None, f"json_error: {exc}"

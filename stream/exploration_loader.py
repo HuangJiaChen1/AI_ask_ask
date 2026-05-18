@@ -12,6 +12,9 @@ from functools import lru_cache
 
 import yaml
 
+from stream.llm_client import llm_generate
+from stream.errors import RateLimitError
+
 _YAML_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "..", "exploration_categories.yaml"
 )
@@ -203,16 +206,20 @@ async def infer_domain(
             object_name=surface_object_name,
             supported_domains=", ".join(ALL_DOMAINS),
         )
-        response = await client.aio.models.generate_content(
+        response = await llm_generate(
+            client=client,
             model=(config or {}).get("model_name"),
             contents=prompt,
             config={"temperature": 0.0, "max_output_tokens": 60},
+            call_name="infer_domain",
         )
         payload, _kind, _recovered = extract_json_object(response.text or "")
         if isinstance(payload, dict):
             domain = payload.get("domain")
             if domain and domain in ALL_DOMAINS:
                 return domain
+    except RateLimitError:
+        raise
     except Exception:
         pass
 

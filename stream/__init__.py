@@ -25,6 +25,12 @@ from .utils import (
     SLOW_LLM_CALL_THRESHOLD
 )
 
+# LLM client wrappers (unified retry + tracing)
+from .llm_client import (
+    llm_generate,
+    llm_generate_stream,
+)
+
 # Response generators (intent-based, 9-node architecture)
 from .response_generators import (
     generate_classification_fallback_stream,
@@ -98,6 +104,10 @@ __all__ = [
     'extract_previous_response',
     'select_hook_type',
     'SLOW_LLM_CALL_THRESHOLD',
+
+    # LLM client wrappers
+    'llm_generate',
+    'llm_generate_stream',
 
     # Response generators
     'generate_classification_fallback_stream',

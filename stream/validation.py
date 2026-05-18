@@ -19,6 +19,8 @@ from bridge_activation_policy import (
 )
 from bridge_context import normalize_relation
 from model_json import extract_json_object
+from .llm_client import llm_generate
+from .errors import RateLimitError
 
 async def classify_intent(
     assistant,
@@ -80,13 +82,15 @@ async def classify_intent(
 
     try:
         t0 = time.time()
-        response = await assistant.client.aio.models.generate_content(
+        response = await llm_generate(
+            client=assistant.client,
             model=assistant.config["model_name"],
             contents=prompt,
             config={
                 "temperature": 0.1,
                 "max_output_tokens": 60
-            }
+            },
+            call_name="classify_intent",
         )
         t1 = time.time()
         logger.info(f"[CLASSIFY] LLM call duration: {t1 - t0:.3f}s")
@@ -138,7 +142,8 @@ async def classify_intent(
         }
         logger.info(f"[CLASSIFY] intent={intent_type} | new_object={new_object} | reasoning={reasoning}")
         return result
-
+    except RateLimitError:
+        raise
     except Exception as e:
         logger.error(f"[CLASSIFY] Error: {e}, using fallback-freeform path")
         import traceback
@@ -216,12 +221,16 @@ async def classify_pre_anchor_semantic_reply(
     )
 
     try:
-        response = await generate_content(
+        response = await llm_generate(
+            client=client,
             model=config["model_name"],
             contents=prompt,
             config={"temperature": 0.0, "max_output_tokens": 80},
+            call_name="classify_pre_anchor",
         )
         payload, _, _ = extract_json_object(response.text or "")
+    except RateLimitError:
+        raise
     except Exception:
         payload = None
 
@@ -307,12 +316,16 @@ async def validate_bridge_activation_kb_question(
     )
 
     try:
-        response = await assistant.client.aio.models.generate_content(
+        response = await llm_generate(
+            client=assistant.client,
             model=assistant.config["model_name"],
             contents=prompt,
             config={"temperature": 0.0, "max_output_tokens": 80},
+            call_name="validate_kb_question",
         )
         payload = json.loads(response.text or "{}")
+    except RateLimitError:
+        raise
     except Exception:
         payload = {}
 
@@ -362,12 +375,16 @@ async def validate_bridge_activation_answer(
     )
 
     try:
-        response = await assistant.client.aio.models.generate_content(
+        response = await llm_generate(
+            client=assistant.client,
             model=assistant.config["model_name"],
             contents=prompt,
             config={"temperature": 0.0, "max_output_tokens": 80},
+            call_name="validate_answer",
         )
         payload = json.loads(response.text or "{}")
+    except RateLimitError:
+        raise
     except Exception:
         payload = {}
 

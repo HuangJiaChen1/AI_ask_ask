@@ -6,6 +6,8 @@ from activities import attribute_to_angles
 import paixueji_prompts
 from model_json import extract_json_object
 from stream.exploration_angles import AngleCoverageRecord
+from stream import llm_generate
+from stream.errors import RateLimitError
 from stream.exploration_loader import (
     SubAttributeCandidate,
     dimension_to_activity_target,
@@ -177,12 +179,16 @@ async def select_attribute_profile(
     )
 
     try:
-        response = await client.aio.models.generate_content(
+        response = await llm_generate(
+            client=client,
             model=(config or {}).get("model_name"),
             contents=prompt,
             config={"temperature": 0.0, "max_output_tokens": 256},
+            call_name="select_attribute",
         )
         payload, payload_kind, recovered = extract_json_object(response.text or "")
+    except RateLimitError:
+        raise
     except Exception as exc:
         payload = None
         payload_kind = "exception"
