@@ -38,8 +38,8 @@ def test_compute_interest_score_all_correct_answers():
     record = AttributeInterestRecord(attribute_id="appearance.color")
     record.turns_explored = 3
     record.intent_history = ["CORRECT_ANSWER", "CORRECT_ANSWER", "CORRECT_ANSWER"]
-    # base = (3/3)*50 = 50; initiation=0; depth=0; penalty=0 -> 50
-    assert compute_attribute_interest_score(record) == 50.0
+    # base=(3/3)*50=50; streak=min(3*5,15)=15 -> 65
+    assert compute_attribute_interest_score(record) == 65.0
 
 
 def test_compute_interest_score_with_question():
@@ -47,8 +47,8 @@ def test_compute_interest_score_with_question():
     record.turns_explored = 3
     record.intent_history = ["CORRECT_ANSWER", "CORRECT_ANSWER", "CORRECT_ANSWER"]
     record.question_count = 1
-    # base=50; initiation=0; depth=min(1*6,25)=6; penalty=0 -> 56
-    assert compute_attribute_interest_score(record) == 56.0
+    # base=50; depth=min(1*6,25)=6; streak=15 -> 71
+    assert compute_attribute_interest_score(record) == 71.0
 
 
 def test_compute_interest_score_child_returned():
@@ -57,9 +57,8 @@ def test_compute_interest_score_child_returned():
     record.intent_history = ["CORRECT_ANSWER", "CORRECT_ANSWER"]
     record.child_initiated_count = 1
     record.child_returned_count = 1
-    # base=(2/2)*50=50; initiation=min(1*8+1*15,30)=23;
-    # depth=0; penalty=0 -> 73
-    assert compute_attribute_interest_score(record) == 73.0
+    # base=(2/2)*50=50; initiation=min(1*8+1*15,30)=23; streak=10 -> 83
+    assert compute_attribute_interest_score(record) == 83.0
 
 
 def test_compute_interest_score_with_elaboration():
@@ -67,8 +66,8 @@ def test_compute_interest_score_with_elaboration():
     record.turns_explored = 2
     record.intent_history = ["INFORMATIVE", "CURIOSITY"]
     record.elaboration_turns = 2
-    # base=(2/2)*50=50; initiation=0; depth=min(2*4,25)=8; penalty=0 -> 58
-    assert compute_attribute_interest_score(record) == 58.0
+    # base=(2/2)*50=50; depth=min(2*4,25)=8; streak=10 -> 68
+    assert compute_attribute_interest_score(record) == 68.0
 
 
 def test_compute_interest_score_struggle_penalty():
@@ -76,7 +75,7 @@ def test_compute_interest_score_struggle_penalty():
     record.turns_explored = 2
     record.intent_history = ["CLARIFYING_IDK", "CLARIFYING_WRONG"]
     record.struggle_count = 2
-    # base=0; initiation=0; depth=0; penalty=min(2*8,35)=16 -> 0 (clamped)
+    # base=0; streak=10; penalty=min(2*8,35)=16 -> 0 (clamped)
     assert compute_attribute_interest_score(record) == 0.0
 
 
@@ -85,7 +84,7 @@ def test_compute_interest_score_avoidance_penalty():
     record.turns_explored = 2
     record.intent_history = ["AVOIDANCE", "BOUNDARY"]
     record.avoidance_count = 2
-    # base=0; initiation=0; depth=0; penalty=min(2*12,35)=24 -> 0 (clamped)
+    # base=0; streak=10; penalty=min(2*12,35)=24 -> 0 (clamped)
     assert compute_attribute_interest_score(record) == 0.0
 
 
@@ -95,9 +94,8 @@ def test_compute_interest_score_emotional_bonus():
     record.intent_history = ["CORRECT_ANSWER", "EMOTIONAL"]
     record.elaboration_turns = 1
     record.emotional_count = 1
-    # base=(2/2)*50=50; initiation=0;
-    # depth=min(1*4+1*5,25)=9; penalty=0 -> 59
-    assert compute_attribute_interest_score(record) == 59.0
+    # base=(2/2)*50=50; depth=min(1*4+1*5,25)=9; streak=10 -> 69
+    assert compute_attribute_interest_score(record) == 69.0
 
 
 def test_compute_interest_score_initiation_cap():
@@ -106,9 +104,9 @@ def test_compute_interest_score_initiation_cap():
     record.intent_history = ["CORRECT_ANSWER"] * 10
     record.child_initiated_count = 10
     record.child_returned_count = 10
-    # initiation=min(10*8+10*15,30)=30 (capped)
+    # initiation=min(10*8+10*15,30)=30 (capped); streak=15
     score = compute_attribute_interest_score(record)
-    assert score == 50.0 + 30.0  # base + initiation
+    assert score == 50.0 + 30.0 + 15.0  # base + initiation + streak
 
 
 def test_compute_interest_score_depth_cap():
@@ -118,9 +116,9 @@ def test_compute_interest_score_depth_cap():
     record.elaboration_turns = 10
     record.question_count = 10
     record.emotional_count = 10
-    # depth=min(10*4+10*6+10*5,25)=25 (capped)
+    # depth=min(10*4+10*6+10*5,25)=25 (capped); streak=15
     score = compute_attribute_interest_score(record)
-    assert score == 50.0 + 25.0  # base + depth
+    assert score == 50.0 + 25.0 + 15.0  # base + depth + streak
 
 
 def test_compute_interest_score_penalty_cap():
@@ -130,8 +128,8 @@ def test_compute_interest_score_penalty_cap():
     record.struggle_count = 10
     record.avoidance_count = 10
     # penalty=min(10*8+10*12,35)=35 (capped)
-    # base=50; penalty=35 -> 15
-    assert compute_attribute_interest_score(record) == 15.0
+    # base=50; streak=15; penalty=35 -> 30
+    assert compute_attribute_interest_score(record) == 30.0
 
 
 def _make_assistant_with_state(current_attr_id: str, explored_angle_ids: list = None):
@@ -369,9 +367,11 @@ def test_evaluate_handoff_exit_lane_timeout_with_memory():
     rec = AttributeInterestRecord(
         attribute_id="appearance.color",
         turns_explored=8,
-        intent_history=["CORRECT_ANSWER"] * 8,
+        intent_history=["CORRECT_ANSWER"] * 7 + ["CLARIFYING_IDK"],
         is_current=True,
     )
+    rec.struggle_count = 1
+    # base=(7/8)*50=43.75; streak=15; penalty=8 -> 50.75 (below 60, above 40)
     assistant = _make_assistant_for_handoff(
         interest_records={"appearance.color": rec},
         turn_count=8,
@@ -494,13 +494,33 @@ def test_evaluate_handoff_observation_angles_and_entity_info_for_cat_covering():
         age=6,
     )
 
-    decision, reason, meta = evaluate_handoff(assistant, SimpleNamespace(should_switch=False, target_attribute_id=None))
+    from unittest.mock import patch
+    captured_contexts = []
+
+    def capture_select_best_activity(*, attribute_id, interest_score, age, conversation_context):
+        captured_contexts.append(conversation_context)
+        mock_activity = SimpleNamespace(activity_id="test_activity", name="Test", launch_prompt="Go!")
+        return SimpleNamespace(
+            activity=mock_activity,
+            selector_score=75.0,
+            decision="matched",
+            fallback_reason=None,
+        )
+
+    with patch("stream.cares_handoff.select_best_activity", side_effect=capture_select_best_activity):
+        decision, reason, meta = evaluate_handoff(assistant, SimpleNamespace(should_switch=False, target_attribute_id=None))
 
     assert decision == HandoffDecision.HANDOFF_NOW, (
         f"Expected HANDOFF_NOW for interest={interest_score:.0f}, got {decision.value} "
         f"with reason={reason}"
     )
     assert meta.get("activity") is not None, "Expected an activity to be selected"
+    assert len(captured_contexts) >= 1
+    ctx = captured_contexts[0]
+    assert "pattern" in ctx.get("angles", []), f"angles should contain 'pattern', got {ctx.get('angles')}"
+    assert ctx.get("entity_info") == {"entity_class": ["cat"]}, (
+        f"entity_info should contain cat class, got {ctx.get('entity_info')}"
+    )
 
 
 def test_evaluate_handoff_bound_activity_eligible_with_entity_class():

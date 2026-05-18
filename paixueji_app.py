@@ -4000,6 +4000,7 @@ def manual_critique():
             introduction=introduction,
             introduction_critique=introduction_critique,
             session_resolution_debug=assistant.session_resolution_debug,
+            attribute_interest_records=assistant.attribute_interest_records,
         )
 
         # Save to reports/HF/YYYY-MM-DD/
@@ -4196,7 +4197,8 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
                                  all_exchanges, exchange_critiques,
                                  global_conclusion, key_concept=None,
                                  introduction=None, introduction_critique=None,
-                                 session_resolution_debug=None):
+                                 session_resolution_debug=None,
+                                 attribute_interest_records=None):
     """
     Generate a markdown report for human feedback critique.
 
@@ -4389,6 +4391,9 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
 
     report += "---\n\n"
 
+    # CARES Interest Analysis section
+    report += _render_cares_interest_summary(attribute_interest_records)
+
     critiqued_exchanges = []
     for ec in exchange_critiques:
         idx = ec["exchange_index"]
@@ -4419,6 +4424,7 @@ def build_human_feedback_report(object_name, age, session_id, transcript,
                 bridge_debug=entry.get("bridge_debug"),
                 attribute_debug=entry.get("attribute_debug"),
                 category_debug=entry.get("category_debug"),
+                attribute_interest_records=attribute_interest_records,
             )
 
     # Global conclusion
@@ -4613,6 +4619,46 @@ def _derive_report_category_summary(category_debug):
     }
 
 
+def _render_cares_interest_summary(attribute_interest_records):
+    """Render a markdown table of CARES interest scores and breakdowns."""
+    if not attribute_interest_records:
+        return ""
+
+    from stream.cares_handoff import compute_attribute_interest_score_breakdown
+
+    lines = ["## CARES Interest Analysis\n\n"]
+    lines.append(
+        "| Attribute | Turns | Score | Base | Initiation | Depth | Streak | Penalty |\n"
+    )
+    lines.append(
+        "|-----------|-------|-------|------|------------|-------|--------|---------|\n"
+    )
+
+    best_attr = None
+    best_score = -1.0
+    for attr_id, record in attribute_interest_records.items():
+        bd = compute_attribute_interest_score_breakdown(record)
+        lines.append(
+            f"| `{attr_id}` | {record.turns_explored} | {bd['total']:.1f} | "
+            f"{bd['base']:.1f} | {bd['initiation']:.1f} | {bd['depth']:.1f} | "
+            f"{bd['streak']:.1f} | {bd['penalty']:.1f} |\n"
+        )
+        if bd["total"] > best_score:
+            best_score = bd["total"]
+            best_attr = attr_id
+
+    lines.append("\n")
+    if best_attr:
+        lines.append(f"**Best attribute:** `{best_attr}` (score: {best_score:.1f})\n")
+    lines.append("**Handoff threshold:** 60\n")
+    if best_score >= 60:
+        lines.append(f"**Would handoff:** Yes — score >= threshold\n")
+    else:
+        lines.append(f"**Would handoff:** No — score < threshold\n")
+    lines.append("\n---\n\n")
+    return "".join(lines)
+
+
 def _render_turn_summary(
     bridge_debug,
     attribute_debug=None,
@@ -4652,6 +4698,18 @@ def _render_turn_summary(
             value = attribute_summary.get(key)
             if value is not None:
                 lines.append(f"- {label}: `{value}`\n")
+        cares_decision = attribute_debug.get("cares_handoff_decision")
+        cares_reason = attribute_debug.get("cares_handoff_reason")
+        interest_current = attribute_debug.get("interest_score_current")
+        interest_best = attribute_debug.get("interest_score_best")
+        if cares_decision:
+            lines.append(f"- CARES Decision: `{cares_decision}`\n")
+        if cares_reason:
+            lines.append(f"- CARES Reason: `{cares_reason}`\n")
+        if interest_current is not None:
+            lines.append(f"- Interest Score (current): `{interest_current:.1f}`\n")
+        if interest_best is not None:
+            lines.append(f"- Interest Score (best): `{interest_best:.1f}`\n")
     if category_debug:
         category_summary = _derive_report_category_summary(category_debug)
         for label, key in [
@@ -4767,6 +4825,7 @@ def _render_raw_diagnostics_entry(
     bridge_debug,
     attribute_debug=None,
     category_debug=None,
+    attribute_interest_records=None,
 ):
     if not bridge_debug and not attribute_debug and not category_debug:
         return ""
@@ -4805,6 +4864,28 @@ def _render_raw_diagnostics_entry(
         value = category_summary.get(key)
         if value is not None:
             lines.append(f"**{label}:** {value}\n")
+    # CARES Interest Record subsection
+    if attribute_debug and attribute_interest_records:
+        from stream.cares_handoff import compute_attribute_interest_score_breakdown
+        attr_id = attribute_debug.get("attribute_id") or attribute_debug.get("state", {}).get("profile", {}).get("attribute_id")
+        if attr_id and attr_id in attribute_interest_records:
+            record = attribute_interest_records[attr_id]
+            bd = compute_attribute_interest_score_breakdown(record)
+            lines.append("\n#### CARES Interest Record\n\n")
+            lines.append(f"- attribute_id: `{record.attribute_id}`\n")
+            lines.append(f"- turns_explored: `{record.turns_explored}`\n")
+            lines.append(f"- intent_history: `{record.intent_history}`\n")
+            lines.append(f"- child_initiated_count: `{record.child_initiated_count}`\n")
+            lines.append(f"- child_returned_count: `{record.child_returned_count}`\n")
+            lines.append(f"- elaboration_turns: `{record.elaboration_turns}`\n")
+            lines.append(f"- question_count: `{record.question_count}`\n")
+            lines.append(f"- emotional_count: `{record.emotional_count}`\n")
+            lines.append(f"- struggle_count: `{record.struggle_count}`\n")
+            lines.append(f"- avoidance_count: `{record.avoidance_count}`\n")
+            lines.append(f"- explored_angle_ids: `{record.explored_angle_ids}`\n")
+            lines.append(f"- score_breakdown: base={bd['base']:.1f} initiation={bd['initiation']:.1f} "
+                        f"depth={bd['depth']:.1f} streak={bd['streak']:.1f} penalty={bd['penalty']:.1f} "
+                        f"total={bd['total']:.1f}\n")
     lines.append("\n")
     lines.append(_render_raw_bridge_debug(bridge_debug))
     lines.append(_render_raw_attribute_debug(attribute_debug))
