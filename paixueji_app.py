@@ -1694,6 +1694,8 @@ def continue_conversation():
 
                     try:
                         should_switch, switch_target_id, switch_reason = switch_future.result(timeout=10)
+                    except RateLimitError:
+                        raise
                     except Exception as exc:
                         logger.warning("[TOPIC_SWITCH] detector error: %s", exc)
                         should_switch, switch_target_id, switch_reason = False, None, f"detector_error: {exc}"
