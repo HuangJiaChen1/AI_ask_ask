@@ -52,43 +52,39 @@ class AttributeInterestRecord:
     angle_records: list[AngleCoverageRecord] = field(default_factory=list)
 
 
-def compute_attribute_interest_score(record: AttributeInterestRecord) -> float:
-    """Compute interest score for a single attribute (0-100)."""
+def compute_attribute_interest_score_breakdown(record: AttributeInterestRecord) -> dict[str, float]:
+    """Return component breakdown of the interest score."""
     if record.turns_explored == 0:
-        return 0.0
+        return {"base": 0.0, "initiation": 0.0, "depth": 0.0, "streak": 0.0, "penalty": 0.0, "total": 0.0}
 
-    # Base engagement (0-50)
     positive_intents = {
-        "CORRECT_ANSWER",
-        "INFORMATIVE",
-        "CURIOSITY",
-        "PLAY",
-        "EMOTIONAL",
+        "CORRECT_ANSWER", "INFORMATIVE", "CURIOSITY", "PLAY", "EMOTIONAL",
     }
     positive = sum(1 for it in record.intent_history if it in positive_intents)
     base = (positive / record.turns_explored) * 50
 
-    # Initiation (0-30)
-    initiation = min(
-        record.child_initiated_count * 8 + record.child_returned_count * 15,
-        30,
-    )
+    initiation = min(record.child_initiated_count * 8 + record.child_returned_count * 15, 30)
 
-    # Depth (0-25)
-    depth = min(
-        record.elaboration_turns * 4
-        + record.question_count * 6
-        + record.emotional_count * 5,
-        25,
-    )
+    depth = min(record.elaboration_turns * 4 + record.question_count * 6 + record.emotional_count * 5, 25)
 
-    # Negative penalty
-    penalty = min(
-        record.struggle_count * 8 + record.avoidance_count * 12,
-        35,
-    )
+    streak = min(record.turns_explored * 5, 15)
 
-    return max(0.0, base + initiation + depth - penalty)
+    penalty = min(record.struggle_count * 8 + record.avoidance_count * 12, 35)
+
+    total = max(0.0, base + initiation + depth + streak - penalty)
+    return {
+        "base": base,
+        "initiation": initiation,
+        "depth": depth,
+        "streak": streak,
+        "penalty": penalty,
+        "total": total,
+    }
+
+
+def compute_attribute_interest_score(record: AttributeInterestRecord) -> float:
+    """Compute interest score for a single attribute (0-100)."""
+    return compute_attribute_interest_score_breakdown(record)["total"]
 
 
 def on_attribute_turn(

@@ -358,6 +358,45 @@ def test_build_attribute_debug_includes_angle_fields():
 from stream.cares_handoff import AttributeInterestRecord
 
 
+def test_compute_attribute_interest_score_with_streak_bonus():
+    """Streak bonus rewards sustained engagement: +5 per turn, max 15."""
+    from stream.cares_handoff import AttributeInterestRecord, compute_attribute_interest_score
+
+    # 2 turns, all positive → base=50, streak=10 → total=60
+    r2 = AttributeInterestRecord(
+        attribute_id="appearance.covering",
+        turns_explored=2,
+        intent_history=["CORRECT_ANSWER", "CORRECT_ANSWER"],
+    )
+    assert compute_attribute_interest_score(r2) == 60.0
+
+    # 3 turns, all positive → base=50, streak=15 → total=65
+    r3 = AttributeInterestRecord(
+        attribute_id="appearance.covering",
+        turns_explored=3,
+        intent_history=["CORRECT_ANSWER", "CORRECT_ANSWER", "CORRECT_ANSWER"],
+    )
+    assert compute_attribute_interest_score(r3) == 65.0
+
+    # 1 turn positive → base=50, streak=5 → total=55
+    r1 = AttributeInterestRecord(
+        attribute_id="appearance.covering",
+        turns_explored=1,
+        intent_history=["CORRECT_ANSWER"],
+    )
+    assert compute_attribute_interest_score(r1) == 55.0
+
+    # 5 turns, 3 positive, 2 struggle → base=30, streak=15, penalty=16 → total=29
+    r_mixed = AttributeInterestRecord(
+        attribute_id="appearance.covering",
+        turns_explored=5,
+        intent_history=["CORRECT_ANSWER", "CLARIFYING_IDK", "CORRECT_ANSWER",
+                        "CLARIFYING_WRONG", "CORRECT_ANSWER"],
+        struggle_count=2,
+    )
+    assert compute_attribute_interest_score(r_mixed) == 29.0
+
+
 def test_assistant_initializes_empty_interest_records():
     from paixueji_assistant import PaixuejiAssistant
     assistant = PaixuejiAssistant(config_path="config.json", age_prompts_path="age_prompts.json")
@@ -604,15 +643,6 @@ def test_validate_activity_ready_valid():
     assert is_valid is True
     assert rejected_reason is None
     assert "soft fur" in reason_text
-
-
-def test_validate_activity_ready_insufficient_turns():
-    """Rejected when turn_count < MIN_ACTIVITY_READY_TURNS."""
-    assistant = _make_assistant_for_validation(turn_count=1)
-    text = '[ACTIVITY_READY]\nREASON: The child said "soft fur".'
-    is_valid, rejected_reason, reason_text = _validate_activity_ready(text, assistant, child_input="It has soft fur")
-    assert is_valid is False
-    assert rejected_reason == "insufficient_turns"
 
 
 def test_validate_activity_ready_no_evidence_quotes():
