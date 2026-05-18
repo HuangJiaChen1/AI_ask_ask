@@ -405,6 +405,7 @@ from stream import (
     select_next_angle,
     EXPLORATION_ANGLES,
 )
+from stream.errors import RateLimitError
 from stream.cares_handoff import (
     on_attribute_turn,
     evaluate_handoff,
@@ -1683,6 +1684,8 @@ def continue_conversation():
                         intent_result = intent_future.result(timeout=10)
                         intent_type_lower = (intent_result.get("intent_type") or "classification_fallback").lower()
                         attribute_reason = intent_result.get("reasoning") or "intent classified for discovery continuation"
+                    except RateLimitError:
+                        raise
                     except Exception as exc:
                         intent_type_lower = "classification_fallback"
                         attribute_reason = f"intent classification fallback: {exc}"
