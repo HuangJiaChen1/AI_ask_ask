@@ -63,6 +63,60 @@ def _strip_activity_markers(text: str) -> str:
     return cleaned.rstrip("\n")
 
 
+def _validate_activity_ready(text: str, assistant, child_input: str) -> tuple[bool, str | None, str | None]:
+    """Validate an [ACTIVITY_READY] marker in raw LLM text.
+
+    Returns (is_valid, rejected_reason, reason_text).
+    - is_valid: True only if marker is present, min turns met, and evidence quotes match transcript.
+    - rejected_reason: None when valid; otherwise one of: insufficient_turns, no_evidence_quotes,
+      evidence_not_in_transcript.
+    - reason_text: The extracted REASON string, or None if no marker/reason found.
+    """
+    if "[ACTIVITY_READY]" not in text:
+        return False, None, None
+
+    if assistant.attribute_state.turn_count < MIN_ACTIVITY_READY_TURNS:
+        assistant.attribute_state.last_activity_ready_rejected_reason = "insufficient_turns"
+        logger.info(
+            "[ACTIVITY_READY] rejected: turn_count=%d < MIN_TURNS=%d",
+            assistant.attribute_state.turn_count, MIN_ACTIVITY_READY_TURNS,
+        )
+        return False, "insufficient_turns", None
+
+    reason_match = _REASON_RE.search(text)
+    if not reason_match:
+        assistant.attribute_state.last_activity_ready_rejected_reason = "no_evidence_quotes"
+        logger.info("[ACTIVITY_READY] rejected: no REASON line found")
+        return False, "no_evidence_quotes", None
+
+    reason_text = reason_match.group(1).strip()
+    quotes = re.findall(r'"([^"]+)"', reason_text)
+    if not quotes:
+        assistant.attribute_state.last_activity_ready_rejected_reason = "no_evidence_quotes"
+        logger.info("[ACTIVITY_READY] rejected: no evidence quotes in reason")
+        return False, "no_evidence_quotes", reason_text
+
+    child_messages = [
+        msg["content"] for msg in assistant.conversation_history
+        if msg.get("role") == "user"
+    ]
+    child_messages.append(child_input)
+
+    for quote in quotes:
+        quote_lower = quote.lower()
+        for child_msg in child_messages:
+            if quote_lower in child_msg.lower():
+                assistant.attribute_state.last_activity_ready_rejected_reason = None
+                return True, None, reason_text
+
+    assistant.attribute_state.last_activity_ready_rejected_reason = "evidence_not_in_transcript"
+    logger.info(
+        "[ACTIVITY_READY] rejected: evidence quotes not found in transcript — %s",
+        quotes,
+    )
+    return False, "evidence_not_in_transcript", reason_text
+
+
 def _format_angle_example(angle_def: dict, attribute_label: str) -> str:
     """Format an angle's example string with attribute label placeholder."""
     return angle_def["example"].format(attribute_label=attribute_label, object_name="{object_name}")
@@ -158,6 +212,13 @@ def _build_continue_guide(
 
     return f"""{preamble}
 
+{angle_block}
+
+Already-used angles (try something different if possible):
+{used_angles_block}
+
+{antipatterns}
+
 ---
 
 [SYSTEM CONTEXT]
@@ -168,15 +229,6 @@ Explored attributes: {explored_attrs_str}
 
 HANDOFF MODE: INACTIVE
 Continue exploring the current attribute. Do NOT output [ACTIVITY_READY].
-
----
-
-{angle_block}
-
-Already-used angles (try something different if possible):
-{used_angles_block}
-
-{antipatterns}
 """
 
 
@@ -1818,6 +1870,18 @@ def continue_conversation():
                             )
                             assistant.set_last_attribute_debug(partial_debug)
 
+                        # Fix 2: Detect [ACTIVITY_READY] in response text BEFORE stripping.
+                        # This is the only detection path for intents without follow-up
+                        # (curiosity, play, emotional) and takes precedence over follow-up
+                        # detection to avoid double-handling.
+                        raw_response = full_response
+                        response_ready_valid, response_rejected_reason, response_reason_text = (
+                            _validate_activity_ready(raw_response, assistant, child_input)
+                        )
+                        if response_ready_valid:
+                            assistant.attribute_state.activity_ready = True
+                            assistant.attribute_activity_ready = True
+
                         # Safety net: strip any leaked [ACTIVITY_READY] / REASON:
                         # from response text before the child sees it.
                         full_response = _strip_activity_markers(full_response)
@@ -1840,7 +1904,14 @@ def continue_conversation():
                                 **_assistant_stream_fields(assistant),
                             ))
 
-                        if needs_followup:
+                        # Initialize marker tracking from response detection.
+                        # These variables are consumed by build_attribute_debug below.
+                        activity_marker_detected = "[ACTIVITY_READY]" in raw_response
+                        activity_marker_reason = response_reason_text
+                        activity_marker_rejected_reason = response_rejected_reason
+                        full_followup = ""
+
+                        if needs_followup and not response_ready_valid:
                             messages_with_response = messages + [
                                 {"role": "user", "content": child_input},
                                 {"role": "assistant", "content": full_response},
@@ -1865,8 +1936,6 @@ def continue_conversation():
                             )
 
                             activity_marker = "[ACTIVITY_READY]"
-                            activity_marker_detected = False
-                            activity_marker_reason = None
                             raw_followup_so_far = ""
                             full_followup = ""
 
@@ -1885,90 +1954,45 @@ def continue_conversation():
                                 return marker_free_followup
 
                             # Collect the full followup without yielding to the client.
-                            # We must validate the [ACTIVITY_READY] marker before deciding
-                            # whether to emit the handoff sentence. If the marker is rejected,
-                            # the handoff text must be suppressed entirely.
                             async for _text_chunk, token_usage, full_so_far in followup_generator:
                                 raw_followup_so_far = full_so_far
-                                if activity_marker in raw_followup_so_far:
-                                    activity_marker_detected = True
 
                             full_followup = _displayable_followup(raw_followup_so_far)
 
-                            # Extract reason from raw text after marker is fully present
-                            if activity_marker_detected:
-                                reason_match = _REASON_RE.search(raw_followup_so_far)
-                                if reason_match:
-                                    activity_marker_reason = reason_match.group(1).strip()
-
-                            activity_marker_rejected_reason = None
-
-                            if activity_marker_detected:
-                                # Guard: require minimum conversation depth before accepting handoff
-                                if assistant.attribute_state.turn_count < MIN_ACTIVITY_READY_TURNS:
-                                    activity_marker_rejected_reason = "insufficient_turns"
-                                    assistant.attribute_state.last_activity_ready_rejected_reason = activity_marker_rejected_reason
-                                    logger.info(
-                                        "[ACTIVITY_READY] rejected: turn_count=%d < MIN_TURNS=%d",
-                                        assistant.attribute_state.turn_count, MIN_ACTIVITY_READY_TURNS,
-                                    )
-                                elif activity_marker_reason:
-                                    # Existing quote validation
-                                    quotes = re.findall(r'"([^"]+)"', activity_marker_reason)
-                                    if not quotes:
-                                        activity_marker_rejected_reason = "no_evidence_quotes"
-                                        assistant.attribute_state.last_activity_ready_rejected_reason = activity_marker_rejected_reason
-                                        logger.info("[ACTIVITY_READY] rejected: no evidence quotes in reason")
-                                    else:
-                                        child_messages = [
-                                            msg["content"] for msg in assistant.conversation_history
-                                            if msg.get("role") == "user"
-                                        ]
-                                        child_messages.append(child_input)
-                                        found_match = False
-                                        for quote in quotes:
-                                            quote_lower = quote.lower()
-                                            for child_msg in child_messages:
-                                                if quote_lower in child_msg.lower():
-                                                    found_match = True
-                                                    break
-                                            if found_match:
-                                                break
-                                        if not found_match:
-                                            activity_marker_rejected_reason = "evidence_not_in_transcript"
-                                            assistant.attribute_state.last_activity_ready_rejected_reason = activity_marker_rejected_reason
-                                            logger.info(
-                                                "[ACTIVITY_READY] rejected: evidence quotes not found in transcript — %s",
-                                                quotes,
-                                            )
-
-                            if activity_marker_detected and not activity_marker_rejected_reason:
-                                assistant.attribute_state.activity_ready = True
-                                assistant.attribute_activity_ready = True
-                                assistant.attribute_state.last_activity_ready_rejected_reason = None
-                                # Yield the validated followup text
-                                if full_followup:
-                                    sequence_number += 1
-                                    yield sse_event("chunk", StreamChunk(
-                                        response=full_followup,
-                                        session_finished=False,
-                                        duration=0.0,
-                                        token_usage=None,
-                                        finish=False,
-                                        sequence_number=sequence_number,
-                                        timestamp=time.time(),
-                                        session_id=session_id,
-                                        request_id=request_id,
-                                        response_type="attribute_activity",
-                                        correct_answer_count=assistant.correct_answer_count,
-                                        intent_type=intent_type_lower,
-                                        **_assistant_stream_fields(assistant),
-                                    ))
-                            elif activity_marker_detected and activity_marker_rejected_reason:
-                                # Handoff rejected — marker and REASON already stripped by
-                                # _displayable_followup(). Keep the follow-up question so the
-                                # conversation continues normally.
-                                pass
+                            # Validate [ACTIVITY_READY] in follow-up text using shared helper
+                            if activity_marker in raw_followup_so_far:
+                                followup_ready_valid, followup_rejected_reason, followup_reason_text = (
+                                    _validate_activity_ready(raw_followup_so_far, assistant, child_input)
+                                )
+                                activity_marker_detected = True
+                                activity_marker_reason = followup_reason_text
+                                activity_marker_rejected_reason = followup_rejected_reason
+                                if followup_ready_valid:
+                                    assistant.attribute_state.activity_ready = True
+                                    assistant.attribute_activity_ready = True
+                                    # Yield the validated followup text
+                                    if full_followup:
+                                        sequence_number += 1
+                                        yield sse_event("chunk", StreamChunk(
+                                            response=full_followup,
+                                            session_finished=False,
+                                            duration=0.0,
+                                            token_usage=None,
+                                            finish=False,
+                                            sequence_number=sequence_number,
+                                            timestamp=time.time(),
+                                            session_id=session_id,
+                                            request_id=request_id,
+                                            response_type="attribute_activity",
+                                            correct_answer_count=assistant.correct_answer_count,
+                                            intent_type=intent_type_lower,
+                                            **_assistant_stream_fields(assistant),
+                                        ))
+                                elif followup_rejected_reason:
+                                    # Handoff rejected — marker and REASON already stripped by
+                                    # _displayable_followup(). Keep the follow-up question so the
+                                    # conversation continues normally.
+                                    pass
                             else:
                                 # No marker detected — yield the followup normally
                                 if full_followup:
@@ -1988,11 +2012,6 @@ def continue_conversation():
                                         intent_type=intent_type_lower,
                                         **_assistant_stream_fields(assistant),
                                     ))
-                        else:
-                            full_followup = ""
-                            activity_marker_detected = False
-                            activity_marker_reason = None
-                            activity_marker_rejected_reason = None
 
                         combined_response = (full_response + " " + full_followup).strip()
 
@@ -2017,6 +2036,28 @@ def continue_conversation():
                             intent_type=intent_type_lower,
                             reply_type="discovery",
                         )
+                        # Fix 4: Augment with gate-level CARES diagnostics
+                        best_score = max(
+                            (
+                                compute_attribute_interest_score(r)
+                                for r in assistant.attribute_interest_records.values()
+                            ),
+                            default=0.0,
+                        )
+                        selection_result = decision_meta.get("selection_result")
+                        attribute_debug.update({
+                            "cares_handoff_decision": decision.value,
+                            "cares_handoff_reason": decision_reason,
+                            "interest_score_current": current_interest_score,
+                            "interest_score_best": best_score,
+                            "select_best_activity_result": {
+                                "activity_id": selection_result.activity.activity_id if selection_result and selection_result.activity else None,
+                                "selector_score": selection_result.selector_score if selection_result else None,
+                                "decision": selection_result.decision if selection_result else None,
+                                "fallback_reason": selection_result.fallback_reason if selection_result else None,
+                            },
+                            "entity_info_used": getattr(assistant, "anchor_object_name", None),
+                        })
                         assistant.set_last_attribute_debug(attribute_debug)
                         assistant.conversation_history.append({"role": "user", "content": child_input})
                         assistant.conversation_history.append({

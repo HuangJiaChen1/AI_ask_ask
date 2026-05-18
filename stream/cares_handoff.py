@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
 from stream.exploration_angles import AngleCoverageRecord
 
-from activities import select_best_activity, SelectionResult
+from activities import select_best_activity, SelectionResult, _attribute_to_angles, MIN_SCORE_FOR_HANDOFF
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -189,33 +192,48 @@ def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, di
 
     # Build conversation context for selection
     def _build_context() -> dict[str, Any]:
+        # Map CARES attribute ID → Tag Block observation angles (not exploration angles)
+        observation_angles = _attribute_to_angles(current_attr)
+        dominant = observation_angles[0] if observation_angles else ""
+
+        # Entity class from anchor object name for bound-activity eligibility
+        anchor = getattr(assistant, "anchor_object_name", None)
+        entity_info = {"entity_class": [anchor]} if anchor else None
+
         return {
-            "dominant_angle": getattr(assistant.attribute_state, "current_angle_id", None) or "",
-            "secondary_angles": list(getattr(current_record, "explored_angle_ids", [])) if current_record else [],
-            "angles": list(getattr(current_record, "explored_angle_ids", [])) if current_record else [],
+            "dominant_angle": dominant,
+            "secondary_angles": list(observation_angles),
+            "angles": list(observation_angles),
             "entity_depth": "property_focused",
             "recent_activities": [],
-            "entity_info": None,
+            "entity_info": entity_info,
             "extracted_properties": None,
         }
 
     # 1. Severe disengagement -> REENGAGE
     if assistant.consecutive_struggle_count >= 3:
+        logger.info("[gate_2_evaluate] decision=REENGAGE, reason=struggle_streak_3, pass=false")
         return HandoffDecision.REENGAGE, "struggle_streak_3", {}
 
     if total_turns >= 2 and current_score < 20:
+        logger.info("[gate_2_evaluate] decision=REENGAGE, reason=critical_disengagement, pass=false")
         return HandoffDecision.REENGAGE, "critical_disengagement", {}
 
     # 2. Clear switch signal -> CONTINUE_SWITCH
     if switch_result.should_switch and switch_result.target_attribute_id:
         target = switch_result.target_attribute_id
         if any(aid == target for aid, _ in scored):
+            logger.info("[gate_2_evaluate] decision=CONTINUE_SWITCH, reason=detector:%s, pass=true", target)
             return HandoffDecision.CONTINUE_SWITCH, f"detector:{target}", {
                 "target_attribute": target,
                 "reason": "child_showed_clear_interest",
             }
 
     # 3. Attribute meets threshold -> HANDOFF_NOW
+    logger.info(
+        "[gate_1_interest] score=%.0f, threshold=%d, pass=%s",
+        best_score, MIN_INTEREST_FOR_HANDOFF, best_score >= MIN_INTEREST_FOR_HANDOFF,
+    )
     if best_score >= MIN_INTEREST_FOR_HANDOFF:
         conversation_context = _build_context()
 
@@ -227,12 +245,23 @@ def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, di
         )
         activity = selection.activity
 
+        logger.info(
+            "[gate_3_activity_score] best_score=%.0f, threshold=%d, activity_id=%s, selector_score=%.0f, decision=%s, pass=%s",
+            best_score,
+            MIN_SCORE_FOR_HANDOFF,
+            selection.activity.activity_id if selection.activity else None,
+            selection.selector_score,
+            selection.decision,
+            selection.activity is not None and selection.selector_score >= MIN_SCORE_FOR_HANDOFF,
+        )
+
         if activity:
             if best_attr == current_attr:
                 return HandoffDecision.HANDOFF_NOW, f"current_best:{best_score:.0f}", {
                     "target_attribute": best_attr,
                     "activity": activity,
                     "readiness_score": best_score,
+                    "selection_result": selection,
                 }
 
             if current_score >= 50:
@@ -249,6 +278,7 @@ def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, di
                         "activity": current_activity,
                         "readiness_score": current_score,
                         "note": f"global_best_is_{best_attr}_but_current_is_good_enough",
+                        "selection_result": current_selection,
                     }
 
             return HandoffDecision.HANDOFF_NOW, f"global_best:{best_attr}:{best_score:.0f}", {
@@ -257,30 +287,45 @@ def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, di
                 "readiness_score": best_score,
                 "current_attribute": current_attr,
                 "bridge_context": f"child_previously_explored_{best_attr}_with_score_{best_score:.0f}",
+                "selection_result": selection,
             }
 
         # Selection returned no activity -> degrade to CONTINUE
+        logger.info(
+            "[gate_2_evaluate] decision=CONTINUE, reason=no_activity_for_best:%.0f, pass=false",
+            best_score,
+        )
         return HandoffDecision.CONTINUE, f"no_activity_for_best:{best_score:.0f}", {
             "current_attribute": current_attr,
             "current_score": current_score,
             "best_attribute": best_attr,
             "best_score": best_score,
+            "selection_result": selection,
         }
 
     # 4. Session timeout without threshold met -> EXIT_LANE
     if total_turns >= MAX_SESSION_TURNS:
         if best_score >= EXIT_LANE_INTEREST:
+            logger.info(
+                "[gate_2_evaluate] decision=EXIT_LANE, reason=timeout_with_memory:%s:%.0f, pass=true",
+                best_attr, best_score,
+            )
             return HandoffDecision.EXIT_LANE, f"timeout_with_memory:{best_attr}:{best_score:.0f}", {
                 "best_attribute": best_attr,
                 "best_score": best_score,
                 "reason": "session_long_but_interest_detected",
             }
         else:
+            logger.info("[gate_2_evaluate] decision=EXIT_LANE, reason=timeout_no_interest, pass=false")
             return HandoffDecision.EXIT_LANE, "timeout_no_interest", {
                 "reason": "session_long_no_meaningful_interest",
             }
 
     # 5. Default: continue
+    logger.info(
+        "[gate_2_evaluate] decision=CONTINUE, reason=building:%.0f, pass=false",
+        current_score,
+    )
     return HandoffDecision.CONTINUE, f"building:{current_score:.0f}", {
         "current_attribute": current_attr,
         "current_score": current_score,

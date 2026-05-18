@@ -1,6 +1,7 @@
 """Tests for the attribute activity pipeline — select_attribute_profile,
 session state, and build_attribute_debug."""
 
+from types import SimpleNamespace
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -525,3 +526,118 @@ def test_build_reengage_guide_simplification_instruction():
     assert "Consecutive struggle count: 3" in guide
     assert "Current interest score: 15/100" in guide
     assert "Causal or how/why questions" in guide
+
+
+# -- Fix 3: angle block must appear BEFORE [SYSTEM CONTEXT] ------------------
+
+def test_build_continue_guide_angle_block_before_system_context():
+    """
+    Regression: _build_continue_guide() placed the angle block AFTER
+    [SYSTEM CONTEXT]. Both response and follow-up generators split on
+    '---\n\n[SYSTEM CONTEXT]' and keep only [0], discarding the angle block.
+
+    After the fix, the angle block must appear BEFORE [SYSTEM CONTEXT] so
+    the split naturally preserves it.
+    """
+    guide = _build_continue_guide(
+        attribute_label="color",
+        activity_target="noticing colors",
+        sensory_safety_rules=_SAFETY,
+        selected_angle=_observation_angle(),
+        explored_angle_ids=[],
+        turn_count=1,
+    )
+
+    # The angle block must appear BEFORE [SYSTEM CONTEXT]
+    angle_pos = guide.find("[NEXT SUGGESTED ANGLE:")
+    system_context_pos = guide.find("[SYSTEM CONTEXT]")
+    assert angle_pos != -1, "Angle block must be present"
+    assert system_context_pos != -1, "[SYSTEM CONTEXT] must be present"
+    assert angle_pos < system_context_pos, (
+        f"Angle block must appear BEFORE [SYSTEM CONTEXT], but "
+        f"angle_pos={angle_pos}, system_context_pos={system_context_pos}"
+    )
+
+    # Simulate what response_generators.py does: split and keep [0]
+    preserved = guide.split("---\n\n[SYSTEM CONTEXT]")[0]
+    assert "[NEXT SUGGESTED ANGLE:" in preserved, (
+        "Angle block must survive the split('---\\n\\n[SYSTEM CONTEXT]')[0]"
+    )
+    assert "Already-used angles" in preserved, (
+        "Used-angles block must survive the split"
+    )
+    assert "ANTI-PATTERNS" in preserved, (
+        "Antipatterns must survive the split"
+    )
+    # [SYSTEM CONTEXT] itself must NOT survive the split
+    assert "[SYSTEM CONTEXT]" not in preserved, (
+        "[SYSTEM CONTEXT] must be stripped by the split"
+    )
+    assert "HANDOFF MODE: INACTIVE" not in preserved, (
+        "System context content must be stripped by the split"
+    )
+
+
+# -- Fix 2: detect [ACTIVITY_READY] in response text -------------------------
+
+from paixueji_app import _validate_activity_ready
+
+
+def _make_assistant_for_validation(turn_count=3):
+    """Minimal mock assistant with attribute_state.turn_count."""
+    assistant = SimpleNamespace()
+    state = SimpleNamespace(turn_count=turn_count, last_activity_ready_rejected_reason=None)
+    assistant.attribute_state = state
+    assistant.conversation_history = [
+        {"role": "user", "content": "I like the orange cat"},
+        {"role": "assistant", "content": "What do you notice?"},
+        {"role": "user", "content": "It has soft fur"},
+    ]
+    return assistant
+
+
+def test_validate_activity_ready_valid():
+    """Valid marker with sufficient turns and matching evidence quotes."""
+    assistant = _make_assistant_for_validation(turn_count=3)
+    text = '[ACTIVITY_READY]\nREASON: The child said "soft fur" and explored texture deeply.'
+    is_valid, rejected_reason, reason_text = _validate_activity_ready(text, assistant, child_input="It has soft fur")
+    assert is_valid is True
+    assert rejected_reason is None
+    assert "soft fur" in reason_text
+
+
+def test_validate_activity_ready_insufficient_turns():
+    """Rejected when turn_count < MIN_ACTIVITY_READY_TURNS."""
+    assistant = _make_assistant_for_validation(turn_count=1)
+    text = '[ACTIVITY_READY]\nREASON: The child said "soft fur".'
+    is_valid, rejected_reason, reason_text = _validate_activity_ready(text, assistant, child_input="It has soft fur")
+    assert is_valid is False
+    assert rejected_reason == "insufficient_turns"
+
+
+def test_validate_activity_ready_no_evidence_quotes():
+    """Rejected when REASON contains no quoted evidence."""
+    assistant = _make_assistant_for_validation(turn_count=3)
+    text = '[ACTIVITY_READY]\nREASON: The child explored texture deeply.'
+    is_valid, rejected_reason, reason_text = _validate_activity_ready(text, assistant, child_input="x")
+    assert is_valid is False
+    assert rejected_reason == "no_evidence_quotes"
+
+
+def test_validate_activity_ready_evidence_not_in_transcript():
+    """Rejected when quoted evidence does not appear in child messages."""
+    assistant = _make_assistant_for_validation(turn_count=3)
+    text = '[ACTIVITY_READY]\nREASON: The child said "fluffy tail" many times.'
+    is_valid, rejected_reason, reason_text = _validate_activity_ready(text, assistant, child_input="It has soft fur")
+    assert is_valid is False
+    assert rejected_reason == "evidence_not_in_transcript"
+
+
+def test_validate_activity_ready_no_marker():
+    """No marker in text → valid=False, no rejection reason."""
+    assistant = _make_assistant_for_validation(turn_count=3)
+    text = "That's a great observation!"
+    is_valid, rejected_reason, reason_text = _validate_activity_ready(text, assistant, child_input="x")
+    assert is_valid is False
+    assert rejected_reason is None
+    assert reason_text is None
