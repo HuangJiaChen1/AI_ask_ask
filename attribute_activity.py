@@ -2,53 +2,58 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 
-from activities import attribute_to_angles
-import paixueji_prompts
-from model_json import extract_json_object
-from stream.exploration_angles import AngleCoverageRecord
-from stream.exploration_loader import (
-    SubAttributeCandidate,
-    dimension_to_activity_target,
-    get_candidate_sub_attributes,
-    infer_domain,
-    sub_attribute_to_label,
+from activities import (
+    ActivityDefinition,
+    get_eligible_activities_for_object,
 )
-
-
-@dataclass(frozen=True)
-class AttributeProfile:
-    attribute_id: str
-    label: str
-    activity_target: str
-    branch: str
-    object_examples: tuple[str, ...]
-    redirect_entity: str | None = None
-    # NEW: fallback attributes for in-lane dynamic switching
-    fallback_attributes: tuple["AttributeProfile", ...] = ()
+from stream.activity_discovery import discover_talkable_activities, ActivityDiscoveryResult
+from stream.exploration_angles import AngleCoverageRecord
+from stream.verification_guided_conversation import VerificationItem
+from stream.llm_client import llm_generate
+from stream.errors import RateLimitError
 
 
 @dataclass
 class DiscoverySessionState:
+    """Activity-centric session state for the attribute lane."""
     object_name: str
-    profile: AttributeProfile
     age: int
     turn_count: int = 0
     activity_ready: bool = False
-    surface_object_name: str | None = None
-    anchor_object_name: str | None = None
-    # NEW: fallback tracking and switch history
-    fallback_profiles: tuple[AttributeProfile, ...] = ()
-    switched_to: str | None = None
-    switch_reason: str | None = None
-    last_activity_ready_rejected_reason: str | None = None
-    # NEW: angle coverage tracking (CARES Phase 0)
+
+    # Activity-centric fields (replaces old profile-centric state)
+    primary_activity: ActivityDefinition | None = None
+    secondary_activities: list[ActivityDefinition] = field(default_factory=list)
+    verification_queue: list[VerificationItem] = field(default_factory=list)
+    verified_properties: dict[str, str] = field(default_factory=dict)  # property -> verified|rejected|unclear
+    current_topic: str | None = None
+
+    # Angle coverage tracking (CARES Phase 0)
     explored_angle_ids: list[str] = field(default_factory=list)
     angle_records: list[AngleCoverageRecord] = field(default_factory=list)
     current_angle_id: str | None = None
 
+    # Legacy compatibility: profile fields for topic switching
+    profile: "AttributeProfile | None" = None
+    fallback_profiles: tuple = ()
+    switched_to: str | None = None
+    switch_reason: str | None = None
+    last_activity_ready_rejected_reason: str | None = None
+    surface_object_name: str | None = None
+    anchor_object_name: str | None = None
+
     def to_debug_dict(self) -> dict:
         d = asdict(self)
-        # AngleCoverageRecord is a dataclass; asdict handles it recursively
+        # Strip non-serializable objects for debug output
+        if self.primary_activity:
+            d["primary_activity"] = {
+                "activity_id": self.primary_activity.activity_id,
+                "name": self.primary_activity.name,
+            }
+        d["secondary_activities"] = [
+            {"activity_id": a.activity_id, "name": a.name}
+            for a in self.secondary_activities
+        ]
         return d
 
     def record_angle(
@@ -70,16 +75,216 @@ class DiscoverySessionState:
         )
 
 
+# Legacy AttributeProfile kept for compatibility during transition
+@dataclass(frozen=True)
+class AttributeProfile:
+    attribute_id: str
+    label: str
+    activity_target: str
+    branch: str
+    object_examples: tuple[str, ...]
+    redirect_entity: str | None = None
+    fallback_attributes: tuple = ()
+
+
 # ---------------------------------------------------------------------------
-# Internal helpers
+# Public API — activity selection (replaces select_attribute_profile)
 # ---------------------------------------------------------------------------
+async def select_activities_for_object(
+    *,
+    object_name: str,
+    anchor_name: str | None,
+    age: int,
+    client,
+    config: dict | None,
+) -> tuple[DiscoverySessionState | None, dict]:
+    """Select activities for an object using the new activity-driven flow.
+
+    Returns:
+        (DiscoverySessionState, debug_dict) — state is None if no match.
+    """
+    resolved_age = 6 if age is None else age
+    resolved_anchor = (anchor_name or object_name).strip().lower()
+
+    # Layer 1: Code filter — eligible activities from catalog
+    eligible = get_eligible_activities_for_object(resolved_anchor, resolved_age)
+
+    if not eligible:
+        return None, {
+            "decision": "no_eligible",
+            "source": "empty_catalog",
+            "reason": f"no eligible activities for {resolved_anchor}, age={resolved_age}",
+        }
+
+    # Layer 2: LLM selection from eligible activities
+    try:
+        discovery_result, discovery_debug = await discover_talkable_activities(
+            eligible_activities=eligible,
+            object_name=object_name,
+            anchor_name=resolved_anchor,
+            age=resolved_age,
+            client=client,
+            config=config,
+        )
+    except RateLimitError:
+        raise
+    except Exception as exc:
+        return None, {
+            "decision": "discovery_error",
+            "reason": str(exc),
+        }
+
+    if not discovery_result.proceed or not discovery_result.primary_activity_id:
+        return None, {
+            "decision": "no_strong_match",
+            "source": "llm",
+            "assessment": discovery_result.assessment,
+            **discovery_debug,
+        }
+
+    # Resolve primary and secondary activity definitions
+    id_to_activity = {a.activity_id: a for a in eligible}
+    primary = id_to_activity.get(discovery_result.primary_activity_id)
+    if not primary:
+        return None, {
+            "decision": "primary_not_in_eligible",
+            "reason": f"LLM returned {discovery_result.primary_activity_id} not in eligible",
+        }
+
+    secondary = [
+        id_to_activity[sid]
+        for sid in discovery_result.secondary_activity_ids
+        if sid in id_to_activity and sid != primary.activity_id
+    ]
+
+    # Build verification queue
+    verification_queue = [
+        VerificationItem(
+            property=v.get("property", ""),
+            question=v.get("question", ""),
+            for_activity_id=v.get("for_activity", ""),
+        )
+        for v in discovery_result.verification_queue
+    ]
+
+    # Build legacy AttributeProfile for compatibility during transition
+    primary_profile = AttributeProfile(
+        attribute_id=f"activity.{primary.activity_id}",
+        label=primary.name,
+        activity_target=primary.preview_prompt or primary.description,
+        branch="in_kb",
+        object_examples=(object_name,),
+    )
+
+    state = DiscoverySessionState(
+        object_name=object_name,
+        age=resolved_age,
+        primary_activity=primary,
+        secondary_activities=secondary,
+        verification_queue=verification_queue,
+        profile=primary_profile,
+    )
+
+    return state, {
+        "decision": "activities_selected",
+        "source": "llm",
+        "primary_activity_id": primary.activity_id,
+        "secondary_activity_ids": [a.activity_id for a in secondary],
+        "verification_count": len(verification_queue),
+        **discovery_debug,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Public API — session start
+# ---------------------------------------------------------------------------
+def start_attribute_session(
+    state: DiscoverySessionState = None,
+    *,
+    object_name: str = "",
+    profile: AttributeProfile = None,
+    age: int | None = None,
+    surface_object_name: str | None = None,
+    anchor_object_name: str | None = None,
+) -> DiscoverySessionState:
+    """Initialize an attribute lane session.
+
+    Supports two calling conventions:
+      1. New: start_attribute_session(state)
+      2. Legacy: start_attribute_session(object_name=..., profile=..., age=...)
+    """
+    if state is not None and isinstance(state, DiscoverySessionState):
+        return state
+    # Legacy path
+    if profile is None:
+        raise ValueError("profile is required for legacy start_attribute_session")
+    return DiscoverySessionState(
+        object_name=object_name,
+        age=6 if age is None else age,
+        profile=profile,
+        surface_object_name=surface_object_name,
+        anchor_object_name=anchor_object_name,
+        fallback_profiles=profile.fallback_attributes,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Public API — debug builder
+# ---------------------------------------------------------------------------
+def build_attribute_debug(
+    *,
+    decision: str,
+    profile: AttributeProfile | None = None,
+    state: DiscoverySessionState | None = None,
+    reason: str | None = None,
+    activity_marker_detected: bool = False,
+    activity_marker_reason: str | None = None,
+    activity_marker_rejected_reason: str | None = None,
+    response_text: str | None = None,
+    intent_type: str | None = None,
+    reply_type: str | None = None,
+) -> dict:
+    return {
+        "decision": decision,
+        "profile": asdict(profile) if profile else None,
+        "state": state.to_debug_dict() if state else None,
+        "reason": reason,
+        "activity_marker_detected": activity_marker_detected,
+        "activity_marker_reason": activity_marker_reason,
+        "activity_marker_rejected_reason": activity_marker_rejected_reason,
+        "response_text": response_text,
+        "intent_type": intent_type,
+        "reply_type": reply_type,
+    }
+
+
+# Compatibility alias
+AttributeSessionState = DiscoverySessionState
+
+
+# ---------------------------------------------------------------------------
+# Backward compatibility wrappers (deprecated — use select_activities_for_object)
+# ---------------------------------------------------------------------------
+import warnings
+
+from stream.exploration_loader import (
+    SubAttributeCandidate,
+    dimension_to_activity_target,
+    get_candidate_sub_attributes,
+    infer_domain,
+    sub_attribute_to_label,
+)
+import paixueji_prompts
+from model_json import extract_json_object
+from activities import attribute_to_angles
+
+
 def _anchor_status_to_branch(anchor_status: str | None) -> str:
     if anchor_status == "exact_supported":
         return "in_kb"
     if anchor_status in ("anchored_high", "anchored_medium"):
         return "anchored_not_in_kb"
     return "unresolved_not_in_kb"
-
 
 
 def _candidate_to_profile(
@@ -96,7 +301,6 @@ def _candidate_to_profile(
     )
 
 
-
 def _build_supported_attribute_block(profiles: tuple[AttributeProfile, ...]) -> str:
     lines = []
     for profile in profiles:
@@ -107,20 +311,6 @@ def _build_supported_attribute_block(profiles: tuple[AttributeProfile, ...]) -> 
     return "\n".join(lines)
 
 
-def _build_fallback_attribute_block(profiles: tuple[AttributeProfile, ...]) -> str:
-    if not profiles:
-        return "(no fallback topics)"
-    lines = []
-    for profile in profiles:
-        lines.append(
-            f"- {profile.attribute_id}: {profile.label}; activity={profile.activity_target}"
-        )
-    return "\n".join(lines)
-
-
-# ---------------------------------------------------------------------------
-# Public API — attribute selection
-# ---------------------------------------------------------------------------
 async def select_attribute_profile(
     *,
     object_name: str,
@@ -130,6 +320,12 @@ async def select_attribute_profile(
     client,
     config: dict | None,
 ) -> tuple[AttributeProfile | None, dict]:
+    """DEPRECATED: Use select_activities_for_object instead."""
+    warnings.warn(
+        "select_attribute_profile is deprecated. Use select_activities_for_object instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     resolved_age = 6 if age is None else age
     branch = _anchor_status_to_branch(anchor_status)
 
@@ -247,10 +443,7 @@ async def select_attribute_profile(
     }
 
 
-# ---------------------------------------------------------------------------
-# Public API — session start
-# ---------------------------------------------------------------------------
-def start_attribute_session(
+def _legacy_start_attribute_session(
     *,
     object_name: str,
     profile: AttributeProfile,
@@ -258,46 +451,14 @@ def start_attribute_session(
     surface_object_name: str | None = None,
     anchor_object_name: str | None = None,
 ) -> DiscoverySessionState:
+    """Legacy start_attribute_session signature kept for compatibility."""
     if profile is None:
         raise ValueError("profile is required")
     return DiscoverySessionState(
         object_name=object_name,
-        profile=profile,
         age=6 if age is None else age,
+        profile=profile,
         surface_object_name=surface_object_name,
         anchor_object_name=anchor_object_name,
         fallback_profiles=profile.fallback_attributes,
     )
-
-
-# ---------------------------------------------------------------------------
-# Public API — debug builder
-# ---------------------------------------------------------------------------
-def build_attribute_debug(
-    *,
-    decision: str,
-    profile: AttributeProfile | None,
-    state: DiscoverySessionState | None,
-    reason: str | None = None,
-    activity_marker_detected: bool = False,
-    activity_marker_reason: str | None = None,
-    activity_marker_rejected_reason: str | None = None,
-    response_text: str | None = None,
-    intent_type: str | None = None,
-    reply_type: str | None = None,
-) -> dict:
-    return {
-        "decision": decision,
-        "profile": asdict(profile) if profile else None,
-        "state": state.to_debug_dict() if state else None,
-        "reason": reason,
-        "activity_marker_detected": activity_marker_detected,
-        "activity_marker_reason": activity_marker_reason,
-        "activity_marker_rejected_reason": activity_marker_rejected_reason,
-        "response_text": response_text,
-        "intent_type": intent_type,
-        "reply_type": reply_type,
-    }
-
-
-AttributeSessionState = DiscoverySessionState
