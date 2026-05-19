@@ -26,6 +26,10 @@ class ActivityDefinition:
     launch_prompt: str = ""
     description: str = ""
 
+    # === Activity matching fields ===
+    attributes: tuple[str, ...] = ()           # e.g. ("polka_dots", "spots")
+    preview_prompt: str = ""                   # Short description for LLM selection
+
     # === Tag Block core tags ===
     observation_angle: str = ""           # color, shape, pattern, emotion, texture, origin...
     mechanic: str = ""                    # collect, compare, imagine, motion_voice...
@@ -78,6 +82,7 @@ class ActivityDefinition:
         # Build extra from fields not in core mapping
         core_keys = {
             "activity_id", "name", "launch_prompt", "description",
+            "attributes", "preview_prompt",
             "observation_angle", "mechanic", "game_style",
             "entity_binding", "entity_class", "entity_class_filter",
             "tier_range", "tier_range_span", "tier_support",
@@ -92,7 +97,9 @@ class ActivityDefinition:
             activity_id=data["activity_id"],
             name=_get("activity_signature.preview_label", "name", ""),
             launch_prompt=_get("activity_signature.preview_prompt", "launch_prompt", ""),
+            preview_prompt=_get("activity_signature.preview_prompt", "preview_prompt", ""),
             description=_get("activity_signature.intro", "description", ""),
+            attributes=tuple(data.get("attributes", [])),
             observation_angle=_get("activity_signature.observation_angle", "observation_angle", ""),
             mechanic=_get("activity_signature.mechanic", "mechanic", ""),
             game_style=data.get("game_style", ""),
