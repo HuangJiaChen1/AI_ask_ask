@@ -46,6 +46,19 @@ def test_start_attribute_session():
     assert session.turn_count == 0
 
 
+def test_start_attribute_lane_signature():
+    """start_attribute_lane must accept a single state argument."""
+    from paixueji_assistant import PaixuejiAssistant
+    import inspect
+    sig = inspect.signature(PaixuejiAssistant.start_attribute_lane)
+    params = list(sig.parameters.keys())
+    assert "attribute_state" in params
+    # Should no longer require a separate attribute_profile
+    assert "attribute_profile" in params
+    # attribute_profile should have a default (None)
+    assert sig.parameters["attribute_profile"].default is None
+
+
 def test_build_attribute_debug():
     activity = ActivityDefinition(activity_id="test", name="Test")
     state = DiscoverySessionState(object_name="cat", age=6, primary_activity=activity)

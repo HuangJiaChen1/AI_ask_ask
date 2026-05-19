@@ -301,11 +301,14 @@ class PaixuejiAssistant:
     def set_last_bridge_debug(self, debug_dict):
         self.last_bridge_debug = debug_dict
 
-    def start_attribute_lane(self, attribute_state, attribute_profile):
+    def start_attribute_lane(self, attribute_state, attribute_profile=None):
         self.attribute_pipeline_enabled = True
         self.attribute_lane_active = True
         self.attribute_state = attribute_state
-        self.attribute_profile = attribute_profile
+        # Support both old (state, profile) and new (state-only) calling conventions
+        self.attribute_profile = attribute_profile or (
+            attribute_state.profile if attribute_state else None
+        )
         self.attribute_activity_ready = False
         self.attribute_matched_activity = None
         self.last_attribute_debug = None
@@ -324,6 +327,18 @@ class PaixuejiAssistant:
         self.last_attribute_debug = debug_dict
 
     def attribute_activity_target(self):
+        # Prefer new activity-centric state, fall back to legacy profile
+        state = getattr(self, "attribute_state", None)
+        if state and hasattr(state, "primary_activity") and state.primary_activity:
+            activity = state.primary_activity
+            return {
+                "activity_source": "attribute",
+                "activity_id": activity.activity_id,
+                "activity_name": activity.name,
+                "activity_target": activity.preview_prompt or activity.description,
+                "launch_prompt": activity.launch_prompt,
+            }
+        # Legacy fallback
         if not self.attribute_profile:
             return None
         result = {
