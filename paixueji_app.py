@@ -419,8 +419,9 @@ from stream.validation import (
 )
 from attribute_activity import (
     build_attribute_debug,
-    select_attribute_profile,
+    select_activities_for_object,
     start_attribute_session,
+    DiscoverySessionState,
 )
 from category_activity import (
     build_category_debug,
@@ -1025,63 +1026,39 @@ def start_conversation():
     if attribute_pipeline_enabled:
         try:
             future = asyncio.run_coroutine_threadsafe(
-                select_attribute_profile(
+                select_activities_for_object(
                     object_name=object_name,
+                    anchor_name=assistant.anchor_object_name,
                     age=age or 6,
-                    anchor_status=assistant.anchor_status,
-                    available_angles=assistant.available_angles,
                     client=assistant.client,
                     config=assistant.config,
                 ),
                 _ASYNC_LOOP,
             )
-            attribute_profile, selection_debug = future.result(timeout=10)
+            attribute_state, selection_debug = future.result(timeout=10)
         except Exception as exc:
-            attribute_profile = None
+            attribute_state = None
             selection_debug = {
                 "decision": "no_attribute_match_fallback",
                 "source": "exception",
                 "reason": str(exc),
             }
 
-        if attribute_profile:
-            attribute_state = start_attribute_session(
-                object_name=object_name,
-                profile=attribute_profile,
-                age=age or 6,
+        if attribute_state:
+            assistant.start_attribute_lane(attribute_state)
+            logger.info(
+                "[ACTIVITY_MATCH] primary=%s session=%s",
+                attribute_state.primary_activity.activity_id,
+                session_id[:8],
             )
-            assistant.start_attribute_lane(attribute_state, attribute_profile)
-            matched_activity = get_activity_for_attribute(
-                attribute_profile.attribute_id, age or 6
-            )
-            if matched_activity:
-                assistant.attribute_matched_activity = {
-                    "activity_id": matched_activity.activity_id,
-                    "name": matched_activity.name,
-                    "launch_prompt": matched_activity.launch_prompt,
-                }
+            for sec in attribute_state.secondary_activities:
                 logger.info(
-                    "[ACTIVITY_MATCH] primary=%s activity=%s session=%s",
-                    attribute_profile.attribute_id, matched_activity.activity_id, session_id[:8],
+                    "[ACTIVITY_MATCH] secondary=%s session=%s",
+                    sec.activity_id, session_id[:8],
                 )
-            else:
-                assistant.attribute_matched_activity = None
-                logger.warning(
-                    "[ACTIVITY_MATCH] no activity found for primary=%s session=%s",
-                    attribute_profile.attribute_id, session_id[:8],
-                )
-
-            for fb in attribute_profile.fallback_attributes:
-                fb_activity = get_activity_for_attribute(fb.attribute_id, age or 6)
-                if fb_activity:
-                    logger.info(
-                        "[ACTIVITY_MATCH] fallback=%s activity=%s session=%s",
-                        fb.attribute_id, fb_activity.activity_id, session_id[:8],
-                    )
             assistant.set_last_attribute_debug(
                 build_attribute_debug(
                     decision="attribute_lane_started",
-                    profile=attribute_profile,
                     state=attribute_state,
                     reason=selection_debug.get("reason"),
                 )
