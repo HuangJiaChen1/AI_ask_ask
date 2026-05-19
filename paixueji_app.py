@@ -423,6 +423,12 @@ from attribute_activity import (
     start_attribute_session,
     DiscoverySessionState,
 )
+from stream.verification_guided_conversation import (
+    build_verification_context,
+    classify_verification,
+    check_probe_needed,
+    VerificationItem,
+)
 from category_activity import (
     build_category_debug,
     build_category_profile,
@@ -1707,6 +1713,41 @@ def continue_conversation():
                                 switch_target_id, session_id[:8],
                             )
 
+                    # VGC: Classify pending verifications
+                    pending_verifications = [
+                        v for v in assistant.attribute_state.verification_queue
+                        if v.status == "pending"
+                    ]
+                    for v in pending_verifications:
+                        v.pending_turns += 1
+
+                    verification_results = []
+                    for v in pending_verifications:
+                        try:
+                            v_future = asyncio.run_coroutine_threadsafe(
+                                classify_verification(
+                                    child_input=child_input,
+                                    property=v.property,
+                                    conversation_context="",
+                                    client=assistant.client,
+                                    config=assistant.config,
+                                ),
+                                _ASYNC_LOOP,
+                            )
+                            v_result = v_future.result(timeout=5)
+                            verification_results.append((v, v_result))
+                        except Exception as exc:
+                            logger.warning("[VGC] classify error for %s: %s", v.property, exc)
+
+                    for v, v_result in verification_results:
+                        verdict = v_result.get("verdict", "unclear")
+                        if verdict == "confirm":
+                            v.status = "verified"
+                            assistant.attribute_state.verified_properties[v.property] = "verified"
+                        elif verdict == "deny":
+                            v.status = "rejected"
+                            assistant.attribute_state.verified_properties[v.property] = "rejected"
+
                     async def stream_attribute_activity():
                         needs_followup = intent_type_lower not in INTENTS_WITHOUT_FOLLOWUP
 
@@ -1814,6 +1855,15 @@ def continue_conversation():
                                 explored_attributes=explored_attributes,
                             )
 
+                        # VGC: Inject pending verification context into prompt
+                        pending_for_prompt = [
+                            v for v in assistant.attribute_state.verification_queue
+                            if v.status == "pending"
+                        ]
+                        if pending_for_prompt:
+                            verification_ctx = build_verification_context(pending_for_prompt)
+                            soft_guide = f"{soft_guide}\n\n{verification_ctx}"
+
                         response_generator = generate_attribute_activation_response_stream(
                             messages=messages,
                             intent_type=intent_type_lower,
@@ -1862,6 +1912,23 @@ def continue_conversation():
                         # Safety net: strip any leaked [ACTIVITY_READY] / REASON:
                         # from response text before the child sees it.
                         full_response = _strip_activity_markers(full_response)
+
+                        # VGC L3: Direct probe if any pending verification exceeded turn threshold
+                        pending_after_response = [
+                            v for v in assistant.attribute_state.verification_queue
+                            if v.status == "pending"
+                        ]
+                        if check_probe_needed(pending_after_response):
+                            probe_item = next(
+                                (v for v in pending_after_response if v.escalation_question),
+                                pending_after_response[0] if pending_after_response else None,
+                            )
+                            if probe_item:
+                                probe_q = probe_item.escalation_question or probe_item.question
+                                if full_response and not full_response.rstrip().endswith("?"):
+                                    full_response = f"{full_response} {probe_q}"
+                                else:
+                                    full_response = probe_q
 
                         if full_response:
                             sequence_number += 1
