@@ -584,5 +584,38 @@ def get_explorable_angles(
     return angles
 
 
+# ---------------------------------------------------------------------------
+# Activity-driven selection: pre-filter for LLM
+# ---------------------------------------------------------------------------
+
+def get_eligible_activities_for_object(
+    anchor_object_name: str,
+    age: int,
+    extracted_properties: dict | None = None,
+) -> list[ActivityDefinition]:
+    """Filter catalog activities eligible for this object and age.
+
+    Uses Layer 1 hard gates (_is_eligible) only. Does NOT filter by
+    observation_angle — the LLM selection layer sees all eligible activities.
+    """
+    child_tier = _age_to_tier(age)
+    catalog = _load_catalog()
+
+    # Resolve entity info from mappings DB
+    entity_info = None
+    try:
+        from stream.db_loader import _find_entity
+        entity = _find_entity(anchor_object_name)
+        if entity and isinstance(entity, dict):
+            entity_info = entity
+    except Exception:
+        pass
+
+    return [
+        a for a in catalog
+        if _is_eligible(a, child_tier, entity_info, extracted_properties)
+    ]
+
+
 # Public alias for downstream modules
 attribute_to_angles = _attribute_to_angles

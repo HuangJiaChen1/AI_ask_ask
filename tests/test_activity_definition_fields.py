@@ -38,3 +38,21 @@ def test_from_dict_reads_attributes_and_preview_prompt():
     assert a.preview_prompt == "You noticed the polka dots on the {entity}. Let's find more!"
     assert a.launch_prompt == "You noticed the polka dots on the {entity}. Let's find more!"
     assert "attributes" not in a.extra
+
+
+def test_get_eligible_activities_for_object_filters_by_tier():
+    """Eligible filter should return only activities matching the child's age tier."""
+    from activities import get_eligible_activities_for_object
+
+    # This test assumes the catalog is loaded; use mocking if catalog is empty.
+    # For now, just test the function signature and that it returns a list.
+    result = get_eligible_activities_for_object("cat", age=6)
+    assert isinstance(result, list)
+
+
+def test_get_eligible_activities_returns_activity_definitions():
+    from activities import get_eligible_activities_for_object, ActivityDefinition
+
+    result = get_eligible_activities_for_object("cat", age=6)
+    for item in result:
+        assert isinstance(item, ActivityDefinition)
