@@ -1819,10 +1819,15 @@ def continue_conversation():
                                 total_turns=total_turns,
                             )
                         elif decision == HandoffDecision.REENGAGE:
+                            pending_for_angle = [
+                                v for v in assistant.attribute_state.verification_queue
+                                if v.status == "pending"
+                            ]
                             selected_angle = select_next_angle(
                                 explored_angle_ids=assistant.attribute_state.explored_angle_ids,
                                 dimension=dimension,
                                 interest_score=0,  # force simple angles only
+                                pending_verifications=pending_for_angle,
                             )
                             assistant.attribute_state.current_angle_id = selected_angle["angle_id"]
                             soft_guide = _build_reengage_guide(
@@ -1837,10 +1842,15 @@ def continue_conversation():
                             )
                         else:
                             # CONTINUE or CONTINUE_SWITCH
+                            pending_for_angle = [
+                                v for v in assistant.attribute_state.verification_queue
+                                if v.status == "pending"
+                            ]
                             selected_angle = select_next_angle(
                                 explored_angle_ids=assistant.attribute_state.explored_angle_ids,
                                 dimension=dimension,
                                 interest_score=current_interest_score,
+                                pending_verifications=pending_for_angle,
                             )
                             assistant.attribute_state.current_angle_id = selected_angle["angle_id"]
                             soft_guide = _build_continue_guide(

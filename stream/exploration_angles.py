@@ -100,6 +100,7 @@ def select_next_angle(
     explored_angle_ids: list[str],
     dimension: str,
     interest_score: float = 0,
+    pending_verifications: list | None = None,
 ) -> dict:
     """Select the next exploration angle for the given dimension.
 
@@ -114,6 +115,26 @@ def select_next_angle(
     """
     pool_key = "physical" if dimension in PHYSICAL_DIMENSIONS else "engagement"
     pool = EXPLORATION_ANGLES.get(pool_key, [])
+
+    # VGC: If there's a pending verification, prefer angles that help verify it
+    if pending_verifications:
+        property_to_angle_hints = {
+            "color": "observation",
+            "shape": "observation",
+            "pattern": "comparison",
+            "texture": "observation",
+            "size": "comparison",
+        }
+        for v in pending_verifications:
+            prop = v.property.lower()
+            for hint_key, hint_angle in property_to_angle_hints.items():
+                if hint_key in prop:
+                    preferred = [
+                        a for a in pool
+                        if a["angle_id"] == hint_angle and a["angle_id"] not in explored_angle_ids
+                    ]
+                    if preferred:
+                        return preferred[0]
 
     if not pool:
         return {
