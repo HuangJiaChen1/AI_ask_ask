@@ -89,6 +89,20 @@ from .cares_handoff import (
     EXIT_LANE_INTEREST,
 )
 
+# Activity discovery (activity-driven pipeline)
+from .activity_discovery import (
+    discover_talkable_activities,
+    ActivityDiscoveryResult,
+)
+
+# Verification-guided conversation
+from .verification_guided_conversation import (
+    VerificationItem,
+    build_verification_context,
+    classify_verification,
+    check_probe_needed,
+)
+
 __all__ = [
     # Utils
     'safe_print',
@@ -150,4 +164,14 @@ __all__ = [
     'MIN_INTEREST_FOR_HANDOFF',
     'MAX_SESSION_TURNS',
     'EXIT_LANE_INTEREST',
+
+    # Activity discovery
+    'discover_talkable_activities',
+    'ActivityDiscoveryResult',
+
+    # Verification-guided conversation
+    'VerificationItem',
+    'build_verification_context',
+    'classify_verification',
+    'check_probe_needed',
 ]
