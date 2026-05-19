@@ -1840,6 +1840,34 @@ def continue_conversation():
                                 struggle_count=assistant.consecutive_struggle_count,
                                 current_score=current_interest_score,
                             )
+                        elif decision == HandoffDecision.PROBE:
+                            pending_for_angle = [
+                                v for v in assistant.attribute_state.verification_queue
+                                if v.status == "pending"
+                            ]
+                            selected_angle = select_next_angle(
+                                explored_angle_ids=assistant.attribute_state.explored_angle_ids,
+                                dimension=dimension,
+                                interest_score=current_interest_score,
+                                pending_verifications=pending_for_angle,
+                            )
+                            assistant.attribute_state.current_angle_id = selected_angle["angle_id"]
+                            soft_guide = _build_continue_guide(
+                                attribute_label=attribute_label,
+                                activity_target=activity_target,
+                                sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
+                                selected_angle=selected_angle,
+                                explored_angle_ids=assistant.attribute_state.explored_angle_ids,
+                                turn_count=assistant.attribute_state.turn_count,
+                                current_score=current_interest_score,
+                                total_turns=total_turns,
+                                explored_attributes=explored_attributes,
+                            )
+                            # PROBE mode: append a directive to ask more directly
+                            soft_guide = (
+                                f"{soft_guide}\n\n[DIRECTIVE] The child seems close to being ready for an activity, "
+                                "but we need to confirm one thing first. Ask a clear, direct question to verify the pending property."
+                            )
                         else:
                             # CONTINUE or CONTINUE_SWITCH
                             pending_for_angle = [
