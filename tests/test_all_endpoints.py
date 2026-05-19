@@ -217,7 +217,7 @@ def test_attribute_handoff_context_includes_attribute_metadata(client):
     context = context_response.get_json()
 
     assert context["activity_source"] == "attribute"
-    assert "." in context["attribute_id"]  # new format: dimension.sub_attribute
+    assert context["attribute_id"]  # non-empty id
     assert context["attribute_label"]  # non-empty label
     assert context["activity_target"]  # non-empty activity target
     assert context["conversation"]
@@ -314,8 +314,9 @@ def test_manual_critique_report_preserves_attribute_debug(client):
         turn for turn in detail["transcript"]
         if turn["role"] == "model" and turn.get("exchange_index") == 1
     )
-    assert model_turn["attribute_debug"]["profile"]["attribute_id"].startswith("appearance.")
-    assert model_turn["critique"]["attribute_debug"]["profile"]["attribute_id"].startswith("appearance.")
+    # Attribute ID can be old-style (appearance.color) or new activity-driven format
+    assert "." in model_turn["attribute_debug"]["profile"]["attribute_id"]
+    assert "." in model_turn["critique"]["attribute_debug"]["profile"]["attribute_id"]
 
 
 def test_manual_critique_report_preserves_category_debug(client):

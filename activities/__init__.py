@@ -26,6 +26,10 @@ class ActivityDefinition:
     launch_prompt: str = ""
     description: str = ""
 
+    # === Activity matching fields ===
+    attributes: tuple[str, ...] = ()           # e.g. ("polka_dots", "spots")
+    preview_prompt: str = ""                   # Short description for LLM selection
+
     # === Tag Block core tags ===
     observation_angle: str = ""           # color, shape, pattern, emotion, texture, origin...
     mechanic: str = ""                    # collect, compare, imagine, motion_voice...
@@ -78,6 +82,7 @@ class ActivityDefinition:
         # Build extra from fields not in core mapping
         core_keys = {
             "activity_id", "name", "launch_prompt", "description",
+            "attributes", "preview_prompt",
             "observation_angle", "mechanic", "game_style",
             "entity_binding", "entity_class", "entity_class_filter",
             "tier_range", "tier_range_span", "tier_support",
@@ -92,7 +97,9 @@ class ActivityDefinition:
             activity_id=data["activity_id"],
             name=_get("activity_signature.preview_label", "name", ""),
             launch_prompt=_get("activity_signature.preview_prompt", "launch_prompt", ""),
+            preview_prompt=_get("activity_signature.preview_prompt", "preview_prompt", ""),
             description=_get("activity_signature.intro", "description", ""),
+            attributes=tuple(data.get("attributes", [])),
             observation_angle=_get("activity_signature.observation_angle", "observation_angle", ""),
             mechanic=_get("activity_signature.mechanic", "mechanic", ""),
             game_style=data.get("game_style", ""),
@@ -259,7 +266,16 @@ def get_activity_for_attribute(attribute_id: str, age: int) -> ActivityDefinitio
     """Return the first activity matching *attribute_id* and the child's age tier.
 
     Uses observation_angle matching via _ATTRIBUTE_TO_ANGLE mapping.
+
+    .. deprecated::
+        Use select_best_activity or the activity-driven pipeline instead.
     """
+    import warnings
+    warnings.warn(
+        "get_activity_for_attribute is deprecated. Use select_best_activity or the activity-driven pipeline instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     tier = _age_to_tier(age)
     catalog = _load_catalog()
     target_angles = _attribute_to_angles(attribute_id)
@@ -575,6 +591,39 @@ def get_explorable_angles(
             angles.add(a.observation_angle)
         angles.update(a.bridge_prerequisites_primary)
     return angles
+
+
+# ---------------------------------------------------------------------------
+# Activity-driven selection: pre-filter for LLM
+# ---------------------------------------------------------------------------
+
+def get_eligible_activities_for_object(
+    anchor_object_name: str,
+    age: int,
+    extracted_properties: dict | None = None,
+) -> list[ActivityDefinition]:
+    """Filter catalog activities eligible for this object and age.
+
+    Uses Layer 1 hard gates (_is_eligible) only. Does NOT filter by
+    observation_angle — the LLM selection layer sees all eligible activities.
+    """
+    child_tier = _age_to_tier(age)
+    catalog = _load_catalog()
+
+    # Resolve entity info from mappings DB
+    entity_info = None
+    try:
+        from stream.db_loader import _find_entity
+        entity = _find_entity(anchor_object_name)
+        if entity and isinstance(entity, dict):
+            entity_info = entity
+    except Exception:
+        pass
+
+    return [
+        a for a in catalog
+        if _is_eligible(a, child_tier, entity_info, extracted_properties)
+    ]
 
 
 # Public alias for downstream modules

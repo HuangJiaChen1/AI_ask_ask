@@ -420,8 +420,15 @@ from stream.validation import (
 )
 from attribute_activity import (
     build_attribute_debug,
-    select_attribute_profile,
+    select_activities_for_object,
     start_attribute_session,
+    DiscoverySessionState,
+)
+from stream.verification_guided_conversation import (
+    build_verification_context,
+    classify_verification,
+    check_probe_needed,
+    VerificationItem,
 )
 from category_activity import (
     build_category_debug,
@@ -1026,63 +1033,39 @@ def start_conversation():
     if attribute_pipeline_enabled:
         try:
             future = asyncio.run_coroutine_threadsafe(
-                select_attribute_profile(
+                select_activities_for_object(
                     object_name=object_name,
+                    anchor_name=assistant.anchor_object_name,
                     age=age or 6,
-                    anchor_status=assistant.anchor_status,
-                    available_angles=assistant.available_angles,
                     client=assistant.client,
                     config=assistant.config,
                 ),
                 _ASYNC_LOOP,
             )
-            attribute_profile, selection_debug = future.result(timeout=10)
+            attribute_state, selection_debug = future.result(timeout=10)
         except Exception as exc:
-            attribute_profile = None
+            attribute_state = None
             selection_debug = {
                 "decision": "no_attribute_match_fallback",
                 "source": "exception",
                 "reason": str(exc),
             }
 
-        if attribute_profile:
-            attribute_state = start_attribute_session(
-                object_name=object_name,
-                profile=attribute_profile,
-                age=age or 6,
+        if attribute_state:
+            assistant.start_attribute_lane(attribute_state)
+            logger.info(
+                "[ACTIVITY_MATCH] primary=%s session=%s",
+                attribute_state.primary_activity.activity_id,
+                session_id[:8],
             )
-            assistant.start_attribute_lane(attribute_state, attribute_profile)
-            matched_activity = get_activity_for_attribute(
-                attribute_profile.attribute_id, age or 6
-            )
-            if matched_activity:
-                assistant.attribute_matched_activity = {
-                    "activity_id": matched_activity.activity_id,
-                    "name": matched_activity.name,
-                    "launch_prompt": matched_activity.launch_prompt,
-                }
+            for sec in attribute_state.secondary_activities:
                 logger.info(
-                    "[ACTIVITY_MATCH] primary=%s activity=%s session=%s",
-                    attribute_profile.attribute_id, matched_activity.activity_id, session_id[:8],
+                    "[ACTIVITY_MATCH] secondary=%s session=%s",
+                    sec.activity_id, session_id[:8],
                 )
-            else:
-                assistant.attribute_matched_activity = None
-                logger.warning(
-                    "[ACTIVITY_MATCH] no activity found for primary=%s session=%s",
-                    attribute_profile.attribute_id, session_id[:8],
-                )
-
-            for fb in attribute_profile.fallback_attributes:
-                fb_activity = get_activity_for_attribute(fb.attribute_id, age or 6)
-                if fb_activity:
-                    logger.info(
-                        "[ACTIVITY_MATCH] fallback=%s activity=%s session=%s",
-                        fb.attribute_id, fb_activity.activity_id, session_id[:8],
-                    )
             assistant.set_last_attribute_debug(
                 build_attribute_debug(
                     decision="attribute_lane_started",
-                    profile=attribute_profile,
                     state=attribute_state,
                     reason=selection_debug.get("reason"),
                 )
@@ -1735,6 +1718,41 @@ def continue_conversation():
                                 switch_target_id, session_id[:8],
                             )
 
+                    # VGC: Classify pending verifications
+                    pending_verifications = [
+                        v for v in assistant.attribute_state.verification_queue
+                        if v.status == "pending"
+                    ]
+                    for v in pending_verifications:
+                        v.pending_turns += 1
+
+                    verification_results = []
+                    for v in pending_verifications:
+                        try:
+                            v_future = asyncio.run_coroutine_threadsafe(
+                                classify_verification(
+                                    child_input=child_input,
+                                    property=v.property,
+                                    conversation_context="",
+                                    client=assistant.client,
+                                    config=assistant.config,
+                                ),
+                                _ASYNC_LOOP,
+                            )
+                            v_result = v_future.result(timeout=5)
+                            verification_results.append((v, v_result))
+                        except Exception as exc:
+                            logger.warning("[VGC] classify error for %s: %s", v.property, exc)
+
+                    for v, v_result in verification_results:
+                        verdict = v_result.get("verdict", "unclear")
+                        if verdict == "confirm":
+                            v.status = "verified"
+                            assistant.attribute_state.verified_properties[v.property] = "verified"
+                        elif verdict == "deny":
+                            v.status = "rejected"
+                            assistant.attribute_state.verified_properties[v.property] = "rejected"
+
                     async def stream_attribute_activity():
                         needs_followup = intent_type_lower not in INTENTS_WITHOUT_FOLLOWUP
 
@@ -1806,10 +1824,15 @@ def continue_conversation():
                                 total_turns=total_turns,
                             )
                         elif decision == HandoffDecision.REENGAGE:
+                            pending_for_angle = [
+                                v for v in assistant.attribute_state.verification_queue
+                                if v.status == "pending"
+                            ]
                             selected_angle = select_next_angle(
                                 explored_angle_ids=assistant.attribute_state.explored_angle_ids,
                                 dimension=dimension,
                                 interest_score=0,  # force simple angles only
+                                pending_verifications=pending_for_angle,
                             )
                             assistant.attribute_state.current_angle_id = selected_angle["angle_id"]
                             soft_guide = _build_reengage_guide(
@@ -1822,12 +1845,16 @@ def continue_conversation():
                                 struggle_count=assistant.consecutive_struggle_count,
                                 current_score=current_interest_score,
                             )
-                        else:
-                            # CONTINUE or CONTINUE_SWITCH
+                        elif decision == HandoffDecision.PROBE:
+                            pending_for_angle = [
+                                v for v in assistant.attribute_state.verification_queue
+                                if v.status == "pending"
+                            ]
                             selected_angle = select_next_angle(
                                 explored_angle_ids=assistant.attribute_state.explored_angle_ids,
                                 dimension=dimension,
                                 interest_score=current_interest_score,
+                                pending_verifications=pending_for_angle,
                             )
                             assistant.attribute_state.current_angle_id = selected_angle["angle_id"]
                             soft_guide = _build_continue_guide(
@@ -1841,6 +1868,44 @@ def continue_conversation():
                                 total_turns=total_turns,
                                 explored_attributes=explored_attributes,
                             )
+                            # PROBE mode: append a directive to ask more directly
+                            soft_guide = (
+                                f"{soft_guide}\n\n[DIRECTIVE] The child seems close to being ready for an activity, "
+                                "but we need to confirm one thing first. Ask a clear, direct question to verify the pending property."
+                            )
+                        else:
+                            # CONTINUE or CONTINUE_SWITCH
+                            pending_for_angle = [
+                                v for v in assistant.attribute_state.verification_queue
+                                if v.status == "pending"
+                            ]
+                            selected_angle = select_next_angle(
+                                explored_angle_ids=assistant.attribute_state.explored_angle_ids,
+                                dimension=dimension,
+                                interest_score=current_interest_score,
+                                pending_verifications=pending_for_angle,
+                            )
+                            assistant.attribute_state.current_angle_id = selected_angle["angle_id"]
+                            soft_guide = _build_continue_guide(
+                                attribute_label=attribute_label,
+                                activity_target=activity_target,
+                                sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
+                                selected_angle=selected_angle,
+                                explored_angle_ids=assistant.attribute_state.explored_angle_ids,
+                                turn_count=assistant.attribute_state.turn_count,
+                                current_score=current_interest_score,
+                                total_turns=total_turns,
+                                explored_attributes=explored_attributes,
+                            )
+
+                        # VGC: Inject pending verification context into prompt
+                        pending_for_prompt = [
+                            v for v in assistant.attribute_state.verification_queue
+                            if v.status == "pending"
+                        ]
+                        if pending_for_prompt:
+                            verification_ctx = build_verification_context(pending_for_prompt)
+                            soft_guide = f"{soft_guide}\n\n{verification_ctx}"
 
                         response_generator = generate_attribute_activation_response_stream(
                             messages=messages,
@@ -1890,6 +1955,23 @@ def continue_conversation():
                         # Safety net: strip any leaked [ACTIVITY_READY] / REASON:
                         # from response text before the child sees it.
                         full_response = _strip_activity_markers(full_response)
+
+                        # VGC L3: Direct probe if any pending verification exceeded turn threshold
+                        pending_after_response = [
+                            v for v in assistant.attribute_state.verification_queue
+                            if v.status == "pending"
+                        ]
+                        if check_probe_needed(pending_after_response):
+                            probe_item = next(
+                                (v for v in pending_after_response if v.escalation_question),
+                                pending_after_response[0] if pending_after_response else None,
+                            )
+                            if probe_item:
+                                probe_q = probe_item.escalation_question or probe_item.question
+                                if full_response and not full_response.rstrip().endswith("?"):
+                                    full_response = f"{full_response} {probe_q}"
+                                else:
+                                    full_response = probe_q
 
                         if full_response:
                             sequence_number += 1
@@ -5689,8 +5771,8 @@ def create_handoff():
         handoff_payload = {
             "conversation": conversation,
             "activity_source": "attribute",
-            "attribute_id": activity_target.get("attribute_id"),
-            "attribute_label": activity_target.get("attribute_label"),
+            "attribute_id": activity_target.get("attribute_id") or activity_target.get("activity_id"),
+            "attribute_label": activity_target.get("attribute_label") or activity_target.get("activity_name"),
             "activity_target": activity_target.get("activity_target"),
         }
     category_target = assistant.category_activity_target() if hasattr(assistant, "category_activity_target") else None

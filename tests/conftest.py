@@ -117,10 +117,36 @@ def mock_gemini_client(monkeypatch):
     client.models.generate_content.return_value = mock_response_sync
 
     # --- Async Mock Configuration (aio) ---
-    mock_response_async = MagicMock()
-    # classify_intent() parses plain-text with INTENT:/NEW_OBJECT:/REASONING: regex
-    mock_response_async.text = "INTENT: CLARIFYING_IDK\nNEW_OBJECT: null\nREASONING: Mock classification"
-    client.aio.models.generate_content.return_value = mock_response_async
+    import re as _re
+
+    async def _aio_generate_content(model, contents, config=None):
+        prompt_text = ""
+        for content in contents:
+            if isinstance(content, dict):
+                prompt_text += content.get("text", "")
+            elif hasattr(content, "text"):
+                prompt_text += content.text
+            elif isinstance(content, str):
+                prompt_text += content
+        resp = MagicMock()
+        # activity_discovery prompt
+        if "ELIGIBLE ACTIVITIES" in prompt_text:
+            # Extract the first activity ID from the prompt so validation passes
+            ids = _re.findall(r"- ID: (\w+)", prompt_text)
+            activity_id = ids[0] if ids else "test_activity"
+            resp.text = json.dumps({
+                "primary": {"activity_id": activity_id, "category": "ready", "certainty": "high", "why": "Test match"},
+                "secondary": [],
+                "verification_queue": [],
+                "assessment": "Strong match",
+                "proceed": True,
+            })
+        else:
+            # classify_intent() parses plain-text with INTENT:/NEW_OBJECT:/REASONING: regex
+            resp.text = "INTENT: CLARIFYING_IDK\nNEW_OBJECT: null\nREASONING: Mock classification"
+        return resp
+
+    client.aio.models.generate_content.side_effect = _aio_generate_content
 
     def side_effect_stream(model, contents, config=None):
         response_text = "Hello! Let's talk about the object. What color is it?"
@@ -133,7 +159,7 @@ def mock_gemini_client(monkeypatch):
     # Patch the global client in the app
     import paixueji_app
     monkeypatch.setattr(paixueji_app, "GLOBAL_GEMINI_CLIENT", client)
-    
+
     return client
 
 @pytest.fixture

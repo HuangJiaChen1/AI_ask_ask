@@ -167,6 +167,7 @@ class HandoffDecision(Enum):
     HANDOFF_NOW = "handoff_now"
     REENGAGE = "reengage"
     EXIT_LANE = "exit_lane"
+    PROBE = "probe"
 
 
 def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, dict[str, Any]]:
@@ -250,6 +251,35 @@ def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, di
             selection.decision,
             selection.activity is not None and selection.selector_score >= MIN_SCORE_FOR_HANDOFF,
         )
+
+        # Gate 3b: Verification status check
+        verification_queue = getattr(
+            getattr(assistant, "attribute_state", None), "verification_queue", None
+        )
+        if verification_queue:
+            pending = [v for v in verification_queue if v.status == "pending"]
+            primary_activity = getattr(
+                getattr(assistant, "attribute_state", None), "primary_activity", None
+            )
+            primary_activity_id = primary_activity.activity_id if primary_activity else None
+            if primary_activity_id:
+                rejected_for_primary = [
+                    v for v in verification_queue
+                    if v.status == "rejected" and v.for_activity_id == primary_activity_id
+                ]
+                if rejected_for_primary:
+                    return HandoffDecision.CONTINUE, "primary_property_rejected", {
+                        "target_attribute": best_attr,
+                        "rejected_properties": [v.property for v in rejected_for_primary],
+                        "readiness_score": best_score,
+                    }
+
+            if pending:
+                return HandoffDecision.PROBE, "properties_pending_verification", {
+                    "target_attribute": best_attr,
+                    "pending_properties": [v.property for v in pending],
+                    "readiness_score": best_score,
+                }
 
         if activity:
             if best_attr == current_attr:

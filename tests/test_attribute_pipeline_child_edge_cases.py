@@ -19,6 +19,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from activities import ActivityDefinition
 from attribute_activity import (
     AttributeProfile,
     DiscoverySessionState,
@@ -692,6 +693,29 @@ class TestDifficultChildConversations:
             mock_gemini_client.aio.models.generate_content_stream = AsyncMock(
                 side_effect=_stream
             )
+            # Patch select_activities_for_object to bypass discovery LLM call
+            _state = DiscoverySessionState(
+                object_name="test_object",
+                age=6,
+                primary_activity=ActivityDefinition(
+                    activity_id="test_activity",
+                    name="Test Activity",
+                    description="A test activity",
+                ),
+                profile=AttributeProfile(
+                    attribute_id="appearance.color",
+                    label="color",
+                    activity_target="noticing colors",
+                    branch="in_kb",
+                    object_examples=("test_object",),
+                ),
+            )
+            monkeypatch.setattr(
+                paixueji_app,
+                "select_activities_for_object",
+                AsyncMock(return_value=(_state, {"decision": "test"})),
+            )
+
             # Ensure the global client is the same patched one
             monkeypatch.setattr(paixueji_app, "GLOBAL_GEMINI_CLIENT", mock_gemini_client)
             return client

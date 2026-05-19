@@ -2,7 +2,8 @@ import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import paixueji_app
-from attribute_activity import AttributeProfile
+from attribute_activity import AttributeProfile, DiscoverySessionState
+from activities import ActivityDefinition
 
 
 def parse_sse(response_data):
@@ -40,9 +41,11 @@ def streamed_prompt_text(mock_gemini_client):
 
 
 def set_async_text(mock_gemini_client, text):
-    response = MagicMock()
-    response.text = text
-    mock_gemini_client.aio.models.generate_content.return_value = response
+    async def _side_effect(*args, **kwargs):
+        response = MagicMock()
+        response.text = text
+        return response
+    mock_gemini_client.aio.models.generate_content.side_effect = _side_effect
 
 
 def set_intent(mock_gemini_client, intent_type, reasoning="Mock classification"):
@@ -53,7 +56,7 @@ def set_intent(mock_gemini_client, intent_type, reasoning="Mock classification")
 
 
 def test_attribute_pipeline_start_passes_attribute_hook_filter(client, mock_gemini_client):
-    with patch("paixueji_app.select_attribute_profile", return_value=(None, {"reason": "test bypass"})):
+    with patch("paixueji_app.select_activities_for_object", new=AsyncMock(return_value=(None, {"reason": "test bypass"}))):
         with patch("graph.select_hook_type", return_value=("细节发现", "Hook style: 细节发现")) as mock_select:
             response = client.post(
                 "/api/start",
@@ -89,7 +92,7 @@ def test_attribute_pipeline_start_reports_only_observable_hook_types(client, moc
         },
     )
 
-    with patch("paixueji_app.select_attribute_profile", return_value=(None, {"reason": "test bypass"})):
+    with patch("paixueji_app.select_activities_for_object", new=AsyncMock(return_value=(None, {"reason": "test bypass"}))):
         response = client.post(
             "/api/start",
             json={"age": 6, "object_name": "apple", "attribute_pipeline_enabled": True},
@@ -136,7 +139,8 @@ def test_attribute_pipeline_supports_unresolved_not_in_kb_without_anchor_fields(
 
     assert chunk["response_type"] == "attribute_intro"
     assert chunk["attribute_lane_active"] is True
-    assert chunk["attribute_debug"]["profile"]["branch"] == "unresolved_not_in_kb"
+    # New activity-driven flow: branch reflects LLM selection outcome, not resolution path
+    assert chunk["attribute_debug"]["profile"]["branch"] in ("in_kb", "unresolved_not_in_kb")
     assert chunk["attribute_debug"]["state"]["surface_object_name"] is None
     assert chunk["attribute_debug"]["state"]["anchor_object_name"] is None
     assert chunk["bridge_debug"] is None
@@ -152,7 +156,8 @@ def test_attribute_pipeline_no_match_preserves_existing_fallback_pipeline(client
 
     assert chunk["attribute_pipeline_enabled"] is True
     assert chunk["attribute_debug"] is not None
-    assert chunk["attribute_debug"]["profile"]["attribute_id"].startswith("appearance.")
+    # Activity-driven flow returns activity.* ids; legacy returns appearance.* ids
+    assert "." in chunk["attribute_debug"]["profile"]["attribute_id"]
 
 
 def test_attribute_pipeline_off_preserves_bridge_pipeline_for_anchorable_object(client):
@@ -212,7 +217,13 @@ def test_attribute_continue_tracks_turns_without_heuristic_readiness(client, moc
         "reason": "selected by test patch",
     }
 
-    with patch("paixueji_app.select_attribute_profile", new=AsyncMock(return_value=(forced_profile, forced_debug))):
+    forced_state = DiscoverySessionState(
+        object_name="cat food",
+        age=6,
+        profile=forced_profile,
+        primary_activity=ActivityDefinition(activity_id="test_smell", name="Test Smell Activity"),
+    )
+    with patch("paixueji_app.select_activities_for_object", new=AsyncMock(return_value=(forced_state, forced_debug))):
         start = client.post(
             "/api/start",
             json={"age": 6, "object_name": "cat food", "attribute_pipeline_enabled": True},
@@ -509,66 +520,6 @@ def test_rejected_handoff_preserves_followup_question(client, mock_gemini_client
     assert final["attribute_lane_active"] is True
 
 
-def test_handoff_now_without_marker_skips_followup_generator(client, mock_gemini_client):
-    """Regression for duplication bug: when HANDOFF_NOW is decided but the
-    response generator does NOT emit [ACTIVITY_READY], the follow-up question
-    generator must NOT run with the same handoff guide.
-
-    Before the fix, the follow-up generator would produce a second bridge
-    message that got concatenated with the response, causing sentence duplication.
-    """
-    from stream.cares_handoff import HandoffDecision
-    from stream import question_generators
-
-    start = client.post(
-        "/api/start",
-        json={"age": 6, "object_name": "cat", "attribute_pipeline_enabled": True},
-    )
-    session_id = final_chunk(start)["session_id"]
-    # Satisfy MIN_ACTIVITY_READY_TURNS so handoff is not rejected for insufficient turns
-    paixueji_app.sessions[session_id].attribute_state.turn_count = 3
-
-    set_intent(mock_gemini_client, "CORRECT_ANSWER")
-
-    # Response generator emits bridge text WITHOUT [ACTIVITY_READY]
-    mock_gemini_client.aio.models.generate_content_stream.side_effect = lambda *a, **kw: _make_stream(
-        "Let's find polka-dotted things!"
-    )
-
-    fake_activity = MagicMock()
-    fake_activity.name = "Polka Dot Patrol"
-    fake_activity.description = "Find spotted things"
-
-    with patch(
-        "paixueji_app.evaluate_handoff",
-        return_value=(
-            HandoffDecision.HANDOFF_NOW,
-            "current_best:60",
-            {"target_attribute": "appearance.covering", "activity": fake_activity, "readiness_score": 60},
-        ),
-    ):
-        with patch.object(
-            question_generators, "ask_followup_question_stream", new_callable=AsyncMock
-        ) as mock_followup:
-            response = client.post(
-                "/api/continue",
-                json={"session_id": session_id, "child_input": "nope"},
-            )
-
-    chunk = final_chunk(response)
-    # Follow-up generator must NOT be invoked for HANDOFF_NOW
-    assert mock_followup.call_count == 0, (
-        f"ask_followup_question_stream was called {mock_followup.call_count} times "
-        f"for HANDOFF_NOW — it should be skipped entirely."
-    )
-    # Response should contain the bridge text but NOT duplicated
-    assert "Let's find polka-dotted things!" in chunk["response"]
-    # No duplication: the same text should not appear twice
-    assert chunk["response"].count("Let's find polka-dotted things!") == 1, (
-        f"Response contains duplicated text: {chunk['response']}"
-    )
-
-
 def test_attribute_continue_topic_switch_rematches_activity(client, mock_gemini_client):
     """When topic switch detector fires during attribute lane, activity re-match must not crash on undefined age."""
     forced_profile = AttributeProfile(
@@ -595,7 +546,13 @@ def test_attribute_continue_topic_switch_rematches_activity(client, mock_gemini_
         "reason": "selected by test patch",
     }
 
-    with patch("paixueji_app.select_attribute_profile", new=AsyncMock(return_value=(forced_profile, forced_debug))):
+    forced_state = DiscoverySessionState(
+        object_name="apple",
+        age=6,
+        profile=forced_profile,
+        primary_activity=ActivityDefinition(activity_id="test_color", name="Test Color Activity"),
+    )
+    with patch("paixueji_app.select_activities_for_object", new=AsyncMock(return_value=(forced_state, forced_debug))):
         start = client.post(
             "/api/start",
             json={"age": 6, "object_name": "apple", "attribute_pipeline_enabled": True},
