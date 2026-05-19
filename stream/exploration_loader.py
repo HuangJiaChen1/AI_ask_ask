@@ -90,7 +90,16 @@ def get_candidate_sub_attributes(
     Returns:
         List of SubAttributeCandidate, one per (dimension, sub_attribute) pair
         that is valid for the given tier.
+
+    .. deprecated::
+        Use activities.get_eligible_activities_for_object instead.
     """
+    import warnings
+    warnings.warn(
+        "get_candidate_sub_attributes is deprecated. Use activities.get_eligible_activities_for_object instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     data = _load_yaml()
     tier = _age_to_tier(age)
 

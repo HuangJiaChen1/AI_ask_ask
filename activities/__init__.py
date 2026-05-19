@@ -266,7 +266,16 @@ def get_activity_for_attribute(attribute_id: str, age: int) -> ActivityDefinitio
     """Return the first activity matching *attribute_id* and the child's age tier.
 
     Uses observation_angle matching via _ATTRIBUTE_TO_ANGLE mapping.
+
+    .. deprecated::
+        Use select_best_activity or the activity-driven pipeline instead.
     """
+    import warnings
+    warnings.warn(
+        "get_activity_for_attribute is deprecated. Use select_best_activity or the activity-driven pipeline instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     tier = _age_to_tier(age)
     catalog = _load_catalog()
     target_angles = _attribute_to_angles(attribute_id)
