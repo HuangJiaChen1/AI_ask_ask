@@ -32,6 +32,7 @@ class ActivityDefinition:
 
     # === Tag Block core tags ===
     observation_angle: str = ""           # color, shape, pattern, emotion, texture, origin...
+    focal_attribute: str = ""             # e.g. "polka_dots", "time_period_behavior"
     mechanic: str = ""                    # collect, compare, imagine, motion_voice...
     game_style: str = ""                  # time_traveler, quest_collector, voice_stage...
 
@@ -83,7 +84,7 @@ class ActivityDefinition:
         core_keys = {
             "activity_id", "name", "launch_prompt", "description",
             "attributes", "preview_prompt",
-            "observation_angle", "mechanic", "game_style",
+            "observation_angle", "focal_attribute", "mechanic", "game_style",
             "entity_binding", "entity_class", "entity_class_filter",
             "tier_range", "tier_range_span", "tier_support",
             "bridge_prerequisites", "bridge_prerequisites_primary", "bridge_prerequisites_secondary",
@@ -101,6 +102,7 @@ class ActivityDefinition:
             description=_get("activity_signature.intro", "description", ""),
             attributes=tuple(data.get("attributes", [])),
             observation_angle=_get("activity_signature.observation_angle", "observation_angle", ""),
+            focal_attribute=_get("activity_signature.focal_attribute", "focal_attribute", ""),
             mechanic=_get("activity_signature.mechanic", "mechanic", ""),
             game_style=data.get("game_style", ""),
             entity_binding=data.get("entity_binding", "agnostic"),

@@ -26,16 +26,11 @@ class ActivityDiscoveryResult:
 
 
 def _build_activity_block(activity: ActivityDefinition) -> str:
-    """Format a single activity for the LLM prompt."""
-    attrs = ", ".join(activity.attributes) if activity.attributes else "(none specified)"
-    preview = activity.preview_prompt or activity.description or "(no description)"
+    """Format a single activity for the LLM prompt (condensed: ID + angle + focal attribute)."""
     return (
         f"- ID: {activity.activity_id}\n"
-        f"  Name: {activity.name}\n"
-        f"  Description: {preview}\n"
-        f"  Attributes required: {attrs}\n"
         f"  Observation angle: {activity.observation_angle or 'any'}\n"
-        f"  Difficulty: {activity.difficulty_level}"
+        f"  Focal attribute: {activity.focal_attribute or '(none)'}"
     )
 
 
@@ -77,16 +72,17 @@ ELIGIBLE ACTIVITIES:
 {activity_block}
 
 INSTRUCTIONS:
-1. Evaluate each activity against the object. Consider:
-   - Does the object plausibly have the required attributes?
-   - Is the activity age-appropriate?
-   - Is the match strong, or would the child need to confirm something first?
+1. For each activity, judge whether the object plausibly has the focal attribute under that observation angle.
+   Example: object="orange cat", activity=(angle=color, focal_attribute=body_color) → the cat clearly has a color → "ready"
+   Example: object="cat", activity=(angle=pattern, focal_attribute=polka_dots) → the cat might have spots, but we need to check → "verifiable"
+   Example: object="apple", activity=(angle=origin, focal_attribute=time_period) → an apple doesn't have a time period → "weak"
 
-2. "Strong match" (category=ready): The object clearly supports the activity. Example: an orange cat → an activity about color.
-   "Verifiable match" (category=verifiable): The object MIGHT support it, but we should verify a property first. Example: a cat → an activity about polka dots (we need to confirm the cat has spots).
-   "Weak / no match" (category=weak): The object does not clearly support any activity.
+2. Category rules:
+   - "ready": the object clearly possesses the focal attribute for that angle
+   - "verifiable": the object might possess it, but a child would need to confirm first
+   - "weak": the object does not plausibly have this attribute/angle combination
 
-3. If the best match is verifiable, list 1-3 specific properties to verify in conversation. Be concrete: "has_polka_dots" not "has_pattern".
+3. If the best match is verifiable, list 1-3 specific properties to verify. Use the exact focal_attribute names when possible.
 
 4. If NO activity is a strong or verifiable match, set proceed=false. Do NOT force a match.
 
