@@ -117,115 +117,51 @@ def _validate_activity_ready(text: str, assistant, child_input: str) -> tuple[bo
     return False, "evidence_not_in_transcript", reason_text
 
 
-def _format_angle_example(angle_def: dict, attribute_label: str) -> str:
-    """Format an angle's example string with attribute label placeholder."""
-    return angle_def["example"].format(attribute_label=attribute_label, object_name="{object_name}")
-
-
-def _build_used_angles_block(
-    explored_angle_ids: list[str], attribute_label: str
-) -> str:
-    """Build the 'Already-used angles' section for prompt injection."""
-    lines = []
-    for uid in explored_angle_ids:
-        for pool in EXPLORATION_ANGLES.values():
-            for a in pool:
-                if a["angle_id"] == uid:
-                    ex = _format_angle_example(a, attribute_label)
-                    lines.append(f"- {uid}: {ex}")
-                    break
-    return "\n".join(lines) if lines else "(none yet)"
-
-
-def _build_angle_block(selected_angle: dict, attribute_label: str) -> str:
-    """Build the [NEXT SUGGESTED ANGLE] section."""
-    angle_id = selected_angle["angle_id"]
-    description = selected_angle["description"]
-    response_hint = selected_angle["response_hint"].format(
-        attribute_label=attribute_label, object_name="{object_name}"
-    )
-    question_hint = selected_angle["question_hint"].format(
-        attribute_label=attribute_label, object_name="{object_name}"
-    )
-    example = _format_angle_example(selected_angle, attribute_label)
-    return (
-        f"[NEXT SUGGESTED ANGLE: {angle_id}]\n"
-        f"{description}\n\n"
-        f"For this turn, try using the {angle_id} angle:\n"
-        f"- Your RESPONSE should: {response_hint}\n"
-        f"- Your FOLLOW-UP QUESTION should: {question_hint}\n"
-        f'- Example of a good question: "{example}"'
-    )
-
-
-def _build_common_preamble(
-    sensory_safety_rules: str,
-    attribute_label: str,
-    turn_count: int,
-    explored_angle_ids: list[str],
-) -> str:
-    """Build the shared top section (safety rules + conversation coverage)."""
-    used_angles = ", ".join(explored_angle_ids) if explored_angle_ids else "(none yet)"
-    return f"""{sensory_safety_rules}
-
-[CONVERSATION COVERAGE]
-Attribute: {attribute_label}
-Turns explored: {turn_count}
-Angles already used: {used_angles}"""
-
-
-def _build_common_antipatterns(attribute_label: str) -> str:
-    """Shared anti-patterns that apply to all modes."""
-    return f"""ANTI-PATTERNS -- NEVER produce these:
-- "What {attribute_label} is it?" -- quiz
-- "Do you know what {attribute_label} it has?" -- quiz with wrapper
-- "What else can you tell me about it?" -- too vague
-- "Let us look at its {attribute_label}!" -- forced redirect
-- "That is nice, but..." then question about {attribute_label} -- ignoring child
-- "Great! Now we can start an activity!" -- mechanical announcement
-- Adding [ACTIVITY_READY] after just one shallow exchange -- premature handoff
-- Switching topics on a single casual mention -- too sensitive
-- Re-phrasing a question from an already-used angle"""
-
-
 # ---------------------------------------------------------------------------
 # Mode-specific prompt builders
 # ---------------------------------------------------------------------------
 
 def _build_continue_guide(
-    attribute_label: str,
-    activity_target: str,
+    observation_angle: str,
+    object_name: str,
     sensory_safety_rules: str,
     selected_angle: dict,
     explored_angle_ids: list[str],
     turn_count: int,
     current_score: float = 0.0,
     total_turns: int = 0,
-    explored_attributes: list[str] | None = None,
 ) -> str:
-    """Build prompt for CONTINUE / CONTINUE_SWITCH — full angle system active."""
-    preamble = _build_common_preamble(sensory_safety_rules, attribute_label, turn_count, explored_angle_ids)
-    angle_block = _build_angle_block(selected_angle, attribute_label)
-    used_angles_block = _build_used_angles_block(explored_angle_ids, attribute_label)
-    explored_attrs_str = ", ".join(explored_attributes) if explored_attributes else "(none yet)"
-    antipatterns = _build_common_antipatterns(attribute_label)
+    """Build prompt for CONTINUE / CONTINUE_SWITCH — streamlined."""
+    angle_id = selected_angle["angle_id"]
+    example = selected_angle["example"].format(
+        attribute_label=observation_angle, object_name=object_name
+    )
+    used = ", ".join(explored_angle_ids) if explored_angle_ids else "none yet"
 
-    return f"""{preamble}
+    return f"""{sensory_safety_rules}
 
-{angle_block}
+CONVERSATION DIRECTION: Explore the {observation_angle} of the {object_name}.
+Be playful and curious. Ask open-ended questions that help the child notice
+and describe the {observation_angle} in their own words.
 
-Already-used angles (try something different if possible):
-{used_angles_block}
+FOR THIS TURN, use the '{angle_id}' style:
+Example: "{example}"
 
-{antipatterns}
+ALREADY USED: {used}
+Do NOT repeat these styles.
+
+ANTI-PATTERNS -- NEVER produce these:
+- "What {observation_angle} is it?" -- quiz
+- "Do you know what {observation_angle} it has?" -- quiz with wrapper
+- "What else can you tell me about it?" -- too vague
+- Mention activities, games, quests, or collecting
 
 ---
 
 [SYSTEM CONTEXT]
-Current attribute: {attribute_label}
+Current focus: {observation_angle}
 Current interest score: {current_score:.0f}/100
 Session turns: {total_turns}
-Explored attributes: {explored_attrs_str}
 
 HANDOFF MODE: INACTIVE
 Continue exploring the current attribute. Do NOT output [ACTIVITY_READY].
@@ -337,8 +273,8 @@ ANTI-PATTERNS -- NEVER produce these:
 
 
 def _build_reengage_guide(
-    attribute_label: str,
-    activity_target: str,
+    observation_angle: str,
+    object_name: str,
     sensory_safety_rules: str,
     selected_angle: dict,
     explored_angle_ids: list[str],
@@ -347,38 +283,40 @@ def _build_reengage_guide(
     current_score: float = 0.0,
 ) -> str:
     """Build prompt for REENGAGE — simplified sensory questions only."""
-    preamble = _build_common_preamble(sensory_safety_rules, attribute_label, turn_count, explored_angle_ids)
-    angle_block = _build_angle_block(selected_angle, attribute_label)
-    used_angles_block = _build_used_angles_block(explored_angle_ids, attribute_label)
+    angle_id = selected_angle["angle_id"]
+    example = selected_angle["example"].format(
+        attribute_label=observation_angle, object_name=object_name
+    )
+    used = ", ".join(explored_angle_ids) if explored_angle_ids else "none yet"
 
-    return f"""{preamble}
+    return f"""{sensory_safety_rules}
+
+CONVERSATION DIRECTION: The child is struggling. Ask a MUCH simpler,
+more concrete question about the {observation_angle} of the {object_name}.
+Use only sensory language (see, look, notice). Single concept only.
+
+FOR THIS TURN, use the '{angle_id}' style:
+Example: "{example}"
+
+ALREADY USED: {used}
+Do NOT repeat these styles.
+
+ANTI-PATTERNS -- NEVER produce these:
+- "What {observation_angle} is it?" -- quiz
+- "Do you know what {observation_angle} it has?" -- quiz with wrapper
+- "What else can you tell me about it?" -- too vague
+- Open-ended or abstract questions ("what do you think", "why do you think")
+- Causal or how/why questions
+- Mention activities, games, quests, or collecting
 
 ---
 
 [SYSTEM CONTEXT]
-Current attribute: {attribute_label}
+Current focus: {observation_angle}
 Current interest score: {current_score:.0f}/100
 Consecutive struggle count: {struggle_count}
 
 REENGAGE MODE: ACTIVE
-The child is struggling. Ask a MUCH simpler, more concrete question.
-Use only sensory language (see, look, notice). Single concept only.
-
----
-
-{angle_block}
-
-Already-used angles (try something different if possible):
-{used_angles_block}
-
-ANTI-PATTERNS -- NEVER produce these:
-- "What {attribute_label} is it?" -- quiz
-- "Do you know what {attribute_label} it has?" -- quiz with wrapper
-- "What else can you tell me about it?" -- too vague
-- Open-ended or abstract questions ("what do you think", "why do you think")
-- Causal or how/why questions
-- Adding [ACTIVITY_READY]
-- Re-phrasing a question from an already-used angle
 """
 
 
