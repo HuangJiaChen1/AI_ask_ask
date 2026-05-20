@@ -427,21 +427,21 @@ def _comparison_angle():
 
 def test_build_continue_guide_contains_angle_block():
     guide = _build_continue_guide(
-        attribute_label="color",
-        activity_target="noticing colors",
+        observation_angle="color",
+        object_name="apple",
         sensory_safety_rules=_SAFETY,
         selected_angle=_observation_angle(),
         explored_angle_ids=[],
         turn_count=1,
     )
-    assert "[NEXT SUGGESTED ANGLE: observation]" in guide
-    assert "Ask what the child notices or sees about the color" in guide
+    assert "FOR THIS TURN, use the 'observation' style" in guide
+    assert "What color do you see on the apple?" in guide
 
 
 def test_build_continue_guide_has_inactive_handoff():
     guide = _build_continue_guide(
-        attribute_label="color",
-        activity_target="noticing colors",
+        observation_angle="color",
+        object_name="apple",
         sensory_safety_rules=_SAFETY,
         selected_angle=_observation_angle(),
         explored_angle_ids=[],
@@ -524,35 +524,35 @@ def test_build_exit_guide_has_wrapup_instruction():
 
 def test_build_reengage_guide_simple_angle_only():
     guide = _build_reengage_guide(
-        attribute_label="color",
-        activity_target="noticing colors",
+        observation_angle="color",
+        object_name="apple",
         sensory_safety_rules=_SAFETY,
         selected_angle=_observation_angle(),
         explored_angle_ids=["observation"],
         turn_count=3,
         struggle_count=3,
     )
-    assert "[NEXT SUGGESTED ANGLE: observation]" in guide
+    assert "FOR THIS TURN, use the 'observation' style" in guide
     assert "REENGAGE MODE: ACTIVE" in guide
 
 
 def test_build_reengage_guide_uses_comparison_when_observation_used():
     guide = _build_reengage_guide(
-        attribute_label="color",
-        activity_target="noticing colors",
+        observation_angle="color",
+        object_name="apple",
         sensory_safety_rules=_SAFETY,
         selected_angle=_comparison_angle(),
         explored_angle_ids=["observation"],
         turn_count=3,
         struggle_count=3,
     )
-    assert "[NEXT SUGGESTED ANGLE: comparison]" in guide
+    assert "FOR THIS TURN, use the 'comparison' style" in guide
 
 
 def test_build_reengage_guide_simplification_instruction():
     guide = _build_reengage_guide(
-        attribute_label="color",
-        activity_target="noticing colors",
+        observation_angle="color",
+        object_name="apple",
         sensory_safety_rules=_SAFETY,
         selected_angle=_observation_angle(),
         explored_angle_ids=[],
@@ -579,30 +579,30 @@ def test_build_continue_guide_angle_block_before_system_context():
     the split naturally preserves it.
     """
     guide = _build_continue_guide(
-        attribute_label="color",
-        activity_target="noticing colors",
+        observation_angle="color",
+        object_name="apple",
         sensory_safety_rules=_SAFETY,
         selected_angle=_observation_angle(),
         explored_angle_ids=[],
         turn_count=1,
     )
 
-    # The angle block must appear BEFORE [SYSTEM CONTEXT]
-    angle_pos = guide.find("[NEXT SUGGESTED ANGLE:")
+    # The angle info must appear BEFORE [SYSTEM CONTEXT]
+    angle_pos = guide.find("FOR THIS TURN, use the 'observation' style")
     system_context_pos = guide.find("[SYSTEM CONTEXT]")
-    assert angle_pos != -1, "Angle block must be present"
+    assert angle_pos != -1, "Angle info must be present"
     assert system_context_pos != -1, "[SYSTEM CONTEXT] must be present"
     assert angle_pos < system_context_pos, (
-        f"Angle block must appear BEFORE [SYSTEM CONTEXT], but "
+        f"Angle info must appear BEFORE [SYSTEM CONTEXT], but "
         f"angle_pos={angle_pos}, system_context_pos={system_context_pos}"
     )
 
     # Simulate what response_generators.py does: split and keep [0]
     preserved = guide.split("---\n\n[SYSTEM CONTEXT]")[0]
-    assert "[NEXT SUGGESTED ANGLE:" in preserved, (
-        "Angle block must survive the split('---\\n\\n[SYSTEM CONTEXT]')[0]"
+    assert "FOR THIS TURN, use the 'observation' style" in preserved, (
+        "Angle info must survive the split('---\\n\\n[SYSTEM CONTEXT]')[0]"
     )
-    assert "Already-used angles" in preserved, (
+    assert "ALREADY USED" in preserved, (
         "Used-angles block must survive the split"
     )
     assert "ANTI-PATTERNS" in preserved, (

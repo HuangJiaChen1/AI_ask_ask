@@ -25,6 +25,15 @@ PHYSICAL_DIMENSIONS = frozenset({
     "change",
 })
 
+# Observation angles that map to the physical pool.
+SENSORY_OBSERVATION_ANGLES = frozenset({
+    "texture", "color", "shape", "size", "pattern", "sound", "smell", "taste"
+})
+
+
+def get_pool_for_observation_angle(observation_angle: str) -> str:
+    return "physical" if observation_angle in SENSORY_OBSERVATION_ANGLES else "engagement"
+
 EXPLORATION_ANGLES = {
     "physical": [
         {
@@ -98,22 +107,23 @@ EXPLORATION_ANGLES = {
 
 def select_next_angle(
     explored_angle_ids: list[str],
-    dimension: str,
+    observation_angle: str,
     interest_score: float = 0,
     pending_verifications: list | None = None,
 ) -> dict:
-    """Select the next exploration angle for the given dimension.
+    """Select the next exploration angle for the given observation angle.
 
     Args:
         explored_angle_ids: List of angle IDs already used this session.
-        dimension: The attribute dimension (e.g. "appearance", "emotion").
+        observation_angle: The observation angle (e.g. "texture", "emotion").
         interest_score: Current interest score (0-100). Unlocks deeper angles.
 
     Returns:
         The selected angle dict with keys: angle_id, description, response_hint,
         question_hint, example.
     """
-    pool_key = "physical" if dimension in PHYSICAL_DIMENSIONS else "engagement"
+    pool_key = get_pool_for_observation_angle(observation_angle)
+    pool = EXPLORATION_ANGLES.get(pool_key, [])
     pool = EXPLORATION_ANGLES.get(pool_key, [])
 
     # VGC: If there's a pending verification, prefer angles that help verify it

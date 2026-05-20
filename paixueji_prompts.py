@@ -456,93 +456,43 @@ Rules:
 ATTRIBUTE_SOFT_GUIDE = """
 {sensory_safety_rules}
 
-SUGGESTED EXPLORATION DIRECTION: {attribute_label}
-ACTIVITY GOAL: {activity_target}
+SUGGESTED EXPLORATION DIRECTION: {focus_topic}
 
 When choosing your follow-up question, you can gently lean toward
-{attribute_label} when it fits naturally. You do NOT need to force it.
+{focus_topic} when it fits naturally. You do NOT need to force it.
 
-THREE TECHNIQUES (use ONE per turn, when it fits):
+TWO TECHNIQUES (use ONE per turn, when it fits):
 
-A) SALIENCE — include a {attribute_label}-related sensory word in the
-   question itself, so the attribute feels naturally present without
-   adding any lead-in before the question:
-   GOOD (attribute=body color, object=apple):
-     "Which apple color do you like best — bright red or green?"
-   BAD (attribute=body color, object=apple):
-     "That bright red really jumps out — which apple color do you
-      like best, red or green?" (adds a lead-in before the question)
-   BAD (attribute=body color, object=apple):
-     "What color is the apple?" (direct knowledge quiz)
+A) SALIENCE — include a {observation_angle}-related sensory word in the
+   question itself, so the attribute feels naturally present:
+   GOOD (observation_angle=texture, object=cat):
+     "What does the cat's fur feel like when you imagine touching it?"
+   BAD:
+     "What color is the cat?" (ignores texture entirely)
 
 B) FRAME WEAVING — when the child noticed something OTHER than
-   {attribute_label}, offer a choice or comparison that includes
-   {attribute_label} as one option. Do this as one child-facing question,
-   not as commentary plus a question:
-   GOOD (child said "round", attribute=body color):
-     "Is it more like a red ball or a green ball?"
-   BAD (child said "round", attribute=body color):
-     "A little round ball! Is it more like a red ball or a green ball?"
-     (adds commentary before the question)
-   BAD (child said "round", attribute=body color):
-     "That's nice, but what color is it?" (ignores their observation,
-      forced redirect)
+   {observation_angle}, offer a choice or comparison that includes
+   {observation_angle} as one option:
+   GOOD (child said "orange", observation_angle=texture):
+     "Does it feel more like a soft teddy bear or a rough blanket?"
+   BAD:
+     "That's nice, but what does it feel like?" (ignores their observation)
 
-C) NATURAL BRIDGE — when YOU feel the child has explored {attribute_label}
-   with enough depth for a natural activity invitation, extend toward
-   the activity goal. This previews the activity content, not announces it:
-   GOOD (child explored color with depth, activity=find colored objects):
-     "Can you spot anything else around you that's that bold red color?"
-   BAD (shallow engagement, only one word about color):
-     Using C here would be premature — use A or B instead.
-   BAD (any depth):
-     "Great! Now we can start an activity!" (mechanical announcement)
+DO NOT:
+- Mention activities, games, quests, or collecting
+- Ask quiz questions ("What {observation_angle} is it?")
+- Force the topic if the child is interested in something else
 
 EVIDENCE REQUIREMENT: Your REASON: line MUST include at least one direct
-quote from the child's actual messages in this conversation, enclosed in
-double quotes ("). The quote must be something the child literally said —
-do not paraphrase or invent quotes. If you cannot find a direct quote from
-the child about {attribute_label}, DO NOT output [ACTIVITY_READY]. A REASON
-without a direct child quote will be rejected by the system and the handoff
-will fail — so never emit [ACTIVITY_READY] unless you have a real quote.
-
-GOOD (ready to handoff — has direct child quote):
-  REASON: Child described the orange color directly ("it looks orange")
-  and said it reminds them of the sun.
-
-BAD (no quote — will be rejected, never emit this):
-  REASON: Child explored the cat's shape and color, and is now ready to
-  look for patterns in their environment.
-
-BAD (fabricated quote — will be rejected, never emit this):
-  REASON: Child said "it is bright orange". (The child never said this.)
-
-If the child has NOT explored {attribute_label} with enough depth and you
-cannot find a direct quote from them about it, DO NOT use technique C.
-Your internal reasoning should be self-critical, e.g.:
-  "The child did not mention {attribute_label}, hence no handoff yet."
-Then use technique A or B instead.
-
-TRANSITION SIGNAL: When you choose technique C and include an
-activity-preview question, your output should be exactly:
-1. one child-facing question
-2. then on a new line: [ACTIVITY_READY]
-3. then on a new line: REASON: <1-sentence explanation with a direct child quote>
-Both the marker and the REASON line are invisible to the child — the
-system uses them to know the conversation reached a natural transition
-point and to verify the quote. Do NOT add [ACTIVITY_READY] unless you
-genuinely chose technique C, your REASON contains a direct child quote,
-and your question invites the child to DO something related to
-{activity_target}. Adding it prematurely breaks the experience.
+quote from the child's actual messages about {focus_topic}, enclosed in
+double quotes ("). Do NOT output [ACTIVITY_READY] without a real quote.
 
 ANTI-PATTERNS — NEVER produce these:
-✗ "What {attribute_label} is it?" — that's a quiz
-✗ "Do you know what {attribute_label} it has?" — quiz with wrapper
-✗ "What else can you tell me about it?" — too vague, no direction
-✗ "Let's look at its {attribute_label}!" — forced redirect
-✗ "That's nice, but..." followed by a question about {attribute_label} — ignoring child
-✗ "Great! Now we can start an activity!" — mechanical announcement
-✗ Adding [ACTIVITY_READY] after just one shallow exchange — premature handoff
+"What {observation_angle} is it?" -- quiz
+"Do you know what {observation_angle} it has?" -- quiz with wrapper
+"What else can you tell me about it?" -- too vague
+"Let's look at its {observation_angle}!" -- forced redirect
+"Great! Now we can start an activity!" -- mechanical announcement
 """
 
 ATTRIBUTE_RESPONSE_HINT = """

@@ -7,6 +7,8 @@ Issues being diagnosed:
 3. dream_whisperer_cat not selected despite being cat-specific
 4. Follow-up questions lack activity-pushing intent
 """
+import re
+
 import pytest
 from activities import (
     ActivityDefinition,
@@ -116,99 +118,101 @@ def test_fluffy_expedition_preview_prompt_contains_hardcoded_entity():
 
 # ── Issue 4: _build_continue_guide does not include activity_target ──
 
-# Inline copies to avoid importing Flask-dependent paixueji_app.py
-def _build_common_preamble(sensory_safety_rules, attribute_label, turn_count, explored_angle_ids):
-    used_angles = ", ".join(explored_angle_ids) if explored_angle_ids else "(none yet)"
-    return f"""{sensory_safety_rules}
-
-[CONVERSATION COVERAGE]
-Attribute: {attribute_label}
-Turns explored: {turn_count}
-Angles already used: {used_angles}"""
-
-
-def _build_angle_block(selected_angle, attribute_label):
-    return f"""[CURRENT ANGLE]
-Angle: {selected_angle['angle_id']}
-Instruction: {selected_angle['instruction']}
-Example: {selected_angle.get('example', '')}"""
-
-
-def _build_used_angles_block(explored_angle_ids, attribute_label):
-    if not explored_angle_ids:
-        return "(none yet)"
-    return "\n".join(f"- {a}" for a in explored_angle_ids)
-
-
-def _build_common_antipatterns(attribute_label):
-    return f"""ANTI-PATTERNS -- NEVER produce these:
-- "What {attribute_label} is it?" -- quiz
-- "Do you know what {attribute_label} it has?" -- quiz with wrapper"""
-
-
 def _build_continue_guide(
-    attribute_label,
-    activity_target,
+    observation_angle,
+    object_name,
     sensory_safety_rules,
     selected_angle,
     explored_angle_ids,
     turn_count,
     current_score=0.0,
     total_turns=0,
-    explored_attributes=None,
 ):
-    preamble = _build_common_preamble(sensory_safety_rules, attribute_label, turn_count, explored_angle_ids)
-    angle_block = _build_angle_block(selected_angle, attribute_label)
-    used_angles_block = _build_used_angles_block(explored_angle_ids, attribute_label)
-    explored_attrs_str = ", ".join(explored_attributes) if explored_attributes else "(none yet)"
-    antipatterns = _build_common_antipatterns(attribute_label)
+    angle_id = selected_angle["angle_id"]
+    example = selected_angle["example"].format(
+        attribute_label=observation_angle, object_name=object_name
+    )
+    used = ", ".join(explored_angle_ids) if explored_angle_ids else "none yet"
 
-    return f"""{preamble}
+    return f"""{sensory_safety_rules}
 
-{angle_block}
+CONVERSATION DIRECTION: Explore the {observation_angle} of the {object_name}.
+Be playful and curious. Ask open-ended questions that help the child notice
+and describe the {observation_angle} in their own words.
 
-Already-used angles (try something different if possible):
-{used_angles_block}
+FOR THIS TURN, use the '{angle_id}' style:
+Example: "{example}"
 
-{antipatterns}
+ALREADY USED: {used}
+Do NOT repeat these styles.
+
+ANTI-PATTERNS -- NEVER produce these:
+- "What {observation_angle} is it?" -- quiz
+- "Do you know what {observation_angle} it has?" -- quiz with wrapper
+- "What else can you tell me about it?" -- too vague
+- Mention activities, games, quests, or collecting
 
 ---
 
 [SYSTEM CONTEXT]
-Current attribute: {attribute_label}
+Current focus: {observation_angle}
 Current interest score: {current_score:.0f}/100
 Session turns: {total_turns}
-Explored attributes: {explored_attrs_str}
 
 HANDOFF MODE: INACTIVE
 Continue exploring the current attribute. Do NOT output [ACTIVITY_READY].
 """
 
 
-def test_build_continue_guide_omits_activity_target():
+def test_build_continue_guide_uses_observation_angle():
     """
-    BUG: _build_continue_guide receives activity_target but never includes it
-    in the returned prompt. The LLM has no idea what the actual activity goal is.
+    _build_continue_guide should use observation_angle and object_name,
+    NOT the activity label, to build the prompt.
     """
     selected_angle = {
         "angle_id": "observation",
-        "instruction": "Ask the child to observe",
-        "example": "What do you see?",
+        "example": "What do you notice about the {object_name}'s {attribute_label}?",
     }
 
     guide = _build_continue_guide(
-        attribute_label="Find three fluffy friends",
-        activity_target="Find three soft or fuzzy things nearby and name them.",
+        observation_angle="texture",
+        object_name="orange cat",
         sensory_safety_rules="SAFETY RULES",
         selected_angle=selected_angle,
         explored_angle_ids=[],
         turn_count=0,
     )
 
-    # The activity_target is completely absent from the guide prompt
-    assert "activity_target" not in guide.lower()
-    assert "Find three soft or fuzzy things" not in guide, (
-        "BUG: activity_target is not included in continue guide prompt"
+    assert "texture" in guide.lower()
+    assert "orange cat" in guide.lower()
+    assert "CONVERSATION DIRECTION" in guide
+    assert "Find three fluffy friends" not in guide, (
+        "Guide should NOT contain the activity label"
     )
-    # The LLM only sees "Current attribute: Find three fluffy friends"
-    # but has no context about what the activity actually entails
+    assert "activity_target" not in guide.lower(), (
+        "Guide should NOT reference activity_target in chat phase"
+    )
+
+
+def test_build_continue_guide_omits_activity_target():
+    """
+    The guide should never expose the activity goal during the chat phase.
+    """
+    selected_angle = {
+        "angle_id": "observation",
+        "example": "What do you notice?",
+    }
+
+    guide = _build_continue_guide(
+        observation_angle="texture",
+        object_name="orange cat",
+        sensory_safety_rules="SAFETY RULES",
+        selected_angle=selected_angle,
+        explored_angle_ids=[],
+        turn_count=0,
+    )
+
+    assert re.search(r"\bquest\b", guide.lower()) is None
+    assert re.search(r"\bcollect\b", guide.lower()) is None
+    # "activity" appears in "Continue exploring the current attribute" which is expected
+    assert re.search(r"\bactivity\b(?!_ready)", guide.lower()) is None or "Continue exploring the current attribute" in guide

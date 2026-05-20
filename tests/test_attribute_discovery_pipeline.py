@@ -140,8 +140,8 @@ def test_soft_guide_requests_reason_line():
     guide_lower = ATTRIBUTE_SOFT_GUIDE.lower()
 
     assert "reason:" in guide_lower
-    assert "invisible to the child" in guide_lower
     assert "evidence requirement" in guide_lower
+    assert "do not output [activity_ready] without a real quote" in guide_lower
 
 
 def test_soft_guide_rejects_hard_lock_and_quiz_patterns():
@@ -154,8 +154,9 @@ def test_soft_guide_rejects_hard_lock_and_quiz_patterns():
 def test_soft_guide_warns_about_premature_handoff():
     guide_lower = ATTRIBUTE_SOFT_GUIDE.lower()
 
-    assert "premature" in guide_lower or "too early" in guide_lower or "shallow" in guide_lower
-    assert "breaks the experience" in guide_lower or "break" in guide_lower
+    assert "do not:" in guide_lower
+    assert "force the topic" in guide_lower
+    assert "mention activities, games, quests, or collecting" in guide_lower
 
 
 # -- Unified intent prompt in attribute pipeline --------------------------------
