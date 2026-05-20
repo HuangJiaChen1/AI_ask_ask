@@ -1016,20 +1016,20 @@ class TestPromptFormattingEdgeCases:
         assert multiline in formatted
 
     def test_attribute_soft_guide_format_with_special_chars(self):
-        """The ATTRIBUTE_SOFT_GUIDE template uses {attribute_label} and
-        {activity_target}. If these contain braces, formatting breaks."""
+        """The ATTRIBUTE_SOFT_GUIDE template uses {focus_topic} and
+        {observation_angle}. If these contain braces, formatting breaks."""
         import paixueji_prompts
         guide = paixueji_prompts.get_prompts()["attribute_soft_guide"]
 
         try:
             formatted = guide.format(
-                attribute_label="body {shape} color",
-                activity_target="finding {colored} objects",
+                focus_topic="the texture of the cat",
+                observation_angle="texture",
                 sensory_safety_rules="",
             )
-            assert "body {shape} color" in formatted
+            assert "texture of the cat" in formatted
         except KeyError as e:
-            pytest.fail(f"Soft guide crashed on braces in attribute_label: {e}")
+            pytest.fail(f"Soft guide crashed on format key: {e}")
 
 
 # ============================================================================
@@ -1192,15 +1192,16 @@ class TestRegressionGuards:
         assert placeholders == {"attribute_label"}
 
     def test_attribute_soft_guide_format_placeholders(self):
-        """The soft guide should only contain {attribute_label} and {activity_target}."""
+        """The soft guide should contain {focus_topic} and {observation_angle}."""
         import paixueji_prompts
         guide = paixueji_prompts.get_prompts()["attribute_soft_guide"]
         placeholders = re.findall(r"\{(\w+)\}", guide)
         # The guide contains examples with curly braces that are NOT format placeholders
-        # (e.g., "{attribute_label}" in the anti-patterns). We just check the actual
+        # (e.g., "{observation_angle}" in the anti-patterns). We just check the actual
         # format keys at the top.
-        assert "attribute_label" in placeholders
-        assert "activity_target" in placeholders
+        assert "focus_topic" in placeholders
+        assert "observation_angle" in placeholders
+        assert "sensory_safety_rules" in placeholders
 
     def test_reason_regex_matches_expected_formats(self):
         """The _REASON_RE regex should capture reasons with and without trailing newline."""
