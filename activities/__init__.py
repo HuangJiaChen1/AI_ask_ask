@@ -38,6 +38,7 @@ class ActivityDefinition:
 
     # === Eligibility hard gates ===
     entity_binding: str = "agnostic"      # bound | parameterized | agnostic
+    entity: str = ""                      # specific entity for bound activities
     entity_class: tuple[str, ...] = ()
     entity_class_filter: tuple[str, ...] = ()
     tier_range_span: tuple[str, ...] = ()          # ("T0", "T1")
@@ -85,7 +86,7 @@ class ActivityDefinition:
             "activity_id", "name", "launch_prompt", "description",
             "attributes", "preview_prompt",
             "observation_angle", "focal_attribute", "mechanic", "game_style",
-            "entity_binding", "entity_class", "entity_class_filter",
+            "entity_binding", "entity", "entity_class", "entity_class_filter",
             "tier_range", "tier_range_span", "tier_support",
             "bridge_prerequisites", "bridge_prerequisites_primary", "bridge_prerequisites_secondary",
             "entity_role", "topic_axis", "difficulty_level",
@@ -106,6 +107,7 @@ class ActivityDefinition:
             mechanic=_get("activity_signature.mechanic", "mechanic", ""),
             game_style=data.get("game_style", ""),
             entity_binding=data.get("entity_binding", "agnostic"),
+            entity=data.get("entity", ""),
             entity_class=tuple(data.get("entity_class", [])),
             entity_class_filter=tuple(_get("matchability.entity_class_filter", "entity_class_filter", [])),
             tier_range_span=tuple(_get("tier_range.span", "tier_range_span", [])),
@@ -325,7 +327,6 @@ def _is_eligible(
     activity: ActivityDefinition,
     child_tier: str,
     entity_info: dict | None = None,
-    extracted_properties: dict | None = None,
 ) -> bool:
     """Check hard eligibility gates for an activity."""
     # Catalog active
@@ -340,15 +341,18 @@ def _is_eligible(
 
     # Entity binding
     if activity.entity_binding == "bound":
-        if activity.entity_class_filter:
+        if activity.entity and entity_info and entity_info.get("entity_name"):
+            # Prefer entity_name match when both sides have it
+            if activity.entity.lower() != entity_info["entity_name"].lower():
+                return False
+        elif activity.entity_class_filter:
             entity_classes = set(entity_info.get("entity_class", [])) if entity_info else set()
             filters = set(activity.entity_class_filter)
             if not (entity_classes & filters):
                 return False
     elif activity.entity_binding == "parameterized":
-        # V1 simplified: parameterized needs extracted properties to be useful
-        if extracted_properties is not None and not extracted_properties:
-            return False
+        # Layer 1 always passes; LLM in Layer 2 judges plausibility
+        pass
     elif activity.entity_binding == "agnostic":
         pass
 
@@ -525,12 +529,11 @@ def select_best_activity(
     catalog = _load_catalog()
 
     entity_info = conversation_context.get("entity_info")
-    extracted_properties = conversation_context.get("extracted_properties")
 
     # Layer 1: Eligibility
     eligible = [
         a for a in catalog
-        if _is_eligible(a, child_tier, entity_info, extracted_properties)
+        if _is_eligible(a, child_tier, entity_info)
     ]
 
     if not eligible:
@@ -577,7 +580,6 @@ def select_best_activity(
 
 def get_explorable_angles(
     entity_info: dict | None,
-    extracted_properties: dict | None,
     age: int,
 ) -> set[str]:
     """Return all observation angles + bridge prerequisites that are eligible for handoff."""
@@ -585,7 +587,7 @@ def get_explorable_angles(
     catalog = _load_catalog()
     eligible = [
         a for a in catalog
-        if _is_eligible(a, child_tier, entity_info, extracted_properties)
+        if _is_eligible(a, child_tier, entity_info)
     ]
     angles: set[str] = set()
     for a in eligible:
@@ -602,7 +604,6 @@ def get_explorable_angles(
 def get_eligible_activities_for_object(
     anchor_object_name: str,
     age: int,
-    extracted_properties: dict | None = None,
 ) -> list[ActivityDefinition]:
     """Filter catalog activities eligible for this object and age.
 
@@ -624,7 +625,7 @@ def get_eligible_activities_for_object(
 
     return [
         a for a in catalog
-        if _is_eligible(a, child_tier, entity_info, extracted_properties)
+        if _is_eligible(a, child_tier, entity_info)
     ]
 
 

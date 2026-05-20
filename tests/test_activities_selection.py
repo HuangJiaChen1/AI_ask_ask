@@ -94,14 +94,10 @@ def test_eligible_bound_no_filter_overlap():
     assert _is_eligible(act, "T1", entity_info=entity_info) is False
 
 
-def test_eligible_parameterized_with_properties():
+def test_eligible_parameterized_always_passes():
+    """Parameterized activities pass Layer 1; LLM judges plausibility in Layer 2."""
     act = make_activity(entity_binding="parameterized")
-    assert _is_eligible(act, "T1", extracted_properties={"color": "red"}) is True
-
-
-def test_eligible_parameterized_without_properties():
-    act = make_activity(entity_binding="parameterized")
-    assert _is_eligible(act, "T1", extracted_properties={}) is False
+    assert _is_eligible(act, "T1") is True
 
 
 def test_eligible_agnostic_always_passes():
@@ -306,7 +302,6 @@ def test_get_explorable_angles_basic():
     """Without entity binding constraints, parameterized activities are eligible."""
     angles = get_explorable_angles(
         entity_info=None,
-        extracted_properties=None,
         age=5,  # T1
     )
     # parameterized activities for T1: fluffy_expedition_dandelion (texture), polka_dot_patrol (pattern)
@@ -318,7 +313,6 @@ def test_get_explorable_angles_with_entity_class():
     """Bound activities become eligible when entity class matches."""
     angles = get_explorable_angles(
         entity_info={"entity_class": ["cat"]},
-        extracted_properties=None,
         age=5,  # T1
     )
     # dream_whisperer_cat (emotion + behavior bridge) should now be included
@@ -332,7 +326,6 @@ def test_get_explorable_angles_empty_for_unsupported_tier():
     """T2 has very limited support in current catalog."""
     angles = get_explorable_angles(
         entity_info=None,
-        extracted_properties=None,
         age=10,  # T2
     )
     # Only polka_dot_patrol supports T2

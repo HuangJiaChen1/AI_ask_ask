@@ -204,7 +204,6 @@ def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, di
             "entity_depth": "property_focused",
             "recent_activities": [],
             "entity_info": entity_info,
-            "extracted_properties": None,
         }
 
     # 1. Severe disengagement -> REENGAGE

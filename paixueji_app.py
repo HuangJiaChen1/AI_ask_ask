@@ -1025,7 +1025,6 @@ def start_conversation():
     entity_info = {"entity_class": [resolution.anchor_object_name]} if resolution.anchor_object_name else None
     assistant.available_angles = get_explorable_angles(
         entity_info=entity_info,
-        extracted_properties=None,
         age=age or 6,
     )
     assistant.attribute_pipeline_enabled = attribute_pipeline_enabled

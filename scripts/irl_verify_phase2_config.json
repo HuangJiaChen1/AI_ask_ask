@@ -1,0 +1,175 @@
+{
+  "report_prefix": "phase2-activity-selection",
+  "delay_seconds": 3,
+  "tests": [
+    {
+      "id": "handoff_pattern_polka_dot",
+      "task_num": 1,
+      "title": "HANDOFF_NOW — Pattern Activity (polka_dot_patrol)",
+      "implemented": "Phase 2 integrates select_best_activity into evaluate_handoff; real ActivityDefinition objects flow into _build_handoff_guide.",
+      "scenario": "Child explored pattern on a ladybug for 4 turns, interest score 75. System selected polka_dot_patrol from catalog.",
+      "generator": "generate_attribute_activation_response_stream",
+      "params": {
+        "messages": [{"role": "assistant", "content": "You noticed the ladybug has dots on its back! Those dots are called polka dots."}],
+        "intent_type": "correct_answer",
+        "object_name": "ladybug",
+        "attribute_label": "pattern",
+        "activity_target": "pattern",
+        "child_answer": "Yeah! It has red with black dots!",
+        "reply_type": "discovery",
+        "state_action": "continue_conversation",
+        "age": 5,
+        "multi_topic_guide": "-SENSORY SAFETY (applies to all sensory invitations):\n-- Default to sight: \"What do you notice?\", \"Which part looks the biggest?\", \"Is it shiny or dull?\"\n-- Allow imagination/guessing: \"Do you think it would feel rough?\", \"If it rolled, would it go fast or slow?\"\n-- Do NOT invite the child to TOUCH, SMELL, TASTE, LICK, or PHYSICALLY INTERACT with the object —\n  the environment may be unsafe (parks, public spaces, unknown items).\n-- Do NOT use \"Do you know…\" framing — it creates testing pressure.\n-- For imitation: only voices and stretches/movements are OK (\"Let's bark like a puppy!\").\n  NEVER suggest petting an animal, touching/smelling a plant, or any physical contact.\n\n[CONVERSATION COVERAGE]\nAttribute: pattern\nTurns explored: 4\nAngles already used: (session complete)\n\n---\n\n[SYSTEM CONTEXT]\nTarget attribute: pattern\nActivity: Find three polka-dotted things!\nChild interest score for this attribute: 75/100\nSession turns: 4\n\nHANDOFF MODE: ACTIVE\nYour next message must bridge from the current conversation to the activity below.\n\n---\n\n[BRIDGE TO ACTIVITY]\nActivity name: Find three polka-dotted things!\nActivity description: The child patrols the neighborhood looking for three more spotted things, using the ladybug as the first clue, then turns them into a patrol parade.\n\nYour next message MUST:\n1. Mention the activity by name: \"Find three polka-dotted things!\"\n2. Connect it to what you just talked about (one sentence)\n3. Ask the child if they want to try it (one short question)\n4. End with [ACTIVITY_READY] on its own line\n\nExample of a good bridge:\n\"You really seem to love colors! Want to try the Color Matching Game? [ACTIVITY_READY]\"\n\nANTI-PATTERNS -- NEVER produce these:\n- Asking a deep question about the attribute AFTER mentioning the activity\n- Forgetting to say the activity name\n- Ending with anything other than [ACTIVITY_READY]\n- Re-phrasing a question from an already-used angle"
+      },
+      "checks": [
+        {"criterion": "Mentions activity name or preview label", "assert_in": ["polka-dot", "polka dot", "patrol", "spotted things", "find three"]},
+        {"criterion": "Contains [ACTIVITY_READY] marker", "assert": "[ACTIVITY_READY]"},
+        {"criterion": "Does NOT ask deep follow-up about pattern after bridging", "assert_not": "why do you think"},
+        {"criterion": "No touch/smell/taste invitation", "assert_not": "touch"},
+        {"criterion": "No touch/smell/taste invitation (smell)", "assert_not": "smell"},
+        {"criterion": "No touch/smell/taste invitation (taste)", "assert_not": "taste"}
+      ]
+    },
+    {
+      "id": "handoff_emotion_mood_changer",
+      "task_num": 2,
+      "title": "HANDOFF_NOW — Emotion Activity (mood_changer_dog)",
+      "implemented": "Real bound activity (entity_binding=bound, entity_class_filter=[dog]) selected and injected into handoff prompt.",
+      "scenario": "Child explored how a stuffed dog feels with interest score 68. System selected mood_changer_dog from catalog.",
+      "generator": "generate_attribute_activation_response_stream",
+      "params": {
+        "messages": [{"role": "assistant", "content": "This dog looks so cozy! How do you think it feels right now?"}],
+        "intent_type": "emotional",
+        "object_name": "stuffed dog",
+        "attribute_label": "emotion",
+        "activity_target": "emotion",
+        "child_answer": "Happy! He wags his tail!",
+        "reply_type": "discovery",
+        "state_action": "continue_conversation",
+        "age": 5,
+        "multi_topic_guide": "-SENSORY SAFETY (applies to all sensory invitations):\n-- Default to sight: \"What do you notice?\", \"Which part looks the biggest?\", \"Is it shiny or dull?\"\n-- Allow imagination/guessing: \"Do you think it would feel rough?\", \"If it rolled, would it go fast or slow?\"\n-- Do NOT invite the child to TOUCH, SMELL, TASTE, LICK, or PHYSICALLY INTERACT with the object —\n  the environment may be unsafe (parks, public spaces, unknown items).\n-- Do NOT use \"Do you know…\" framing — it creates testing pressure.\n-- For imitation: only voices and stretches/movements are OK (\"Let's bark like a puppy!\").\n  NEVER suggest petting an animal, touching/smelling a plant, or any physical contact.\n\n[CONVERSATION COVERAGE]\nAttribute: emotion\nTurns explored: 4\nAngles already used: (session complete)\n\n---\n\n[SYSTEM CONTEXT]\nTarget attribute: emotion\nActivity: Translate the dog feelings\nChild interest score for this attribute: 68/100\nSession turns: 4\n\nHANDOFF MODE: ACTIVE\nYour next message must bridge from the current conversation to the activity below.\n\n---\n\n[BRIDGE TO ACTIVITY]\nActivity name: Translate the dog feelings\nActivity description: The child speaks for a stuffed dog across three situations and names how the dog feels.\n\nYour next message MUST:\n1. Mention the activity by name: \"Translate the dog feelings\"\n2. Connect it to what you just talked about (one sentence)\n3. Ask the child if they want to try it (one short question)\n4. End with [ACTIVITY_READY] on its own line\n\nExample of a good bridge:\n\"You really seem to love colors! Want to try the Color Matching Game? [ACTIVITY_READY]\"\n\nANTI-PATTERNS -- NEVER produce these:\n- Asking a deep question about the attribute AFTER mentioning the activity\n- Forgetting to say the activity name\n- Ending with anything other than [ACTIVITY_READY]\n- Re-phrasing a question from an already-used angle"
+      },
+      "checks": [
+        {"criterion": "Mentions activity name or preview label", "assert_in": ["translate", "dog feelings", "feeling", "mood"]},
+        {"criterion": "Connects to feelings/emotions", "assert_in": ["feel", "emotion", "happy", "sad", "voice", "speak"]},
+        {"criterion": "Contains [ACTIVITY_READY] marker", "assert": "[ACTIVITY_READY]"},
+        {"criterion": "No touch/smell/taste invitation", "assert_not": "touch"},
+        {"criterion": "No touch/smell/taste invitation (smell)", "assert_not": "smell"},
+        {"criterion": "No touch/smell/taste invitation (taste)", "assert_not": "taste"}
+      ]
+    },
+    {
+      "id": "continue_observation_low_interest",
+      "task_num": 3,
+      "title": "CONTINUE — Observation Angle (Low Interest)",
+      "implemented": "CARES Phase 0 angle system: select_next_angle unlocks observation only when interest_score < 30.",
+      "scenario": "Child just started exploring color on an apple, interest score 25. Next angle is observation.",
+      "generator": "generate_attribute_activation_response_stream",
+      "params": {
+        "messages": [{"role": "assistant", "content": "Look at this apple! What do you notice about it?"}],
+        "intent_type": "correct_answer",
+        "object_name": "apple",
+        "attribute_label": "color",
+        "activity_target": "color",
+        "child_answer": "Red!",
+        "reply_type": "discovery",
+        "state_action": "continue_conversation",
+        "age": 5,
+        "multi_topic_guide": "-SENSORY SAFETY (applies to all sensory invitations):\n-- Default to sight: \"What do you notice?\", \"Which part looks the biggest?\", \"Is it shiny or dull?\"\n-- Allow imagination/guessing: \"Do you think it would feel rough?\", \"If it rolled, would it go fast or slow?\"\n-- Do NOT invite the child to TOUCH, SMELL, TASTE, LICK, or PHYSICALLY INTERACT with the object —\n  the environment may be unsafe (parks, public spaces, unknown items).\n-- Do NOT use \"Do you know…\" framing — it creates testing pressure.\n-- For imitation: only voices and stretches/movements are OK (\"Let's bark like a puppy!\").\n  NEVER suggest petting an animal, touching/smelling a plant, or any physical contact.\n\n[CONVERSATION COVERAGE]\nAttribute: color\nTurns explored: 1\nAngles already used: (none yet)\n\n---\n\n[SYSTEM CONTEXT]\nCurrent attribute: color\nCurrent interest score: 25/100\nSession turns: 1\nExplored attributes: color\n\nHANDOFF MODE: INACTIVE\nContinue exploring the current attribute. Do NOT output [ACTIVITY_READY].\n\n---\n\n[NEXT SUGGESTED ANGLE: observation]\nAsk the child to observe and describe the attribute with their own words\n\nFor this turn, try using the observation angle:\n- Your RESPONSE should: Share one concrete sensory fact about the color\n- Your FOLLOW-UP QUESTION should: Ask what the child notices or sees about the color\n- Example of a good question: \"What color do you see on the apple?\"\n\nAlready-used angles (try something different if possible):\n(none yet)\n\nANTI-PATTERNS -- NEVER produce these:\n- \"What color is it?\" -- quiz\n- \"Do you know what color it has?\" -- quiz with wrapper\n- \"What else can you tell me about it?\" -- too vague\n- \"Let us look at its color!\" -- forced redirect\n- \"That is nice, but...\" then question about color -- ignoring child\n- \"Great! Now we can start an activity!\" -- mechanical announcement\n- Adding [ACTIVITY_READY] after just one shallow exchange -- premature handoff\n- Switching topics on a single casual mention -- too sensitive\n- Re-phrasing a question from an already-used angle"
+      },
+      "checks": [
+        {"criterion": "Does NOT contain [ACTIVITY_READY]", "assert_not": "[activity_ready]"},
+        {"criterion": "Does NOT mention activity names", "assert_not": "polka dot"},
+        {"criterion": "Does NOT mention activity names (patrol)", "assert_not": "patrol"},
+        {"criterion": "Does NOT mention activity names (game)", "assert_not": "game"},
+        {"criterion": "Asks observation question (see/notice/look)", "assert_in": ["see", "notice", "look", "color"]},
+        {"criterion": "No touch/smell/taste invitation", "assert_not": "touch"}
+      ]
+    },
+    {
+      "id": "continue_comparison_medium_interest",
+      "task_num": 4,
+      "title": "CONTINUE — Comparison Angle (Medium Interest)",
+      "implemented": "Angle selection unlocks comparison when interest_score is 30-55.",
+      "scenario": "Child explored shape for 2 turns, interest score 42. Next angle is comparison.",
+      "generator": "generate_attribute_activation_response_stream",
+      "params": {
+        "messages": [{"role": "assistant", "content": "This apple is round like a ball! What other round things do you know?"}],
+        "intent_type": "informative",
+        "object_name": "apple",
+        "attribute_label": "shape",
+        "activity_target": "shape",
+        "child_answer": "A ball! And a cookie!",
+        "reply_type": "discovery",
+        "state_action": "continue_conversation",
+        "age": 5,
+        "multi_topic_guide": "-SENSORY SAFETY (applies to all sensory invitations):\n-- Default to sight: \"What do you notice?\", \"Which part looks the biggest?\", \"Is it shiny or dull?\"\n-- Allow imagination/guessing: \"Do you think it would feel rough?\", \"If it rolled, would it go fast or slow?\"\n-- Do NOT invite the child to TOUCH, SMELL, TASTE, LICK, or PHYSICALLY INTERACT with the object —\n  the environment may be unsafe (parks, public spaces, unknown items).\n-- Do NOT use \"Do you know…\" framing — it creates testing pressure.\n-- For imitation: only voices and stretches/movements are OK (\"Let's bark like a puppy!\").\n  NEVER suggest petting an animal, touching/smelling a plant, or any physical contact.\n\n[CONVERSATION COVERAGE]\nAttribute: shape\nTurns explored: 2\nAngles already used: observation\n\n---\n\n[SYSTEM CONTEXT]\nCurrent attribute: shape\nCurrent interest score: 42/100\nSession turns: 2\nExplored attributes: shape\n\nHANDOFF MODE: INACTIVE\nContinue exploring the current attribute. Do NOT output [ACTIVITY_READY].\n\n---\n\n[NEXT SUGGESTED ANGLE: comparison]\nCompare this attribute with something familiar to the child\n\nFor this turn, try using the comparison angle:\n- Your RESPONSE should: Share a surprising comparison or contrast about the shape\n- Your FOLLOW-UP QUESTION should: Ask the child to compare the shape with something they know\n- Example of a good question: \"Is it more like a banana or a grape in shape?\"\n\nAlready-used angles (try something different if possible):\n- observation: What color do you see on the apple?\n\nANTI-PATTERNS -- NEVER produce these:\n- \"What shape is it?\" -- quiz\n- \"Do you know what shape it has?\" -- quiz with wrapper\n- \"What else can you tell me about it?\" -- too vague\n- \"Let us look at its shape!\" -- forced redirect\n- \"That is nice, but...\" then question about shape -- ignoring child\n- \"Great! Now we can start an activity!\" -- mechanical announcement\n- Adding [ACTIVITY_READY] after just one shallow exchange -- premature handoff\n- Switching topics on a single casual mention -- too sensitive\n- Re-phrasing a question from an already-used angle"
+      },
+      "checks": [
+        {"criterion": "Does NOT contain [ACTIVITY_READY]", "assert_not": "[activity_ready]"},
+        {"criterion": "Does NOT mention activity names", "assert_not": "game"},
+        {"criterion": "Uses comparison language", "assert_in": ["like", "same", "different", "more", "round", "circle", "square"]},
+        {"criterion": "No touch/smell/taste invitation", "assert_not": "touch"}
+      ]
+    },
+    {
+      "id": "exit_lane_wrap_up",
+      "task_num": 5,
+      "title": "EXIT_LANE — Session Wrap-up (No Activity)",
+      "implemented": "CARES EXIT_LANE decision triggers _build_exit_guide when session exceeds MAX_SESSION_TURNS without meeting handoff threshold.",
+      "scenario": "8 turns explored across color and shape, best score 35. System triggers EXIT_LANE.",
+      "generator": "generate_attribute_activation_response_stream",
+      "params": {
+        "messages": [{"role": "assistant", "content": "The apple is red and round! You know so much about it."}],
+        "intent_type": "correct_answer",
+        "object_name": "apple",
+        "attribute_label": "color",
+        "activity_target": "color",
+        "child_answer": "Yeah!",
+        "reply_type": "discovery",
+        "state_action": "continue_conversation",
+        "age": 5,
+        "multi_topic_guide": "-SENSORY SAFETY (applies to all sensory invitations):\n-- Default to sight: \"What do you notice?\", \"Which part looks the biggest?\", \"Is it shiny or dull?\"\n-- Allow imagination/guessing: \"Do you think it would feel rough?\", \"If it rolled, would it go fast or slow?\"\n-- Do NOT invite the child to TOUCH, SMELL, TASTE, LICK, or PHYSICALLY INTERACT with the object —\n  the environment may be unsafe (parks, public spaces, unknown items).\n-- Do NOT use \"Do you know…\" framing — it creates testing pressure.\n-- For imitation: only voices and stretches/movements are OK (\"Let's bark like a puppy!\").\n  NEVER suggest petting an animal, touching/smelling a plant, or any physical contact.\n\n[CONVERSATION COVERAGE]\nAttribute: color\nTurns explored: 8\nAngles already used: (session complete)\n\n---\n\n[SYSTEM CONTEXT]\nSession turns: 8\nExplored attributes: color, shape\nBest attribute explored: color\nBest interest score: 35/100\n\nEXIT MODE: ACTIVE\nThe session has been long. Wrap up naturally WITHOUT pushing an activity.\n\n---\n\n[WRAP-UP]\nYour next message MUST:\n1. Thank the child for exploring with you (one warm sentence)\n2. Ask what they want to talk about or explore next (one open-ended question)\n3. Keep it light and open — no pressure\n\nExample of a good wrap-up:\n\"We talked about so many fun things today! What do you want to explore next?\"\n\nANTI-PATTERNS -- NEVER produce these:\n- Asking why/how/causal questions about the current attribute\n- Pushing an activity or game\n- Outputting [ACTIVITY_READY]\n- Re-phrasing a question from an already-used angle"
+      },
+      "checks": [
+        {"criterion": "Does NOT contain [ACTIVITY_READY]", "assert_not": "[activity_ready]"},
+        {"criterion": "Does NOT push activity or game", "assert_not": "game"},
+        {"criterion": "Does NOT push activity or game (try)", "assert_not": "try"},
+        {"criterion": "No why/how/causal questions", "assert_not": "why"},
+        {"criterion": "No why/how/causal questions (how)", "assert_not": "how"},
+        {"criterion": "Asks open-ended what-next question", "assert_in": ["what", "next", "want", "explore", "talk"]},
+        {"criterion": "Warm/appreciative tone", "assert_in": ["fun", "great", "nice", "thank", "talked", "today"]},
+        {"criterion": "No touch/smell/taste invitation", "assert_not": "touch"}
+      ]
+    },
+    {
+      "id": "reengage_struggle_recovery",
+      "task_num": 6,
+      "title": "REENGAGE — Struggle Recovery (Simple Question)",
+      "implemented": "CARES REENGAGE decision forces simple angles (observation/comparison only) when child struggles.",
+      "scenario": "Child said 'I don't know' 3 times about texture. System triggers REENGAGE with observation angle forced.",
+      "generator": "generate_attribute_activation_response_stream",
+      "params": {
+        "messages": [{"role": "assistant", "content": "How do you think this dandelion feels?"}],
+        "intent_type": "clarifying_idk",
+        "object_name": "dandelion",
+        "attribute_label": "texture",
+        "activity_target": "texture",
+        "child_answer": "I don't know",
+        "reply_type": "discovery",
+        "state_action": "continue_conversation",
+        "age": 5,
+        "multi_topic_guide": "-SENSORY SAFETY (applies to all sensory invitations):\n-- Default to sight: \"What do you notice?\", \"Which part looks the biggest?\", \"Is it shiny or dull?\"\n-- Allow imagination/guessing: \"Do you think it would feel rough?\", \"If it rolled, would it go fast or slow?\"\n-- Do NOT invite the child to TOUCH, SMELL, TASTE, LICK, or PHYSICALLY INTERACT with the object —\n  the environment may be unsafe (parks, public spaces, unknown items).\n-- Do NOT use \"Do you know…\" framing — it creates testing pressure.\n-- For imitation: only voices and stretches/movements are OK (\"Let's bark like a puppy!\").\n  NEVER suggest petting an animal, touching/smelling a plant, or any physical contact.\n\n[CONVERSATION COVERAGE]\nAttribute: texture\nTurns explored: 3\nAngles already used: observation, comparison, preference\n\n---\n\n[SYSTEM CONTEXT]\nCurrent attribute: texture\nCurrent interest score: 15/100\nConsecutive struggle count: 3\n\nREENGAGE MODE: ACTIVE\nThe child is struggling. Ask a MUCH simpler, more concrete question.\nUse only sensory language (see, look, notice). Single concept only.\n\n---\n\n[NEXT SUGGESTED ANGLE: observation]\nAsk the child to observe and describe the attribute with their own words\n\nFor this turn, try using the observation angle:\n- Your RESPONSE should: Share one concrete sensory fact about the texture\n- Your FOLLOW-UP QUESTION should: Ask what the child notices or sees about the texture\n- Example of a good question: \"What do you notice about the dandelion?\"\n\nAlready-used angles (try something different if possible):\n- observation: What do you notice about the dandelion?\n- comparison: Is it more like a banana or a grape in texture?\n- preference: Do you like soft dandelions or rough dandelions better?\n\nANTI-PATTERNS -- NEVER produce these:\n- \"What texture is it?\" -- quiz\n- \"Do you know what texture it has?\" -- quiz with wrapper\n- \"What else can you tell me about it?\" -- too vague\n- Open-ended or abstract questions (\"what do you think\", \"why do you think\")\n- Causal or how/why questions\n- Adding [ACTIVITY_READY]\n- Re-phrasing a question from an already-used angle"
+      },
+      "checks": [
+        {"criterion": "Does NOT contain [ACTIVITY_READY]", "assert_not": "[activity_ready]"},
+        {"criterion": "Very simple concrete question", "assert_in": ["see", "look", "notice"]},
+        {"criterion": "Single concept only (no compound questions)", "assert_not": "and what"},
+        {"criterion": "No open-ended abstract questions", "assert_not": "what do you think"},
+        {"criterion": "No why/how questions", "assert_not": "why"},
+        {"criterion": "No why/how questions (how)", "assert_not": "how"},
+        {"criterion": "No touch/smell/taste invitation", "assert_not": "touch"}
+      ]
+    }
+  ]
+}
