@@ -1729,8 +1729,13 @@ def continue_conversation():
                         activity_target = assistant.attribute_state.profile.activity_target
                         object_name_attr = assistant.attribute_state.object_name
 
-                        # Determine dimension and select next angle (CARES Phase 0)
-                        dimension = assistant.attribute_state.profile.attribute_id.split(".")[0]
+                        # Determine observation angle for pool selection
+                        observation_angle = ""
+                        if assistant.attribute_state.primary_activity:
+                            observation_angle = assistant.attribute_state.primary_activity.observation_angle
+                        else:
+                            # Fallback: derive from profile label (legacy path during transition)
+                            observation_angle = assistant.attribute_state.profile.label
 
                         # Build list of explored attributes for display
                         explored_attributes = list(assistant.attribute_interest_records.keys())
@@ -1768,14 +1773,14 @@ def continue_conversation():
                             ]
                             selected_angle = select_next_angle(
                                 explored_angle_ids=assistant.attribute_state.explored_angle_ids,
-                                dimension=dimension,
+                                observation_angle=observation_angle,
                                 interest_score=0,  # force simple angles only
                                 pending_verifications=pending_for_angle,
                             )
                             assistant.attribute_state.current_angle_id = selected_angle["angle_id"]
                             soft_guide = _build_reengage_guide(
-                                attribute_label=attribute_label,
-                                activity_target=activity_target,
+                                observation_angle=observation_angle,
+                                object_name=object_name_attr,
                                 sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
                                 selected_angle=selected_angle,
                                 explored_angle_ids=assistant.attribute_state.explored_angle_ids,
@@ -1790,21 +1795,20 @@ def continue_conversation():
                             ]
                             selected_angle = select_next_angle(
                                 explored_angle_ids=assistant.attribute_state.explored_angle_ids,
-                                dimension=dimension,
+                                observation_angle=observation_angle,
                                 interest_score=current_interest_score,
                                 pending_verifications=pending_for_angle,
                             )
                             assistant.attribute_state.current_angle_id = selected_angle["angle_id"]
                             soft_guide = _build_continue_guide(
-                                attribute_label=attribute_label,
-                                activity_target=activity_target,
+                                observation_angle=observation_angle,
+                                object_name=object_name_attr,
                                 sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
                                 selected_angle=selected_angle,
                                 explored_angle_ids=assistant.attribute_state.explored_angle_ids,
                                 turn_count=assistant.attribute_state.turn_count,
                                 current_score=current_interest_score,
                                 total_turns=total_turns,
-                                explored_attributes=explored_attributes,
                             )
                             # PROBE mode: append a directive to ask more directly
                             soft_guide = (
@@ -1819,21 +1823,20 @@ def continue_conversation():
                             ]
                             selected_angle = select_next_angle(
                                 explored_angle_ids=assistant.attribute_state.explored_angle_ids,
-                                dimension=dimension,
+                                observation_angle=observation_angle,
                                 interest_score=current_interest_score,
                                 pending_verifications=pending_for_angle,
                             )
                             assistant.attribute_state.current_angle_id = selected_angle["angle_id"]
                             soft_guide = _build_continue_guide(
-                                attribute_label=attribute_label,
-                                activity_target=activity_target,
+                                observation_angle=observation_angle,
+                                object_name=object_name_attr,
                                 sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
                                 selected_angle=selected_angle,
                                 explored_angle_ids=assistant.attribute_state.explored_angle_ids,
                                 turn_count=assistant.attribute_state.turn_count,
                                 current_score=current_interest_score,
                                 total_turns=total_turns,
-                                explored_attributes=explored_attributes,
                             )
 
                         # VGC: Inject pending verification context into prompt
@@ -1963,7 +1966,7 @@ def continue_conversation():
                                 client=assistant.client,
                                 attribute_soft_guide=followup_soft_guide,
                                 response_text="",
-                                focus_topic=f"the '{attribute_label}' attribute",
+                                focus_topic=f"the {observation_angle} of the {object_name_attr}",
                             )
 
                             activity_marker = "[ACTIVITY_READY]"
