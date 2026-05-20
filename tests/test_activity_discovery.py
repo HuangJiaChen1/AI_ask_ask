@@ -13,14 +13,13 @@ def test_build_activity_block_formats_activity():
         activity_id="polka_dot_patrol",
         name="Polka Dot Patrol",
         description="Find spotted things",
-        attributes=("polka_dots", "spots"),
-        preview_prompt="You noticed the polka dots!",
+        focal_attribute="polka_dots",
+        observation_angle="pattern",
     )
     block = _build_activity_block(a)
     assert "polka_dot_patrol" in block
+    assert "pattern" in block
     assert "polka_dots" in block
-    assert "spots" in block
-    assert "You noticed the polka dots!" in block
 
 
 def test_activity_discovery_result_dataclass():

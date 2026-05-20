@@ -53,6 +53,9 @@ class ActivityDefinition:
     topic_axis: str = ""                  # form | perspective | connection | change...
     difficulty_level: int = 1             # 1 | 2
 
+    # === KUD (Know-Understand-Do) ===
+    kud_do: tuple[str, ...] = ()          # Do items from tag_block.yaml
+
     # === Extra bucket for non-core fields ===
     extra: dict[str, Any] = field(default_factory=dict)
 
@@ -92,6 +95,7 @@ class ActivityDefinition:
             "entity_role", "topic_axis", "difficulty_level",
             "activity_signature", "matchability", "progression",
             "estimated_duration_minutes", "materials_needed", "target_attribute",
+            "kud",
         }
         extra = {k: v for k, v in data.items() if k not in core_keys}
 
@@ -117,6 +121,7 @@ class ActivityDefinition:
             entity_role=_get("activity_signature.entity_role", "entity_role", "subject"),
             topic_axis=_get("progression.topic_axis", "topic_axis", ""),
             difficulty_level=_get("progression.difficulty_level", "difficulty_level", 1) or 1,
+            kud_do=tuple(data.get("kud", {}).get("do", [])),
             extra=extra,
         )
 

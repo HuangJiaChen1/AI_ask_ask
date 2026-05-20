@@ -331,13 +331,7 @@ class PaixuejiAssistant:
         state = getattr(self, "attribute_state", None)
         if state and hasattr(state, "primary_activity") and state.primary_activity:
             activity = state.primary_activity
-            return {
-                "activity_source": "attribute",
-                "activity_id": activity.activity_id,
-                "activity_name": activity.name,
-                "activity_target": activity.preview_prompt or activity.description,
-                "launch_prompt": activity.launch_prompt,
-            }
+            return self._build_activity_target_dict(activity, state)
         # Legacy fallback
         if not self.attribute_profile:
             return None
@@ -352,6 +346,39 @@ class PaixuejiAssistant:
             result["activity_id"] = self.attribute_matched_activity.get("activity_id")
             result["activity_name"] = self.attribute_matched_activity.get("name")
             result["launch_prompt"] = self.attribute_matched_activity.get("launch_prompt")
+        return result
+
+    @staticmethod
+    def _build_activity_target_dict(activity, state=None):
+        """Build the activity_target payload with topic, target, secondary, verification."""
+        topic = f"{activity.observation_angle} · {activity.focal_attribute}" if activity.observation_angle else activity.focal_attribute
+        target = "; ".join(activity.kud_do) if activity.kud_do else (activity.preview_prompt or activity.description)
+        result = {
+            "activity_source": "attribute",
+            "activity_id": activity.activity_id,
+            "activity_name": activity.name,
+            "topic": topic,
+            "target": target,
+            "activity_target": target,  # backward compat for handoff route
+            "launch_prompt": activity.launch_prompt,
+        }
+        if state is not None:
+            result["secondary"] = [
+                {
+                    "activity_id": a.activity_id,
+                    "topic": f"{a.observation_angle} · {a.focal_attribute}" if a.observation_angle else a.focal_attribute,
+                    "target": "; ".join(a.kud_do) if a.kud_do else (a.preview_prompt or a.description),
+                }
+                for a in getattr(state, "secondary_activities", [])
+            ]
+            result["verification_queue"] = [
+                {
+                    "property": v.property,
+                    "question": v.question,
+                    "for_activity_id": v.for_activity_id,
+                }
+                for v in getattr(state, "verification_queue", [])
+            ]
         return result
 
     def start_category_lane(self, category_state, category_profile):

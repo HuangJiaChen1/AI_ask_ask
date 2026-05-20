@@ -1333,7 +1333,11 @@ function updateTopicStatusCard() {
     card.style.display = shouldShow ? 'block' : 'none';
     if (!shouldShow) return;
 
-    const label = currentAttributeDebug?.profile?.label || '-';
+    // Prefer new activity_target dict (topic/target/secondary/verification)
+    const at = currentAttributeActivityTarget || {};
+    const label = at.topic || currentAttributeDebug?.profile?.label || '-';
+    const targetText = at.target || at.activity_target || currentAttributeDebug?.profile?.activity_target || '-';
+
     const setText = (id, value) => {
         const el = document.getElementById(id);
         if (el) el.textContent = value || '-';
@@ -1343,8 +1347,33 @@ function updateTopicStatusCard() {
     const fallbackText = currentAttributeFallbackLabels?.join(', ') || '-';
     setText('topicFallbackLabels', fallbackText);
 
-    const target = currentAttributeDebug?.profile?.activity_target || '-';
-    setText('topicActivityTarget', target);
+    setText('topicActivityTarget', targetText);
+
+    // Secondary activities
+    const secEl = document.getElementById('topicSecondaryActivities');
+    if (secEl) {
+        if (at.secondary && at.secondary.length > 0) {
+            secEl.innerHTML = 'Also: ' + at.secondary.map(s =>
+                `<span style="display:inline-block; background:#e0f2fe; padding:1px 6px; border-radius:4px; margin:1px 2px;">${s.topic || s.activity_id}</span>`
+            ).join(' ');
+            secEl.style.display = 'block';
+        } else {
+            secEl.style.display = 'none';
+        }
+    }
+
+    // Verification queue
+    const verEl = document.getElementById('topicVerificationQueue');
+    if (verEl) {
+        if (at.verification_queue && at.verification_queue.length > 0) {
+            verEl.innerHTML = 'Verify: ' + at.verification_queue.map(v =>
+                `<span style="display:inline-block; background:#fef3c7; padding:1px 6px; border-radius:4px; margin:1px 2px;">${v.property}</span>`
+            ).join(' ');
+            verEl.style.display = 'block';
+        } else {
+            verEl.style.display = 'none';
+        }
+    }
 
     const turnEl = document.getElementById('topicTurnCount');
     const turnCount = currentAttributeTurnCount || 0;
