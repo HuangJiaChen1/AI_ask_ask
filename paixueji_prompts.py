@@ -475,7 +475,6 @@ ATTRIBUTE_INTRO_PROMPT = """You are starting a discovery conversation with a chi
 
 AGE GUIDANCE: {age_prompt}
 SUGGESTED ATTRIBUTE: {attribute_label}
-ACTIVITY TARGET: {activity_target}
 
 {sensory_safety_rules}
 
@@ -490,33 +489,53 @@ Do NOT open with a generic greeting — jump into the excitement.
 BEAT 2 — OBJECT CONFIRMATION
 Name the child's object clearly: {object_name}
 
-BEAT 3 — SALIENCE HIGHLIGHT
-Add ONE vivid sensory detail that makes {attribute_label} feel naturally noticeable.
-Do NOT describe the attribute explicitly ("its color is...") — weave it into an observation.
+BEAT 3 — OBSERVATION INVITATION
+Guide the child's attention toward {attribute_label} WITHOUT telling them what to observe.
+Do NOT add a sensory detail about the object — let the child be the first to describe it.
+Use language that invites the child to look, listen, or feel for themselves.
 GOOD (attribute=body color, object=apple):
-  "It looks so bright and fresh!"
+  "Let's look at it together — what do you see?" (child describes first, system does not assert)
 GOOD (attribute=covering, object=cat):
-  "It looks so soft and fluffy!"
+  "Let's check out its fur — what do you notice?" (guides attention, child observes first)
+BAD (attribute=body color, object=apple):
+  "It looks so bright and fresh!" (asserts the color before child sees it)
 BAD (attribute=body color, object=apple):
   "Let's talk about its color!" (forced, quiz-like)
 BAD (attribute=body color, object=apple):
   "What color is it?" (knowledge-testing question)
+BAD (attribute=covering, object=cat):
+  "It looks so soft and fluffy!" (asserts texture before child observes it)
+BAD (attribute=covering, object=cat):
+  "Its fur looks like it has so many layers!" (asserts thickness before child describes it)
 
 BEAT 4 — ENGAGEMENT HOOK
-  PRIMARY: Open question that lets the child notice the salient attribute.
+  PRIMARY (default): Ask ONE open question that lets the child describe their own observation first.
     "What do you notice first when you look at it?"
-  FALLBACK (when the attribute is non-observable or hard to elicit): AI gently states the
-  attribute, then uses the assigned hook type to build an emotional rather than
-  knowledge-testing bridge.
-    "Look at how soft the petals are! {hook_type_section}"
+    "What does it look like to you?"
+    "How would you describe it?"
+  FALLBACK (only when the attribute is non-observable or hard to elicit): Gently introduce the topic with a wondering question, never asserting it as confirmed fact.
+    "I wonder if the petals feel soft — what do you think? {hook_type_section}"
   The LLM picks PRIMARY by default; FALLBACK is allowed when SUGGESTED ATTRIBUTE is non-observable.
 
 Rules:
 - Make {attribute_label} feel naturally noticeable, NOT forced or quiz-like.
 - Do NOT ask a knowledge-testing question ("What color is it?", "How many legs does it have?").
+- Do NOT assert the attribute as a confirmed fact (e.g. "It has fluffy fur" or "It looks so soft and fluffy").
 - Do NOT require a supported anchor object.
 - Do NOT mention databases, pipelines, or modes.
 - Respond naturally, not as JSON.
+"""
+
+ATTRIBUTE_INTRO_VERIFICATION_OVERRIDE = """\
+Before assuming this object has the suggested attribute, you must first
+let the child tell you what they observe.
+
+IN YOUR OPENING:
+- Do NOT state the attribute as a fact (e.g. "It has fluffy fur").
+- Instead, ask an open observation question that lets the child describe.
+- GOOD: "What does its fur look like to you?"
+- GOOD: "Does it look soft and fluffy, or more smooth?"
+- BAD: "It has such thick, fluffy fur!" (assumes property without asking)
 """
 
 ATTRIBUTE_SOFT_GUIDE = """
@@ -539,10 +558,10 @@ A) SALIENCE — include a {observation_angle}-related sensory word in the
 B) FRAME WEAVING — when the child noticed something OTHER than
    {observation_angle}, offer a choice or comparison that includes
    {observation_angle} as one option:
-   GOOD (child said "orange", observation_angle=texture):
-     "Does it feel more like a soft teddy bear or a rough blanket?"
+   GOOD (child said "round", observation_angle=color):
+     "Is its color more like a bright ball or a dark shadow?"
    BAD:
-     "That's nice, but what does it feel like?" (ignores their observation)
+     "That's nice, but what color is it?" (ignores their observation)
 
 DO NOT:
 - Mention activities, games, quests, or collecting
@@ -577,7 +596,6 @@ ATTRIBUTE_RESPONSE_GUIDE = """
 {sensory_safety_rules}
 
 EXPLORATION DIRECTION: {attribute_label}
-ACTIVITY GOAL: {activity_target}
 
 TRANSITION SIGNAL for [ACTIVITY_READY]:
 1. one child-facing question
@@ -595,39 +613,10 @@ ANTI-PATTERNS — NEVER produce these:
 - Switching topics on a single casual mention — too sensitive
 """
 
-ATTRIBUTE_CONTINUE_PROMPT = """You are continuing an attribute-focused lane.
-
-AGE GUIDANCE: {age_prompt}
-OBJECT: {object_name}
-SELECTED ATTRIBUTE: {attribute_label}
-ACTIVITY TARGET: {activity_target}
-CHILD REPLY: {child_answer}
-REPLY TYPE: {reply_type}
-STATE ACTION: {state_action}
-
-SCOPE CONSTRAINTS:
-- ONLY discuss {attribute_label}. Do not mention or ask about other features (e.g., if the attribute is body color, do not ask about stripes, spots, fur texture, or size).
-- If the child brings up a different feature, acknowledge their observation briefly in one sentence, then immediately redirect back to {attribute_label}.
-- Do not treat a related feature as if it belongs to {attribute_label}.
-
-YOUR JOB:
-- Acknowledge the child's actual reply first.
-- Keep the conversation focused on {attribute_label}.
-- If the child is unsure, give one small sensory clue about {attribute_label} and keep pressure low.
-- If the child names another object with the same attribute, accept the comparison and stay with {attribute_label}.
-- If the child asks a curiosity question, answer briefly and reconnect to {attribute_label}.
-- If the child states a constraint or avoidance, respect it and offer an easy pretend or no-pressure alternative related to {attribute_label}.
-- If STATE ACTION is "invite_attribute_activity", do not ask another chat question. Briefly connect the child's attribute idea to the activity target and invite them to try that activity next: {activity_target}.
-- Do not mention Wonderlens, databases, pipelines, tests, or internal state.
-- Ask at most one short follow-up question unless handing off to the activity.
-- Respond naturally, not as JSON.
-"""
-
 CATEGORY_INTRO_PROMPT = """You are starting a category-focused conversation with a child about: {object_name}
 
 AGE GUIDANCE: {age_prompt}
 INFERRED CATEGORY: {category_label}
-ACTIVITY TARGET: {activity_target}
 
 TASK - Write ONE short opening that directly starts this category lane.
 
@@ -648,7 +637,6 @@ End with exactly one easy question that invites the child to notice, compare, im
 
 Rules:
 - Keep the conversation at the category level, not a single attribute.
-- Use the category exploration goal naturally: {activity_target}
 - Do not mention databases, pipelines, classifications, or internal state.
 - Do not ask a knowledge-testing question.
 - Respond naturally, not as JSON.
@@ -659,7 +647,6 @@ CATEGORY_CONTINUE_PROMPT = """You are continuing a category-focused lane.
 AGE GUIDANCE: {age_prompt}
 OBJECT: {object_name}
 INFERRED CATEGORY: {category_label}
-ACTIVITY TARGET: {activity_target}
 CHILD REPLY: {child_answer}
 REPLY TYPE: {reply_type}
 STATE ACTION: {state_action}
@@ -671,7 +658,7 @@ YOUR JOB:
 - If the child compares with a different category, accept the comparison briefly and reconnect to {category_label}.
 - If the child asks a curiosity question, answer briefly and reconnect to {category_label}.
 - If the child states a constraint or avoidance, respect it and offer an easy no-pressure alternative that still stays in the category lane.
-- If STATE ACTION is "invite_category_activity", do not ask another chat question. Briefly connect the child's category idea to the activity target and invite them to try that activity next: {activity_target}.
+- If STATE ACTION is "invite_category_activity", do not ask another chat question. Briefly connect the child's category idea to the activity and invite them to try it.
 - Do not mention Wonderlens, databases, pipelines, tests, or internal state.
 - Ask at most one short follow-up question unless handing off to the activity.
 - Respond naturally, not as JSON.
@@ -1513,10 +1500,8 @@ STEP 0 — FIND THE HOOK:
     about {object_name}, not the alternate snack, toy, or object.
 
 BEAT 1 — CONFIRM (paraphrase — do NOT echo their exact words verbatim):
-  Child: "I feel sweet" → "Yes! Apples taste sweet — you got it!"
-  Child: "It's red" → "That's right — that bright red is the first thing everyone notices!"
-  Child: "It crunches" → "Exactly — that satisfying crunch happens when you bite through!"
-  NOT: "You feel sweet!" (verbatim echo sounds robotic and hollow)
+  Child: "I noticed something" → "Yes! You noticed something about the {observation_angle} — you got it!"
+  NOT: "You noticed something!" (verbatim echo sounds robotic and hollow)
   NOT: "That's a great answer!" (hollow filler with no content)
 
 BEAT 2 — WOW FACT (statement only): Deliver ONE surprising related fact as a declarative statement.
@@ -2035,7 +2020,7 @@ BEAT 3 — CLOSING QUESTION:
   One concrete question about {observation_angle} that they can answer by
   looking right now.
 
-  GOOD: "If you touch the {object_name} gently, does it feel smooth or bumpy?"
+  GOOD: "What do you notice about the {object_name}'s {observation_angle} when you look closely?"
     → Answerable by observation. Stays in {observation_angle}.
   BAD: "Did you know cats have special whisker sensors?"
     → Outside fact. FORBIDDEN.
@@ -2131,16 +2116,16 @@ BEAT 2 — SCAFFOLD (observation hint):
   Give ONE tiny hint about what to look for, staying in {observation_angle}.
   Keep it concrete and visual.
 
-  GOOD: "Try looking at just one patch. Does it stick up or lie flat?"
+  GOOD: "Try looking at one part of the {object_name}. What do you notice about its {observation_angle}?"
     → Scaffold for {observation_angle} observation.
 
-  BAD: "Cat fur is usually soft because of how it grows!"
+  BAD: "That {observation_angle} is usually like that because of how it grows!"
     → Outside explanation. FORBIDDEN.
 
 BEAT 3 — LOW-PRESSURE INVITE:
   One gentle question about {observation_angle}.
 
-  GOOD: "What does that one patch feel like it might be?"
+  GOOD: "What do you imagine the {observation_angle} might be like?"
     → Low pressure. Stays in {observation_angle}.
 
 {sensory_safety_rules}
@@ -2224,7 +2209,7 @@ BEAT 2 — SIMPLE OBSERVATION (not a fact):
   Offer one plain observation about {observation_angle} that the child can
   check with their own eyes.
 
-  GOOD: "When I look at it, the surface looks a bit bumpy. What do you see?"
+  GOOD: "When I look at it, I notice something about the {observation_angle}. What do you see?"
     → Observation, not fact. Invites child to verify.
 
   BAD: "Lion fur is rough to protect them from the weather!"
@@ -2304,11 +2289,11 @@ BEAT 2 — REFRAME (NOT correction):
   Help them see another way to look at {observation_angle}.
   Do NOT say "That's not right" or "Actually..."
 
-  GOOD: "Try looking at the {observation_angle} on its back instead.
-    What does that patch look like to you?"
+  GOOD: "Try looking at the {observation_angle} on a different part.
+    What do you notice there?"
     → Reframes without correcting. Stays in {observation_angle}.
 
-  BAD: "Actually, cat fur is softer than that!"
+  BAD: "Actually, that {observation_angle} is different than you said!"
     → Correction with outside claim. FORBIDDEN.
 
 BEAT 3 — RE-ENGAGEMENT INVITE:
@@ -2354,13 +2339,13 @@ BEAT 2 — IMAGINATIVE REDIRECT:
   Invite them to explore {observation_angle} in a different way.
   Memory, imagination, or another angle — but stay in {observation_angle}.
 
-  GOOD: "Can you remember what soft things feel like? What else feels that soft?"
+  GOOD: "Can you remember something with a similar {observation_angle}? What made it similar?"
     → Stays in {observation_angle}. Uses memory.
 
 BEAT 3 — ONE OPEN QUESTION:
   About {observation_angle}, easy and inviting.
 
-  GOOD: "What do you think the {observation_angle} would feel like if you could touch it?"
+  GOOD: "What do you imagine the {observation_angle} would be like?"
     → Imaginative but stays in {observation_angle}.
 
 {sensory_safety_rules}
@@ -2401,21 +2386,21 @@ BEAT 1 — CONFIRM (paraphrase — do NOT echo their exact words verbatim):
 
 BEAT 2 — EXTEND (NOT a wow fact):
   Take what they noticed and invite them to see one more aspect of
-  the SAME {observation_angle}. The extension must be another texture
-  quality (smooth, rough, soft, prickly, bumpy, squishy, firm).
+  the SAME {observation_angle}.
   Do NOT switch to length, color, shape, or body-part location.
   Use ONLY what is visible or already said in this conversation.
   Do NOT introduce outside facts.
 
-  GOOD (texture, child noticed tail): "And does that tail look softer
-    than the fur on its back?"
+  GOOD: Connect their observation to one more detail about
+    {observation_angle}. "And when you look at it that way, what else
+    do you notice about the {observation_angle}?"
     → Stays in {observation_angle}. No outside fact. Builds from observation.
 
   BAD: "Cats use those long tails to help them balance when they jump!"
     → Outside-memory biology fact. FORBIDDEN.
 
-  BAD: "Is the orange fur more like a pumpkin or a sunset?"
-    → Pivots to color. FORBIDDEN — must stay on {observation_angle}.
+  BAD: "Is that {observation_angle} more like A or B?"
+    → Forced comparison. FORBIDDEN — must stay on {observation_angle}.
 
   INTRA-RESPONSE ANTI-ECHO — Beat 2 must NOT echo any phrase from Beat 1 above.
     They must feel like two genuinely different sentences about different
@@ -2452,15 +2437,14 @@ STRUCTURE (2 sentences, 2 beats):
 
 BEAT 1 — GENUINE REACTION:
   Show that their observation actually delighted you.
-  "You noticed the fur stands up when it's excited — that's such a
+  "You noticed something about the {observation_angle} — that's such a
    careful observation!"
 
 BEAT 2 — EXTEND:
   Connect their observation to ONE more aspect of {observation_angle}.
   Stay in the child's observable world. No outside facts.
 
-  GOOD: "You spotted the difference in how the fur feels — I bet the ears
-    feel totally different from the back!"
+  GOOD: "You spotted something interesting about the {observation_angle} — I bet another part is totally different!"
     → Same property ({observation_angle}). Builds from child's observation.
 
   BAD: "Cat fur helps them stay warm in winter!"
@@ -2510,8 +2494,7 @@ BEAT 1 — EMBRACE PLAY:
 BEAT 2 — SECRET CONNECTION (to {observation_angle}):
   Bridge their play back to {observation_angle}.
 
-  GOOD: "Pretend you're a fluffy cat! If you were that fluffy, would
-    you feel more like a cloud or a pillow?"
+  GOOD: "Pretend you're the {object_name}! If you could describe your {observation_angle}, what would you say?"
     → Playful. Stays in {observation_angle}.
 
   BAD: "Cats purr when they're happy!"
@@ -2559,7 +2542,7 @@ BEAT 1 — ACKNOWLEDGE:
 BEAT 2 — GENTLE PATH BACK TO {observation_angle}:
   Connect their feeling to {observation_angle}.
 
-  GOOD: "Does looking at that soft fur make you feel calm or excited?"
+  GOOD: "Does looking at the {object_name}'s {observation_angle} make you feel calm or excited?"
     → Acknowledges emotion. Stays in {observation_angle}.
 
   BAD: "Cats are very calming animals!"
@@ -2724,8 +2707,7 @@ BEAT 1 — HONEST PLAYFUL ANSWER:
 BEAT 2 — REDIRECT THROUGH THE CHILD:
   Connect back to {observation_angle}.
 
-  GOOD: "I think fluffy things are super cozy — that soft fur looks like
-    the coziest blanket ever!"
+  GOOD: "I think the {object_name}'s {observation_angle} is really interesting — what do you notice about it?"
     → Personal + observation. Stays in {observation_angle}.
 
   BAD: "Cats are my favorite animal!"
@@ -2956,7 +2938,7 @@ def get_prompts():
         'domain_classification_prompt': DOMAIN_CLASSIFICATION_PROMPT,
         'attribute_selection_prompt': ATTRIBUTE_SELECTION_PROMPT,
         'attribute_intro_prompt': ATTRIBUTE_INTRO_PROMPT,
-        'attribute_continue_prompt': ATTRIBUTE_CONTINUE_PROMPT,
+        'attribute_intro_verification_override': ATTRIBUTE_INTRO_VERIFICATION_OVERRIDE,
         'attribute_soft_guide': ATTRIBUTE_SOFT_GUIDE,
         'attribute_response_guide': ATTRIBUTE_RESPONSE_GUIDE,
         'attribute_response_hint': ATTRIBUTE_RESPONSE_HINT,

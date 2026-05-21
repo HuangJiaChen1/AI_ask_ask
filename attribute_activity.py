@@ -23,6 +23,7 @@ class DiscoverySessionState:
 
     # Activity-centric fields (replaces old profile-centric state)
     primary_activity: ActivityDefinition | None = None
+    primary_category: str = ""  # "ready" | "verifiable" | "weak"
     secondary_activities: list[ActivityDefinition] = field(default_factory=list)
     verification_queue: list[VerificationItem] = field(default_factory=list)
     verified_properties: dict[str, str] = field(default_factory=dict)  # property -> verified|rejected|unclear
@@ -180,6 +181,7 @@ async def select_activities_for_object(
         object_name=object_name,
         age=resolved_age,
         primary_activity=primary,
+        primary_category=discovery_result.primary_category,
         secondary_activities=secondary,
         verification_queue=verification_queue,
         profile=primary_profile,

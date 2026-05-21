@@ -170,7 +170,6 @@ Continue exploring the current attribute. Do NOT output [ACTIVITY_READY].
 
 def _build_handoff_guide(
     attribute_label: str,
-    activity_target: str,
     sensory_safety_rules: str,
     activity,
     target_attribute: str,
@@ -225,7 +224,6 @@ ANTI-PATTERNS -- NEVER produce these:
 
 def _build_exit_guide(
     attribute_label: str,
-    activity_target: str,
     sensory_safety_rules: str,
     best_attribute: str | None,
     best_score: float,
@@ -1175,7 +1173,6 @@ def start_conversation():
                             messages=messages,
                             object_name=assistant.category_state.object_name,
                             category_label=assistant.category_state.profile.category_label,
-                            activity_target=assistant.category_state.profile.activity_target,
                             age_prompt=age_prompt,
                             age=age or 6,
                             config=assistant.config,
@@ -1280,17 +1277,26 @@ def start_conversation():
                                 HOOK_TYPES,
                                 attribute_pipeline_enabled=True,
                             )
+                        # Use observation_angle + focal_attribute for intro generation,
+                        # not the activity name (e.g. "Find three fluffy friends").
+                        primary = assistant.attribute_state.primary_activity
+                        if primary and primary.observation_angle:
+                            intro_label = primary.observation_angle
+                            if primary.focal_attribute:
+                                intro_label += f" · {primary.focal_attribute}"
+                        else:
+                            intro_label = assistant.attribute_state.profile.label
                         generator = ask_attribute_intro_stream(
                             messages=messages,
                             object_name=assistant.attribute_state.object_name,
-                            attribute_label=assistant.attribute_state.profile.label,
-                            activity_target=assistant.attribute_state.profile.activity_target,
+                            attribute_label=intro_label,
                             attribute_branch=assistant.attribute_state.profile.branch,
                             age_prompt=age_prompt,
                             age=age or 6,
                             config=assistant.config,
                             client=assistant.client,
                             hook_type_section=hook_type_section,
+                            verification_items=assistant.attribute_state.verification_queue,
                         )
                         sequence_number = 0
                         full_response = ""
@@ -1588,7 +1594,6 @@ def continue_conversation():
                             messages=messages,
                             object_name=assistant.category_state.object_name,
                             category_label=assistant.category_state.profile.category_label,
-                            activity_target=assistant.category_state.profile.activity_target,
                             child_answer=child_input,
                             reply_type=decision.reply_type,
                             state_action=readiness.state_action,
@@ -1822,7 +1827,6 @@ def continue_conversation():
                             age_prompt,
                         )
                         attribute_label = assistant.attribute_state.profile.label
-                        activity_target = assistant.attribute_state.profile.activity_target
                         object_name_attr = assistant.attribute_state.object_name
 
                         # Determine observation angle for pool selection
@@ -1844,7 +1848,6 @@ def continue_conversation():
                             activity = decision_meta.get("activity")
                             soft_guide = _build_handoff_guide(
                                 attribute_label=attribute_label,
-                                activity_target=activity_target,
                                 sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
                                 activity=activity,
                                 target_attribute=decision_meta.get("target_attribute", attribute_label),
@@ -1855,7 +1858,6 @@ def continue_conversation():
                         elif decision == HandoffDecision.EXIT_LANE:
                             soft_guide = _build_exit_guide(
                                 attribute_label=attribute_label,
-                                activity_target=activity_target,
                                 sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
                                 best_attribute=decision_meta.get("best_attribute"),
                                 best_score=decision_meta.get("best_score", 0.0),
@@ -1950,7 +1952,6 @@ def continue_conversation():
                             object_name=object_name_attr,
                             attribute_label=attribute_label,
                             observation_angle=observation_angle,
-                            activity_target=activity_target,
                             child_answer=child_input,
                             reply_type="discovery",
                             state_action="continue_conversation",
@@ -3688,17 +3689,26 @@ def select_activity():
                         HOOK_TYPES,
                         attribute_pipeline_enabled=True,
                     )
+                # Use observation_angle + focal_attribute for intro generation,
+                # not the activity name (e.g. "Find three fluffy friends").
+                primary = assistant.attribute_state.primary_activity
+                if primary and primary.observation_angle:
+                    intro_label = primary.observation_angle
+                    if primary.focal_attribute:
+                        intro_label += f" · {primary.focal_attribute}"
+                else:
+                    intro_label = assistant.attribute_state.profile.label
                 generator = ask_attribute_intro_stream(
                     messages=messages,
                     object_name=assistant.attribute_state.object_name,
-                    attribute_label=assistant.attribute_state.profile.label,
-                    activity_target=assistant.attribute_state.profile.activity_target,
+                    attribute_label=intro_label,
                     attribute_branch=assistant.attribute_state.profile.branch,
                     age_prompt=age_prompt,
                     age=age or 6,
                     config=assistant.config,
                     client=assistant.client,
                     hook_type_section=hook_type_section,
+                    verification_items=assistant.attribute_state.verification_queue,
                 )
                 sequence_number = 0
                 full_response = ""

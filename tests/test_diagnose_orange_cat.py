@@ -216,3 +216,100 @@ def test_build_continue_guide_omits_activity_target():
     assert re.search(r"\bcollect\b", guide.lower()) is None
     # "activity" appears in "Continue exploring the current attribute" which is expected
     assert re.search(r"\bactivity\b(?!_ready)", guide.lower()) is None or "Continue exploring the current attribute" in guide
+
+
+# ── Issue 5: Intro asserts unverified properties ──
+
+def test_attribute_intro_prompt_has_no_activity_target():
+    """ATTRIBUTE_INTRO_PROMPT should not reference activity_target."""
+    from paixueji_prompts import ATTRIBUTE_INTRO_PROMPT
+    assert "{activity_target}" not in ATTRIBUTE_INTRO_PROMPT
+    assert "ACTIVITY TARGET" not in ATTRIBUTE_INTRO_PROMPT
+
+
+def test_attribute_intro_verification_override_exists():
+    """Verification override must exist and forbid assertions."""
+    from paixueji_prompts import ATTRIBUTE_INTRO_VERIFICATION_OVERRIDE
+    assert 'Do NOT state the attribute as a fact' in ATTRIBUTE_INTRO_VERIFICATION_OVERRIDE
+    assert 'BAD: "It has such thick, fluffy fur!"' in ATTRIBUTE_INTRO_VERIFICATION_OVERRIDE
+
+
+def test_attribute_intro_prompt_does_not_encourage_assertions():
+    """ATTRIBUTE_INTRO_PROMPT itself must not list assertion examples as GOOD.
+
+    Regression: the prompt previously listed 'It looks so soft and fluffy!'
+    as a GOOD example for cat+covering, causing intros to assume unverified
+    properties even when verification_queue was empty.
+    """
+    import re
+    from paixueji_prompts import ATTRIBUTE_INTRO_PROMPT
+
+    # The old assertion-encouraging example must NOT appear in the GOOD section
+    # Extract the GOOD block for cat+covering (between the GOOD line and the next BAD/empty line)
+    good_cat_match = re.search(
+        r'GOOD \(attribute=covering, object=cat\):.*?(?=\nBAD|\n\n|\Z)',
+        ATTRIBUTE_INTRO_PROMPT,
+        re.DOTALL,
+    )
+    assert good_cat_match is not None, "Prompt must have GOOD example for cat+covering"
+    good_cat_block = good_cat_match.group(0)
+    assert '"It looks so soft and fluffy!"' not in good_cat_block, (
+        "GOOD example must not encourage asserting fluffy as fact"
+    )
+
+    # The prompt must contain a child-first observation example
+    assert "Let's check out its fur — what do you notice?" in ATTRIBUTE_INTRO_PROMPT, (
+        "Prompt must guide attention without asserting property"
+    )
+    # The assertion must be explicitly marked as BAD
+    assert "asserts texture before child observes it" in ATTRIBUTE_INTRO_PROMPT
+    assert "asserts thickness before child describes it" in ATTRIBUTE_INTRO_PROMPT
+
+
+def test_attribute_intro_prompt_forbids_assertions_in_rules():
+    """The Rules section must explicitly forbid asserting attributes as fact."""
+    from paixueji_prompts import ATTRIBUTE_INTRO_PROMPT
+    assert 'Do NOT assert the attribute as a confirmed fact' in ATTRIBUTE_INTRO_PROMPT
+
+
+def test_discovery_session_state_has_primary_category():
+    """DiscoverySessionState should carry the activity classification."""
+    from attribute_activity import DiscoverySessionState
+    state = DiscoverySessionState(object_name="cat", age=6)
+    assert hasattr(state, "primary_category")
+    assert state.primary_category == ""
+
+
+def test_select_activities_preserves_primary_category():
+    """select_activities_for_object should pass primary_category into state."""
+    from unittest.mock import AsyncMock, patch
+    from attribute_activity import select_activities_for_object, DiscoverySessionState
+
+    async def run():
+        with patch("attribute_activity.discover_talkable_activities", new_callable=AsyncMock) as mock_discover:
+            mock_discover.return_value = (
+                type("Result", (), {
+                    "primary_activity_id": "fluffy_expedition_dandelion",
+                    "primary_category": "verifiable",
+                    "secondary_activity_ids": [],
+                    "verification_queue": [{"property": "has_fluffy_fur", "question": "Does it have fluffy fur?", "for_activity": "fluffy_expedition_dandelion"}],
+                    "assessment": "test",
+                    "proceed": True,
+                    "all_activity_categories": {},
+                })(),
+                {"decision": "test"},
+            )
+            state, debug = await select_activities_for_object(
+                object_name="orange cat",
+                anchor_name="cat",
+                age=6,
+                client=None,
+                config={},
+            )
+            assert isinstance(state, DiscoverySessionState)
+            assert state.primary_category == "verifiable"
+            assert len(state.verification_queue) == 1
+            assert state.verification_queue[0].question == "Does it have fluffy fur?"
+
+    import asyncio
+    asyncio.run(run())

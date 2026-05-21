@@ -124,7 +124,7 @@ def test_attribute_pipeline_start_uses_attribute_intro_and_debug(client, mock_ge
     assert "BEAT 2" in prompt_text
     assert "OBJECT CONFIRMATION" in prompt_text
     assert "BEAT 3" in prompt_text
-    assert "SALIENCE HIGHLIGHT" in prompt_text
+    assert "OBSERVATION INVITATION" in prompt_text
     assert "BEAT 4" in prompt_text
     assert "ENGAGEMENT HOOK" in prompt_text
 

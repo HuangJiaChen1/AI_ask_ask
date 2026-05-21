@@ -359,34 +359,34 @@ from stream.cares_handoff import AttributeInterestRecord
 
 
 def test_compute_attribute_interest_score_with_streak_bonus():
-    """Streak bonus rewards sustained engagement: +5 per turn, max 15."""
+    """Streak bonus rewards sustained engagement: +5 per turn, max 20."""
     from stream.cares_handoff import AttributeInterestRecord, compute_attribute_interest_score
 
-    # 2 turns, all positive → base=50, streak=10 → total=60
+    # 2 turns, all positive → base=60, streak=10 → total=70
     r2 = AttributeInterestRecord(
         attribute_id="appearance.covering",
         turns_explored=2,
         intent_history=["CORRECT_ANSWER", "CORRECT_ANSWER"],
     )
-    assert compute_attribute_interest_score(r2) == 60.0
+    assert compute_attribute_interest_score(r2) == 70.0
 
-    # 3 turns, all positive → base=50, streak=15 → total=65
+    # 3 turns, all positive → base=60, streak=15 → total=75
     r3 = AttributeInterestRecord(
         attribute_id="appearance.covering",
         turns_explored=3,
         intent_history=["CORRECT_ANSWER", "CORRECT_ANSWER", "CORRECT_ANSWER"],
     )
-    assert compute_attribute_interest_score(r3) == 65.0
+    assert compute_attribute_interest_score(r3) == 75.0
 
-    # 1 turn positive → base=50, streak=5 → total=55
+    # 1 turn positive → base=60, streak=5 → total=65
     r1 = AttributeInterestRecord(
         attribute_id="appearance.covering",
         turns_explored=1,
         intent_history=["CORRECT_ANSWER"],
     )
-    assert compute_attribute_interest_score(r1) == 55.0
+    assert compute_attribute_interest_score(r1) == 65.0
 
-    # 5 turns, 3 positive, 2 struggle → base=30, streak=15, penalty=16 → total=29
+    # 5 turns, 3 positive, 2 struggle → base=36, streak=20, penalty=8 → total=48
     r_mixed = AttributeInterestRecord(
         attribute_id="appearance.covering",
         turns_explored=5,
@@ -394,7 +394,7 @@ def test_compute_attribute_interest_score_with_streak_bonus():
                         "CLARIFYING_WRONG", "CORRECT_ANSWER"],
         struggle_count=2,
     )
-    assert compute_attribute_interest_score(r_mixed) == 29.0
+    assert compute_attribute_interest_score(r_mixed) == 48.0
 
 
 def test_assistant_initializes_empty_interest_records():
@@ -458,7 +458,6 @@ def test_build_continue_guide_has_inactive_handoff():
 def test_build_handoff_guide_no_angle_block():
     guide = _build_handoff_guide(
         attribute_label="color",
-        activity_target="noticing colors",
         sensory_safety_rules=_SAFETY,
         activity=None,
         target_attribute="appearance.color",
@@ -477,7 +476,6 @@ def test_build_handoff_guide_contains_activity_name():
 
     guide = _build_handoff_guide(
         attribute_label="color",
-        activity_target="noticing colors",
         sensory_safety_rules=_SAFETY,
         activity=FakeActivity(),
         target_attribute="appearance.color",
@@ -493,7 +491,6 @@ def test_build_handoff_guide_contains_activity_name():
 def test_build_exit_guide_no_angle_block():
     guide = _build_exit_guide(
         attribute_label="color",
-        activity_target="noticing colors",
         sensory_safety_rules=_SAFETY,
         best_attribute="appearance.color",
         best_score=48,
@@ -507,7 +504,6 @@ def test_build_exit_guide_no_angle_block():
 def test_build_exit_guide_has_wrapup_instruction():
     guide = _build_exit_guide(
         attribute_label="color",
-        activity_target="noticing colors",
         sensory_safety_rules=_SAFETY,
         best_attribute="appearance.color",
         best_score=48,

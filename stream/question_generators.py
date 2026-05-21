@@ -298,13 +298,13 @@ async def ask_attribute_intro_stream(
     messages: list[dict],
     object_name: str,
     attribute_label: str,
-    activity_target: str,
     attribute_branch: str = "",
     age_prompt: str,
     age: int,
     config: dict,
     client: genai.Client,
     hook_type_section: str = "",
+    verification_items: list | None = None,
 ) -> AsyncGenerator[tuple[str, TokenUsage | None, str, dict], None]:
     """Stream a soft attribute introduction — makes the suggested attribute
     salient without hard-locking the conversation."""
@@ -312,12 +312,21 @@ async def ask_attribute_intro_stream(
     prompt = prompts["attribute_intro_prompt"].format(
         object_name=object_name,
         attribute_label=attribute_label,
-        activity_target=activity_target,
         age_prompt=age_prompt,
         age=age,
         sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
         hook_type_section=hook_type_section,
     )
+    if verification_items:
+        verification_override = prompts.get("attribute_intro_verification_override", "")
+        if verification_override:
+            lines = ["\n[VERIFICATION REQUIRED — DO NOT ASSERT AS FACT]"]
+            for item in verification_items:
+                question = getattr(item, "question", "")
+                if question:
+                    lines.append(f"- {question}")
+            lines.append("\n" + verification_override)
+            prompt += "\n".join(lines)
     messages_to_send = messages + [{"role": "user", "content": prompt}]
     clean_messages = clean_messages_for_api(messages_to_send)
     system_instruction, contents = convert_messages_to_gemini_format(clean_messages)
@@ -360,7 +369,6 @@ async def ask_category_intro_stream(
     messages: list[dict],
     object_name: str,
     category_label: str,
-    activity_target: str,
     age_prompt: str,
     age: int,
     config: dict,
@@ -370,7 +378,6 @@ async def ask_category_intro_stream(
     prompt = prompts["category_intro_prompt"].format(
         object_name=object_name,
         category_label=category_label,
-        activity_target=activity_target,
         age_prompt=age_prompt,
         age=age,
     )

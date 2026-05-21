@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-MIN_INTEREST_FOR_HANDOFF = 60
+MIN_INTEREST_FOR_HANDOFF = 50
 MAX_SESSION_TURNS = 8
 EXIT_LANE_INTEREST = 40
 
@@ -61,15 +61,15 @@ def compute_attribute_interest_score_breakdown(record: AttributeInterestRecord) 
         "CORRECT_ANSWER", "INFORMATIVE", "CURIOSITY", "PLAY", "EMOTIONAL",
     }
     positive = sum(1 for it in record.intent_history if it in positive_intents)
-    base = (positive / record.turns_explored) * 50
+    base = (positive / record.turns_explored) * 60
 
     initiation = min(record.child_initiated_count * 8 + record.child_returned_count * 15, 30)
 
     depth = min(record.elaboration_turns * 4 + record.question_count * 6 + record.emotional_count * 5, 25)
 
-    streak = min(record.turns_explored * 5, 15)
+    streak = min(record.turns_explored * 5, 20)
 
-    penalty = min(record.struggle_count * 8 + record.avoidance_count * 12, 35)
+    penalty = min(record.struggle_count * 4 + record.avoidance_count * 12, 35)
 
     total = max(0.0, base + initiation + depth + streak - penalty)
     return {

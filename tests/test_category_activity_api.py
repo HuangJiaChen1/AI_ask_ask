@@ -52,7 +52,7 @@ def test_category_pipeline_start_uses_category_intro_and_debug(client, mock_gemi
 
     prompt_text = streamed_prompt_text(mock_gemini_client)
     assert "Animals" in prompt_text
-    assert "different animals" in prompt_text
+    assert "category-focused conversation" in prompt_text
 
 
 def test_category_pipeline_supports_unknown_domain_fallback(client, mock_gemini_client):

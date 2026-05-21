@@ -221,7 +221,6 @@ async def generate_attribute_activation_response_stream(
     object_name: str,
     attribute_label: str,
     observation_angle: str = "",
-    activity_target: str,
     child_answer: str,
     reply_type: str,
     state_action: str,
@@ -346,7 +345,6 @@ async def generate_category_activation_response_stream(
     messages: list[dict],
     object_name: str,
     category_label: str,
-    activity_target: str,
     child_answer: str,
     reply_type: str,
     state_action: str,
@@ -358,7 +356,6 @@ async def generate_category_activation_response_stream(
     prompt = paixueji_prompts.get_prompts()["category_continue_prompt"].format(
         object_name=object_name,
         category_label=category_label,
-        activity_target=activity_target,
         child_answer=child_answer,
         reply_type=reply_type,
         state_action=state_action,
