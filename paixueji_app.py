@@ -1852,6 +1852,7 @@ def continue_conversation():
                             intent_type=intent_type_lower,
                             object_name=object_name_attr,
                             attribute_label=attribute_label,
+                            observation_angle=observation_angle,
                             activity_target=activity_target,
                             child_answer=child_input,
                             reply_type="discovery",

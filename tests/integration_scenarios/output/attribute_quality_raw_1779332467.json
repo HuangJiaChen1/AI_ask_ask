@@ -1,0 +1,158 @@
+[
+  {
+    "intent": "concept_confusion",
+    "description": "Child asks meaning of a word the model just used",
+    "expected_strategy": "Honor observation, do NOT defend with facts, re-ask observationally about texture",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! The fur is also very fuzzy."
+      },
+      {
+        "role": "user",
+        "content": "Fuzzy!"
+      },
+      {
+        "role": "assistant",
+        "content": "Can you find something fuzzy at home?"
+      }
+    ],
+    "child_input": "What does fuzzy mean?",
+    "classification": {
+      "target": "concept_confusion",
+      "predicted": "CONCEPT_CONFUSION",
+      "match": true,
+      "reasoning": "The child is asking for a definition of the specific vocabulary word \"fuzzy\" that the model introduced in its previous response.",
+      "action_subtype": "NONE"
+    },
+    "response": "I love that you're looking so closely—that's how scientists think! Every cat looks a little bit different, so I'm curious what you see.\n\nWhen you look at the cat's fur, does it look smooth and flat, or does it look bumpy and messy?",
+    "followup": "",
+    "combined": "I love that you're looking so closely—that's how scientists think! Every cat looks a little bit different, so I'm curious what you see.\n\nWhen you look at the cat's fur, does it look smooth and flat, or does it look bumpy and messy?",
+    "needs_followup": false
+  },
+  {
+    "intent": "correct_answer",
+    "description": "Child gives a meaningful on-target observation about texture",
+    "expected_strategy": "Confirm + observation bridge, extend same texture angle, NO question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! What happens when you rub the fur backwards?"
+      },
+      {
+        "role": "user",
+        "content": "It gets messy!"
+      },
+      {
+        "role": "assistant",
+        "content": "Messy! What does it feel like?"
+      }
+    ],
+    "child_input": "It feels rough and a little bumpy when I go backwards",
+    "classification": {
+      "target": "correct_answer",
+      "predicted": "CORRECT_ANSWER",
+      "match": true,
+      "reasoning": "The child is directly answering the AI's question about how the cat feels by providing a descriptive sensory response.",
+      "action_subtype": "NONE"
+    },
+    "response": "That sounds like the fur changes from smooth to prickly when it goes the wrong way. Look closely at the tips of the hair and see if they look sharp or rounded compared to the rest of the coat.",
+    "followup": "Do those tiny tips look like they would be stiff like a little brush or soft like a feather?",
+    "combined": "That sounds like the fur changes from smooth to prickly when it goes the wrong way. Look closely at the tips of the hair and see if they look sharp or rounded compared to the rest of the coat. Do those tiny tips look like they would be stiff like a little brush or soft like a feather?",
+    "needs_followup": true
+  },
+  {
+    "intent": "informative",
+    "description": "Child shares relevant information about texture",
+    "expected_strategy": "Celebrate + extend same observation_angle, NO question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! What kind of fur does your cat have?"
+      },
+      {
+        "role": "user",
+        "content": "I don't have a cat."
+      },
+      {
+        "role": "assistant",
+        "content": "No cat! What animal do you like to touch?"
+      }
+    ],
+    "child_input": "My dog has short hair but this cat has super long and fluffy fur",
+    "classification": {
+      "target": "informative",
+      "predicted": "CORRECT_ANSWER",
+      "match": false,
+      "reasoning": "The child is directly responding to the AI's prompt by comparing their dog to the cat, providing meaningful content about the animal's fur.",
+      "action_subtype": "NONE"
+    },
+    "response": "That is such a great way to describe the difference between your dog's short hair and that long, fluffy fur! If you look closely at the cat's tail, does that fluffy part look like it would feel the same as the fur on its tummy?",
+    "followup": "If you look at how the fur sticks out on the tail, does it look puffier than the fur on the cat's back?",
+    "combined": "That is such a great way to describe the difference between your dog's short hair and that long, fluffy fur! If you look closely at the cat's tail, does that fluffy part look like it would feel the same as the fur on its tummy? If you look at how the fur sticks out on the tail, does it look puffier than the fur on the cat's back?",
+    "needs_followup": true
+  },
+  {
+    "intent": "social",
+    "description": "Child asks a social question",
+    "expected_strategy": "Playful answer, redirect to texture, NO question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! Do you have a favorite animal?"
+      },
+      {
+        "role": "user",
+        "content": "Dogs!"
+      },
+      {
+        "role": "assistant",
+        "content": "Dogs! What do you like about them?"
+      }
+    ],
+    "child_input": "What's your favorite animal?",
+    "classification": {
+      "target": "social",
+      "predicted": "SOCIAL",
+      "match": true,
+      "reasoning": "The child is asking the AI a personal question about its own preferences rather than answering the previous question or discussing the cat.",
+      "action_subtype": "NONE"
+    },
+    "response": "I think dogs are wonderful, especially when they have fur that looks as soft and fuzzy as a warm sweater! If you look closely at the fluffy cat, does its fur look like it would feel just as soft as a dog's coat?",
+    "followup": "If you look at the cat's belly, does that fur look even fluffier than the fur on its back?",
+    "combined": "I think dogs are wonderful, especially when they have fur that looks as soft and fuzzy as a warm sweater! If you look closely at the fluffy cat, does its fur look like it would feel just as soft as a dog's coat? If you look at the cat's belly, does that fur look even fluffier than the fur on its back?",
+    "needs_followup": true
+  }
+]

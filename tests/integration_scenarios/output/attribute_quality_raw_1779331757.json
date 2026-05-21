@@ -1,0 +1,310 @@
+[
+  {
+    "intent": "curiosity",
+    "description": "Child asks why the fur is fluffy",
+    "expected_strategy": "Honor curiosity about texture, invite observation, closing question about texture",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! What else do you feel when you pet it?"
+      },
+      {
+        "role": "user",
+        "content": "It's warm and fluffy!"
+      },
+      {
+        "role": "assistant",
+        "content": "Warm and fluffy — nice! Do you think all cats feel the same?"
+      }
+    ],
+    "child_input": "Why is the fur so fluffy?",
+    "classification": {
+      "target": "curiosity",
+      "predicted": "CURIOSITY",
+      "match": true,
+      "reasoning": "The child is asking \"why\" to learn more about the physical properties of the cat's fur.",
+      "action_subtype": "NONE"
+    },
+    "response": "That is such a great question to ask! I love how you are looking so closely at the fur.\n\nWhen you look at all that fluff, does it look like the hairs are all lying flat in one direction, or do they look like they are sticking out in lots of different ways?",
+    "followup": "",
+    "combined": "That is such a great question to ask! I love how you are looking so closely at the fur.\n\nWhen you look at all that fluff, does it look like the hairs are all lying flat in one direction, or do they look like they are sticking out in lots of different ways?",
+    "needs_followup": false
+  },
+  {
+    "intent": "concept_confusion",
+    "description": "Child asks meaning of a word the model just used",
+    "error": "429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}"
+  },
+  {
+    "intent": "clarifying_idk",
+    "description": "Child says they don't know",
+    "error": "429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}"
+  },
+  {
+    "intent": "clarifying_wrong",
+    "description": "Child gives a wrong answer about texture",
+    "expected_strategy": "Warm acknowledgment, reframe (NOT correct), re-engagement question about texture",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! Is the fur smooth or bumpy?"
+      },
+      {
+        "role": "user",
+        "content": "Smooth!"
+      },
+      {
+        "role": "assistant",
+        "content": "Smooth! What else do you feel?"
+      }
+    ],
+    "child_input": "It feels like sandpaper!",
+    "classification": {
+      "target": "clarifying_wrong",
+      "predicted": "CORRECT_ANSWER",
+      "match": false,
+      "reasoning": "The child is directly responding to the AI's prompt about how the object feels by providing a descriptive comparison.",
+      "action_subtype": "NONE"
+    },
+    "response": "I love that you're thinking about how it feels! Sometimes things can look one way in one spot and different in another. \n\nIf you look at the fur on its tummy, does that part look like it would feel the same as the part that felt like sandpaper, or does it look different to you?",
+    "followup": "",
+    "combined": "I love that you're thinking about how it feels! Sometimes things can look one way in one spot and different in another. \n\nIf you look at the fur on its tummy, does that part look like it would feel the same as the part that felt like sandpaper, or does it look different to you?",
+    "needs_followup": false
+  },
+  {
+    "intent": "clarifying_constraint",
+    "description": "Child describes a real-world constraint",
+    "expected_strategy": "Validate constraint, redirect to texture, open question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! Can you touch it and tell me more?"
+      },
+      {
+        "role": "user",
+        "content": "It's fluffy!"
+      },
+      {
+        "role": "assistant",
+        "content": "Fluffy! Can you compare it to your shirt?"
+      }
+    ],
+    "child_input": "I don't have a cat at home",
+    "classification": {
+      "target": "clarifying_constraint",
+      "predicted": "CLARIFYING_CONSTRAINT",
+      "match": true,
+      "reasoning": "The child is explaining a real-world situational constraint regarding why they cannot compare the cat to their shirt.",
+      "action_subtype": "NONE"
+    },
+    "response": "It is okay if you don't have a cat at home to touch! Even without one right here, you can imagine how that fluffy fur might feel compared to your shirt. \n\nIf you were to press your hand against that fluff, do you think it would feel squishy or firm?",
+    "followup": "",
+    "combined": "It is okay if you don't have a cat at home to touch! Even without one right here, you can imagine how that fluffy fur might feel compared to your shirt. \n\nIf you were to press your hand against that fluff, do you think it would feel squishy or firm?",
+    "needs_followup": false
+  },
+  {
+    "intent": "correct_answer",
+    "description": "Child gives a meaningful on-target observation about texture",
+    "expected_strategy": "Confirm + observation bridge, extend same texture angle, NO question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! What happens when you rub the fur backwards?"
+      },
+      {
+        "role": "user",
+        "content": "It gets messy!"
+      },
+      {
+        "role": "assistant",
+        "content": "Messy! What does it feel like?"
+      }
+    ],
+    "child_input": "It feels rough and a little bumpy when I go backwards",
+    "classification": {
+      "target": "correct_answer",
+      "predicted": "CORRECT_ANSWER",
+      "match": true,
+      "reasoning": "The child is directly answering the AI's question about how the cat feels by providing a descriptive sensory observation.",
+      "action_subtype": "NONE"
+    },
+    "response": "It sounds like the fur changes from smooth to prickly when you go against the grain. Look closely at the tips of the hair and see if they look sharp or rounded compared to the rest of the coat.",
+    "followup": "If you look at the parts where the fur stays smooth, do those hairs look thicker or thinner than the ones that feel prickly?",
+    "combined": "It sounds like the fur changes from smooth to prickly when you go against the grain. Look closely at the tips of the hair and see if they look sharp or rounded compared to the rest of the coat. If you look at the parts where the fur stays smooth, do those hairs look thicker or thinner than the ones that feel prickly?",
+    "needs_followup": true
+  },
+  {
+    "intent": "informative",
+    "description": "Child shares relevant information about texture",
+    "error": "429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}"
+  },
+  {
+    "intent": "play",
+    "description": "Child wants to play",
+    "error": "429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}"
+  },
+  {
+    "intent": "emotional",
+    "description": "Child expresses emotion",
+    "expected_strategy": "Acknowledge, gentle path back to texture, question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! How does touching it make you feel?"
+      },
+      {
+        "role": "user",
+        "content": "Happy!"
+      },
+      {
+        "role": "assistant",
+        "content": "Happy! What does it remind you of?"
+      }
+    ],
+    "child_input": "I'm scared the cat will scratch me",
+    "classification": {
+      "target": "emotional",
+      "predicted": "EMOTIONAL",
+      "match": true,
+      "reasoning": "The child is expressing fear regarding the cat, which takes precedence over answering the question.",
+      "action_subtype": "NONE"
+    },
+    "response": "It sounds like you are feeling a little bit worried about those sharp claws. When you look at the cat's fluffy fur, does it look like it would feel soft and smooth, or does it look a bit bumpy?",
+    "followup": "",
+    "combined": "It sounds like you are feeling a little bit worried about those sharp claws. When you look at the cat's fluffy fur, does it look like it would feel soft and smooth, or does it look a bit bumpy?",
+    "needs_followup": false
+  },
+  {
+    "intent": "avoidance",
+    "description": "Child wants to avoid the topic",
+    "expected_strategy": "Accept, one gentle option back to texture, question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! What else do you notice about the texture?"
+      },
+      {
+        "role": "user",
+        "content": "It's fluffy!"
+      },
+      {
+        "role": "assistant",
+        "content": "Fluffy! Can you describe it more?"
+      }
+    ],
+    "child_input": "Let's talk about dogs instead",
+    "classification": {
+      "target": "avoidance",
+      "predicted": "ACTION",
+      "match": false,
+      "reasoning": "The child is explicitly requesting to change the topic of conversation to dogs.",
+      "action_subtype": "D"
+    },
+    "response": "That’s okay, we can talk about something else! If you’d like to look at the cat’s fur one more time, does it look like the texture is smooth or a little bit bumpy to you?",
+    "followup": "",
+    "combined": "That’s okay, we can talk about something else! If you’d like to look at the cat’s fur one more time, does it look like the texture is smooth or a little bit bumpy to you?",
+    "needs_followup": false
+  },
+  {
+    "intent": "boundary",
+    "description": "Child tests limits",
+    "expected_strategy": "Validate, brief boundary, redirect to texture, question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! Can you pat it gently?"
+      },
+      {
+        "role": "user",
+        "content": "Okay!"
+      },
+      {
+        "role": "assistant",
+        "content": "What does it feel like when you pat it?"
+      }
+    ],
+    "child_input": "I don't want to talk about this anymore, this is boring",
+    "classification": {
+      "target": "boundary",
+      "predicted": "AVOIDANCE",
+      "match": false,
+      "reasoning": "The child explicitly expresses fatigue and a desire to stop the current topic by calling it \"boring.\"",
+      "action_subtype": "NONE"
+    },
+    "response": "I can tell you are really curious about how things feel! Let's keep our hands safe by just looking closely at the fur instead. If you look at the very tips of the fur, do they look smooth or do they look a little bit bumpy?",
+    "followup": "",
+    "combined": "I can tell you are really curious about how things feel! Let's keep our hands safe by just looking closely at the fur instead. If you look at the very tips of the fur, do they look smooth or do they look a little bit bumpy?",
+    "needs_followup": false
+  },
+  {
+    "intent": "action",
+    "description": "Child asks the assistant to do something",
+    "error": "429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}"
+  },
+  {
+    "intent": "social",
+    "description": "Child asks a social question",
+    "error": "429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}"
+  },
+  {
+    "intent": "social_acknowledgment",
+    "description": "Child says thank you",
+    "error": "429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.', 'status': 'RESOURCE_EXHAUSTED'}}"
+  }
+]

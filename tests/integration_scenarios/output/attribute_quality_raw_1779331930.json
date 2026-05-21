@@ -1,0 +1,548 @@
+[
+  {
+    "intent": "curiosity",
+    "description": "Child asks why the fur is fluffy",
+    "expected_strategy": "Honor curiosity about texture, invite observation, closing question about texture",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! What else do you feel when you pet it?"
+      },
+      {
+        "role": "user",
+        "content": "It's warm and fluffy!"
+      },
+      {
+        "role": "assistant",
+        "content": "Warm and fluffy — nice! Do you think all cats feel the same?"
+      }
+    ],
+    "child_input": "Why is the fur so fluffy?",
+    "classification": {
+      "target": "curiosity",
+      "predicted": "CURIOSITY",
+      "match": true,
+      "reasoning": "The child is asking \"why\" to learn more about the physical properties of the cat's fur.",
+      "action_subtype": "NONE"
+    },
+    "response": "That is such a great question to ask! I love how you are looking so closely at the fur.\n\nWhen you look at the fluffy parts, do they look like they would feel soft and squishy, or do they look like they might feel a little bit prickly?",
+    "followup": "",
+    "combined": "That is such a great question to ask! I love how you are looking so closely at the fur.\n\nWhen you look at the fluffy parts, do they look like they would feel soft and squishy, or do they look like they might feel a little bit prickly?",
+    "needs_followup": false
+  },
+  {
+    "intent": "concept_confusion",
+    "description": "Child asks meaning of a word the model just used",
+    "expected_strategy": "Honor observation, do NOT defend with facts, re-ask observationally about texture",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! The fur is also very fuzzy."
+      },
+      {
+        "role": "user",
+        "content": "Fuzzy!"
+      },
+      {
+        "role": "assistant",
+        "content": "Can you find something fuzzy at home?"
+      }
+    ],
+    "child_input": "What does fuzzy mean?",
+    "classification": {
+      "target": "concept_confusion",
+      "predicted": "CONCEPT_CONFUSION",
+      "match": true,
+      "reasoning": "The child is asking for a definition of the specific vocabulary word \"fuzzy\" that the model introduced in its previous response.",
+      "action_subtype": "NONE"
+    },
+    "response": "I love that you're asking such great questions—that is exactly how scientists think! \"Fuzzy\" is just a word for when something looks like it has lots of tiny, soft bits sticking out all over it. \n\nWhen you look at the cat, does the texture look smooth and flat, or does it look bumpy and thick?",
+    "followup": "",
+    "combined": "I love that you're asking such great questions—that is exactly how scientists think! \"Fuzzy\" is just a word for when something looks like it has lots of tiny, soft bits sticking out all over it. \n\nWhen you look at the cat, does the texture look smooth and flat, or does it look bumpy and thick?",
+    "needs_followup": false
+  },
+  {
+    "intent": "clarifying_idk",
+    "description": "Child says they don't know",
+    "expected_strategy": "Accept, scaffold hint about texture, low-pressure question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! What about the tail — does it feel the same?"
+      },
+      {
+        "role": "user",
+        "content": "I don't know"
+      },
+      {
+        "role": "assistant",
+        "content": "That's okay! Can you guess what the tail might feel like?"
+      }
+    ],
+    "child_input": "Um...",
+    "classification": {
+      "target": "clarifying_idk",
+      "predicted": "CLARIFYING_IDK",
+      "match": true,
+      "reasoning": "The child used \"Um...\" which indicates they are unsure or do not know the answer to the AI's question.",
+      "action_subtype": "NONE"
+    },
+    "response": "That is totally okay—sometimes it’s hard to tell just by looking! If you look really closely at the tail, do the hairs look like they are all lying flat, or do they look a bit more messy and sticking out? What do you think that might feel like?",
+    "followup": "",
+    "combined": "That is totally okay—sometimes it’s hard to tell just by looking! If you look really closely at the tail, do the hairs look like they are all lying flat, or do they look a bit more messy and sticking out? What do you think that might feel like?",
+    "needs_followup": false
+  },
+  {
+    "intent": "clarifying_wrong",
+    "description": "Child gives a wrong answer about texture",
+    "expected_strategy": "Warm acknowledgment, reframe (NOT correct), re-engagement question about texture",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! Is the fur smooth or bumpy?"
+      },
+      {
+        "role": "user",
+        "content": "Smooth!"
+      },
+      {
+        "role": "assistant",
+        "content": "Smooth! What else do you feel?"
+      }
+    ],
+    "child_input": "It feels like sandpaper!",
+    "classification": {
+      "target": "clarifying_wrong",
+      "predicted": "CORRECT_ANSWER",
+      "match": false,
+      "reasoning": "The child is directly responding to the AI's prompt about how the object feels by providing a sensory description.",
+      "action_subtype": "NONE"
+    },
+    "response": "I love that you're thinking about how it feels! Sometimes things can look one way and feel another way when we look closer. \n\nIf you look at the fur on its tummy, does that part look like it has the same texture as the rest?",
+    "followup": "",
+    "combined": "I love that you're thinking about how it feels! Sometimes things can look one way and feel another way when we look closer. \n\nIf you look at the fur on its tummy, does that part look like it has the same texture as the rest?",
+    "needs_followup": false
+  },
+  {
+    "intent": "clarifying_constraint",
+    "description": "Child describes a real-world constraint",
+    "expected_strategy": "Validate constraint, redirect to texture, open question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! Can you touch it and tell me more?"
+      },
+      {
+        "role": "user",
+        "content": "It's fluffy!"
+      },
+      {
+        "role": "assistant",
+        "content": "Fluffy! Can you compare it to your shirt?"
+      }
+    ],
+    "child_input": "I don't have a cat at home",
+    "classification": {
+      "target": "clarifying_constraint",
+      "predicted": "CLARIFYING_CONSTRAINT",
+      "match": true,
+      "reasoning": "The child is explaining a real-world situational constraint regarding their lack of access to the object mentioned.",
+      "action_subtype": "NONE"
+    },
+    "response": "It is okay if you don't have a cat at home to touch! Even without one right here, you can imagine how that fluffy fur might feel compared to the fabric of your shirt. \n\nIf you were to press your hand against that fluff, do you think it would feel squishy or would it feel firm underneath?",
+    "followup": "",
+    "combined": "It is okay if you don't have a cat at home to touch! Even without one right here, you can imagine how that fluffy fur might feel compared to the fabric of your shirt. \n\nIf you were to press your hand against that fluff, do you think it would feel squishy or would it feel firm underneath?",
+    "needs_followup": false
+  },
+  {
+    "intent": "correct_answer",
+    "description": "Child gives a meaningful on-target observation about texture",
+    "expected_strategy": "Confirm + observation bridge, extend same texture angle, NO question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! What happens when you rub the fur backwards?"
+      },
+      {
+        "role": "user",
+        "content": "It gets messy!"
+      },
+      {
+        "role": "assistant",
+        "content": "Messy! What does it feel like?"
+      }
+    ],
+    "child_input": "It feels rough and a little bumpy when I go backwards",
+    "classification": {
+      "target": "correct_answer",
+      "predicted": "CORRECT_ANSWER",
+      "match": true,
+      "reasoning": "The child is directly answering the AI's question about how the cat feels by describing the texture.",
+      "action_subtype": "NONE"
+    },
+    "response": "It sounds like the fur changes from smooth to prickly when you go the wrong way. You might notice that the fur around the ears looks much shorter and finer than the long, thick hair on the belly.",
+    "followup": "If you look at the long hair on the belly, does it look like it would be just as prickly as the fur near the ears?",
+    "combined": "It sounds like the fur changes from smooth to prickly when you go the wrong way. You might notice that the fur around the ears looks much shorter and finer than the long, thick hair on the belly. If you look at the long hair on the belly, does it look like it would be just as prickly as the fur near the ears?",
+    "needs_followup": true
+  },
+  {
+    "intent": "informative",
+    "description": "Child shares relevant information about texture",
+    "expected_strategy": "Celebrate + extend same observation_angle, NO question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! What kind of fur does your cat have?"
+      },
+      {
+        "role": "user",
+        "content": "I don't have a cat."
+      },
+      {
+        "role": "assistant",
+        "content": "No cat! What animal do you like to touch?"
+      }
+    ],
+    "child_input": "My dog has short hair but this cat has super long and fluffy fur",
+    "classification": {
+      "target": "informative",
+      "predicted": "CORRECT_ANSWER",
+      "match": false,
+      "reasoning": "The child is directly responding to the AI's prompt by comparing their dog to the cat, providing meaningful content about the animal's fur.",
+      "action_subtype": "NONE"
+    },
+    "response": "Wow, you really spotted the difference between the short hair on your dog and that long, fluffy fur! Does the fur on the cat's tail look like it would feel just as soft as the fur on its tummy?",
+    "followup": "If you had to guess, would that long fur on the tail look more like a soft cloud or more like a fuzzy blanket?",
+    "combined": "Wow, you really spotted the difference between the short hair on your dog and that long, fluffy fur! Does the fur on the cat's tail look like it would feel just as soft as the fur on its tummy? If you had to guess, would that long fur on the tail look more like a soft cloud or more like a fuzzy blanket?",
+    "needs_followup": true
+  },
+  {
+    "intent": "play",
+    "description": "Child wants to play",
+    "expected_strategy": "Embrace play, bridge to texture, fun question about texture",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! If you could give this cat a new texture, what would it be?"
+      },
+      {
+        "role": "user",
+        "content": "Like a cloud!"
+      },
+      {
+        "role": "assistant",
+        "content": "A cloud cat! What would that feel like?"
+      }
+    ],
+    "child_input": "Pretend the cat is a pillow and we jump on it!",
+    "classification": {
+      "target": "play",
+      "predicted": "PLAY",
+      "match": true,
+      "reasoning": "The child is engaging in imaginative, pretend play rather than answering the question seriously.",
+      "action_subtype": "NONE"
+    },
+    "response": "Oh, jumping on a cloud cat sounds like such a bouncy adventure! If you landed on that fluffy fur, do you think it would feel squishy like a marshmallow or firm like a sofa cushion? How would that texture change when you landed on it?",
+    "followup": "",
+    "combined": "Oh, jumping on a cloud cat sounds like such a bouncy adventure! If you landed on that fluffy fur, do you think it would feel squishy like a marshmallow or firm like a sofa cushion? How would that texture change when you landed on it?",
+    "needs_followup": false
+  },
+  {
+    "intent": "emotional",
+    "description": "Child expresses emotion",
+    "expected_strategy": "Acknowledge, gentle path back to texture, question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! How does touching it make you feel?"
+      },
+      {
+        "role": "user",
+        "content": "Happy!"
+      },
+      {
+        "role": "assistant",
+        "content": "Happy! What does it remind you of?"
+      }
+    ],
+    "child_input": "I'm scared the cat will scratch me",
+    "classification": {
+      "target": "emotional",
+      "predicted": "EMOTIONAL",
+      "match": true,
+      "reasoning": "The child is expressing fear regarding the cat, which takes precedence over answering the question.",
+      "action_subtype": "NONE"
+    },
+    "response": "It sounds like you are feeling a little bit worried about those sharp claws. When you look at the cat's fluffy fur, does it look like it would feel soft and smooth, or does it look a bit prickly?",
+    "followup": "",
+    "combined": "It sounds like you are feeling a little bit worried about those sharp claws. When you look at the cat's fluffy fur, does it look like it would feel soft and smooth, or does it look a bit prickly?",
+    "needs_followup": false
+  },
+  {
+    "intent": "avoidance",
+    "description": "Child wants to avoid the topic",
+    "expected_strategy": "Accept, one gentle option back to texture, question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! What else do you notice about the texture?"
+      },
+      {
+        "role": "user",
+        "content": "It's fluffy!"
+      },
+      {
+        "role": "assistant",
+        "content": "Fluffy! Can you describe it more?"
+      }
+    ],
+    "child_input": "Let's talk about dogs instead",
+    "classification": {
+      "target": "avoidance",
+      "predicted": "ACTION",
+      "match": false,
+      "reasoning": "The child is issuing a command to change the topic to a specific new subject.",
+      "action_subtype": "D"
+    },
+    "response": "That’s okay, we can take a break from talking about the cat! If you feel like it later, what do you think the fur would feel like if you looked at it really closely—would it look bumpy or smooth?",
+    "followup": "",
+    "combined": "That’s okay, we can take a break from talking about the cat! If you feel like it later, what do you think the fur would feel like if you looked at it really closely—would it look bumpy or smooth?",
+    "needs_followup": false
+  },
+  {
+    "intent": "boundary",
+    "description": "Child tests limits",
+    "expected_strategy": "Validate, brief boundary, redirect to texture, question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! Can you pat it gently?"
+      },
+      {
+        "role": "user",
+        "content": "Okay!"
+      },
+      {
+        "role": "assistant",
+        "content": "What does it feel like when you pat it?"
+      }
+    ],
+    "child_input": "I don't want to talk about this anymore, this is boring",
+    "classification": {
+      "target": "boundary",
+      "predicted": "AVOIDANCE",
+      "match": false,
+      "reasoning": "The child explicitly expresses fatigue and a desire to stop the current topic by calling it \"boring.\"",
+      "action_subtype": "NONE"
+    },
+    "response": "I can tell you are really curious about what it's like to touch things! Let's keep our hands safe and just look closely at the fur instead. If you look at the very tips of the fur, do they look smooth or do they look a little bit bumpy?",
+    "followup": "",
+    "combined": "I can tell you are really curious about what it's like to touch things! Let's keep our hands safe and just look closely at the fur instead. If you look at the very tips of the fur, do they look smooth or do they look a little bit bumpy?",
+    "needs_followup": false
+  },
+  {
+    "intent": "action",
+    "description": "Child asks the assistant to do something",
+    "expected_strategy": "Brief response, redirect action toward texture, question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! Can you show me how soft with your hands?"
+      },
+      {
+        "role": "user",
+        "content": "Like this!"
+      },
+      {
+        "role": "assistant",
+        "content": "Great! What else do you feel?"
+      }
+    ],
+    "child_input": "Draw a picture of the cat for me",
+    "classification": {
+      "target": "action",
+      "predicted": "ACTION",
+      "match": true,
+      "reasoning": "The child is issuing a direct command for the AI to perform an action (drawing a picture).",
+      "action_subtype": "NONE"
+    },
+    "response": "That sounds like a fun drawing! While you draw the fur, does it look like it would feel bumpy or smooth if you could touch it?",
+    "followup": "",
+    "combined": "That sounds like a fun drawing! While you draw the fur, does it look like it would feel bumpy or smooth if you could touch it?",
+    "needs_followup": false
+  },
+  {
+    "intent": "social",
+    "description": "Child asks a social question",
+    "expected_strategy": "Playful answer, redirect to texture, NO question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! Do you have a favorite animal?"
+      },
+      {
+        "role": "user",
+        "content": "Dogs!"
+      },
+      {
+        "role": "assistant",
+        "content": "Dogs! What do you like about them?"
+      }
+    ],
+    "child_input": "What's your favorite animal?",
+    "classification": {
+      "target": "social",
+      "predicted": "SOCIAL",
+      "match": true,
+      "reasoning": "The child is asking the AI about its own personal preference, which falls under the category of asking about the AI itself.",
+      "action_subtype": "NONE"
+    },
+    "response": "I think it’s so fun to imagine how different animals feel! Does the dog’s fur look just as soft as the cat’s, or does it look a little bit scratchier to you?",
+    "followup": "If you look at the cat's belly, does that fur look even softer than the fur on its back?",
+    "combined": "I think it’s so fun to imagine how different animals feel! Does the dog’s fur look just as soft as the cat’s, or does it look a little bit scratchier to you? If you look at the cat's belly, does that fur look even softer than the fur on its back?",
+    "needs_followup": true
+  },
+  {
+    "intent": "social_acknowledgment",
+    "description": "Child says thank you",
+    "expected_strategy": "Brief warm response, NO question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! You did great noticing that!"
+      },
+      {
+        "role": "user",
+        "content": "Thank you!"
+      },
+      {
+        "role": "assistant",
+        "content": "You're welcome! What else do you feel?"
+      }
+    ],
+    "child_input": "Thanks for talking with me!",
+    "classification": {
+      "target": "social_acknowledgment",
+      "predicted": "SOCIAL_ACKNOWLEDGMENT",
+      "match": true,
+      "reasoning": "The child is expressing gratitude and acknowledging the conversation rather than answering a question or introducing a new topic.",
+      "action_subtype": "NONE"
+    },
+    "response": "You're so welcome, and I'm having such a fun time exploring this fluffy cat with you!",
+    "followup": "If you looked really closely at all that fluff, does it look like it would be bumpy or smooth?",
+    "combined": "You're so welcome, and I'm having such a fun time exploring this fluffy cat with you! If you looked really closely at all that fluff, does it look like it would be bumpy or smooth?",
+    "needs_followup": true
+  }
+]

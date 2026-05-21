@@ -216,11 +216,17 @@ async def ask_followup_question_stream(
         surface_object_name = surface_object_name or object_name
 
     prompts = paixueji_prompts.get_prompts()
-    followup_prompt = prompts['followup_question_prompt'].format(
+    if attribute_soft_guide:
+        # Attribute pipeline: use strict angle-locked follow-up prompt
+        followup_base = prompts.get('attribute_followup_question_prompt', prompts['followup_question_prompt'])
+    else:
+        followup_base = prompts['followup_question_prompt']
+
+    followup_prompt = followup_base.format(
         object_name=object_name,
         age=age,
         age_prompt=age_prompt,
-        knowledge_context=knowledge_context,
+        knowledge_context=knowledge_context if not attribute_soft_guide else "",
         sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
         focus_topic=focus_topic,
     )

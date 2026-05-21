@@ -1,0 +1,80 @@
+[
+  {
+    "intent": "informative",
+    "description": "Child shares relevant information about texture",
+    "expected_strategy": "Celebrate + extend same observation_angle, NO question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! What kind of fur does your cat have?"
+      },
+      {
+        "role": "user",
+        "content": "I don't have a cat."
+      },
+      {
+        "role": "assistant",
+        "content": "No cat! What animal do you like to touch?"
+      }
+    ],
+    "child_input": "My dog has short hair but this cat has super long and fluffy fur",
+    "classification": {
+      "target": "informative",
+      "predicted": "CORRECT_ANSWER",
+      "match": false,
+      "reasoning": "The child is directly responding to the AI's prompt by comparing their dog to the cat, providing meaningful content about the animal's fur.",
+      "action_subtype": "NONE"
+    },
+    "response": "That is such a sharp observation to notice how different the short hair on your dog looks compared to that long, fluffy fur. I wonder if the fur near the cat's paws looks just as soft as the fur on its back.",
+    "followup": "If you look really closely at the fur on the cat's back, does it look like it would be just as soft as the fluff around its ears?",
+    "combined": "That is such a sharp observation to notice how different the short hair on your dog looks compared to that long, fluffy fur. I wonder if the fur near the cat's paws looks just as soft as the fur on its back. If you look really closely at the fur on the cat's back, does it look like it would be just as soft as the fluff around its ears?",
+    "needs_followup": true
+  },
+  {
+    "intent": "social",
+    "description": "Child asks a social question",
+    "expected_strategy": "Playful answer, redirect to texture, NO question",
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hey there! Look at this fluffy cat. What do you notice about how its fur feels?"
+      },
+      {
+        "role": "user",
+        "content": "It's soft!"
+      },
+      {
+        "role": "assistant",
+        "content": "Soft! Do you have a favorite animal?"
+      },
+      {
+        "role": "user",
+        "content": "Dogs!"
+      },
+      {
+        "role": "assistant",
+        "content": "Dogs! What do you like about them?"
+      }
+    ],
+    "child_input": "What's your favorite animal?",
+    "classification": {
+      "target": "social",
+      "predicted": "SOCIAL",
+      "match": true,
+      "reasoning": "The child is asking the AI about its own personal preference, which falls under the category of asking about the AI itself.",
+      "action_subtype": "NONE"
+    },
+    "response": "I love how dogs have such thick, fuzzy coats that look like they would be just as soft as that cat. You can see how the fur bunches up in little tufts, which makes me wonder if that texture feels bumpy or smooth when you look closely at it.",
+    "followup": "If you look at those little tufts of fur, do you think they look more like tiny, soft clouds or like a bunch of little prickly spikes?",
+    "combined": "I love how dogs have such thick, fuzzy coats that look like they would be just as soft as that cat. You can see how the fur bunches up in little tufts, which makes me wonder if that texture feels bumpy or smooth when you look closely at it. If you look at those little tufts of fur, do you think they look more like tiny, soft clouds or like a bunch of little prickly spikes?",
+    "needs_followup": true
+  }
+]

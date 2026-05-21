@@ -220,6 +220,7 @@ async def generate_attribute_activation_response_stream(
     intent_type: str,
     object_name: str,
     attribute_label: str,
+    observation_angle: str = "",
     activity_target: str,
     child_answer: str,
     reply_type: str,
@@ -240,11 +241,29 @@ async def generate_attribute_activation_response_stream(
     """
     prompts = paixueji_prompts.get_prompts()
     intent_lower = intent_type.lower()
-    prompt_key = f"{intent_lower}_intent_prompt"
+    prompt_key = f"attribute_{intent_lower}_intent_prompt"
     intent_template = prompts.get(prompt_key, "")
 
     if not intent_template:
-        intent_template = prompts.get("classification_fallback_prompt", "")
+        # Graceful fallback: try ordinary intent prompt, then classification fallback
+        intent_template = prompts.get(f"{intent_lower}_intent_prompt", "")
+        if not intent_template:
+            intent_template = prompts.get("classification_fallback_prompt", "")
+        logger.warning(
+            f"Missing attribute prompt '{prompt_key}', fell back to ordinary '{intent_lower}_intent_prompt'"
+        )
+
+    # Pre-format the attribute exploration contract for injection into attribute prompts
+    attribute_exploration_contract = ""
+    contract_template = getattr(paixueji_prompts, 'ATTRIBUTE_EXPLORATION_CONTRACT', '')
+    if contract_template:
+        try:
+            attribute_exploration_contract = contract_template.format(
+                observation_angle=observation_angle or attribute_label,
+                object_name=object_name,
+            )
+        except KeyError:
+            attribute_exploration_contract = contract_template
 
     # Build the intent prompt (pure response — no attribute constraint)
     try:
@@ -256,6 +275,9 @@ async def generate_attribute_activation_response_stream(
             last_model_response=last_model_response,
             knowledge_context=knowledge_context,
             sensory_safety_rules=paixueji_prompts.SENSORY_SAFETY_RULES,
+            attribute_label=attribute_label,
+            observation_angle=observation_angle or attribute_label,
+            attribute_exploration_contract=attribute_exploration_contract,
         )
     except KeyError:
         intent_prompt = intent_template

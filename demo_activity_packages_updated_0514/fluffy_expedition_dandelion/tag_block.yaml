@@ -52,7 +52,7 @@ activity_signature:
   focal_attribute: "fluffy_soft_texture"
   intro: "The child uses a dandelion as the first fluffy example, then finds three more soft or fuzzy things and names them as characters."
   preview_label: "Find three fluffy friends"
-  preview_prompt: "This dandelion is fluffy. Let's find more soft or fuzzy things nearby."
+  preview_prompt: "Find more soft or fuzzy things nearby."
   role_pivot_note: "The dandelion starts as the photographed subject, then becomes the first example of the broader fluffy texture mission."
 
 matchability:
