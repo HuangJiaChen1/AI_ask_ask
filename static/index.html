@@ -103,6 +103,10 @@
                     <input type="checkbox" id="categoryPipelineEnabled">
                     <span>Category</span>
                 </label>
+                <label class="manual-select-toggle" for="manualActivitySelection" title="Manually choose activity instead of auto-selection">
+                    <input type="checkbox" id="manualActivitySelection">
+                    <span>Manual Select</span>
+                </label>
             </div>
 
             <button onclick="startConversation()">Start Learning!</button>
@@ -156,6 +160,16 @@
             </p>
             <div id="objectChoices" style="display: flex; flex-direction: column; gap: 8px;">
                 <!-- Dynamically populated with buttons -->
+            </div>
+        </div>
+
+        <!-- Activity Selection Panel (for manual activity selection) -->
+        <div id="activitySelectionPanel" style="display: none; padding: 15px; margin: 10px; background: #f6fef9; border: 2px solid #22c55e; border-radius: 8px;">
+            <p style="margin: 0 0 10px 0; font-weight: bold; color: #15803d;">
+                Choose an activity:
+            </p>
+            <div id="activityCards" style="display: flex; flex-direction: column; gap: 10px;">
+                <!-- Dynamically populated with activity cards -->
             </div>
         </div>
 

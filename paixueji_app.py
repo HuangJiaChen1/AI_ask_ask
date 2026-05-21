@@ -356,11 +356,17 @@ from stream.validation import (
     validate_bridge_activation_answer,
     validate_bridge_activation_kb_question,
 )
+from activities import (
+    get_eligible_activities_for_object,
+    ActivityDefinition,
+)
+from stream.activity_discovery import discover_talkable_activities
 from attribute_activity import (
     build_attribute_debug,
     select_activities_for_object,
     start_attribute_session,
     DiscoverySessionState,
+    AttributeProfile,
 )
 from stream.verification_guided_conversation import (
     build_verification_context,
@@ -968,49 +974,110 @@ def start_conversation():
     assistant.attribute_pipeline_enabled = attribute_pipeline_enabled
     assistant.category_pipeline_enabled = category_pipeline_enabled
     if attribute_pipeline_enabled:
-        try:
-            future = asyncio.run_coroutine_threadsafe(
-                select_activities_for_object(
-                    object_name=object_name,
-                    anchor_name=assistant.anchor_object_name,
-                    age=age or 6,
-                    client=assistant.client,
-                    config=assistant.config,
-                ),
-                _ASYNC_LOOP,
-            )
-            attribute_state, selection_debug = future.result(timeout=10)
-        except Exception as exc:
-            attribute_state = None
-            selection_debug = {
-                "decision": "no_attribute_match_fallback",
-                "source": "exception",
-                "reason": str(exc),
-            }
+        if data.get('manual_activity_selection'):
+            # Manual mode: get eligible activities and classify them,
+            # but let the user pick the primary.
+            resolved_anchor = (assistant.anchor_object_name or object_name).strip().lower()
+            resolved_age = 6 if age is None else age
+            try:
+                eligible = get_eligible_activities_for_object(resolved_anchor, resolved_age)
+            except Exception as exc:
+                eligible = []
+                logger.warning("[MANUAL_ACTIVITY] get_eligible failed: %s", exc)
 
-        if attribute_state:
-            assistant.start_attribute_lane(attribute_state)
-            logger.info(
-                "[ACTIVITY_MATCH] primary=%s session=%s",
-                attribute_state.primary_activity.activity_id,
-                session_id[:8],
-            )
-            for sec in attribute_state.secondary_activities:
-                logger.info(
-                    "[ACTIVITY_MATCH] secondary=%s session=%s",
-                    sec.activity_id, session_id[:8],
-                )
-            assistant.set_last_attribute_debug(
-                build_attribute_debug(
-                    decision="attribute_lane_started",
-                    state=attribute_state,
-                    reason=selection_debug.get("reason"),
-                )
-            )
+            if eligible:
+                try:
+                    future = asyncio.run_coroutine_threadsafe(
+                        discover_talkable_activities(
+                            eligible_activities=eligible,
+                            object_name=object_name,
+                            anchor_name=resolved_anchor,
+                            age=resolved_age,
+                            client=assistant.client,
+                            config=assistant.config,
+                        ),
+                        _ASYNC_LOOP,
+                    )
+                    discovery_result, discovery_debug = future.result(timeout=10)
+                except Exception as exc:
+                    discovery_result = None
+                    discovery_debug = {"decision": "error", "reason": str(exc)}
+
+                if discovery_result:
+                    assistant.pending_activity_selection = True
+                    assistant.pending_eligible_activities = eligible
+                    assistant.pending_activity_categories = discovery_result.all_activity_categories
+                    assistant.pending_manual_selection_context = {
+                        "object_name": object_name,
+                        "anchor_name": assistant.anchor_object_name,
+                        "age": resolved_age,
+                    }
+                    selection_debug = {
+                        "decision": "awaiting_manual_selection",
+                        "eligible_count": len(eligible),
+                        "all_categories": discovery_result.all_activity_categories,
+                        **discovery_debug,
+                    }
+                else:
+                    assistant.clear_attribute_lane()
+                    assistant.attribute_pipeline_enabled = True
+                    selection_debug = {
+                        "decision": "discovery_failed",
+                        "reason": discovery_debug.get("reason", "unknown"),
+                    }
+                assistant.set_last_attribute_debug(selection_debug)
+            else:
+                assistant.clear_attribute_lane()
+                assistant.attribute_pipeline_enabled = True
+                assistant.set_last_attribute_debug({
+                    "decision": "no_eligible",
+                    "reason": f"no eligible activities for {resolved_anchor}, age={resolved_age}",
+                })
         else:
-            assistant.clear_attribute_lane()
-            assistant.attribute_pipeline_enabled = True
-            assistant.set_last_attribute_debug(selection_debug)
+            # Auto mode: existing LLM-driven selection
+            try:
+                future = asyncio.run_coroutine_threadsafe(
+                    select_activities_for_object(
+                        object_name=object_name,
+                        anchor_name=assistant.anchor_object_name,
+                        age=age or 6,
+                        client=assistant.client,
+                        config=assistant.config,
+                    ),
+                    _ASYNC_LOOP,
+                )
+                attribute_state, selection_debug = future.result(timeout=10)
+            except Exception as exc:
+                attribute_state = None
+                selection_debug = {
+                    "decision": "no_attribute_match_fallback",
+                    "source": "exception",
+                    "reason": str(exc),
+                }
+
+            if attribute_state:
+                assistant.start_attribute_lane(attribute_state)
+                logger.info(
+                    "[ACTIVITY_MATCH] primary=%s session=%s",
+                    attribute_state.primary_activity.activity_id,
+                    session_id[:8],
+                )
+                for sec in attribute_state.secondary_activities:
+                    logger.info(
+                        "[ACTIVITY_MATCH] secondary=%s session=%s",
+                        sec.activity_id, session_id[:8],
+                    )
+                assistant.set_last_attribute_debug(
+                    build_attribute_debug(
+                        decision="attribute_lane_started",
+                        state=attribute_state,
+                        reason=selection_debug.get("reason"),
+                    )
+                )
+            else:
+                assistant.clear_attribute_lane()
+                assistant.attribute_pipeline_enabled = True
+                assistant.set_last_attribute_debug(selection_debug)
     if category_pipeline_enabled:
         try:
             future = asyncio.run_coroutine_threadsafe(
@@ -1164,6 +1231,36 @@ def start_conversation():
                             session_id=session_id,
                             request_id=request_id,
                             response_type="category_intro",
+                            correct_answer_count=assistant.correct_answer_count,
+                            **_assistant_stream_fields(assistant),
+                        ))
+                        return
+
+                    if assistant.pending_activity_selection:
+                        eligible_payload = [
+                            {
+                                "activity_id": a.activity_id,
+                                "name": a.name,
+                                "observation_angle": a.observation_angle,
+                                "focal_attribute": a.focal_attribute,
+                                "preview_prompt": a.preview_prompt or a.description,
+                                "description": a.description,
+                                "category": assistant.pending_activity_categories.get(a.activity_id, "weak"),
+                            }
+                            for a in assistant.pending_eligible_activities
+                        ]
+                        yield sse_event("chunk", StreamChunk(
+                            response="",
+                            session_finished=False,
+                            duration=0.0,
+                            token_usage=None,
+                            finish=True,
+                            sequence_number=1,
+                            timestamp=time.time(),
+                            session_id=session_id,
+                            request_id=request_id,
+                            response_type="activity_selection",
+                            eligible_activities=eligible_payload,
                             correct_answer_count=assistant.correct_answer_count,
                             **_assistant_stream_fields(assistant),
                         ))
@@ -3493,6 +3590,183 @@ def continue_conversation():
             print(f"[INFO] Session {session_id[:8]}... client disconnected")
         except Exception as e:
             print(f"[ERROR] Error in continue_conversation: {e}")
+            import traceback
+            traceback.print_exc()
+            yield sse_event("error", build_sse_error_payload(e))
+
+    return Response(generate(), mimetype='text/event-stream')
+
+
+@app.route('/api/select-activity', methods=['POST'])
+def select_activity():
+    """
+    Resolve a pending manual activity selection and stream the attribute intro.
+
+    Request body:
+        {
+            "session_id": "...",
+            "activity_id": "color_hunt"
+        }
+
+    SSE Events:
+        - chunk: StreamChunk object (serialized as JSON) with response_type="attribute_intro"
+        - complete: Final completion marker
+        - error: Error information
+    """
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"success": False, "error": "Request body must be JSON"}), 400
+
+    session_id = data.get('session_id')
+    activity_id = data.get('activity_id')
+
+    if not session_id or not activity_id:
+        return jsonify({"success": False, "error": "Missing session_id or activity_id"}), 400
+
+    assistant = sessions.get(session_id)
+    if not assistant:
+        return jsonify({"success": False, "error": "Session not found"}), 404
+
+    if not assistant.pending_activity_selection:
+        return jsonify({"success": False, "error": "No pending activity selection"}), 400
+
+    # Resolve selected activity from pending eligible list
+    id_to_activity = {a.activity_id: a for a in assistant.pending_eligible_activities}
+    selected = id_to_activity.get(activity_id)
+    if not selected:
+        return jsonify({"success": False, "error": f"Activity {activity_id} not found in eligible list"}), 400
+
+    # Build DiscoverySessionState with selected as primary
+    secondary = [a for a in assistant.pending_eligible_activities if a.activity_id != activity_id]
+    context = assistant.pending_manual_selection_context
+    primary_profile = AttributeProfile(
+        attribute_id=f"activity.{selected.activity_id}",
+        label=selected.name,
+        activity_target=selected.preview_prompt or selected.description,
+        branch="in_kb",
+        object_examples=(context.get("object_name", ""),),
+    )
+    state = DiscoverySessionState(
+        object_name=context.get("object_name", ""),
+        age=context.get("age", 6),
+        primary_activity=selected,
+        secondary_activities=secondary,
+        profile=primary_profile,
+    )
+
+    # Activate lane and clear pending state
+    assistant.start_attribute_lane(state)
+    assistant.pending_activity_selection = False
+    assistant.pending_eligible_activities = []
+    assistant.pending_activity_categories = {}
+    assistant.pending_manual_selection_context = {}
+
+    request_id = str(uuid.uuid4())
+    logger.info(
+        "[MANUAL_SELECT] activity=%s session=%s request=%s",
+        activity_id, session_id[:8], request_id[:8],
+    )
+
+    def generate():
+        try:
+            age = assistant.age
+            age_prompt = ""
+            if assistant.age is not None:
+                age_prompt = assistant.get_age_prompt(assistant.age)
+
+            async def stream_attribute_intro():
+                messages = prepare_messages_for_streaming(
+                    assistant.conversation_history.copy(),
+                    age_prompt,
+                )
+                hook_type_section = ""
+                if HOOK_TYPES:
+                    _hook_type_name, hook_type_section = select_hook_type(
+                        age or 6,
+                        assistant.conversation_history,
+                        HOOK_TYPES,
+                        attribute_pipeline_enabled=True,
+                    )
+                generator = ask_attribute_intro_stream(
+                    messages=messages,
+                    object_name=assistant.attribute_state.object_name,
+                    attribute_label=assistant.attribute_state.profile.label,
+                    activity_target=assistant.attribute_state.profile.activity_target,
+                    attribute_branch=assistant.attribute_state.profile.branch,
+                    age_prompt=age_prompt,
+                    age=age or 6,
+                    config=assistant.config,
+                    client=assistant.client,
+                    hook_type_section=hook_type_section,
+                )
+                sequence_number = 0
+                full_response = ""
+                async for text_chunk, token_usage, full_so_far, _decision_info in generator:
+                    full_response = full_so_far
+                    if not text_chunk:
+                        continue
+                    sequence_number += 1
+                    yield sse_event("chunk", StreamChunk(
+                        response=text_chunk,
+                        session_finished=False,
+                        duration=0.0,
+                        token_usage=token_usage,
+                        finish=False,
+                        sequence_number=sequence_number,
+                        timestamp=time.time(),
+                        session_id=session_id,
+                        request_id=request_id,
+                        response_type="attribute_intro",
+                        correct_answer_count=assistant.correct_answer_count,
+                        intent_type=None,
+                        **_assistant_stream_fields(assistant),
+                    ))
+
+                attribute_debug = build_attribute_debug(
+                    decision="attribute_intro",
+                    profile=assistant.attribute_profile,
+                    state=assistant.attribute_state,
+                    reason="intro generated (manual selection)",
+                    response_text=full_response,
+                    reply_type="attribute_intro",
+                )
+                assistant.set_last_attribute_debug(attribute_debug)
+                assistant.conversation_history.append({
+                    "role": "assistant",
+                    "content": full_response,
+                    "nodes_executed": [],
+                    "mode": "chat",
+                    "response_type": "attribute_intro",
+                    "attribute_debug": attribute_debug,
+                    "resolution_debug": assistant.session_resolution_debug,
+                })
+                sequence_number += 1
+                yield sse_event("chunk", StreamChunk(
+                    response=full_response,
+                    session_finished=False,
+                    duration=0.0,
+                    token_usage=None,
+                    finish=True,
+                    sequence_number=sequence_number,
+                    timestamp=time.time(),
+                    session_id=session_id,
+                    request_id=request_id,
+                    response_type="attribute_intro",
+                    correct_answer_count=assistant.correct_answer_count,
+                    **_assistant_stream_fields(assistant),
+                ))
+                yield sse_event("complete", {"success": True})
+
+            loop = _ASYNC_LOOP
+            sync_stream = async_gen_to_sync(stream_attribute_intro(), loop)
+            for event in sync_stream:
+                yield event
+
+        except GeneratorExit:
+            print(f"[INFO] Session {session_id[:8]}... client disconnected")
+        except Exception as e:
+            print(f"[ERROR] Error in select_activity: {e}")
             import traceback
             traceback.print_exc()
             yield sse_event("error", build_sse_error_payload(e))

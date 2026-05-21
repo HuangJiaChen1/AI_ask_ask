@@ -1504,3 +1504,84 @@ body {
 .topic-status-card.switching {
     animation: switchHighlight 1s ease-in-out;
 }
+
+/* Activity Selection Panel */
+.activity-card {
+    padding: 12px 14px;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.activity-card:hover {
+    border-color: #22c55e;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.15);
+}
+
+.activity-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.activity-card-header h4 {
+    margin: 0;
+    font-size: 1em;
+    color: #1f2937;
+}
+
+.activity-category {
+    font-size: 0.72em;
+    font-weight: 600;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 12px;
+    letter-spacing: 0.03em;
+}
+
+.category-ready {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.category-verifiable {
+    background: #fef9c3;
+    color: #a16207;
+}
+
+.category-weak {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.activity-meta {
+    margin: 0 0 6px 0;
+    font-size: 0.82em;
+    color: #6b7280;
+}
+
+.activity-preview {
+    margin: 0;
+    font-size: 0.88em;
+    color: #4b5563;
+    line-height: 1.4;
+}
+
+.manual-select-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.9em;
+    color: #4b5563;
+    cursor: pointer;
+}
+
+.manual-select-toggle input {
+    width: 18px;
+    height: 18px;
+    accent-color: #22c55e;
+    cursor: pointer;
+}

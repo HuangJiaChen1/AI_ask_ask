@@ -23,6 +23,8 @@ let correctAnswerCount = 0;
 let conversationComplete = false;
 let detectedObject = null;  // For manual topic switch override
 let awaitingObjectSelection = false;  // Waiting for object choice flag
+let awaitingActivitySelection = false; // Waiting for manual activity selection
+let pendingEligibleActivities = [];   // Activities waiting for selection
 let lastRequest = null;           // { type: 'start' | 'continue', childInput?: string }
 let retryCountdownInterval = null;
 let retryAutoTimer = null;
@@ -287,6 +289,7 @@ const inputArea = document.querySelector('.input-area');
 const backBtn = document.getElementById('backBtn');
 const manualSwitchPanel = document.getElementById('manualSwitchPanel');
 const objectSelectionPanel = document.getElementById('objectSelectionPanel');
+const activitySelectionPanel = document.getElementById('activitySelectionPanel');
 
 window.paixuejiUi = {
     state: {
@@ -295,6 +298,7 @@ window.paixuejiUi = {
         learningAnchorVisible: false,
         manualSwitchVisible: false,
         objectSelectionVisible: false,
+        activitySelectionVisible: false,
     },
 
     renderPrimaryView() {
@@ -321,6 +325,10 @@ window.paixuejiUi = {
             isChat && this.state.manualSwitchVisible ? 'block' : 'none';
         objectSelectionPanel.style.display =
             isChat && this.state.objectSelectionVisible ? 'block' : 'none';
+        if (activitySelectionPanel) {
+            activitySelectionPanel.style.display =
+                isChat && this.state.activitySelectionVisible ? 'block' : 'none';
+        }
     },
 
     renderBackButton() {
@@ -378,6 +386,11 @@ window.paixuejiUi = {
 
     setObjectSelectionVisible(visible) {
         this.state.objectSelectionVisible = visible;
+        this.renderChatPanels();
+    },
+
+    setActivitySelectionVisible(visible) {
+        this.state.activitySelectionVisible = visible;
         this.renderChatPanels();
     },
 };
@@ -552,6 +565,7 @@ async function startConversation() {
     const objectName = document.getElementById('objectName').value.trim();
     const attributePipelineEnabled = !!document.getElementById('attributePipelineEnabled')?.checked;
     const categoryPipelineEnabled = !!document.getElementById('categoryPipelineEnabled')?.checked;
+    const manualActivitySelection = !!document.getElementById('manualActivitySelection')?.checked;
     // Save state for debug panel
     currentObject = objectName;
 
@@ -635,7 +649,8 @@ async function startConversation() {
                 model_name_override: conversationModel,
                 grounding_model_override: groundingModel,
                 attribute_pipeline_enabled: attributePipelineEnabled,
-                category_pipeline_enabled: categoryPipelineEnabled
+                category_pipeline_enabled: categoryPipelineEnabled,
+                manual_activity_selection: manualActivitySelection
             }),
             signal: currentStreamController.signal
         });
@@ -963,6 +978,16 @@ function handleStreamChunk(chunk) {
         }
     }
 
+    // Handle manual activity selection panel
+    if (chunk.response_type === 'activity_selection' && chunk.finish) {
+        awaitingActivitySelection = true;
+        pendingEligibleActivities = chunk.eligible_activities || [];
+        window.paixuejiUi.setActivitySelectionVisible(true);
+        renderActivitySelectionPanel(pendingEligibleActivities);
+        isStreaming = false;
+        return;
+    }
+
     // Object selection uses natural language instead of UI buttons
     // User reads suggested objects in AI response text and types their choice as next message
     // (Removed showObjectSelection call - no longer using UI panel)
@@ -1117,6 +1142,91 @@ function handleStreamChunk(chunk) {
     if (chunk.finish && (chunk.chat_phase_complete || chunk.activity_ready)) {
         conversationComplete = true;
         showChatPhaseCompleteModal();
+    }
+}
+
+/**
+ * Render the manual activity selection panel with category labels
+ * @param {Array} activities - List of eligible activities from backend
+ */
+function renderActivitySelectionPanel(activities) {
+    const container = document.getElementById('activityCards');
+    if (!container) return;
+    container.innerHTML = '';
+
+    activities.forEach(act => {
+        const card = document.createElement('div');
+        card.className = 'activity-card';
+        const categoryClass = `category-${act.category || 'weak'}`;
+        card.innerHTML = `
+            <div class="activity-card-header">
+                <h4>${escapeHtml(act.name || act.activity_id)}</h4>
+                <span class="activity-category ${categoryClass}">${act.category || 'weak'}</span>
+            </div>
+            <p class="activity-meta">${escapeHtml(act.observation_angle || '')} · ${escapeHtml(act.focal_attribute || '')}</p>
+            <p class="activity-preview">${escapeHtml(act.preview_prompt || act.description || '')}</p>
+        `;
+        card.onclick = () => selectActivity(act.activity_id);
+        container.appendChild(card);
+    });
+}
+
+/**
+ * Send selected activity to backend and stream the attribute intro
+ * @param {string} activityId - The selected activity ID
+ */
+async function selectActivity(activityId) {
+    if (!sessionId) return;
+    window.paixuejiUi.setActivitySelectionVisible(false);
+    awaitingActivitySelection = false;
+    isStreaming = true;
+
+    try {
+        const response = await fetch(`${API_BASE}/select-activity`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ session_id: sessionId, activity_id: activityId }),
+        });
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+
+            const events = buffer.split('\n\n');
+            buffer = events.pop() || '';
+
+            for (const eventText of events) {
+                if (!eventText.trim()) continue;
+                const lines = eventText.split('\n');
+                let eventType = 'message';
+                let dataStr = '';
+                for (const line of lines) {
+                    if (line.startsWith('event:')) {
+                        eventType = line.slice(6).trim();
+                    } else if (line.startsWith('data:')) {
+                        dataStr = line.slice(5).trim();
+                    }
+                }
+                if (dataStr) {
+                    try {
+                        const data = JSON.parse(dataStr);
+                        await handleSSEEvent(eventType, data);
+                    } catch (e) {
+                        console.error('[ERROR] Failed to parse SSE data:', e, dataStr);
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        console.error('[ERROR] selectActivity failed:', err);
+        addAssistantErrorMessage('Failed to start activity. Please try again.');
+    } finally {
+        isStreaming = false;
     }
 }
 
@@ -1558,6 +1668,9 @@ function resetConversation() {
     window.paixuejiUi.setLearningAnchorVisible(false);
     window.paixuejiUi.setManualSwitchVisible(false);
     window.paixuejiUi.setObjectSelectionVisible(false);
+    window.paixuejiUi.setActivitySelectionVisible(false);
+    awaitingActivitySelection = false;
+    pendingEligibleActivities = [];
     setChatPhaseCompleteModalVisible(false);
     setActivitiesMiniLauncherVisible(false);
     window.paixuejiUi.showMainPage();

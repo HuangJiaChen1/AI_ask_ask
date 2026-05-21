@@ -23,6 +23,7 @@ class ActivityDiscoveryResult:
     verification_queue: list[dict] = field(default_factory=list)
     assessment: str = ""
     proceed: bool = False
+    all_activity_categories: dict[str, str] = field(default_factory=dict)  # activity_id -> category
 
 
 def _build_activity_block(activity: ActivityDefinition) -> str:
@@ -86,10 +87,13 @@ INSTRUCTIONS:
 
 4. If NO activity is a strong or verifiable match, set proceed=false. Do NOT force a match.
 
-5. Respond ONLY with valid JSON (no markdown fences, no extra text):
+5. For EVERY eligible activity (not just primary/secondary), output its category in `all_activities`.
+
+6. Respond ONLY with valid JSON (no markdown fences, no extra text):
 {{
   "primary": {{"activity_id": "...", "topic": "...", "category": "ready|verifiable|weak", "certainty": "high|medium|low", "why": "..."}},
   "secondary": [{{"activity_id": "...", "category": "...", "why": "..."}}],
+  "all_activities": [{{"activity_id": "...", "category": "ready|verifiable|weak"}}],
   "verification_queue": [{{"property": "has_polka_dots", "question": "Does it have polka dots?", "for_activity": "polka_dot_patrol"}}],
   "assessment": "...",
   "proceed": true|false
@@ -112,12 +116,32 @@ INSTRUCTIONS:
 
         primary = parsed.get("primary", {}) or {}
         secondary = parsed.get("secondary", []) or []
+        all_activities = parsed.get("all_activities", []) or []
         verification_queue = parsed.get("verification_queue", []) or []
         proceed = bool(parsed.get("proceed", False))
 
+        # Build all_activity_categories map
+        valid_ids = {a.activity_id for a in eligible_activities}
+        all_categories: dict[str, str] = {}
+        for item in all_activities:
+            aid = item.get("activity_id")
+            if aid and aid in valid_ids:
+                all_categories[aid] = item.get("category", "weak")
+        # Fallback: infer from primary/secondary if all_activities missing
+        if not all_categories:
+            pid = primary.get("activity_id")
+            if pid and pid in valid_ids:
+                all_categories[pid] = primary.get("category", "ready")
+            for s in secondary:
+                sid = s.get("activity_id")
+                if sid and sid in valid_ids:
+                    all_categories[sid] = s.get("category", "verifiable")
+            for aid in valid_ids:
+                if aid not in all_categories:
+                    all_categories[aid] = "weak"
+
         # Validate primary activity_id exists in eligible
         primary_id = primary.get("activity_id")
-        valid_ids = {a.activity_id for a in eligible_activities}
         if primary_id and primary_id not in valid_ids:
             logger.warning(
                 "[ACTIVITY_DISCOVERY] primary %s not in eligible %s",
@@ -144,6 +168,7 @@ INSTRUCTIONS:
             ],
             assessment=parsed.get("assessment", ""),
             proceed=proceed and primary_id is not None,
+            all_activity_categories=all_categories,
         )
 
         debug = {
@@ -151,6 +176,7 @@ INSTRUCTIONS:
             "primary_id": result.primary_activity_id,
             "primary_category": result.primary_category,
             "secondary_ids": result.secondary_activity_ids,
+            "all_categories": result.all_activity_categories,
             "verification_count": len(result.verification_queue),
             "assessment": result.assessment,
             "raw_response": raw_text[:500],

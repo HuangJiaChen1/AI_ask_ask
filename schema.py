@@ -247,6 +247,7 @@ class StreamChunk(BaseModel):
     category_debug: dict | None = None
     activity_ready: bool = False
     activity_target: dict | None = None
+    eligible_activities: list[dict] | None = None
     reply_type: str | None = None
 
     # Switch state (attribute topic switching visibility)

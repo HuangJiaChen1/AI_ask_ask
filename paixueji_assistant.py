@@ -96,6 +96,12 @@ class PaixuejiAssistant:
         self.attribute_activity_ready = False
         self.attribute_matched_activity = None
         self.attribute_interest_records: dict[str, "AttributeInterestRecord"] = {}
+
+        # Manual activity selection (testing/debugging)
+        self.pending_activity_selection = False
+        self.pending_eligible_activities: list = []
+        self.pending_activity_categories: dict[str, str] = {}
+        self.pending_manual_selection_context: dict = {}
         self.category_pipeline_enabled = False
         self.category_lane_active = False
         self.category_state = None
@@ -322,6 +328,10 @@ class PaixuejiAssistant:
         self.attribute_activity_ready = False
         self.attribute_matched_activity = None
         self.last_attribute_debug = None
+        self.pending_activity_selection = False
+        self.pending_eligible_activities = []
+        self.pending_activity_categories = {}
+        self.pending_manual_selection_context = {}
 
     def set_last_attribute_debug(self, debug_dict):
         self.last_attribute_debug = debug_dict
