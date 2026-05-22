@@ -450,7 +450,6 @@ def test_build_continue_guide_has_inactive_handoff():
         total_turns=3,
     )
     assert "HANDOFF MODE: INACTIVE" in guide
-    assert "Do NOT output [ACTIVITY_READY]" in guide
     assert "Current interest score: 45/100" in guide
     assert "Session turns: 3" in guide
 
@@ -485,7 +484,6 @@ def test_build_handoff_guide_contains_activity_name():
     assert "Color Matching Game" in guide
     assert "[BRIDGE TO ACTIVITY]" in guide
     assert "Mention the activity by name" in guide
-    assert "End with [ACTIVITY_READY]" in guide
 
 
 def test_build_exit_guide_no_angle_block():
@@ -515,7 +513,6 @@ def test_build_exit_guide_has_wrapup_instruction():
     assert "Thank the child" in guide
     assert "what they want to talk about" in guide
     assert "why/how/causal questions" in guide
-    assert "Outputting [ACTIVITY_READY]" in guide
 
 
 def test_build_reengage_guide_simple_angle_only():
@@ -613,57 +610,6 @@ def test_build_continue_guide_angle_block_before_system_context():
     )
 
 
-# -- Fix 2: detect [ACTIVITY_READY] in response text -------------------------
-
-from paixueji_app import _validate_activity_ready
-
-
-def _make_assistant_for_validation(turn_count=3):
-    """Minimal mock assistant with attribute_state.turn_count."""
-    assistant = SimpleNamespace()
-    state = SimpleNamespace(turn_count=turn_count, last_activity_ready_rejected_reason=None)
-    assistant.attribute_state = state
-    assistant.conversation_history = [
-        {"role": "user", "content": "I like the orange cat"},
-        {"role": "assistant", "content": "What do you notice?"},
-        {"role": "user", "content": "It has soft fur"},
-    ]
-    return assistant
-
-
-def test_validate_activity_ready_valid():
-    """Valid marker with sufficient turns and matching evidence quotes."""
-    assistant = _make_assistant_for_validation(turn_count=3)
-    text = '[ACTIVITY_READY]\nREASON: The child said "soft fur" and explored texture deeply.'
-    is_valid, rejected_reason, reason_text = _validate_activity_ready(text, assistant, child_input="It has soft fur")
-    assert is_valid is True
-    assert rejected_reason is None
-    assert "soft fur" in reason_text
-
-
-def test_validate_activity_ready_no_evidence_quotes():
-    """Rejected when REASON contains no quoted evidence."""
-    assistant = _make_assistant_for_validation(turn_count=3)
-    text = '[ACTIVITY_READY]\nREASON: The child explored texture deeply.'
-    is_valid, rejected_reason, reason_text = _validate_activity_ready(text, assistant, child_input="x")
-    assert is_valid is False
-    assert rejected_reason == "no_evidence_quotes"
-
-
-def test_validate_activity_ready_evidence_not_in_transcript():
-    """Rejected when quoted evidence does not appear in child messages."""
-    assistant = _make_assistant_for_validation(turn_count=3)
-    text = '[ACTIVITY_READY]\nREASON: The child said "fluffy tail" many times.'
-    is_valid, rejected_reason, reason_text = _validate_activity_ready(text, assistant, child_input="It has soft fur")
-    assert is_valid is False
-    assert rejected_reason == "evidence_not_in_transcript"
-
-
-def test_validate_activity_ready_no_marker():
-    """No marker in text → valid=False, no rejection reason."""
-    assistant = _make_assistant_for_validation(turn_count=3)
-    text = "That's a great observation!"
-    is_valid, rejected_reason, reason_text = _validate_activity_ready(text, assistant, child_input="x")
-    assert is_valid is False
-    assert rejected_reason is None
-    assert reason_text is None
+# Removed: _validate_activity_ready tests
+# The [ACTIVITY_READY] marker system has been removed. Handoff readiness
+# is now determined entirely by evaluate_handoff before any LLM call.

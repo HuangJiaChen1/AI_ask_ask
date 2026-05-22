@@ -422,6 +422,8 @@ def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
     selected_hook_type = latest.get("selected_hook_type") if latest else None
     question_style = latest.get("question_style") if latest else None
 
+    switch_state = {}
+    fallback_labels = None
     if getattr(assistant, "attribute_state", None):
         state = assistant.attribute_state
         switch_state = {
