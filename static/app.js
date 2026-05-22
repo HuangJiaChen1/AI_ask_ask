@@ -1154,7 +1154,20 @@ function renderActivitySelectionPanel(activities) {
     if (!container) return;
     container.innerHTML = '';
 
-    activities.forEach(act => {
+    // Defensive filter: only show ready/verifiable activities
+    const displayable = (activities || []).filter(
+        act => act.category === 'ready' || act.category === 'verifiable'
+    );
+
+    // Empty list fallback
+    if (displayable.length === 0) {
+        window.paixuejiUi.setActivitySelectionVisible(false);
+        appendMessage('bot', '当前没有合适的活动，换个话题试试吧。');
+        awaitingActivitySelection = false;
+        return;
+    }
+
+    displayable.forEach(act => {
         const card = document.createElement('div');
         card.className = 'activity-card';
         const categoryClass = `category-${act.category || 'weak'}`;
