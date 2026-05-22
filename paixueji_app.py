@@ -289,6 +289,7 @@ from attribute_activity import (
 )
 from stream.verification_guided_conversation import (
     build_verification_context,
+    build_probe_verification_context,
     classify_verification,
     check_probe_needed,
     VerificationItem,
