@@ -94,7 +94,7 @@ Current interest score: {current_score:.0f}/100
 Session turns: {total_turns}
 
 HANDOFF MODE: INACTIVE
-Continue exploring the current attribute. Do NOT output [ACTIVITY_READY].
+Continue exploring the current attribute.
 """
 
 
@@ -139,15 +139,10 @@ Your next message MUST:
 1. Mention the activity by name: "{activity_name}"
 2. Connect it to what you just talked about (one sentence)
 3. Ask the child if they want to try it (one short question)
-4. End with [ACTIVITY_READY] on its own line
-
-Example of a good bridge:
-"You really seem to love colors! Want to try the Color Matching Game? [ACTIVITY_READY]"
 
 ANTI-PATTERNS -- NEVER produce these:
 - Asking a deep question about the attribute AFTER mentioning the activity
 - Forgetting to say the activity name
-- Ending with anything other than [ACTIVITY_READY]
 - Re-phrasing a question from an already-used angle
 """
 
@@ -195,7 +190,6 @@ Example of a good wrap-up:
 ANTI-PATTERNS -- NEVER produce these:
 - Asking why/how/causal questions about the current attribute
 - Pushing an activity or game
-- Outputting [ACTIVITY_READY]
 - Re-phrasing a question from an already-used angle
 """
 
@@ -247,9 +241,6 @@ Consecutive struggle count: {struggle_count}
 REENGAGE MODE: ACTIVE
 """
 
-
-# Minimum turns before [ACTIVITY_READY] marker is accepted in attribute activity pipeline.
-MIN_ACTIVITY_READY_TURNS = 3
 
 from stream import (
     ask_attribute_intro_stream,
