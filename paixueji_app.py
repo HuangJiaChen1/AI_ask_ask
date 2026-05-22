@@ -2176,17 +2176,15 @@ def continue_conversation():
                             ),
                             default=0.0,
                         )
-                        selection_result = decision_meta.get("selection_result")
+                        activity = decision_meta.get("activity")
                         attribute_debug.update({
                             "cares_handoff_decision": decision.value,
                             "cares_handoff_reason": decision_reason,
                             "interest_score_current": current_interest_score,
                             "interest_score_best": best_score,
-                            "select_best_activity_result": {
-                                "activity_id": selection_result.activity.activity_id if selection_result and selection_result.activity else None,
-                                "selector_score": selection_result.selector_score if selection_result else None,
-                                "decision": selection_result.decision if selection_result else None,
-                                "fallback_reason": selection_result.fallback_reason if selection_result else None,
+                            "primary_activity": {
+                                "activity_id": activity.activity_id if activity else None,
+                                "name": activity.name if activity else None,
                             },
                             "entity_info_used": getattr(assistant, "anchor_object_name", None),
                         })

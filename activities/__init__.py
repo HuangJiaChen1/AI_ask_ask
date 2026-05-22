@@ -126,25 +126,6 @@ class ActivityDefinition:
         )
 
 
-@dataclass
-class ActivityProfile:
-    """Maps interest score to preferred activity mechanics/styles."""
-    preferred_mechanics: list[str]
-    acceptable_mechanics: list[str]
-    preferred_game_styles: list[str]
-    acceptable_game_styles: list[str]
-    preferred_difficulty_level: int
-
-
-@dataclass
-class SelectionResult:
-    """Output of select_best_activity."""
-    activity: ActivityDefinition | None
-    selector_score: float
-    decision: str                         # "matched" | "fallback" | "none"
-    fallback_reason: str | None
-
-
 # ---------------------------------------------------------------------------
 # Catalog loader
 # ---------------------------------------------------------------------------
@@ -175,27 +156,11 @@ def _load_catalog() -> tuple[ActivityDefinition, ...]:
 
 
 # ---------------------------------------------------------------------------
-# Sibling axis routing for progression
-# ---------------------------------------------------------------------------
-
-_SIBLING_AXES: dict[str, list[str]] = {
-    "form": ["function", "connection"],
-    "function": ["form", "causation"],
-    "causation": ["function", "change"],
-    "change": ["causation", "connection"],
-    "connection": ["change", "form", "perspective"],
-    "perspective": ["connection", "responsibility"],
-    "responsibility": ["perspective"],
-}
-
-
-def _is_sibling_axis(axis_a: str, axis_b: str) -> bool:
-    return axis_b in _SIBLING_AXES.get(axis_a, [])
-
-
-# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
+MIN_SCORE_FOR_HANDOFF = 60
+
 
 def _normalize_tier_support(raw: dict[str, Any]) -> dict[str, bool]:
     """Normalize tier_support values to bool. Handles yes/no and true/false."""
@@ -264,9 +229,6 @@ _DIMENSION_TO_ANGLES: dict[str, list[str]] = {
 }
 
 
-MIN_SCORE_FOR_HANDOFF = 60
-
-
 # ---------------------------------------------------------------------------
 # Legacy matcher (kept for paixueji_app.py pre-load calls)
 # ---------------------------------------------------------------------------
@@ -274,14 +236,14 @@ MIN_SCORE_FOR_HANDOFF = 60
 def get_activity_for_attribute(attribute_id: str, age: int) -> ActivityDefinition | None:
     """Return the first activity matching *attribute_id* and the child's age tier.
 
-    Uses observation_angle matching via _ATTRIBUTE_TO_ANGLE mapping.
+    Uses observation_angle matching via _attribute_to_angles mapping.
 
     .. deprecated::
-        Use select_best_activity or the activity-driven pipeline instead.
+        Use the activity-driven pipeline instead.
     """
     import warnings
     warnings.warn(
-        "get_activity_for_attribute is deprecated. Use select_best_activity or the activity-driven pipeline instead.",
+        "get_activity_for_attribute is deprecated. Use the activity-driven pipeline instead.",
         DeprecationWarning,
         stacklevel=2,
     )
@@ -391,7 +353,7 @@ def get_angle_matched_candidates(
 ) -> tuple[list[ActivityDefinition], str | None]:
     """Return (matched_candidates, fallback_reason).
 
-    Tries exact angle match → bridge prerequisite overlap → all eligible.
+    Tries exact observation_angle match → bridge prerequisite overlap → all eligible.
     """
     target_angles = _attribute_to_angles(attribute_id)
 
@@ -411,172 +373,6 @@ def get_angle_matched_candidates(
 
     # Fallback to all eligible
     return eligible, "no_angle_match_fallback"
-
-
-# ---------------------------------------------------------------------------
-# Selection core: Interest score → ActivityProfile
-# ---------------------------------------------------------------------------
-
-def _interest_to_profile(interest_score: float) -> ActivityProfile:
-    """Map interest score (0-100) to preferred mechanics/styles/difficulty."""
-    if interest_score >= 80:
-        return ActivityProfile(
-            preferred_mechanics=["collect", "compare", "test", "build"],
-            acceptable_mechanics=["sort", "voice", "care"],
-            preferred_game_styles=["field_experiment", "creation", "mystery_trail"],
-            acceptable_game_styles=["voice_stage"],
-            preferred_difficulty_level=3,
-        )
-    elif interest_score >= 60:
-        return ActivityProfile(
-            preferred_mechanics=["compare", "collect", "sort", "voice"],
-            acceptable_mechanics=["observe", "narrate", "imagine"],
-            preferred_game_styles=["field_experiment", "voice_stage"],
-            acceptable_game_styles=["mystery_trail", "time_traveler", "quest_collector"],
-            preferred_difficulty_level=2,
-        )
-    else:
-        return ActivityProfile(
-            preferred_mechanics=["observe", "voice"],
-            acceptable_mechanics=["narrate", "imagine"],
-            preferred_game_styles=["voice_stage", "field_experiment"],
-            acceptable_game_styles=[],
-            preferred_difficulty_level=1,
-        )
-
-
-# ---------------------------------------------------------------------------
-# Selection core: Layer 3 — Scoring
-# ---------------------------------------------------------------------------
-
-def score_activity(
-    activity: ActivityDefinition,
-    interest_score: float,
-    age: int,
-    conversation_context: dict[str, Any],
-    progression_state: dict[str, Any] | None = None,
-) -> float:
-    """Score a single activity (0-93 in V1)."""
-    s = 0.0
-    profile = _interest_to_profile(interest_score)
-
-    # ── A. Interest-Profile Match (0-40) ──
-    if activity.mechanic in profile.preferred_mechanics:
-        s += 25
-    elif activity.mechanic in profile.acceptable_mechanics:
-        s += 12
-    else:
-        s += 5
-
-    if activity.game_style in profile.preferred_game_styles:
-        s += 15
-    elif activity.game_style in profile.acceptable_game_styles:
-        s += 7
-
-    # Difficulty match (0-8)
-    diff = abs(activity.difficulty_level - profile.preferred_difficulty_level)
-    if diff == 0:
-        s += 8
-    elif diff == 1:
-        s += 4
-
-    # ── B. Conversation Coherence (0-30) ──
-    dominant = conversation_context.get("dominant_angle", "")
-    secondary = conversation_context.get("secondary_angles", [])
-    angles = conversation_context.get("angles", [])
-
-    if activity.observation_angle == dominant:
-        s += 15
-    elif activity.observation_angle in secondary:
-        s += 7
-
-    overlap = len(set(activity.bridge_prerequisites_primary) & set(angles))
-    s += min(overlap * 5, 10)
-
-    entity_depth = conversation_context.get("entity_depth", "")
-    if (activity.entity_role == "subject" and entity_depth == "deep") or \
-       (activity.entity_role == "exemplar" and entity_depth == "property_focused"):
-        s += 5
-
-    # ── C. Progression Fit (0-20) — V1 stub ──
-    if progression_state:
-        target_axis = progression_state.get("target_axis")
-        target_rung = progression_state.get("target_rung")
-        if target_axis and target_rung:
-            if activity.topic_axis == target_axis and activity.difficulty_level == target_rung:
-                s += 20
-            elif activity.topic_axis == target_axis and abs(activity.difficulty_level - target_rung) <= 1:
-                s += 15
-            elif _is_sibling_axis(activity.topic_axis, target_axis):
-                s += 8
-
-    # ── D. Practical Fit (0-3) — V1: recency only ──
-    recent = conversation_context.get("recent_activities", [])
-    if activity.activity_id not in recent:
-        s += 3
-
-    return s
-
-
-# ---------------------------------------------------------------------------
-# Selection core: Entry point
-# ---------------------------------------------------------------------------
-
-def select_best_activity(
-    attribute_id: str,
-    interest_score: float,
-    age: int,
-    conversation_context: dict[str, Any],
-    progression_state: dict[str, Any] | None = None,
-) -> SelectionResult:
-    """Three-layer selection: Eligibility → Angle Match → Score & Rank."""
-    child_tier = _age_to_tier(age)
-    catalog = _load_catalog()
-
-    entity_info = conversation_context.get("entity_info")
-
-    # Layer 1: Eligibility
-    eligible = [
-        a for a in catalog
-        if _is_eligible(a, child_tier, entity_info)
-    ]
-
-    if not eligible:
-        return SelectionResult(
-            activity=None,
-            selector_score=0.0,
-            decision="none",
-            fallback_reason="no_eligible_activities",
-        )
-
-    # Layer 2: Angle matching
-    conversation_angles = list(conversation_context.get("angles", []))
-    matched, fallback_reason = get_angle_matched_candidates(
-        eligible, attribute_id, conversation_angles
-    )
-
-    # Layer 3: Scoring
-    scored = [
-        (a, score_activity(a, interest_score, age, conversation_context, progression_state))
-        for a in matched
-    ]
-    scored.sort(key=lambda x: x[1], reverse=True)
-    best_activity, best_score = scored[0]
-
-    if best_score >= MIN_SCORE_FOR_HANDOFF:
-        return SelectionResult(
-            activity=best_activity,
-            selector_score=best_score,
-            decision="matched",
-            fallback_reason=fallback_reason,
-        )
-
-    return SelectionResult(
-        activity=None,
-        selector_score=best_score,
-        decision="none",
-        fallback_reason=fallback_reason or "score_below_threshold",
-    )
 
 
 # ---------------------------------------------------------------------------

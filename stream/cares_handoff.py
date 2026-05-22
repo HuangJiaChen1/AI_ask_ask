@@ -7,8 +7,6 @@ from typing import Any
 
 from stream.exploration_angles import AngleCoverageRecord
 
-from activities import select_best_activity, SelectionResult, _attribute_to_angles, MIN_SCORE_FOR_HANDOFF
-
 logger = logging.getLogger(__name__)
 
 
@@ -171,7 +169,11 @@ class HandoffDecision(Enum):
 
 
 def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, dict[str, Any]]:
-    """Evaluate handoff decision based on interest scores and session state."""
+    """Evaluate handoff decision based on interest scores and session state.
+
+    Uses the primary_activity already selected by the activity-driven pipeline.
+    No re-selection via select_best_activity — the pipeline's choice is authoritative.
+    """
     records = assistant.attribute_interest_records
     total_turns = sum(r.turns_explored for r in records.values())
 
@@ -187,24 +189,10 @@ def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, di
     current_record = records.get(current_attr)
     current_score = compute_attribute_interest_score(current_record) if current_record else 0
 
-    # Build conversation context for selection
-    def _build_context() -> dict[str, Any]:
-        # Map CARES attribute ID → Tag Block observation angles (not exploration angles)
-        observation_angles = _attribute_to_angles(current_attr)
-        dominant = observation_angles[0] if observation_angles else ""
-
-        # Entity class from anchor object name for bound-activity eligibility
-        anchor = getattr(assistant, "anchor_object_name", None)
-        entity_info = {"entity_class": [anchor]} if anchor else None
-
-        return {
-            "dominant_angle": dominant,
-            "secondary_angles": list(observation_angles),
-            "angles": list(observation_angles),
-            "entity_depth": "property_focused",
-            "recent_activities": [],
-            "entity_info": entity_info,
-        }
+    # Primary activity from the activity-driven pipeline (authoritative)
+    primary_activity = getattr(
+        getattr(assistant, "attribute_state", None), "primary_activity", None
+    )
 
     # 1. Severe disengagement -> REENGAGE
     if assistant.consecutive_struggle_count >= 3:
@@ -225,30 +213,15 @@ def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, di
                 "reason": "child_showed_clear_interest",
             }
 
-    # 3. Attribute meets threshold -> HANDOFF_NOW
+    # 3. Interest threshold met and primary activity available -> HANDOFF_NOW
     logger.info(
         "[gate_1_interest] score=%.0f, threshold=%d, pass=%s",
         best_score, MIN_INTEREST_FOR_HANDOFF, best_score >= MIN_INTEREST_FOR_HANDOFF,
     )
-    if best_score >= MIN_INTEREST_FOR_HANDOFF:
-        conversation_context = _build_context()
-
-        selection = select_best_activity(
-            attribute_id=best_attr,
-            interest_score=best_score,
-            age=assistant.age or 6,
-            conversation_context=conversation_context,
-        )
-        activity = selection.activity
-
+    if best_score >= MIN_INTEREST_FOR_HANDOFF and primary_activity is not None:
         logger.info(
-            "[gate_3_activity_score] best_score=%.0f, threshold=%d, activity_id=%s, selector_score=%.0f, decision=%s, pass=%s",
-            best_score,
-            MIN_SCORE_FOR_HANDOFF,
-            selection.activity.activity_id if selection.activity else None,
-            selection.selector_score,
-            selection.decision,
-            selection.activity is not None and selection.selector_score >= MIN_SCORE_FOR_HANDOFF,
+            "[gate_3_primary_activity] activity_id=%s, readiness_score=%.0f",
+            primary_activity.activity_id, best_score,
         )
 
         # Gate 3b: Verification status check
@@ -257,9 +230,6 @@ def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, di
         )
         if verification_queue:
             pending = [v for v in verification_queue if v.status == "pending"]
-            primary_activity = getattr(
-                getattr(assistant, "attribute_state", None), "primary_activity", None
-            )
             primary_activity_id = primary_activity.activity_id if primary_activity else None
             if primary_activity_id:
                 rejected_for_primary = [
@@ -280,52 +250,24 @@ def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, di
                     "readiness_score": best_score,
                 }
 
-        if activity:
-            if best_attr == current_attr:
-                return HandoffDecision.HANDOFF_NOW, f"current_best:{best_score:.0f}", {
-                    "target_attribute": best_attr,
-                    "activity": activity,
-                    "readiness_score": best_score,
-                    "selection_result": selection,
-                }
+        # Handoff to the primary activity selected by the pipeline
+        return HandoffDecision.HANDOFF_NOW, f"primary_activity:{best_score:.0f}", {
+            "target_attribute": current_attr,
+            "activity": primary_activity,
+            "readiness_score": best_score,
+        }
 
-            if current_score >= 50:
-                current_selection = select_best_activity(
-                    attribute_id=current_attr,
-                    interest_score=current_score,
-                    age=assistant.age or 6,
-                    conversation_context=conversation_context,
-                )
-                current_activity = current_selection.activity
-                if current_activity:
-                    return HandoffDecision.HANDOFF_NOW, f"current_good:{current_score:.0f}", {
-                        "target_attribute": current_attr,
-                        "activity": current_activity,
-                        "readiness_score": current_score,
-                        "note": f"global_best_is_{best_attr}_but_current_is_good_enough",
-                        "selection_result": current_selection,
-                    }
-
-            return HandoffDecision.HANDOFF_NOW, f"global_best:{best_attr}:{best_score:.0f}", {
-                "target_attribute": best_attr,
-                "activity": activity,
-                "readiness_score": best_score,
-                "current_attribute": current_attr,
-                "bridge_context": f"child_previously_explored_{best_attr}_with_score_{best_score:.0f}",
-                "selection_result": selection,
-            }
-
-        # Selection returned no activity -> degrade to CONTINUE
+    # Log why we skipped handoff
+    if best_score >= MIN_INTEREST_FOR_HANDOFF and primary_activity is None:
         logger.info(
-            "[gate_2_evaluate] decision=CONTINUE, reason=no_activity_for_best:%.0f, pass=false",
+            "[gate_2_evaluate] decision=CONTINUE, reason=no_primary_activity:%.0f, pass=false",
             best_score,
         )
-        return HandoffDecision.CONTINUE, f"no_activity_for_best:{best_score:.0f}", {
+        return HandoffDecision.CONTINUE, f"no_primary_activity:{best_score:.0f}", {
             "current_attribute": current_attr,
             "current_score": current_score,
             "best_attribute": best_attr,
             "best_score": best_score,
-            "selection_result": selection,
         }
 
     # 4. Session timeout without threshold met -> EXIT_LANE
