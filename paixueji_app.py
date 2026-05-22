@@ -422,9 +422,6 @@ def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
     selected_hook_type = latest.get("selected_hook_type") if latest else None
     question_style = latest.get("question_style") if latest else None
 
-    switch_state = {}
-    fallback_labels = None
-    activity_ready_rejected_reason = None
     if getattr(assistant, "attribute_state", None):
         state = assistant.attribute_state
         switch_state = {
@@ -434,7 +431,6 @@ def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
             "attribute_turn_count": getattr(state, "turn_count", 0),
         }
         fallback_labels = [fb.label for fb in getattr(state, "fallback_profiles", ())] or None
-        activity_ready_rejected_reason = getattr(state, "last_activity_ready_rejected_reason", None)
 
     return {
         "current_object_name": assistant.object_name,
@@ -464,7 +460,7 @@ def _assistant_stream_fields(assistant: PaixuejiAssistant) -> dict:
         "question_style": question_style,
         **switch_state,
         "attribute_fallback_labels": fallback_labels,
-        "attribute_activity_ready_rejected_reason": activity_ready_rejected_reason,
+        "attribute_activity_ready_rejected_reason": None,
     }
 
 
