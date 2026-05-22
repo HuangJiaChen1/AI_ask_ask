@@ -5034,6 +5034,24 @@ def _render_raw_diagnostics_entry(
         value = attribute_summary.get(key)
         if value is not None:
             lines.append(f"**{label}:** {value}\n")
+    cares_decision = (attribute_debug or {}).get("cares_handoff_decision")
+    cares_reason = (attribute_debug or {}).get("cares_handoff_reason")
+    interest_current = (attribute_debug or {}).get("interest_score_current")
+    interest_best = (attribute_debug or {}).get("interest_score_best")
+    if cares_decision:
+        lines.append(f"**CARES Decision:** {cares_decision}\n")
+    if cares_reason:
+        lines.append(f"**CARES Reason:** {cares_reason}\n")
+    if interest_current is not None:
+        lines.append(f"**Interest Score (current):** {interest_current:.1f}\n")
+    if interest_best is not None:
+        lines.append(f"**Interest Score (best):** {interest_best:.1f}\n")
+    verification_queue = ((attribute_debug or {}).get("state") or {}).get("verification_queue", [])
+    if verification_queue:
+        pending = sum(1 for v in verification_queue if v.get("status") == "pending")
+        verified = sum(1 for v in verification_queue if v.get("status") == "verified")
+        rejected = sum(1 for v in verification_queue if v.get("status") == "rejected")
+        lines.append(f"**Verification Queue:** {verified}✓ / {pending}⏳ / {rejected}✗\n")
     category_summary = _derive_report_category_summary(category_debug)
     for label, key in [
         ("Category ID", "category_id"),

@@ -1223,3 +1223,131 @@ def test_render_turn_summary_includes_cares_and_verification():
     assert "Interest Score (current): `45.0`" in result
     assert "Interest Score (best): `68.0`" in result
     assert "Verification Queue: `1✓ / 1⏳ / 1✗`" in result
+
+
+def test_render_turn_summary_includes_cares_and_verification():
+    from paixueji_app import _render_turn_summary
+
+    attribute_debug = {
+        "cares_handoff_decision": "continue",
+        "cares_handoff_reason": "building:45",
+        "interest_score_current": 45.0,
+        "interest_score_best": 68.0,
+        "state": {
+            "verification_queue": [
+                {"property": "颜色", "status": "verified", "question": "它是什么颜色？"},
+                {"property": "形状", "status": "pending", "question": "它是什么形状？"},
+                {"property": "大小", "status": "rejected", "question": "它有多大？"},
+            ]
+        },
+    }
+
+    result = _render_turn_summary(
+        bridge_debug=None,
+        attribute_debug=attribute_debug,
+        category_debug=None,
+    )
+
+    assert "CARES Decision: " in result
+    assert "CARES Reason: " in result
+    assert "Interest Score (current): " in result
+    assert "Interest Score (best): " in result
+    assert "Verification Queue: " in result
+
+
+def test_diagnostics_appendix_includes_cares_and_verification():
+    from paixueji_app import _render_raw_diagnostics_entry
+
+    attribute_debug = {
+        "cares_handoff_decision": "handoff_now",
+        "cares_handoff_reason": "primary_activity:72",
+        "interest_score_current": 72.0,
+        "interest_score_best": 72.0,
+        "state": {
+            "verification_queue": [
+                {"property": "颜色", "status": "verified"},
+                {"property": "形状", "status": "verified"},
+                {"property": "触感", "status": "pending"},
+            ]
+        },
+    }
+
+    result = _render_raw_diagnostics_entry(
+        exchange_index=1,
+        source_label="attribute_activity",
+        response_type="attribute_activity",
+        bridge_debug={"decision": "attribute_activity"},
+        attribute_debug=attribute_debug,
+        category_debug=None,
+        attribute_interest_records=None,
+    )
+
+    assert "**CARES Decision:** handoff_now" in result
+    assert "**CARES Reason:** primary_activity:72" in result
+    assert "**Interest Score (current):** 72.0" in result
+    assert "**Interest Score (best):** 72.0" in result
+    assert "**Verification Queue:** 2✓ / 1⏳ / 0✗" in result
+
+
+def test_render_turn_summary_includes_cares_and_verification():
+    from paixueji_app import _render_turn_summary
+
+    attribute_debug = {
+        "cares_handoff_decision": "continue",
+        "cares_handoff_reason": "building:45",
+        "interest_score_current": 45.0,
+        "interest_score_best": 68.0,
+        "state": {
+            "verification_queue": [
+                {"property": "颜色", "status": "verified", "question": "它是什么颜色？"},
+                {"property": "形状", "status": "pending", "question": "它是什么形状？"},
+                {"property": "大小", "status": "rejected", "question": "它有多大？"},
+            ]
+        },
+    }
+
+    result = _render_turn_summary(
+        bridge_debug=None,
+        attribute_debug=attribute_debug,
+        category_debug=None,
+    )
+
+    assert "CARES Decision: `continue`" in result
+    assert "CARES Reason: `building:45`" in result
+    assert "Interest Score (current): `45.0`" in result
+    assert "Interest Score (best): `68.0`" in result
+    assert "Verification Queue: `1✓ / 1⏳ / 1✗`" in result
+
+
+def test_diagnostics_appendix_includes_cares_and_verification():
+    from paixueji_app import _render_raw_diagnostics_entry
+
+    attribute_debug = {
+        "cares_handoff_decision": "handoff_now",
+        "cares_handoff_reason": "primary_activity:72",
+        "interest_score_current": 72.0,
+        "interest_score_best": 72.0,
+        "state": {
+            "verification_queue": [
+                {"property": "颜色", "status": "verified"},
+                {"property": "形状", "status": "verified"},
+                {"property": "触感", "status": "pending"},
+            ]
+        },
+    }
+
+    result = _render_raw_diagnostics_entry(
+        exchange_index=1,
+        source_label="attribute_activity",
+        response_type="attribute_activity",
+        bridge_debug={"decision": "attribute_activity"},
+        attribute_debug=attribute_debug,
+        category_debug=None,
+        attribute_interest_records=None,
+    )
+
+    assert "**CARES Decision:** handoff_now" in result
+    assert "**CARES Reason:** primary_activity:72" in result
+    assert "**Interest Score (current):** 72.0" in result
+    assert "**Interest Score (best):** 72.0" in result
+    assert "**Verification Queue:** 2✓ / 1⏳ / 0✗" in result
