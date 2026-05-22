@@ -999,7 +999,7 @@ DISAMBIGUATION RULES:
   - "yes" or "no" in response to "Did you know...?" → SOCIAL_ACKNOWLEDGMENT (not a learning answer)
   - "i didn't know that" (after model states a fact) → SOCIAL_ACKNOWLEDGMENT
   - "I don't know" or "idk" when AI's last response starts with "Did you know" →
-      SOCIAL_ACKNOWLEDGMENT (child is reacting to a fun fact, NOT stuck on an answer question)
+      SOCIAL_ACKNOWLEDGMENT (child is reacting to an opening fact, NOT stuck on an answer question)
   - "oh yeah" (acknowledging fact, not answering a question) → SOCIAL_ACKNOWLEDGMENT
   - Short single-word affirmations when no specific question was asked → SOCIAL_ACKNOWLEDGMENT
   - "What's a [X]?" or "What does [X] mean?" where [X] is a word the model just used →
