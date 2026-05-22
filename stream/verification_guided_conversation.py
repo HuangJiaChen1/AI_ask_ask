@@ -149,3 +149,22 @@ Respond ONLY with valid JSON:
 def check_probe_needed(pending_items: list[VerificationItem], max_pending_turns: int = 2) -> bool:
     """Return True if any pending verification has exceeded the turn threshold."""
     return any(item.pending_turns >= max_pending_turns for item in pending_items)
+
+
+def build_probe_verification_context(pending_items: list[VerificationItem]) -> str:
+    """Build a gentle, direct verification guide for PROBE mode follow-ups.
+
+    Unlike `build_verification_context` which tells the LLM to guide naturally
+    and NOT ask directly, this function instructs the LLM to ask the pending
+    verification question directly but gently.
+    """
+    lines = ["[VERIFICATION -- ask gently and directly]"]
+    for item in pending_items:
+        q = getattr(item, "question", "")
+        if q:
+            lines.append(f"- {q}")
+    lines.append(
+        "\nAsk ONE of these questions in a warm, natural way. "
+        "Do NOT command. Do NOT demand. Sound like a curious friend."
+    )
+    return "\n".join(lines)
