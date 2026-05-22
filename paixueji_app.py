@@ -1852,15 +1852,6 @@ def continue_conversation():
                                 total_turns=total_turns,
                             )
 
-                        # VGC: Inject pending verification context into prompt
-                        pending_for_prompt = [
-                            v for v in assistant.attribute_state.verification_queue
-                            if v.status == "pending"
-                        ]
-                        if pending_for_prompt:
-                            verification_ctx = build_verification_context(pending_for_prompt)
-                            soft_guide = f"{soft_guide}\n\n{verification_ctx}"
-
                         response_generator = generate_attribute_activation_response_stream(
                             messages=messages,
                             intent_type=intent_type_lower,
