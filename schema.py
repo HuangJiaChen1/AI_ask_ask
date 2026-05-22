@@ -208,12 +208,6 @@ class StreamChunk(BaseModel):
     classification_status: str | None = None
     classification_failure_reason: str | None = None
 
-    # Fun fact state
-    fun_fact: Optional[str] = None
-    fun_fact_hook: Optional[str] = None
-    fun_fact_question: Optional[str] = None
-    real_facts: Optional[str] = None
-
     # IB PYP Theme info
     ibpyp_theme: Optional[str] = None
     ibpyp_theme_name: Optional[str] = None
