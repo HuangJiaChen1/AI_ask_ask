@@ -276,30 +276,6 @@ def optimize_prompt_llm(
     )
 
 
-# ============================================================================
-# Synchronous grounding helper (for fun_fact preview)
-# ============================================================================
-
-def _run_grounding(client, config: dict, object_name: str, age: int) -> str:
-    """
-    Run the grounding step synchronously (no Google Search tool in sync API).
-
-    Falls back to a plain generate_content call with the grounding prompt so
-    the optimizer gets real factual context for structuring the preview.
-    """
-    prompts = paixueji_prompts.get_prompts()
-    grounding_prompt = prompts["fun_fact_grounding_prompt"].format(
-        object_name=object_name,
-        age=age,
-        category="general",
-    )
-    model_name = config["model_name"]
-    response = client.models.generate_content(
-        model=model_name,
-        contents=grounding_prompt,
-        config=GenerateContentConfig(temperature=0.3, max_output_tokens=1000),
-    )
-    return response.text.strip()
 
 
 # ============================================================================
@@ -665,22 +641,11 @@ def generate_preview_response(
     age = state.get("age") or trace.age or 6
     object_name = state.get("object_name") or trace.object_name or ""
 
-    if prompt_name == "fun_fact_structuring_prompt":
-        # Re-run grounding so the new structuring prompt is tested against real facts
-        grounded_text = _run_grounding(client, config, object_name, age)
-        formatted = optimized_prompt.format(
-            object_name=object_name,
-            age=age,
-            grounded_text=grounded_text,
-        )
-
-    elif prompt_name == "introduction_prompt":
+    if prompt_name == "introduction_prompt":
         formatted = optimized_prompt.format(
             object_name=object_name,
             age_prompt=_get_age_prompt(age),
             category_prompt=state.get("level1_category", ""),
-            grounded_facts_section="",
-            fun_fact_instruction="Ask an opening question about this object.",
         )
 
     elif prompt_name == "followup_question_prompt":
@@ -803,7 +768,7 @@ def generate_preview_response(
     else:
         raise ValueError(
             f"No preview generation logic implemented for prompt: '{prompt_name}'. "
-            f"Supported prompts: fun_fact_structuring_prompt, introduction_prompt, "
+            f"Supported prompts: introduction_prompt, "
             f"followup_question_prompt, feedback_response_prompt, "
             f"correction_response_prompt, explanation_response_prompt, "
             f"user_intent_prompt, <intent>_intent_prompt, "
@@ -812,7 +777,7 @@ def generate_preview_response(
 
     # Resolve phase: explicit override wins; fall back to trace-derived phase
     phase = culprit_phase_override if culprit_phase_override is not None else _get_culprit_phase(trace)
-    if prompt_name in ("fun_fact_structuring_prompt", "introduction_prompt"):
+    if prompt_name == "introduction_prompt":
         is_q = True
     elif prompt_name == "followup_question_prompt":
         # generate_question appears in both phases — use resolved phase to determine slice depth
