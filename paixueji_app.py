@@ -1949,10 +1949,21 @@ def continue_conversation():
                                 {"role": "user", "content": child_input},
                                 {"role": "assistant", "content": full_response},
                             ]
-                            followup_soft_guide = (
-                                soft_guide.split("---\n\n[SYSTEM CONTEXT]")[0].strip()
-                                if soft_guide else soft_guide
-                            )
+                            pending_for_prompt = [
+                                v for v in assistant.attribute_state.verification_queue
+                                if v.status == "pending"
+                            ]
+
+                            if decision == HandoffDecision.PROBE and pending_for_prompt:
+                                followup_soft_guide = build_probe_verification_context(pending_for_prompt)
+                            else:
+                                followup_soft_guide = (
+                                    soft_guide.split("---\n\n[SYSTEM CONTEXT]")[0].strip()
+                                    if soft_guide else soft_guide
+                                )
+                                if pending_for_prompt:
+                                    verification_ctx = build_verification_context(pending_for_prompt)
+                                    followup_soft_guide = f"{followup_soft_guide}\n\n{verification_ctx}"
                             followup_generator = ask_followup_question_stream(
                                 messages=messages_with_response,
                                 object_name=object_name_attr,
