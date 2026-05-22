@@ -1690,11 +1690,16 @@ def continue_conversation():
                     verification_results = []
                     for v in pending_verifications:
                         try:
+                            last_model_msg = _latest_assistant_message(assistant.conversation_history)
+                            conversation_context = (
+                                f"Model's last message: {last_model_msg.get('content', '') if last_model_msg else '(none)'}\n"
+                                f"Verification question: {v.question}"
+                            )
                             v_future = asyncio.run_coroutine_threadsafe(
                                 classify_verification(
                                     child_input=child_input,
                                     property=v.property,
-                                    conversation_context="",
+                                    conversation_context=conversation_context,
                                     client=assistant.client,
                                     config=assistant.config,
                                 ),

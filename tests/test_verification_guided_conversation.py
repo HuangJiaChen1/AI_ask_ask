@@ -65,14 +65,18 @@ async def test_classify_verification_confirm():
 
 
 @pytest.mark.asyncio
-async def test_classify_verification_keyword_fast_path():
-    """Keywords like 'yes', 'yeah', 'yep' should bypass LLM."""
+async def test_classify_verification_context_aware_unclear():
+    """Child answering an open question should NOT confirm unrelated property."""
+    mock_client = MagicMock()
+    mock_response = MagicMock()
+    mock_response.text = '{"verdict": "unclear", "confidence": "high", "reason": "Child answered observation question, not verification"}'
+    mock_client.aio.models.generate_content = AsyncMock(return_value=mock_response)
+
     result = await classify_verification(
-        child_input="Yeah it has spots",
-        property="has_spots",
-        conversation_context="",
-        client=None,
-        config=None,
+        child_input="it has wings",
+        property="polka_dots",
+        conversation_context="Model's last message: what do you notice when you look at its back?\nVerification question: Does your bug have any spots or polka dots on its back?",
+        client=mock_client,
+        config={"model_name": "gemini-2.0-flash-lite"},
     )
-    assert result["verdict"] == "confirm"
-    assert result["source"] == "keyword"
+    assert result["verdict"] == "unclear"

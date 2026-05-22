@@ -38,8 +38,8 @@ def test_compute_interest_score_all_correct_answers():
     record = AttributeInterestRecord(attribute_id="appearance.color")
     record.turns_explored = 3
     record.intent_history = ["CORRECT_ANSWER", "CORRECT_ANSWER", "CORRECT_ANSWER"]
-    # base=(3/3)*60=60; streak=min(3*5,20)=15 -> 75
-    assert compute_attribute_interest_score(record) == 75.0
+    # CORRECT_ANSWER half-weight: base=(1.5/3)*60=30; streak=min(3*5,20)=15 -> 45
+    assert compute_attribute_interest_score(record) == 45.0
 
 
 def test_compute_interest_score_with_question():
@@ -47,8 +47,8 @@ def test_compute_interest_score_with_question():
     record.turns_explored = 3
     record.intent_history = ["CORRECT_ANSWER", "CORRECT_ANSWER", "CORRECT_ANSWER"]
     record.question_count = 1
-    # base=60; depth=min(1*6,25)=6; streak=15 -> 81
-    assert compute_attribute_interest_score(record) == 81.0
+    # CORRECT_ANSWER half-weight: base=30; depth=min(1*6,25)=6; streak=15 -> 51
+    assert compute_attribute_interest_score(record) == 51.0
 
 
 def test_compute_interest_score_child_returned():
@@ -57,8 +57,8 @@ def test_compute_interest_score_child_returned():
     record.intent_history = ["CORRECT_ANSWER", "CORRECT_ANSWER"]
     record.child_initiated_count = 1
     record.child_returned_count = 1
-    # base=(2/2)*60=60; initiation=min(1*8+1*15,30)=23; streak=10 -> 93
-    assert compute_attribute_interest_score(record) == 93.0
+    # CORRECT_ANSWER half-weight: base=30; initiation=min(1*8+1*15,30)=23; streak=10 -> 63
+    assert compute_attribute_interest_score(record) == 63.0
 
 
 def test_compute_interest_score_with_elaboration():
@@ -94,8 +94,8 @@ def test_compute_interest_score_emotional_bonus():
     record.intent_history = ["CORRECT_ANSWER", "EMOTIONAL"]
     record.elaboration_turns = 1
     record.emotional_count = 1
-    # base=(2/2)*60=60; depth=min(1*4+1*5,25)=9; streak=10 -> 79
-    assert compute_attribute_interest_score(record) == 79.0
+    # 1 EMOTIONAL full + 1 CORRECT_ANSWER half: base=(1.5/2)*60=45; depth=min(1*4+1*5,25)=9; streak=10 -> 64
+    assert compute_attribute_interest_score(record) == 64.0
 
 
 def test_compute_interest_score_initiation_cap():
@@ -104,9 +104,9 @@ def test_compute_interest_score_initiation_cap():
     record.intent_history = ["CORRECT_ANSWER"] * 10
     record.child_initiated_count = 10
     record.child_returned_count = 10
-    # initiation=min(10*8+10*15,30)=30 (capped); streak=20
+    # CORRECT_ANSWER half-weight: base=30; initiation=min(10*8+10*15,30)=30 (capped); streak=20
     score = compute_attribute_interest_score(record)
-    assert score == 60.0 + 30.0 + 20.0  # base + initiation + streak
+    assert score == 30.0 + 30.0 + 20.0  # base + initiation + streak
 
 
 def test_compute_interest_score_depth_cap():
@@ -128,8 +128,8 @@ def test_compute_interest_score_penalty_cap():
     record.struggle_count = 10
     record.avoidance_count = 10
     # penalty=min(10*4+10*12,35)=35 (capped)
-    # base=60; streak=20; penalty=35 -> 45
-    assert compute_attribute_interest_score(record) == 45.0
+    # CORRECT_ANSWER half-weight: base=30; streak=20; penalty=35 -> 15
+    assert compute_attribute_interest_score(record) == 15.0
 
 
 def _make_assistant_with_state(current_attr_id: str, explored_angle_ids: list = None):
@@ -355,15 +355,15 @@ def test_evaluate_handoff_exit_lane_timeout_no_interest():
         is_current=True,
     )
     rec.struggle_count = 4
-    # base=(4/8)*60=30; streak=20; penalty=min(4*4,35)=16; score=34 (below 40)
+    # CORRECT_ANSWER half-weight: base=(2/8)*60=15; streak=20; penalty=min(4*4,35)=16; score=19
     assistant = _make_assistant_for_handoff(
         interest_records={"appearance.color": rec},
         turn_count=8,
     )
     switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
     decision, reason, meta = evaluate_handoff(assistant, switch)
-    assert decision == HandoffDecision.EXIT_LANE
-    assert "timeout_no_interest" in reason
+    assert decision == HandoffDecision.REENGAGE
+    assert "critical_disengagement" in reason
 
 
 def test_evaluate_handoff_exit_lane_timeout_with_memory():
@@ -374,7 +374,7 @@ def test_evaluate_handoff_exit_lane_timeout_with_memory():
         is_current=True,
     )
     rec.struggle_count = 3
-    # base=(5/8)*60=37.5; streak=20; penalty=min(3*4,35)=12; score=45.5 (below 50, above 40)
+    # CORRECT_ANSWER half-weight: base=(2.5/8)*60=18.75; streak=20; penalty=min(3*4,35)=12; score=26.75
     assistant = _make_assistant_for_handoff(
         interest_records={"appearance.color": rec},
         turn_count=8,
@@ -382,8 +382,7 @@ def test_evaluate_handoff_exit_lane_timeout_with_memory():
     switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
     decision, reason, meta = evaluate_handoff(assistant, switch)
     assert decision == HandoffDecision.EXIT_LANE
-    assert "timeout_with_memory" in reason
-    assert meta["best_attribute"] == "appearance.color"
+    assert "timeout_no_interest" in reason
 
 
 def test_evaluate_handoff_handoff_now_with_primary_activity():
@@ -502,4 +501,34 @@ def test_evaluate_handoff_rejected_verification_blocks_handoff():
     assert decision == HandoffDecision.CONTINUE
     assert "primary_property_rejected" in reason
 
+
+def test_compute_interest_score_correct_answer_half_weight():
+    """CORRECT_ANSWER contributes half weight toward base score."""
+    record = AttributeInterestRecord(attribute_id="appearance.color")
+    record.turns_explored = 1
+    record.intent_history = ["CORRECT_ANSWER"]
+    # base=(0.5/1)*60=30; streak=5 -> 35
+    assert compute_attribute_interest_score(record) == 35.0
+
+
+def test_evaluate_handoff_correct_answer_no_handoff_in_one_turn():
+    """CORRECT_ANSWER alone must not push score above threshold in 1 turn."""
+    rec = AttributeInterestRecord(
+        attribute_id="appearance.color",
+        turns_explored=1,
+        intent_history=["CORRECT_ANSWER"],
+        is_current=True,
+    )
+    mock_activity = SimpleNamespace(
+        activity_id="test_activity",
+        name="Test activity",
+    )
+    assistant = _make_assistant_for_handoff(
+        interest_records={"appearance.color": rec},
+        turn_count=1,
+        primary_activity=mock_activity,
+    )
+    switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
+    decision, _, _ = evaluate_handoff(assistant, switch)
+    assert decision != HandoffDecision.HANDOFF_NOW
 

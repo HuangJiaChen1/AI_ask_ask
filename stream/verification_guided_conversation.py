@@ -65,35 +65,16 @@ async def classify_verification(
 ) -> dict:
     """Classify whether the child's input confirms, denies, or is unclear about a property.
 
-    Returns dict with keys: verdict (confirm|deny|unclear), confidence, reason, source (keyword|llm)
+    Uses LLM with conversation context to determine if the child is actually
+    responding to the verification question before judging confirm/deny/unclear.
+
+    Returns dict with keys: verdict (confirm|deny|unclear), confidence, reason, source (llm|fallback)
     """
-    child_lower = child_input.lower()
-
-    # Keyword fast path — only for unambiguous single-word responses
-    words = set(re.findall(r"[a-z']+", child_lower))
-    if words & _DENY_KEYWORDS and not (words & _CONFIRM_KEYWORDS):
-        return {
-            "verdict": "deny",
-            "confidence": "high",
-            "reason": f"Child used denial keywords: {words & _DENY_KEYWORDS}",
-            "source": "keyword",
-        }
-    if words & _CONFIRM_KEYWORDS and not (words & _DENY_KEYWORDS):
-        # Only if the input is short (≤6 words) and clearly affirmative
-        if len(child_input.split()) <= 6:
-            return {
-                "verdict": "confirm",
-                "confidence": "high",
-                "reason": f"Child used confirmation keywords: {words & _CONFIRM_KEYWORDS}",
-                "source": "keyword",
-            }
-
-    # LLM classification for ambiguous or complex inputs
     if client is None or config is None:
         return {
             "verdict": "unclear",
             "confidence": "low",
-            "reason": "No LLM client available and no clear keywords",
+            "reason": "No LLM client available for context-aware verification",
             "source": "fallback",
         }
 
@@ -103,10 +84,14 @@ Property to verify: "{property}"
 Conversation context: {conversation_context or "(none)"}
 Child's latest input: "{child_input}"
 
-Does the child's input confirm or deny this property?
-- confirm: The child clearly indicates the property is true (e.g., "yes", "it has spots", "the cat is fluffy").
-- deny: The child clearly indicates the property is false (e.g., "no", "it doesn't have spots", "the cat is smooth").
-- unclear: The child's input is unrelated, ambiguous, or does not address the property.
+Step 1: Is the child responding to the verification question in the conversation context?
+- If NO (e.g., answering a different question, describing something unrelated, or changing topic): respond with {{"verdict": "unclear", "confidence": "high", "reason": "..."}}
+- If YES: proceed to Step 2.
+
+Step 2: Does the child's input confirm or deny the property?
+- confirm: The child clearly indicates the property is true.
+- deny: The child clearly indicates the property is false.
+- unclear: The child's input is ambiguous or does not clearly address the property.
 
 Respond ONLY with valid JSON:
 {{"verdict": "confirm|deny|unclear", "confidence": "high|medium|low", "reason": "..."}}"""
