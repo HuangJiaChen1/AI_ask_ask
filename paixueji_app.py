@@ -1943,7 +1943,7 @@ def continue_conversation():
                         # that gets concatenated with the response, causing duplication.
                         if (
                             needs_followup
-                            and decision in (HandoffDecision.CONTINUE, HandoffDecision.CONTINUE_SWITCH)
+                            and decision in (HandoffDecision.CONTINUE, HandoffDecision.CONTINUE_SWITCH, HandoffDecision.PROBE)
                         ):
                             messages_with_response = messages + [
                                 {"role": "user", "content": child_input},
