@@ -104,10 +104,6 @@ async def run_turn(assistant, user_input, session_id):
         "new_object_name": None,
         "detected_object_name": None,
         "response_type": None,
-        "fun_fact": "",
-        "fun_fact_hook": "",
-        "fun_fact_question": "",
-        "real_facts": "",
         "nodes_executed": [],
         "_input_state_snapshot": {
             "object_name": assistant.object_name,

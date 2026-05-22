@@ -1079,7 +1079,7 @@ class TestClarifyingWrongBeat3RealLLM:
 
 class TestIdkAfterDidYouKnowDisambiguation:
     """Validate USER_INTENT_PROMPT has an explicit rule for
-    'I don't know' / 'idk' after a 'Did you know?' fun-fact question."""
+    'I don't know' / 'idk' after a 'Did you know?' opening question."""
 
     def _get_prompt(self) -> str:
         return paixueji_prompts.USER_INTENT_PROMPT

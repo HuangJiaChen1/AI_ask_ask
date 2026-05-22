@@ -117,10 +117,6 @@ def _build_initial_state(assistant, user_input, messages, response_type=None):
         "new_object_name": None,
         "detected_object_name": None,
         "response_type": response_type,   # "introduction" → bypasses analyze_input
-        "fun_fact": "",
-        "fun_fact_hook": "",
-        "fun_fact_question": "",
-        "real_facts": "",
         "nodes_executed": [],
         # Snapshot for tracing (not used by graph logic)
         "_input_state_snapshot": {
