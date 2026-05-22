@@ -262,127 +262,19 @@ def _make_stream(text):
     return _Stream(chunks)
 
 
-def test_activity_marker_rejected_without_evidence_quote(client, mock_gemini_client):
-    start = client.post(
-        "/api/start",
-        json={"age": 6, "object_name": "cat", "attribute_pipeline_enabled": True},
-    )
-    session_id = final_chunk(start)["session_id"]
-    paixueji_app.sessions[session_id].attribute_state.turn_count = 3
-    # Force CONTINUE path so the follow-up generator runs and marker handling is exercised.
-    paixueji_app.sessions[session_id].attribute_state.primary_activity = None
-
-    set_intent(mock_gemini_client, "CORRECT_ANSWER")
-
-    stream_call = 0
-    def _side_effect(model, contents, config=None):
-        nonlocal stream_call
-        stream_call += 1
-        if stream_call == 1:
-            return _make_stream("Yes, cats are furry!")
-        return _make_stream("Can you spot anything orange nearby?\n[ACTIVITY_READY]\nREASON: Child explored the color.")
-
-    mock_gemini_client.aio.models.generate_content_stream.side_effect = _side_effect
-
-    response = client.post(
-        "/api/continue",
-        json={"session_id": session_id, "child_input": "it is fat"},
-    )
-
-    chunk = final_chunk(response)
-    assert chunk["response_type"] == "attribute_activity"
-    assert chunk["activity_ready"] is False
-    assert chunk["attribute_debug"]["activity_marker_detected"] is True
-    assert chunk["attribute_debug"]["activity_marker_rejected_reason"] == "no_evidence_quotes"
-    # Marker and REASON stripped, but follow-up question preserved
-    assert "Can you spot anything orange nearby?" in chunk["response"]
-    assert "[ACTIVITY_READY]" not in chunk["response"]
-    assert "REASON:" not in chunk["response"]
-    # Conversation stays in the attribute lane
-    assert chunk["attribute_lane_active"] is True
+# Removed: test_activity_marker_rejected_without_evidence_quote
+# Removed: test_activity_marker_rejected_with_fabricated_quote
+# Removed: test_activity_marker_accepted_with_current_turn_quote
+# These tests validated the [ACTIVITY_READY] marker system which has been
+# removed. Handoff readiness is now determined entirely by evaluate_handoff.
 
 
-def test_activity_marker_rejected_with_fabricated_quote(client, mock_gemini_client):
-    start = client.post(
-        "/api/start",
-        json={"age": 6, "object_name": "cat", "attribute_pipeline_enabled": True},
-    )
-    session_id = final_chunk(start)["session_id"]
-    paixueji_app.sessions[session_id].attribute_state.turn_count = 3
-    # Force CONTINUE path so the follow-up generator runs and marker handling is exercised.
-    paixueji_app.sessions[session_id].attribute_state.primary_activity = None
+def test_marker_and_reason_preserved_in_response(client, mock_gemini_client):
+    """[ACTIVITY_READY] and REASON are no longer stripped from LLM output.
 
-    set_intent(mock_gemini_client, "CORRECT_ANSWER")
-
-    stream_call = 0
-    def _side_effect(model, contents, config=None):
-        nonlocal stream_call
-        stream_call += 1
-        if stream_call == 1:
-            return _make_stream("Yes, cats are furry!")
-        return _make_stream(
-            'Can you spot anything orange nearby?\n[ACTIVITY_READY]\nREASON: Child said "it is orange".'
-        )
-
-    mock_gemini_client.aio.models.generate_content_stream.side_effect = _side_effect
-
-    response = client.post(
-        "/api/continue",
-        json={"session_id": session_id, "child_input": "it is fat"},
-    )
-
-    chunk = final_chunk(response)
-    assert chunk["response_type"] == "attribute_activity"
-    assert chunk["activity_ready"] is False
-    assert chunk["attribute_debug"]["activity_marker_detected"] is True
-    assert chunk["attribute_debug"]["activity_marker_rejected_reason"] == "evidence_not_in_transcript"
-    # Marker and REASON stripped, but follow-up question preserved
-    assert "Can you spot anything orange nearby?" in chunk["response"]
-    assert "[ACTIVITY_READY]" not in chunk["response"]
-    assert "REASON:" not in chunk["response"]
-    # Conversation stays in the attribute lane
-    assert chunk["attribute_lane_active"] is True
-
-
-def test_activity_marker_accepted_with_current_turn_quote(client, mock_gemini_client):
-    """A quote from the current turn's child input should be accepted."""
-    start = client.post(
-        "/api/start",
-        json={"age": 6, "object_name": "cat", "attribute_pipeline_enabled": True},
-    )
-    session_id = final_chunk(start)["session_id"]
-    paixueji_app.sessions[session_id].attribute_state.turn_count = 3
-    # Force CONTINUE path so the follow-up generator runs and marker handling is exercised.
-    paixueji_app.sessions[session_id].attribute_state.primary_activity = None
-
-    set_intent(mock_gemini_client, "CORRECT_ANSWER")
-
-    stream_call = 0
-    def _side_effect(model, contents, config=None):
-        nonlocal stream_call
-        stream_call += 1
-        if stream_call == 1:
-            return _make_stream("Yes, cats are furry!")
-        return _make_stream(
-            'Can you spot anything orange nearby?\n[ACTIVITY_READY]\nREASON: Child said "it is fat" and explored the color.'
-        )
-
-    mock_gemini_client.aio.models.generate_content_stream.side_effect = _side_effect
-
-    response = client.post(
-        "/api/continue",
-        json={"session_id": session_id, "child_input": "it is fat"},
-    )
-
-    chunk = final_chunk(response)
-    assert chunk["response_type"] == "attribute_activity"
-    assert chunk["activity_ready"] is True
-    assert chunk["attribute_debug"]["activity_marker_detected"] is True
-    assert chunk["attribute_debug"]["activity_marker_rejected_reason"] is None
-
-
-def test_reason_not_leaked_when_marker_present(client, mock_gemini_client):
-    """REASON line must never appear in any SSE chunk when marker is present."""
+    Since the marker system has been removed and prompts no longer instruct
+    the LLM to emit these tokens, any that do appear are passed through.
+    """
     start = client.post(
         "/api/start",
         json={"age": 6, "object_name": "cat", "attribute_pipeline_enabled": True},
@@ -396,10 +288,10 @@ def test_reason_not_leaked_when_marker_present(client, mock_gemini_client):
         nonlocal stream_call
         stream_call += 1
         if stream_call == 1:
-            return _make_stream("Cats have amazing fur. What do you notice about this one?")
-        return _make_stream(
-            'Can you spot anything orange nearby?\n[ACTIVITY_READY]\nREASON: Child said "it is orange".'
-        )
+            return _make_stream(
+                'Cats have amazing fur. What do you notice? [ACTIVITY_READY]\nREASON: Child said "it is orange".'
+            )
+        return _make_stream("What else do you notice about the cat?")
 
     mock_gemini_client.aio.models.generate_content_stream.side_effect = _side_effect
 
@@ -409,15 +301,17 @@ def test_reason_not_leaked_when_marker_present(client, mock_gemini_client):
     )
 
     chunks = [event["data"] for event in parse_sse(response.data) if event["event"] == "chunk"]
-    for chunk in chunks:
-        assert "REASON:" not in (chunk.get("response") or ""), f"REASON leaked in chunk: {chunk}"
-        assert "[ACTIVITY_READY]" not in (chunk.get("response") or ""), f"Marker leaked in chunk: {chunk}"
+    # Verify markers are preserved (stripping was removed along with the marker system)
+    assert any("[ACTIVITY_READY]" in (c.get("response") or "") for c in chunks)
+    assert any("REASON:" in (c.get("response") or "") for c in chunks)
 
 
-def test_no_response_marker_leaked_when_response_generator_emits_it(client, mock_gemini_client):
-    """[ACTIVITY_READY] emitted by the response generator must be stripped
-    before it reaches the child — the follow-up generator is not the only
-    place where the marker can appear."""
+def test_response_marker_preserved_when_generator_emits_it(client, mock_gemini_client):
+    """[ACTIVITY_READY] emitted by the response generator is no longer stripped.
+
+    The marker system has been removed; prompts no longer instruct the LLM
+    to emit these tokens. Any that appear are passed through unchanged.
+    """
     start = client.post(
         "/api/start",
         json={"age": 6, "object_name": "cat", "attribute_pipeline_enabled": True},
@@ -442,13 +336,17 @@ def test_no_response_marker_leaked_when_response_generator_emits_it(client, mock
     )
 
     chunks = [event["data"] for event in parse_sse(response.data) if event["event"] == "chunk"]
-    for chunk in chunks:
-        assert "[ACTIVITY_READY]" not in (chunk.get("response") or ""), f"Marker leaked in chunk: {chunk}"
-        assert "REASON:" not in (chunk.get("response") or ""), f"REASON leaked in chunk: {chunk}"
+    # Verify marker and REASON are preserved (stripping was removed)
+    assert any("[ACTIVITY_READY]" in (c.get("response") or "") for c in chunks)
+    assert any("REASON:" in (c.get("response") or "") for c in chunks)
 
 
-def test_reason_stripped_when_marker_absent(client, mock_gemini_client):
-    """REASON line must be stripped even when LLM emits it without the marker."""
+def test_reason_preserved_when_marker_absent(client, mock_gemini_client):
+    """REASON line is no longer stripped from LLM output.
+
+    The marker system has been removed; _strip_activity_markers no longer
+    exists, so any REASON lines the LLM emits are passed through.
+    """
     start = client.post(
         "/api/start",
         json={"age": 6, "object_name": "cat", "attribute_pipeline_enabled": True},
@@ -462,8 +360,8 @@ def test_reason_stripped_when_marker_absent(client, mock_gemini_client):
         nonlocal stream_call
         stream_call += 1
         if stream_call == 1:
-            return _make_stream("Cats have amazing fur. What do you notice about this one?")
-        return _make_stream("Can you spot anything red?\nREASON: child seemed ready")
+            return _make_stream("Cats have amazing fur. REASON: child seemed ready")
+        return _make_stream("What else do you notice about the cat?")
 
     mock_gemini_client.aio.models.generate_content_stream.side_effect = _side_effect
 
@@ -473,23 +371,18 @@ def test_reason_stripped_when_marker_absent(client, mock_gemini_client):
     )
 
     chunks = [event["data"] for event in parse_sse(response.data) if event["event"] == "chunk"]
-    for chunk in chunks:
-        assert "REASON:" not in (chunk.get("response") or ""), f"REASON leaked in chunk: {chunk}"
-    final = chunks[-1]
-    assert "REASON:" not in (final.get("response") or "")
+    # REASON is preserved since stripping was removed
+    assert any("REASON:" in (c.get("response") or "") for c in chunks)
 
 
-def test_rejected_handoff_preserves_followup_question(client, mock_gemini_client):
-    """When [ACTIVITY_READY] is rejected due to insufficient_turns, the marker
-    and REASON must be stripped but the underlying follow-up question must still
-    be yielded so the conversation can continue."""
+def test_followup_question_preserved_on_continue(client, mock_gemini_client):
+    """When evaluate_handoff returns CONTINUE, the follow-up question is still
+    yielded so the conversation can continue normally."""
     start = client.post(
         "/api/start",
         json={"age": 6, "object_name": "cat", "attribute_pipeline_enabled": True},
     )
     session_id = final_chunk(start)["session_id"]
-    # Force CONTINUE path so the follow-up generator runs and marker handling is exercised.
-    paixueji_app.sessions[session_id].attribute_state.primary_activity = None
 
     # Use INFORMATIVE (not CURIOSITY) so needs_followup=True and the
     # follow-up question block actually executes.
@@ -501,7 +394,7 @@ def test_rejected_handoff_preserves_followup_question(client, mock_gemini_client
         stream_call += 1
         if stream_call == 1:
             return _make_stream("Cats have amazing fur. What do you notice about this one?")
-        return _make_stream("Can you spot anything orange nearby?\n[ACTIVITY_READY]\nREASON: Child explored the color.")
+        return _make_stream("Can you spot anything orange nearby?")
 
     mock_gemini_client.aio.models.generate_content_stream.side_effect = _side_effect
 
@@ -511,20 +404,12 @@ def test_rejected_handoff_preserves_followup_question(client, mock_gemini_client
     )
 
     chunks = [event["data"] for event in parse_sse(response.data) if event["event"] == "chunk"]
-    for chunk in chunks:
-        assert "[ACTIVITY_READY]" not in (chunk.get("response") or ""), (
-            f"ACTIVITY_READY marker leaked in chunk: {chunk}"
-        )
-        assert "REASON:" not in (chunk.get("response") or ""), (
-            f"REASON leaked in chunk: {chunk}"
-        )
     final = chunks[-1]
     assert "Can you spot anything orange nearby?" in final["response"], (
         f"Follow-up question missing from final response: {final['response']}"
     )
-    assert "[ACTIVITY_READY]" not in final["response"]
-    assert "REASON:" not in final["response"]
-    assert final["attribute_debug"]["activity_marker_rejected_reason"] == "insufficient_turns"
+    # activity_ready is False because evaluate_handoff returns CONTINUE
+    # (insufficient turns / interest score not high enough)
     assert final["attribute_lane_active"] is True
 
 

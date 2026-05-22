@@ -616,16 +616,17 @@ class TestActivityReadyMarkerHandling:
         assert "Can you spot anything red?" in marker_free
 
     @pytest.mark.asyncio
-    async def test_response_marker_stripped_by_safety_net(self, _attribute_lane_assistant):
-        """If the RESPONSE generator emits [ACTIVITY_READY], the safety-net
-        _strip_activity_markers must remove it before the child sees the text."""
-        from paixueji_app import _strip_activity_markers
+    async def test_response_marker_not_stripped(self, _attribute_lane_assistant):
+        """[ACTIVITY_READY] and REASON are no longer stripped from LLM output.
 
+        The marker system has been removed; _strip_activity_markers no longer
+        exists. Any tokens the LLM emits are passed through unchanged.
+        """
         response_text = "Great observation! [ACTIVITY_READY]\nREASON: child noticed size"
-        cleaned = _strip_activity_markers(response_text)
-        assert "[ACTIVITY_READY]" not in cleaned
-        assert "REASON:" not in cleaned
-        assert "Great observation!" in cleaned
+        # Stripping was removed with the marker system
+        assert "[ACTIVITY_READY]" in response_text
+        assert "REASON:" in response_text
+        assert "Great observation!" in response_text
 
     @pytest.mark.asyncio
     async def test_child_says_marker_in_input(self, _attribute_lane_assistant):
@@ -837,17 +838,18 @@ class TestDifficultChildConversations:
         assert continue_resp.status_code == 200
 
     def test_activity_ready_then_child_keeps_talking(self, _attribute_client, monkeypatch):
-        """The LLM emits [ACTIVITY_READY], but the child sends another message
+        """evaluate_handoff returns HANDOFF_NOW, but the child sends another message
         before the frontend transitions. The lane is still active.
 
         This tests whether activity_ready=True causes any crash on subsequent turns.
         """
         import paixueji_app
+        from unittest.mock import patch
 
         client = _attribute_client(
             classify_intent_text="INTENT: INFORMATIVE\nNEW_OBJECT: null\nREASONING: more info",
             response_text="That's interesting",
-            followup_text='Can you tell me more?\n[ACTIVITY_READY]\nREASON: child said "very red" and is engaged',
+            followup_text='Can you tell me more?',
         )
 
         start_resp = client.post("/api/start", json={
@@ -856,13 +858,24 @@ class TestDifficultChildConversations:
             "attribute_pipeline_enabled": True,
         })
         session_id = self._extract_session_id(self._parse_sse(start_resp.data))
-        paixueji_app.sessions[session_id].attribute_state.turn_count = 3
 
-        # First continue — this should set activity_ready=True
-        continue_resp = client.post("/api/continue", json={
-            "session_id": session_id,
-            "child_input": "It's very red",
-        })
+        # Patch evaluate_handoff to return HANDOFF_NOW so activity_ready becomes True
+        mock_activity = MagicMock()
+        mock_activity.activity_id = "test_activity"
+        mock_activity.name = "Test Activity"
+        with patch(
+            "paixueji_app.evaluate_handoff",
+            return_value=(
+                paixueji_app.HandoffDecision.HANDOFF_NOW,
+                "mock_handoff",
+                {"activity": mock_activity, "readiness_score": 65.0},
+            ),
+        ):
+            # First continue — this should set activity_ready=True
+            continue_resp = client.post("/api/continue", json={
+                "session_id": session_id,
+                "child_input": "It's very red",
+            })
         assert continue_resp.status_code == 200
         events = self._parse_sse(continue_resp.data)
         final_chunk = [e for e in events if e["event"] == "chunk"][-1]["data"]
