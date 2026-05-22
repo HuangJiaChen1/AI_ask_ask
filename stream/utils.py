@@ -194,7 +194,7 @@ def extract_previous_response(messages: list[dict]) -> str:
     The assistant turn contains the full combined response text (explanation,
     wow detail, and closing question), not just the question alone.
     Used to provide rich context when the child reacts to any part of the
-    previous turn (fun fact, explanation, question, etc.).
+    previous turn (explanation, question, etc.).
 
     Args:
         messages: Conversation history (list of role/content dicts)

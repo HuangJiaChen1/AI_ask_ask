@@ -102,8 +102,8 @@ class OptimizationResult(BaseModel):
     """Records a prompt optimization: before/after prompt, evidence, and preview."""
     optimization_id: str                # UUID
     timestamp: str
-    culprit_name: str                   # e.g. "generate_fun_fact"
-    prompt_name: str                    # e.g. "fun_fact_structuring_prompt"
+    culprit_name: str                   # e.g. "generate_intro"
+    prompt_name: str                    # e.g. "introduction_prompt"
     original_prompt: str                # Snapshot BEFORE optimization (for diff + rollback)
     optimized_prompt: str               # The new version
     failure_pattern: str                # LLM's 1-sentence diagnosis of the general failure class

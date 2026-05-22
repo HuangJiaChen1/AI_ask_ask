@@ -8,8 +8,6 @@ It is organized into several sub-modules:
 - response_generators: Intent-based response generators (9-node architecture)
 - question_generators: Question-only stream generators (intro path + followup)
 - validation: Intent classification logic
-- fun_fact: Grounded fun fact generation
-- fun_fact: Grounded fun fact generation
 
 All public functions are re-exported from this module for backward compatibility.
 """
@@ -62,9 +60,6 @@ from .validation import (
 
 # Topic switch detector
 from .topic_switch_detector import detect_topic_switch
-
-# Fun fact (grounded)
-from .fun_fact import generate_fun_fact
 
 # Exploration categories
 from .exploration_loader import (
@@ -148,9 +143,6 @@ __all__ = [
 
     # Topic switch detector
     'detect_topic_switch',
-
-    # Fun fact (grounded)
-    'generate_fun_fact',
 
     # Exploration categories
     'get_candidate_sub_attributes',

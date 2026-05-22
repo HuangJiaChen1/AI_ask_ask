@@ -170,12 +170,6 @@ class PaixuejiState(TypedDict):
     response_type: Optional[str]
     chat_phase_complete: Optional[bool]
 
-    # --- Fun Fact (Grounded) ---
-    fun_fact: Optional[str]
-    fun_fact_hook: Optional[str]
-    fun_fact_question: Optional[str]
-    real_facts: Optional[str]
-
     # --- Hook Type Selection ---
     hook_types: dict                       # Loaded from hook_types.json at startup
     selected_hook_type: Optional[str]      # e.g. "情绪投射", "创意改造"
@@ -584,33 +578,6 @@ async def node_analyze_input(state: PaixuejiState) -> dict:
         "action_subtype": action_subtype,
         "used_kb_item": None,
         "kb_mapping_status": None,
-    }
-
-
-@trace_node
-async def node_generate_fun_fact(state: PaixuejiState) -> dict:
-    """
-    Generate grounded fun facts for the introduction using Google Search.
-    Only called on the introduction path.
-    """
-    start_time = time.time()
-    logger.info(f"[{state['session_id']}] Node: Generate Fun Fact for '{state['object_name']}'")
-
-    from stream.fun_fact import generate_fun_fact
-
-    fact_data = await generate_fun_fact(
-        object_name=state["object_name"],
-        age=state["age"] or 6,
-        config=state["config"],
-        client=state["client"],
-    )
-
-    logger.info(f"[{state['session_id']}] Node: Generate Fun Fact finished in {time.time() - start_time:.3f}s")
-    return {
-        "fun_fact": fact_data.get("fun_fact", ""),
-        "fun_fact_hook": fact_data.get("hook", ""),
-        "fun_fact_question": fact_data.get("question", ""),
-        "real_facts": fact_data.get("real_facts", "")
     }
 
 

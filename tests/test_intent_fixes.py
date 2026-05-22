@@ -1074,12 +1074,12 @@ class TestClarifyingWrongBeat3RealLLM:
 
 
 # ============================================================================
-# Fix 6 — "I don't know" misclassified after "Did you know?" fun fact
+# Fix 6 — "I don't know" misclassified after "Did you know?" opening question
 # ============================================================================
 
 class TestIdkAfterDidYouKnowDisambiguation:
     """Validate USER_INTENT_PROMPT has an explicit rule for
-    'I don't know' / 'idk' after a 'Did you know?' fun-fact question."""
+    'I don't know' / 'idk' after a 'Did you know?' opening question."""
 
     def _get_prompt(self) -> str:
         return paixueji_prompts.USER_INTENT_PROMPT

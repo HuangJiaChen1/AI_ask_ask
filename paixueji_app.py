@@ -3373,12 +3373,6 @@ def continue_conversation():
                         "detected_object_name": None,
                         "response_type": None,
 
-                        # Fun fact (not used in continue, but required by state schema)
-                        "fun_fact": "",
-                        "fun_fact_hook": "",
-                        "fun_fact_question": "",
-                        "real_facts": "",
-
                         # Hook type (not used in continue turns, required by state schema)
                         "hook_types": HOOK_TYPES,
                         "selected_hook_type": None,
@@ -4288,7 +4282,7 @@ def optimize_prompt():
 
     Request body:
         {
-            "culprit_name": "generate_fun_fact",
+            "culprit_name": "generate_intro",
             "prompt_name": null,   # optional explicit override
             "trace_id": null       # optional; if provided, only that trace is used
         }
