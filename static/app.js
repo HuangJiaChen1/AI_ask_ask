@@ -1392,6 +1392,17 @@ function updateDebugPanel() {
     setText('debugAttributeReplyType', attributeReply.reply_type);
     setText('debugActivityMarkerDetected', attributeDebug.activity_marker_detected ? 'yes' : null);
     setText('debugActivityMarkerReason', attributeDebug.activity_marker_reason);
+    setText('debugCaresDecision', attributeDebug.cares_handoff_decision || '-');
+    setText('debugCaresReason', attributeDebug.cares_handoff_reason || '-');
+    const vq = (attributeDebug.state || {}).verification_queue || [];
+    if (vq.length > 0) {
+        const verified = vq.filter(v => v.status === 'verified').length;
+        const pending = vq.filter(v => v.status === 'pending').length;
+        const rejected = vq.filter(v => v.status === 'rejected').length;
+        setText('debugVerificationSummary', `${verified}✓ / ${pending}⏳ / ${rejected}✗`);
+    } else {
+        setText('debugVerificationSummary', '-');
+    }
     setText('debugSwitchedTo', currentAttributeSwitchedTo || '-');
     setText('debugSwitchReason', currentAttributeSwitchReason || '-');
     setText('debugFallbackCount', currentAttributeFallbackCount || '-');
