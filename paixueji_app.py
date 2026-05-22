@@ -1163,9 +1163,10 @@ def start_conversation():
                                 "focal_attribute": a.focal_attribute,
                                 "preview_prompt": a.preview_prompt or a.description,
                                 "description": a.description,
-                                "category": assistant.pending_activity_categories.get(a.activity_id, "weak"),
+                                "category": cat,
                             }
                             for a in assistant.pending_eligible_activities
+                            if (cat := assistant.pending_activity_categories.get(a.activity_id, "weak")) in ("ready", "verifiable")
                         ]
                         yield sse_event("chunk", StreamChunk(
                             response="",

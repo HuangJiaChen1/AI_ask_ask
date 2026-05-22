@@ -161,3 +161,54 @@ def test_continue_conversation_surfaces_rate_limit_error(client, mock_gemini_cli
     error_data = error_events[0]["data"]
     assert error_data["code"] == 429
     assert error_data["error_type"] == "rate_limited"
+
+
+def test_manual_activity_selection_filters_weak_activities(client):
+    """When manual_activity_selection is enabled, weak activities are not sent in the payload."""
+    from unittest.mock import AsyncMock, MagicMock, patch
+
+    # Mock the discovery result so we have mixed categories
+    mock_result = MagicMock()
+    mock_result.primary_activity_id = "color_hunt"
+    mock_result.primary_category = "ready"
+    mock_result.secondary_activity_ids = ["shape_seeker"]
+    mock_result.verification_queue = []
+    mock_result.assessment = "Mixed"
+    mock_result.proceed = True
+    mock_result.all_activity_categories = {
+        "color_hunt": "ready",
+        "shape_seeker": "verifiable",
+        "time_traveler": "weak",
+    }
+
+    with patch("paixueji_app.discover_talkable_activities", return_value=(mock_result, {})):
+        with patch("paixueji_app.get_eligible_activities_for_object") as mock_get_eligible:
+            mock_get_eligible.return_value = [
+                MagicMock(activity_id="color_hunt", name="Color Hunt", observation_angle="color", focal_attribute="color", preview_prompt="Find colors", description="Color hunt activity"),
+                MagicMock(activity_id="shape_seeker", name="Shape Seeker", observation_angle="shape", focal_attribute="shape", preview_prompt="Find shapes", description="Shape seeker activity"),
+                MagicMock(activity_id="time_traveler", name="Time Traveler", observation_angle="time", focal_attribute="time_period", preview_prompt="Travel in time", description="Time traveler activity"),
+            ]
+            payload = {
+                "age": 6,
+                "object_name": "cat",
+                "manual_activity_selection": True,
+                "attribute_pipeline_enabled": True,
+            }
+            response = client.post("/api/start", json=payload)
+            assert response.status_code == 200
+
+            events = parse_sse(response.data)
+            selection_events = [
+                e for e in events
+                if e["event"] == "chunk"
+                and e["data"]
+                and e["data"].get("response_type") == "activity_selection"
+            ]
+            assert len(selection_events) == 1
+
+            eligible = selection_events[0]["data"]["eligible_activities"]
+            categories = {a["category"] for a in eligible}
+            assert "weak" not in categories, f"weak should be filtered, got categories: {categories}"
+            assert len(eligible) == 2  # ready + verifiable only
+            ids = {a["activity_id"] for a in eligible}
+            assert ids == {"color_hunt", "shape_seeker"}
