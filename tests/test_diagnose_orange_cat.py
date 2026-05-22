@@ -313,3 +313,54 @@ def test_select_activities_preserves_primary_category():
 
     import asyncio
     asyncio.run(run())
+
+
+def test_probe_mode_generates_followup_question():
+    """
+    PROBE mode should be included in the follow-up question generation condition
+    so the response generator doesn't have to violate its own 'Do NOT ask
+    a question' rule.
+    """
+    import pathlib
+
+    source_path = pathlib.Path(__file__).parent.parent / "paixueji_app.py"
+    source = source_path.read_text(encoding="utf-8")
+
+    # Find the followup decision condition block
+    followup_condition_match = re.search(
+        r'if\s*\(\s*needs_followup[\s\S]*?decision in\s*\(([^)]+)\)',
+        source,
+    )
+    assert followup_condition_match is not None, (
+        "Could not find followup condition block"
+    )
+    decisions_str = followup_condition_match.group(1)
+    assert "PROBE" in decisions_str or "probe" in decisions_str.lower(), (
+        "PROBE decision must be included in followup generation"
+    )
+
+    # Verify PROBE uses build_probe_verification_context in the followup path
+    assert "build_probe_verification_context" in source, (
+        "PROBE followup must use build_probe_verification_context"
+    )
+
+
+def test_build_probe_verification_context():
+    """Unit test for build_probe_verification_context."""
+    from stream.verification_guided_conversation import (
+        build_probe_verification_context,
+        VerificationItem,
+    )
+
+    items = [
+        VerificationItem(
+            property="has_fluffy_fur",
+            question="Does it have fluffy fur?",
+            for_activity_id="fluffy_expedition_dandelion",
+        ),
+    ]
+    result = build_probe_verification_context(items)
+    assert "Does it have fluffy fur?" in result
+    assert "ask gently and directly" in result.lower()
+    assert "Do NOT command" in result
+    assert "Do NOT demand" in result
