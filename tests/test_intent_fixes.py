@@ -1074,7 +1074,7 @@ class TestClarifyingWrongBeat3RealLLM:
 
 
 # ============================================================================
-# Fix 6 — "I don't know" misclassified after "Did you know?" fun fact
+# Fix 6 — "I don't know" misclassified after "Did you know?" opening question
 # ============================================================================
 
 class TestIdkAfterDidYouKnowDisambiguation:
