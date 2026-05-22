@@ -4883,6 +4883,12 @@ def _render_turn_summary(
             lines.append(f"- Interest Score (current): `{interest_current:.1f}`\n")
         if interest_best is not None:
             lines.append(f"- Interest Score (best): `{interest_best:.1f}`\n")
+        verification_queue = (attribute_debug.get("state") or {}).get("verification_queue", [])
+        if verification_queue:
+            pending = sum(1 for v in verification_queue if v.get("status") == "pending")
+            verified = sum(1 for v in verification_queue if v.get("status") == "verified")
+            rejected = sum(1 for v in verification_queue if v.get("status") == "rejected")
+            lines.append(f"- Verification Queue: `{verified}✓ / {pending}⏳ / {rejected}✗`\n")
     if category_debug:
         category_summary = _derive_report_category_summary(category_debug)
         for label, key in [

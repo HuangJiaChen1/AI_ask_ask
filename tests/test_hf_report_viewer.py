@@ -1193,3 +1193,33 @@ def test_hf_report_parser_keeps_second_paragraph_in_model_turn(tmp_path):
     intro_turn = next(turn for turn in parsed["transcript"] if turn["role"] == "model")
 
     assert "\n\nWhen you open a bag of food" in intro_turn["text"]
+
+
+def test_render_turn_summary_includes_cares_and_verification():
+    from paixueji_app import _render_turn_summary
+
+    attribute_debug = {
+        "cares_handoff_decision": "continue",
+        "cares_handoff_reason": "building:45",
+        "interest_score_current": 45.0,
+        "interest_score_best": 68.0,
+        "state": {
+            "verification_queue": [
+                {"property": "颜色", "status": "verified", "question": "它是什么颜色？"},
+                {"property": "形状", "status": "pending", "question": "它是什么形状？"},
+                {"property": "大小", "status": "rejected", "question": "它有多大？"},
+            ]
+        },
+    }
+
+    result = _render_turn_summary(
+        bridge_debug=None,
+        attribute_debug=attribute_debug,
+        category_debug=None,
+    )
+
+    assert "CARES Decision: `continue`" in result
+    assert "CARES Reason: `building:45`" in result
+    assert "Interest Score (current): `45.0`" in result
+    assert "Interest Score (best): `68.0`" in result
+    assert "Verification Queue: `1✓ / 1⏳ / 1✗`" in result
