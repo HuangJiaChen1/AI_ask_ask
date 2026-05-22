@@ -1900,21 +1900,19 @@ def continue_conversation():
                             )
                             assistant.set_last_attribute_debug(partial_debug)
 
-                        # Fix 2: Detect [ACTIVITY_READY] in response text BEFORE stripping.
-                        # This is the only detection path for intents without follow-up
-                        # (curiosity, play, emotional) and takes precedence over follow-up
-                        # detection to avoid double-handling.
-                        raw_response = full_response
-                        response_ready_valid, response_rejected_reason, response_reason_text = (
-                            _validate_activity_ready(raw_response, assistant, child_input)
-                        )
-                        if response_ready_valid:
+                        # Handoff decision is authoritative. If we reached HANDOFF_NOW,
+                        # all readiness checks (interest score, turns, verification queue)
+                        # have already passed in evaluate_handoff.
+                        if decision == HandoffDecision.HANDOFF_NOW:
                             assistant.attribute_state.activity_ready = True
                             assistant.attribute_activity_ready = True
-
-                        # Safety net: strip any leaked [ACTIVITY_READY] / REASON:
-                        # from response text before the child sees it.
-                        full_response = _strip_activity_markers(full_response)
+                            response_ready_valid = True
+                            response_rejected_reason = None
+                            response_reason_text = None
+                        else:
+                            response_ready_valid = False
+                            response_rejected_reason = None
+                            response_reason_text = None
 
                         # VGC L3: Direct probe if any pending verification exceeded turn threshold
                         pending_after_response = [
@@ -1951,11 +1949,6 @@ def continue_conversation():
                                 **_assistant_stream_fields(assistant),
                             ))
 
-                        # Initialize marker tracking from response detection.
-                        # These variables are consumed by build_attribute_debug below.
-                        activity_marker_detected = "[ACTIVITY_READY]" in raw_response
-                        activity_marker_reason = response_reason_text
-                        activity_marker_rejected_reason = response_rejected_reason
                         full_followup = ""
 
                         # Only generate follow-up for CONTINUE modes.
@@ -1965,7 +1958,6 @@ def continue_conversation():
                         # that gets concatenated with the response, causing duplication.
                         if (
                             needs_followup
-                            and not response_ready_valid
                             and decision in (HandoffDecision.CONTINUE, HandoffDecision.CONTINUE_SWITCH)
                         ):
                             messages_with_response = messages + [
@@ -1988,83 +1980,29 @@ def continue_conversation():
                                 focus_topic=f"the {observation_angle} of the {object_name_attr}",
                             )
 
-                            activity_marker = "[ACTIVITY_READY]"
-                            raw_followup_so_far = ""
-                            full_followup = ""
-
-                            def _displayable_followup(raw_followup: str) -> str:
-                                marker_free_followup = _strip_activity_markers(raw_followup)
-                                if activity_marker in raw_followup:
-                                    return marker_free_followup
-
-                                # Defensive: strip any trailing partial marker prefix that
-                                # might have leaked through if the stream was interrupted
-                                # mid-marker.
-                                max_buffered_prefix = min(len(raw_followup), len(activity_marker) - 1)
-                                for suffix_len in range(max_buffered_prefix, 0, -1):
-                                    if raw_followup.endswith(activity_marker[:suffix_len]):
-                                        return marker_free_followup[:-suffix_len]
-                                return marker_free_followup
-
                             # Collect the full followup without yielding to the client.
                             async for _text_chunk, token_usage, full_so_far in followup_generator:
-                                raw_followup_so_far = full_so_far
+                                pass
 
-                            full_followup = _displayable_followup(raw_followup_so_far)
+                            full_followup = full_so_far if full_so_far else ""
 
-                            # Validate [ACTIVITY_READY] in follow-up text using shared helper
-                            if activity_marker in raw_followup_so_far:
-                                followup_ready_valid, followup_rejected_reason, followup_reason_text = (
-                                    _validate_activity_ready(raw_followup_so_far, assistant, child_input)
-                                )
-                                activity_marker_detected = True
-                                activity_marker_reason = followup_reason_text
-                                activity_marker_rejected_reason = followup_rejected_reason
-                                if followup_ready_valid:
-                                    assistant.attribute_state.activity_ready = True
-                                    assistant.attribute_activity_ready = True
-                                    # Yield the validated followup text
-                                    if full_followup:
-                                        sequence_number += 1
-                                        yield sse_event("chunk", StreamChunk(
-                                            response=full_followup,
-                                            session_finished=False,
-                                            duration=0.0,
-                                            token_usage=None,
-                                            finish=False,
-                                            sequence_number=sequence_number,
-                                            timestamp=time.time(),
-                                            session_id=session_id,
-                                            request_id=request_id,
-                                            response_type="attribute_activity",
-                                            correct_answer_count=assistant.correct_answer_count,
-                                            intent_type=intent_type_lower,
-                                            **_assistant_stream_fields(assistant),
-                                        ))
-                                elif followup_rejected_reason:
-                                    # Handoff rejected — marker and REASON already stripped by
-                                    # _displayable_followup(). Keep the follow-up question so the
-                                    # conversation continues normally.
-                                    pass
-                            else:
-                                # No marker detected — yield the followup normally
-                                if full_followup:
-                                    sequence_number += 1
-                                    yield sse_event("chunk", StreamChunk(
-                                        response=full_followup,
-                                        session_finished=False,
-                                        duration=0.0,
-                                        token_usage=None,
-                                        finish=False,
-                                        sequence_number=sequence_number,
-                                        timestamp=time.time(),
-                                        session_id=session_id,
-                                        request_id=request_id,
-                                        response_type="attribute_activity",
-                                        correct_answer_count=assistant.correct_answer_count,
-                                        intent_type=intent_type_lower,
-                                        **_assistant_stream_fields(assistant),
-                                    ))
+                            if full_followup:
+                                sequence_number += 1
+                                yield sse_event("chunk", StreamChunk(
+                                    response=full_followup,
+                                    session_finished=False,
+                                    duration=0.0,
+                                    token_usage=None,
+                                    finish=False,
+                                    sequence_number=sequence_number,
+                                    timestamp=time.time(),
+                                    session_id=session_id,
+                                    request_id=request_id,
+                                    response_type="attribute_activity",
+                                    correct_answer_count=assistant.correct_answer_count,
+                                    intent_type=intent_type_lower,
+                                    **_assistant_stream_fields(assistant),
+                                ))
 
                         combined_response = (full_response + " " + full_followup).strip()
 
@@ -2082,9 +2020,9 @@ def continue_conversation():
                             profile=assistant.attribute_profile,
                             state=assistant.attribute_state,
                             reason=attribute_reason,
-                            activity_marker_detected=activity_marker_detected,
-                            activity_marker_reason=activity_marker_reason,
-                            activity_marker_rejected_reason=activity_marker_rejected_reason,
+                            activity_marker_detected=False,
+                            activity_marker_reason=None,
+                            activity_marker_rejected_reason=None,
                             response_text=combined_response,
                             intent_type=intent_type_lower,
                             reply_type="discovery",
