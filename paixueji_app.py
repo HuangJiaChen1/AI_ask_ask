@@ -924,6 +924,7 @@ def start_conversation():
                     assistant.pending_activity_selection = True
                     assistant.pending_eligible_activities = eligible
                     assistant.pending_activity_categories = discovery_result.all_activity_categories
+                    assistant.pending_verification_queue = discovery_result.verification_queue
                     assistant.pending_manual_selection_context = {
                         "object_name": object_name,
                         "anchor_name": assistant.anchor_object_name,
@@ -3496,6 +3497,16 @@ def select_activity():
     # Build DiscoverySessionState with selected as primary
     secondary = [a for a in assistant.pending_eligible_activities if a.activity_id != activity_id]
     context = assistant.pending_manual_selection_context
+    primary_category = assistant.pending_activity_categories.get(activity_id, "")
+    verification_queue = [
+        VerificationItem(
+            property=v.get("property", ""),
+            question=v.get("question", ""),
+            for_activity_id=v.get("for_activity", ""),
+        )
+        for v in assistant.pending_verification_queue
+        if v.get("for_activity") == activity_id and v.get("property")
+    ]
     primary_profile = AttributeProfile(
         attribute_id=f"activity.{selected.activity_id}",
         label=selected.name,
@@ -3507,7 +3518,9 @@ def select_activity():
         object_name=context.get("object_name", ""),
         age=context.get("age", 6),
         primary_activity=selected,
+        primary_category=primary_category,
         secondary_activities=secondary,
+        verification_queue=verification_queue,
         profile=primary_profile,
     )
 
@@ -3516,6 +3529,7 @@ def select_activity():
     assistant.pending_activity_selection = False
     assistant.pending_eligible_activities = []
     assistant.pending_activity_categories = {}
+    assistant.pending_verification_queue = []
     assistant.pending_manual_selection_context = {}
 
     request_id = str(uuid.uuid4())

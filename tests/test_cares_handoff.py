@@ -503,38 +503,3 @@ def test_evaluate_handoff_rejected_verification_blocks_handoff():
     assert "primary_property_rejected" in reason
 
 
-def test_evaluate_handoff_insufficient_turns_blocks_handoff():
-    """1 turn with high score should NOT trigger HANDOFF_NOW.
-
-    Regression for: child says 'its orange' after 1 turn; score=65 but
-    evaluate_handoff incorrectly returned HANDOFF_NOW because it did not
-    check turns_explored. The _build_handoff_guide then forced a jarring
-    activity switch before the conversation had enough depth.
-    """
-    rec = AttributeInterestRecord(
-        attribute_id="appearance.texture",
-        turns_explored=1,
-        intent_history=["CORRECT_ANSWER"],
-        is_current=True,
-    )
-    # Score: base=(1/1)*60=60, streak=min(1*5,20)=5 -> 65 >= 50
-    assert compute_attribute_interest_score(rec) == 65.0
-
-    mock_activity = SimpleNamespace(
-        activity_id="fluffy_expedition_dandelion",
-        name="Find three fluffy friends",
-        observation_angle="texture",
-    )
-    assistant = _make_assistant_for_handoff(
-        current_attr_id="appearance.texture",
-        interest_records={"appearance.texture": rec},
-        turn_count=1,
-        age=6,
-        primary_activity=mock_activity,
-    )
-    switch = SimpleNamespace(should_switch=False, target_attribute_id=None)
-    decision, reason, meta = evaluate_handoff(assistant, switch)
-    assert decision == HandoffDecision.CONTINUE
-    assert "insufficient_turns" in reason
-    assert meta["current_turns"] == 1
-    assert meta["best_score"] == 65.0

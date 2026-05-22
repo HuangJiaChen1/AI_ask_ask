@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import paixueji_app
 from attribute_activity import AttributeProfile, DiscoverySessionState
 from activities import ActivityDefinition
+from stream.cares_handoff import HandoffDecision
 
 
 def parse_sse(response_data):
@@ -233,13 +234,13 @@ def test_attribute_continue_tracks_turns_without_heuristic_readiness(client, moc
     assert start_chunk["attribute_debug"]["profile"]["attribute_id"] == "senses.smell"
 
     set_intent(mock_gemini_client, "CORRECT_ANSWER")
-    first = client.post(
-        "/api/continue",
-        json={"session_id": session_id, "child_input": "It smells strong"},
-    )
+    with patch("paixueji_app.evaluate_handoff", return_value=(HandoffDecision.CONTINUE, "building", {})):
+        first = client.post(
+            "/api/continue",
+            json={"session_id": session_id, "child_input": "It smells strong"},
+        )
     first_chunk = final_chunk(first)
     assert first_chunk["response_type"] == "attribute_activity"
-    # activity_ready is False until LLM emits [ACTIVITY_READY] marker
     assert first_chunk["activity_ready"] is False
     assert "activity_marker_detected" in first_chunk["attribute_debug"]
 
@@ -398,10 +399,11 @@ def test_followup_question_preserved_on_continue(client, mock_gemini_client):
 
     mock_gemini_client.aio.models.generate_content_stream.side_effect = _side_effect
 
-    response = client.post(
-        "/api/continue",
-        json={"session_id": session_id, "child_input": "it is fat"},
-    )
+    with patch("paixueji_app.evaluate_handoff", return_value=(HandoffDecision.CONTINUE, "building", {})):
+        response = client.post(
+            "/api/continue",
+            json={"session_id": session_id, "child_input": "it is fat"},
+        )
 
     chunks = [event["data"] for event in parse_sse(response.data) if event["event"] == "chunk"]
     final = chunks[-1]

@@ -6,6 +6,7 @@ Issues being diagnosed:
 2. No verification of "fluffy" property — parameterized activity assumed applicable
 3. dream_whisperer_cat not selected despite being cat-specific
 4. Follow-up questions lack activity-pushing intent
+5. PROBE directive uses pushy "Ask a clear, direct question" language
 """
 import re
 
@@ -313,3 +314,54 @@ def test_select_activities_preserves_primary_category():
 
     import asyncio
     asyncio.run(run())
+
+
+# ── Issue 6: PROBE directive uses pushy language ──
+
+def test_probe_directive_does_not_use_pushy_language():
+    """
+    Regression: PROBE mode appended a directive telling the LLM to
+    'Ask a clear, direct question to verify the pending property.'
+    This produced pushy responses like 'tell me if it looks smooth or
+    if it looks a bit messy.' The directive must use gentle, guiding
+    language instead.
+    """
+    import pathlib
+
+    source_path = pathlib.Path(__file__).parent.parent / "paixueji_app.py"
+    source = source_path.read_text(encoding="utf-8")
+
+    # The old pushy directive must NOT be present
+    assert "Ask a clear, direct question" not in source, (
+        "PROBE directive must not tell LLM to ask a 'clear, direct question'"
+    )
+
+    # Must not contain commanding phrases
+    assert "tell me if" not in source.lower(), (
+        "PROBE directive must not contain commanding 'tell me if' language"
+    )
+
+
+def test_probe_mode_generates_followup_question():
+    """
+    PROBE mode should use the follow-up question generator so the
+    response generator doesn't have to violate its own 'Do NOT ask
+    a question' rule.
+    """
+    import pathlib
+
+    source_path = pathlib.Path(__file__).parent.parent / "paixueji_app.py"
+    source = source_path.read_text(encoding="utf-8")
+
+    # Find the followup decision block
+    followup_condition_match = re.search(
+        r'if\s*\(\s*needs_followup[\s\S]*?decision in\s*\(([^)]+)\)',
+        source,
+    )
+    assert followup_condition_match is not None, (
+        "Could not find followup condition block"
+    )
+    decisions_str = followup_condition_match.group(1)
+    assert "PROBE" in decisions_str or "probe" in decisions_str.lower(), (
+        "PROBE decision must be included in followup generation"
+    )

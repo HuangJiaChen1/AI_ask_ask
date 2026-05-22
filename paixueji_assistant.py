@@ -101,6 +101,7 @@ class PaixuejiAssistant:
         self.pending_activity_selection = False
         self.pending_eligible_activities: list = []
         self.pending_activity_categories: dict[str, str] = {}
+        self.pending_verification_queue: list[dict] = []
         self.pending_manual_selection_context: dict = {}
         self.category_pipeline_enabled = False
         self.category_lane_active = False
@@ -331,6 +332,7 @@ class PaixuejiAssistant:
         self.pending_activity_selection = False
         self.pending_eligible_activities = []
         self.pending_activity_categories = {}
+        self.pending_verification_queue = []
         self.pending_manual_selection_context = {}
 
     def set_last_attribute_debug(self, debug_dict):
