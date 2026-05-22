@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 MIN_INTEREST_FOR_HANDOFF = 50
 MAX_SESSION_TURNS = 8
+MIN_TURNS_FOR_HANDOFF = 3
 EXIT_LANE_INTEREST = 40
 
 
@@ -250,6 +251,16 @@ def evaluate_handoff(assistant, switch_result) -> tuple[HandoffDecision, str, di
             selection.decision,
             selection.activity is not None and selection.selector_score >= MIN_SCORE_FOR_HANDOFF,
         )
+
+        # Gate: minimum turns before handoff
+        current_record = records.get(current_attr)
+        if current_record and current_record.turns_explored < MIN_TURNS_FOR_HANDOFF:
+            return HandoffDecision.CONTINUE, f"insufficient_turns:{current_record.turns_explored}", {
+                "current_attribute": current_attr,
+                "current_turns": current_record.turns_explored,
+                "min_turns": MIN_TURNS_FOR_HANDOFF,
+                "best_score": best_score,
+            }
 
         # Gate 3b: Verification status check
         verification_queue = getattr(
