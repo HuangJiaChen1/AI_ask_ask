@@ -1828,11 +1828,6 @@ def continue_conversation():
                                 current_score=current_interest_score,
                                 total_turns=total_turns,
                             )
-                            # PROBE mode: append a directive to ask more directly
-                            soft_guide = (
-                                f"{soft_guide}\n\n[DIRECTIVE] The child seems close to being ready for an activity, "
-                                "but we need to confirm one thing first. Ask a clear, direct question to verify the pending property."
-                            )
                         else:
                             # CONTINUE or CONTINUE_SWITCH
                             pending_for_angle = [
