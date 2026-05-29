@@ -45,7 +45,6 @@ from .response_generators import (
 from .question_generators import (
     ask_introduction_question_stream,
     ask_followup_question_stream,
-    ask_attribute_intro_stream,
     ask_category_intro_stream,
 )
 
@@ -131,7 +130,6 @@ __all__ = [
     # Question generators (intro path + followup)
     'ask_introduction_question_stream',
     'ask_followup_question_stream',
-    'ask_attribute_intro_stream',
     'ask_category_intro_stream',
 
     # Intent classification
