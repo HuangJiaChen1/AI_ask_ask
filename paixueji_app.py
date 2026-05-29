@@ -313,7 +313,7 @@ CORS(app)
 
 sessions = {}
 
-ALLOWED_MODELS = {"gemini-3.1-flash-lite-preview", "gemini-2.0-flash-lite"}
+ALLOWED_MODELS = {"gemini-3.5-flash", "gemini-3.1-flash-lite-preview", "gemini-2.0-flash-lite"}
 MAX_BRIDGE_ATTEMPTS = 2
 MAX_PRE_ANCHOR_SUPPORT_TURNS = 2
 MAX_BRIDGE_ACTIVATION_TURNS = 4
