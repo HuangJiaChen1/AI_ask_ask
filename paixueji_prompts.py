@@ -471,73 +471,6 @@ Choose 1-2 FALLBACKS as related attributes the child might naturally drift to.
 If domain is "unknown", prefer attributes from appearance or senses dimensions.
 All attribute_ids must exactly match entries from the SUPPORTED ATTRIBUTES list."""
 
-ATTRIBUTE_INTRO_PROMPT = """You are starting a discovery conversation with a child about: {object_name}
-
-AGE GUIDANCE: {age_prompt}
-SUGGESTED ATTRIBUTE: {attribute_label}
-
-{sensory_safety_rules}
-
-TASK — Write ONE short opening that makes {attribute_label} naturally noticeable.
-
-STRUCTURE: Emotional Opening -> Object Confirmation -> Salience Highlight -> Engagement Hook
-
-BEAT 1 — EMOTIONAL OPENING
-Lead with a warm, natural opening like "Whoa!" or "Oh, nice!"
-Do NOT open with a generic greeting — jump into the excitement.
-
-BEAT 2 — OBJECT CONFIRMATION
-Name the child's object clearly: {object_name}
-
-BEAT 3 — OBSERVATION INVITATION
-Guide the child's attention toward {attribute_label} WITHOUT telling them what to observe.
-Do NOT add a sensory detail about the object — let the child be the first to describe it.
-Use language that invites the child to look, listen, or feel for themselves.
-GOOD (attribute=body color, object=apple):
-  "Let's look at it together — what do you see?" (child describes first, system does not assert)
-GOOD (attribute=covering, object=cat):
-  "Let's check out its fur — what do you notice?" (guides attention, child observes first)
-BAD (attribute=body color, object=apple):
-  "It looks so bright and fresh!" (asserts the color before child sees it)
-BAD (attribute=body color, object=apple):
-  "Let's talk about its color!" (forced, quiz-like)
-BAD (attribute=body color, object=apple):
-  "What color is it?" (knowledge-testing question)
-BAD (attribute=covering, object=cat):
-  "It looks so soft and fluffy!" (asserts texture before child observes it)
-BAD (attribute=covering, object=cat):
-  "Its fur looks like it has so many layers!" (asserts thickness before child describes it)
-
-BEAT 4 — ENGAGEMENT HOOK
-  PRIMARY (default): Ask ONE open question that lets the child describe their own observation first.
-    "What do you notice first when you look at it?"
-    "What does it look like to you?"
-    "How would you describe it?"
-  FALLBACK (only when the attribute is non-observable or hard to elicit): Gently introduce the topic with a wondering question, never asserting it as confirmed fact.
-    "I wonder if the petals feel soft — what do you think? {hook_type_section}"
-  The LLM picks PRIMARY by default; FALLBACK is allowed when SUGGESTED ATTRIBUTE is non-observable.
-
-Rules:
-- Make {attribute_label} feel naturally noticeable, NOT forced or quiz-like.
-- Do NOT ask a knowledge-testing question ("What color is it?", "How many legs does it have?").
-- Do NOT assert the attribute as a confirmed fact (e.g. "It has fluffy fur" or "It looks so soft and fluffy").
-- Do NOT require a supported anchor object.
-- Do NOT mention databases, pipelines, or modes.
-- Respond naturally, not as JSON.
-"""
-
-ATTRIBUTE_INTRO_VERIFICATION_OVERRIDE = """\
-Before assuming this object has the suggested attribute, you must first
-let the child tell you what they observe.
-
-IN YOUR OPENING:
-- Do NOT state the attribute as a fact (e.g. "It has fluffy fur").
-- Instead, ask an open observation question that lets the child describe.
-- GOOD: "What does its fur look like to you?"
-- GOOD: "Does it look soft and fluffy, or more smooth?"
-- BAD: "It has such thick, fluffy fur!" (assumes property without asking)
-"""
-
 ATTRIBUTE_SOFT_GUIDE = """
 {sensory_safety_rules}
 
@@ -2900,8 +2833,6 @@ def get_prompts():
         'bridge_activation_answer_validator_prompt': BRIDGE_ACTIVATION_ANSWER_VALIDATOR_PROMPT,
         'domain_classification_prompt': DOMAIN_CLASSIFICATION_PROMPT,
         'attribute_selection_prompt': ATTRIBUTE_SELECTION_PROMPT,
-        'attribute_intro_prompt': ATTRIBUTE_INTRO_PROMPT,
-        'attribute_intro_verification_override': ATTRIBUTE_INTRO_VERIFICATION_OVERRIDE,
         'attribute_soft_guide': ATTRIBUTE_SOFT_GUIDE,
         'attribute_response_guide': ATTRIBUTE_RESPONSE_GUIDE,
         'attribute_response_hint': ATTRIBUTE_RESPONSE_HINT,
