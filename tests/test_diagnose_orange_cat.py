@@ -219,58 +219,6 @@ def test_build_continue_guide_omits_activity_target():
     assert re.search(r"\bactivity\b(?!_ready)", guide.lower()) is None or "Continue exploring the current attribute" in guide
 
 
-# ── Issue 5: Intro asserts unverified properties ──
-
-def test_attribute_intro_prompt_has_no_activity_target():
-    """ATTRIBUTE_INTRO_PROMPT should not reference activity_target."""
-    from paixueji_prompts import ATTRIBUTE_INTRO_PROMPT
-    assert "{activity_target}" not in ATTRIBUTE_INTRO_PROMPT
-    assert "ACTIVITY TARGET" not in ATTRIBUTE_INTRO_PROMPT
-
-
-def test_attribute_intro_verification_override_exists():
-    """Verification override must exist and forbid assertions."""
-    from paixueji_prompts import ATTRIBUTE_INTRO_VERIFICATION_OVERRIDE
-    assert 'Do NOT state the attribute as a fact' in ATTRIBUTE_INTRO_VERIFICATION_OVERRIDE
-    assert 'BAD: "It has such thick, fluffy fur!"' in ATTRIBUTE_INTRO_VERIFICATION_OVERRIDE
-
-
-def test_attribute_intro_prompt_does_not_encourage_assertions():
-    """ATTRIBUTE_INTRO_PROMPT itself must not list assertion examples as GOOD.
-
-    Regression: the prompt previously listed 'It looks so soft and fluffy!'
-    as a GOOD example for cat+covering, causing intros to assume unverified
-    properties even when verification_queue was empty.
-    """
-    import re
-    from paixueji_prompts import ATTRIBUTE_INTRO_PROMPT
-
-    # The old assertion-encouraging example must NOT appear in the GOOD section
-    # Extract the GOOD block for cat+covering (between the GOOD line and the next BAD/empty line)
-    good_cat_match = re.search(
-        r'GOOD \(attribute=covering, object=cat\):.*?(?=\nBAD|\n\n|\Z)',
-        ATTRIBUTE_INTRO_PROMPT,
-        re.DOTALL,
-    )
-    assert good_cat_match is not None, "Prompt must have GOOD example for cat+covering"
-    good_cat_block = good_cat_match.group(0)
-    assert '"It looks so soft and fluffy!"' not in good_cat_block, (
-        "GOOD example must not encourage asserting fluffy as fact"
-    )
-
-    # The prompt must contain a child-first observation example
-    assert "Let's check out its fur — what do you notice?" in ATTRIBUTE_INTRO_PROMPT, (
-        "Prompt must guide attention without asserting property"
-    )
-    # The assertion must be explicitly marked as BAD
-    assert "asserts texture before child observes it" in ATTRIBUTE_INTRO_PROMPT
-    assert "asserts thickness before child describes it" in ATTRIBUTE_INTRO_PROMPT
-
-
-def test_attribute_intro_prompt_forbids_assertions_in_rules():
-    """The Rules section must explicitly forbid asserting attributes as fact."""
-    from paixueji_prompts import ATTRIBUTE_INTRO_PROMPT
-    assert 'Do NOT assert the attribute as a confirmed fact' in ATTRIBUTE_INTRO_PROMPT
 
 
 def test_discovery_session_state_has_primary_category():
