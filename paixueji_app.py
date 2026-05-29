@@ -243,7 +243,7 @@ REENGAGE MODE: ACTIVE
 
 
 from stream import (
-    ask_attribute_intro_stream,
+    ask_introduction_question_stream,
     ask_category_intro_stream,
     ask_followup_question_stream,
     classify_intent,
