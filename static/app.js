@@ -576,8 +576,8 @@ async function startConversation() {
     }
 
     // Read backbone model overrides
-    const conversationModel = document.querySelector('input[name="conversationModel"]:checked')?.value || 'gemini-3.1-flash-lite-preview';
-    const groundingModel = document.querySelector('input[name="groundingModel"]:checked')?.value || 'gemini-3.1-flash-lite-preview';
+    const conversationModel = document.querySelector('input[name="conversationModel"]:checked')?.value || 'gemini-3.5-flash';
+    const groundingModel = document.querySelector('input[name="groundingModel"]:checked')?.value || 'gemini-3.5-flash';
 
     // Clear previous messages
     messagesContainer.innerHTML = '';
