@@ -1190,35 +1190,29 @@ def start_conversation():
                             assistant.conversation_history.copy(),
                             age_prompt,
                         )
-                        # Select a hook type for the attribute intro
+                        # Select a hook type using the FULL ordinary chat pool
                         hook_type_section = ""
+                        selected_hook_type_name = None
                         if HOOK_TYPES:
-                            _hook_type_name, hook_type_section = select_hook_type(
+                            selected_hook_type_name, hook_type_section = select_hook_type(
                                 age or 6,
                                 assistant.conversation_history,
                                 HOOK_TYPES,
-                                attribute_pipeline_enabled=True,
+                                attribute_pipeline_enabled=False,
                             )
-                        # Use observation_angle + focal_attribute for intro generation,
-                        # not the activity name (e.g. "Find three fluffy friends").
-                        primary = assistant.attribute_state.primary_activity
-                        if primary and primary.observation_angle:
-                            intro_label = primary.observation_angle
-                            if primary.focal_attribute:
-                                intro_label += f" · {primary.focal_attribute}"
-                        else:
-                            intro_label = assistant.attribute_state.profile.label
-                        generator = ask_attribute_intro_stream(
+
+                        generator = ask_introduction_question_stream(
                             messages=messages,
                             object_name=assistant.attribute_state.object_name,
-                            attribute_label=intro_label,
-                            attribute_branch=assistant.attribute_state.profile.branch,
+                            surface_object_name=assistant.surface_object_name,
+                            anchor_object_name=assistant.anchor_object_name,
+                            intro_mode="supported",
                             age_prompt=age_prompt,
                             age=age or 6,
                             config=assistant.config,
                             client=assistant.client,
                             hook_type_section=hook_type_section,
-                            verification_items=assistant.attribute_state.verification_queue,
+                            knowledge_context="",
                         )
                         sequence_number = 0
                         full_response = ""
@@ -1252,6 +1246,19 @@ def start_conversation():
                             reply_type="attribute_intro",
                         )
                         assistant.set_last_attribute_debug(attribute_debug)
+
+                        # Derive question_style from hook_type_name (same logic as graph.py)
+                        OPEN_ENDED_QUESTION_HOOKS = {
+                            "想象导向", "情绪投射", "角色代入", "选择偏好",
+                            "创意改造", "意图好奇", "轻搞怪/无厘头",
+                        }
+                        CONCRETE_QUESTION_HOOKS = {"细节发现", "经验、生活链接", "模仿引导"}
+                        question_style = None
+                        if selected_hook_type_name in OPEN_ENDED_QUESTION_HOOKS:
+                            question_style = "open_ended"
+                        elif selected_hook_type_name in CONCRETE_QUESTION_HOOKS:
+                            question_style = "concrete"
+
                         assistant.conversation_history.append({
                             "role": "assistant",
                             "content": full_response,
@@ -1260,6 +1267,8 @@ def start_conversation():
                             "response_type": "attribute_intro",
                             "attribute_debug": attribute_debug,
                             "resolution_debug": assistant.session_resolution_debug,
+                            "selected_hook_type": selected_hook_type_name,
+                            "question_style": question_style,
                         })
                         sequence_number += 1
                         yield sse_event("chunk", StreamChunk(
