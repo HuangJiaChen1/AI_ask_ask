@@ -64,7 +64,6 @@ from google.genai.types import HttpOptions
 
 from paixueji_assistant import PaixuejiAssistant
 from stream.question_generators import (
-    ask_attribute_intro_stream,
     ask_followup_question_stream,
     ask_introduction_question_stream,
 )
@@ -200,7 +199,6 @@ async def _run_test(test_config: dict, assistant) -> dict:
     # Resolve age_prompt if age is provided (skip for generators that don't need it)
     generators_needing_age_prompt = {
         "ask_introduction_question_stream",
-        "ask_attribute_intro_stream",
         "ask_followup_question_stream",
         "generate_intent_response_stream",
         "generate_classification_fallback_stream",
@@ -221,8 +219,6 @@ async def _run_test(test_config: dict, assistant) -> dict:
     output = ""
     if generator_name == "ask_introduction_question_stream":
         output = await _collect_stream(lambda: ask_introduction_question_stream(**params))
-    elif generator_name == "ask_attribute_intro_stream":
-        output = await _collect_stream(lambda: ask_attribute_intro_stream(**params))
     elif generator_name == "ask_followup_question_stream":
         output = await _collect_stream(lambda: ask_followup_question_stream(**params))
     elif generator_name == "generate_intent_response_stream":
