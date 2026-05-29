@@ -362,31 +362,31 @@ def test_compute_attribute_interest_score_with_streak_bonus():
     """Streak bonus rewards sustained engagement: +5 per turn, max 20."""
     from stream.cares_handoff import AttributeInterestRecord, compute_attribute_interest_score
 
-    # 2 turns, all positive → base=60, streak=10 → total=70
+    # 2 turns, all neutral (CORRECT_ANSWER) → base=30, streak=10 → total=40
     r2 = AttributeInterestRecord(
         attribute_id="appearance.covering",
         turns_explored=2,
         intent_history=["CORRECT_ANSWER", "CORRECT_ANSWER"],
     )
-    assert compute_attribute_interest_score(r2) == 70.0
+    assert compute_attribute_interest_score(r2) == 40.0
 
-    # 3 turns, all positive → base=60, streak=15 → total=75
+    # 3 turns, all neutral → base=30, streak=15 → total=45
     r3 = AttributeInterestRecord(
         attribute_id="appearance.covering",
         turns_explored=3,
         intent_history=["CORRECT_ANSWER", "CORRECT_ANSWER", "CORRECT_ANSWER"],
     )
-    assert compute_attribute_interest_score(r3) == 75.0
+    assert compute_attribute_interest_score(r3) == 45.0
 
-    # 1 turn positive → base=60, streak=5 → total=65
+    # 1 turn neutral → base=30, streak=5 → total=35
     r1 = AttributeInterestRecord(
         attribute_id="appearance.covering",
         turns_explored=1,
         intent_history=["CORRECT_ANSWER"],
     )
-    assert compute_attribute_interest_score(r1) == 65.0
+    assert compute_attribute_interest_score(r1) == 35.0
 
-    # 5 turns, 3 positive, 2 struggle → base=36, streak=20, penalty=8 → total=48
+    # 5 turns, 3 neutral, 2 struggle → base=18, streak=20, penalty=8 → total=30
     r_mixed = AttributeInterestRecord(
         attribute_id="appearance.covering",
         turns_explored=5,
@@ -394,7 +394,7 @@ def test_compute_attribute_interest_score_with_streak_bonus():
                         "CLARIFYING_WRONG", "CORRECT_ANSWER"],
         struggle_count=2,
     )
-    assert compute_attribute_interest_score(r_mixed) == 48.0
+    assert compute_attribute_interest_score(r_mixed) == 30.0
 
 
 def test_assistant_initializes_empty_interest_records():
