@@ -995,21 +995,20 @@ class TestPromptFormattingEdgeCases:
     def test_object_name_with_special_chars(self):
         """Object names like 'my {favorite} toy' could break formatting."""
         import paixueji_prompts
-        template = paixueji_prompts.get_prompts()["attribute_intro_prompt"]
+        template = paixueji_prompts.get_prompts()["introduction_prompt"]
 
         try:
             formatted = template.format(
                 object_name="my {favorite} toy",
-                attribute_label="body color",
-                activity_target="finding colored objects",
                 age_prompt="age 6 guidance",
                 age=6,
-                sensory_safety_rules="",
                 hook_type_section="",
+                knowledge_context="",
+                sensory_safety_rules="",
             )
             assert "my {favorite} toy" in formatted
         except KeyError as e:
-            pytest.fail(f"Attribute intro prompt crashed on special object name: {e}")
+            pytest.fail(f"Introduction prompt crashed on special object name: {e}")
 
     def test_child_answer_with_newlines_and_tabs(self):
         """Multi-line child answers should not break prompt structure."""
