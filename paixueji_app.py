@@ -921,7 +921,7 @@ def start_conversation():
                     discovery_result = None
                     discovery_debug = {"decision": "error", "reason": str(exc)}
 
-                if discovery_result:
+                if discovery_result and discovery_result.proceed:
                     assistant.pending_activity_selection = True
                     assistant.pending_eligible_activities = eligible
                     assistant.pending_activity_categories = discovery_result.all_activity_categories
@@ -1168,22 +1168,27 @@ def start_conversation():
                             for a in assistant.pending_eligible_activities
                             if (cat := assistant.pending_activity_categories.get(a.activity_id, "weak")) in ("ready", "verifiable")
                         ]
-                        yield sse_event("chunk", StreamChunk(
-                            response="",
-                            session_finished=False,
-                            duration=0.0,
-                            token_usage=None,
-                            finish=True,
-                            sequence_number=1,
-                            timestamp=time.time(),
-                            session_id=session_id,
-                            request_id=request_id,
-                            response_type="activity_selection",
-                            eligible_activities=eligible_payload,
-                            correct_answer_count=assistant.correct_answer_count,
-                            **_assistant_stream_fields(assistant),
-                        ))
-                        return
+                        if not eligible_payload:
+                            assistant.pending_activity_selection = False
+                            assistant.clear_attribute_lane()
+                            assistant.attribute_pipeline_enabled = True
+                        else:
+                            yield sse_event("chunk", StreamChunk(
+                                response="",
+                                session_finished=False,
+                                duration=0.0,
+                                token_usage=None,
+                                finish=True,
+                                sequence_number=1,
+                                timestamp=time.time(),
+                                session_id=session_id,
+                                request_id=request_id,
+                                response_type="activity_selection",
+                                eligible_activities=eligible_payload,
+                                correct_answer_count=assistant.correct_answer_count,
+                                **_assistant_stream_fields(assistant),
+                            ))
+                            return
 
                     if assistant.attribute_lane_active and assistant.attribute_state:
                         messages = prepare_messages_for_streaming(

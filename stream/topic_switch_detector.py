@@ -86,7 +86,7 @@ Output ONLY valid JSON (no markdown fences, no extra text):
     try:
         gen_config = GenerateContentConfig(
             temperature=0.1,
-            max_output_tokens=150,
+            max_output_tokens=1024,
             system_instruction=system_instruction if system_instruction else None,
         )
         response = await llm_generate(

@@ -60,7 +60,7 @@ def compute_attribute_interest_score_breakdown(record: AttributeInterestRecord) 
     }
     positive = sum(1 for it in record.intent_history if it in positive_intents)
     neutral = sum(1 for it in record.intent_history if it == "CORRECT_ANSWER")
-    base = ((positive + neutral * 0.5) / record.turns_explored) * 60
+    base = ((positive + neutral * 2 / 3) / record.turns_explored) * 60
 
     initiation = min(record.child_initiated_count * 8 + record.child_returned_count * 15, 30)
 
@@ -70,7 +70,7 @@ def compute_attribute_interest_score_breakdown(record: AttributeInterestRecord) 
 
     penalty = min(record.struggle_count * 4 + record.avoidance_count * 12, 35)
 
-    total = max(0.0, base + initiation + depth + streak - penalty)
+    total = round(max(0.0, base + initiation + depth + streak - penalty), 10)
     return {
         "base": base,
         "initiation": initiation,

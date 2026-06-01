@@ -101,7 +101,7 @@ Respond ONLY with valid JSON:
             client=client,
             model=config.get("model_name"),
             contents=prompt,
-            config={"temperature": 0.0, "max_output_tokens": 128},
+            config={"temperature": 0.0, "max_output_tokens": 1024},
             call_name="classify_verification",
         )
         raw_text = response.text or ""

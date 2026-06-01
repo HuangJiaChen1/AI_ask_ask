@@ -219,7 +219,7 @@ async def infer_domain(
             client=client,
             model=(config or {}).get("model_name"),
             contents=prompt,
-            config={"temperature": 0.0, "max_output_tokens": 60},
+            config={"temperature": 0.0, "max_output_tokens": 1024},
             call_name="infer_domain",
         )
         payload, _kind, _recovered = extract_json_object(response.text or "")

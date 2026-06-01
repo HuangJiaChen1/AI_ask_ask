@@ -88,7 +88,7 @@ async def classify_intent(
             contents=prompt,
             config={
                 "temperature": 0.1,
-                "max_output_tokens": 60
+                "max_output_tokens": 1024
             },
             call_name="classify_intent",
         )
@@ -225,7 +225,7 @@ async def classify_pre_anchor_semantic_reply(
             client=client,
             model=config["model_name"],
             contents=prompt,
-            config={"temperature": 0.0, "max_output_tokens": 80},
+            config={"temperature": 0.0, "max_output_tokens": 1024},
             call_name="classify_pre_anchor",
         )
         payload, _, _ = extract_json_object(response.text or "")
@@ -320,7 +320,7 @@ async def validate_bridge_activation_kb_question(
             client=assistant.client,
             model=assistant.config["model_name"],
             contents=prompt,
-            config={"temperature": 0.0, "max_output_tokens": 80},
+            config={"temperature": 0.0, "max_output_tokens": 1024},
             call_name="validate_kb_question",
         )
         payload = json.loads(response.text or "{}")
@@ -379,7 +379,7 @@ async def validate_bridge_activation_answer(
             client=assistant.client,
             model=assistant.config["model_name"],
             contents=prompt,
-            config={"temperature": 0.0, "max_output_tokens": 80},
+            config={"temperature": 0.0, "max_output_tokens": 1024},
             call_name="validate_answer",
         )
         payload = json.loads(response.text or "{}")

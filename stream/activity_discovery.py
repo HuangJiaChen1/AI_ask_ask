@@ -104,10 +104,18 @@ INSTRUCTIONS:
             client=client,
             model=(config or {}).get("model_name"),
             contents=prompt,
-            config={"temperature": 0.1, "max_output_tokens": 512},
+            config={"temperature": 0.1, "max_output_tokens": 2048},
             call_name="discover_talkable_activities",
         )
         raw_text = response.text or ""
+
+        # Debug: log full raw response for troubleshooting parse failures
+        logger.info(
+            "[ACTIVITY_DISCOVERY] raw_text_len=%d finish_reason=%r raw_preview=%r",
+            len(raw_text),
+            getattr(response.candidates[0], "finish_reason", "N/A") if getattr(response, "candidates", None) else "N/A",
+            raw_text[:500],
+        )
 
         # Extract JSON even if wrapped in fences
         match = _JSON_FENCE_RE.search(raw_text)

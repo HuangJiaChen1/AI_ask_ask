@@ -1162,7 +1162,7 @@ function renderActivitySelectionPanel(activities) {
     // Empty list fallback
     if (displayable.length === 0) {
         window.paixuejiUi.setActivitySelectionVisible(false);
-        appendMessage('bot', '当前没有合适的活动，换个话题试试吧。');
+        addMessage('bot', '当前没有合适的活动，换个话题试试吧。');
         awaitingActivitySelection = false;
         return;
     }
